@@ -1212,7 +1212,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 25,
+        "amount": 15,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1240,7 +1240,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 32,
+          "amount": 19,
           "if": {
             "p": "hasStatus",
             "of": "target",

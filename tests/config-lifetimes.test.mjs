@@ -182,6 +182,7 @@ test('framework tuning stays live across portable restore while each run keeps i
         assert.deepEqual(after.pinned, before.pinned);
         assert.equal(before.live.counter, 9);
         assert.equal(before.live.reflect, 7);
-        assert.deepEqual(after.live, { counter: 18, reflect: 4, evasion: before.live.evasion + 2 });
+        // statusCaps "none" (owner 2026-11-15): the live reflect.stackCap edit of 4 no longer clamps; the 7 Reflect stacks held stay 7.
+        assert.deepEqual(after.live, { counter: 18, reflect: 7, evasion: before.live.evasion + 2 });
     }
 });

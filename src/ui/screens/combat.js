@@ -6,7 +6,7 @@ import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionM
 import { TargetQuote } from '../models/TargetQuoteModel.js';
 import { acFor } from '../models/acBadge.js';
 import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView } from '../models/CombatHealthModel.js';
-import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay, PlayCostEvents, RequoteHeldHand } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
@@ -819,6 +819,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   combatEl.addEventListener('pointerover', previewAimedTarget);
   combatEl.addEventListener('focusin', previewAimedTarget);
+
+  // A target armed without a hover (a touch has none: the picker, the cursor or a tap's focus ring) quotes the card at that enemy, so a
+  // back-row enemy's +1 Stamina shows on the card's cost before the play, like the hovered quote on desktop. Shown = paid.
+  function syncArmedTarget() {
+    if (!selected || inputBusy() || enemyPlayback || combatEl.classList.contains('drag-targeting')) return;
+    const id = combatEl.querySelector('.combatant.enemy.hover-target, .combatant.enemy.gp-focus')?.dataset.eid;
+    if (!id || id === lastTargetId || !cardTargets(selected).legalIds.includes(id)) return;
+    lastTargetId = id;
+    renderHand();
+  }
 
   function refreshAim() {
     if (combatEl.classList.contains('drag-targeting')) return;
@@ -1998,7 +2008,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
-        counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
+        counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, ...(FixCoreCounterStacks(combat) ? { counterDecay: FixCoreCounterStacks(combat).decayPerTurn } : {}), reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
@@ -4295,7 +4305,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       aimScheduled = true;
       setTimeout(() => {
         aimScheduled = false;
-        if (combatEl.isConnected) refreshAim();
+        if (combatEl.isConnected) { syncArmedTarget(); refreshAim(); }
       }, 0);
     });
     aimObs.observe(field, { attributes: true, attributeFilter: ['class'], subtree: true });

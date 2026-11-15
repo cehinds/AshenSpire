@@ -39,3 +39,12 @@ test('a fight made without the bands key gains no formation Block', () => {
     assert.equal(blockAfterPhase(combat).get('e1'), baseline(['wanderingSoldier', 'wanderingSoldier']).get('e1'));
   } finally { fixCoreMechanics.bands = saved; }
 });
+
+test('the formation Block honours the enemy\'s blockCap (the same +2 otherwise)', () => {
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+  const [first] = combat.enemies;
+  first.statuses = { ...first.statuses, unbreakable: { stacks: 1 } }; // keeps its Block through the turn start and caps it at 30
+  first.block = 29;
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(first.block, 30, '29 + 2 stops at the cap');
+});

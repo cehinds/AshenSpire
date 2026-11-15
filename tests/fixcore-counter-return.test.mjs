@@ -266,11 +266,16 @@ import { cardDetailHtml } from '../src/ui/components/card.js';
 import { t } from '../src/ui/strings.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
+import { withoutCounterStackDefaults } from './legacyHitRules.mjs';
+import { fixCoreMechanics as shippedRules } from '../src/content/generated/fixCoreMechanics.js';
 import { CounterStackPercent } from '../src/ui/models/CounterStackPercentModel.js';
-test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Block or Ward absorption', () => {
+test('the Counter help is profile-aware: Core 2 says what a stack returns, a fight before batch 5 keeps the Block-as-stacks wording, legacy keeps Block or Ward absorption', () => {
   const core = cardDetailHtml(reg, { cardId: 'core.counter' });
-  assert.ok(core.includes(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
+  assert.ok(core.includes(t('card.counter.help.stacks', { stackPercent: 10, stacks: 1 })), 'Core reads the card-stack wording with its own grant');
+  assert.match(core, /Playing it grants 1 Counter\. Each covered hit that lands returns the card's damage plus 10% of that hit per Counter held/);
   assert.doesNotMatch(core, /after full Block or Ward absorption/);
+  const older = withoutCounterStackDefaults(() => cardDetailHtml(reg, { cardId: 'core.counter' }));
+  assert.ok(older.includes(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) || /Counter coverage/.test(older), 'a fight before batch 5 reads its own wording');
   assert.match(t('card.counter.help.core', { stackPercent: CounterStackPercent() }), /10% of the incoming damage per Counter stack/);
   assert.match(t('card.counter.help.legacy'), /after full Block or Ward absorption/);
   const legacyReg = createRegistries(contentBundle);
@@ -279,18 +284,22 @@ test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per
 });
 
 test('Core card and health Counter copy share the configured percentage without float artifacts', () => {
-  const original = mechanics.counter.stackFraction;
+  const original = shippedRules.counter.returnPerStack;
+  try {
+    shippedRules.counter.returnPerStack = 0.29;
+    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /29% of that hit per Counter held/);
+    shippedRules.counter.returnPerStack = 0.304;
+    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /30\.4% of that hit per Counter held/);
+  } finally { shippedRules.counter.returnPerStack = original; }
+  // The Block-as-stacks wording of an earlier fight still follows mechanics.counter.stackFraction.
+  const held = mechanics.counter.stackFraction;
   try {
     mechanics.counter.stackFraction = 0.29;
-    const help = cardDetailHtml(reg, { cardId: 'core.counter' });
-    assert.match(help, /29% of the incoming damage per Counter stack/);
+    assert.match(withoutCounterStackDefaults(() => cardDetailHtml(reg, { cardId: 'core.counter' })), /29% of the incoming damage per Counter stack/);
     assert.match(combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter').help, /29%/);
     mechanics.counter.stackFraction = 0.304;
     assert.equal(CounterStackPercent(), 30.4);
-    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /30\.4% of the incoming damage per Counter stack/);
-  } finally {
-    mechanics.counter.stackFraction = original;
-  }
+  } finally { mechanics.counter.stackFraction = held; }
 });
 
 test('the Counter face token reads the return (13), not the post-protection HP loss', () => {
@@ -476,8 +485,8 @@ test('Counters with authored coverage get eligibility-aware help and keep the co
   const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
   assert.match(html, /Counter coverage:/);
   // frostCounter is a spell Counter that arms in Core (owner 2026-10-19), so the help promises the Core return.
-  assert.match(html, /10% of the incoming damage per Counter stack/);
-  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /10% of the incoming damage per Counter stack/);
+  assert.match(html, /10% of that hit per Counter held/);
+  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /10% of that hit per Counter held/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
 

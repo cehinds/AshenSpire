@@ -85,12 +85,15 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434',
   'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30',
   'sha256:5b4af5bc7a4392da72001450ac193e05875dd8df1ec0bccf9edcd91d7b2f78cf',
+  'sha256:5db789257edff6ccecfbb277e81ab30e3aae881512d7420aa48b78e93989e32a',
+  'sha256:fd966dab88e5d25f38037c91ae136d5bf8f7e6c97dd3800e05d449750d21c572',
   'sha256:eb76303d1d3613e52717a20d58633bbeefc5b5f38fe16ba64338d9e830833f8b',
+  'sha256:6c2ff725ad1e7091e9bbe845b117677ea795c77bba0cc2927b6ab133f3570ebf',
+  'sha256:1d8ae1110ad291fb2e6c06344e804837f3969b1a2156b35abf1b73d5d602b5cb',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
-// pinned once at the batch-4 merge. Moved again by the bands rules (fixCoreMechanics.json `bands`, src/model/fixCoreMechanics.js) in W25-BANDS, then by the swapRows op, the Upset the Ranks card, formation Block and the spell lanes (rules 6-9).
-// Moved again by W25-EvadeCards (Evade card data, card modes, the self Advance): eb7630... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:1d8ae1110ad291fb2e6c06344e804837f3969b1a2156b35abf1b73d5d602b5cb';
+// the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Pinned once at the batch-5 + bands + Evade cards merge.
+const FIXED_EVASION_RUNTIME = 'sha256:8c57f365f79a7d77421f5d50188c8c96f993bd17f68e55cfadbb4bb2f35e25d8';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

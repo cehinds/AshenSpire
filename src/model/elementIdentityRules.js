@@ -2,7 +2,7 @@
 // content/source/fixCoreMechanics.json `elements`. Pure and headless; the engine effects live in
 // src/engine/elementIdentity.js. A fight copies the rules into itself when it is created, so a fight (or a run
 // profile) without an `elements` block keeps every pre-W25 behaviour: ElementRulesOf returns null.
-import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, StatusCapsLifted } from './fixCoreMechanics.js';
 
 /** The element rules this fight plays under, or null (old fights, other profiles). */
 export function ElementRulesOf(ctx) {
@@ -55,8 +55,9 @@ export function ElementStatusTooltip(ctx, id) {
   return null;
 }
 
-/** True when the element rules lift the engine cap of this status (Burn): nothing limits its stacks. */
+/** True when this fight lifts the cap of this status: every status under `statusCaps: "none"` (owner 2026-11-15), Burn under the element rules. Nothing limits its stacks. */
 export function ElementStatusUncapped(ctx, id) {
+  if (StatusCapsLifted(ctx)) return true;
   const rules = ElementRulesOf(ctx);
   return !!rules && id === 'burn' && !Number.isFinite(rules.burn.cap);
 }

@@ -43,7 +43,7 @@ combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
 combat.protection.poiseBonusAria,,"Poise {value} of {max}, plus {bonus} bonus","{bonus} Poise above the maximum. Bonus Poise is taken first and fades 5 per turn.",Poise {value}/{max} +{bonus}
-combat.protection.counter,,Counter,"Counter {stacks} · returns {stacks}×{stackPercent}% of incoming · −{decay} per turn",Counter
+combat.protection.counter,,Counter,"Counter {stacks} · each hit it answers returns {stackPercent}% of the hit per stack and uses up 1 · −{decay} per turn",Counter
 combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}% of it back at the attacker; every reflected hit costs one stack. Stacks last until the fight ends.",Reflect
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
@@ -869,6 +869,7 @@ deckEditor.rank.cantrip,,Cantrip,"Rank 0 spell, a cantrip.",
 deckEditor.rank.basic,,Basic,Rank 0 combat maneuver.,
 card.counter.help.legacy,,Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Block or Ward absorption; card support effects resolve when played.,Legacy Counter help.,
 card.counter.help.core,,"Prepare counter until next player turn. A covered hit returns the card's damage plus {stackPercent}% of the incoming damage per Counter stack (more with stance advantage), plus Poise damage; the Block you hold becomes Counter stacks.",Core Counter help.,
+card.counter.help.stacks,,"Prepare counter until next player turn. Playing it grants {stacks} Counter. Each covered hit that lands returns the card's damage plus {stackPercent}% of that hit per Counter held, then uses up 1 Counter; 1 fades each turn. Stacks have no limit.",Counter stack help.,
 card.counter.face.core,,Return damage and Poise,Core Counter face line while no attack is revealed.,
 deckEditor.range.melee,,Melee,Melee range: reaches the enemy in front.,
 deckEditor.range.reach,,Reach,Reach range: reaches past the front enemy.,
@@ -1457,6 +1458,7 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "combat.intent.inManyTurns","","{turns} turns","",""
 "combat.intent.retreating","","Retreating","",""
 "combat.intent.advancing","","Approaching","",""
+"combat.intent.advancingDetail","","Steps into melee range before it attacks.","",""
 # ---- the lookup's own developer messages (src/ui/strings.js). Read without calling resolve(), so an unknown id cannot recurse.
 "strings.error.noId","","uiStrings: a row has no id","",""
 "strings.error.duplicateId","","uiStrings: duplicate id '{id}'","",""
@@ -1737,7 +1739,7 @@ stance.name.neutral,,No stance,,
 stance.benefit.attack,,Attacks deal +20% damage.,,
 stance.benefit.smash,,+50% Poise damage. Keeps its bonus against Block.,,
 stance.benefit.sweep,,No extra benefit: a Sweep already hits every enemy in range for full damage.,,
-stance.benefit.counter,,+25% Block gained. A hit that costs you HP returns 25% of that HP to the attacker.,,
+stance.benefit.counter,,+25% Block gained.,,
 stance.benefit.defend,,+50% Block gained. You take 25% less Poise damage.,,
 stance.benefit.prepared,,Spells deal +25% damage.,,
 stance.benefit.neutral,,Holding no stance: draw 1 extra card at the start of your next turn.,,
@@ -1922,7 +1924,7 @@ cardArtBuilder.type.smash,,Smash,,
 cardArtBuilder.type.sweep,,Sweep,,
 cardArtBuilder.type.counter,,Counter,,
 cardArtBuilder.type.defend,,Defend,,
-cardArtBuilder.type.evade,,Evade,,
+cardArtBuilder.type.evade,,Defense (evade art),,
 cardArtBuilder.type.skill,,Utility,,
 cardArtBuilder.category.physical,,Physical,,
 cardArtBuilder.category.spell,,Magical,,

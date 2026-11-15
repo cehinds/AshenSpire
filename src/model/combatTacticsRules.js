@@ -10,13 +10,13 @@ const whole = value => Number.isSafeInteger(value) && value >= 0;
 /** Bounds Counter counts for runtime and save restoration. */
 export const COUNTER_STACK_SAFETY_CEILING = 999;
 
-/** Clamps Counter to the safety ceiling and Reflect to its live rule cap. */
-export function clampStackCounts(entity) {
+/** Clamps Counter to the safety ceiling and Reflect to its live rule cap (to the same ceiling when the fight lifts status caps). */
+export function clampStackCounts(entity, capsLifted = false) {
   if (!entity) return;
   if (Number.isSafeInteger(entity.counterStacks) && entity.counterStacks > COUNTER_STACK_SAFETY_CEILING) {
     entity.counterStacks = COUNTER_STACK_SAFETY_CEILING;
   }
-  if (Number.isSafeInteger(entity.reflectStacks) && entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
+  if (Number.isSafeInteger(entity.reflectStacks) && entity.reflectStacks > (capsLifted ? COUNTER_STACK_SAFETY_CEILING : mechanics.reflect.stackCap)) entity.reflectStacks = capsLifted ? COUNTER_STACK_SAFETY_CEILING : mechanics.reflect.stackCap;
 }
 
 export function stackCountProblems(entity, path = 'entity') {

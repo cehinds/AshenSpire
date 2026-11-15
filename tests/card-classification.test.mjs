@@ -20,7 +20,9 @@ test('canonical category and stance subtype preserve authored execution kind', (
     assert.deepEqual(cardClassification(def), { cardCategory: 'stance', stanceType: subtype, stanceGroups: groups });
     assert.equal(def.type, 'skill');
   }
-  assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'evade');
+  // Evade is a tag and status, not a card type (owner 2026-11-15): a card that prepares Evade is a Defense card.
+  assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'defense');
+  assert.deepEqual(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceGroups, ['defensive']);
   for (const type of ['consumable', 'status', 'curse'])
     assert.deepEqual(cardClassification(card('casting', 1, { type })), { cardCategory: type, stanceType: null, stanceGroups: [] });
   assert.deepEqual(cardClassification(card('casting', 1, { type: 'power' })), { cardCategory: 'power', stanceType: 'prepare', stanceGroups: [] });

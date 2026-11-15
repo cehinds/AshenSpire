@@ -99,8 +99,8 @@ test('Executioner: base branch before the break, Broken branch after a real Core
   };
   const base = dmg(false), broken = dmg(true);
   assert.equal(base.length, 1); assert.equal(broken.length, 1);
-  // Authored 10 vs 25 (x2.5) before scaling; the broken target also takes Vulnerable x1.25, so the 25 branch is well past 2.5x.
-  assert.ok(broken[0] > base[0] * 2.5, `Broken branch fires (legacy ${legacy}: ${base} -> ${broken})`);
+  // Authored 10 vs 15 (x1.5, the Broken bonus was nerfed from 25) before scaling; the target also takes Vulnerable x1.25 (legacy Staggered) or the Broken x1.5, so the branch is well past 1.5x.
+  assert.ok(broken[0] > base[0] * 1.5, `Broken branch fires (legacy ${legacy}: ${base} -> ${broken})`);
   }
   const card = reg.cards.get('executioner');
   assert.match(card.textTemplate, /If the target is Broken/);
