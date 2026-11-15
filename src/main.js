@@ -1,3 +1,4 @@
+import { installLegacyBrowser } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
@@ -162,6 +163,10 @@ import { createContentValidationCache } from './model/contentValidationCache.js'
 import { SetFaceCostRunSource, SetFaceCostPricer } from './model/faceCosts.js';
 import { SpellCostAdjust } from './engine/spellCosts.js';
 void DEBUG_CHROME_READY;
+
+// Older WebKit (iOS 15, an iPhone SE 1st gen): repair the stylesheets and add container queries and popovers
+// before anything renders. A no-op where the browser has them all (docs/qa/IOS15-COMPAT.md).
+installLegacyBrowser();
 
 const app = document.getElementById('app');
 
