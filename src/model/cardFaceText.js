@@ -232,11 +232,12 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
       // Owner, 2026-11-15: the word Barrier is gone from player text; N stacks read "Gain N x poisePerStack Poise" (it can exceed the maximum).
       case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Poise`);
-      case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
+      case 'gainWard': return frag('restore', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
-      case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
+      // Owner, 2026-11-15: Gain may exceed the maximum, Restore stops at it. restoreMana, restoreStamina and gainWard are capped; gainEnergy and gainPoise are not.
+      case 'restoreMana': return frag('restore', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
-      case 'restoreStamina':
+      case 'restoreStamina': return frag('restore', `${num(n, base)} Stamina`);
       case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
       case 'buildup': {
@@ -316,7 +317,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const segmentsOf = (fragments, extraBonus = [], isUnconditional = fragments === unconditional) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
+    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), restore = of('restore'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
     if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
@@ -324,6 +325,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
+    if (restore.length) out.push({ kind: 'gain', text: `Restore ${joinList(restore)}` });
     if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? joinList(defenseRestore) + '. ' + joinList(bonus) : joinList(bonus) });
     else if (defenseRestore.length) out.push({ kind: 'bonus', text: joinList(defenseRestore) });
     return out;
