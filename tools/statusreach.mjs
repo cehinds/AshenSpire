@@ -409,6 +409,8 @@ export function statusReach(bundle, opts = {}) {
     if (profile.camp === 'spell' && stanceRulesFor(stanceContext).spellStatusStacks > 0
       && (carrier.effects || []).some(effect => ['applyStatus', 'buildup'].includes(effect.op)
         && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('precision', `R8 authored spell status ${where}`);
+    // An Evade card (W25-EvadeCards) grants its stacks with its own applyStatus effect rather than a stance-entry tag; it still carries Evade.
+    if ((carrier.effects || []).some(effect => effect.op === 'applyStatus' && effect.status === 'evade' && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('evade', `R8 authored Evade status ${where}`);
     const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
       .some(effect => effect.op === 'damage' && positive(effect.amount));
     const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;
