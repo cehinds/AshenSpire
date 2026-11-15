@@ -9,7 +9,7 @@ import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
 import { openCombatLogModal } from './combatLogModal.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
-import { setAttr, setData } from '../domWrite.js';
+import { setAttr } from '../domWrite.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -294,12 +294,12 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     setAttr(reaction, 'aria-checked', toggle.enabled);
     const stateLabel = t(toggle.enabled ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
     setAttr(reaction, 'aria-label', t('combat.reactions.state', { state: stateLabel }));
-    setData(reaction, 'enabled', toggle.enabled);
+    if (reaction.dataset.enabled !== String(toggle.enabled)) reaction.dataset.enabled = String(toggle.enabled);
     value.textContent = stateLabel;
     autoSupported = !!toggle.supported;
     if (!autoBusy) auto.disabled = !autoSupported;
     setAttr(auto, 'aria-checked', !!autoOn);
-    setData(auto, 'enabled', !!autoOn);
+    if (auto.dataset.enabled !== String(!!autoOn)) auto.dataset.enabled = String(!!autoOn);
     const autoLabel = t(autoOn ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
     setAttr(auto, 'aria-label', t('combat.auto.state', { state: autoLabel }));
     autoValue.textContent = autoLabel;

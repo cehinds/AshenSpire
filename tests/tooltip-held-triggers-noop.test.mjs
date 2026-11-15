@@ -27,6 +27,8 @@ test('syncHeldTriggers: a second call over an unchanged hand writes nothing', ()
   const hand = document.createElement('div'); hand.className = 'hand';
   const card = document.createElement('div'); card.className = 'card';
   const tag = document.createElement('span'); tag.className = 'card-tag-symbol';
+  // The fake DOM's tabIndex is a plain field; a browser's writes the attribute, which the guard reads.
+  Object.defineProperty(tag, 'tabIndex', { set(v) { this.setAttribute('tabindex', String(v)); }, get() { return Number(this.getAttribute('tabindex') ?? -1); } });
   card.appendChild(tag); hand.appendChild(card); document.body.appendChild(hand);
   syncHeldTriggers(hand);
   assert.equal(tag.getAttribute('tabindex'), '-1');

@@ -916,7 +916,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const armed = !!dragInstanceId || !!selected || !!selfArm || selectedFlask != null;
     const plan = pendingTargetPlan(dragInstanceId || selected || selfArm);
     const layer = targetLayer({ armed: armed && plan.mode === 'enemy', enemies: combat.enemies });
-    setData(combatEl, 'targetLayer', layer.active ? 'armed' : 'idle');
+    { const mode = layer.active ? 'armed' : 'idle'; if (combatEl.dataset.targetLayer !== mode) combatEl.dataset.targetLayer = mode; }
     updateTargetHud(armed ? plan.legalIds : []);
     combatEl.querySelectorAll('.combatant').forEach(frame => {
       const id = frame.classList.contains('player') ? combat.player.id : frame.dataset.eid;
@@ -972,12 +972,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     // `.hand[data-has-selection]` stands in for `.hand:has(.selected)` in combat.css.
     const handEl = $('.hand');
-    if (handEl) setAttrIfChanged(handEl, 'data-has-selection', !!handEl.querySelector('.selected'));
+    handEl?.setAttribute('data-has-selection', String(!!handEl.querySelector('.selected')));
     // The preview's target outline follows the aimed card, which this sync is the one place that changes.
     decorateRoundsScreen();
     const player = $('.combatant.player');
-    if (player && player.classList.contains('armed') !== !!selfArm) player.classList.toggle('armed', !!selfArm);
-    if (player) { const tab = selfArm ? 0 : -1; if (player.tabIndex !== tab) player.tabIndex = tab; setAttrIfChanged(player, 'aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
+    player?.classList.toggle('armed', !!selfArm);
+    if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
     const inst = active && findInst(active);
     const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');

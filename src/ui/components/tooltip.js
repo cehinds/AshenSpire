@@ -37,7 +37,6 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { reducedMotionRequested } from '../motion.js';
-import { setAttr, setData } from '../domWrite.js';
 let tooltipSettings = resolveTooltipSettings();
 
 export function configureTooltipSettings(settings) {
@@ -445,8 +444,8 @@ const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
  */
 export function syncHeldTriggers(root) {
   for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
-    if (heldBackInCard(el)) { setAttr(el, 'tabindex', '-1'); setData(el, 'heldBack', 'true'); }
-    else if (el.dataset.heldBack === 'true') { setAttr(el, 'tabindex', '0'); delete el.dataset.heldBack; }
+    if (heldBackInCard(el)) { if (el.getAttribute('tabindex') !== '-1') el.tabIndex = -1; if (el.dataset.heldBack !== 'true') el.dataset.heldBack = 'true'; }
+    else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
   }
 }
 /** Keep a hand's triggers in step with its cards' selection classes. Returns the stop function. */
