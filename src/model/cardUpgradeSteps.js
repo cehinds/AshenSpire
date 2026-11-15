@@ -10,6 +10,7 @@ import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
+import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 
 export { STACK_CAPS };
 // Owner ask 2026-10-31: poise, a range / targeting / stance / school / element change and a rank-down join the
@@ -19,7 +20,7 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
-  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8,
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
   // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
   attr: 2 });
 // A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
@@ -172,6 +173,13 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
   const spell = familyValue(tags, 'camp:') === 'spell' || tags.includes('source:spell');
   const set = (id, option = {}) => { found[FX_OF(id)] = { fx: id, ...option }; };
+  // Wave 2 batch 5: +1 Counter on a card that already grants Counter stacks, while the whole grant (its own, +1 once upgraded, plus every earlier +1) stays within stacksMax.
+  const stackRules = fixCoreMechanics.counter;
+  if (maneuver === 'counter' && stackRules?.stackSource === 'card') {
+    const own = Number.isInteger(stackRules.stacksByCard?.[base.id]) ? stackRules.stacksByCard[base.id] : stackRules.stacksPerCard;
+    const extra = effects.filter((e) => e.op === 'gainCounterStacks').reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    if (own + (stackRules.stacksUpgradeBonus || 0) + extra + 1 <= stackRules.stacksMax) set('counter', { n: 1 });
+  }
   if (!hasBlock && !counterReturn && maneuver !== 'counter') set('block', { n: sp >= 2 ? 6 : 4 });
   const draw = effects.filter((e) => isPlainEffect(e, 'draw')).reduce((sum, e) => sum + e.amount, 0);
   if (draw < 3) set('draw', { n: 1 });

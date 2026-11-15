@@ -193,7 +193,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         }
         // A complete Core receipt records base and stack bonus. Advantage is the remainder.
         let detail = '';
-        if ([amount, base, share].every(Number.isSafeInteger) && base >= 0 && share >= 0 && base + share <= amount) {
+        if (Array.isArray(event.counterHits) && event.counterHits.length > 1) detail = ` (${event.counterHits.length} hits: ${event.counterHits.map(row => row.amount).join(' + ')})`;
+        else if ([amount, base, share].every(Number.isSafeInteger) && base >= 0 && share >= 0 && base + share <= amount) {
           const advantage = amount - base - share;
           detail = ` (base ${base} + stack bonus ${share}${advantage ? ` + advantage ${advantage}` : ''})`;
         }

@@ -87,10 +87,10 @@ test('Counter explanation preserves the configured fractional percent in health 
   try {
     mechanics.counter.stackFraction = 0.29;
     const badge = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
-    assert.match(badge.help, /returns 1×29% of incoming/);
+    assert.match(badge.help, /returns 29% of the hit per stack/);
     mechanics.counter.stackFraction = 0.304;
     const fractional = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
-    assert.match(fractional.help, /returns 1×30\.4% of incoming/);
+    assert.match(fractional.help, /returns 30\.4% of the hit per stack/);
   } finally {
     mechanics.counter.stackFraction = original;
   }

@@ -23,6 +23,31 @@ export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaL
 // floor(advantageBlockFraction x incoming) Block. Enemy-turn reactions in an already matching stance cost handCostDiscount less SP (floor 0).
 export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poiseFraction: 0.2, advantageIncomingFraction: 0.25, advantagePoiseFraction: 0.5, advantageBlockFraction: 0.25 });
 export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
+// Owner, 2026-11-15 (Wave 2 batch 5): Counter acts like Evade. `stackSource: "card"` switches a fight to it: a Counter card grants stacksByCard[id]
+// (else stacksPerCard) stacks, +stacksUpgradeBonus when upgraded, each grant clamped to 1..stacksMax; a covered landed hit returns
+// floor(incoming x returnPerStack x stacks held) + the card's base damage (+ floor(advantageShare x incoming)) and consumes consumePerHit stacks;
+// decayPerTurn stacks fade at the owner's turn start. Stacks held have no cap. A rules object without `stackSource` (a fight saved earlier) keeps
+// the Block-as-stacks rule, mechanics.counter.stackFraction and decayPerTurn. Logic: src/engine/counterRule.js, guardStacks.js.
+const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']);
+/** The Counter-stack rules a fight plays under (the `counter` block with `stackSource: "card"`), or null for the Block-as-stacks rule of an earlier fight. */
+export const FixCoreCounterStacks = ctx => fixCoreEnabled(ctx) && rawRules(ctx).counter?.stackSource === 'card' ? rawRules(ctx).counter : null;
+/** The Counter stacks one play of `cardId` grants under `rules` (a `counter` block with stackSource "card"): its table entry or stacksPerCard, +upgrade bonus, clamped to 1..stacksMax; 0 for another rule. */
+export function CounterStacksForCard(rules, cardId, upgraded = false) {
+  if (rules?.stackSource !== 'card') return 0;
+  const base = Number.isInteger(rules.stacksByCard?.[cardId]) ? rules.stacksByCard[cardId] : rules.stacksPerCard;
+  return Math.max(1, Math.min(rules.stacksMax, base + (upgraded ? Math.max(0, rules.stacksUpgradeBonus | 0) : 0)));
+}
+function validateCounterStacks(row) {
+  if (!row || row.stackSource === undefined) return;
+  const whole = value => Number.isInteger(value) && value >= 0;
+  if (row.stackSource !== 'card' || !(Number.isFinite(row.returnPerStack) && row.returnPerStack >= 0) || !whole(row.consumePerHit) || !whole(row.decayPerTurn)
+    || !(Number.isFinite(row.advantageShare) && row.advantageShare >= 0) || !Number.isInteger(row.stacksMax) || row.stacksMax < 1 || !whole(row.stacksUpgradeBonus)
+    || !Number.isInteger(row.stacksPerCard) || row.stacksPerCard < 1 || row.stacksPerCard > row.stacksMax
+    || (row.stacksByCard !== undefined && (typeof row.stacksByCard !== 'object' || row.stacksByCard === null
+      || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))) {
+    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax');
+  }
+}
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
 export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
@@ -135,17 +160,19 @@ function validateElementFlux(row) {
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
     || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
+  if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
     || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
-  fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
+  fractions('counter', rules.counter && Object.fromEntries(Object.entries(rules.counter).filter(([key]) => !COUNTER_STACK_KEYS.includes(key))), Object.keys(FIXCORE_COUNTER_DEFAULTS));
+  validateCounterStacks(rules.counter);
   if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
   const pr = rules.ratings;
   if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
@@ -203,6 +230,13 @@ export function fixCoreRules(ctx,entity=null,carrier=null) {
   return result;
 }
 export function fixCoreEnabled(ctx) { return ctx?.combatExpansionVersion === 2 && (ctx?.fixCoreRules?.version === 1 || ctx?.gameProfile?.modules?.effects?.fixCoreVersion === 1) && rawRules(ctx).enabled; }
+
+/**
+ * Owner, 2026-11-15: "nothing should have a max stack count". True when this fight's rules lift every cap on how many stacks a combatant
+ * can HOLD (the expanded-status caps of 3, Shock's 10, Reflect's 10). A fight saved without `statusCaps: "none"` keeps its caps; a per-grant
+ * amount (what a card adds) is never a cap. Safety ceilings that only keep garbage out of a save are not caps and stay.
+ */
+export const StatusCapsLifted = ctx => fixCoreEnabled(ctx) && ctx?.fixCoreRules?.statusCaps === 'none';
 /** True when FixCore is active and the data toggle has switched Ward off. */
 export function fixCoreWardDisabled(ctx) { return fixCoreEnabled(ctx) && !fixCoreWardEnabled(rawRules(ctx)); }
 export function protectionBindings(ctx, entity, carrier=null) {
