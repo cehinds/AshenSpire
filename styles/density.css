@@ -18,7 +18,8 @@
 }
 @media (pointer: fine) and (hover: hover) and (min-width: 700px) {
   :root {
-    --tap-floor: calc(min(var(--tap-target), 40px) / var(--ui-zoom, 1));
+    /* base.css owns --tap-floor; a mouse caps the floor it divides at 40 px (--tap-cap), never below the player's smaller setting. */
+    --tap-cap: min(var(--tap-target), 40px);
     --density-title: calc(26px / var(--ui-zoom, 1));
     --density-row-name: clamp(calc(16px / var(--ui-zoom, 1)), 1.75rem, calc(18px / var(--ui-zoom, 1)));
     --density-row-text: clamp(calc(13px / var(--ui-zoom, 1)), 1.4rem, calc(14px / var(--ui-zoom, 1)));
