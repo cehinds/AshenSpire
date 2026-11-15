@@ -1,7 +1,7 @@
 // src/ui/legacyBrowser.js: the one door that decides whether a page gets the iOS 15 repairs. docs/qa/IOS15-COMPAT.md.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { installLegacyBrowser, legacyFlags } from '../src/ui/legacyBrowser.js';
+import { installLegacyBrowser, installLegacyBrowserSafely, legacyFlags } from '../src/ui/legacyBrowser.js';
 import { forceColorMixFallback } from '../src/ui/colorMixCompat.js';
 import { forceCqFallback } from '../src/ui/cqCompat.js';
 
@@ -62,4 +62,21 @@ test('feature detection: a browser lacking color-mix and container queries gets 
 
 test('a page without a document is left alone', () => {
   assert.equal(installLegacyBrowser({}), null);
+});
+
+test('only the -webkit- prefix gaps (current Safari): installLegacyBrowser is a no-op', () => {
+  const css = '.a{user-select:none;backdrop-filter:blur(2px)}';
+  const win = fakeWindow({ supports: (prop) => !/^(user-select|backdrop-filter)$/.test(prop), sheets: [css] });
+  assert.equal(installLegacyBrowser(win), null);
+  assert.equal(win.styles[0].textContent, css);
+  assert.equal(win.observers.length, 0);
+});
+
+test('a repair that throws is logged and the page boots unrepaired', () => {
+  const win = fakeWindow({ supports: () => false, sheets: ['.a{width:1cqw}'] });
+  win.document.querySelectorAll = () => { throw new Error('boom'); };
+  const logged = [];
+  try { assert.equal(installLegacyBrowserSafely(win, { error: (...a) => logged.push(a) }), null); } finally { forceCqFallback(false); forceColorMixFallback(false); }
+  assert.equal(logged.length, 1);
+  assert.match(String(logged[0][0]), /booting without them/);
 });

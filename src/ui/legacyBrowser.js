@@ -85,3 +85,8 @@ export function installLegacyBrowser(win = globalThis.window) {
   }
   return result;
 }
+
+/** installLegacyBrowser that can never stop the game booting: a failure is logged and the page runs unrepaired. */
+export function installLegacyBrowserSafely(win = globalThis.window, log = console) {
+  try { return installLegacyBrowser(win); } catch (error) { log.error?.('[legacy-browser] repairs failed; booting without them', error); return null; }
+}
