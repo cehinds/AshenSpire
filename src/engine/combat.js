@@ -677,7 +677,10 @@ function enemyTurnStart(combat) {
       if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     }
     const formation = BandsFormationBlock(combat, e); // rows (W25-BANDS rule 8): two or more in a row hold the line
-    if (formation > 0) { e.block = (e.block || 0) + formation; combat.emit('blockGained', { targetId: e.id, amount: formation, total: e.block, source: 'formation' }); } // flat: no Defense rating
+    if (formation > 0) { // flat +data Block: gainBlock would add the enemy's Defense rating, so the same blockCap clamp gainBlock applies is taken here
+      const cap = S.getCap(combat, e, 'blockCap'), gain = cap != null ? Math.max(0, Math.min(formation, cap - (e.block || 0))) : formation;
+      if (gain > 0) { e.block = (e.block || 0) + gain; combat.emit('blockGained', { targetId: e.id, amount: gain, total: e.block, source: 'formation' }); }
+    }
   }
   drainQueue(combat);
 }
