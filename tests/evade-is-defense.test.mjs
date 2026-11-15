@@ -17,7 +17,8 @@ const EVADE_CARDS = ['evasiveGuard', 'dodgeRoll', 'quickstep', 'backstep', 'acro
 test('Quickstep and every card that prepares Evade wear the Defense label and icon', () => {
   for (const cardId of EVADE_CARDS) for (const upgraded of [false, true]) {
     const def = applyCombatExpansionCard(resolveCard(registries, { cardId, upgraded }));
-    assert.notEqual(def.evade, undefined, cardId + ' still prepares an Evade');
+    // W25-EvadeCards (intended by the design): these cards grant Evade stacks with their own applyStatus effect, not a `def.evade` tag.
+    assert.ok(def.evade !== undefined || def.effects.some(effect => effect.op === 'applyStatus' && effect.status === 'evade' && effect.target === 'self'), cardId + ' still grants Evade');
     assert.equal(combatCardType(def), 'Defense', cardId);
     assert.equal(cardClassification(def).stanceType, 'defense', cardId);
     const model = playingCardModel(registries, { cardId, upgraded }, { definition: def });
