@@ -169,6 +169,7 @@ export function GrantRetreatCard(ctx) {
   const rules = BandsActive(ctx);
   if (!rules || !HoldsRetreatWeapon(ctx) || !ctx.registries.cards.has(rules.retreatCardId)) return false;
   if (ctx.piles.hand.some(card => card.cardId === rules.retreatCardId)) return false;
+  if (ctx.piles.hand.length >= ctx.handMax) return false; // a full hand is granted none: no overflow
   ctx.piles.hand.push({ instanceId: ctx.nextInstanceId(), cardId: rules.retreatCardId, upgraded: false });
   ctx.emit?.('combatRetreatGranted', { cardId: rules.retreatCardId });
   return true;

@@ -566,8 +566,8 @@ function startPlayerTurn(combat) {
   const baseDraw = Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0));
   const restDraw = NeutralExtraDraw(combat, p, combat.turn);
   if (restDraw > 0) combat.handMax += restDraw;
+  GrantRetreatCard(combat); // rows (W25-BANDS): a retreat weapon puts a free Retreat card in hand first, so it holds a hand slot and the draw fills the rest
   A.drawCards(combat, baseDraw + restDraw);
-  GrantRetreatCard(combat); // rows (W25-BANDS): a retreat weapon puts a free Retreat card in hand
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });

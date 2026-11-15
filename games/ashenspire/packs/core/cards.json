@@ -401,7 +401,8 @@
     "type": "skill",
     "icon": "move",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "effects": [
       {

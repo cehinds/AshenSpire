@@ -57,3 +57,32 @@ test('playing Retreat ends the Advance and costs nothing; an unplayed one exhaus
   dispatch(again, { type: 'endTurn' });
   assert.ok(again.piles.exhaust.some(c => c.cardId === 'core.retreat'), 'Ethereal: exhausted at end of turn');
 });
+
+// Review fix 1 (W25Bands): Retreat is Ethereal and Exhaust, so it never reaches the draw or discard pile; a full hand is granted none.
+const retreatIn = pile => pile.filter(c => c.cardId === 'core.retreat').length;
+test('Retreat exhausts when played: three turns of shortbow leave none in the draw or discard pile and one in hand each turn start', () => {
+  const combat = withWeapon('shortbow', []);
+  combat.piles.hand.length = 0;
+  GrantRetreatCard(combat);
+  for (let turn = 0; turn < 3; turn++) {
+    assert.equal(retreatIn(combat.piles.hand), 1, `one in hand at turn ${turn + 1}`);
+    assert.equal(retreatIn(combat.piles.draw), 0);
+    assert.equal(retreatIn(combat.piles.discard), 0);
+    const retreat = combat.piles.hand.find(c => c.cardId === 'core.retreat');
+    dispatch(combat, { type: 'playCard', cardInstanceId: retreat.instanceId });
+    assert.equal(retreatIn(combat.piles.discard), 0, 'played Retreat is exhausted, not discarded');
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(retreatIn(combat.piles.draw) + retreatIn(combat.piles.discard), 0);
+    assert.equal(retreatIn(combat.piles.hand), 1, 'the new turn grants exactly one');
+  }
+  assert.equal(retreatIn(combat.piles.exhaust), 3);
+});
+test('a full hand is granted no Retreat (no overflow past handMax)', () => {
+  const combat = withWeapon('shortbow', []);
+  combat.piles.hand.length = 0;
+  for (let i = 0; i < combat.handMax; i++) combat.piles.hand.push({ instanceId: `f${i}`, cardId: 'core.strike', upgraded: false });
+  assert.equal(GrantRetreatCard(combat), false);
+  assert.equal(combat.piles.hand.length, combat.handMax);
+  combat.piles.hand.pop();
+  assert.equal(GrantRetreatCard(combat), true);
+});
