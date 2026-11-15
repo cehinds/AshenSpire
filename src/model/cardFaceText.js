@@ -246,7 +246,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         if (effect.chance !== undefined && partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
-      case 'changeAttribute': return frag('gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
+      case 'changeAttribute': return frag(effect.thisTurn === true ? 'bonus' : 'gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
       case 'applyStatus': {
         // Unmodelled per-application tags (for example Persistent) may carry
         // authored rules. Preserve that prose rather than silently dropping it.
@@ -292,7 +292,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
-      case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
+      case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
       case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
