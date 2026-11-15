@@ -10,6 +10,7 @@ import { visibleCombatPanelRect } from './battlefieldStage.js';
 import { openCombatLogModal } from './combatLogModal.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
 import { setAttr } from '../domWrite.js';
+import { measureThenMutate } from '../frameMeasure.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -213,9 +214,11 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   // size, so it is read once per width/zoom/inset/log-button key and again when
   // update() changes a label.
   let heightKey = '', heightValue = 0, toolbarLabelKey = '';
-  function measure() {
+  // Split in two so the frame's one flush serves every reader: readGeometry() is the read phase and returns the
+  // writes (frameMeasure.measureThenMutate runs every queued job's reads before any job's writes).
+  function readGeometry() {
     frame = 0;
-    if (!root.isConnected) return;
+    if (!root.isConnected) return null;
     // Phase 1: every read, before the first write of this pass.
     const combatBox = combatEl.getBoundingClientRect();
     const zoom = combatBox.width / combatEl.clientWidth || 1;
@@ -237,6 +240,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const footerTop = split
       ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
       : footerControls?.getBoundingClientRect().top ?? dockTop;
+    return () => {
     // Phase 2: the row in its final corner geometry (first pass after a resize
     // included). Skipped writes keep a repeated pass from dirtying layout.
     put(root, '--combat-log-button-width', `${logWidth}px`);
@@ -262,12 +266,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     // The legacy panel is always hidden; both readers are body modals. Only a
     // real Log press needs snapHeights(), to preserve drag/snap/cancel behavior.
     if (root.dataset.logSize !== state.size) root.dataset.logSize = state.size;
+    };
   }
-  const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
-  function flushGeometry() {
-    if (frame) cancelAnimationFrame(frame);
-    measure();
-  }
+  const measure = () => readGeometry()?.();
+  // A flush before the job runs (flushGeometry) clears `frame`, which cancels the queued pass.
+  const queuedRead = () => (frame ? readGeometry() : null);
+  const schedule = () => { if (!frame) { frame = 1; measureThenMutate(queuedRead, queuedRead); } };
+  function flushGeometry() { measure(); }
   const observer = new ResizeObserver(schedule);
   observer.observe(combatEl);
   const footer = combatEl.querySelector('.combat-action-row'); if (footer) observer.observe(footer);
@@ -339,5 +344,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
     // A remount releases this instance but leaves an open full log to the next one.
-    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); gridObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); gridObserver.disconnect(); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }
