@@ -255,3 +255,12 @@
 :root .combat .intent .intent-followups { flex-wrap:wrap; justify-content:center; }
 :root .combat .intent .intent-followup[data-has-value='true'] { gap:calc(2px / var(--ui-zoom,1)); }
 :root .combat .intent .intent-followup .intent-followup-value { font-size:calc(15px / var(--ui-zoom,1)); font-weight:700; line-height:1; color:inherit; }
+
+/* W25-BANDS: the row tag at an enemy's feet; its colour marks the rank (back: cooler and dimmer). Present only when the fight has rows. */
+:root .combat .combatant .band-row-tag {
+  position:absolute; left:50%; bottom:0; transform:translate(-50%, 55%);
+  font-size:calc(max(11px, 10px * var(--mini-hud-scale,1)) / var(--ui-zoom,1)); line-height:1; letter-spacing:.06em; text-transform:uppercase;
+  padding:calc(1px / var(--ui-zoom,1)) calc(5px / var(--ui-zoom,1)); border:1px solid var(--line-soft); border-radius:calc(3px / var(--ui-zoom,1));
+  background:var(--panel); color:var(--muted); pointer-events:none; white-space:nowrap; z-index:2;
+}
+:root .combat .combatant[data-band-row='back'] .band-row-tag { opacity:.85; }

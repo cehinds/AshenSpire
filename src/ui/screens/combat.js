@@ -2493,6 +2493,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         refreshCombatantContext(box, def.name);
         box.removeAttribute('aria-disabled');
       }
+      // W25-BANDS: a small Front / Back tag at the enemy's feet (the row is drawn as a rank; the word makes it plain). Absent in a fight without rows.
+      setData(box, 'bandRow', enemy.alive && enemy.row ? enemy.row : '');
+      const rowHome = box.querySelector(':scope > .combatant-stack') || box; // the figure's stack: its bottom edge is the enemy's feet
+      let rowTag = rowHome.querySelector(':scope > .band-row-tag');
+      if (enemy.alive && enemy.row) {
+        if (!rowTag) { rowTag = document.createElement('span'); rowTag.className = 'band-row-tag'; rowTag.setAttribute('aria-hidden', 'true'); rowHome.append(rowTag); }
+        const label = t(`combat.row.${enemy.row}`);
+        if (rowTag.textContent !== label) rowTag.textContent = label;
+      } else rowTag?.remove();
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box, slotKeys: record ? record.slotKeys : keys, promoted: promotedNow });
     }
