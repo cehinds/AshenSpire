@@ -142,3 +142,20 @@ test('the data: every shipped grant is within 1..3, core.counter grants 1 (upgra
   assert.throws(() => validateFixCoreRules({ ...shipped, counter: { ...rules, stacksByCard: { 'core.counter': 4 } } }), /stacksByCard/);
   assert.throws(() => validateFixCoreRules({ ...shipped, counter: { ...rules, stacksPerCard: 0 } }), /counter stacks/);
 });
+
+test('auto-Counter in Counter stance (no card, base 0) returns floor(incoming x 0.1 x stacks) and spends one stack', () => {
+  const { combat } = live();
+  dispatch(combat, { type: 'setReactions', enabled: true });
+  combat.piles.hand.length = 0;
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  combat.player.counterStacks = 5;
+  dispatch(combat, { type: 'endTurn' });
+  const option = combat.pendingReaction?.options.find(row => row.autoCounter);
+  assert.ok(option, 'the card-less option is offered');
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id });
+  const trig = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
+  assert.equal(trig.counterBase, 0);
+  assert.equal(trig.amount, Math.floor(trig.counterIncoming * 0.1 * 5));
+  assert.equal(combat.player.counterStacks, 4 - 1 + 0, 'one spent by the hit, one faded at the next turn start');
+});
