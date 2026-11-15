@@ -11,6 +11,7 @@
 // Headless: no document, window or timers.
 import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
+import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
 
@@ -174,6 +175,8 @@ export function ElementPushPull(ctx, source, target, carrier) {
     ctx.rangeState = movedEngagementState(ctx.rangeState, sourceKey, targetKey, pull ? -1 : 1);
     ctx.emit?.('combatEngagementMoved', { sourceId: source.id, targetId: target.id, bands: pull ? -1 : 1, reason: 'force' });
   }
+  // Rows (W25-BANDS rule 6): a push sends a front enemy to the back row, a pull brings a back enemy to the front. The row move sets its own pair bands.
+  if (BandsActive(ctx) && target.kind === 'enemy' && target.alive) SetEnemyRow(ctx, target, pull ? 'front' : 'back', 'force');
 }
 
 /**
