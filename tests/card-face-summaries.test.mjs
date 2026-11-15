@@ -226,3 +226,23 @@ test('a legacy-resolved card never keeps the current card summary', () => withKi
   assert.doesNotMatch(legacy, /max 5/, legacy);
   assert.equal(resolveCard(reg, { cardId: 'reclamation', legacyAbility: true }).faceTemplate, undefined);
 }));
+
+// W25-EvadeCards (owner review, 2026-11-15): the face of every old Evade card says "Evade N." itself, as Block says "N Block", rather than leaving it to the side tag.
+test('every Evade card face says Evade N, at every upgrade and in both profiles', async () => {
+  for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
+    for (const cardId of ['quickstep', 'dodgeRoll', 'evasiveGuard', 'backstep', 'core.backstep', 'acrobaticsRogue', 'shadowstep', 'crawlingShot', 'progression-nightstep']) {
+      if (!registries.cards.has(cardId)) continue;
+      for (const extra of [{}, { upgraded: true }]) {
+        const face = facesOf(dom, registries, { cardId, ...extra }, rules);
+        assert.ok(face.some(line => /\bEvade \d+\b/.test(line)), `${name}: ${cardId} ${JSON.stringify(extra)}: ${face.join(' | ')}`);
+        assert.ok(face.every(line => wordsIn(line) <= 5), `${name}: ${cardId}: ${face.join(' | ')}`);
+      }
+    }
+  });
+});
+
+test('an upgraded Evade card reads its doubled stacks, never "2 per 1"', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  assert.match(facesOf(dom, reg, { cardId: 'dodgeRoll', upgraded: true }, rules).join(' | '), /Evade 2/);
+  assert.doesNotMatch(facesOf(dom, reg, { cardId: 'acrobaticsRogue', upgraded: true }, rules).join(' | '), /per 1/);
+}));
