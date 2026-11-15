@@ -3,6 +3,7 @@ import { footerLayoutModel, footerText, footerStaminaLayers } from '../models/Fo
 import { assetUrl } from '../assetmap.js';
 import { esc } from './tooltip.js';
 import { t } from '../strings.js';
+import { setAttr } from '../domWrite.js';
 
 const plan = footerLayoutModel(footerLayout);
 const selectors = { sp: '.energy-orb', draw: '.pile.draw', end: '.end-turn', discard: '.pile.spent', potions: '.combat-potions' };
@@ -10,7 +11,7 @@ const states = new WeakMap();
 export function paintFooterOrb(orb, resource, urls) {
   if (!orb.closest?.('[data-footer-art]')) return false;
   const canvas = orb.querySelector(':scope > svg'), b = plan.groups.sp.bounds;
-  canvas.setAttribute('viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
+  setAttr(canvas, 'viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
   canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="xMidYMid meet"/>`).join('');
   return true;
 }
@@ -77,7 +78,7 @@ function capLongWords() {
   const list = [...pendingCaps].filter(([node]) => node.isConnected);
   pendingCaps.clear();
   const long = list.filter(([node, w]) => node.getComputedTextLength() > w);
-  for (const [node, w] of long) node.setAttribute('textLength', String(w));
+  for (const [node, w] of long) setAttr(node, 'textLength', w);
   // Marked only once measured: a word dropped here because it was detached is
   // measured again by the next paint that finds it.
   for (const [node] of list) node.dataset.measured = 'true';
@@ -121,8 +122,10 @@ export function paintFooterArt(row, values = {}) {
     }
   }
   scheduleCaps();
-  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnAria || (next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn));
-  row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
+  const endTurnButton = row.querySelector('.end-turn');
+  if (endTurnButton) setAttr(endTurnButton, 'aria-label', next.endTurnAria || (next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn));
+  const potionsButton = row.querySelector('.combat-potions');
+  if (potionsButton) setAttr(potionsButton, 'aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
   // The key sits on its own line under the words, as the full label's key does.
   for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
@@ -139,5 +142,5 @@ export function paintFooterArt(row, values = {}) {
   }
   fitFooterCompactLabels(row);
   // Refresh references after switching between light and high-resolution packs.
-  for (const image of row.querySelectorAll('[data-footer-asset]')) image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]));
+  for (const image of row.querySelectorAll('[data-footer-asset]')) setAttr(image, 'href', assetUrl(footerAssets[image.dataset.footerAsset]));
 }
