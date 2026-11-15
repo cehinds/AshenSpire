@@ -882,7 +882,7 @@ async function main() {
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
     const fit1 = await evalIn(FIT);
     console.log(`    view-fit ${fit0} → ${fit1}`);
-    ok(reflexed && fit1 !== fit0, `resize: the combat canvas re-fit ${fit0} → ${fit1} (else this case tests nothing)`);
+    ok(Number.isFinite(fit0) && Number.isFinite(fit1) && reflexed && fit1 !== fit0, `resize: the combat canvas re-fit ${fit0} → ${fit1} (else this case tests nothing)`);
     ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);

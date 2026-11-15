@@ -355,6 +355,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   function closeTray() {
     clearTimeout(trayTimer);
+    keepRestoredCamera = false; // a cancelled opening must not leave the restore hold armed for the next tap
     if (tray.dataset.open !== 'true') return;
     tray.dataset.shown = 'false';
     trayReveal.inert = true;
