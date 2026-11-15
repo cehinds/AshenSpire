@@ -55,6 +55,7 @@
 /* W25-F: the caster's second stance icon (elemental flux, or the plain magic mark) sits beside the stance glyph; an SVG ignores [hidden], so say it. */
 :root .combat .player-action-intent .flux-icon[hidden] { display:none; }
 :root .combat .player-action-intent .player-flux { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); }
+:root .combat .player-action-intent .player-advanced { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); font-weight:700; color:var(--grace); }
 :root .combat .player-action-intent .flux-icon[data-flux='fire'] { color:var(--ember); }
 :root .combat .player-action-intent .flux-icon[data-flux='frost'] { color:var(--frost); }
 :root .combat .player-action-intent .flux-icon[data-flux='divine'] { color:var(--grace); }
@@ -254,3 +255,19 @@
 :root .combat .intent .intent-followups { flex-wrap:wrap; justify-content:center; }
 :root .combat .intent .intent-followup[data-has-value='true'] { gap:calc(2px / var(--ui-zoom,1)); }
 :root .combat .intent .intent-followup .intent-followup-value { font-size:calc(15px / var(--ui-zoom,1)); font-weight:700; line-height:1; color:inherit; }
+
+/* W25-BANDS: the row tag at an enemy's feet; its colour marks the rank (back: cooler and dimmer). Present only when the fight has rows. */
+:root .combat .combatant .band-row-tag {
+  position:absolute; left:50%; top:0; transform:translateX(-50%); /* inside the figure's stack at its head, clear of the player's HUD plates, which hang below a back-row enemy on a phone */
+  font-size:calc(max(11px, 10px * var(--mini-hud-scale,1)) / var(--ui-zoom,1)); line-height:1; letter-spacing:.06em; text-transform:uppercase;
+  padding:calc(1px / var(--ui-zoom,1)) calc(5px / var(--ui-zoom,1)); border:1px solid var(--line-soft); border-radius:calc(3px / var(--ui-zoom,1));
+  background:var(--panel); color:var(--muted); pointer-events:none; white-space:nowrap; z-index:var(--combat-layer-selection);
+}
+:root .combat .combatant[data-band-row='back'] .band-row-tag { opacity:.85; }
+/* Two visible ranks: a back-row enemy stands a little behind and above its front-row neighbour, smaller, and its HUD plates move with it
+   (individual translate/scale leave the stage's own transform alone). */
+:root .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-14px / var(--ui-zoom,1)); scale:.9; transform-origin:50% 100%; }
+
+/* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
+   and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
+:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }

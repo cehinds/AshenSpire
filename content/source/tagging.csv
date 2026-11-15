@@ -1578,8 +1578,10 @@ armament,,straightSword,classification.armament
 armament,,greatsword,classification.armament
 armament,,dagger,classification.armament
 armament,,shortbow,classification.armament
+armament,,shortbow,retreat
 armament,,katana,classification.armament
 armament,,halberd,classification.armament
+armament,,halberd,retreat
 armament,,warhammer,classification.armament
 armament,,twinblade,classification.armament
 armament,,battleaxe,classification.armament
@@ -1594,10 +1596,13 @@ armament,,parryDagger,classification.armament
 armament,,ashStaff,classification.armament
 armament,,starstoneStaff,classification.armament
 armament,,boneSceptre,classification.armament
+armament,,boneSceptre,retreat
 armament,,emberlightSceptre,classification.armament
+armament,,emberlightSceptre,retreat
 armament,,goldboughBranch,classification.armament
 armament,,blightRod,classification.armament
 armament,,gorefireBrand,classification.armament
+armament,,gorefireBrand,retreat
 armament,,wyrmhornStaff,classification.armament
 armour,reaver,default,classification.armour
 armour,reaver,vigil,classification.armour

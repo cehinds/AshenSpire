@@ -11,6 +11,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { withoutBands } from './legacyBandsRules.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
@@ -21,7 +22,8 @@ function fight([seed, classId]) {
   const profile = resolveGameProfile('default');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
-  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+  // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
+  const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
 }

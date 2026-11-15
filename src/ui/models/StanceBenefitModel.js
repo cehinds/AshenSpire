@@ -33,3 +33,6 @@ export function FluxTip(view) {
   const element = t(`stance.flux.name.${view.element}`);
   return { title: t('stance.flux.title', { element }), body: t('stance.flux.body', { element, multiplier: view.multiplier }) };
 }
+
+/** AdvancedTip() → { title, body } of the Advanced mark on the player (W25-BANDS). */
+export const AdvancedTip = () => ({ title: t('stance.advanced.title'), body: t('stance.advanced.body') });

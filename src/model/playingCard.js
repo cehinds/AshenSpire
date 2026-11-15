@@ -249,9 +249,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'retain': text = `Retain ${n}`; break;
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
+      case 'swapRows': text = 'Swap its row with the nearest enemy in the other row'; break;
       case 'moveEngagement': {
-        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker'].includes(effect.target)
+        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
+        if (effect.target === 'self') { text = 'Step back'; break; }
         const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
         break;

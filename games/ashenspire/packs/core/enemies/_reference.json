@@ -1637,7 +1637,8 @@
       "kind": "weapon",
       "rarity": "common",
       "tags": [
-        "bow"
+        "bow",
+        "retreat"
       ],
       "range": "reach",
       "points": {
@@ -1663,7 +1664,8 @@
       "tags": [
         "polearm",
         "heavy",
-        "stagger"
+        "stagger",
+        "retreat"
       ],
       "range": "reach"
     },
@@ -1824,7 +1826,8 @@
       "rarity": "uncommon",
       "tags": [
         "sceptre",
-        "blight"
+        "blight",
+        "retreat"
       ],
       "range": "reach",
       "points": {
@@ -1837,7 +1840,8 @@
       "kind": "staff",
       "rarity": "rare",
       "tags": [
-        "sceptre"
+        "sceptre",
+        "retreat"
       ],
       "range": "reach",
       "points": {
@@ -1880,7 +1884,8 @@
       "tags": [
         "sceptre",
         "burn",
-        "bleed"
+        "bleed",
+        "retreat"
       ],
       "range": "reach"
     },
