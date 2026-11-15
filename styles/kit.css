@@ -3910,6 +3910,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { width:100%; max-width:none; min-width:0; }
 .armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
 .epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
+.rank-up-offer-card .epc-art-glyph { display:grid; place-items:center; width:100%; height:100%; color:var(--gold); }
+.rank-up-offer-card .epc-art-glyph .engraved-icon { width:62%; height:62%; }
 .collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
 /* THE SAME BARGAIN THE ARMAMENT OFFER MAKES, and for a second reason here:
    `box-sizing` is border-box repo-wide, so the tile's 8px of padding and its

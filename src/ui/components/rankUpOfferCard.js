@@ -7,7 +7,7 @@ import { t, tFull } from '../strings.js';
 export function RankUpOfferModel() {
   const effect = t('rankUp.blurb');
   return {
-    id: 'cardRank', name: t('rankUp.name'), cardKind: 'service', type: 'Service', art: null, glyph: 'skill', accent: '#d0ac5d',
+    id: 'cardRank', name: t('rankUp.name'), cardKind: 'service', type: 'Service', art: null, glyph: 'smith', accent: '#d0ac5d',
     typeExplanation: tFull('rankUp.name'), facts: [], tags: [],
     effectsLabel: 'Effect', bonuses: [{ label: effect, explanation: effect }],
     flavor: effect, requirement: 'One card', requirementExplanation: t('rankUp.blurb'), rarity: 'uncommon',
