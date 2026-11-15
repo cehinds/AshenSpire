@@ -20,6 +20,7 @@ import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
+import { ChangeAttribute } from './liveStats.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -1886,6 +1887,14 @@ export const OPCODE_HANDLERS = Object.freeze({
           if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, { accepted: stacks });
           if (eff.status === 'grounded') Control.groundStatusPressure(ctx, t);
         }
+      }
+      return;
+    },
+    // A live attribute change (W25-L): +/- `amount` to one attribute for the rest of the fight, or until the end of the owner's turn with
+    // `thisTurn`; everything derived from it follows at once (engine/liveStats.js) and returns when the fight ends.
+    changeAttribute: (ctx, action, eff) => {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        ChangeAttribute(ctx, t, eff.attribute, Math.trunc(evalNum(ctx, action, eff.amount, 0, t)), { thisTurn: eff.thisTurn === true });
       }
       return;
     },

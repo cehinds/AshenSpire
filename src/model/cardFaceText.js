@@ -62,6 +62,8 @@ function esc(value) {
 }
 
 /** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
+const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
+
 export function withChargedEffects(def, preview = null) {
   return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
 }
@@ -240,6 +242,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         if (effect.chance !== undefined && partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
+      case 'changeAttribute': return frag('gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
       case 'applyStatus': {
         // Unmodelled per-application tags (for example Persistent) may carry
         // authored rules. Preserve that prose rather than silently dropping it.
@@ -397,6 +400,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries);
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', tag: true, text: esc(smashClause) });
+  // A run-long attribute upgrade (W25-L) says what it gives while the card is in the deck.
+  for (const [attribute, amount] of Object.entries(def.runAttributeBonus || {})) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(amount)} ${ATTRIBUTE_ABBREVIATION[attribute] || esc(title(attribute))} for the run while in your deck` });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount);

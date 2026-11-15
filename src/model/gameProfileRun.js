@@ -3,6 +3,7 @@ export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
+import { PrAttributeView } from './fixCoreMechanics.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemFamily } from './itemPicks.js';
 
@@ -112,7 +113,7 @@ export function gameProfileRatingReceipt(registries, run) {
   const stats = gameModule(run,'stats')?.mode === 'configured';
   if (stats) for (const id of ids) {
     const table = run.derivedStatRuleSnapshot?.rules || registries.derivedStatRules;
-    const receipt = deriveStat(table,id,{attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
+    const receipt = deriveStat(table,id,{attributes: id === 'pr' ? PrAttributeView(run,attributes) : attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
     attributeReceipts[id] = receipt; totals[id] = receipt.value;
   }
   const sources = [{name:'Attributes',kind:'attribute',...totals}];

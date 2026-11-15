@@ -5,6 +5,9 @@
     "enabled": false,
     "poisePerStack": 5
   },
+  "ratings": {
+    "prAttributes": ["intelligence", "wisdom"]
+  },
   "defaultTags": [
     "defense:wardProtection",
     "defense:poiseProtection"

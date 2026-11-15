@@ -68,6 +68,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
+import { ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
 import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -491,6 +492,7 @@ function endCheck(combat) {
 }
 
 function finishCombat(combat, result) {
+  RestoreLiveStats(combat); // every attribute and derived value returns to its fight-start value (HP trimmed)
   combat.result = result;
   combat.phase = 'ended';
   Reactions.finishReactions(combat);
@@ -603,6 +605,7 @@ function endPlayerTurn(combat, discardIds = []) {
   }
 
   S.ClearTurnBoosts(combat, p);
+  ClearTurnAttributeBoosts(combat, p);
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -1802,6 +1805,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     if (payment.terminal) {
       p.energy -= check.energy; p.mana -= check.mana;
       combat.piles.hand.splice(idx, 1); combat.piles.exhaust.push(inst);
+      RestoreLiveStats(combat);
       p.hp = 0; p.alive = false; combat.phase = 'ended'; combat.result = 'defeat';
       Reactions.finishReactions(combat);
       combat.emit('ashenBlightLost', { targetId: p.id, reason: 'threshold' }); return;

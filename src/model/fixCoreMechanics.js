@@ -51,6 +51,24 @@ export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(ru
 export const FixCoreHitRollOff = rules => rules?.accuracy?.hitRoll === false;
 export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === false;
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
+// Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
+// of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
+export const FIXCORE_PR_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
+/** FixCorePrAttributes(ctx) -> the attribute ids PR reads the highest of, or null for Intelligence-only PR (rules without the key). */
+export function FixCorePrAttributes(ctx) {
+  if (!fixCoreEnabled(ctx)) return null;
+  const ids = rawRules(ctx).ratings?.prAttributes;
+  return Array.isArray(ids) && ids.length > 1 && ids.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)) ? ids : null;
+}
+/**
+ * PrAttributeView(ctx, attributes) -> the attributes PR is priced from: Intelligence replaced by the highest of the listed
+ * attributes when the rules carry `ratings.prAttributes`, else the attributes untouched.
+ */
+export function PrAttributeView(ctx, attributes) {
+  const ids = FixCorePrAttributes(ctx);
+  if (!ids || !attributes) return attributes;
+  return { ...attributes, intelligence: Math.max(...ids.map(id => Number(attributes[id]) || 0)) };
+}
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
 // Pure v1 -> current migration for persisted rules: a perception block saved
 // before bonuses[] keeps baseDC, drops the four retired fields and gets
@@ -100,7 +118,7 @@ function validateStanceBenefits(rows) {
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','stanceBenefits','elements',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0)))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
@@ -111,6 +129,9 @@ export function validateFixCoreRules(rules) {
   const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
   fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
   if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
+  const pr = rules.ratings;
+  if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
+    || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
   fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
   validateStanceBenefits(rules.stanceBenefits);
   const smash = rules.smashVsDefensive;

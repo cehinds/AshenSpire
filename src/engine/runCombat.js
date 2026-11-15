@@ -36,6 +36,7 @@ import { openKnowledgeEncounter } from '../model/enemyKnowledgeRun.js';
 import { emptyEnemyKnowledge, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
 import { limitEnemyIds } from '../model/combatLimits.js';
 import { reconcileCombatKnowledge } from './enemyKnowledge.js';
+import { RestoreLiveStats } from './liveStats.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
@@ -184,6 +185,7 @@ export function createRunCombat({
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  RestoreLiveStats(combat); // a fight that ended another way still hands the run its fight-start maxima (idempotent)
   if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
   // Headless callers can finish without taking a combat checkpoint. Persist

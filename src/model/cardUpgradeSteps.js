@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
@@ -19,7 +19,9 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
-  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8 });
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8,
+  // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
+  attr: 2 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -140,9 +142,11 @@ function options(base, current, applied, limits) {
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
   addMenuOptions(base, current, found, dmgIndex, counterReturn);
+  if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
   return found;
 }
 
+const isSpellCard = (card) => familyValue(tagsOf(card), 'camp:') === 'spell' || tagsOf(card).includes('source:spell');
 const hasOp = (effects, op) => effects.some((effect) => effect.op === op);
 const FX_OF = (id) => `fx:${id}`;
 
@@ -172,11 +176,14 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   if (!keywords.includes('innate')) set('innate');
   if (keywords.includes('exhaust')) set('unexhaust');
   if (!hasOp(effects, 'retain')) set('holdOne');
-  const boosted = (stat) => effects.some((e) => e.op === 'applyStatus' && e.thisTurn === true && e.status === stat);
-  // Temporary STR / DEX are Strength / Dexterity statuses removed at turn end. INT / WIS have no live status in combat
-  // (ratings are folded in when the fight starts), so a spell card is not offered a boost.
+  const boosted = (stat) => effects.some((e) => (e.op === 'applyStatus' && e.thisTurn === true && e.status === stat) || (e.op === 'changeAttribute' && e.attribute === stat));
+  // A boost is a live attribute change (engine/liveStats.js): STR for an attack, DEX for a block, INT for a spell's damage, WIS for a
+  // spell's defence. stepOf picks the duration: this turn (+2) or the rest of the fight (+1, stacks per play).
+  const hasWard = hasOp(effects, 'gainWard') || hasOp(effects, 'gainBarrier');
   if (!spell && dmgIndex >= 0 && !boosted('strength')) set('boost', { stat: 'strength', n: 2 });
   else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
+  else if (spell && dmgIndex >= 0 && !boosted('intelligence')) set('boost', { stat: 'intelligence', n: 2 });
+  else if (spell && (hasBlock || hasWard) && !boosted('wisdom')) set('boost', { stat: 'wisdom', n: 2 });
   if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
     && !effects.some((e) => e.op === 'damage' && (e.target === 'randomEnemy' || e.target === 'otherEnemy'))) set('target', { other: true });
   // Owner, 2026-11-14: Reaction is open to every stance (attack, smash, sweep, spells, skills). A card that already reacts (Defense, Counter,
@@ -257,6 +264,8 @@ export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = 
 
 const stepOf = (kind, option, choice) => {
   const pickOf = (list) => list[Math.min(list.length - 1, Math.floor(choice * list.length))];
+  // The boost's duration is its own choice: usually this turn (+n), sometimes the rest of the fight (+1, stacking per play).
+  if (kind === 'fx:boost') return choice >= 0.65 ? { k: 'fx', fx: 'boost', stat: option.stat, n: 1, until: 'fight' } : { k: 'fx', fx: 'boost', stat: option.stat, n: option.n, until: 'turn' };
   if (kind.startsWith('fx:')) return { k: 'fx', ...option };
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
@@ -269,6 +278,7 @@ const stepOf = (kind, option, choice) => {
       return option.by?.[pool] > 1 ? { k: 'cost', pool, n: option.by[pool] } : { k: 'cost', pool };
     }
     case 'poise': return { k: 'poise', n: option.n };
+    case 'attr': return { k: 'attr', stat: pickOf(option.stats), n: 1 };
     case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
     case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
     case 'maneuver': case 'school': return { k: 'tag', tag: pickOf(option.tags) };

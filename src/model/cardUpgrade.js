@@ -41,7 +41,7 @@ export function upgradedDefinition(base) {
 //                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo']);
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
 // The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
@@ -70,10 +70,15 @@ export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
 // cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
-// retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR or DEX
-// this turn), target (+1 target at half damage), reaction (the Reaction trait).
+// retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
+// for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait).
 export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction'));
-export const BOOST_STATS = Object.freeze(words('strength dexterity'));
+export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
+// A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
+// fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
+// The run-long attribute upgrade (`{ k: 'attr', stat, n }`) offers only these two, and only on a spell.
+export const RUN_ATTRIBUTE_STATS = Object.freeze(words('intelligence wisdom'));
+export const BOOST_DURATIONS = Object.freeze(words('turn fight'));
 
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
@@ -107,6 +112,20 @@ export function upgradeSignature(instance) {
   if (!steps.length) return '0';
   if (steps.length === 1 && steps[0].k === 'authored') return '1';
   return steps.map((s) => Object.entries(s).map(([key, value]) => `${key}=${value}`).join(',')).join(';');
+}
+
+/**
+ * DeckAttributeBonuses(deck) -> `{ intelligence, wisdom }` the run gains from the run-long attribute upgrades on the cards in the deck.
+ * Read from the deck every time, so a card that leaves it takes its bonus along.
+ */
+export function DeckAttributeBonuses(deck) {
+  const out = {};
+  for (const card of deck || []) {
+    for (const step of FlatSteps(upgradeStepsOf(card))) {
+      if (step && step.k === 'attr' && RUN_ATTRIBUTE_STATS.includes(step.stat) && Number.isInteger(step.n) && step.n > 0) out[step.stat] = (out[step.stat] || 0) + step.n;
+    }
+  }
+  return out;
 }
 
 const CONDITION_KEYS = ['when', 'if', 'condition', 'unless', 'repeat'];
@@ -172,6 +191,8 @@ function applyStep(card, step) {
       }
       break;
     }
+    // A run-long attribute (W25-L): +n INT or WIS for the run while this card is in the deck (DeckAttributeBonuses). It changes no play of the card itself.
+    case 'attr': out.runAttributeBonus = { ...(card.runAttributeBonus || {}), [step.stat]: ((card.runAttributeBonus || {})[step.stat] || 0) + step.n }; break;
     case 'poise': {
       const index = firstPlainIndex(effects, 'poiseDamage');
       if (index >= 0) effects[index].amount += step.n;
@@ -252,7 +273,11 @@ function applyFx(card, step) {
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
     case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
-    case 'boost': effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true }); break;
+    case 'boost':
+      // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).
+      if (step.until === undefined && ['strength', 'dexterity'].includes(step.stat)) effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true });
+      else effects.push({ op: 'changeAttribute', target: 'self', attribute: step.stat, amount: step.n, ...(step.until === 'fight' ? {} : { thisTurn: true }) });
+      break;
     // A step rolled from 2026-11-14 carries `other`: one OTHER enemy, never the main target. A step saved before it keeps a random enemy.
     case 'target': {
       const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
@@ -327,6 +352,12 @@ export function upgradeStepsProblems(instance, path) {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
+      if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
+      if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');
+    }
+    if (step.k === 'attr') {
+      if (!RUN_ATTRIBUTE_STATS.includes(step.stat)) bad('stat');
+      if (!isCount(step.n, 3)) bad('n');
     }
     if (step.k === 'combo') {
       const inner = step.steps;
