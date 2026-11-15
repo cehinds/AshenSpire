@@ -81,9 +81,12 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1',
   'sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179',
   'sha256:1cb94094c521bfc9e0ad13066046d32142b6bb163db7d024e5c031aa2c019ba0',
+  'sha256:8af5d70cc4e5608e15f4536e058782426af5c8de0b6c6c76713a5f730d6ceda2',
+  'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434',
 ]);
-// Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F) and Ward routing (W25-W); pinned once at the batch-4 merge.
-const FIXED_EVASION_RUNTIME = 'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434';
+// Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
+// pinned once at the batch-4 merge.
+const FIXED_EVASION_RUNTIME = 'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

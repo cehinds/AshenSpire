@@ -4,20 +4,20 @@
   "artifactFormat": "ashen.build@1",
   "game": "ashenspire",
   "version": "2.0.0",
-  "hash": "sha256:f800addfab0bbd707e028c30f3fe13e0ee125a4873c6c40543dc0a7c75b6affe",
-  "bytes": 2705901,
+  "hash": "sha256:246679c9e1e1749f2725a6971fe0a573f1b97a0d857ee9f336c595dd7559798a",
+  "bytes": 2715803,
   "report": {
-    "mechanics": 268,
+    "mechanics": 269,
     "portable": 15,
-    "legacy": 180,
+    "legacy": 181,
     "data": 73,
-    "portableShare": 0.056,
+    "portableShare": 0.0558,
     "components": 28,
     "screens": 14,
     "maps": 3,
     "assets": 8253,
     "unboundTags": 0,
-    "missingIcons": 261,
+    "missingIcons": 262,
     "unresolvedAssets": 0
   }
 }
