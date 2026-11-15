@@ -43,7 +43,6 @@ test('the allowance reads the instance rank, not the track level', () => {
   assert.equal(F('core.stunningBlow', 4), 4);
   assert.equal(F('core.ironbreaker', 3), 3);
   assert.equal(F('core.cometLance', 5), 5);
-  assert.equal(F('core.manaSurge', 2), 2);
   assert.equal(F('core.stunningBlow'), 1);
-  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart']) assert.equal(F(id, 9), 1, id);
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.manaSurge']) assert.equal(F(id, 9), 1, id); // Mana Surge is a cantrip since 2026-11-15
 });
