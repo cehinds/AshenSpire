@@ -27,5 +27,16 @@ try {
     assert.ok(m.zoom <= 1.1 + 1e-9, `${w}x${h}: Auto zoom is held at 1.1 on a mouse window (${m.zoom})`);
     await page.close();
   }
+  // The dialogue's context panel is sized to its one line of text; the scene band takes what it frees.
+  const ev = await browser.newPage({ viewport: { width: 1920, height: 1000 } });
+  await ev.goto(`${server.url}index.html?shot=event&shotSeed=4`);
+  await ev.waitForSelector('.dialogue-context');
+  await ev.waitForTimeout(1200);
+  const d = await ev.evaluate(() => {
+    const root = document.querySelector('.dialogue-screen');
+    return { h: root.clientHeight, ctx: document.querySelector('.dialogue-context').offsetHeight, scene: document.querySelector('.dialogue-scene').offsetHeight };
+  });
+  assert.ok(d.ctx < d.h * 0.2, `dialogue context panel is sized to its text (${d.ctx} of ${d.h})`);
+  assert.ok(d.scene > d.h * 0.59, `the scene band took the freed height (${d.scene} of ${d.h})`);
   console.log('desktop-density: OK'); setTimeout(() => process.exit(0), 50);
 } finally { await browser.close(); await server.close?.(); }

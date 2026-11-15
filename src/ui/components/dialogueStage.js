@@ -212,6 +212,29 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     root.style.setProperty('--w4-band-scene', `${bands.scene}px`);
     root.style.setProperty('--w4-band-context', `${bands.context}px`);
     root.style.setProperty('--w4-band-footer', `${bands.footer}px`);
+    // A MOUSE WINDOW SIZES THE CONTEXT PANEL TO ITS TEXT (owner, 2026-11-15): the desktop split is only a
+    // ceiling. The panel is measured at that ceiling and the height it does not need goes to the scene band,
+    // so one line of speech is not a large empty box. A phone or compact host keeps the configured split.
+    if (fine && bands.supported && !compactHud && !dialogueCompactHost(logicalViewport().width, parent)) {
+      const ctx = root.querySelector(':scope > .dialogue-context');
+      const region = ctx?.querySelector(':scope > .dialogue-region');
+      if (ctx && region && !ctx.hidden) {
+        fitResponses(rem);
+        const box = region.querySelector(':scope > .dialogue-responses');
+        box?.style.removeProperty('--dialogue-response-row-h');
+        region.dataset.responseStretch = 'false';
+        const stretched = region.offsetHeight;
+        region.style.alignSelf = 'flex-start';
+        const natural = region.offsetHeight;
+        region.style.alignSelf = '';
+        const needed = Math.min(bands.context, Math.ceil(natural + (bands.context - stretched)));
+        const freed = bands.context - needed;
+        if (freed > 1) {
+          root.style.setProperty('--w4-band-scene', `${bands.scene + freed}px`);
+          root.style.setProperty('--w4-band-context', `${needed}px`);
+        }
+      }
+    }
     root.dataset.w4Geometry = bands.supported ? 'supported' : 'unsupported';
     root.dataset.dialogueCompact = String(dialogueCompactHost(logicalViewport().width, parent));
     // A short host draws the HUD's one-row compact form. The band itself never

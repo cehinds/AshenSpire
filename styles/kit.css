@@ -5784,7 +5784,7 @@ button[data-button-size] {
 }
 /* A mouse window: the three actions are one right-aligned group sized to their labels, not thirds of the width. */
 @media (pointer: fine) and (hover: hover) {
-  :root[data-layout='wide'] .dialogue-foot > .modal-foot-actions { display: flex; justify-content: flex-end; width: 100%; gap: 0.8rem; }
+  :root[data-layout='wide'] .dialogue-foot > .modal-foot-actions { display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 0.8rem; }
   :root[data-layout='wide'] .dialogue-foot > .modal-foot-actions > button { container-type: normal; overflow: visible; text-overflow: clip; flex: 0 0 auto; width: auto; min-width: 9rem; padding-inline: 1.8rem; height: var(--dialogue-action-h, calc(40px / var(--ui-zoom, 1))); min-height: var(--dialogue-action-h, calc(40px / var(--ui-zoom, 1))); }
 }
 /* A layer switched off (sceneLayouts layering.layers[].enabled) draws nothing:
