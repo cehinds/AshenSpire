@@ -1756,8 +1756,8 @@
         }
       }
     ],
-    "textTemplate": "Whenever an enemy Staggers, become Prepared and draw a card.",
-    "faceTemplate": ["On Stagger: Prepared, draw 1."],
+    "textTemplate": "Whenever an enemy is Broken, become Prepared and draw a card.",
+    "faceTemplate": ["On Break: Prepared, draw 1."],
     "upgrade": {
       "cost": 0
     }
