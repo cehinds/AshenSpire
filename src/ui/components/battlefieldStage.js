@@ -335,7 +335,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const watchedRacks = new WeakSet();
   let rackRequest = 0;
   // Disconnected by release() with the other observers.
+  // The field's own size is part of the pass key. Reading clientWidth/clientHeight there flushed style and layout on
+  // every call, ~30 a turn, though all but a few return at the key check. The observer reports the size after layout
+  // (it fires before paint); the first call reads it once.
+  let fieldSizeKey = null;
   const rackObserver = new ResizeObserver(entries => {
+    if (entries.some(({ target }) => target === field)) fieldSizeKey = `${field.clientWidth}|${field.clientHeight}`;
     const fresh = entries.filter(({ target }) => watchedRacks.has(target));
     if (!fresh.length) return;
     cancelAnimationFrame(rackRequest);
@@ -345,6 +350,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (field.isConnected) centerTargetOverheads();
     });
   });
+  rackObserver.observe(field);
   centerTargetOverheads.watchRack = rack => {
     if (watchedRacks.has(rack)) return;
     rackObserver.observe(rack);
@@ -353,7 +359,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   };
   function centerTargetOverheads() {
     const zoom = uiZoom();
-    const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, field.clientWidth, field.clientHeight].join('|');
+    const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, fieldSizeKey ??= `${field.clientWidth}|${field.clientHeight}`].join('|');
     if (field.dataset?.layoutEpoch !== undefined && key === centerTargetOverheads.placedKey) return;
     globalThis.__perfCount?.('hudPass');
     invalidateSpriteRects();
