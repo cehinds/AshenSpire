@@ -204,7 +204,8 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     const width = root.clientWidth, height = root.clientHeight;
     if (!(width > 0) || !(height > 0)) return;
     const compactHud = dialogueHudCompact({ width: logicalViewport().width, height: logicalViewport().height }, layout, parent);
-    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud);
+    const fine = typeof matchMedia === 'function' && matchMedia('(pointer: fine) and (hover: hover)').matches;
+    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud, fine);
     root.style.setProperty('--w4-vw', `${width / 100}px`);
     root.style.setProperty('--w4-vh', `${height / 100}px`);
     root.style.setProperty('--w4-band-hud', `${bands.hud}px`);
@@ -246,7 +247,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     // the whole figure instead; a wide-but-short window still can, and keeps
     // the close-up it had (844x390, where the whole-figure rule made both
     // speakers small and distant).
-    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(logicalViewport().width, parent), height);
+    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(logicalViewport().width, parent) || fine, height);
     fitResponses(rem);
   }
 
