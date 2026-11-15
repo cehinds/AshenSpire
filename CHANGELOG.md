@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-15
 
-- **The flask test watches a real map choice again** ([#2786](https://github.com/cehinds/AshenSpire/pull/2786), `0.7.4.104`). A behind-the-scenes test once more catches a map that forgets where you chose to go when the flask setting changes. Nothing in play changes.
+- **The flask test watches a real map choice again** ([#2786](https://github.com/cehinds/AshenSpire/pull/2786), `0.7.4.106`). A behind-the-scenes test once more catches a map that forgets where you chose to go when the flask setting changes. Nothing in play changes.
+- **Older iPhones can play** ([#2785](https://github.com/cehinds/AshenSpire/pull/2785), `0.7.4.106`). The game now loads and lays out on iPhones that stop at iOS 15, such as the first iPhone SE, where it used to show nothing. Newer phones and computers are unchanged.
 - **Lighter Lite on phones** ([#2784](https://github.com/cehinds/AshenSpire/pull/2784), `0.7.4.104`). On a phone in Lite mode the game no longer draws blurred glows, shadows and colour blends, which are slow on small phones; selections and targets are shown with plain outlines instead, and unfound compendium pieces stay hidden. Desktop looks the same as before.
 - **Less measuring in combat** ([#2781](https://github.com/cehinds/AshenSpire/pull/2781), `0.7.4.102`). The markers above enemies, the combat log row and the footer labels no longer force the screen to be re-measured on every update, so phones do less work each turn. Nothing looks different.
 - **The map keeps where you were looking** ([#2779](https://github.com/cehinds/AshenSpire/pull/2779), `0.7.4.98`). Coming back to the map after the Armoury or Continue no longer jumps the view to your starting node; it stays where you left it.
