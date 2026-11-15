@@ -1,3 +1,4 @@
+import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
@@ -801,7 +802,7 @@ export function persistentWardMaximum(ctx, entity) {
 /** barrierPoiseBonus(ctx, entity) → the +Poise the entity's Barrier stacks give (SPEC 4.1a): `barrier.poisePerStack` per stack, 5 by default. */
 export function barrierPoiseBonus(ctx, entity) {
   const per = ctx?.ratingsRules?.barrier?.poisePerStack;
-  return Math.max(0, Math.floor((entity?.statuses?.barrier?.stacks || 0) * (Number.isFinite(per) ? per : 5))) + wardPoiseBonus(ctx, entity);
+  return Math.max(0, Math.floor((entity?.statuses?.barrier?.stacks || 0) * (Number.isFinite(per) ? per : DEFAULT_BARRIER_POISE_PER_STACK))) + wardPoiseBonus(ctx, entity);
 }
 
 /**
@@ -811,7 +812,7 @@ export function barrierPoiseBonus(ctx, entity) {
  */
 export function BarrierPoisePerStack(source) {
   const per = source?.ratingsRules?.barrier?.poisePerStack ?? source?.balance?.combatRatings?.barrier?.poisePerStack ?? source?.registries?.balance?.combatRatings?.barrier?.poisePerStack;
-  return Number.isFinite(per) && per > 0 ? per : 5;
+  return Number.isFinite(per) && per > 0 ? per : DEFAULT_BARRIER_POISE_PER_STACK;
 }
 
 /** BarrierPoiseFactor(effect, source) -> the Poise per stack for an effect that adds Barrier stacks (gainBarrier, applyStatus barrier), else 1. */

@@ -1,6 +1,6 @@
 // Version-2 combination cards. Conditional riders and hook budgets use the
 // shared interpreter; no card ids are selected by the combat engine.
-import { BarrierPoisePerStack } from '../model/combatRatings.js';
+import { DEFAULT_BARRIER_POISE_PER_STACK } from './barrierPoise.js';
 const has = (status, of = 'self') => ({ p: 'hasStatus', of, status });
 const row = (id, name, cost, type, tags, effects, textTemplate, extra = {}) => ({
   id, name, class: 'colorless', rarity: 'uncommon', cost, manaCost: 0, type,
@@ -10,7 +10,7 @@ const spell = school => ['camp:spell', `school:${school}`, 'range:melee', 'targe
 const locks = ['sleep', 'paralysis', 'dazed'];
 // Ember Covenant grants Barrier stacks; its text names the Poise they are worth (stacks x `barrier.poisePerStack`), never a typed number.
 const EMBER_COVENANT_STACKS = 3;
-const emberCovenantPoise = EMBER_COVENANT_STACKS * BarrierPoisePerStack(null);
+const emberCovenantPoise = EMBER_COVENANT_STACKS * DEFAULT_BARRIER_POISE_PER_STACK;
 
 export const combatExpansionCombos = [
   row('dreamHarvest', 'Dream Harvest', 1, 'skill', spell('illusion'),
