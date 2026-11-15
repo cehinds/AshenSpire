@@ -219,7 +219,9 @@ function takeOverFace(into, from, prior, html, receipt) {
     const row = texts[i];
     if (row.dataset.customImage || row.querySelector('[data-card-decoration]')) return null;
   }
-  for (const node of painted) into.append(node);
+  // A card taking over its own face already holds those nodes in place: moving them would remove and insert
+  // each one again (the artwork <img> with them) for no change.
+  if (into !== from) for (const node of painted) into.append(node);
   for (const i of rewrite) texts[i].innerHTML = next.rows[i];
   return { rewrite, texts };
 }
@@ -454,7 +456,9 @@ export function renderCard(registries, ref, opts = {}) {
     paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
     // The fitter swaps in the roomy reading as fresh nodes: their damage numbers take the receipt binding too.
     if (!receiptRebound.has(el)) { receiptRebound.add(el); el.addEventListener?.('facereadingchange', () => bindDamageReceipt(el, opts.preview)); }
-    for (const node of kept)el.append(node);
+    // The kept nodes (the key badge, the info button, the hit lane) stay where they are when the face was
+    // taken over in place; anything else rebuilt the element's children and puts them back.
+    if (!(taken && donor === el)) for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
