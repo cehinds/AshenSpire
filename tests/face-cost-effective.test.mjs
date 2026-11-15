@@ -16,7 +16,8 @@ const newRun = hand => {
 };
 const spells = profile.content.cards.map(card => reg.cards.get(card.id)).filter(def => cardManaCategory(reg, def) === 'spell');
 const printed = def => reg.framework.costProfile(def);
-const cantrip = def => (def.cardTags ?? def.tags ?? []).some(tag => (tag.id ?? tag) === 'rank.cantrip');
+const hasTag = (def, id) => (def.cardTags ?? def.tags ?? []).some(tag => (tag.id ?? tag) === id);
+const cantrip = def => hasTag(def, 'rank.cantrip') || hasTag(def, 'cost.manaOnly'); // neither pays the Stamina surcharge
 
 test('a spell face shows +1 Mana and +1 Stamina (cantrips +1 Mana only); a non-spell is unchanged', () => {
   const run = newRun('greatsword');
