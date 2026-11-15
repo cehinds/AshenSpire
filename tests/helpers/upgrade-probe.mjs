@@ -37,7 +37,8 @@ function snap(c) {
   const e = c.enemies[0];
   const piles = Object.fromEntries(Object.entries(c.piles).map(([k, v]) => [k, v.length]));
   return clean({ ehp: e.hp, eblock: e.block, estat: Object.fromEntries(Object.entries(e.statuses || {}).map(([k, v]) => [k, v.stacks ?? v])), epoise: e.persistentPoise?.value, eposture: e.poise ?? e.poiseMeter ?? null,
-    php: c.player.hp, pblock: c.player.block, pstat: Object.fromEntries(Object.entries(c.player.statuses || {}).map(([k, v]) => [k, v.stacks ?? v])), stam: c.player.stamina, mana: c.player.mana, piles, range: c.range ?? c.band ?? c.distance ?? null, ppos: c.player.position ?? c.player.band ?? null, epos: e.position ?? e.band ?? null, stance: c.player.combatStance ?? null });
+    php: c.player.hp, pblock: c.player.block, pstat: Object.fromEntries(Object.entries(c.player.statuses || {}).map(([k, v]) => [k, v.stacks ?? v])), stam: c.player.stamina, mana: c.player.mana, piles, range: c.range ?? c.band ?? c.distance ?? null, ppos: c.player.position ?? c.player.band ?? null, epos: e.position ?? e.band ?? null, stance: c.player.combatStance ?? null,
+    others: c.enemies.slice(1).map((o) => ({ hp: o.hp, block: o.block, poise: o.persistentPoise?.value, stat: Object.fromEntries(Object.entries(o.statuses || {}).map(([k, v]) => [k, v.stacks ?? v])) })) });
 }
 const keep = (x) => Object.fromEntries(Object.entries(x).filter(([k, v]) => !/^(ability|knowledge|cardInstanceId|damageReceipt|serial|seq|id$)/.test(k) && typeof v !== 'object'));
 export const outcome = (r) => JSON.stringify({ e: r.error, a: r.after, ev: r.ev.map(keep) });
