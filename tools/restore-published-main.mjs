@@ -42,7 +42,9 @@ export function siteReader(site, { fetchImpl = fetch, pause = ms => new Promise(
     safeRelative(path);
     const url = new URL(path, base);
     requireThat(url.origin === base.origin && url.pathname.startsWith(base.pathname), 'published URL escaped its site');
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // GitHub Pages answers a burst of ~10k object GETs with HTTP 429, so a rate limit gets a
+    // long, Retry-After-aware backoff (up to 8 tries, not counted against the 3); other transient failures keep 3.
+    for (let attempt = 0, limited = 0; attempt < 3; attempt++) {
       let response;
       try { response = await fetchImpl(url.href, { redirect: 'manual', signal: AbortSignal.timeout(30000) }); }
       catch (error) {
@@ -50,7 +52,13 @@ export function siteReader(site, { fetchImpl = fetch, pause = ms => new Promise(
         await pause(250 * 2 ** attempt); continue;
       }
       requireThat(!response.url || response.url === url.href, `${path}: response changed origin or path`);
-      if ([429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
+      if (response.status === 429 && ++limited < 8) {
+        const wait = Number(response.headers?.get?.('retry-after'));
+        await response.body?.cancel();
+        await pause(Number.isFinite(wait) && wait > 0 ? Math.min(wait * 1000, 60000) : Math.min(1000 * 2 ** limited, 30000) + Math.floor(Math.random() * 500));
+        attempt--; continue;
+      }
+      if ([500, 502, 503, 504].includes(response.status) && attempt < 2) {
         await response.body?.cancel(); await pause(250 * 2 ** attempt); continue;
       }
       if (response.status === 404 && missing) { await response.body?.cancel(); return null; }
@@ -77,7 +85,7 @@ function sameBox(row, box) {
 }
 
 /** Stage the existing --main-build layout only after the entire payload verifies. Existing output is never overwritten. */
-export async function restorePublishedMain({ trusted, out, site = SITE, fetchImpl, pause, concurrency = 8, log = () => {} }) {
+export async function restorePublishedMain({ trusted, out, site = SITE, fetchImpl, pause, concurrency = 4, log = () => {} }) {
   requireThat(/^[0-9a-f]{40}$/.test(trusted.sha) && trusted.box?.digest, 'main must have a source SHA and build box');
   if (trusted.manifest?.schema !== 2) return { restored: false, reason: 'main has no schema-2 asset manifest' };
   requireThat(Number.isInteger(concurrency) && concurrency >= 1 && concurrency <= 16, 'concurrency must be 1..16');

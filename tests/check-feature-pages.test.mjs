@@ -232,3 +232,37 @@ test('feature-only index verification uses the same bounded text reader', async 
     ? new Response('x'.repeat(1024 * 1024 + 1)) : normalFetch(url, options);
   await assert.rejects(checkFeaturePages(setup), /response exceeds .* byte limit/);
 });
+
+test('primary check: a stale dev card that turns fresh within the bound succeeds', async () => {
+  const old = { branch: 'test', commit: 'd'.repeat(40), ordinal: 1801, stamp: 'BUILD 0.7.1.1801 · src aaaaaaaaaa' };
+  let n = 0; const waits = [];
+  const setup = primaryFixture({ response: ({ url, body, status }) => {
+    if (url.pathname === '/AshenSpire/' && ++n <= 3) body = body.replace('c'.repeat(40), old.commit).replace('1802', '1801').replace('0.7.1.1802', '0.7.1.1801');
+    return { body, status };
+  } });
+  await checkFeaturePages({ ...setup, attempts: 100, delay: async ms => waits.push(ms) });
+  assert.deepEqual(waits, [3000, 3000, 3000]); assert.match(setup.reports.join('\n'), /primary verified/);
+});
+
+function devFixture(observed) {
+  const setup = primaryFixture();
+  const dev = { ...setup.target, branch: 'dev', ordinal: 83, version: '0.7.4', digest: '1111111111', stamp: 'BUILD 0.7.4.83 · src 1111111111', commit: 'a'.repeat(40) };
+  const row = { branch: 'dev', commit: 'b'.repeat(40), ...observed };
+  const f = primaryFixture({ index: setup.card() + setup.card(row) });
+  return { ...f, primaryTargets: [f.target, dev] };
+}
+
+test('primary check: a newer dev stamp than this run deployed is superseded, not a failure', async () => {
+  const f = devFixture({ ordinal: 84, stamp: 'BUILD 0.7.4.84 · src 2222222222' });
+  const reports = [];
+  await checkFeaturePages({ ...f, attempts: 1, report: m => reports.push(m) });
+  assert.match(reports.join('\n'), /superseded: dev BUILD 0\.7\.4\.83 .* newer published BUILD 0\.7\.4\.84/);
+  assert.match(reports.join('\n'), /primary verified: test/);
+});
+
+test('primary check: a dev card still older than expected after the bound fails', async () => {
+  const f = devFixture({ ordinal: 82, stamp: 'BUILD 0.7.4.82 · src 2222222222' });
+  const waits = [];
+  await assert.rejects(checkFeaturePages({ ...f, attempts: 100, delay: async ms => waits.push(ms) }), /stale or missing public index card/);
+  assert.equal(waits.length, 99);
+});
