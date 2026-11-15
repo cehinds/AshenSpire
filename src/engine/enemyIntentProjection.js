@@ -9,6 +9,7 @@ import { knowledgeIntentProjection } from './enemyKnowledge.js';
 import { decayAtTurnStart as decayStatuses } from './statuses.js';
 
 import * as Counter from './counterRule.js';
+import { IsBroken } from './brokenRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { effectiveD20Percent } from './d20Chance.js';
 import { enemyMoveDamage } from '../model/state.js';
@@ -80,8 +81,8 @@ function applyMoveEffects(ctx, other, move, carrier, moveId, prepared) {
 }
 
 // 'stop' ends the whole advance (an action that cannot be known), 'delay' ends this enemy's plan, 'ok' goes on.
-function advanceThroughEarlierEnemies(ctx, source, prepared) {
-  const advance = (other, moveId, damage, hits) => {
+function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
+  const advance = (other, moveId, damage, hits, followUp = false) => {
     const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
     if (!authored) return 'stop';
     const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
@@ -89,39 +90,52 @@ function advanceThroughEarlierEnemies(ctx, source, prepared) {
     // player's Block and Poise nor applies its effects in the forecast (its charging badge shows no damage either).
     if (move.delay) return 'delay';
     const carrier = Tactics.enemyMoveCarrier(other, move, moveId, ctx);
-    // The move enters its stance before its hit lands, as the live move does: a second move in the same stance carries the matching-stance bonus.
     try {
-      ProfileCombat.setProfileStance(ctx, other, carrier);
+      // Live (combat.js presentIntent -> primeEnemyCounter) a planned follow-up is presented just before it plays, and presenting it enters its stance
+      // from a carrier of its own: the stance and its entry grants (Precision, Evade) are in place before the hit, and the hit's own carrier then finds
+      // the enemy already in that stance, so it carries the matching-stance bonus. A head was presented earlier (its stance is already on the enemy).
+      if (followUp) ProfileCombat.setProfileStance(ctx, other, Tactics.enemyMoveCarrier(other, move, moveId, ctx));
+      prepared.attackerSource = null; // each move meets a fresh copy of its enemy, with the stance and buffs the moves before it left
       if (damage != null) Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared);
+      ProfileCombat.setProfileStance(ctx, other, carrier);
     } catch { return 'stop'; }
     if (!applyMoveEffects(ctx, other, move, carrier, moveId, prepared)) return 'stop';
     return 'ok';
   };
   for (const other of ctx.enemies) {
-    if (other.id === source.id) return;
+    if (other.id === source.id) {
+      // The enemy's own earlier moves this turn (a follow-up is priced after its head and the follow-ups before it).
+      for (const [i, own] of ownMoves.entries()) if (advance(source, own.moveId, own.damage, own.hits, i > 0) !== 'ok') return 'stop';
+      return;
+    }
     const intent = other.intent;
-    if (!other.alive || !intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
-    if (ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
+    // A Broken enemy (poise.breakRule "broken") lost only its head: its intent reads Broken, but the plan behind it still plays this turn
+    // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
+    const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
+    if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
+    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
     decayAtTurnStart(ctx, other);
-    const head = advance(other, intent.moveId, intent.damage, intent.hits);
-    if (head === 'stop') return;
-    if (head === 'delay' || !other.planDue) continue;
+    if (!broken) {
+      const head = advance(other, intent.moveId, intent.damage, intent.hits);
+      if (head === 'stop') return 'stop';
+      if (head === 'delay' || !other.planDue) continue;
+    }
     for (const planned of other.plannedMoves || []) {
       const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[planned.moveId];
       if (!authored || authored.reaction) continue;
       const move = Tactics.expandedEnemyMove(other, authored, planned.moveId, ctx);
       if (move.delay) break;
-      const step = advance(other, planned.moveId, move.damage == null ? null : enemyMoveDamage(other, move), move.hits ?? 1);
-      if (step === 'stop') return;
+      const step = advance(other, planned.moveId, move.damage == null ? null : enemyMoveDamage(other, move), move.hits ?? 1, true);
+      if (step === 'stop') return 'stop';
       if (step === 'delay') break;
     }
   }
 }
 
-function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
+function damageBounds(combat, enemy, move, base, hits, neutral, action = null, own = null) {
   const { ctx, player, source } = detached(combat, enemy, neutral);
   const effect = move.effects?.find(row => row.op === 'damage');
-  const moveId = action?.meta?.moveId || enemy.intent?.moveId;
+  const moveId = action?.meta?.moveId || own?.moveId || enemy.intent?.moveId;
   const carrier = { ...(action?.card || Tactics.enemyMoveCarrier(source, move, moveId, ctx)),
     damageSchool: action?.effect?.damageSchool || action?.card?.damageSchool || (effect?.damageSchool || move.damageSchool) };
   const proposal = Proposal.proposalTargetPlan(ctx, source, player, carrier);
@@ -136,13 +150,13 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // A miss preserves the target's defenses for the next hit. Enumerate/merge the reachable
     // target states (Block, pools, stance, statuses) rather than multiply all-landed damage by hit probability.
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
-    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
+    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.broken, row.statuses, row.reflectStacks]);
     // Owner, 2026-11-14: enemies act in order, so the number on a later attacker is what the player loses after the earlier ones have hit
     // (their Block spent, their Poise broken, a Counter used up). A forecast with no action in flight carries each earlier, readable attack
     // through the same state before the Counter's own Block is read; the receipt taken as an action starts already holds them.
     // The attacker's own statuses tick at its turn start (Weak wears off), before its move: a forecast prices the hit after that tick.
     if (!action) decayAtTurnStart(ctx, source);
-    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => advanceThroughEarlierEnemies(ctx, source, state));
+    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => { if (advanceThroughEarlierEnemies(ctx, source, state, own?.moves) === 'stop' && own) own.unknown = true; });
     // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
     // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
     let states = [{ attacker: Damage.cloneDetachedAttacker(source), target: prepared.defender, key: targetKey(prepared.defender), loss: 0, landed: 0, probability: 1 }];
@@ -171,6 +185,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
       states = [...next.values()];
     }
     // Misses (Evade/AC/perception) are a chance, not a smaller number: the range spans the states where every reachable hit connected.
+    if (own?.unknown) return null;
     const mostLanded = Math.max(...states.map(row => row.landed));
     const connected = states.filter(row => row.landed === mostLanded);
     const losses = connected.map(row => row.loss);
@@ -236,4 +251,33 @@ export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null,
     state.counterBlocked = true; // previewDamageHits must not grant it a second time
   }
   return state;
+}
+
+// Owner, 2026-11-14: an enemy planning the same stance twice in a row shows every number, not only the first. The follow-up at `index` of
+// `enemy.plannedMoves` is priced as the HP the player loses when it lands after the head and the follow-ups before it have resolved
+// (their Block spent, Poise broken, the attacker's own stance and statuses carried). null when it has no number: it is not an attack, a
+// delayed move ends the plan before it, a reaction, or something in front of it cannot be known.
+export function ProjectPlannedMoveDamage(combat, enemy, index) {
+  const planned = enemy.plannedMoves || [], head = enemy.intent;
+  const defs = combat.registries.enemies.get(enemy.enemyId)?.moves;
+  const broken = IsBroken(enemy) && head?.kind === 'staggered' && enemy.planDue;
+  if (!defs || !planned[index] || (!broken && (!head?.moveId || head.kind === 'staggered'))) return null;
+  // A Broken enemy lost its head, not its plan: the follow-ups are priced as the first moves it plays.
+  const moves = broken ? [] : [{ moveId: head.moveId, damage: head.damage, hits: head.hits }];
+  for (let i = 0; i < index; i++) {
+    const authored = defs[planned[i].moveId];
+    if (!authored || authored.reaction) return null;
+    const move = Tactics.expandedEnemyMove(enemy, authored, planned[i].moveId, combat);
+    moves.push({ moveId: planned[i].moveId, damage: move.damage == null ? null : enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
+  }
+  const authored = defs[planned[index].moveId];
+  if (!authored || authored.reaction) return null;
+  const move = Tactics.expandedEnemyMove(enemy, authored, planned[index].moveId, combat);
+  if (move.delay || move.damage == null || (move.effects || []).filter(row => row.op === 'damage').length > 1) return null;
+  const hits = Math.max(0, Math.floor(move.hits ?? 1)), base = enemyMoveDamage(enemy, move);
+  if (!Number.isFinite(base) || hits > 100) return null;
+  try {
+    const bounds = damageBounds(combat, enemy, move, base, hits, false, null, { moves, moveId: planned[index].moveId });
+    return bounds && { min: bounds.min, max: bounds.max, label: bounds.min === bounds.max ? String(bounds.max) : `${bounds.min}–${bounds.max}` };
+  } catch { return null; }
 }

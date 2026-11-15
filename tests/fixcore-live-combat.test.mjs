@@ -59,27 +59,35 @@ test('actual card dispatch matches selected target receipt and card face after e
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- // Owner, 2026-11-14: the quote is the HP the hit will cost (after Block 3 and Poise), the same as the receipt's totalDamage.
- assert.equal(preview.totalDamage,preview.damageReceipt.totalDamage,'the quote is already cut by Block and Poise');
+ // Owner, 2026-11-14: the per-target quote is the HP the hit will cost (after Block 3 and Poise), the same as the receipt's totalDamage;
+ // `totalDamage` on the row is the card FACE (attacker side), which Block and Poise do not cut.
+ assert.equal(preview.perTargetHitDamages[target.id].reduce((a,b)=>a+b,0),preview.damageReceipt.totalDamage,'the quote is already cut by Block and Poise');
+ assert.equal(preview.totalDamage,preview.faceValue*preview.hits,'the face is the attacker-side number');
  const hp=target.hp;dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
  assert.equal(hp-combat.enemies[0].hp,preview.damageReceipt.totalDamage);
  const receipt=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt;
  assert.equal(receipt.totalDamage,preview.damageReceipt.totalDamage);
  assert.ok(receipt.hits[0].sources.some(row=>row.id.startsWith('ar:')));
 });
-test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG',()=>{
- const {combat,target}=live();Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
+// Wave 3: a Poise break makes the target Broken (hits x1.5, `poise.breakRule: "broken"`); a fight saved before that keeps the Staggered
+// Vulnerable (x1.25), so the legacy case pins the rules to `{ drain: 'prevented' }` as the fight was created.
+function mixedMultihit(legacy){
+ const {combat,target}=live();if(legacy)combat.fixCoreRules={...combat.fixCoreRules,poise:{drain:'prevented'}};
+ const third=legacy?25:30,total=legacy?50:55;
+ Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
  // Owner, 2026-11-14: hitDamages is the HP lost per hit (the receipt's hpLoss); the incoming hit before defences is the receipt's `incoming`.
- assert.deepEqual(preview.hitDamages,[6,19,25]);assert.equal(preview.totalDamage,50);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3; hit 2 meets 1 Poise (capped)
- assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);
+ assert.deepEqual(preview.hitDamages,[6,19,third]);assert.equal(preview.totalDamage,total);// the Poise break after hit 2 leaves the break bonus for hit 3; hit 2 meets 1 Poise (capped)
+ assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,third]);assert.equal(preview.hpLoss,total);
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),[20,20,25]);assert.equal(500-target.hp,50);
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),[20,20,third]);assert.equal(500-target.hp,total);
  assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
-});
+}
+test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG (Broken rule)',()=>mixedMultihit(false));
+test('mixed multihit receipt, legacy Staggered rule (a fight saved before Broken): the third hit carries Vulnerable x1.25',()=>mixedMultihit(true));
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
  const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};
  setProfileStance(combat,combat.player,{...card});

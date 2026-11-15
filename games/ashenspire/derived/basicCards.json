@@ -175,7 +175,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 18
         },
         {
           "op": "applyStatus",
@@ -249,7 +249,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 12
         }
       ],
       "copiesWithBasicTraining": "owned"

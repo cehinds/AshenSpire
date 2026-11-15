@@ -176,7 +176,7 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const whole = Math.floor(exact + 1e-9);
   const restored = Math.min(room, whole);
   const barrier = overflow ? whole - restored : 0;
-  if (missingMode) {
+  if (entity.broken) { /* nothing restored while Broken */ } else if (missingMode) {
     const missingAfter = room - restored;
     ward.value = Math.max(0, Math.min(ward.max, ward.max - missingAfter));
     // Missing is kept only while it is still above max; at or below max it is max - value again.
@@ -215,12 +215,14 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
   // A card that restores Poise fills it first; the rest becomes Block (the
   // ordinary, physical layer), as a card's Ward overflow becomes Barrier.
   const overflow = options.source === 'card';
+  // Owner, 2026-11-14: a Broken owner's Poise stays empty until Broken ends (it then refills to full); a card's Poise becomes Block.
+  if (entity.broken && !overflow) return { restored: 0, credited: 0 };
   if (!missingMode && poise.value >= poise.max && !overflow) return { restored: 0, credited: 0 };
   if (onceKey) s.wardAllowances[onceKey] = true;
   let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   const valueBefore = poise.value;
-  const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
+  const room = entity.broken ? 0 : missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
   const whole = Math.floor(credit + 1e-9);
   const restored = Math.min(room, whole);
   let block = overflow ? whole - restored : 0;
@@ -229,7 +231,7 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
     const cap = Statuses.getCap(ctx, entity, 'blockCap');
     if (cap != null) block = Math.min(block, Math.max(0, cap - (entity.block || 0)));
   }
-  if (missingMode) {
+  if (entity.broken) { /* nothing restored while Broken */ } else if (missingMode) {
     const missingAfter = room - restored;
     poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
     if (missingAfter <= poise.max) delete poise.missing;

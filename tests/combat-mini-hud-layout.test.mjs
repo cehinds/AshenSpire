@@ -67,7 +67,8 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
   const css = read('styles/combat-mini-hud.css');
   assert.match(css, /--mh-bar-w: var\(--hud-mini-bar-width, 150px\)/);
   assert.match(css, /--mh-bar-h: var\(--hud-mini-bar-height, 10px\)/);
-  assert.match(css, /\.combat-health-poise-bar\.combat-health-poise-bar \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
+  // The Poise number sits beside the bar, so the row is 100% and the Poise trough (its well) carries the HP bar's width.
+  assert.match(css, /\.combat-health-poise-bar > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
   assert.match(css, /\.combat-health-meter > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'the HP trough is that width');
   assert.match(css, /\.combat-health-badges \{[^}]*width: var\(--mh-bar-w\); max-width: 100%[^}]*overflow: hidden/, 'the badge row is capped at the bar width (the browser test counts 8 statuses)');
   assert.match(css, /grid-row: 1 \/ 3/, 'the shield spans the HP and Poise rows only');

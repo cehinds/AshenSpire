@@ -34,6 +34,7 @@ function fixture(document, { retain = false } = {}) {
   node('turn-ribbon', combatEl);
   const painted = () => hand.children.map(c => c.dataset.instanceId);
   const context = {
+    paidAtCommit: new WeakSet(),
     combat, registries, combatEl, document, CSS: { escape: value => value }, console,
     selected: null, selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
     playbackEvents: [], heldTurnHand: null, playQueue: [], disp: null, busy: true, enemyPlayback: false, upcastPreviewRefresh: false,

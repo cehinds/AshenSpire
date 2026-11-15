@@ -241,6 +241,24 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
   }
 }
 
+/** ClearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
+export function ClearTurnBoosts(ctx, entity) {
+  const boosts = entity.turnBoosts;
+  if (!boosts) return;
+  const bases = entity.turnBoostBases || {};
+  for (const [statusId, stacks] of Object.entries(boosts)) {
+    const inst = entity.statuses?.[statusId];
+    if (!inst) continue;
+    // Remove at most the boost still present: a loss since the grant takes the boost first, so stacks the owner held
+    // before it (or gained since, without `thisTurn`) are never eaten. A boost saved without a base keeps the old subtraction.
+    const present = Number.isFinite(bases[statusId]) ? Math.max(0, Math.min(stacks, inst.stacks - bases[statusId])) : stacks;
+    inst.stacks -= present;
+    if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
+  }
+  delete entity.turnBoosts;
+  delete entity.turnBoostBases;
+}
+
 /**
  * decayAtTurnEnd(ctx, entity) — apply per-owner-turn-end decay:
  *   'perTurnEnd'   → −1 stack (expire at 0)

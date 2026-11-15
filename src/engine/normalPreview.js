@@ -4,6 +4,7 @@
 // Momentum, which this file once tracked beside the combat-rounds system, was removed with it (cleanup 3i-A).
 //
 // Engine code only: no DOM.
+import { IsBroken } from './brokenRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { parseStanceAdvantage } from './combatRounds/resolver.js';
 import { enemyTimelineCard, enemyMoveQuote, moveKind, stanceFor } from './combatRoundsAdapter.js';
@@ -28,8 +29,13 @@ export function multiActionOn(combat) {
 export function enemyPlanActions(combat, enemy) {
   if (!multiActionOn(combat) || !enemy?.alive) return [];
   const intent = enemy.intent;
-  if (!intent?.moveId || intent.kind === 'staggered') return [];
   const def = combat.registries.enemies.get(enemy.enemyId);
+  // A Broken enemy (poise.breakRule "broken") lost only its head: the plan behind it still plays, so its follow-ups are shown after a lost head.
+  if (IsBroken(enemy) && intent?.kind === 'staggered' && enemy.planDue && enemy.plannedMoves?.length) {
+    return [{ id: null, instanceId: `${enemy.id}:lost`, kind: 'broken', target: 'self', sp: 0, tags: [], stance: null },
+      ...enemy.plannedMoves.map((entry, i) => enemyTimelineCard(enemy, entry, i + 1, def))];
+  }
+  if (!intent?.moveId || intent.kind === 'staggered') return [];
   const head = { moveId: intent.moveId, sp: fixCoreEnabled(combat) ? enemyMoveQuote(def.moves[intent.moveId], { enemy, moveId: intent.moveId, combat }).totalSp : 1 };
   return [head, ...(enemy.plannedMoves ?? [])].map((entry, i) => enemyTimelineCard(enemy, entry, i, def));
 }

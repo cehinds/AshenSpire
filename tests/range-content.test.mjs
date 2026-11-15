@@ -72,7 +72,7 @@ test('Core movement cards have explicit paid movement and preserve existing Evad
   assert.equal(advance.stanceTrigger, undefined);
   for (const [id, bands] of [['core.closingDodge', -1], ['core.backstep', 1]]) {
     const card = cards.find(row => row.id === id);
-    assert.equal(card.staminaCost, 4); assert.equal(card.manaCost, 0); assert.equal(card.rarity, 'uncommon');
+    assert.equal(card.staminaCost, id === 'core.backstep' ? 2 : 4); assert.equal(card.manaCost, 0); assert.equal(card.rarity, 'uncommon'); // Backstep costs 2 (owner, 2026-11-14)
     assert.deepEqual(card.effects[0], evade.effects[0]);
     assert.deepEqual(card.effects[1], { op: 'moveEngagement', target: 'enemy', bands });
     assert.ok(card.tags.includes('trait:reaction')); assert.equal(card.stanceTrigger.stance, 'evade');

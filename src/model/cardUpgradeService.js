@@ -1,7 +1,7 @@
 // The Core card-upgrade service: plan (inert) then commit (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
-import { canUpgrade, nextUpgradeStep, nextUpgradeOptions } from './cardUpgradeLimits.js';
+import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
 import { upgradeStepsOf, upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
@@ -19,7 +19,7 @@ const face = (registries, run, instance) => projectGameCard(run, instance) || re
  * `choices` > 1 (a blacksmith; see upgradeChoiceCount) adds `options: [{ step, after }]`, the distinct steps the
  * player picks from, `step`/`after` being the first; the quote remembers `choices` so a commit re-plans the same list.
  */
-export function planCardUpgrade(run, registries, instanceId, { choices = 1 } = {}) {
+export function planCardUpgrade(run, registries, instanceId, { choices = 1, combos = false } = {}) {
   const instance = findInstance(run, instanceId);
   const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' });
   const quote = { ok: verdict.ok, code: verdict.code, reason: verdict.reason, instanceId, n: verdict.n, cost: verdict.cost, free: verdict.free, step: null, before: null, after: null };
@@ -33,8 +33,14 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1 } = {
     const step = nextUpgradeStep(run, instance, base, registries);
     return { ...quote, step, before: face(registries, run, instance), after: after(step) };
   }
-  const options = nextUpgradeOptions(run, instance, base, registries, count).map((step) => ({ step, after: after(step) }));
-  return { ...quote, choices: count, step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
+  const options = nextUpgradeOptions(run, instance, base, registries, count, { combos }).map((step) => ({ step, after: after(step) }));
+  return { ...quote, choices: count, combos, step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
+}
+
+/** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */
+export function PlanRestCardUpgrade(run, registries, instanceId) {
+  const instance = findInstance(run, instanceId);
+  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance) : {});
 }
 
 /**
@@ -44,7 +50,7 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1 } = {
  * the step. Throws on a refusal; the run is untouched then.
  */
 export function commitCardUpgrade(run, registries, quote) {
-  const plan = planCardUpgrade(run, registries, quote && quote.instanceId, { choices: quote && quote.choices });
+  const plan = planCardUpgrade(run, registries, quote && quote.instanceId, { choices: quote && quote.choices, combos: !!(quote && quote.combos) });
   if (!plan.ok) throw new Error(plan.reason || 'That card cannot be upgraded.');
   // A quote with several options commits whichever one the player chose, as long as it is still on the re-planned list.
   const offered = (plan.options ? plan.options.map((o) => o.step) : [plan.step]).map((s) => JSON.stringify(s));

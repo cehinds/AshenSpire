@@ -178,7 +178,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
-      : effect.target === 'randomEnemy' ? ' to a random enemy' : '';
+      : effect.target === 'randomEnemy' ? ' to a random enemy' : effect.target === 'otherEnemy' ? ' to another enemy' : '';
     let text;
     switch (effect.op) {
       case 'damage': {

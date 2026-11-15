@@ -25,13 +25,22 @@ test('a rank-up offers 2 to 3 distinct options from the blacksmith pool, with bi
   const options = rankUpBonusOptions(registries, run, strike);
   assert.ok(options.length >= 2 && options.length <= 3, `got ${options.length}`);
   assert.equal(new Set(options.map((o) => JSON.stringify(o.step))).size, options.length);
+  // The 2026-11-14 menu no longer guarantees a damage step (the first upgrades offer one option, the pool is wider), so the
+  // "bigger amounts" rule is read on whichever number step both rolls offer, over several seeds.
   const base = registries.cards.get(strike.cardId);
-  const plain = nextUpgradeOptions(run, strike, base, registries, 3);
-  const plainDmg = plain.find((s) => s.k === 'dmg');
-  const bonusDmg = options.map((o) => o.step).find((s) => s.k === 'dmg');
-  assert.ok(plainDmg && bonusDmg, 'both offer damage on a Strike');
-  assert.ok(amount(bonusDmg) > amount(plainDmg), 'a rank-up damage step is bigger than a blacksmith one');
-  assert.equal(amount(bonusDmg), plainDmg.n * rankUpBonusScale(registries));
+  let compared = 0;
+  for (let seed = 1; seed <= 60; seed++) {
+    const seeded = newRun(seed), card = strikeOf(seeded);
+    const bonusSteps = rankUpBonusOptions(registries, seeded, card).map((o) => o.step);
+    for (const plainStep of nextUpgradeOptions(seeded, card, base, registries, 3)) {
+      const bonusStep = bonusSteps.find((s) => s.k === plainStep.k && s.fx === plainStep.fx && Number.isFinite(s.n) && Number.isFinite(plainStep.n));
+      if (!bonusStep) continue;
+      // A step already at its ceiling (Block cannot exceed the card's base) cannot grow: never smaller, and the scaled amount where it can.
+      assert.ok(amount(bonusStep) >= amount(plainStep), 'a rank-up number step is never smaller than a blacksmith one');
+      if (amount(bonusStep) > amount(plainStep)) { compared++; assert.equal(amount(bonusStep), plainStep.n * rankUpBonusScale(registries)); }
+    }
+  }
+  assert.ok(compared > 0, 'some seed offers a number step that the rank-up makes bigger');
   for (const { step, after } of options) {
     assert.equal(step.bonus, true);
     assert.equal(after.rank, 2, 'the preview is the card at its new rank');

@@ -9,7 +9,9 @@
 // the numbers without an edit here. Nothing sets HP or skips an enemy turn.
 //
 // Usage: node tools/coresim.mjs [--class reaver|rogue|starseer|herald|all] [--runs 200] [--acts 1]
-//          [--seed-base 1000] [--policy greedy|careful|both] [--json <file>] [--records] [--quiet] [--selftest]
+//          [--seed-base 1000] [--policy greedy|careful|both] [--rule shipped|staggered] [--no-break-bot] [--json <file>] [--records] [--quiet] [--selftest]
+//   --rule staggered puts the pre-Broken Staggered rule back on every fight (the "before" numbers); --no-break-bot turns off the one thing the
+//   greedy bot learned in Wave 3 (play the card that empties an enemy's Poise first); both leave the other numbers untouched.
 //   --policy both (the default) runs greedy and careful on the same seeds.
 //   --json <file> writes the full report as JSON; the same arguments always print the same report.
 //   --records adds every run's node-by-node trace (HP in and out, heals) to the JSON.
@@ -79,6 +81,11 @@ export function loadProfile() {
 }
 const PROFILE_META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 
+// Wave 3 switches (set by main; runFleet callers may pass them): `rule` 'shipped' plays the fixCoreMechanics.json break rule, 'staggered' puts the
+// Staggered rule back on every fight (poise.breakRule absent: the numbers before the Broken ruling); `breakBot` is the one thing the greedy bot learned,
+// to play the card that breaks an enemy's Poise this turn before the rest when one can.
+const SIM = { rule: 'shipped', breakBot: true };
+
 // ---- the fight bot ---------------------------------------------------------------------------------------------
 const num = (x) => (Number.isFinite(x) ? x : 0);
 
@@ -86,7 +93,7 @@ const num = (x) => (Number.isFinite(x) ? x : 0);
 // for the rest of that turn's decisions; a reaction card's Block is previewed once per card per fight.
 const faceMemo = new WeakMap();
 function cardFace(combat, card, targetId) {
-  const key = `${combat.turn}|${combat.enemies.filter((e) => e.alive).map((e) => `${e.id}${num(e.block) > 0 ? 'b' : ''}`).join(',')}`;
+  const key = `${combat.turn}|${combat.enemies.filter((e) => e.alive).map((e) => `${e.id}${num(e.block) > 0 ? 'b' : ''}${SIM.breakBot ? `p${num(e.persistentPoise && e.persistentPoise.value)}` : ''}`).join(',')}`;
   let memo = faceMemo.get(combat);
   if (!memo || memo.key !== key) faceMemo.set(combat, memo = { key, faces: new Map() });
   const k = `${card.instanceId}>${targetId}`;
@@ -105,7 +112,9 @@ function previewFace(combat, card, targetId) {
       damage += ids.reduce((sum, id) => sum + num(per[id]), 0) * 1;
     } else if (v.op === 'block') block += num(v.value);
   }
-  return { damage, hit, block, cost: Math.max(1, num(p.staminaCost) || num(p.cost)), smash: false };
+  // Wave 3: does the play empty this target's Poise bar (the engine's own quote, the one the screen shows as BREAK)?
+  const breaks = (p.values || []).some((v) => v.perTargetPoise && v.perTargetPoise[targetId] && v.perTargetPoise[targetId].breaks);
+  return { damage, hit, block, breaks, cost: Math.max(1, num(p.staminaCost) || num(p.cost)), smash: false };
 }
 
 /** The damage the living enemies will deal this turn (true intents), before Block. */
@@ -158,11 +167,17 @@ function pickCard(registries, combat, refused, policy) {
     const face = cardFace(combat, card, target.id);
     if (!face) { refused.add(card.instanceId); continue; }
     scored.push({ card, target, face, smash });
+    // Greedy learned one thing: a card that would empty ANOTHER enemy's Poise is offered against it too.
+    if (SIM.breakBot && !(face && face.breaks)) for (const other of alive) {
+      if (other === target) continue;
+      const alt = cardFace(combat, card, other.id);
+      if (alt && alt.breaks && alt.damage > 0) { scored.push({ card, target: other, face: alt, smash }); break; }
+    }
   }
   const attacks = scored.filter((s) => s.face.damage > 0);
   const guards = scored.filter((s) => s.face.damage <= 0 && s.face.block > 0);
   const rank = (s) => {
-    const tier = s.smash && s.target === defensive ? 0 : (alive.length >= 3 && s.face.hit >= 3 ? 1 : 2);
+    const tier = SIM.breakBot && s.face.breaks ? -1 : s.smash && s.target === defensive ? 0 : (alive.length >= 3 && s.face.hit >= 3 ? 1 : 2);
     return [tier, -(s.face.damage / s.face.cost)];
   };
   attacks.sort((a, b) => { const x = rank(a); const y = rank(b); return x[0] - y[0] || x[1] - y[1]; });
@@ -173,6 +188,28 @@ function pickCard(registries, combat, refused, policy) {
   return order.length ? order[0] : null;
 }
 
+/**
+ * What the Poise did in one fight (Wave 3): breaks of enemies and of the player, and the HP of the hits that landed on an enemy while it was
+ * broken against the hits that did not. "Broken" is the engine's `targetBroken` flag under the Broken rule; under the Staggered rule it is read
+ * from the event log (a Poise break until that enemy's turn starts), since the old rule marks no event.
+ */
+function breakCounters(combat) {
+  const out = { enemyBreaks: 0, playerBreaks: 0, brokenHits: 0, brokenHp: 0, plainHits: 0, plainHp: 0 };
+  const staggered = new Set();
+  const legacy = !(combat.fixCoreRules && combat.fixCoreRules.poise && combat.fixCoreRules.poise.breakRule);
+  for (const ev of combat.eventLog) {
+    if (ev.type === 'poiseBroken' && ev.poiseBreak !== false) {
+      if (ev.targetId === 'player') out.playerBreaks++; else { out.enemyBreaks++; if (legacy) staggered.add(ev.targetId); }
+    } else if (ev.type === 'enemyActorTurnStarted' || ev.type === 'enemyTurnStart') { if (legacy) { if (ev.type === 'enemyTurnStart') staggered.clear(); else staggered.delete(ev.sourceId); } }
+    else if (ev.type === 'damageDealt' && ev.sourceId === 'player' && ev.targetId !== 'player' && ev.isAttack) {
+      const on = legacy ? staggered.has(ev.targetId) : !!ev.targetBroken;
+      const hp = num(ev.hpLoss); // the hit's HP before any overkill cap, so a killing blow still counts at its full size
+      if (on) { out.brokenHits++; out.brokenHp += hp; } else { out.plainHits++; out.plainHp += hp; }
+    }
+  }
+  return out;
+}
+
 /** Fight one encounter through the real Core path. Returns { result, turns, stalemate, hpLost, healed }. */
 function fight(ctx, run, rng, encounterId, policy) {
   const { registries } = ctx;
@@ -180,6 +217,7 @@ function fight(ctx, run, rng, encounterId, policy) {
   const boss = Array.isArray(run.seatOrder) ? bossTierScale(registries, { encounter: enc, tier: run.actNumber }) : null;
   const hpMult = Array.isArray(run.seatOrder) ? (boss ? boss.hp : seatTierHpMult(registries, seatAtTier(run.seatOrder, run.actNumber), run.actNumber)) : 1;
   const combat = createRunCombat({ registries, rng, run, enemyIds: enc.enemies, encounter: enc, hpMult, enemyDamageMult: boss ? boss.damage : 1 });
+  if (SIM.rule === 'staggered') combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } };
   stampCombatPlaysEver(run, combat);
   const hpIn = run.hp;
   let guard = 0; let stalemate = false;
@@ -227,11 +265,12 @@ function fight(ctx, run, rng, encounterId, policy) {
     if (ev.type === 'healed') healed += num(ev.amount);
     else if (ev.type === 'hpLost') lost += num(ev.amount);
   }
+  const brk = breakCounters(combat);
   const result = stalemate ? 'defeat' : combat.result;
   if (stalemate) combat.result = 'defeat';
   runCombatEnd(run, combat);
   foldCombatPlaysEver(run, combat);
-  return { combat, enc, result, turns: Math.min(combat.turn, STALEMATE_TURNS), stalemate, hpIn, hpLost: lost, healed };
+  return { combat, enc, result, turns: Math.min(combat.turn, STALEMATE_TURNS), stalemate, hpIn, hpLost: lost, healed, brk };
 }
 
 // ---- between fights (the rules src/main.js onCombatEnd / beginGameProfileReward / showRest follow) -------------------
@@ -350,7 +389,7 @@ export function simulateRun(ctx, classId, seed, policy, { acts = 1 } = {}) {
   const rng = createRng(seed);
   run.seatOrder = drawSeatOrder(registries, rng);
   const rec = { classId, seed, policy, win: false, actsCleared: 0, death: null, hpAtBoss: null, maxHpAtBoss: null,
-    fights: 0, turns: 0, stalemates: 0, encounters: {}, rests: 0, restPicks: 0, events: 0, shops: 0, treasures: 0,
+    fights: 0, turns: 0, stalemates: 0, breaks: { enemyBreaks: 0, playerBreaks: 0, brokenHits: 0, brokenHp: 0, plainHits: 0, plainHp: 0 }, firstBreakFight: null, firstPlayerBreakFight: null, encounters: {}, rests: 0, restPicks: 0, events: 0, shops: 0, treasures: 0,
     cardsTaken: 0, relicsTaken: 0, levelUps: 0, trace: [] };
   const trace = (kind, nodeId, before, healed, extra = {}) => rec.trace.push({ kind, nodeId, floor: run.floor, hpIn: before, hpOut: run.hp, maxHp: run.maxHp, healed, ...extra });
   const stats = rec;
@@ -384,6 +423,7 @@ export function simulateRun(ctx, classId, seed, policy, { acts = 1 } = {}) {
         const hpIn = run.hp;
         const out = fight(ctx, run, rng, encId, policy);
         rec.fights++; rec.turns += out.turns;
+        { const b = rec.breaks; for (const key of Object.keys(out.brk)) b[key] += out.brk[key]; if (out.brk.enemyBreaks > 0 && rec.firstBreakFight === null) rec.firstBreakFight = rec.fights; if (out.brk.playerBreaks > 0 && rec.firstPlayerBreakFight === null) rec.firstPlayerBreakFight = rec.fights; }
         const row = rec.encounters[encId] || (rec.encounters[encId] = { n: 0, lost: 0 });
         row.n++; row.lost += hpIn - Math.max(0, run.hp);
         if (out.stalemate) rec.stalemates++;
@@ -422,6 +462,21 @@ export function simulateRun(ctx, classId, seed, policy, { acts = 1 } = {}) {
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const r2 = (x) => Math.round(x * 100) / 100;
 
+function breakSummary(records, fights) {
+  const sum = (key) => records.reduce((s, r) => s + r.breaks[key], 0);
+  const first = records.map((r) => r.firstBreakFight).filter((x) => x !== null);
+  const firstPlayer = records.map((r) => r.firstPlayerBreakFight).filter((x) => x !== null);
+  const per = (x) => r2(fights ? x / fights : 0);
+  return {
+    enemyBreaksPerFight: per(sum('enemyBreaks')), playerBreaksPerFight: per(sum('playerBreaks')),
+    runsWithBreakInFight1: r2(records.length ? first.filter((x) => x === 1).length / records.length : 0),
+    runsWithBreakByFight2: r2(records.length ? first.filter((x) => x <= 2).length / records.length : 0),
+    runsWithPlayerBreakInFight1: r2(records.length ? firstPlayer.filter((x) => x === 1).length / records.length : 0),
+    hitsOnBroken: sum('brokenHits'), meanHpPerHitOnBroken: r2(sum('brokenHits') ? sum('brokenHp') / sum('brokenHits') : 0),
+    hitsOnUnbroken: sum('plainHits'), meanHpPerHitOnUnbroken: r2(sum('plainHits') ? sum('plainHp') / sum('plainHits') : 0),
+  };
+}
+
 export function summarize(records) {
   const n = records.length;
   const wins = records.filter((r) => r.win);
@@ -447,6 +502,9 @@ export function summarize(records) {
     meanRestSites: r2(rests / (n || 1)), restPickShare: r2(rests ? records.reduce((s, r) => s + r.restPicks, 0) / rests : 0),
     meanEventsLeft: r2(records.reduce((s, r) => s + r.events, 0) / (n || 1)), meanShopsLeft: r2(records.reduce((s, r) => s + r.shops, 0) / (n || 1)),
     meanLevelUps: r2(records.reduce((s, r) => s + r.levelUps, 0) / (n || 1)),
+    // Wave 3: what the Poise did. Per fight: enemy breaks, player breaks; the share of runs whose first break came in fight 1 / by fight 2; the
+    // mean HP of a player hit on a broken enemy against one on an enemy that was not.
+    breaks: breakSummary(records, fights),
     stalemates: records.reduce((s, r) => s + r.stalemates, 0), crashes: 0, topEncountersByHpLost: encounters,
   };
 }
@@ -487,6 +545,8 @@ function printReport(report, classes, policies) {
       out.push(`  deaths by node: fight ${r.deathsByKind.fight} elite ${r.deathsByKind.elite} boss ${r.deathsByKind.boss}; by floor ${JSON.stringify(r.deathsByFloor)}`);
       out.push(`  entered boss ${r.bossEntered}: mean HP ${r.meanHpAtBoss} (${(r.meanHpPctAtBoss * 100).toFixed(1)}% of max); at full HP ${(r.fullHpAtBossShare * 100).toFixed(1)}% of runs`);
       out.push(`  fights/run ${r.meanFightsPerRun}, turns/fight ${r.meanTurnsPerFight}, rest sites/run ${r.meanRestSites} (Rest picked ${(r.restPickShare * 100).toFixed(1)}%), events left ${r.meanEventsLeft}, shops left ${r.meanShopsLeft}, level-ups ${r.meanLevelUps}`);
+      const b = r.breaks;
+      out.push(`  Poise: enemy breaks/fight ${b.enemyBreaksPerFight}, player breaks/fight ${b.playerBreaksPerFight}; a break in fight 1 in ${(b.runsWithBreakInFight1 * 100).toFixed(0)}% of runs, by fight 2 in ${(b.runsWithBreakByFight2 * 100).toFixed(0)}%; HP per hit on a broken enemy ${b.meanHpPerHitOnBroken} (n=${b.hitsOnBroken}) against ${b.meanHpPerHitOnUnbroken} on one that was not (n=${b.hitsOnUnbroken})`);
       out.push(`  stalemates ${r.stalemates}, crashes ${r.crashes}`);
       out.push(`  HP lost per fight, top: ${r.topEncountersByHpLost.map((e) => `${e.id} ${e.meanHpLost} (n=${e.fights})`).join('; ')}`);
     }
@@ -498,7 +558,7 @@ function printReport(report, classes, policies) {
 
 // ---- command line ----------------------------------------------------------------------------------------------
 function parseArgs(argv) {
-  const opt = { class: 'all', runs: 200, acts: 1, seedBase: 1000, policy: 'both', json: null, records: false, quiet: false, selftest: false };
+  const opt = { class: 'all', runs: 200, acts: 1, seedBase: 1000, policy: 'both', rule: 'shipped', breakBot: true, json: null, records: false, quiet: false, selftest: false };
   const take = (i, name) => { if (i + 1 >= argv.length) throw new Error(`${name} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -511,6 +571,8 @@ function parseArgs(argv) {
     else if (a === '--records') opt.records = true;
     else if (a === '--quiet') opt.quiet = true;
     else if (a === '--selftest') opt.selftest = true;
+    else if (a === '--rule') opt.rule = take(i++, a);
+    else if (a === '--no-break-bot') opt.breakBot = false;
     else throw new Error(`unknown argument '${a}'`);
   }
   if (opt.class !== 'all' && !CLASSES.includes(opt.class)) throw new Error(`--class expects ${CLASSES.join('|')}|all`);
@@ -533,6 +595,8 @@ function selftest() {
 export async function main(argv) {
   let opt;
   try { opt = parseArgs(argv); } catch (error) { console.error(`coresim: ${error.message}`); process.exit(2); }
+  if (opt.rule !== 'shipped' && opt.rule !== 'staggered') { console.error('coresim: --rule expects shipped|staggered'); process.exit(2); }
+  SIM.rule = opt.rule; SIM.breakBot = opt.breakBot;
   if (opt.selftest) return selftest();
   const classes = opt.class === 'all' ? CLASSES : [opt.class];
   const policies = opt.policy === 'both' ? POLICIES : [opt.policy];

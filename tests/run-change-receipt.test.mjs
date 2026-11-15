@@ -105,8 +105,8 @@ test('a ramped card upgraded after plays shows the faces the live resolver gives
 test('an acquired upgraded card carries the face of the owned instance, not the base definition', async () => {
   const { projectGameCard } = await import('../src/model/gameProfile.js');
   const run = newRun();
-  const probe = run.deck.find((c) => c.cardId === 'core.strike');
-  const got = { instanceId: 'got1', cardId: 'core.strike', upgraded: true, upgradeSteps: [nextUpgradeStep(run, probe, registries.cards.get('core.strike'), registries)] };
+  // An explicit number step: the first rolled step of the Wave 2 menu can be a tag (range, school) that leaves the effects as authored.
+  const got = { instanceId: 'got1', cardId: 'core.strike', upgraded: true, upgradeSteps: [{ k: 'dmg', n: 2 }] };
   const d = diff(run, (r) => { r.deck.push(got); });
   const row = d.rows.find((r) => r.instanceId === 'got1');
   assert.deepEqual(JSON.parse(JSON.stringify(row.face)), JSON.parse(JSON.stringify(projectGameCard(run, structuredClone(got)))));

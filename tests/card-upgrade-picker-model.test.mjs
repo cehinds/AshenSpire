@@ -17,7 +17,8 @@ import { closeConfirmationModal } from '../src/ui/components/confirmationModal.j
 const modalOf = dom => dom.document.querySelector('.confirmation-modal');
 
 // Seed 504: every copy of a card rolls the same next step, so the identical-copies row tests do not depend on luck (re-recorded 2026-10-31 when the pool grew; was 511).
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 504, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// The Reaver's greatsword is smithed to +9 so a card has all ten upgrade slots (rank + weapon level + 1, SPEC card upgrades); slot limits are tested in w25-upgrade-slots.test.mjs.
+const newRun = () => Object.assign(createRunState({ registries, classId: 'reaver', seed: 504, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }), { itemUpgradeLevels: { 'armament/greatsword': 9 } });
 const strike = run => run.deck.find(c => c.cardId === 'core.strike');
 
 test('rows: a fresh Strike costs nothing, its second upgrade is 1 Smithing Stone', () => {
