@@ -42,7 +42,7 @@ import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, SetPlayerFlux, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, SetPlayerFlux, SetPlayerAdvanced, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { PlayerFluxView } from '../models/StanceBenefitModel.js';
 import { ElementFluxRules } from '../../engine/elementFlux.js';
 import { inPreparedStance } from '../../model/focusMana.js';
@@ -820,6 +820,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   combatEl.addEventListener('pointerover', previewAimedTarget);
   combatEl.addEventListener('focusin', previewAimedTarget);
 
+  // A target armed without a hover (a touch has none: the picker, the cursor or a tap's focus ring) quotes the card at that enemy, so a
+  // back-row enemy's +1 Stamina shows on the card's cost before the play, like the hovered quote on desktop. Shown = paid.
+  function syncArmedTarget() {
+    if (!selected || inputBusy() || enemyPlayback || combatEl.classList.contains('drag-targeting')) return;
+    const id = combatEl.querySelector('.combatant.enemy.hover-target, .combatant.enemy.gp-focus')?.dataset.eid;
+    if (!id || id === lastTargetId || !cardTargets(selected).legalIds.includes(id)) return;
+    lastTargetId = id;
+    renderHand();
+  }
+
   function refreshAim() {
     if (combatEl.classList.contains('drag-targeting')) return;
     const want = currentAims();
@@ -1004,13 +1014,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // glyphs shows, so nothing is removed, re-created or refitted for it.
     // W25-F: a caster's second stance icon: the elemental flux (or the plain magic mark), from the display state so it moves with the paced beats.
     const fluxView = PlayerFluxView(ElementFluxRules(combat), dv(combat.player), inPreparedStance(dv(combat.player)));
-    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); return; }
+    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); SetPlayerAdvanced(previous, combat.player?.advanced > 0); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
       SetPlayerFlux(action, fluxView);
+      SetPlayerAdvanced(action, combat.player?.advanced > 0);
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');
@@ -2492,6 +2503,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         refreshCombatantContext(box, def.name);
         box.removeAttribute('aria-disabled');
       }
+      // W25-BANDS: a small Front / Back tag at the enemy's feet (the row is drawn as a rank; the word makes it plain). Absent in a fight without rows.
+      setData(box, 'bandRow', enemy.alive && enemy.row ? enemy.row : '');
+      const rowHome = box.querySelector(':scope > .combatant-stack') || box; // the figure's stack: its bottom edge is the enemy's feet
+      let rowTag = rowHome.querySelector(':scope > .band-row-tag');
+      if (enemy.alive && enemy.row) {
+        if (!rowTag) { rowTag = document.createElement('span'); rowTag.className = 'band-row-tag'; rowTag.setAttribute('aria-hidden', 'true'); rowHome.append(rowTag); }
+        const label = t(`combat.row.${enemy.row}`);
+        if (rowTag.textContent !== label) rowTag.textContent = label;
+      } else rowTag?.remove();
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box, slotKeys: record ? record.slotKeys : keys, promoted: promotedNow });
     }
@@ -4285,7 +4305,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       aimScheduled = true;
       setTimeout(() => {
         aimScheduled = false;
-        if (combatEl.isConnected) refreshAim();
+        if (combatEl.isConnected) { syncArmedTarget(); refreshAim(); }
       }, 0);
     });
     aimObs.observe(field, { attributes: true, attributeFilter: ['class'], subtree: true });

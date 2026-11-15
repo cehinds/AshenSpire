@@ -12,6 +12,7 @@
 import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
 import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
+import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
 
@@ -34,6 +35,8 @@ export function ElementHasTag(ctx, entity, tag) {
   return [entity?.tags, def?.tags, def?.kindIds].some(list => Array.isArray(list) && list.includes(tag)) || (tag === 'boss' && (entity?.isBoss === true || def?.boss === true));
 }
 const livingOpponents = (ctx, source) => (source?.kind === 'enemy' ? [ctx.player] : ctx.enemies || []).filter(entity => entity?.alive);
+/** Spell lanes (W25-BANDS rule 9): with rows, the enemies a hit on `target` can spread to are those in its row; otherwise every living opponent. */
+const laneOpponents = (ctx, source, target) => livingOpponents(ctx, source).filter(entity => !(BandsActive(ctx) && target?.kind === 'enemy' && target.row) || entity.row === target.row);
 const sameSide = (ctx, entity) => (entity?.kind === 'enemy' ? ctx.enemies || [] : [...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : []), ctx.player].filter((e, i, all) => e && all.indexOf(e) === i));
 
 /** A status cap this ruleset lifts: every cap under `statusCaps: "none"` (owner 2026-11-15), Burn's under element rules (owner 2026-11-14; the engine cap is 3); the engine cap otherwise. */
@@ -58,12 +61,12 @@ function addCapped(ctx, target, id, stacks, source, cap) {
 // ---------------------------------------------------------------------------
 
 /** Fire spreads to every living enemy when the card is single-target and more than one enemy stands. */
-function fireSpreads(ctx, rules, source, carrier) {
+function fireSpreads(ctx, rules, source, carrier, target = null) {
   if (ElementOfHit(carrier) !== 'fire' || carrier?.elementChain || HitsAllTargets(carrier)) return false;
   // The damage op decides the spread once, before any hit lands, so a spread hit that kills the aimed enemy still
   // costs every other enemy the spread multiplier (shown = dealt).
   if (typeof carrier?.elementSpread === 'boolean') return carrier.elementSpread;
-  return !rules.fire.spreadNeedsOtherEnemies || livingOpponents(ctx, source).length > 1;
+  return !rules.fire.spreadNeedsOtherEnemies || laneOpponents(ctx, source, target).length > 1;
 }
 
 /**
@@ -77,7 +80,7 @@ export function ElementReceiptStages(ctx, source, target, carrier, raw) {
   const stages = [];
   const push = (id, label, multiplier) => { if (Number.isFinite(multiplier) && multiplier !== 1) stages.push({ id, label, multiplier }); };
   push('element-chill', 'Chill: damage dealt', Math.max(0, 1 - rules.frost.chillDamageDealtPerStack * stacksOf(source, 'chill')));
-  if (element === 'fire' && fireSpreads(ctx, rules, source, carrier)) push('element-fire-spread', 'Fire spreads to every enemy', rules.fire.spreadMultiplier);
+  if (element === 'fire' && fireSpreads(ctx, rules, source, carrier, target)) push('element-fire-spread', BandsActive(ctx) ? 'Fire spreads across its row' : 'Fire spreads to every enemy', rules.fire.spreadMultiplier);
   if (carrier?.elementChain) push('element-chain', 'Lightning chains', rules.lightning.chainMultiplier);
   push('element-burn', 'Burn: damage taken', 1 + rules.burn.damageTakenPerStack * stacksOf(target, 'burn'));
   if (element === 'lightning') push('element-shock', 'Shock: lightning taken', 1 + rules.shock.lightningTakenPerStack * stacksOf(target, 'shock'));
@@ -179,6 +182,8 @@ export function ElementPushPull(ctx, source, target, carrier) {
     ctx.rangeState = movedEngagementState(ctx.rangeState, sourceKey, targetKey, pull ? -1 : 1);
     ctx.emit?.('combatEngagementMoved', { sourceId: source.id, targetId: target.id, bands: pull ? -1 : 1, reason: 'force' });
   }
+  // Rows (W25-BANDS rule 6): a push sends a front enemy to the back row, a pull brings a back enemy to the front. The row move sets its own pair bands.
+  if (BandsActive(ctx) && target.kind === 'enemy' && target.alive) SetEnemyRow(ctx, target, pull ? 'front' : 'back', 'force');
 }
 
 /**
@@ -236,19 +241,23 @@ export function ElementPreviewBreak(ctx, attacker, defender, element, incoming =
 export function ElementTargets(ctx, source, eff, carrier, targets) {
   const rules = ElementRulesOf(ctx);
   if (!rules || source?.kind === 'enemy' || ![undefined, null, 'enemy'].includes(eff?.target) || targets.length !== 1) return targets;
-  if (!fireSpreads(ctx, rules, source, carrier)) return targets;
-  return [targets[0], ...livingOpponents(ctx, source).filter(entity => entity !== targets[0])];
+  if (!fireSpreads(ctx, rules, source, carrier, targets[0])) return targets;
+  return [targets[0], ...laneOpponents(ctx, source, targets[0]).filter(entity => entity !== targets[0])];
 }
 
-/** The other enemy a lightning hit on `target` chains to: the next living enemy after it in the fight's order, wrapping. */
+/** The other enemy a lightning hit on `target` chains to: with rows, one in its own row first; then the next living enemy after it in the fight's order, wrapping. */
 export function ElementChainTarget(ctx, source, target) {
   const enemies = ctx.enemies || [];
   const at = enemies.indexOf(target);
+  const lane = BandsActive(ctx) && target?.row;
+  let any = null;
   for (let step = 1; step < enemies.length; step++) {
     const other = enemies[(at + step) % enemies.length];
-    if (other !== target && other.alive) return other;
+    if (other === target || !other.alive) continue;
+    if (!lane || other.row === lane) return other;
+    any ||= other;
   }
-  return null;
+  return any;
 }
 
 /** The secondary hits a hit plans (deterministic), for the damage op and for previews: [{ kind, target, carrier }]. */

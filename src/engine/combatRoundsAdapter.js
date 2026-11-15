@@ -9,6 +9,7 @@ import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/co
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
 import { quoteRangeActions } from './combatEngagement.js';
+import { BandsEnemyPhaseRangeState, BandsEnemyBackAtPhase, BandsActive } from './bandRows.js';
 import * as Actions from './actions.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
@@ -134,7 +135,8 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   const pool = enemyTurnSp(enemy, def, combat);
   // Price the accepted sequence against the stance before each move; planning grants nothing.
   const pricingEnemy = { ...enemy };
-  const pricing = policy ? { ...combat, rangeState: combat.rangeState && structuredClone(combat.rangeState) } : combat;
+  // Rows (W25-BANDS): the plan is priced against the bands as they stand at the coming enemy phase, after this turn's end-of-turn Advance decrement.
+  const pricing = policy ? { ...combat, rangeState: BandsActive(combat) ? BandsEnemyPhaseRangeState(combat) : combat.rangeState && structuredClone(combat.rangeState) } : combat;
   for (const entry of queue) {
     if (policy) projectEnemyMovement(pricing, pricingEnemy, entry.moveId);
     const stance = stanceOf({ ...def.moves[entry.moveId], enemyId: enemy.enemyId, moveId: entry.moveId });
@@ -145,7 +147,19 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
     if (policy && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
+    pricingEnemy.approachFor = undefined; // set by the pick when a back-row enemy's attack was planned as the step forward
     let moveId = opener ?? pick(pricingEnemy, def, pool - spent, pricing);
+    // Rows (W25-BANDS): an opener is planned like any other move, so a back-row enemy's melee opener shows (and plays) the step forward at once.
+    if (opener && policy && BandsActive(combat) && def.moves[opener]) {
+      const closingId = def.rangeClosingMove, closing = def.moves[closingId];
+      const left = pool - spent;
+      const oq = enemyMoveQuote(def.moves[opener], { enemy: pricingEnemy, moveId: opener, combat: pricing });
+      if (closing && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId)) && closing.effects?.some(effect => effect.op === 'moveEngagement')
+        && closingId !== opener && oq.advanceSp > 0 && oq.totalSp <= left && BandsEnemyBackAtPhase(combat, enemy)
+        && enemyMoveQuote(closing, { enemy: pricingEnemy, moveId: closingId, combat: pricing }).totalSp <= left) {
+        pricingEnemy.approachFor = opener; moveId = closingId;
+      }
+    }
     if (policy && moveId != null && enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing }).totalSp > pool - spent) moveId = pick(pricingEnemy, def, pool - spent, pricing);
     if (!policy && moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity, pricing);
     if (moveId == null) break;
@@ -153,7 +167,7 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
     if (spent + sp > pool && (policy || queue.length > 0)) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
-    queue.push({ moveId, sp });
+    queue.push({ moveId, sp, ...(pricingEnemy.approachFor ? { approachFor: pricingEnemy.approachFor } : {}) });
     if (policy) projectEnemyMovement(pricing, pricingEnemy, moveId);
     const stance = stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId });
     if (stance) pricingEnemy.combatStance = stance;
@@ -167,18 +181,29 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
 // mirrors execution (executeMovePayload): an entry that fits the SP left is kept, in order; one that does not is either
 // replaced by the enemy's own affordable range-closing move (the swap execution would make) or dropped, and the walk
 // goes on, because a refused move spends nothing. Nothing is picked and no RNG is drawn. Returns the kept entries.
-export function trimEnemyPlan(enemy, def, entries, { combat }) {
+export function trimEnemyPlan(enemy, def, entries, { combat, projectBands = false }) {
   const pool = enemyTurnSp(enemy, def, combat);
   const pricingEnemy = { ...enemy };
-  const pricing = { ...combat, rangeState: combat.rangeState && structuredClone(combat.rangeState) };
+  const pricing = { ...combat, rangeState: projectBands && BandsActive(combat) ? BandsEnemyPhaseRangeState(combat) : combat.rangeState && structuredClone(combat.rangeState) };
   const closingId = def.rangeClosingMove, closing = def.moves[closingId];
   const closingEligible = Boolean(closing) && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId))
     && Boolean(closing.effects?.some(effect => effect.op === 'moveEngagement'));
   const kept = [];
   let spent = 0;
   for (const entry of entries) {
-    let moveId = entry.moveId;
+    let moveId = entry.moveId, approachFor = entry.approachFor, flipped = false;
     let quote = enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing });
+    // Rows (W25-BANDS, owner 2026-11-15): the intent shown is the move done. A back-row enemy's melee attack is the step forward while the bands at
+    // the coming enemy phase need an Advance, and the stored attack returns when they do not. A relabel reads the stored pick; nothing is rolled.
+    if (projectBands && BandsActive(combat) && closingEligible) {
+      if (approachFor && moveId === closingId && def.moves[approachFor]) {
+        const back = enemyMoveQuote(def.moves[approachFor], { enemy: pricingEnemy, moveId: approachFor, combat: pricing });
+        if (!(back.advanceSp > 0 && BandsEnemyBackAtPhase(combat, enemy))) { moveId = approachFor; approachFor = undefined; quote = back; flipped = true; }
+      } else if (moveId !== closingId && quote.advanceSp > 0 && BandsEnemyBackAtPhase(combat, enemy)) {
+        approachFor = moveId; moveId = closingId; flipped = true;
+        quote = enemyMoveQuote(closing, { enemy: pricingEnemy, moveId, combat: pricing });
+      }
+    }
     if (spent + quote.totalSp > pool) {
       const left = pool - spent;
       if (!(quote.advanceSp > 0 && closingEligible && closingId !== moveId
@@ -188,7 +213,8 @@ export function trimEnemyPlan(enemy, def, entries, { combat }) {
       if (spent + quote.totalSp > pool) continue;
     }
     spent += quote.totalSp;
-    kept.push({ moveId, sp: quote.totalSp });
+    if (flipped && kept.length === 0) kept.bandFlip = true;
+    kept.push({ moveId, sp: quote.totalSp, ...(approachFor ? { approachFor } : {}) });
     projectEnemyMovement(pricing, pricingEnemy, moveId);
     const stance = stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId });
     if (stance) pricingEnemy.combatStance = stance;
@@ -224,7 +250,9 @@ function projectEnemyMovement(pricing, enemy, moveId) {
 export function takePlannedMove(combat, enemy, def, { isFirstTurn = false, pick }) {
   const plan = enemy.plannedMoves ?? (enemy.plannedMoves = []);
   extendEnemyQueue(enemy, def, plan, { isFirstTurn, pick, combat });
-  return plan.shift()?.moveId ?? null;
+  const head = plan.shift();
+  if (head?.approachFor) enemy.headApproachFor = head.approachFor; else delete enemy.headApproachFor; // the attack a back-row enemy's shown step forward stands for (rows, W25-BANDS)
+  return head?.moveId ?? null;
 }
 
 // The timeline stance and kind helpers live in combatRounds/stance.js (no cycle with model/actionCosts.js).

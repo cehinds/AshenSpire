@@ -35,7 +35,7 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
@@ -54,7 +54,7 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' },
     playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
@@ -102,7 +102,7 @@ function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' }, playerActionIntent, playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };

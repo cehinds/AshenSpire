@@ -213,6 +213,7 @@ player's piles).
 | `pierce` | 1 | SP | A piercing weapon: 1. |
 | `precision` | 1 | SP | A precise technique: 1. |
 | `guard` | 0 | SP | An archetype chip, not a power. |
+| `retreat` | 0 | SP | A movement card's identity chip, like `guard`; the card's 1 SP cost prices the step back, the tag adds no power. |
 | `bow` | 0 | SP | The range weight prices a bow. |
 | `ranged` | 0 | SP | The range weight prices it. |
 | `flourish` | 0 | SP | An archetype chip. |

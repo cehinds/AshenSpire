@@ -79,7 +79,7 @@ export function validateEffects(effects, path, vctx) {
     if (eff.target !== undefined && !TARGETS.includes(eff.target) && !(eff.op === 'moveEngagement' && eff.target === 'pendingAttacker')) {
       err(`${p}.target`, `Unknown target '${eff.target}' (closed set: ${TARGETS.join(', ')})`);
     }
-    if (eff.op === 'moveEngagement' && (!['enemy', 'pendingAttacker'].includes(eff.target) || ![-1, 1].includes(eff.bands))) err(p, 'moveEngagement requires enemy or pendingAttacker and bands -1 or 1');
+    if (eff.op === 'moveEngagement' && (!['enemy', 'pendingAttacker', 'self'].includes(eff.target) || ![-1, 1].includes(eff.bands) || (eff.target === 'self' && eff.bands !== 1))) err(p, 'moveEngagement requires enemy or pendingAttacker and bands -1 or 1 (self, bands 1: step back out of the Advance)');
     // swapClass is `{ classId } | { random: true }` — one selector, never
     // neither (the door would swap to nothing) nor both (one would be ignored).
     if (eff.op === 'swapClass') {

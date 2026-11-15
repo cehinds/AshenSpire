@@ -164,6 +164,7 @@ export function createRunCombat({
         baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,
+    enemyRows: encounter?.rows || [],
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,
     enemyDamageMult,

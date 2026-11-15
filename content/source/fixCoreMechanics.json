@@ -162,6 +162,14 @@
     "throwPrecisionPenalty": 1,
     "maxRange": "reach"
   },
+  "bands": {
+    "version": 1,
+    "rows": true,
+    "advancedTurnEnds": 2,
+    "retreatTag": "retreat",
+    "retreatCardId": "core.retreat",
+    "formationBlock": 2
+  },
   "elements": {
     "version": 1,
     "fire": {

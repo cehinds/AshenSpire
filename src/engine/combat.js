@@ -1,5 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -122,7 +123,7 @@ const QUEUE_GUARD = 10000;
  * Setup events are in combat.eventLog.
  */
 export function createCombat({
-  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], enemyRows = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -349,6 +350,7 @@ export function createCombat({
 
   initializeFormationOccupancy(combat);
   initializeCombatRange(combat, rangePolicy);
+  InitBandRows(combat, enemyRows);
   if (knowledge) initializeCombatKnowledge(combat, knowledge);
   else if (fixCoreEnabled(combat)) initializeCombatKnowledge(combat, { rules: snapshotEnemyKnowledgeRules(registries) });
   if (configuredCombat(combat)) {
@@ -564,6 +566,7 @@ function startPlayerTurn(combat) {
   const baseDraw = Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0));
   const restDraw = NeutralExtraDraw(combat, p, combat.turn);
   if (restDraw > 0) combat.handMax += restDraw;
+  GrantRetreatCard(combat); // rows (W25-BANDS): a retreat weapon puts a free Retreat card in hand first, so it holds a hand slot and the draw fills the rest
   A.drawCards(combat, baseDraw + restDraw);
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
@@ -584,6 +587,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   // (4) playerTurnEnd triggers first…
   combat.emit('playerTurnEnd', { turn: combat.turn });
+  BandsPlayerTurnEnd(combat); // rows (W25-BANDS): one turn end of the Advance is spent
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
@@ -659,6 +663,7 @@ function finishPlayerHand(combat, preserveLockedHand = false) {
 // The enemy turn start (SPEC §4.1 step 5): the start event, then each living enemy loses its block.
 function enemyTurnStart(combat) {
   combat.emit('enemyTurnStart', { turn: combat.turn });
+  BandsEnemyPhaseStart(combat); // rows (W25-BANDS): an empty front row lets the back row step forward
   // Enemies lose their block at the start of THEIR turn.
   for (const e of combat.enemies) {
     if (!e.alive) continue;
@@ -670,6 +675,11 @@ function enemyTurnStart(combat) {
       const protection = startTacticalTurn(combat, e);
       if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
       if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
+    }
+    const formation = BandsFormationBlock(combat, e); // rows (W25-BANDS rule 8): two or more in a row hold the line
+    if (formation > 0) { // flat +data Block: gainBlock would add the enemy's Defense rating, so the same blockCap clamp gainBlock applies is taken here
+      const cap = S.getCap(combat, e, 'blockCap'), gain = cap != null ? Math.max(0, Math.min(formation, cap - (e.block || 0))) : formation;
+      if (gain > 0) { e.block = (e.block || 0) + gain; combat.emit('blockGained', { targetId: e.id, amount: gain, total: e.block, source: 'formation' }); }
     }
   }
   drainQueue(combat);
@@ -900,7 +910,8 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
   if (fixCoreEnabled(combat)) {
     const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
     const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
-    if(!prepaid && required>available && rangeQuote?.advanceSp > 0) {
+    // Rows (W25-BANDS): a back-row melee move is planned as the step forward when it needs one, so this swap is only the SP one: the move shown is the move done.
+    if(!prepaid && rangeQuote?.advanceSp > 0 && required>available) {
       const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
       const closingEligible = !core2ActionPolicyEnabled(combat) || (!closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId)));
       if (closingEligible && closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId);
@@ -1010,6 +1021,7 @@ function rollIntents(combat, isFirstTurn = false) {
       continue;
     }
     presentIntent(combat, enemy, def, moveId);
+    if (enemy.headApproachFor && enemy.intent?.moveId === moveId) enemy.intent.approachFor = enemy.headApproachFor;
     // The pool's planned moves play after the head in the enemy phase (enemyPhase), so the plan is due this turn.
     enemy.planDue = true;
     // An enemy Broken in its own turn loses the head of this plan (Wave 3): its intent reads Broken, the rest of the plan stays.
@@ -1029,10 +1041,10 @@ function revalidateEnemyPlans(combat) {
     const head = enemy.intent;
     if (!enemy.alive || !enemy.planDue || enemy.pendingMove || enemy.skipNextTurn || !head?.moveId || head.resolved) continue;
     const def = combat.registries.enemies.get(enemy.enemyId);
-    const before = [{ moveId: head.moveId }, ...(enemy.plannedMoves ?? [])];
-    const kept = Rounds.trimEnemyPlan(enemy, def, before, { combat });
+    const before = [{ moveId: head.moveId, ...(head.approachFor ? { approachFor: head.approachFor } : {}) }, ...(enemy.plannedMoves ?? [])];
+    const kept = Rounds.trimEnemyPlan(enemy, def, before, { combat, projectBands: true });
     const ids = rows => rows.map(row => row.moveId).join(',');
-    if (ids(kept) === ids(before)) { enemy.plannedMoves = kept.slice(1); continue; }
+    if (ids(kept) === ids(before)) { enemy.plannedMoves = kept.slice(1); if (enemy.intent && kept[0]) { if (kept[0].approachFor) enemy.intent.approachFor = kept[0].approachFor; else delete enemy.intent.approachFor; } continue; }
     // The plan is the tail of movesHistory (each pick was recorded when made): rewrite it so maxConsecutive sees what will play.
     const history = enemy.movesHistory, start = history.length - before.length;
     if (start >= 0 && ids(before) === history.slice(start).join(',')) history.splice(start, before.length, ...kept.map(row => row.moveId));
@@ -1046,9 +1058,18 @@ function revalidateEnemyPlans(combat) {
       enemy.planDue = false;
       continue;
     }
-    presentIntent(combat, enemy, def, kept[0].moveId);
+    if (kept.bandFlip) reshowIntent(combat, enemy, def, kept[0]);
+    else presentIntent(combat, enemy, def, kept[0].moveId);
     drainQueue(combat);
   }
+}
+
+// Shows a move again with no roll (rows, W25-BANDS): a back-row enemy's attack and its step forward trade places when the player's Advance
+// changes, and the visibility already rolled for this turn's intent stands. Nothing is drawn from the fight's rng.
+function reshowIntent(combat, enemy, def, entry) {
+  clearCombatCounter(enemy);
+  enemy.intent = { ...buildIntent(def.moves[entry.moveId], entry.moveId, enemy, combat), ...(entry.approachFor ? { approachFor: entry.approachFor } : {}) };
+  primeEnemyCounter(combat, enemy, def.moves[entry.moveId], entry.moveId);
 }
 
 // Shows a move as the enemy's intent: its box, stance, visibility roll and counter priming. The head of a turn and
@@ -1080,7 +1101,7 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const canClose = policy && !closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId))
     && closing?.effects?.some(effect => effect.op === 'moveEngagement')
     && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
-  const replacements = new Map();
+  const replacements = new Map(), rowIds = new Set();
   // A retreat (a move with its own retreatWeight) is offered only while the fight is closer than the enemy
   // prefers; maxConsecutive keeps it from repeating back to back, so the player is not chased out of reach forever.
   const wantsDistance = policy && combat.rangeState?.policy.enabled && def.startingRange !== undefined
@@ -1091,6 +1112,8 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
       if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
+      // Rows (W25-BANDS): from the back row a move that needs an Advance is planned as the step forward ("Approaching").
+      if (canClose && quote.advanceSp > 0 && id !== closingId && BandsEnemyBackAtPhase(combat, enemy) && quote.totalSp <= maxSp) { replacements.set(id, closingId); rowIds.add(id); return true; } // only an affordable attack hides behind the step: the stored approachFor attack must fit the pool when it returns
       if (quote.totalSp <= maxSp) return true;
       // Preserve the authored attack choice when only its approach is too
       // expensive. Commit its owned, affordable closing move in the forecast,
@@ -1118,14 +1141,14 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
 
   const weightOf = mv => mv.retreatWeight ?? mv.weight;
   const total = pool.reduce((acc, [, mv]) => acc + weightOf(mv), 0);
-  if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
+  const settle = id => { const to = replacements.get(id) ?? id; enemy.approachFor = rowIds.has(id) ? id : undefined; return to; };
+  if (total <= 0) return settle(pool[0][0]);
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
     r -= weightOf(mv);
-    if (r < 0) return replacements.get(id) ?? id;
+    if (r < 0) return settle(id);
   }
-  const last = pool[pool.length - 1][0];
-  return replacements.get(last) ?? last;
+  return settle(pool[pool.length - 1][0]);
 }
 
 function buildIntent(move, moveId, enemy = null, combat = null) {

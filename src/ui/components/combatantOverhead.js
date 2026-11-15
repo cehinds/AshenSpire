@@ -5,7 +5,7 @@ import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 import { setAttr, setData, onLive } from '../domWrite.js';
-import { StanceBenefitTip, FluxTip } from '../models/StanceBenefitModel.js';
+import { StanceBenefitTip, FluxTip, AdvancedTip } from '../models/StanceBenefitModel.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -135,6 +135,9 @@ export function playerActionIntent(profile, onTarget) {
   const flux = document.createElement('span'); flux.className = 'intent-action player-flux'; flux.dataset.valueKind = 'count'; flux.hidden = true;
   for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = FluxIcon(element); icon.setAttribute('hidden', ''); flux.append(icon); }
   row.append(flux);
+  // W25-BANDS: the Advanced mark (you stand in reach of every enemy), a chevron drawn once and shown by SetPlayerAdvanced.
+  const advanced = document.createElement('span'); advanced.className = 'intent-action player-advanced'; advanced.hidden = true; advanced.textContent = '\u00bb';
+  row.append(advanced);
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
   setPlayerActionManeuver(node, profile);
@@ -143,7 +146,8 @@ export function playerActionIntent(profile, onTarget) {
     const tip = StanceBenefitTip(node.dataset.maneuver);
     const view = node.dataset.flux ? { element: node.dataset.flux === 'magic' ? null : node.dataset.flux, multiplier: Number(node.dataset.fluxMultiplier) } : null;
     const fluxTip = view ? FluxTip(view) : null;
-    return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}${fluxTip ? `<div class="tt-title">${esc(fluxTip.title)}</div>${esc(fluxTip.body)}` : ''}`;
+    const advancedTip = node.dataset.advanced ? AdvancedTip() : null;
+    return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}${fluxTip ? `<div class="tt-title">${esc(fluxTip.title)}</div>${esc(fluxTip.body)}` : ''}${advancedTip ? `<div class="tt-title">${esc(advancedTip.title)}</div>${esc(advancedTip.body)}` : ''}`;
   }, { intent: 'above', align: 'center' });
   return node;
 }
@@ -158,6 +162,14 @@ export function SetPlayerFlux(node, view) {
   if (group.hidden !== !view) group.hidden = !view;
   // An SVG has no `hidden` property, only the attribute (the stylesheet hides `.flux-icon[hidden]`).
   for (const icon of group.querySelectorAll('.flux-icon')) { const hidden = icon.dataset.flux !== flux; if (icon.hasAttribute('hidden') !== hidden) icon.toggleAttribute('hidden', hidden); }
+}
+
+/** Shows or hides the Advanced mark of a node playerActionIntent built (W25-BANDS); writes only what differs. */
+export function SetPlayerAdvanced(node, on) {
+  const mark = node.querySelector('.player-advanced');
+  if (!mark) return;
+  setData(node, 'advanced', on ? '1' : '');
+  if (mark.hidden !== !on) mark.hidden = !on;
 }
 
 /** Shows `profile`'s glyph on a node playerActionIntent built; writes only what differs, replaces nothing. */

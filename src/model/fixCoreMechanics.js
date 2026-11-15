@@ -154,13 +154,30 @@ function validateSpellCosts(row) {
     || SPELL_COST_INTEGERS.some(key => !Number.isInteger(row[key]) || row[key] < 0) || typeof row.cantripTag !== 'string' || !row.cantripTag
     || (row.manaOnlyTag !== undefined && (typeof row.manaOnlyTag !== 'string' || !row.manaOnlyTag))) throw new Error(`FixCore spellCosts requires version 1, a cantripTag and whole numbers >= 0 for ${SPELL_COST_INTEGERS.join(', ')}`);
 }
+// Owner, 2026-11-15 (W25-BANDS): front and back rows. `bands.rows: true` turns the system on; a fight saved without the block (or with rows:false)
+// plays as before. advancedTurnEnds: how many of the player's turn ends an Advance lasts (2 = through the enemy phase and the next turn).
+// retreatTag / retreatCardId: a weapon with the tag grants the free Retreat card each turn. formationBlock: Block two enemies of one row gain at their turn start.
+// Logic: src/engine/bandRows.js.
+const BANDS_FIELDS = Object.freeze(['version', 'rows', 'advancedTurnEnds', 'retreatTag', 'retreatCardId', 'formationBlock']);
+function validateBands(row) {
+  if (row === undefined) return;
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !BANDS_FIELDS.includes(key)) || typeof row.rows !== 'boolean'
+    || !Number.isInteger(row.advancedTurnEnds) || row.advancedTurnEnds < 1 || !Number.isInteger(row.formationBlock) || row.formationBlock < 0
+    || typeof row.retreatTag !== 'string' || !row.retreatTag || typeof row.retreatCardId !== 'string' || !row.retreatCardId) throw new Error('FixCore bands requires {version:1, rows:boolean, advancedTurnEnds >= 1, formationBlock >= 0, retreatTag, retreatCardId}');
+}
+/** FixCoreBands(ctx) -> the band rules of a fight, or null when the fight has no `bands.rows: true` (a fight made before the rows ruling). */
+export function FixCoreBands(ctx) {
+  if (!fixCoreEnabled(ctx)) return null;
+  const row = rawRules(ctx).bands;
+  return row?.rows === true ? row : null;
+}
 function validateElementFlux(row) {
   if (row === undefined) return;
   if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'multiplier'].includes(key)) || !(Number.isFinite(row.multiplier) && row.multiplier >= 1)) throw new Error('FixCore elementFlux requires {version:1, multiplier:number >= 1}');
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
     || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
@@ -181,6 +198,7 @@ export function validateFixCoreRules(rules) {
   validateStanceBenefits(rules.stanceBenefits);
   validateSpellCosts(rules.spellCosts);
   validateElementFlux(rules.elementFlux);
+  validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
