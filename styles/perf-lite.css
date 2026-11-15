@@ -88,9 +88,9 @@
 :root[data-performance='lite'] .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 3; }
 
 /* 6. Title and startup: the dimmed city was `brightness(.28) saturate(.82)`;
-   the same darkening as a flat overlay in the background stack. */
-:root[data-performance='lite'] .tower-interior-city {
-  background-image: linear-gradient(rgba(8, 7, 5, .72), rgba(8, 7, 5, .72)), url('../assets/bg/tower-city-background-unlit.webp');
+   the same darkening as a flat overlay (no second url(), which would add an ASSET_CSS slot). */
+:root[data-performance='lite'] .tower-interior-city::after {
+  content: ''; position: absolute; inset: 0; background: rgba(8, 7, 5, .72);
 }
 
 /* 7. Text shadows: the multi-layer blurred HUD shadow (--hud-text-shadow, set
