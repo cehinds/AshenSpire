@@ -20,7 +20,9 @@ test('canonical category and stance subtype preserve authored execution kind', (
     assert.deepEqual(cardClassification(def), { cardCategory: 'stance', stanceType: subtype, stanceGroups: groups });
     assert.equal(def.type, 'skill');
   }
-  assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'evade');
+  // Evade is a tag and status, not a card type (owner 2026-11-15): a card that prepares Evade is a Defense card.
+  assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'defense');
+  assert.deepEqual(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceGroups, ['defensive']);
   for (const type of ['consumable', 'status', 'curse'])
     assert.deepEqual(cardClassification(card('casting', 1, { type })), { cardCategory: type, stanceType: null, stanceGroups: [] });
   assert.deepEqual(cardClassification(card('casting', 1, { type: 'power' })), { cardCategory: 'power', stanceType: 'prepare', stanceGroups: [] });
@@ -46,7 +48,7 @@ test('Sweep Reaction uses actual rank two, while Defense uses rank one', () => {
 
 test('shared card model exposes canonical identity and separate ability labels with legacy CSS hooks', () => {
   const registries = createRegistries(contentBundle);
-  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Evade']]) {
+  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Defense']]) {
     const def = applyCardTraits(applyCombatExpansionCard(registries.cards.get(id)));
     const model = playingCardModel(registries, { cardId: id }, { definition: def });
     assert.equal(model.type.id, category);

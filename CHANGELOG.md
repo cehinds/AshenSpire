@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-15
+
+- **Evade cards are Defense cards** ([#2767](https://github.com/cehinds/AshenSpire/pull/2767), `0.7.4.86`). Cards that prepare an Evade (Quickstep, Dodge Roll, Backstep and others) now show Defense as their type, with the Defense icon; Evade itself still works as before.
+
 ## 2026-11-14
 
 - **Counter that hits back fairly, no stack limits, and gentler new spells** ([#2766](https://github.com/cehinds/AshenSpire/pull/2766), `0.7.4.85`). Counter now works like Evade: each Counter card gives 1 to 3 stacks, every hit you take while countering hits back for the card's damage plus a tenth of the hit per stack and spends one stack, and you lose one stack each turn; the Counter stance no longer hits back on its own, and a new upgrade can add a Counter stack. Nothing has a maximum stack count any more. The nine Mana spells hit a little softer while staying worth their Mana, and Executioner hits a Broken enemy for less.
