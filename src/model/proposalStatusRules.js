@@ -143,6 +143,12 @@ export function proposalHitRules({ actor, target, card, amount, damageType, camp
     if (b.kind === 'weaponBonus' && direct && !reactive && hasAnyTag(card, b.requiredTags))
       out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: b.camp, proposalReactive: true }));
   }
+  // Item properties on the player (W25 step 6): a typed packet on each melee weapon hit, and a status on each hit.
+  if (direct && !reactive && actor?.itemProps) {
+    for (const b of actor.itemProps.weaponBonuses || []) if (hasAnyTag(card, ['classification.attack']) && !tagsOf(card).includes('camp:spell') && (!range || range === 'melee'))
+      out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: 'spell', proposalReactive: true }));
+    for (const b of actor.itemProps.onHit || []) out.effects.push(effect(actor, target, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
+  }
   out.amount = damageQuantity(out.amount * outgoingMultiplier);
   let incomingCap = Infinity, healingMultiplier = null;
   for (const { status, stacks, behavior: b } of active(target, rules, capabilities)) {

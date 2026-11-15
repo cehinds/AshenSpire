@@ -11,12 +11,12 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { serializeCombatSnapshot,restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { uncappedRun } from './helpers/uncapped-range.mjs';
+import { uncappedRun, withLegacyRangedBow } from './helpers/uncapped-range.mjs';
 function fixture(effects,left='dagger') {
   const profile=structuredClone(resolveGameProfile('core'));
   profile.content.cards.find(row=>row.id==='core.strike').effects=effects;
   delete profile.hash;profile.hash=gameDigest(profile);
-  const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
+  const registries=withLegacyRangedBow(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile));
   const run=createRunState({registries,classId:'reaver',seed:511});
   uncappedRun(run);
   run.loadout.sets.rightHand[0]='shortbow';run.loadout.sets.leftHand[0]=left;

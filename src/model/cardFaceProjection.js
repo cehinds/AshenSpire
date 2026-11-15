@@ -108,12 +108,19 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
   // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
   // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
-  const whole = part => (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)))) || COST_RE.test(plain(part));
+  const whole = part => /^\d+ [A-Za-z]+ \+ \d+ [A-Za-z]+(?: ×\d+)?$/.test(plain(part).trim()) || (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)) || /^\+\d+ [A-Z]{3} this turn$/.test(plain(part).trim()))) || COST_RE.test(plain(part));
   // A trailing qualifier (hit count, area) belongs to every piece or to none: a split would otherwise lose it.
   const qualifier = part => /( ×\d+| to all| to random enemy)$/.exec(plain(part).trim())?.[1] ?? '';
   if (parts.length > 1 && parts.some(part => qualifier(part) !== qualifier(parts[parts.length - 1]))) return null;
   if (parts.length < 2 || parts.some(part => wordCount(part) > words || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
-  return parts.map(html => ({ ...line, html }));
+  // Short neighbours share a clause ("Evade 1, Draw 2") so a card with four small effects still fits the three-clause face.
+  const packed = [];
+  for (const part of parts) {
+    const last = packed[packed.length - 1];
+    if (last !== undefined && wordCount(`${last}, ${part}`) <= words) packed[packed.length - 1] = `${last}, ${part}`;
+    else packed.push(part);
+  }
+  return packed.map(html => ({ ...line, html }));
 }
 
 // Split only complete authored sentences. A following qualification belongs

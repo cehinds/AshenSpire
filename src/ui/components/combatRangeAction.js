@@ -1,5 +1,6 @@
 import { t } from '../strings.js';
 import { uiZoom } from '../fx.js';
+import { CanvasBox, viewViewportBox } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatRangeActionPlan } from '../models/CombatRangeActionModel.js';
 
@@ -49,8 +50,10 @@ export function mountCombatRangeAction(card, preview, options) {
     if (!card.isConnected || !node.isConnected) return;
     const zoom = uiZoom();
     const box = card.getBoundingClientRect(), parent = host.getBoundingClientRect();
-    const width = Math.min(360, window.innerWidth - 16);
-    const center = Math.max(8 + width / 2, Math.min(window.innerWidth - 8 - width / 2, box.left + box.width / 2));
+    // 360 / 16 / 8 are canvas px and the clamp is the canvas's box, not the real window (owner, 2026-11-14).
+    const fit = CanvasBox().scale, frame = viewViewportBox();
+    const width = Math.min(360 * fit, frame.width - 16 * fit);
+    const center = Math.max(frame.left + 8 * fit + width / 2, Math.min(frame.right - 8 * fit - width / 2, box.left + box.width / 2));
     Object.assign(node.style, { width: `${width / zoom}px`, left: `${(center - parent.left) / zoom}px`, top: `${(box.top - parent.top) / zoom}px` });
   };
   const schedule = () => { if (queued == null) queued = requestAnimationFrame(place); };

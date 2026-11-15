@@ -111,9 +111,9 @@ test('all three burden cards are real unplayable definitions and never normal re
     assert.equal(pack.groups['base.current-rewards'].members.includes(row.definition.id),false);
   }
 });
-test('core keeps its ten-card starter and only admits compatible rewards with active dependencies',()=>{
+test('core keeps its eleven-card starter and only admits compatible rewards with active dependencies',()=>{
   const p=profile(),reg=registries(p),run=createRunState({seed:73,classId:'reaver',registries:reg});
-  assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
+  assert.equal(run.deck.length,11);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
   assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),[]);
   const admitted=new Set(p.content.cards.map(card=>card.id));
   assert.ok(admitted.has('base.draw'));assert.ok(admitted.has('base.foresight'));

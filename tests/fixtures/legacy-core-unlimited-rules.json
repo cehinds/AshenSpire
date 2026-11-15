@@ -1,0 +1,50 @@
+[
+ {
+  "id": "basicTraining",
+  "requiresTag": "training.basic",
+  "pools": [
+   "strike",
+   "defend",
+   "counter",
+   "smash",
+   "sweep",
+   "evade",
+   "jab",
+   "gash",
+   "pommelStrike",
+   "steadyGuard",
+   "drivingThrust",
+   "expose",
+   "hammerBlow",
+   "rendingSmash",
+   "wideSweep",
+   "reapingArc"
+  ],
+  "cards": {
+   "rarity": [
+    "starter"
+   ],
+   "tagsAny": [
+    "maneuver:attack",
+    "maneuver:defend",
+    "maneuver:counter",
+    "maneuver:smash",
+    "maneuver:sweep"
+   ]
+  }
+ },
+ {
+  "id": "graduate",
+  "requiresTag": "training.graduate",
+  "pools": [],
+  "excludeCards": [
+   "core.mendingTouch",
+   "core.steadyHands"
+  ],
+  "cards": {
+   "tagsAll": [
+    "rank.cantrip"
+   ]
+  }
+ }
+]

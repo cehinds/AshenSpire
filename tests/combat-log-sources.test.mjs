@@ -85,10 +85,10 @@ test('Block, Barrier and heals name the move, card or stance that raised them', 
   ]);
   assert.deepEqual(lines, [
     `Wandering Soldier gained 6 Block (${move('wanderingSoldier', guard)}).`,
-    'Forsaken gained 8 Barrier (Crystal Barrier).',
+    'Forsaken gained 8 Poise (Crystal Aegis).',
     'Wyrm Lord gained 1 Block (Defend stance).',
     `Wyrm Lord recovered 6 HP (${move('wyrmLord', 'goldenBulwark')}).`,
-    "Wyrm Lord gained 3 Barrier (Forsaken's Crystal Barrier).",
+    "Wyrm Lord gained 3 Poise (Forsaken's Crystal Aegis).",
   ]);
 });
 
@@ -102,7 +102,7 @@ test('a status names who applied it and from what; a tick names the status', () 
   ]);
   assert.deepEqual(lines, [
     "Wyrm Lord gained 2 Crimson Blight (Forsaken's Blight Touch).",
-    'Forsaken gained Starstone Charge (Crystal Barrier).',
+    'Forsaken gained Starstone Charge (Crystal Aegis).',
     `Forsaken gained ${registries.statuses.get('bleeding').name} (Wyrm Lord's ${move('wyrmLord', 'halberdReign')}).`,
     'Wyrm Lord lost 1 HP (Crimson Blight).',
     `Forsaken gained ${registries.statuses.get('weak').name} (from Wandering Soldier).`,
@@ -161,8 +161,8 @@ test('breaks, Ward refills and deaths name what caused them', () => {
   ]), [
     "Wyrm Lord's Ward broke (by Forsaken's Strike; interrupted).",
     "Forsaken's Ward broke (by Crimson Blight flux; −1 Stamina next turn).",
-    `Forsaken's Barrier broke (Wyrm Lord's ${move('wyrmLord', 'halberdReign')}).`,
-    'Forsaken restored 3 Ward (2 → 5) from Crystal Barrier.',
+    `Forsaken's bonus Poise broke (Wyrm Lord's ${move('wyrmLord', 'halberdReign')}).`,
+    'Forsaken restored 3 Ward (2 → 5) from Crystal Aegis.',
     "Wandering Soldier was defeated by Forsaken's Strike.",
   ]);
 });
@@ -215,7 +215,7 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     const warden = charging.enemies.get('fellWarden').name;
     const lines = combatLogEntries(c.eventLog, { registries: charging, enemies: c.enemies }).map(row => row.text);
     assert.ok(lines.includes(`${warden} gained 8 Block (preparing).`), lines.join('\n'));
-    assert.ok(lines.includes(`${warden} gained 3 Barrier (preparing).`), lines.join('\n'));
+    assert.ok(lines.includes(`${warden} gained 3 Poise (preparing).`), lines.join('\n'));
     for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
   }
 });

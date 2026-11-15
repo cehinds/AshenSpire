@@ -28,15 +28,20 @@ export function cardIsMagicTagged(card) {
   return MAGIC_CARD_TAGS.some((tag) => tags.includes(tag));
 }
 
+/** FocusHeld(registries, loadout, classId) → whether an equipped armament carries the Focus item type (all sceptres; one is enough, a second adds nothing). */
+export function FocusHeld(registries, loadout, classId) {
+  const rule = registries?.balance?.mana;
+  if (!rule?.focusItemType || !loadout) return false;
+  return equippedPieces(registries, loadout, classId).some((piece) => piece.kind !== 'armor' && (piece.itemTypeTags || []).includes(rule.focusItemType));
+}
+
 /** focusManaDiscount(registries, loadout, classId, card, actor) → the Mana taken off this card (0 for a non-magic card, without a Focus armament, or outside the Prepared stance). */
 export function focusManaDiscount(registries, loadout, classId, card, actor) {
   if (!cardIsMagicTagged(card) || !inPreparedStance(actor)) return 0;
   const rule = registries?.balance?.mana;
   const amount = Number(rule?.focusManaDiscount);
-  if (!(amount > 0) || !rule.focusItemType || !loadout) return 0;
-  const held = equippedPieces(registries, loadout, classId)
-    .some((piece) => piece.kind !== 'armor' && (piece.itemTypeTags || []).includes(rule.focusItemType));
-  return held ? Math.floor(amount) : 0;
+  if (!(amount > 0)) return 0;
+  return FocusHeld(registries, loadout, classId) ? Math.floor(amount) : 0;
 }
 
 /** applyFocusManaDiscount(mana, discount) → max(mana - discount, 0). */

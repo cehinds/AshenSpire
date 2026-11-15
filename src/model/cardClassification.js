@@ -7,7 +7,10 @@ export function actualCardRank(def) {
 const tagIds = def => (def.cardTags ?? def.tags)?.map(tag => typeof tag === 'string' ? tag : tag.id);
 const profileFor = def => def.combatProfile || (def.camp ? def : combatProfileFor(tagIds(def) ? { ...def, cardTags: tagIds(def) } : def));
 function martialStanceType(def, profile) {
-  let stance = def.evade != null ? 'evade'
+  // Evade is a tag and status, not a card type (owner 2026-11-15): a card that prepares an Evade is a Defense card.
+  // W25-EvadeCards: a card whose own effect grants Evade stacks prepares an Evade as well (Quickstep stays a Counter by maneuver).
+  const grantsEvade = (def.effects || []).some(effect => effect.op === 'applyStatus' && effect.status === 'evade' && effect.target === 'self');
+  let stance = def.evade != null || grantsEvade ? 'defense'
     : ({ smash: 'smash', attack: 'attack', sweep: 'sweep', counter: 'counter', defend: 'defense' })[profile.maneuver];
   if (!stance && (def.type === 'attack' || ['casting', 'ranged'].includes(profile.maneuver)
     && (def.effects || []).some(effect => effect.op === 'damage'))) stance = 'attack';
@@ -44,7 +47,7 @@ export function cardClassification(def) {
   const profile = profileFor(def);
   const stanceType = martialStanceType(def, profile);
   if (!stanceType) return { cardCategory: 'skill', stanceType: 'prepare', stanceGroups: [] };
-  const stanceGroups = ['defense', 'evade'].includes(stanceType) ? ['defensive']
+  const stanceGroups = stanceType === 'defense' ? ['defensive']
     : stanceType === 'counter' || stanceType === 'sweep' && (actualCardRank(def) >= 2 || def.defensiveReaction === true)
       ? ['offense', 'defensive'] : ['offense'];
   return { cardCategory: 'stance', stanceType, stanceGroups };

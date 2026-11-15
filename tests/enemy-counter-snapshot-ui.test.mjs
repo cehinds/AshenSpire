@@ -53,6 +53,6 @@ test('generic Smash hint remains accurate when the Guard damage multiplier is tu
     intent: 'attack', damage: 5, tags: ['camp:physical', 'maneuver:smash'] } } }, { registries });
   const hint = card.combatTags.find(tag => tag.id === 'maneuver:smash').blurb;
   assert.match(hint, /extra damage against physical Guard/);
-  assert.doesNotMatch(hint, /50%/);
+  assert.doesNotMatch(hint.replace(/Stance benefit:[^.]*\./, ''), /50%/); // the stance's own benefit (Wave 2.5) may state 50%; the Guard multiplier may not
   assert.equal(balance.combatMatchups.smash.guardedMultiplier, 2);
 });

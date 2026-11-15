@@ -242,6 +242,13 @@
       "modules": []
     },
     {
+      "id": "cost.manaOnly",
+      "tag": "cost.manaOnly",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
       "id": "cost.stamina",
       "tag": "cost.stamina",
       "family": "cost",
@@ -1153,6 +1160,15 @@
       ]
     },
     {
+      "id": "status.brittle",
+      "tag": "status.brittle",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.bulwarkEcho",
       "tag": "status.bulwarkEcho",
       "family": "status",
@@ -1168,6 +1184,15 @@
       "portability": "legacy",
       "modules": [
         "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.chill",
+      "tag": "status.chill",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
         "statuses"
       ]
     },
@@ -1319,6 +1344,15 @@
       ]
     },
     {
+      "id": "status.freeze",
+      "tag": "status.freeze",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.frost",
       "tag": "status.frost",
       "family": "status",
@@ -1436,6 +1470,15 @@
       ]
     },
     {
+      "id": "status.knockback",
+      "tag": "status.knockback",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.lifeTithe",
       "tag": "status.lifeTithe",
       "family": "status",
@@ -1474,6 +1517,15 @@
     {
       "id": "status.necroticBlight",
       "tag": "status.necroticBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.necroticBuildup",
+      "tag": "status.necroticBuildup",
       "family": "status",
       "portability": "legacy",
       "modules": [
@@ -1567,6 +1619,15 @@
     {
       "id": "status.sanguinePact",
       "tag": "status.sanguinePact",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.shock",
+      "tag": "status.shock",
       "family": "status",
       "portability": "legacy",
       "modules": [
@@ -1782,6 +1843,13 @@
     {
       "id": "targeting.enemy",
       "tag": "targeting.enemy",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.otherEnemy",
+      "tag": "targeting.otherEnemy",
       "family": "targeting",
       "portability": "legacy",
       "modules": []

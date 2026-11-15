@@ -190,15 +190,16 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
       assert.doesNotMatch(plain(clause.html), /Smash|while Prone|Entry:|Usable through/, label);
     }
   }
-  // Whirlwind's two area figures are two short clauses; the long readings stay in Information.
+  // Whirlwind's three area figures (damage, Poise, Bleed) are three short clauses; the long readings stay in Information.
   const whirl = playingCardDefinition(coreReg, { cardId: 'core.whirlwind' }, { rules: coreRules });
   const tokens = staticCardTokens(whirl);
   const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
     authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
-  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all']);
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all', 'Bleed 1 to all']);
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
-  assert.ok(backFace.clauses.some(line => plain(line.html) === 'Retreat 1 band'));
+  // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").
+  assert.ok(backFace.clauses.some(line => /^Evade 1\b/.test(plain(line.html)) && /Retreat/.test(plain(line.html))), backFace.clauses.map(line => plain(line.html)).join(' | '));
 });
 
 test('a line with a tag rider reads its faceHtml on the face and drops when that is empty', () => {
@@ -243,8 +244,8 @@ const projectRoomy = (def) => {
   return cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects, roomy: FACE_BUDGET });
 };
 
-test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 10 px', () => {
-  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 10]);
+test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 13 px (Wave 2 sizes: was 10)', () => {
+  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 13]);
   assert.equal(FACE_BUDGET.clauses, 5);
 });
 

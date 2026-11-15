@@ -103,26 +103,39 @@
     "icon": "madness",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 1
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
       },
       {
-        "op": "dodgeRoll",
-        "target": "self"
+        "op": "block",
+        "target": "self",
+        "amount": 2
       }
     ],
-    "textTemplate": "Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.",
+    "textTemplate": "Gain {evade} Evade. Gain {block} Block.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 3
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
         },
         {
-          "op": "dodgeRoll",
-          "target": "self"
+          "op": "block",
+          "target": "self",
+          "amount": 2
         }
       ]
     }
@@ -137,39 +150,69 @@
     "flavor": "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     "keywords": [],
     "icon": "motion",
-    "weightClassPriced": true,
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 3
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
       },
       {
-        "op": "gainPoise",
+        "op": "moveEngagement",
         "target": "self",
-        "amount": 3
+        "bands": -1,
+        "mode": "advance"
       },
       {
-        "op": "gainWard",
+        "op": "moveEngagement",
         "target": "self",
-        "amount": 3
+        "bands": 1,
+        "mode": "retreat"
       }
     ],
-    "textTemplate": "Gain {block} Block, {gainPoise} Poise and {gainWard} Ward. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.",
-    "singleBreak": {
+    "textTemplate": "Gain {evade} Evade. Choose: Advance or Retreat.",
+    "choiceModes": [
+      {
+        "id": "advance",
+        "name": "Advance",
+        "tooltip": "Step in: every enemy is within your reach."
+      },
+      {
+        "id": "retreat",
+        "name": "Retreat",
+        "tooltip": "Step back out of the enemy's reach."
+      }
+    ],
+    "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 3
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
         },
         {
-          "op": "gainPoise",
+          "op": "moveEngagement",
           "target": "self",
-          "amount": 3
+          "bands": -1,
+          "mode": "advance"
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1,
+          "mode": "retreat"
         }
-      ],
-      "textTemplate": "Gain {block} Block and {gainPoise} Poise guard. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina."
+      ]
     }
   },
   {
@@ -315,22 +358,43 @@
     "icon": "motion",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 6
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
       },
       {
         "op": "draw",
         "amount": 1
       }
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "textTemplate": "Gain {evade} Evade. Prepare Melee Counter: return {damage} damage. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 8
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 2
         },
         {
           "op": "draw",
@@ -1069,7 +1133,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -1148,7 +1212,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 25,
+        "amount": 15,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1156,8 +1220,8 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: deal {damage.2} instead.",
-    "faceTemplate": ["Deal {damage} damage.", "Staggered: deal {damage.2} instead."],
+    "textTemplate": "Deal {damage} damage. If the target is Broken: deal {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Broken: deal {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1176,7 +1240,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 32,
+          "amount": 19,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -1791,7 +1855,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: deal {poiseDamage.2} more Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: deal {poiseDamage.2} more Poise damage.",
     "upgrade": {
       "effects": [
         {
@@ -1888,7 +1952,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {

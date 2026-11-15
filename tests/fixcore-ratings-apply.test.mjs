@@ -5,7 +5,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { createRunCombat as createRunCombatWithBenefits } from './withoutWeaknesses.mjs';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { configuredModule, profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { stanceRulesFor } from '../src/model/stanceRules.js';
@@ -48,10 +51,14 @@ function damage(w, cardId) {
   const hp = target.hp;
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: target.id });
   const live = combat.eventLog.filter(row => row.type === 'damageDealt').at(-1).damageReceipt;
-  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-03: totalDamage is the raw quote; the receipt total is the resolved HP loss.
+  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-14: totalDamage is the HP quote; the receipt total is the resolved HP loss.
   assert.equal(out.liveIncoming, out.incoming, `${cardId}: live incoming matches the preview`);
   assert.equal(out.liveLoss, out.preview, `${cardId}: live HP loss matches the preview`);
-  assert.equal(value.hitDamages[0], out.liveIncoming, `${cardId}: the raw quote is the full hit that lands`);
+  // Owner, 2026-11-14: the quote is the HP the first hit costs; the full incoming hit is the receipt's `incoming`.
+  // Owner, 2026-11-14 (face rule): `hitDamages` is the card FACE (your side + the reference enemy's Vulnerable/weakness, no defences);
+  // the per-target quote (`perTargetHitDamages`) is the HP lost.
+  assert.equal(value.perTargetHitDamages[target.id][0], live.hits[0].hpLoss, `${cardId}: the quote is the HP the first hit costs`);
+  assert.equal(value.hitDamages[0], value.faceValue, `${cardId}: the face is the attacker-side number`);
   return out;
 }
 // One Block card (Defend, or Counter's Block): preview value against the Block actually gained live.
@@ -175,13 +182,19 @@ for (const src of sources.pr) {
     });
   });
 }
-for (const [label, mutate] of [['STR (stat)', stat('strength')], ['weapon Smith tier', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; }]]) {
-  test(`AR (${label}) does not change the Arcane Spark cantrip`, () => {
-    const base = world('starseer'), up = world('starseer', mutate);
-    assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
-    assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
-  });
-}
+test('AR (STR (stat)) does not change the Arcane Spark cantrip', () => {
+  const base = world('starseer'), up = world('starseer', stat('strength'));
+  assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
+  assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
+});
+// Upgrades branch, 2026-11-14: a staff Smith tier raises its PR together with its AR (smithingCore: "PR rises with AR"). The spell
+// follows the PR gain only: the AR gain alone (STR, above) leaves it unchanged.
+test('a staff Smith tier raises PR with AR and moves the Arcane Spark cantrip by the PR weight', () => {
+  const base = world('starseer'), up = world('starseer', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; });
+  assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar - ratings(base).ar === ratings(up).pr - ratings(base).pr, 'PR rises with AR');
+  const delta = ratings(up).pr - ratings(base).pr;
+  assert.equal(damage(up, 'core.cantrip').incoming - damage(base, 'core.cantrip').incoming, Math.floor(delta * weights(up.combat).pr));
+});
 test('PR (INT) does not change a physical attack card', () => {
   const base = world('reaver'), up = world('reaver', stat('intelligence'));
   assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar === ratings(base).ar);

@@ -1,12 +1,12 @@
 {
-  "servicesPerVisit": "all",
+  "servicesPerVisit": 1,
   "services": [
+    "rest",
     "smith",
-    "levelUp",
     "upgradeCard"
   ],
   "recovery": {
-    "hp": "full",
+    "hp": 0.3,
     "sp": "full",
     "mp": "full",
     "healingFlasks": "full",

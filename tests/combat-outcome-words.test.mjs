@@ -3,7 +3,7 @@
 // word; at most three words show on a fighter at once and the rest queue.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { outcomeKindForEvent, statusPopupFor, stackPriority, CALLOUT_KINDS, STACK_STEP_MS } from '../src/ui/fx.js';
+import { outcomeKindForEvent, calloutForEvent, statusPopupFor, stackPriority, CALLOUT_KINDS, STACK_STEP_MS } from '../src/ui/fx.js';
 import { t } from '../src/ui/strings.js';
 
 const hit = (over = {}) => ({ type: 'damageDealt', targetId: 'e1', amount: 0, blocked: 0, ...over });
@@ -37,11 +37,15 @@ test('an immune target: IMMUNE (pale grey), from a flagged hit or a refused stat
   assert.equal(t(CALLOUT_KINDS.immune.string), 'IMMUNE');
 });
 
-test('an evaded hit is MISSED, the one existing miss word', () => {
+// Owner, 2026-11-14: without the hit roll an Evade stack cancels the hit, and the floater says so. Out of range stays Missed.
+test('an evaded hit is EVADED, its own word; an out-of-range miss stays MISSED', () => {
   assert.equal(outcomeKindForEvent({ type: 'attackEvaded', targetId: 'e1' }), 'evaded');
   assert.equal(outcomeKindForEvent({ type: 'combatAvoidanceResolved', avoided: true }), 'evaded');
   assert.equal(outcomeKindForEvent({ type: 'combatAvoidanceResolved', avoided: false }), null);
-  assert.equal(t(CALLOUT_KINDS.evaded.string), 'MISSED');
+  assert.equal(t(CALLOUT_KINDS.evaded.string), 'EVADED');
+  assert.equal(calloutForEvent({ type: 'attackMissed', targetId: 'e1', missReason: 'evaded' }).kind, 'evaded');
+  assert.equal(calloutForEvent({ type: 'attackMissed', targetId: 'e1', missReason: 'range' }).kind, 'missed');
+  assert.equal(calloutForEvent({ type: 'attackMissed', targetId: 'e1', missReason: 'accuracy' }).kind, 'missed');
 });
 
 test('a hostile status applied names its past-tense word in its colour', () => {

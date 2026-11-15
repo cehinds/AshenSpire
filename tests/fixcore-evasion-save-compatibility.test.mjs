@@ -44,6 +44,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const snapshot = serializeCombatSnapshot(combat);
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
+  // A fight saved before the 2026-11-14 ruling: it has no hitRoll / evadeStacksPerCard / perception.roll keys, so it keeps rolling and grants evadeStackBase.
+  delete snapshot.fixCoreRules.accuracy.hitRoll; delete snapshot.fixCoreRules.accuracy.evadeStacksPerCard; delete snapshot.fixCoreRules.perception.roll;
   const restored = restoreStripped({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 2);
@@ -55,9 +57,10 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
-  // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped 3, and the
+  // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped evadeStacksPerCard, and the
   // grant matches the face. Off-combat faces (no combat rules) still read the shipped rule.
-  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 3 Evade.');
+  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade.');
+  assert.equal(restored.fixCoreRules.accuracy.hitRoll, undefined, 'the saved fight keeps rolling');
   const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join('').replace(/<[^>]*>/g,'');
   const plain = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored });
   const live = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored, preview: previewCard(restored, 'resumed-evade', null) });
@@ -110,7 +113,25 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-07: the mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: the stance move (src/engine/combatRounds/stance.js → src/model/stance.js) repoints the maneuver_smash manifest, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: enemy-level budgets on the integrated dev runtime; old saves keep their own rules.
-  assert.equal(profile.lock.runtimeHash, 'sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6');
+  // Re-pinned 2026-11-14: exact hits and intents (hitRoll, evadeStacksPerCard, perception.roll) move the runtime hash (63e8... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-14: the one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp) moves the runtime hash (9808... is now in PREVIOUS_RUNTIMES, so a save from it still resumes).
+  // Re-pinned 2026-11-14: Ward Poise and the Poise break rule merged together (batch 1); 1551ec... and e4f237... are each branch's own hash, now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-14: Ward as a Poise effect (ward.poisePerStack in fixCoreMechanics.json, src/model/combatRatings.js) moves the runtime hash (68d4... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-14: the batch-1 fix pass (the card preview skips an unmet conditional row; the Reaction upgrade on any stance) moves the runtime hash (6c4dab... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-modals (blacksmith/option modals, item properties) moves the runtime hash; earlier batch-1 668f10... is kept.
+  // Re-pinned 2026-11-14: stance natural benefits (stanceBenefits rules, src/engine/stanceBenefits.js) move the runtime hash (68d4... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-stances (stance natural benefits, stanceBenefits rules) moves the runtime hash; w25-stances' own 211930... and the earlier f2b79e... are kept.
+  // Re-pinned 2026-11-14 (batch 2): Sweep has no extra benefit (owner: sweeps are AoE for full damage): the sweep row leaves stanceBenefits and the hash moves; the batch-2 stances merge hash 28288b... is kept.
+  // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-elements (element identity: fixCoreMechanics.json elements, the shock/chill/freeze/brittle/necroticBuildup/knockback statuses, the receipt stages) moves the runtime hash; a save made before keeps its snapshotted rules, which lack elements, and plays as before. w25-elements' own 33931a... and cc8bab... and the earlier 093f55... are kept.
+  // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-stats (PR from max(INT, WIS): ratings.prAttributes; live attribute changes in a fight) moves the runtime hash; a fight saved without the key keeps INT-only PR. w25-stats' own 4d6cf7... and the earlier f47819... are kept.
+  // Re-pinned 2026-11-15: changeAttribute gains its engine/runtime/ops.json row (mechanics-runtime artifact), which moves the runtime hash (a4c872... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-15 (batch 3): the Broken wording on cards, relics and the Prepared status moves the runtime hash; batch-2's a4c872... and ad67bc... are kept (a2854a... was batch 3's own pin before merging dev).
+  // Re-pinned 2026-11-15 (batch 3): the rankUpCard row in engine/runtime/ops.json moves the runtime hash (753eed... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-15 (W25-F): spell costs and elemental flux rules (spellCosts/elementFlux) move the runtime hash (0ea717..., 9f3348... are now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-15 (W25-W): Ward's `ward.routing` rule and the Barrier -> "Gain N Poise" wording move the runtime hash (batch 3's 753eed... is now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move it again (the branch pins 63e86f... and 8af5d7... are now in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-15 (W25-NC, Wave 2 batch 5, W25-BANDS): statusCaps, the Counter stack rule and the bands rules move the runtime hash; W25-EvadeCards moved it again (the Evade card face phrase and Quickstep's Counter stack); every earlier hash, 8c57f3... included, is in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

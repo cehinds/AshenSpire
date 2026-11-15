@@ -87,10 +87,10 @@ test('Counter explanation preserves the configured fractional percent in health 
   try {
     mechanics.counter.stackFraction = 0.29;
     const badge = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
-    assert.match(badge.help, /returns 1×29% of incoming/);
+    assert.match(badge.help, /returns 29% of the hit per stack/);
     mechanics.counter.stackFraction = 0.304;
     const fractional = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
-    assert.match(fractional.help, /returns 1×30\.4% of incoming/);
+    assert.match(fractional.help, /returns 30\.4% of the hit per stack/);
   } finally {
     mechanics.counter.stackFraction = original;
   }
@@ -125,7 +125,7 @@ test('the Precision badge uses supplied Core wording and keeps the legacy fallba
   const badge = combatHealthModel({ precision: 2 }).badges.find(row => row.kind === 'precision');
   const coreHelp = 'Each stack adds 2 Precision. Loses 5 stacks at the start of your turn.';
   assert.match(badgeTipHtml(badge, { precisionHelp: coreHelp }), /Each stack adds 2 Precision\. Loses 5 stacks/);
-  assert.match(badgeTipHtml(badge, {}), /Each stack adds 1 Accuracy\./, 'non-Core surfaces keep the authored legacy wording');
+  assert.match(badgeTipHtml(badge, {}), /Adds Accuracy only where a roll decides whether an attack lands\./, 'non-Core surfaces keep the authored legacy wording');
 
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(screen, /precisionHelp: fixCoreEnabled\(combat\) \? registries\.statuses\.get\('precision', entity\)\?\.tooltip : undefined/);

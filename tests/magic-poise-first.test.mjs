@@ -29,7 +29,8 @@ function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
   return { receipt, combat, target, poiseAfter: poise - receipt.poiseMitigated, blockAfter: receipt.blockRemaining };
 }
 const physical = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
-const spell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
+// A poison spell: a fire spell ignores some Poise under the element rules (W25; tests/element-fire.test.mjs), which this suite isolates from.
+const spell = { combatProfile: { camp: 'spell', damageType: 'poison', magicShare: 1 } };
 const arcane = { combatProfile: { camp: 'spell', damageType: 'arcane' }, magicShare: 0.5 };
 
 test('(a) pure spell 10 vs Poise 6, Block 5: Poise 6->0 first, the 4 left meets Block 5->1, HP 0', () => {
@@ -93,8 +94,10 @@ test('the numeric Barrier pool is gone: the magic left after Poise and Block mee
 
 test('the float splits magic Poise from absorbed Poise', () => {
   const parts = guardHitFloatParts({ amount: 10, poiseAbsorbed: 6, magicPoise: 6, blocked: 4 });
-  assert.equal(parts.magicPoise.text, 'Poise 6');
-  assert.equal(parts.poise, null);
+  assert.equal(parts.magicPoise.text, 'Poise 6', 'the receipt keeps the magic share');
+  // Owner, 2026-11-14: the screen floats ONE yellow number for all the Poise the hit removed.
+  assert.equal(parts.poise.text, '6');
+  assert.equal(parts.poise.cls, 'poise small hitpart');
 });
 
 test('a pierce hit spends the same Block as the same mixed hit without pierce (arcane 10, Block 10, Poise 5)', () => {
@@ -126,21 +129,25 @@ test('the Poise tooltip composes the locked physical text with the spell sentenc
   assert.match(text, /Spells spend Poise one for one before Block\./);
 });
 
-test('a spell Poise absorbed with the rest blocked keeps the BLOCKED callout and the Poise N float part', () => {
+test('a spell Poise absorbed with the rest blocked keeps the BLOCKED word (screen reader) and floats the Block and Poise numbers', () => {
   const event = { type: 'damageDealt', amount: 4, blocked: 4, poiseAbsorbed: 6, magicPoise: 6 };
   assert.equal(outcomeKindForEvent(event), 'blocked');
   assert.equal(guardHitFloatParts(event).magicPoise.text, 'Poise 6');
+  assert.equal(guardHitFloatParts(event).poise.text, '6');
+  assert.equal(guardHitFloatParts(event).guard.text, '4');
 });
 
-test('the damage floater floats the whole hit, and equals the combat log number (engine-shaped events)', async () => {
+// The floater is the HP lost (owner, 2026-11-14); the combat log's "for N" still names the whole hit as it met the layers.
+test('the damage floater floats the HP lost; the combat log names the whole hit (engine-shaped events)', async () => {
   const { combatLogEntries, hitAsLayered } = await import('../src/model/combatLog.js');
   const ev = r => ({ type: 'damageDealt', sourceId: 'p', targetId: 'e', amount: r.receipt.amount, blocked: r.receipt.blocked, hpLoss: r.receipt.hpLoss, poiseAbsorbed: r.receipt.poiseMitigated, magicPoise: r.receipt.magicPoise, wardAbsorbed: r.receipt.wardMitigated, barrierAbsorbed: r.receipt.barrierMitigated, ...(r.receipt.pierceBypassed ? { pierced: r.receipt.pierceBypassed, piercePoise: r.receipt.piercePoise } : {}) });
   const logFor = event => JSON.stringify(combatLogEntries([event], { registries: reg }));
   for (const [name, carrier] of [['spell', spell], ['physical', physical]]) {
     const event = ev(hit(carrier, { poise: 6, block: 5 }));
     const parts = guardHitFloatParts(event);
-    const text = (parts.damage ? parts.damage.text : parts.fullHit.text).replace('-', '');
-    assert.equal(text, '10', `${name} 10 into Poise 6 / Block 5 floats the full 10`);
+    // The number floated is the HP the hit cost; a hit that cost none floats no number and shows the fully-absorbed word.
+    if (event.hpLoss > 0) assert.equal(parts.damage.text, `-${event.hpLoss}`, `${name}: 10 into Poise 6 / Block 5 floats its HP loss`);
+    else { assert.equal(parts.damage, null, name); assert.equal(outcomeKindForEvent(event), 'blocked', name); }
     assert.equal(hitAsLayered(event), 10);
     assert.match(logFor(event), /for 10/, `${name}: the combat log says the same number`);
   }

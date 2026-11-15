@@ -60,7 +60,7 @@ test('the block guard splits the modified total once and refills Ward; the part 
   assert.equal(stacker.block, 0); assert.equal(stacker.persistentWard.value, 0);
 });
 
-test('upcast protection keeps its stack total and the faces read Barrier', () => {
+test('upcast protection keeps its stack total and the faces read Gain N Poise', () => {
   const combat = fixture();
   for (const [cardId, school] of [['frostCounter', 'frost'], ['fireCounter', 'fire'], ['forceCounter', 'force'], ['alterationCounter', 'alteration']]) {
     for (let rank = 0; rank <= 3; rank++) {
@@ -70,13 +70,13 @@ test('upcast protection keeps its stack total and the faces read Barrier', () =>
     }
   }
   const rules = { combatExpansionVersion: 2, breakMeterVersion: 2 };
-  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier', abilityRank: 1 }, { rules }), /Gain 4 Barrier/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier', abilityRank: 1 }, { rules }), /Gain 20 Poise/);
   const complex = { id: 'test-defense', name: 'Complex defense', type: 'skill',
     tags: ['camp:spell', 'school:divine'], ashenBlightCost: 10,
     effects: [{ op: 'gainBarrier', target: 'self', amount: 18 }],
-    textTemplate: 'Gain {gainBarrier} temporary Barrier. Pay 10 Ashen Blight. Exhaust.' };
+    textTemplate: 'Gain {gainBarrier} temporary Poise. Pay 10 Ashen Blight. Exhaust.' };
   assert.equal(cardFaceLines(complex, null, registries), null);
-  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: complex, rules }), /Gain 18 temporary Barrier\. Pay 10 Ashen Blight\. Exhaust/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: complex, rules }), /Gain 90 temporary Poise\. Pay 10 Ashen Blight\. Exhaust/);
 });
 
 test('expanded block opcode faces and allied gains use defense shares; legacy faces retain Block', () => {

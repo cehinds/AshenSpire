@@ -33,8 +33,10 @@ export function targetBodyHeight({ viewportHeight, portraitPhone, ratio }, confi
 // Spread one row (same side and depth band) left to right: clamp to the field
 // edges, push apart to the overlap allowance, then pull back from the right
 // edge. Rows carry `x` and `width`; returns false if the left edge cannot be kept.
-export function separateRow(group, width, config = CONFIG) {
-  const margin = config.edgeMarginPx;
+// `unit` is the real px per authored (canvas) px of the caller's coordinates: the combat stage measures in scaled real
+// px under the combat canvas, so its authored margins take the canvas fit (1 everywhere else).
+export function separateRow(group, width, config = CONFIG, unit = 1) {
+  const margin = config.edgeMarginPx * unit;
   group.sort((p, q) => p.x - q.x);
   const gap = (p, q) => (p.width + q.width) / 2 * (1 - config.overlapAllowance);
   const clampEdge = r => { r.x = Math.max(margin + r.width / 2, Math.min(width - margin - r.width / 2, r.x)); };
@@ -57,21 +59,21 @@ export function separateRow(group, width, config = CONFIG) {
 // Option that mirrors what composition does after the fit, so the fit judges the
 // final positions: `handTop` (with `solo`) is the floor for the lone player's feet.
 export function fitViewportSprites({ width, actors, viewportHeight, portraitPhone = false, config = CONFIG,
-  handTop = null, solo = false }) {
+  handTop = null, solo = false, unit = 1 }) {
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
-  const margin = config.edgeMarginPx;
+  const margin = config.edgeMarginPx * unit;
   const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio }, config) }));
   // A row is one depth band on one side (visualBand); lanes within it share the floor.
   const floor = a => solo && Number.isFinite(handTop) && handTop > 0 && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
   const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
   const solve = factor => {
     const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: a.slot.x }));
-    let ok = rows.every(r => r.height <= (r.a.slot.fitGround ?? r.a.slot.ground) - 2 &&
-      r.height + (r.a.leading ?? 0) + 6 <= floor(r.a) && r.width <= width - 2 * margin);
+    let ok = rows.every(r => r.height <= (r.a.slot.fitGround ?? r.a.slot.ground) - 2 * unit &&
+      r.height + (r.a.leading ?? 0) + 6 * unit <= floor(r.a) && r.width <= width - 2 * margin);
     const groups = new Map();
     for (const r of rows) groups.set(rowOf(r.a), [...(groups.get(rowOf(r.a)) || []), r]);
     for (const group of groups.values()) {
-      if (!separateRow(group, width, config)) ok = false;
+      if (!separateRow(group, width, config, unit)) ok = false;
     }
     return { rows, ok };
   };

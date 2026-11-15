@@ -52,6 +52,14 @@
 :root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
 :root .combat .player-action-intent .intent-action[hidden] { display:none; }
+/* W25-F: the caster's second stance icon (elemental flux, or the plain magic mark) sits beside the stance glyph; an SVG ignores [hidden], so say it. */
+:root .combat .player-action-intent .flux-icon[hidden] { display:none; }
+:root .combat .player-action-intent .player-flux { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); }
+:root .combat .player-action-intent .player-advanced { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); font-weight:700; color:var(--grace); }
+:root .combat .player-action-intent .flux-icon[data-flux='fire'] { color:var(--ember); }
+:root .combat .player-action-intent .flux-icon[data-flux='frost'] { color:var(--frost); }
+:root .combat .player-action-intent .flux-icon[data-flux='divine'] { color:var(--grace); }
+:root .combat .player-action-intent .flux-icon[data-flux='necrotic'] { color:var(--rot); }
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
@@ -171,8 +179,9 @@
 /* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
    numbers. The bar is now 16px thick, its value 16px and the badges 1.6x, all in physical px (the width cap and the
    centring on the body are the profile's hudWidthFraction and hudCenterOnBody). Badges stay flush left and the value
-   flush right. Phones and tablets keep the rules above. */
-@media (min-width: 1200px) {
+   flush right. Phones and tablets keep the rules above. A container query on the game viewport, not a media query:
+   in combat it reads the form factor's canvas, never the real window (owner, 2026-11-14). */
+@container game-viewport (min-width: 1200px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(16px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(15px / var(--ui-zoom,1));
     height: calc(54px / var(--ui-zoom,1))!important; min-height: calc(54px / var(--ui-zoom,1))!important;
@@ -197,7 +206,7 @@
 
 /* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
    first approved sizes so the bodies keep their height (the stage's group height is config: desktopShortMiniHudGroupHeightPx, matched to this rule). */
-@media (min-width: 1200px) and (max-height: 800px) {
+@container game-viewport (min-width: 1200px) and (max-height: 800px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));
     height: calc(38px / var(--ui-zoom,1))!important; min-height: calc(38px / var(--ui-zoom,1))!important;
@@ -223,3 +232,42 @@
 
 /* Owner (2026-11-06): the mini HUD is as wide as its cell and its contents scale with it (--mini-hud-scale, set once per layout pass). */
 :root .combat .combatant { --intent-content-scale: calc(.8 * var(--mini-hud-scale, 1)); }
+
+/* Wave 2 (sizes): the incoming damage is the largest number on the combat screen (24 px effective); every other number stays under 20.
+   The player's own HP and Poise numbers match the enemy's small mini HUD numbers (owner, 2026-11-15). */
+:root .combat { --focus-number-size: calc(27px / var(--ui-zoom, 1)); }
+:root[data-layout='narrow'] .combat { --focus-number-size: calc(24px / var(--ui-zoom, 1)); }
+:root .combat .intent .intent-action-value, :root .combat .intent .intent-followup { --intent-value-size: var(--focus-number-size); }
+
+/* A charging move (owner, 2026-11-14): its number lands later, so it is small, muted and not the red of incoming damage, with the turns left under it. */
+:root .combat .intent .intent-action[data-value-kind='later'] .intent-action-value { font-size: calc(15px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); opacity: .85; }
+:root .combat[data-target-hud='true'] .intent .intent-action[data-value-kind='later'] .intent-action-value { color: var(--parchment); }
+:root .combat .intent .intent-later-note { display: block; font: 600 calc(12px / var(--ui-zoom, 1))/1.1 system-ui, sans-serif; white-space: nowrap; color: var(--parchment); opacity: .9; }
+:root .combat .intent .intent-later { align-items: center; }
+/* The charging move's turn pip (owner, 2026-11-15): a small hourglass badge with the turns left, right of the icon (the intent row clips anything hung below it). */
+:root .combat .intent .intent-action[data-charging='true'] { position: relative; }
+:root .combat .intent .intent-later-pip { position: static; margin-inline-start: calc(2px / var(--ui-zoom, 1)); display: inline-flex; align-items: center; gap: 0; padding: 0 calc(2px / var(--ui-zoom, 1)); border-radius: 999px; background: var(--bg-raise, var(--bg)); border: 1px solid var(--parchment); color: var(--parchment); pointer-events: none; }
+:root .combat .intent .intent-later-pip > svg { width: calc(9px / var(--ui-zoom, 1)); height: calc(9px / var(--ui-zoom, 1)); }
+:root .combat .intent .intent-later-turns { font: 700 calc(11px / var(--ui-zoom, 1))/1 system-ui, sans-serif; color: var(--parchment); }
+
+/* A follow-up of the head's own stance shows its HP number beside the icon (owner, 2026-11-14): the secondary number size, so the head's
+   number stays the largest, and never under 11 px; a row of several wraps instead of widening the intent past a phone's width. */
+:root .combat .intent .intent-followups { flex-wrap:wrap; justify-content:center; }
+:root .combat .intent .intent-followup[data-has-value='true'] { gap:calc(2px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-followup .intent-followup-value { font-size:calc(15px / var(--ui-zoom,1)); font-weight:700; line-height:1; color:inherit; }
+
+/* W25-BANDS: the row tag at an enemy's feet; its colour marks the rank (back: cooler and dimmer). Present only when the fight has rows. */
+:root .combat .combatant .band-row-tag {
+  position:absolute; left:50%; top:0; transform:translateX(-50%); /* inside the figure's stack at its head, clear of the player's HUD plates, which hang below a back-row enemy on a phone */
+  font-size:calc(max(11px, 10px * var(--mini-hud-scale,1)) / var(--ui-zoom,1)); line-height:1; letter-spacing:.06em; text-transform:uppercase;
+  padding:calc(1px / var(--ui-zoom,1)) calc(5px / var(--ui-zoom,1)); border:1px solid var(--line-soft); border-radius:calc(3px / var(--ui-zoom,1));
+  background:var(--panel); color:var(--muted); pointer-events:none; white-space:nowrap; z-index:var(--combat-layer-selection);
+}
+:root .combat .combatant[data-band-row='back'] .band-row-tag { opacity:.85; }
+/* Two visible ranks: a back-row enemy stands a little behind and above its front-row neighbour, smaller, and its HUD plates move with it
+   (individual translate/scale leave the stage's own transform alone). */
+:root .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-14px / var(--ui-zoom,1)); scale:.9; transform-origin:50% 100%; }
+
+/* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
+   and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
+:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }

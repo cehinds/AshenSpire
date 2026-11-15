@@ -395,7 +395,7 @@ async function blockedIndexPass() {
     const placeheld = await ev(artState);
     check(placeheld.n > 0 && placeheld.placeholders === placeheld.n, `in-run Retry (${name}): the failed load did not leave marked placeholders (${placeheld.placeholders} of ${placeheld.n})`);
     mode = 'pass';
-    await click('[aria-label="Quick menu"]');
+    await click('[aria-label="Menu"]');
     await poll(`!!document.querySelector('.qn-row')`, 4000);
     await ev(`[...document.querySelectorAll('.qn-row')].find((r) => /settings/i.test(r.textContent))?.click()`);
     check(await poll(`!!document.querySelector('[data-art-retry]:not([hidden])')`, 6000) >= 0, `in-run Retry (${name}): Settings offered no Retry`);

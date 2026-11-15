@@ -111,7 +111,7 @@
       "locked": false,
       "bind": "name",
       "autoFit": true,
-      "minFontSize": 22.273333333333333,
+      "minFontSize": 28.5,
       "maxFontSize": 32.96296296296296,
       "maxLines": 1,
       "verticalAlign": "middle"
@@ -136,7 +136,7 @@
       "bind": "rules",
       "maxLines": 3,
       "autoFit": true,
-      "minFontSize": 22,
+      "minFontSize": 31,
       "maxFontSize": 31,
       "verticalAlign": "middle"
     },
@@ -698,7 +698,7 @@
         "color": "#efd09a",
         "fontFamily": "Georgia, serif",
         "fontWeight": "700",
-        "fontSize": "7cqw",
+        "fontSize": "7.8cqw",
         "lineHeight": "1",
         "letterSpacing": ".085em",
         "textTransform": "uppercase",

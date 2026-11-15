@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (243 tool files, plus the 9 subfolders)
+## Tools something references (245 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -91,6 +91,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `click-impact-stages.mjs` | Independent acceptance policy: the current ordered presentation owes one gap at each stage boundary and half-rate sprites. | tests click-impact-stages; tools click-impact-probe |
 | `closedsets.mjs` | closedsets — Viki, 2026-08-08. | tests closedsets, run-node, spell-damage-dealt-mult; tools doorplant, onevocab; docs docs/plan-progression-and-property-system.md; other src/buildversion.js, src/content/encounters/weald.js +2 |
 | `collect-feature-previews.mjs` | Trusted Pages collector: download data only; never run a feature checkout. | wf pages-builds; tests art-migrate-trigger, collect-feature-previews; tools combat-audit/hosted-preview |
+| `combat-canvas-qa.mjs` | Combat canvas layout probe: inside a form factor every combat element is laid out in the fixed canvas, so fresh loads and resize chains agree in canvas px. | npm qa:combat-canvas; docs docs/design/fixed-form-factor-layouts.md |
 | `combat-expansion-smoke.mjs`, `combat-layer-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-formation-extra-qa.cjs` | (no header comment) | tests fetch-art |
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |
@@ -104,7 +105,8 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `contentreach.mjs` | contentreach — CAN A PLAYER EVER GET THIS CARD, RELIC OR EVENT? | tests contentreach; docs SPEC.md, docs/FINISH.md |
 | `contrast-audit.mjs` | contrast-audit — what the eye actually gets: WCAG contrast of the | wf ci; tests contrast-title-continue, engine.test.js; tools buildstamp-shot, mapreach, pairsweep +1; docs SPEC.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/main.js +2 |
 | `convert-card-art.py` | Format/size conversion only. The authored PNG master remains unchanged. | tools export-extended-card-art |
-| `core-entry-fixture.mjs` | A deterministic real-input route: seed 4, initial Shrine, then the leftmost | tests core-entry-fixture; tools click-impact-probe, quick-start-inputs |
+| `core-entry-fixture.mjs` | The shortest real-input route (New Game, Begin, any key, Enter) and its input budget, then the leftmost | tests core-entry-fixture; tools click-impact-probe, quick-start-inputs |
+| `coresim.mjs` | tools/coresim.mjs — a headless Act 1 simulator for the Core 2 ruleset. | tests coresim |
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
@@ -122,6 +124,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
 | `enemy-sheets.mjs` | tools/enemy-sheets.mjs - one editable character sheet per Core enemy (owner request 2026-11-01). | tests enemy-sheets; tools jev; docs CONTRIBUTING.md, DEVELOPER.md, games/ashenspire/packs/core/enemies/_reference.md; other games/ashenspire/packs/core/enemies/_reference.json, games/ashenspire/packs/core/enemies/ashRevenant.json, games/ashenspire/packs/core/enemies/ashheartDragon.json +31 |
+| `enemy-turn-probe.mjs` | enemy-turn-probe — how long the enemies' turn takes, in a real browser | (none) |
 | `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |
 | `equipment-blender.py` | tools/equipment-blender.py — armament + armour-set sprites, rendered in Blender. | tests engine.test.js, run-node; tools attic/class-material-leaks, palette-audit.py, poses-blender.py +1; docs CREDITS.md, asset-data/classes/LOOK-REFERENCE-ROGUE.md, asset-data/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md +3; other asset-data/classes/build_rogue.proposal.py, asset-data/classes/rejected-inputs.json, content/source/weapons.csv +1 |
 | `escape-back.mjs` | escape-back — Escape and pad B back out of every screen, measured | tests escape-back; docs DEVELOPER.md, docs/FINISH.md; other src/ui/input.js, src/ui/screens/map.js |
@@ -249,6 +252,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `testnumbers.mjs` | testnumbers — NO TWO TESTS WEAR THE SAME NUMBER. | tests run-node; tools plantsites-baseline.json |
 | `tokens-css.mjs` | tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json as CSS custom properties. | tests run-node, serve-watch, tokens-css; tools launch, serve; docs DEVELOPER.md; other index.html, styles/tokens.generated.css |
 | `textfit.mjs` | textfit — THE GATE FOR "NOTHING BLEEDS", MEASURED ON A REAL PAGE. | tests card-presentation-levels |
+| `text-size-probe.mjs` | text-size-probe — how big is the text the player reads, and how big are the things they tap, in a real browser | (none) |
 | `tutorial-reach.mjs` | tutorial-reach — can a real player finish (or skip) the first-run | wf ci, tutorial-reach; tests run-node, tutorial-reach-stability; tools actionreach, gatelist, mobilefit +4; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `ui-components.mjs` | Reusable UI component contract: stable semantic ids, one shared Map/Combat | tests run-node, ui-component-catalogs; docs DEVELOPER.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1 |
 | `ui-validate.mjs` | Validates the JSON UI layer (engine/ui/components, games/<game>/ui/screens) and writes engine/ui/index.json. | tests ui-json; tools build-game; docs engine/ui/README.md; other package.json |

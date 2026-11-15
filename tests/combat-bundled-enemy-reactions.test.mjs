@@ -16,11 +16,14 @@ const { createRunCombat } = require('src/engine/runCombat.js');
 const { previewCard, previewIntent } = require('src/engine/combat.js');
 const { CounterPreviewAgainst } = require('src/engine/combatCounterPreview.js');
 
-function coreCounterFixture() {
+function coreCounterFixture({ cardStacks = false } = {}) {
   const profile = resolveGameProfile('core');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'bundled-counter-preview' });
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; } // pins the pre-Wave-2.5 arithmetic (tests/legacyStanceRules.mjs)
+  // ...and the Block-as-stacks Counter rule of a fight created before Wave 2 batch 5 (the card-stack rule has its own test below).
+  if (!cardStacks) { const counter = { ...combat.fixCoreRules.counter }; for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key]; combat.fixCoreRules = { ...combat.fixCoreRules, counter }; }
   combat.piles.hand.push({ instanceId: 'bundled-core-counter', cardId: 'core.counter' });
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [],
@@ -39,6 +42,15 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   assert.equal(returned.hp, 13);
   assert.equal(returned.poise, 6);
   assert.equal(returned.block, 2);
+  assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
+});
+
+test('bundled Core Counter under the card-stack rule previews 4 + floor(0.1 x 8 x 1 stack) and mutates nothing', () => {
+  const { combat, enemy } = coreCounterFixture({ cardStacks: true });
+  const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
+  const returned = previewCard(combat, 'bundled-core-counter', enemy.id).values.find(row => row.op === 'damage').counterReturn;
+  assert.equal(returned.incoming, 8);
+  assert.equal(returned.hp, 4, 'core.counter grants 1 stack: floor(8 x 0.1 x 1) = 0 on top of the card\'s 4');
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 

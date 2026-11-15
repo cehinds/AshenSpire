@@ -47,3 +47,10 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
   out.damageBasis = fixCoreEnabled(ctx) ? 'hp' : 'beforeBlock';
   return IntentProjection.projectEnemyIntentDamage(ctx, enemy, out, { action, base, hits, move });
 }
+
+/** The HP a captured intent says the player loses in all, or null when it states none (the number a prompt or a log line can print). */
+export function IncomingHpLoss(intent) {
+  const projected = intent?.projectedDamage;
+  if (projected && Number.isFinite(projected.max) && projected.basis === 'hp') return projected.max;
+  return Number.isFinite(intent?.hpLoss) ? intent.hpLoss : null;
+}

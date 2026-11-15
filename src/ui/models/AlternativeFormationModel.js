@@ -278,3 +278,23 @@ export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false,
   if (!wide || !tall) return grid.miniHudGroupHeightPx;
   return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
 }
+
+// The formation's lengths, scaled by k (owner, 2026-11-14: one layout per form factor, only scaled). The stage plans
+// in canvas px (the models' authored px and thresholds are canvas px) and scales the plan into the real px its rects
+// are in. Fractions (skew, anchors, depth, layers) and indices are left alone.
+const CELL_LENGTHS = ['x', 'ground', 'fitGround', 'width', 'artWidth', 'tileHeight', 'miniHudLeft', 'miniHudWidth', 'miniHudTop'];
+export function ScaleFormationPlan(plan, k) {
+  if (!(k > 0) || k === 1) return plan;
+  const cell = item => {
+    if (!item || typeof item !== 'object') return item;
+    const out = { ...item };
+    for (const key of CELL_LENGTHS) if (Number.isFinite(out[key])) out[key] *= k;
+    if (out.box) out.box = { ...out.box, left: out.box.left * k, top: out.box.top * k, width: out.box.width * k, height: out.box.height * k };
+    return out;
+  };
+  for (const key of ['ground', 'rowSpacing', 'friendlyWidth', 'enemyWidth']) if (Number.isFinite(plan[key])) plan[key] *= k;
+  for (const key of ['cells', 'slots', 'visualCells']) if (Array.isArray(plan[key])) plan[key] = plan[key].map(cell);
+  if (Array.isArray(plan.visualBands)) plan.visualBands = plan.visualBands.map(band => ({ ...band, top: band.top * k, height: band.height * k }));
+  if (plan.teamGap) plan.teamGap = { top: plan.teamGap.top * k, height: plan.teamGap.height * k };
+  return plan;
+}

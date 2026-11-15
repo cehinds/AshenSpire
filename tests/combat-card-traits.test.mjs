@@ -125,7 +125,8 @@ test('per-tag card counts at tier 0 across every card', () => {
   console.log(`trait card counts (tier from rank, all ${allDefs.length} defs): ${JSON.stringify(counts)}`);
   // Flux +6: the Psychic and Earth spells Mind Spike, Mind Fracture, Waking Nightmare,
   // Stone Sling, Rockfall and Entomb (owner decision 5, 2026-10-12).
-  assert.deepEqual(counts, { reaction: 80, counterstrike: 22, impact: 60, flux: 76 });
+  // W25-EvadeCards (2026-11-15): the Evade cards leave the martial `evades` table and drop its rewrite of Quickstep and Dodge Roll, so counterstrike 22 -> 20 and impact 60 -> 56.
+  assert.deepEqual(counts, { reaction: 80, counterstrike: 20, impact: 56, flux: 76 });
 });
 
 test('applyCardTraits reads Impact and Flux magnitudes from the fight rules', () => {

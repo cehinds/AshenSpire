@@ -81,13 +81,14 @@ test('compact hidden rules still report incomplete even when visible copy fits',
   assert.equal(f.text.style.maxHeight, '100%', 'no cue reserves space');
 }));
 
+// Wave 2 (sizes): 36 characters (was 40) still shrink below the preferred 15px yet fit this bay at the 13px floor.
 test('long rules shrink inside a fixed bay, preserving parchment and artwork geometry', () => withKitDom(() => {
   invalidateLayoutMetrics();
-  const f = fixture({ chars: 40, width: 180, top: 80, height: 45, full: false });
+  const f = fixture({ chars: 36, width: 180, top: 80, height: 45, full: false });
   const geometry = { ...f.layer.style };
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) < 15, 'preferred font does not fit');
-  assert.ok(parseFloat(f.text.style.fontSize) >= 6, 'configured minimum');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 13, 'configured minimum (Wave 2 sizes: 13px, was 6)');
   assert.deepEqual({ top: f.layer.style.top, height: f.layer.style.height }, geometry);
   assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(f.text.dataset.rulesComplete, 'true');
@@ -96,7 +97,7 @@ test('long rules shrink inside a fixed bay, preserving parchment and artwork geo
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true', 'unfit copy offers inspection without growing');
   assert.equal(f.layer.clientHeight, 45);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 13);
   f.state.chars = 3;
   f.fit();
   assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
@@ -127,19 +128,19 @@ test('a one-liner that needs shrinking to fit shows its rules with no Inspect cu
 
 test('rules that need three lines at 11px shrink until they fit the glance, with every word kept', () => withKitDom(() => {
   invalidateLayoutMetrics();
+  // Wave 2 (sizes): the floor is 13px, so sixty characters that fit only below 13px now keep their words at 13px and offer the cue.
   const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
   f.fit();
   const font = parseFloat(f.text.style.fontSize);
-  assert.ok(font < 11 && font >= 6, 'shrunk past 11px, above the configured minimum');
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1, 'the words sit inside the parchment');
-  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(font, 13, 'shrinks to the 13px floor and stops there');
+  assert.equal(f.face.dataset.rulesOverflow, 'true', 'it does not fit at the floor, so the face offers inspection');
 }));
 
 test('rules that cannot fit even at the minimum tighten the line height, then clip with an ellipsis', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 5000, width: 180, top: 80, height: 45, full: false });
   f.fit();
-  assert.equal(parseFloat(f.text.style.fontSize) >= 6, true);
+  assert.equal(parseFloat(f.text.style.fontSize) >= 13, true);
   assert.equal(parseFloat(f.text.style.lineHeight) < 1.05, true, 'line height was tightened');
   assert.equal(f.text.style.textOverflow, 'ellipsis');
   assert.equal(f.text.style.overflow, 'hidden');

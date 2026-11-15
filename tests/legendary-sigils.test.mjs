@@ -333,7 +333,7 @@ test('the panel\'s buttons are at least 48 CSS px on a coarse pointer and 44 oth
 test('the `sigils` stream retains its appended index after later stream additions', () => {
   assert.equal(STREAM_NAMES.indexOf('sigils'), 16);
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
-  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds', 'combatContest']);
+  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds', 'combatContest', 'elements']);
 });
 
 test('FINISH: with defaults no sigil ever drops and no stream counter moves', () => {

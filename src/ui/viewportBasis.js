@@ -1,10 +1,10 @@
-import { logicalViewport, VIEW_PRESETS } from './viewViewport.js';
+import { logicalViewport, viewScale, VIEW_PRESETS } from './viewViewport.js';
 
 // The height combatant sizes are a share of. The large viewport (100lvh) is the
 // height with the mobile URL bar retracted, so it does not move as the bar
 // slides in and out; a probe element reads it in the same physical pixels as
 // the battlefield. A selected view preset (desktop, mobile ...) answers with
-// its own height scaled like the rest of the game. Anything the browser cannot
+// its canvas height times the fit scale, so it does not follow the window. Anything the browser cannot
 // answer falls back to the layout viewport.
 let probe = null;
 export function stableViewportHeight(win = globalThis.window) {
@@ -21,10 +21,16 @@ export function stableViewportHeight(win = globalThis.window) {
     const lvh = probe.getBoundingClientRect().height;
     if (!VIEW_PRESETS[preset] && lvh > 0) return lvh;
   } catch { /* fall through to the layout viewport */ }
+  // The consumer sizes in physical px (it measures the field with getBoundingClientRect,
+  // then divides by the field's zoom), so a canvas answers its height times the fit scale:
+  // the same layout px in every window that shows this canvas.
+  if (VIEW_PRESETS[preset]) return (logicalViewport(win).height || 0) * viewScale(win);
   return Math.max(win.innerHeight || 0, logicalViewport(win).height || 0);
 }
 
-// A phone in portrait takes the smaller body share (config: bodyHeightFraction).
+// A phone in portrait takes the smaller body share (config: bodyHeightFraction). Under a canvas the
+// logical viewport decides, not the window: a phone canvas shown in a wide window is still portrait.
 export function portraitPhoneViewport(narrow, win = globalThis.window) {
-  return Boolean(narrow) && (win?.innerWidth ?? 0) <= (win?.innerHeight ?? 0);
+  const { width, height } = logicalViewport(win);
+  return Boolean(narrow) && width <= height;
 }

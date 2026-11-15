@@ -7,15 +7,16 @@ import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
 test('large face labels keep martial maneuvers and public Spell preparation categories', () => {
-  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Evade'],['barrageCounter','Spell'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
+  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Defense'],['barrageCounter','Spell'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
   assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Melee|attacks and spells/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Gain \d+ Block/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Return.*Poise/);
   const dodge = combatCardSummary(card('dodgeRoll'), null, reg);
-  assert.match(dodge, /Prepare one Evade/);
-  assert.match(dodge, /Return.*damage/);
+  // W25-EvadeCards (intended by the design): Dodge Roll grants Evade stacks instead of preparing one Evade.
+  assert.match(dodge, /Gain 1 Evade/);
+  assert.match(dodge, /Advance or Retreat/);
 });
 test('new spell summary contains its explicit gauge pressure and chance', () => {
   const text = combatCardSummary(card('emberDart'), null, reg);
@@ -26,7 +27,7 @@ test('summary uses live bindings and preserves full conditional effects', () => 
   const text = combatCardSummary(fire, {tokens:{damage:9,burn:6}}, reg);
   assert.match(text, /Deal 9 Fire damage/); assert.match(text, /Add 6 Burn buildup/);
   const lucid = combatCardSummary(card('lucidRecovery'), null, reg);
-  assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 2 Barrier/);
+  assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 10 Poise/);
 });
 test('complex passive cards preserve authored text rather than hiding trigger rules', () => {
   for (const id of ['emberCovenant','shatterOpportunity','earthGrounding','restfulDream']) assert.equal(combatCardSummary(card(id), null, reg), null);
@@ -59,7 +60,7 @@ test('expanded grade summaries retain added buildup together with authored limit
   const ward = grade('progression-firmament-ward');
   const charged = combatCardSummary(ward, {tokens:{chargeManaDiscount:2}}, reg);
   assert.match(charged, /Next spell this turn: 2 less Mana \(min 0\); cannot stack with itself/);
-  assert.match(charged, /Gain 2 Barrier once per turn per family/);
+  assert.match(charged, /Gain 10 Poise once per turn per family/);
   const constellation = combatCardSummary(grade('progression-falling-constellation'), null, reg);
   assert.match(constellation, /distinct starstone card IDs played at least 2 this turn/);
   const shelter = combatCardSummary(grade('progression-pilgrim-s-shelter'), null, reg);
@@ -75,7 +76,7 @@ test('temporary tier options keep nonzero base separate and never offer locked t
   const plan = upcastChoicePlan({name:'Tiered fixture',upcast:{baseTier:2,unlockedTiers:[3,5],maximumTier:5}});
   assert.deepEqual(plan.options.map(option => option.id), ['2','3','5']);
   assert.match(plan.options[1].name, /tier 3 \(\+1\)/);
-  assert.match(plan.options[2].tooltip, /\+3 SP and \+3 Mana/);
+  assert.match(plan.options[2].tooltip, /\+3 Stamina and \+3 Mana/);
 });
 
 test('compact Counter face leaves complete delivery coverage in inspection', async () => {

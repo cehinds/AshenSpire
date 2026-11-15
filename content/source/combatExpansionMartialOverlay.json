@@ -309,49 +309,65 @@
     "maneuver": "counter"
   },
   "evasiveGuard": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "dodgeRoll": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "quickstep": {
     "maneuver": "counter"
   },
   "backstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "acrobaticsRogue": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "shadowstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "progression-nightstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "aspDart": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "ricochet": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "fanOfKnives": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "toxicVolley": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "pinningShot": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "arrowVolley": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "aimedShot": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "barbedArrow": {
-    "maneuver": "ranged"
+    "maneuver": "attack",
+    "range": "reach",
+    "projectile": true
   },
   "enterGorefire": {
     "maneuver": "support"

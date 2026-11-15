@@ -20,7 +20,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/derivedStats.js",
-    "symbol": "restoreDerivedStatRuleSnapshot"
+    "file": "src/engine/elementIdentity.js"
   }
 }

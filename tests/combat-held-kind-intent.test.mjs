@@ -35,7 +35,7 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
@@ -54,7 +54,7 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' },
     playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
@@ -86,7 +86,7 @@ function loadPlayerActionIntent() {
     append(...nodes) { this.children.push(...nodes); },
     addEventListener(type, fn) { this.listeners[type] = fn; },
     querySelectorAll(selector) {
-      const found = [], walk = node => { for (const child of node.children || []) { if (selector === '.intent-action' && child.className === 'intent-action') found.push(child); walk(child); } };
+      const found = [], walk = node => { for (const child of node.children || []) { if (['.intent-action', '.intent-action:not(.player-flux)'].includes(selector) && child.className === 'intent-action') found.push(child); walk(child); } };
       walk(this); return found;
     },
   }) };
@@ -94,7 +94,7 @@ function loadPlayerActionIntent() {
   const setData = (el, key, value) => { el.dataset[key] = String(value); };
   const setAttr = (el, key, value) => { el.attrs[key] = String(value); };
   const onLive = (el, type, fn) => { el.listeners[type] = fn; };
-  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }), setData, setAttr, onLive });
+  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }), FluxIcon: () => ({ setAttribute() {} }), FLUX_ELEMENT_SCHOOL: {}, setData, setAttr, onLive, attachTooltip() {}, StanceBenefitTip: () => ({ title: '', body: '' }), esc: text => text });
 }
 function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
@@ -102,7 +102,7 @@ function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, kindForCard, selfArm: null,
+    combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' }, playerActionIntent, playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };

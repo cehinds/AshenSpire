@@ -8,7 +8,7 @@
 // A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
 // to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
 import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
@@ -21,7 +21,7 @@ import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
@@ -152,12 +152,13 @@ export function mountEvent(app, opts) {
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
-    const affordable = choiceAffordable(choice, run);
+    const unmet = ChoiceUnmetRequirement(choice, run, registries);
+    const affordable = unmet === null;
     responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
     if (!affordable) {
       btn.disabled = true;
-      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: unmet === 'rankableCard' ? t('event.noRankableCard') : 'Cannot afford' }));
     } else {
       // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
       // the quest completion check — one writer for all three, shared with the
@@ -166,21 +167,17 @@ export function mountEvent(app, opts) {
         const before = snapshotRunForDiff(run);
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
+        // The header shows the cinders and HP the choice just paid or took, on this same screen.
+        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
         // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
         showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };
-      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
-      // CHARACTERISTIC of the choice, derived from its own ops
-      // (model/consequence.js); the beat is derived from that characteristic
-      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
-      // position all moved into the machinery with it — a bar that cannot be
-      // pressed still never gets armed, because this branch is the affordable
-      // one and always was.
+      // A choice commits on one tap (the eventChoice row in model/secondbeat.js
+      // says `tap: true`; owner, 2026-11-14). Whether a choice binds is still a
+      // characteristic derived from its ops (model/consequence.js) and rides in
+      // the ctx so the audit record keeps it; it no longer picks a hold.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
-        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
-        confirmLabel: 'CHOOSE',
         onConfirm: commit,
       }));
     }

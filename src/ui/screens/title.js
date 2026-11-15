@@ -210,6 +210,16 @@ export function mountTitle(app, {
     });
   };
 
+  // A profile with no save in any slot has nothing to choose between, so New
+  // Game opens creation for the first slot at once. Once any slot holds a save,
+  // the slot door stays (choosing a slot then matters).
+  const startNewGame = () => {
+    const anySave = currentSlots.some((record) => record.summary);
+    const slot = saveSlotSelectionModel(currentSlots, { kind: 'new' }).properties.actionSlot;
+    if (!anySave && slot != null && onNew) onNew(slot);
+    else openModal('new');
+  };
+
   const openNewReview = (slot) => {
     if (slot == null) return;
     newReviewSlot = slot;
@@ -239,7 +249,7 @@ export function mountTitle(app, {
         if (action === 'continue') onContinue(occupied()[0].slot);
         else if (action === 'quick-start') onQuickStart?.();
         else if (action === 'load') openLoadSelector(button);
-        else if (action === 'new') openModal(action);
+        else if (action === 'new') startNewGame();
         else if (action === 'collection' && onCompendium) onCompendium();
         else if (action === 'bestiary') onBestiary?.();
         else if (action === 'history') onHistory?.();

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { live as cappedLive } from './helpers/fixcore-combat-rules.mjs';
 import { uncappedCombat } from './helpers/uncapped-range.mjs';
-const live = () => uncappedCombat(cappedLive());
+const live = ({ legacy = false } = {}) => uncappedCombat(cappedLive({ legacy }));
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { rangeSourceContact, quoteRangeActions, previewRangeRoutes } from '../src/engine/combatEngagement.js';
@@ -46,7 +46,14 @@ test('Advance once, attack twice, pay once; growing the distance re-charges', ()
   ctx.player.stamina = first.staminaCost;
   dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
   assert.equal(ctx.rangeState.engagements[key], 0);
-  const again = ctx.piles.hand.find(row => row.instanceId !== card.instanceId && previewCard(ctx, row.instanceId, 'e1')?.range) || ctx.piles.hand[0];
+  // The second attack is the starter's other Strike (priced like the first); it is moved into the hand when the opening draw left it behind.
+  let again = ctx.piles.hand.find(row => row.cardId === 'core.strike' && row.instanceId !== card.instanceId);
+  if (!again) {
+    const other = row => row.cardId === 'core.strike' && row.instanceId !== card.instanceId;
+    const pile = [ctx.piles.draw, ctx.piles.discard].find(list => list.some(other));
+    again = pile.splice(pile.findIndex(other), 1)[0];
+    ctx.piles.hand.push(again);
+  }
   const second = previewCard(ctx, again.instanceId, 'e1');
   assert.equal(second.range.routes[0].advanceSp, 0, 'second attack has no Advance cost');
   assert.equal(second.staminaCost, first.staminaCost - 2);
@@ -171,7 +178,8 @@ test('a paid Counter return reuses the accepted quote after movement and source 
 });
 test('a missed incoming contact neither refunds nor preserves its paid Counter reservation', async () => {
   const { primeAccuracyRolls }=await import('./accuracyFixture.mjs');
-  const ctx=live(); distantUnclosingIncoming(ctx);
+  // A natural-1 miss needs the d20: the fight carries the rules of one saved before the 2026-11-14 ruling.
+  const ctx=live({legacy:true}); distantUnclosingIncoming(ctx);
   ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
   ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
   ctx.player.stamina=2;

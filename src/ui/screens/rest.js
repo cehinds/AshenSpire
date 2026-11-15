@@ -49,7 +49,6 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
 import { t, tFull, has } from '../strings.js';
-import { restReview } from '../models/ConfirmationReviewModel.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -396,8 +395,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       restOption.click();
     });
     arm(restOption, 'shrineRest', {
-      // W2a: question, the Shrine and the pools it acts on, the exact recovery.
-      ...restReview({ shrine: locationTitle(stay.locationId), heal, manaGain, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {
         // The rules fire (`rested`), the pools move through the engine's
         // opcodes; this screen writes nothing to the run itself.

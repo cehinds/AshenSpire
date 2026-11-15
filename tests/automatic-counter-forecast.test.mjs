@@ -27,6 +27,9 @@ const registries = { ...base, enemies: { ...base.enemies, get(id) {
 function fixture({ spent = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'automatic-counter-forecast' });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; } // pins the pre-Wave-2.5 arithmetic (see tests/legacyStanceRules.mjs)
+  // ...and the owner-cycle budget of a fight created before the Counter-stack rule (Wave 2 batch 5 has no budget: every landed covered hit answers while stacks last).
+  { const counter = { ...combat.fixCoreRules.counter }; for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key]; combat.fixCoreRules = { ...combat.fixCoreRules, counter }; }
   assert.equal(combat.enemies[0].maxStamina, 3);
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
@@ -46,11 +49,11 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   const combat = fixture({ spent }), enemy = combat.enemies[0];
   const before = JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() });
   const forecast = captureEnemyIntent(combat, enemy);
-  // Owner, 2026-11-03: the forecast is the raw hit (20 each), whatever the Counter stance and its Block do; the real HP loss
-  // (what the Counter owner-cycle budget changes) is checked against the damageDealt events below.
+  // Owner, 2026-11-14: the forecast is the HP lost per hit, the Counter stance and its Block included (what the Counter owner-cycle
+  // budget changes); the damageDealt events below are the same numbers.
   const expected = spent ? [15, 15, 15] : [12, 15, 15];
-  assert.deepEqual(Array.from(forecast.hitDamages), [20, 20, 20]);
-  assert.equal(forecast.totalDamage, 60);
+  assert.deepEqual(Array.from(forecast.hitDamages), expected);
+  assert.equal(forecast.totalDamage, expected.reduce((a, b) => a + b, 0));
   assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');
   assert.equal(JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() }), before);
   assert.deepEqual(captureEnemyIntent(combat, enemy), forecast);

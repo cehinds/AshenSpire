@@ -9,12 +9,12 @@ const log = events => combatLogEntries(events, { enemies }).map(row => row.text)
 test('the combat log shows each layer a hit spent and what it left, then the damage inflicted', () => {
   const [line] = log([{ type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 2, blocked: 0,
     barrierAbsorbed: 6, barrierRemaining: 0, wardAbsorbed: 3, wardRemaining: 0, blockRemaining: 0 }]);
-  assert.equal(line, "Enemy's attack hit Forsaken for 11: Barrier absorbed 6 (6 → 0), Ward absorbed 3 (3 → 0); 2 HP dealt.");
+  assert.equal(line, "Enemy's attack hit Forsaken for 11: Bonus Poise absorbed 6 (6 → 0), Ward absorbed 3 (3 → 0); 2 HP dealt.");
 });
 
 test('a hit Barrier stops outright logs 0 HP dealt, and reads resisted on the fighter', () => {
   const event = { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 0, blocked: 0, barrierAbsorbed: 4, barrierRemaining: 2 };
-  assert.match(log([event])[0], /hit Forsaken for 4: Barrier absorbed 4 \(6 → 2\); 0 HP dealt\.$/);
+  assert.match(log([event])[0], /hit Forsaken for 4: Bonus Poise absorbed 4 \(6 → 2\); 0 HP dealt\.$/);
   assert.equal(guardHitFloatParts(event).barrier.text, '4 RESISTED');
 });
 
@@ -24,14 +24,14 @@ test('an Evade names the evader and the attack, with the roll and what it beat',
   assert.equal(line, "Forsaken evaded Enemy's attack: Evade roll 14 + 3 = 17 beat 12.");
 });
 
-test('Ward and Barrier breaks are logged', () => {
+test('Ward and bonus Poise breaks are logged', () => {
   const lines = log([{ type: 'barrierBroken', targetId: 'player' }, { type: 'wardBroken', targetId: 'player', staminaLoss: 1 }]);
-  assert.match(lines[0], /Barrier broke/); assert.match(lines[1], /Ward broke \(−1 Stamina next turn\)/);
+  assert.match(lines[0], /bonus Poise broke/); assert.match(lines[1], /Ward broke \(−1 Stamina next turn\)/);
 });
 
 test('a Ward refill from Barrier overflow is logged with what it restored', () => {
   const [line] = log([{ type: 'persistentWardChanged', targetId: 'player', restored: 4, value: 10, max: 10, source: 'barrier' }]);
-  assert.equal(line, 'Forsaken restored 4 Ward (6 → 10) from Barrier overflow.');
+  assert.equal(line, 'Forsaken restored 4 Ward (6 → 10) from Bonus Poise overflow.');
 });
 
 test('a Ward change that restores nothing is not logged', () => {

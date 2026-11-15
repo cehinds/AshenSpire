@@ -21,7 +21,7 @@
     },
     {
       "id": "base.persistent-barrier",
-      "name": "Persistent Barrier",
+      "name": "Persistent Poise",
       "icon": "shield",
       "stackMode": "add",
       "decay": "none",

@@ -41,7 +41,7 @@ const swaps = page => page.evaluate(() => window.__hudSwaps);
 const geometry = page => page.evaluate(() => [...document.querySelectorAll('.combatant')].filter(frame => !frame.classList.contains('dead')).map(frame => {
   const sprite = frame.querySelector('.sprite').getBoundingClientRect(), id = frame.dataset.eid, role = frame.classList.contains('player') ? 'player' : 'enemy';
   const polygon = JSON.parse(frame.dataset.targetHudCellPolygon || 'null');
-  const cellWidth = polygon ? polygon[2][0] - polygon[3][0] : null;
+  const cellWidth = polygon ? (polygon[2][0] - polygon[3][0]) * (Number(document.documentElement.dataset.viewScale) || 1) : null; // canvas px to the real px of getBoundingClientRect
   const rack = frame.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
   const shell = document.querySelector(`.target-hud-detail[data-eid="${id}"]`), panel = shell?.querySelector('.target-hud-panel').getBoundingClientRect();
   const box = shell?.getBoundingClientRect();
@@ -142,7 +142,7 @@ try {
     const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant:not(.dead)')].map(frame => {
       const id = frame.dataset.eid, polygon = JSON.parse(frame.dataset.targetHudCellPolygon || 'null');
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack?.getBoundingClientRect();
-      return { id, cell: frame.dataset.formationCell, cellWidth: polygon && polygon[2][0] - polygon[3][0], intent: !!rack?.querySelector('.intent, .player-action-intent'),
+      return { id, cell: frame.dataset.formationCell, cellWidth: polygon && (polygon[2][0] - polygon[3][0]) * (Number(document.documentElement.dataset.viewScale) || 1), intent: !!rack?.querySelector('.intent, .player-action-intent'),
         hp: !!rack?.querySelector('.as-meter, [data-meter-row="hp"], .meters'), box: box && { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width }, vw: innerWidth, vh: innerHeight };
     }));
     const player = rows.find(row => row.id === 'player');

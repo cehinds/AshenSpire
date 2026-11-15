@@ -1,3 +1,4 @@
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { cardCutoutUrl } from '../layeredCardArt.js';
 import { matchViewMedia } from '../viewViewport.js';
 import { anchorLocalBox } from '../fx.js';
@@ -186,7 +187,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
-      el('summary', { text: t('deckEditor.filters') }),
+      // A small icon button (owner, 2026-11-15); the word stays for assistive technology and the tooltip.
+      el('summary', { title: t('deckEditor.filters'), 'aria-label': t('deckEditor.filters'), class: 'deck-editor-filter-toggle' }, [
+        el('span', { class: 'deck-editor-filter-glyph', 'aria-hidden': 'true', html: '<svg viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M1.5 2.5h13L9.5 8.8V14l-3-1.7V8.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>' }),
+        el('span', { class: 'sr-only', text: t('deckEditor.filters') }),
+      ]),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -417,7 +422,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // own counts are its meta line, never a badge.
   const typeName = row => row.cardCategory[0].toUpperCase() + row.cardCategory.slice(1);
   function rowCosts(row, lead = []) {
-    const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
+    const pools = FaceCostProfile(registries, resolveCard(registries, row.ref));
     return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
       el('span', { class: `deck-editor-cost resource-${id}${art ? ' illustrated' : ''}`, title: `${label}: ${value}`,
         'aria-label': `${label}: ${value}` }, [

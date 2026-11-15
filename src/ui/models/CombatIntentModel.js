@@ -17,6 +17,15 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
+  // A promoted follow-up (IntentFollowUpModel.PromoteFollowUp) is the next move shown in the head slot before its
+  // own event: its icon only if the observer's read of it passed (no value, no stance beyond the icon's), else "?".
+  if (intent.promoted) {
+    const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;
+    if (!icon) return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
+    // The family and title the real (known) presentation gives that maneuver: sweeps and ranged attacks read as Attacking.
+    const family = PROMOTED_FAMILY[icon] || 'preparing';
+    return { visibility: 'partial', title: capitalize(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
+  }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
@@ -32,8 +41,12 @@ export function combatIntentPresentation(intent = {}) {
   }
   // Interrupted turns retain their status in the tooltip; their badge simply
   // reports that the enemy is preparing, rather than claiming an attack.
-  if (intent.kind === 'staggered') return { visibility: 'partial', title: partialTitle('preparing'), stance: 'preparing',
+  // A staggered enemy's action was cancelled: it reads Staggered, with no number and no "?" (owner, 2026-11-14).
+  if (intent.kind === 'staggered') return { visibility: 'partial', title: t('combat.intent.staggered'), stance: 'preparing',
     parts: [{ icon: 'prepare', value: null }], damageClass: null };
+  // A delayed move that does not land this turn: "Charging", the turns left, whatever it gains now as this turn's effect, and its number as the
+  // later one, small and not tinted as incoming damage (owner, 2026-11-14). The turn it lands it is read as the attack it is.
+  if (intent.charging) return chargingPresentation(intent);
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const projectedDamage = intent.projectedDamage || null;
@@ -56,6 +69,21 @@ export function combatIntentPresentation(intent = {}) {
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
+export const ChargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
+
+function chargingPresentation(intent) {
+  const { turnsLeft, block } = intent.charging, when = ChargingWhen(turnsLeft);
+  const later = intentDamageRead(intent)?.label ?? null;
+  const parts = [];
+  if (block != null) parts.push({ icon: 'defend', value: String(block) });
+  parts.push(later != null
+    ? { icon: 'attack', value: later, valueKind: 'later', turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingAria', { amount: later, when }) }
+    : { icon: 'prepare', value: null, turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingNote', { when }) });
+  return { visibility: 'known', title: t('combat.intent.charging'), stance: 'preparing', parts, damageClass: null, charging: intent.charging };
+}
+
+const PROMOTED_FAMILY = Object.freeze({ attack: 'attacking', smash: 'smashing', counter: 'countering', defend: 'defending',
+  evade: 'defending', buff: 'buffing', cast: 'casting', prepare: 'preparing' });
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });
 const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);
@@ -81,4 +109,19 @@ export function intentDamageRead(intent) {
   return { label, summary: intent.damageScope === 'contact'
     ? t('combat.intent.damageContact', { index: (intent.contactIndex || 0) + 1, count: intent.contactCount || 1, amount: bounds, basis })
     : t('combat.intent.damageTotal', { amount: bounds, basis }) };
+}
+
+// Owner, 2026-11-14: planned follow-ups of the SAME stance as the head show their own number beside the icon (the HP the player loses from
+// each, given the actions before it). `priceAt(i)` quotes follow-up i ({ label } or null). The run ends at the first follow-up that is a
+// different stance, unread, or unpriced; a Charging head keeps its presentation. Returns copies of the symbols, never the originals.
+export function SameStanceNumbers(headPart, symbols = [], priceAt) {
+  // A damaging spell is drawn with the cast icon at the head, but its stance row reads as an attack (iconForStance).
+  const icon = headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
+  let run = ['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null;
+  return symbols.map((symbol, i) => {
+    if (!run || symbol.kind !== 'action' || symbol.icon !== icon) { run = false; return { ...symbol }; }
+    const price = priceAt(i);
+    if (price?.label == null) { run = false; return { ...symbol }; }
+    return { ...symbol, value: String(price.label) };
+  });
 }

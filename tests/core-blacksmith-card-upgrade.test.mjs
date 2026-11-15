@@ -22,6 +22,7 @@ const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBund
 
 function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
+  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 9 }; // all ten card upgrade slots (rank + weapon level + 1)
   run.smithingStones = stones;
   run.cinders = cinders;
   run.seenEvents = [];
@@ -49,8 +50,8 @@ test('Core Blacksmith: any deck card upgrades for cinders and no stones, even pa
 
 test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
   const run = smithRun(coreOut, 3, 31, 200);
-  const [a, b, c] = strikes(run);
-  for (const card of [a, b, c, a, a]) upgrade(run, card.instanceId);
+  const [a, b] = strikes(run); // the Reaver starts with two Strikes now
+  for (const card of [a, b, a, b, a]) upgrade(run, card.instanceId);
   assert.equal(run.smithingStones, 3, 'the stones are never touched');
   assert.equal(run.cinders, 0, 'five upgrades at 40 cinders');
   assert.equal(upgradeCount(a), 3);

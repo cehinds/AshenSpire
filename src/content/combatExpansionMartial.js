@@ -68,8 +68,10 @@ function martialProjection(def) {
   // Mounted basics already carry their weapon's authoritative role and camp.
   // Preserve a bow's Ranged Strike or a staff's spell rather than overwriting it.
   const existing = tags.find(tag => tag.startsWith('maneuver:'))?.slice(9);
+  // A bow's Strike is an ordinary attack that reaches (owner, 2026-11-14): keep its authored range tag with its maneuver.
+  const existingRange = tags.find(tag => tag.startsWith('range:'))?.slice(6);
   const role = def.equipmentRole && !['dodgeRoll', 'evasiveGuard'].includes(def.id) && existing
-    ? { ...row, maneuver: existing } : row;
+    ? { ...row, maneuver: existing, ...(existingRange && !row.range ? { range: existingRange } : {}) } : row;
   const range = def.range || role.range || (RANGED.has(def.id) ? 'ranged' : role.maneuver === 'ranged' ? 'reach' : 'melee');
   const targeting = def.targeting || (role.maneuver === 'sweep' || AREA.has(def.id) ? 'area' : 'single');
   const rewritten = tagsFor(tags, role, range, targeting);
@@ -108,25 +110,6 @@ function martialProjection(def) {
     }
   }
   if (EVADES.has(def.id)) card.evade = { charges: 1, bonus: 0 };
-  if (['quickstep', 'dodgeRoll'].includes(def.id)) {
-    const originalBlock = def.id === 'quickstep' ? 4 : 3;
-    let primaryBlock = false;
-    const support = card.effects.filter(effect => !['damage', 'poiseDamage', 'wardDamage', 'gainWard', 'gainPoise'].includes(effect.op))
-      .map(effect => {
-        if (effect.op !== 'block' || effect.if || effect.oncePerTurn || primaryBlock) return effect;
-        primaryBlock = true;
-        return { ...effect, amount: addedAmount(effect.amount, 5 - originalBlock) };
-      });
-    if (!primaryBlock) support.unshift({ op: 'block', target: 'self', amount: 5 });
-    // Quickstep's new base draw supplements, rather than erases, earned draws.
-    if (def.id === 'quickstep') support.push({ op: 'draw', amount: 1 });
-    card.effects = [...support, { op: 'damage', target: 'enemy', amount: 3 }];
-    card.counterPayload = { hp: 3, poise: 0, ward: 0 };
-    // Equipment ratingId can point at DR for the guard face; the reply uses AR.
-    delete card.ratingId; delete card.ratingValue; delete card.ratingCap;
-    card.textTemplate = `Gain {block} Block. Prepare one Evade and Melee Counter: return {damage} damage when the full incoming action is absorbed.${def.id === 'quickstep' ? ' Draw {draw} card.' : ''}`;
-    delete card.upgrade; delete card.singleBreak;
-  }
   if (UPCAST[def.id]) card.upcast = { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, ...UPCAST[def.id] };
   return card;
 }

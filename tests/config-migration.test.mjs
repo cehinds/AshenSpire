@@ -89,6 +89,8 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // Settings descriptions (2026-10-26): the tooltipHelp baseline re-points exactly
 // two string leaves, the hoverTooltips and tooltipDelay notes, to the owner's
 // one-short-sentence copy. Nothing else in the module moves.
+// Broken wording (2026-11-14): the tooltipHelp baseline re-points exactly two string leaves, messages.playerPoise
+// (Your Stagger threshold -> The threshold that Breaks you) and messages.enemyPoise (Fill it to Stagger -> Break).
 // Quick menu Console row (2026-10-25): the uiContent baseline adds the console
 // row to MENU (map/combat/overlay), MENU_ACTS and the three menuRows probes.
 // Nothing else in that entry changes.
@@ -99,6 +101,7 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // entry gains `biomes` and `terrain` on each of the three MEGA_MAPS paintings
 // (biome framing and battle terrain zones). Only those 12 leaves change; no
 // whole-fixture recapture.
+// Map spacing (2026-11-15, owner "spread them out"): MAP_TERRAIN_REVEAL_RADIUS 74 -> 100, the fog light scaling with COL_X 75 -> 96.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

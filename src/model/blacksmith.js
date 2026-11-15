@@ -19,7 +19,16 @@
 // shown and quoted — `serviceCandidates` lists what each could act on now, and the screen shows a service with none
 // as unavailable, with the reason `serviceIdleReason` names.
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
-import { smithingPlan, commitItemUpgrade, withSmithService } from './smithing.js';
+import { smithingPlan, commitItemUpgrade, withSmithService, ownedSmithingItems } from './smithing.js';
+import { coreSmithingActive } from './smithingCore.js';
+import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
+import { mulberry32 } from './rng.js';
+import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { upgradeSeed } from './cardUpgradeSteps.js';
+import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
+import { SmithUpgradeSlots } from './smithUpgrade.js';
+import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
+import { ITEM_SMITH } from '../content/itemProperties.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
 import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice } from './blacksmithConfig.js';
 
@@ -86,7 +95,19 @@ export function upgradeableArts(registries, run) {
 // Item upgrade
 // ---------------------------------------------------------------------------
 
+/**
+ * The owned items the Blacksmith's item upgrade could act on now (Core 2): one row per weapon, shield, armour and
+ * relic that still has an upgrade slot and an option to roll. A short purse still lists it; the quote says why.
+ */
+export function SmithUpgradeItems(registries, run) {
+  return ownedSmithingItems(registries, run).map((row) => {
+    const smith = PlanSmithUpgrade(run, row.itemRef);
+    return { itemRef: row.itemRef, itemKind: row.itemKind, itemId: row.itemId, itemName: row.item?.name || '', used: smith.used, slots: smith.slots, nextLevel: smith.n, code: smith.code };
+  }).filter((row) => row.itemName && row.code !== 'none' && row.code !== 'slots');
+}
+
 export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stones', priceMult = 1 } = {}) {
+  if (coreSmithingActive(run)) return coreUpgradePlan(registries, run, itemRef, { purse, priceMult });
   // Core: stones come off by the blacksmith's discount, and the work costs cinders by the tier it reaches.
   const candidate = smithingPlan(registries, run, undefined, { stoneDiscount: blacksmithStoneDiscount(run) }).candidates.find((row) => row.itemRef === itemRef) || null;
   const cost = candidate && blacksmithRules(run) ? cinders(tierUpgradePrice(run, candidate.nextLevel), priceMult) : 0;
@@ -103,13 +124,104 @@ export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stone
   };
 }
 
+// Core 2 (W25 step 4): a choice of two or three rolled options, priced by the item's upgrade number (smithUpgrade.js).
+function coreUpgradePlan(registries, run, itemRef, { purse, priceMult }) {
+  const smith = PlanSmithUpgrade(run, itemRef, { priceMult });
+  const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
+  let reason = '';
+  if (!blacksmithOffers(run, 'upgrade') || purse !== 'stones') reason = say('blacksmith.refuse.notOffered');
+  else if (smith.code === 'none') reason = say('blacksmith.refuse.upgradeNone', { name });
+  else if (smith.code === 'slots') reason = say('blacksmith.refuse.slots', { name, used: smith.used, max: smith.slots });
+  else if (smith.code === 'stones') reason = say('blacksmith.refuse.stones', { cost: smith.stones, have: stones(run), plural: plural(smith.stones) });
+  else if (smith.code === 'cinders') reason = say('shop.refuse.cinders');
+  return {
+    ok: !reason, reason, itemRef, purse, name, smith, options: smith.options, n: smith.n,
+    candidate: { itemRef, itemName: name, currentLevel: smith.used, nextLevel: smith.n, cost: smith.stones },
+    stones: smith.stones, cost: smith.cinders, revision: blacksmithRevision(run),
+  };
+}
+
+/** Commit the quote; `quote.optionId` names the option chosen (the first rolled when none is named). */
 export function commitBlacksmithUpgrade(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = blacksmithUpgradePlan(registries, run, quote.itemRef, { purse: quote.purse, priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
+  if (plan.smith) {
+    if ((quote.n ?? plan.n) !== plan.n) throw new Error(say('shop.refuse.stale'));
+    const optionId = quote.optionId ?? plan.options[0].id;
+    const receipt = withSmithService(registries, run, () => ApplySmithUpgrade(run, plan.smith, optionId));
+    bump(run, plan);
+    return receipt;
+  }
   // A Core run commits equipment upgrades only inside the Smith service; the stone price is smithingPlan's, less the discount.
   const receipt = withSmithService(registries, run, () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse, stoneDiscount: blacksmithStoneDiscount(run) }));
   run.cinders -= plan.cost;
+  bump(run, plan);
+  return receipt;
+}
+
+// ---------------------------------------------------------------------------
+// Category change (W25 step 5): 1 Smithing Stone and 75 cinders, part of the Smith service
+// ---------------------------------------------------------------------------
+
+/** Whether the item is a weapon the Blacksmith can give another category (it offers an upgrade service and the item has one). */
+export const CanChangeCategory = (registries, run, itemRef) => coreSmithingActive(run) && blacksmithOffers(run, 'upgrade') && CategoryChoices(run, itemRef).length > 0;
+
+/** The quote for turning `itemRef` into `category`, keeping the properties named by `keepKeys`. */
+export function CategoryChangePlan(registries, run, itemRef, category, keepKeys = [], { priceMult = 1 } = {}) {
+  const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
+  const plan = PlanCategoryChange(run, itemRef, category, keepKeys, { priceMult });
+  let reason = '';
+  if (!CanChangeCategory(registries, run, itemRef)) reason = say('blacksmith.refuse.categoryNone', { name });
+  else if (plan.code === 'category') reason = say('blacksmith.refuse.categoryNone', { name });
+  else if (plan.code === 'keep') reason = say('shop.refuse.stale');
+  else if (plan.code === 'keepMany') reason = say('blacksmith.refuse.keepMany', { max: plan.keepLimit });
+  else if (plan.code === 'keepOne') reason = say('blacksmith.refuse.keepOne');
+  else if (plan.code === 'stones') reason = say('blacksmith.refuse.stones', { cost: plan.stones, have: stones(run), plural: plural(plan.stones) });
+  else if (plan.code === 'cinders') reason = say('shop.refuse.cinders');
+  return { ...plan, ok: !reason, reason, name, cost: plan.cinders, revision: blacksmithRevision(run) };
+}
+
+export function CommitCategoryChange(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = CategoryChangePlan(registries, run, quote.itemRef, quote.category, quote.keep, { priceMult });
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  // The properties rolled are the ones the quote showed, or the quote is stale.
+  if (JSON.stringify(quote.newProperties?.map((row) => row.id) ?? plan.newProperties.map((row) => row.id)) !== JSON.stringify(plan.newProperties.map((row) => row.id))) throw new Error(say('shop.refuse.stale'));
+  const receipt = withSmithService(registries, run, () => ApplyCategoryChange(run, plan));
+  run.shopStock.tradeRevision = plan.revision + 1;
+  return receipt;
+}
+
+// ---------------------------------------------------------------------------
+// Item rank-up (W25 step 6): one more upgrade slot on an item, at the card rank-up's price
+// ---------------------------------------------------------------------------
+
+/** Quote for ranking `itemRef` up: +1 upgrade slot for the rank-up price (cinders and stones), until the slot ceiling. */
+export function ItemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {}) {
+  const rules = blacksmithRules(run);
+  const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
+  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
+  const slots = SmithUpgradeSlots(run, itemRef);
+  let reason = '';
+  if (!coreSmithingActive(run) || !blacksmithOffers(run, 'upgrade') || !rules) reason = say('blacksmith.refuse.notOffered');
+  else if (slots >= ITEM_SMITH.maxSlots) reason = say('blacksmith.refuse.rankMax', { name });
+  else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
+  else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, itemRef, name, from: ItemRank(run, itemRef), to: ItemRank(run, itemRef) + 1, slots, used: ItemUpgradeCount(run, itemRef), stones: need, cost: price, revision: blacksmithRevision(run) };
+}
+
+export function CommitItemRankUp(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = ItemRankUpPlan(registries, run, quote.itemRef, { priceMult });
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  const receipt = withSmithService(registries, run, () => {
+    run.itemRanks = { ...(run.itemRanks || {}), [plan.itemRef]: plan.to };
+    run.smithingStones = stones(run) - plan.stones;
+    run.cinders -= plan.cost;
+    return { itemRef: plan.itemRef, rank: plan.to, slots: plan.slots + 1, spentStones: plan.stones, spent: plan.cost };
+  });
   bump(run, plan);
   return receipt;
 }
@@ -134,6 +246,19 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
 }
 
 
+/**
+ * Whether Blacksmith work on this card also raises its rank (W25 step 3): `blacksmith.upgradeRankChance` percent,
+ * rolled on the run's seed, the card and its upgrade number, so it is the same however often it is asked.
+ */
+export function UpgradeGrantsRank(run, instance) {
+  return upgradeGrantsRankAt(run, instance, Array.isArray(instance?.upgradeSteps) ? instance.upgradeSteps.length : 0);
+}
+function upgradeGrantsRankAt(run, instance, steps) {
+  const chance = blacksmithRules(run)?.upgradeRankChance;
+  if (!(chance > 0) || !instance || EquipmentBound(instance)) return false;
+  return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#rankChance`, steps))() * 100 < chance;
+}
+
 export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = upgradeArtPlan(registries, run, quote.instanceId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
@@ -148,21 +273,22 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   catch (error) { run.smithingStones -= lent; throw error; }
   run.cinders -= plan.cost;
   bump(run, plan);
-  return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n };
+  // The work may also raise the card's rank (rolled before the step was added: the count it had when quoted).
+  const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
+  const ranked = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
+  if (ranked) card.rank = InstanceRank(card) + 1;
+  return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }
 
 // ---------------------------------------------------------------------------
 // Rank-up (Core only): one more rank on an owned card, for cinders and a stone
 // ---------------------------------------------------------------------------
 
-const RANK_CEILING = 99; // state.js MAX_CARD_RANK (not imported: state.js pulls the whole run schema into this module)
-const instanceRank = (card) => (Number.isInteger(card?.rank) && card.rank >= 1 ? card.rank : 1);
-const equipmentOwned = (card) => !!card && (!!card.sourceArmamentId || !!card.grantedBy || card.equipmentRole === 'granted' || card.equipmentRole === 'weaponArt');
+// The shared rank rules live in rankUpService.js, so a combat reward, a shop and an event raise a card the same way.
 
 /** The cards a rank-up could raise now: owned, run-owned (not equipment-bound), below the rank ceiling. */
 export function rankUpCards(registries, run) {
-  if (!coreCardUpgrades(run)) return [];
-  return owned(run).filter((card) => !equipmentOwned(card) && registries.cards.has(card.cardId) && instanceRank(card) < RANK_CEILING);
+  return RankUpCandidates(registries, run);
 }
 
 export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
@@ -174,11 +300,11 @@ export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) 
   let reason = '';
   if (!coreCardUpgrades(run) || !blacksmithOffers(run, 'rankUp') || !rules) reason = say('blacksmith.refuse.notOffered');
   else if (!card) reason = say('shop.refuse.gone');
-  else if (equipmentOwned(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
-  else if (instanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
+  else if (EquipmentBound(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
+  else if (InstanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
   else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
   else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
-  const from = instanceRank(card);
+  const from = InstanceRank(card);
   return { ok: !reason, reason, instanceId, name, from, to: from + 1, stones: need, cost: price, revision: blacksmithRevision(run) };
 }
 
@@ -187,7 +313,7 @@ export function commitRankUp(registries, run, quote, { priceMult = 1 } = {}) {
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   if ((quote.from ?? plan.from) !== plan.from) throw new Error(say('shop.refuse.stale'));
-  owned(run).find((row) => row.instanceId === plan.instanceId).rank = plan.to;
+  RaiseCardRank(registries, run, plan.instanceId);
   run.smithingStones = stones(run) - plan.stones;
   run.cinders -= plan.cost;
   bump(run, plan);
@@ -204,7 +330,7 @@ export function commitRankUp(registries, run, quote, { priceMult = 1 } = {}) {
  */
 export function serviceCandidates(registries, run, id) {
   switch (id) {
-    case 'upgrade': return smithingPlan(registries, run).candidates;
+    case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
     case 'rankUp': return rankUpCards(registries, run);
     default: return [];

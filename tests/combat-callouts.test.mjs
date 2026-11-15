@@ -12,7 +12,7 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/dom.mjs';
-import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
+import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs, actionPacing } from '../src/ui/animationPace.js';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
@@ -23,7 +23,7 @@ test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
     assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
-  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'BLOCK BREAK');
   assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
   assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
   assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
@@ -188,7 +188,8 @@ test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
   drive(t2,({trace,run,finish})=>{
     // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
     run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
-    assert.equal(timeOf(trace,'bars'),LEAD + TOTAL + AFTER + 2 * REACTION,'ordered callout-only actions retain the shared action delays');
+    // The attack beat keeps its lead-in and its sprite; the Counter that follows it plays at once, with one Counter gap between its stages.
+    assert.ok(timeOf(trace,'bars') < LEAD + TOTAL + AFTER + 2 * REACTION,'a Counter exchange is shorter than the shared action delays');
   });
 });
 
@@ -196,7 +197,7 @@ const CASES = [
   ['CRITICAL on the target, with its hurt pose', enemyAttack({ type: 'critHit', sourceId: 'e1', targetId: 'player', multiplier: 2 }, hit('e1', 'player')), 'critical@player', 'hit@player'],
   ['Dodged on the evader (attackEvaded)', enemyAttack({ type: 'attackEvaded', sourceId: 'e1', targetId: 'player', charges: 0 }), 'dodged@player', 'missed@player'],
   ['Dodged on the evader (combatAvoidanceResolved)', enemyAttack({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, evade: { success: true } }), 'dodged@player', 'missed@player'],
-  ['GUARD BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
+  ['BLOCK BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
   ['STAGGERED on an enemy', playerAttack(hit('player', 'e1'), { type: 'enemyStaggered', targetId: 'e1', enemyId: 'x' }), 'staggered@e1', 'hit@e1'],
   ['STAGGERED on the player', enemyAttack(hit('e1', 'player'), { type: 'playerStaggered', targetId: 'player', actionLoss: 1 }), 'staggered@player', 'hit@player'],
   ['STAGGERED on a co-op seat', enemyAttack(hit('e1', 'seatB'), { type: 'playerStaggered', targetId: 'seatB', actionLoss: 1 }), 'staggered@seatB', 'hit@seatB'],
@@ -254,10 +255,13 @@ test('COUNTERED shows on the attacker who got countered, after the counter\'s sp
   drive(t2, ({ trace, run, finish }) => {
     run([{ type: 'combatCounterTriggered', sourceId: 'player', sourceKind: 'player', targetId: 'e1', amount: 3 }, hit('player', 'e1', 3)]);
     finish();
-    assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER, 'the counter hit is announced before target reaction');
-    assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER + REACTION);
-    assert.ok(timeOf(trace, 'callout:countered@e1') >= LEAD + TOTAL + AFTER + 2 * REACTION, 'counter outcome follows the target reaction');
-    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the counter damage follows its reaction by a gap');
+    // Owner, 2026-11-14: the Counter animation starts at once; the hit word, the reaction and the damage floater follow it, one
+    // Counter gap (motion.counter.floaterToAnimMs) apart.
+    const G = actionPacing().counterGapMs, start = 1; // a zero-length wait is one 1 ms timer turn
+    assert.equal(timeOf(trace, 'callout:hit@e1'), start + TOTAL + G, 'the counter hit is announced before target reaction');
+    assert.equal(timeOf(trace, 'reaction:e1'), start + TOTAL + 2 * G);
+    assert.ok(timeOf(trace, 'callout:countered@e1') >= start + TOTAL + 3 * G, 'counter outcome follows the target reaction');
+    assert.equal(timeOf(trace, 'float:-3'), start + TOTAL + 3 * G, 'the counter damage follows its reaction by a gap');
   });
 });
 

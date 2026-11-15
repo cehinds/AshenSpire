@@ -247,6 +247,20 @@
         "symbol": "runOpcode case moveEngagement"
       }
     },
+    "swapRows": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": true
+        }
+      },
+      "description": "Swaps the target enemy's front or back row with the nearest living enemy in the other row (the target alone crosses when none stands there); inactive in a fight without the bands rules.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case swapRows"
+      }
+    },
     "dodgeRoll": {
       "params": {
         "target": {
@@ -969,6 +983,50 @@
       "legacy": {
         "file": "src/engine/actions.js",
         "symbol": "runOpcode case refillFlasks"
+      }
+    },
+    "changeAttribute": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "attribute": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "thisTurn": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Adds or subtracts an attribute for the rest of the fight, or until the end of the owner turn with thisTurn; derived stats follow at once.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case changeAttribute"
+      }
+    },
+    "rankUpCard": {
+      "params": {
+        "random": {
+          "type": "boolean",
+          "required": false
+        },
+        "cost": {
+          "type": "number",
+          "required": false
+        }
+      },
+      "description": "Run level: raises one card's rank through the shared rank-up service; cost cinders are paid only when a card rises.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case rankUpCard"
       }
     }
   },

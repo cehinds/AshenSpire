@@ -67,7 +67,8 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
   const css = read('styles/combat-mini-hud.css');
   assert.match(css, /--mh-bar-w: var\(--hud-mini-bar-width, 150px\)/);
   assert.match(css, /--mh-bar-h: var\(--hud-mini-bar-height, 10px\)/);
-  assert.match(css, /\.combat-health-poise-bar\.combat-health-poise-bar \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
+  // The Poise number sits beside the bar, so the row is 100% and the Poise trough (its well) carries the HP bar's width.
+  assert.match(css, /\.combat-health-poise-bar > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
   assert.match(css, /\.combat-health-meter > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'the HP trough is that width');
   assert.match(css, /\.combat-health-badges \{[^}]*width: var\(--mh-bar-w\); max-width: 100%[^}]*overflow: hidden/, 'the badge row is capped at the bar width (the browser test counts 8 statuses)');
   assert.match(css, /grid-row: 1 \/ 3/, 'the shield spans the HP and Poise rows only');
@@ -146,4 +147,24 @@ test('PoiseBarRemaining leaves a draining bar as it is; the pulse and inspector 
   assert.deepEqual(PoiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
   assert.deepEqual(PoiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
   assert.deepEqual(PoiseLeft({ persistentPoise: { value: 0, max: 0 }, poiseMeter: { value: 0, max: 10 } }, {}), { value: 0, max: 0 }, 'an empty pool beats the legacy meter');
+});
+
+// Owner 2026-11-15: the player's HP and Poise numbers match the enemy mini HUD: one size for both numbers and both combatants, the number column
+// right of the bars wide enough for "999/999" (4.4em of the value size, the width that fixed the CI-font overflow), and no player-only number sizes.
+test('the player HP and Poise numbers use the enemy mini HUD size, in a column that clears three-digit values', () => {
+  const css = read('styles/combat-mini-hud.css');
+  const responsive = read('styles/combat-target-responsive.css');
+  const sizes = [...css.matchAll(/\.m-value\.m-value \{\s*font-size: ([^;]+);/g)].map(m => m[1]);
+  assert.equal(sizes.length, 2, 'one rule for the HP number, one for the Poise number');
+  assert.deepEqual(new Set(sizes).size, 1, 'HP and Poise numbers share one size');
+  assert.match(sizes[0], /var\(--mh-value-size\)/, 'the size is the shared token');
+  const size = Number(/--mh-value-size: ([\d.]+)px/.exec(css)?.[1]);
+  assert.ok(size >= 11, 'never under 11 px');
+  assert.equal(size, Number(/combatant\.enemy \.combat-health-row \.as-meter \.m-value \{ font-size: calc\(([\d.]+)px/.exec(read('styles/combat-layers.css'))?.[1]), 'the enemy HP and Poise number size');
+  assert.match(css, /combat-health-poise-bar \.m-value\.m-value \{[^}]*color: var\(--gold\)/, 'the Poise number is yellow');
+  assert.match(css, /\.combatant\.player > \.target-hud-overhead-meters \{\s*--mh-value-w: calc\(var\(--mh-value-size\) \/ var\(--ui-zoom, 1\) \* 4\.4 \+ var\(--mh-gap\)\)/, 'the player number column holds 999/999');
+  assert.doesNotMatch(css, /--hp-chars|focus-number-size/, 'no player-only number geometry in the mini HUD sheet');
+  assert.doesNotMatch(responsive, /combatant\.player \.combat-health-row[^\n]*(focus-number-size|combatant-value-text)/, 'no player-only HP number size');
+  assert.doesNotMatch(read('src/ui/screens/combat.js'), /--hp-chars/, 'the Poise number no longer starts after a big HP number');
+  assert.doesNotMatch(css, /combat-health-meter\.combat-health-meter \{ align-items: flex-start/, 'the HP number centres on its bar like the enemy\'s');
 });

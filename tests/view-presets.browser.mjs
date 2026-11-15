@@ -13,7 +13,7 @@ const base = process.env.VIEW_PRESETS_BASE || server.url;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 const errors = [];
 const hosts = { desktop: [1440,900], wide: [1920,1080], tablet: [1024,768], mobile: [390,844] };
-const presets = { desktop: [1440,900], mobile: [390,844], widescreen: [1920,1080], tablet: [1024,768] };
+const presets = { desktop: [1440,900], mobile: [390,844], widescreen: [2560,1080], tablet: [1180,820] };
 async function pageFor(profile, shot, host = 'desktop') {
   const [width,height] = hosts[host];
   const page = await browser.newPage({ viewport: { width,height }, reducedMotion: 'reduce' });
@@ -22,15 +22,24 @@ async function pageFor(profile, shot, host = 'desktop') {
   await page.goto(`${base}${process.env.VIEW_PRESETS_ENTRY || 'index.html'}?shot=${shot}&gameProfile=${profile}&shotSeed=3`);
   return page;
 }
-async function choose(page, preset) {
+// `autoAs`: what View = Auto resolves to on this screen. Under the combat screen
+// Auto lays out on the form factor's fixed canvas ('desktop' at 1440x900,
+// 'mobile' at 390x844); elsewhere it stays 'auto'.
+async function choose(page, preset, autoAs = 'auto') {
   const select = page.locator('select[data-key="viewPreset"]');
   await select.selectOption(preset);
-  await page.waitForFunction(value => document.documentElement.dataset.viewPreset === value, preset);
+  const expected = preset === 'auto' ? autoAs : preset;
+  await page.waitForFunction(value => document.documentElement.dataset.viewPreset === value, expected);
   const dimensions = await page.evaluate(() => {
     const root = document.documentElement;
     const box = root.getBoundingClientRect();
     return { logical: { width: parseFloat(root.style.getPropertyValue('--view-width')), height: parseFloat(root.style.getPropertyValue('--view-height')) }, width: box.width, height: box.height, scale: Number(root.dataset.viewScale), host: [innerWidth,innerHeight] };
   });
+  if (preset === 'auto' && autoAs !== 'auto') {
+    const [width,height] = presets[autoAs === 'widescreen' || autoAs === 'tablet' || autoAs === 'mobile' || autoAs === 'desktop' ? autoAs : 'desktop'];
+    assert.equal(dimensions.logical.width, width);
+    assert.equal(dimensions.logical.height, height);
+  }
   if (presets[preset]) {
     const [width,height] = presets[preset];
     assert.equal(dimensions.logical.width, width);
@@ -66,7 +75,7 @@ try {
     const before = await page.evaluate(liveSnapshot);
     await openCombatSettings(page);
     for (const preset of [...Object.keys(presets), 'auto']) {
-      await choose(page, preset);
+      await choose(page, preset, 'desktop');
       if (profile === 'core' && preset === 'mobile') {
         await page.locator('select[data-key="viewPreset"]').scrollIntoViewIfNeeded();
         await page.screenshot({ path:resolve(output, 'desktop-mobile-preset.png') });
@@ -92,12 +101,13 @@ try {
     await openCombatSettings(page);
     await page.setViewportSize({ width:390,height:844 });
     await choose(page, 'desktop');
-    await choose(page, 'auto');
+    await choose(page, 'auto', 'mobile');
     console.log(`Combat preset checks passed: ${profile}`);
     await page.close();
   }
   const map = await pageFor('core', 'map', 'mobile');
   await map.locator('.mapscreen').waitFor();
+  assert.equal(await map.evaluate(() => document.documentElement.dataset.viewPreset), 'auto', 'Auto stays auto outside combat');
   // The shot setting boots the same in-document preset used by Settings.
   await map.goto(`${base}${process.env.VIEW_PRESETS_ENTRY || 'index.html'}?shot=map&gameProfile=core&shotSeed=3&shotSettings=${encodeURIComponent(JSON.stringify({ viewPreset:'desktop', mapFreePan:true }))}`);
   await map.locator('.map-scroll').waitFor();

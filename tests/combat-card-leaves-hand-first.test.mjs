@@ -44,6 +44,7 @@ function fixture(document, { energy } = {}) {
     unplayableReason: () => null, cardTargets: () => ({ legalIds: combat.enemies.map(e => e.id) }),
     upcastOptions: () => [], cardChoicePlan: () => null, resolveCard: () => ({}),
     takeSnapshot: () => ({ ents: {}, hand: [...combat.piles.hand], handPreviews: new Map(combat.piles.hand.map(c => [c.instanceId, previewCard(combat, c.instanceId)])) }),
+    payPlayAtCommit() {}, // the commit-time payment has its own test: tests/combat-play-pays-first.test.mjs
     flyCard: () => timeline.push('fly'), sfx: { play() {} }, haptic: { play() {} }, t: x => x,
     render() { timeline.push('render'); }, renderPlayQueue() {}, queueToast: { show: text => timeline.push('toast:' + text) },
     commitEndTurn: () => timeline.push('end-turn'),

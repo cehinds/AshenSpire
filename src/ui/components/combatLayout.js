@@ -7,6 +7,7 @@ import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 import { fitFooterCompactLabels } from './footerArt.js';
 import { layoutMetrics } from '../layoutMetrics.js';
+import { CanvasBox } from '../viewViewport.js';
 
 // Absolute caption rows are part of the header's occupied layout band. Move
 // the field/grid with that band rather than squeezing figures at fixed feet.
@@ -93,7 +94,11 @@ export function wireCombatLayout(combatEl) {
     // the custom-property writes below forces a style and layout flush (one 149 ms
     // recalc on a phone profile at the footer host's clientWidth).
     const clientWidth = combatEl.clientWidth, clientHeight = combatEl.clientHeight;
-    const zoom = combatEl.getBoundingClientRect().width / clientWidth || 1;
+    // The canvas zoom (canvas px per local px): every authored px in the plans below is a
+    // canvas px, so the combat canvas's fit scale is left out (CanvasRect). Rects read
+    // later in this pass are scaled real px and convert through rectZoom.
+    const rectZoom = combatEl.getBoundingClientRect().width / clientWidth || 1;
+    const zoom = rectZoom / CanvasBox().scale;
     const host = row ? row.parentElement || combatEl : null;
     const hostWidth = host ? host.clientWidth - inlinePadding(host) : 0;
     const rem = Math.max(16 / zoom, parseFloat(layoutMetrics().fontSize) || 16);
@@ -132,13 +137,13 @@ export function wireCombatLayout(combatEl) {
       // so a tall host does not keep an empty strip under the smaller header.
       ? (split && headerRow === 'single' ? headerSizing.splitHeightPx / zoom
         : Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom))
-      : combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo);
+      : combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, rectZoom, bandMemo);
     combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
     combatEl.dataset.desktopFooter = String(split);
     desktopHeader.apply(true);
     if (combatEl.dataset.desktopHeader === 'true') {
-      const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
+      const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / rectZoom || 0;
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
     }
     // Desktop (owner, 2026-10-31): the hand band shrinks to what the smaller, lower fan needs;

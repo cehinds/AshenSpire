@@ -33,11 +33,11 @@ That object is only meaningful when the module is supported by the selected bund
 
 Settings live in `engine/modules/rest/settings.schema.json`; shipped defaults are in `defaults.json`. Every listed setting is required after resolution unless the schema marks it otherwise.
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
-- `/servicesPerVisit` (type enum; default `1`; allowed 1): Current schema fixes this to exactly one service.
-- `/services` (type array; default `["strategize","smith","levelUp"]`; minItems 1; items: "strategize", "smith", "levelUp"): Supported service IDs: strategize, smith, levelUp.
+- `/servicesPerVisit` (type enum; default `1`; allowed 1, "all"): 1 closes the visit after one service; "all" heals on arrival and lets every listed service run once.
+- `/services` (type array; default `["strategize","smith","levelUp"]`; minItems 1; items: "rest", "strategize", "smith", "levelUp", "upgradeCard"): Supported service IDs: rest, strategize, smith, levelUp, upgradeCard. Listing `rest` turns on rest-choice mode: arriving heals nothing, only the `rest` service restores (per `/recovery`), and every other service restores nothing. With `servicesPerVisit` 1 the deck-free fallback is satisfied by `strategize` or `rest`.
 - `/allowEmptyStrategize` (type enum; default `true`; allowed true): Allows recovery-only Strategize when there are no cards to edit.
 - `/recovery` (type object; default `{"hp":"full","sp":"full","mp":"full","healingFlasks":"full","mpFlasks":"full"}`): Nested recovery policy; core fixes each field to full.
-  - `/recovery/hp` (object; default `"full"`; allowed "full"): part of the parent object setting.
+  - `/recovery/hp` (default `"full"`; allowed "full" or a number from 0.01 to 1): `"full"`, or a fraction of max HP (rounded up) that the `rest` service restores. Without the `rest` service the value is not read.
   - `/recovery/sp` (object; default `"full"`; allowed "full"): part of the parent object setting.
   - `/recovery/mp` (object; default `"full"`; allowed "full"): part of the parent object setting.
   - `/recovery/healingFlasks` (object; default `"full"`; allowed "full"): part of the parent object setting.

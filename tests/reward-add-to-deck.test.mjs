@@ -5,6 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, projectZones } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
+import { pinLegacyRewards } from './helpers/legacy-core-rewards.mjs';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId } from '../src/model/gameProfileRewards.js';
 
 const p = resolveGameProfile('core'), reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
@@ -59,7 +60,8 @@ test('add to deck refuses non-card rewards', () => {
   const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
   let found = null;
   for (let seed = 0; seed < 300 && !found; seed++) {
-    const r = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    // The shipped combat mix is cards only (2026-11-14), so a non-card reward comes from a run pinned to the old 66/4/18/2/10 mix.
+    const r = pinLegacyRewards(createRunState({ seed: 1, classId: 'reaver', registries: reg }));
     const o = gameProfileRewardOffers(reg, r, createRng(seed), { offerId: 'fight' });
     const at = o.options.findIndex(row => !['combatCards', 'weaponArts'].includes(row.kind));
     if (at >= 0) found = { r, o, at };

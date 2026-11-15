@@ -259,7 +259,13 @@ test('default decks are pool keys resolved by class and weapon type, from the sh
 
 test('unlimited copies are earned: training.basic for basic maneuvers, training.graduate for cantrips', async () => {
   const { deckCopyLimit, characterSettings: cs } = await import('../engine/kernel/gameConfig.js');
-  const s = cs(profile.modules), base = profile.content.characters.find(c => c.id === 'reaver');
+  // Shipped Core has no unlimited training rules (owned copies only); the earned-unlimited rules a run pinned before rest-site deck
+  // editing keeps are the legacy fixture's, laid over the shipped deck-training settings.
+  const OLD_RULES = JSON.parse(readFileSync(new URL('./fixtures/legacy-core-unlimited-rules.json', import.meta.url), 'utf8'));
+  const shipped = cs(profile.modules);
+  assert.deepEqual(shipped.deckEditing.unlimited, [], 'shipped Core mints nothing');
+  assert.equal(deckCopyLimit('core.strike', profile.content.characters.find(c => c.id === 'reaver'), profile.content, shipped, profile.modules.gear, { 'core.strike': 2 }), 2);
+  const s = { ...shipped, deckEditing: { ...shipped.deckEditing, unlimited: OLD_RULES } }, base = profile.content.characters.find(c => c.id === 'reaver');
   const limit = (row, id, owned = {}) => deckCopyLimit(id, row, profile.content, s, profile.modules.gear, owned);
   assert.ok(base.tags.includes('training.basic'));
   for (const id of ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade']) assert.equal(limit(base, id), Infinity, id);

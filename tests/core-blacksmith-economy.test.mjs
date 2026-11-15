@@ -169,26 +169,27 @@ test('armament purchase: refuses without cinders or room, and a stale quote spen
 test('weapon-art shelf: the Core art is sold at the weaponArt price, once, into the sideboard', () => {
   const run = smithRun(coreOut);
   // Owner 2026-11-05: the shelf is the carried greatsword's two learnable arts (its default is granted, so never sold).
-  assert.deepEqual(run.shopStock.weaponArts.map((row) => row.id).sort(), ['executioner', 'poiseBreaker']);
+  // Owner 2026-11-14 (playableOnly): poiseBreaker costs mana a Reaver cannot pay, so the shelf stocks only executioner.
+  assert.deepEqual(run.shopStock.weaponArts.map((row) => row.id).sort(), ['executioner']);
   const row = run.shopStock.weaponArts[0];
   assert.ok(row.cost >= 68 && row.cost <= 90);
   const before = run.cinders;
   const receipt = commitCoreWeaponArt(coreOut, run, coreWeaponArtPlan(coreOut, run, row.id));
   assert.equal(run.cinders, before - row.cost);
   assert.ok(run.sideboard.some((card) => card.instanceId === receipt.instance.instanceId && card.cardId === row.id));
-  assert.equal(run.shopStock.weaponArts.length, 1);
+  assert.equal(run.shopStock.weaponArts.length, 0, 'the only art on the shelf is sold once');
   assert.equal(coreWeaponArtPlan(coreOut, run, row.id).ok, false);
   const poor = smithRun(coreOut, { cinders: 1 });
   assert.match(coreWeaponArtPlan(coreOut, poor, poor.shopStock.weaponArts[0].id).reason, /cinders/i);
 });
 
 test('blacksmith upgrade: insufficient cinders refuses and keeps both purses; stale quote refuses', () => {
-  const run = smithRun(coreOut, { stones: 5, cinders: 59 });
+  const run = smithRun(coreOut, { stones: 5, cinders: 24 }); // W25: the first item upgrade costs 25 cinders
   const plan = blacksmithUpgradePlan(coreOut, run, 'armament/greatsword');
   assert.equal(plan.ok, false);
   assert.match(plan.reason, /cinders/i);
   assert.throws(() => commitBlacksmithUpgrade(coreOut, run, plan));
-  assert.deepEqual([run.smithingStones, run.cinders, run.itemUpgradeLevels?.['armament/greatsword']], [5, 59, undefined]);
+  assert.deepEqual([run.smithingStones, run.cinders, run.itemUpgradeLevels?.['armament/greatsword']], [5, 24, undefined]);
   run.cinders = 500;
   const quote = blacksmithUpgradePlan(coreOut, run, 'armament/greatsword');
   commitBlacksmithUpgrade(coreOut, run, quote);
@@ -207,18 +208,20 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   run.itemUpgradeLevels = { 'armament/greatsword': 1 };
   assert.equal(commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }) !== undefined, true);
   assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
-  // The Blacksmith takes tier 2 to 3, at 2 stones (the ladder's 3 less the discount) and 150 cinders.
+  // W25: the Blacksmith's work is a pick of rolled options, priced by the item's upgrade number (2 fixed tiers held,
+  // so this is upgrade 3: 1 stone and 85 cinders), and it leaves the fixed tier ladder alone.
   const smith = smithRun(coreOut, { stones: 4, cinders: 400 });
   smith.itemUpgradeLevels = { 'armament/greatsword': 2 };
   const plan = blacksmithUpgradePlan(coreOut, smith, 'armament/greatsword');
-  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 2, 150]);
+  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 85]);
   commitBlacksmithUpgrade(coreOut, smith, plan);
-  assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 3);
-  assert.equal(smithingPlan(coreReg, smith).candidates.find((c) => c.itemRef === 'armament/greatsword'), undefined, 'no tier 4');
+  assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 2);
+  assert.equal(smith.itemUpgradePicks['armament/greatsword'].length, 1);
 });
 
 test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 40 cinders', () => {
   const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
   assert.equal(run.cinders, 60);
@@ -300,6 +303,7 @@ test('armament purchase: a rack piece the run has since acquired is refused and 
 
 test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
   const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
   const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };

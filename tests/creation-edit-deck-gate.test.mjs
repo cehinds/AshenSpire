@@ -7,12 +7,19 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { armouryOpensDeckEditor } from '../src/model/armouryRules.js';
+import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
-test('the gate the review asks (the preview run + the settings) is off with deck editing off and on with it on', () => {
+test('the shipped Core (deck edited at rest sites) opens no Armoury or creation deck door', () => {
   const preview = createRunState({ seed: 0, classId: 'reaver', registries, gameProfile: profile });
+  assert.equal(armouryOpensDeckEditor(preview, { deckEditing: true }), false);
+});
+
+test('the gate the review asks (the preview run + the settings) is off with deck editing off and on with it on (pre-rest Core)', () => {
+  const legacy = legacyCoreProfile();
+  const preview = createRunState({ seed: 0, classId: 'reaver', registries: legacyCoreRegistries(legacy), gameProfile: legacy });
   assert.equal(armouryOpensDeckEditor(preview, { deckEditing: false }), false);
   assert.equal(armouryOpensDeckEditor(preview, { deckEditing: true }), true);
 });

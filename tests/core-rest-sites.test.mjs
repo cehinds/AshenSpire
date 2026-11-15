@@ -5,6 +5,10 @@ import { core2Registries } from './helpers/core2.mjs';
 import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 
 const registries = core2Registries();
 
@@ -36,7 +40,8 @@ test('Core has three rest sites per act and the floor before the boss is always 
   }
 });
 
-test('15% of the randomly typed Core nodes are shops and fixed nodes never are (D9)', () => {
+test('legacy routes content: 15% of the randomly typed Core nodes are shops and fixed nodes never are (D9)', () => {
+  const old = legacyCoreProfile(), registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, old)), old);
   const run = createRunState({ seed: 5, classId: 'reaver', registries, runId: 'shop-share' });
   let eligible = 0, shops = 0;
   for (let seed = 1; seed <= 300; seed++) for (const tier of [1, 2, 3]) {

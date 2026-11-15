@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return', 'wording'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,24 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/components/creationCards.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/components/creationCards.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/components/footerArt.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/components/holdconfirm.js', 'Confirm', 'a sentence that merely starts with the word ("Confirm change"), not the common.confirm row'],
+  ['src/ui/fx.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/fx.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/input.js', 'Confirm', 'the keybinding table names its own control ("Confirm / Play", short "Confirm"); not the common.confirm button'],
+  ['src/ui/input.js', 'Menu', 'the keybinding table names its own control ("Open Menu", short "Menu"); not the common.menu button'],
+  ['src/ui/models/CombatantInspectorSections.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/models/CombatantInspectorSections.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/models/ConfirmationReviewModel.js', 'Confirm', 'a list of banned generic words a review head must not use; not shown copy'],
+  ['src/ui/models/ProgressionInspectionModel.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/models/ProgressionInspectionModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/models/SettingsRowsModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/screens/combat.js', 'Confirm', 'a sentence that merely starts with the word ("Confirm <thing>"), not the common.confirm row'],
+  ['src/ui/screens/customize.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/screens/customize.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
+  ['src/ui/screens/rest.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/cardArtStyle.js', 'Reviewed', 'persisted CARD_ART_REVIEWED style identifier; the authoring tab and review checkbox read their own uiStrings rows'],
   ['src/ui/components/combatActionRow.js', 'Draw', 'opens the Draw pile; not the procedural builder draw-effect art cue'],
   ['src/ui/components/creationCards.js', 'Draw', 'character resource stat label for cards drawn per turn; not the builder draw-effect art cue'],

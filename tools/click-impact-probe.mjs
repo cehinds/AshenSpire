@@ -14,7 +14,7 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // spell range: one real hostile action is still required and its committed miss is
 // reported without inventing a number. While numbers are short, a hostile card with a
 // positive public preview chance is preferred, since only HP damage yields a number.
-// Optional enemy-turn reactions are declined through their visible Back button.
+// Optional enemy-turn reactions are declined through their visible Skip button.
 // No engine action, settings change, injected state or synthetic click is used.
 //
 // Each input, contact and numeric readout is associated with this player's
@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { pointerTargetExpression } from './pointer-target.mjs';
-import { judgeRounds } from './click-impact-rounds.mjs';
+import { judgeRounds, MIN_PLAYS } from './click-impact-rounds.mjs';
 import { orderedImpactSample } from './click-impact-stages.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -214,13 +214,10 @@ async function main() {
     }
     await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'New Game');
     await click('.title-menu .slot-new', 'New Game');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the slot picker');
-    await click('[data-title-action="modal-continue"]', 'Create character');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the slot review');
-    await click('[data-title-action="review-new"]', 'Start');
+    // A fresh profile opens creation directly: no slot picker or slot review.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'Core class creation');
     await click('#cz-classes .cz-class', 'Reaver');
-    await click('#cz-next', 'Review');
+    await click('#cz-next', 'Customise');
     await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'review'`, 'Core review');
     await click('#seed-input', 'seed field');
     for (const type of ['keyDown','keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'a', code: 'KeyA', modifiers: 2, windowsVirtualKeyCode: 65 }, S);
@@ -339,7 +336,20 @@ async function main() {
         };
         // Only HP damage draws a number now: while numbers are short, prefer a card that can deal it.
         const canDamage = c => { const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId); return !!inst && damaging(resolveCombatCard(combat, inst)) && combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0); };
-        const pick = (${numbers.length < PLAYS} && hand.find(c => eligible(c) && canDamage(c))) || hand.find(eligible);
+        const { resolvedCardPlayCosts } = await import('/src/engine/combat.js');
+        const { chooseImpactPlay } = await import('/tools/click-impact-rounds.mjs');
+        const living = combat.enemies.filter(enemy => enemy.alive);
+        const candidates = hand.map(c => {
+          const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
+          const def = inst && resolveCombatCard(combat, inst);
+          const ok = eligible(c);
+          const hits = ok && def ? immediateCardEffects(def).filter(e => e.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(e.target)) : [];
+          const damage = hits.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          // Conservative: one living enemy whose HP the card's listed damage reaches.
+          const lethal = ok && living.length === 1 && hits.length > 0 && damage >= living[0].hp;
+          return { id: c, eligible: ok, canDamage: ok && canDamage(c), cost: ok && def ? (Number(resolvedCardPlayCosts(combat, def).stamina) || 0) : 0, damage, lethal };
+        });
+        const pick = chooseImpactPlay(candidates, { numbersShort: ${numbers.length < PLAYS}, samplesShort: ${samples.length < PLAYS} })?.id;
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
         return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
@@ -354,11 +364,11 @@ async function main() {
         // burning every sampling attempt on that same unchanged hand.
         const turn = await evalIn(`window.__combat.turn`);
         for (let attempt = 0; attempt < 3 && await evalIn(`window.__combat?.turn === ${turn} && window.__combat?.phase === 'player'`); attempt += 1) {
-          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 600 } : null; })()`);
+          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 0 } : null; })()`);
           if (!pt) throw new Error('no End Turn');
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-          await wait(pt.hold + 250);
+          await wait(pt.hold ? pt.hold + 250 : 60);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
           const transitionEnd = Date.now() + 4000;
           while (Date.now() < transitionEnd) {
@@ -370,7 +380,7 @@ async function main() {
         while (Date.now() < deadline) {
           if (await evalIn(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`)) break;
           const decline = '.reaction-choice [data-control-role="exit"]';
-          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Back from the optional defensive reaction');
+          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Skip the optional defensive reaction');
           else await wait(100);
         }
         await until(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`, `turn ${turn + 1} or the fight's end`, 1000);
@@ -419,6 +429,8 @@ async function main() {
         console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (no HP damage)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
       } else if (args.includes('--debug')) console.log('    unmeasured', JSON.stringify(await evalIn(`({ floats: window.__impact.floats.filter(t => t > ${mark}), contacts: window.__impact.contacts.filter(t => t > ${mark}), clips: window.__impact.clips.filter(c => c.at > ${mark}), stages: window.__fx.trace.filter(([at]) => at > ${mark}) })`)));
     }
+    const ended = await evalIn(`window.__combat?.result ?? null`);
+    if (ended != null && (samples.length < MIN_PLAYS || numbers.length < MIN_PLAYS)) console.error(`click-impact-probe: the fight ended (${JSON.stringify(ended)}) after ${await played()} plays`);
     await cdp.send('Target.closeTarget', { targetId }).catch(() => null);
     if (!hostileProofs) throw new Error('no real hostile action completed its contact and stage proof');
     return { samples, numbers };
@@ -440,7 +452,7 @@ async function main() {
       targetablePlayer: !!document.querySelector('.player.targetable'),
       cardsPlayed: window.__combat?.player?.counters?.cardsPlayedThisCombat,
       phase: window.__combat?.phase, player: { energy: window.__combat?.player?.energy, stamina: window.__combat?.player?.stamina, mana: window.__combat?.player?.mana, statuses: window.__combat?.player?.statuses },
-      modal: document.querySelector(".card-choice, .confirmation-modal")?.innerText,
+      modal: document.querySelector(".card-choice, .option-choice, .confirmation-modal")?.innerText,
       body: document.body.innerText.slice(-2500),
     })`).catch(() => null)));
     process.exitCode = 1;

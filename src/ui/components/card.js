@@ -1,3 +1,5 @@
+import { BarrierPoisePerStack } from '../../model/combatRatings.js';
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { bindDamageReceipt, cardDamageReceipt, damageReceiptHtml } from './damageReceipt.js';
 import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
@@ -48,7 +50,7 @@ import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
-import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
+import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
@@ -883,7 +885,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
-  const pools = liveCosts || registries.framework.costProfile(def);
+  const pools = liveCosts || FaceCostProfile(registries, def);
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
@@ -910,12 +912,12 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + (id === 'barrier' ? amount * BarrierPoisePerStack(ctx) : amount) + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: t('combat.protection.poise') })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
-        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less Stamina.'
         + (stance.maneuver === 'defend' ? ' While in Defend stance, Defend, Counter and Evade cards all take Adept discounts.' : '')
-        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
+        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and bonus Poise.' : '')
         + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
     }
   }
@@ -923,13 +925,17 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // Core return help only where live arms the card (armsAsCoreCounter): Counter stances and spell Counters with coverage.
     const inCore = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
     const coreCounter = inCore && armsAsCoreCounter(registries, def);
+    const stackRules = inCore ? FixCoreCounterStacks({ combatExpansionVersion: 2, gameProfile: registries.gameProfile }) : null;
+    const counterHelp = () => stackRules
+      ? t('card.counter.help.stacks', { stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)), stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded) })
+      : t('card.counter.help.core', { stackPercent: CounterStackPercent() });
     const coreIneligible = inCore && !coreCounter;
     if (def.counterCoverage) {
       const c = def.counterCoverage;
       const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
-      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
-    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? t('card.counter.help.core', { stackPercent: CounterStackPercent() }) : t('card.counter.help.legacy'))}</div>`;
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(counterHelp()) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
+    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? counterHelp() : t('card.counter.help.legacy'))}</div>`;
   }
   if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {

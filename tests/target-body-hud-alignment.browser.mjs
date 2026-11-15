@@ -6,7 +6,7 @@ const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODUL
 const server = process.env.BASE_URL ? null : await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 try {
-  for (const [width, height] of [[390, 844], [820, 1180], [1440, 900]]) {
+  for (const [width, height] of [[390, 844], [412, 915], [820, 1180], [1440, 900]]) {
     const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -58,7 +58,7 @@ try {
         const rack = frame.querySelector(':scope > .target-hud-overhead-meters').getBoundingClientRect();
         const hp = frame.querySelector('.target-hud-overhead-meters [data-res="hp"].m-track').getBoundingClientRect();
         return { accepted, pose: controller.pose, source: art.body.source, gap: head - rack.bottom,
-          width: hp.width, expectedWidth: Number(frame.dataset.miniHudWidth) };
+          width: hp.width, expectedWidth: Number(frame.dataset.miniHudWidth) * (Number(document.documentElement.dataset.viewScale) || 1) }; // canvas px to the real px of getBoundingClientRect
       }, stance);
       assert.equal(receipt.accepted, true, `${width}: ${stance} uses a real stance frame`);
       assert.equal(receipt.source, 'authored', 'body head must come from semantic metadata');

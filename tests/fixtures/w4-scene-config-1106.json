@@ -27,7 +27,13 @@
         "context": 33,
         "footer": 15
       },
-      "floorPercent": 60,
+      "bandsDesktop": {
+        "hud": 9,
+        "scene": 59,
+        "context": 24,
+        "footer": 8
+      },
+      "floorPercent": 75,
       "portraitSlot": {
         "widthVw": 20,
         "compactWidthVw": 30

@@ -4,7 +4,7 @@
 // instead of calling allocateCombatBands with a hand-built argument list.
 import { wireCombatLayout } from '../../src/ui/components/combatLayout.js';
 
-const GLOBALS = ['document', 'getComputedStyle', 'requestAnimationFrame', 'cancelAnimationFrame', 'ResizeObserver', 'MutationObserver'];
+const GLOBALS = ['window', 'document', 'getComputedStyle', 'requestAnimationFrame', 'cancelAnimationFrame', 'ResizeObserver', 'MutationObserver'];
 
 class InertObserver {
   constructor() { this.connected = false; }
@@ -18,6 +18,7 @@ function withFakes(documentElement, fn) {
   for (const key of GLOBALS) original[key] = Object.getOwnPropertyDescriptor(globalThis, key);
   const define = (key, value) => Object.defineProperty(globalThis, key, { configurable: true, value });
   define('document', { documentElement });
+  define('window', { document: { documentElement } });
   define('getComputedStyle', () => ({ fontSize: '16px', paddingLeft: '0px', paddingRight: '0px' }));
   define('requestAnimationFrame', () => 0);
   define('cancelAnimationFrame', () => {});
@@ -33,8 +34,11 @@ function withFakes(documentElement, fn) {
 
 // `width` and `height` are local (pre-zoom) CSS px; the root's rendered width is
 // width * zoom, so the caller measures the zoom the way a browser reports it.
-export function planCombatLayout({ formFactor, width, height, zoom = 1 }) {
-  const documentElement = { dataset: { formFactor } };
+// `canvasScale` puts the root under a combat canvas (data-view-*) drawn at that fit scale,
+// so the rendered width is also multiplied by it, as a browser reports it under the transform.
+export function planCombatLayout({ formFactor, width, height, zoom = 1, canvasScale = null }) {
+  const documentElement = { dataset: { formFactor, ...(canvasScale ? { viewPreset: 'desktop', viewScale: String(canvasScale),
+    viewWidth: '1440', viewHeight: '900', viewLeft: '0', viewTop: '0' } : {}) } };
   return withFakes(documentElement, () => {
     const props = {};
     const combatEl = {
@@ -43,7 +47,7 @@ export function planCombatLayout({ formFactor, width, height, zoom = 1 }) {
       clientWidth: width,
       clientHeight: height,
       style: { setProperty(key, value) { props[key] = value; } },
-      getBoundingClientRect: () => ({ width: width * zoom, height: height * zoom }),
+      getBoundingClientRect: () => ({ width: width * zoom * (canvasScale || 1), height: height * zoom * (canvasScale || 1) }),
       querySelector: () => null,
     };
     const layout = wireCombatLayout(combatEl);

@@ -36,6 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
+import { CounterExchangeRoles } from './models/CounterExchangeModel.js';
 import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
@@ -639,7 +640,7 @@ function showFloater(rec, item, entry) {
 
 // ---------------------------------------------------------------------------
 // On-character callouts (owner, 2026-10-11): one short word that rises from
-// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK.
+// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, BLOCK BREAK.
 // Larger than a damage float and coloured per kind; the words are UI strings.
 // Two on one fighter stack (never overlap) and at most two show at once; the
 // same word already showing on that fighter is not repeated.
@@ -761,9 +762,10 @@ function dropWaitingFloaters(layer) {
 export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
-  const residual = amount - blocked;
-  // The whole hit as it reached the layers. `event.amount` is what is left AFTER Barrier, Ward and Poise,
-  // so the floater reads the same sum the combat log does (owner, 2026-11-02: show the actual hit).
+  // The HP the hit took: a killing blow is not charged for its overkill (owner rule: the floater is the HP lost).
+  const taken = amount - blocked;
+  const residual = Number.isFinite(event?.hpRemoved) ? Math.min(taken, event.hpRemoved) : taken;
+  // The whole hit as it reached the layers (the combat log's "for N"); the floater itself shows the HP lost, `residual`.
   const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
@@ -781,18 +783,20 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
-    poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
+    // One yellow number for all the Poise the hit removed (Poise absorbed plus a spell's magic Poise).
+    poise: poise + magicPoise > 0 ? { text: String(poise + magicPoise), cls: 'poise small hitpart' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
     // Magic hits Poise first, 1:1 (owner, 2026-10-31).
     magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
-    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    // The number floats the FULL hit before Block / Poise / Ward / Barrier; the Block badge drops by the guard
-    // on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome words key off
-    // HP loss as before; `fullHit` is the number a guarded hit that cost no HP floats (beside BLOCKED or Pierced).
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small hitpart' } : null,
+    // Owner, 2026-11-14: the floating number is the HP the hit cost (what the card face, the intent and the HP bar agree on), never the
+    // hit before Block, Poise, Ward or Barrier. `damage` stays null for a hit that cost no HP, which shows its outcome word instead;
+    // `fullHit` is the unsigned pre-layer figure a guarded hit that cost no HP carries (beside BLOCKED or Pierced; the policy hides it).
     full,
-    damage: residual > 0 ? { text: `-${full}`, cls: dmgClass(full, targetMaxHp) } : null,
+    // A hit on a Broken target pops in the critical size: the payoff of the break is seen, not only read (Wave 3).
+    damage: residual > 0 ? { text: `-${residual}`, cls: event?.targetBroken ? 'dmg crit' : dmgClass(residual, targetMaxHp) } : null,
     // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
     fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
@@ -1098,7 +1102,7 @@ export function groupBeats(events) {
 // splits the attack beat at its first accuracy receipt: [move + Hit/Miss word] [the reaction card's beats] [the rest,
 // already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
 const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-  || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
+  || event.type === 'attackMissed' && (event.missReason === 'accuracy' || event.missReason === 'evaded') && event.evadeActive;
 // A receipt that announces an outcome (onResult says Hit or Miss for it); combatAvoidanceResolved announces one only when avoided.
 const announces = event => ['attackHit', 'attackMissed', 'attackEvaded'].includes(event.type) || event.type === 'combatAvoidanceResolved' && event.avoided === true;
 const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');
@@ -1191,7 +1195,7 @@ export function playTimeline(events, ctx, done) {
   // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
   // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
   const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
-  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'Stamina', manaSpent: 'Mana', enemyStaminaSpent: 'Stamina' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
@@ -1218,6 +1222,40 @@ export function playTimeline(events, ctx, done) {
       || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
     callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
   };
+  // The enemies' turn runs on its own pacing (content/config actionPacing.json, motion.enemyTurn): every beat from the
+  // ENEMY TURN banner on, except a card the player plays in answer (a reaction), keeps the player's pacing.
+  const enemyFrom = beats.findIndex(beat => beat.banner && beat.events[0]?.type === 'enemyTurnStart');
+  // A turn resumed after the player answered a reaction prompt has no banner: the screen says whether it is the enemies'.
+  const enemyStart = ctx.isEnemyPlayback?.() === true ? 0 : enemyFrom;
+  const enemyBeats = new Set(enemyStart < 0 ? [] : beats.slice(enemyStart).filter(beat => beat.actorId !== 'player'));
+  const enemyEvents = new Set([...enemyBeats].flatMap(beat => beat.events));
+  const inEnemyTurn = beat => beat.events.some(event => enemyEvents.has(event));
+  // A beat that hits or misses owes the player the contact and the number, so it keeps every stage gap. A wind-up is
+  // held for its telegraph length alone, and an action that deals nothing (a Guard, a Warcry) says its word as it
+  // moves and walks no result, reaction or damage stage, since it has none to say.
+  const OUTCOME = new Set(['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'combatAvoidanceResolved', 'hpLost']);
+  const enemyTimingFor = beat => {
+    if (beat.telegraph) return { ...enemyTiming, intentMs: 0, wordMs: 0, resetMs: 0 };
+    // The reveal of whose turn it is and the refill of the hand follow the banner without a pause of their own.
+    if (beat.kind === 'reveal' || beat.kind === 'draw') return { ...enemyTiming, stepMs: 0 };
+    if (beat.actorId && !beat.banner && !beat.events.some(event => OUTCOME.has(event.type)))
+      return { ...enemyTiming, intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
+    return enemyTiming;
+  };
+  // A Counter exchange (owner, 2026-11-14): the Counter card's cost, word, stance and animation start together, then the hit or
+  // miss, then the reaction with its damage floaters, and every wait between a floater and the next animation is the one short
+  // Counter gap (motion.counter.floaterToAnimMs). The animations themselves keep their length; only the waits shrink.
+  const counterRoles = CounterExchangeRoles(beats);
+  const counterHitEvents = new Set([...counterRoles].filter(([, role]) => role === 'hit').flatMap(([beat]) => beat.events));
+  const counterTimingFor = (role, base) => {
+    const gap = timing.counterGapMs;
+    const gaps = { afterSpriteMs: gap, resultMs: gap, reactionMs: gap, damageMs: gap, resetMs: gap, stepMs: gap };
+    // Only the Counter card and its return start on one beat: the hit that the Counter answers keeps its own lead-in.
+    return role === 'hit' ? { ...base, ...gaps } : { ...base, intentMs: 0, wordMs: 0, ...gaps };
+  };
+  // The pacing a beat runs on (its banner shows for the same hold the timeline waits).
+  const pacingOf = beat => enemyBeats.has(beat) ? enemyTiming : timing;
+  const dealsOutcome = beat => beat.events.some(event => OUTCOME.has(event.type));
   let handle, skippedPointer = false;
   const isCurrent = () => ctx.isCurrent?.() ?? true;
   const skip = event => {
@@ -1249,6 +1287,11 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
   handle = runActionTimeline(beats, {
     onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
+    timingFor: beat => {
+      const base = enemyBeats.has(beat) ? enemyTimingFor(beat) : null;
+      const role = counterRoles.get(beat);
+      return role ? counterTimingFor(role, base || timing) : base;
+    },
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
@@ -1331,7 +1374,8 @@ export function playTimeline(events, ctx, done) {
       if (beat.resultSaid && !beat.events.some(announces)) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
-        const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
+        const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' && event.missReason === 'evaded' ? 'evaded'
+          : event.type === 'attackMissed' || event.type === 'attackEvaded'
           || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed'
           : event.type === 'contestPassed' || event.type === 'contestFailed' ? event.type : null;
         if (!kind || saidTargets.has(event.targetId)) continue;
@@ -1349,10 +1393,16 @@ export function playTimeline(events, ctx, done) {
     },
     onReaction: beat => {
       runParts(beat, 'reaction');
-      return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
+      const speed = inEnemyTurn(beat) ? enemyTiming.spriteSpeed : timing.spriteSpeed;
+      // An enemy action with no outcome (a Guard) shows its flash but holds the timeline for none of it.
+      if (inEnemyTurn(beat) && beat.actorId && beat.kind !== 'reveal' && !dealsOutcome(beat)) return 0;
+      // The hit a Counter answers does not hold the exchange for its recoil: the counter animation takes over the figure a gap
+      // after the damage floaters, as the owner asked (2026-11-14); the recoil still plays until it does.
+      if (beat.events.some(event => counterHitEvents.has(event))) return 0;
+      return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, speed)) || 0));
     },
     onNumbers: beat => {
-      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
+      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', pacingOf(beat).bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
@@ -1557,12 +1607,13 @@ export function outcomeKindForEvent(e = {}) {
   if (e.immune && !(Number(e.amount) > 0)) return 'immune';
   const parts = guardHitFloatParts(e);
   if (parts.residual > 0) return null; // HP damage: the per-layer floats show it
-  if (parts.pierced) return null; // a pierced hit keeps its floats (Pierced N beside Block and Poise), not a lone BLOCKED word
   if (parts.blocked > 0) return 'blocked';
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
   if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
   if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
+  // A hit that Poise alone absorbed whole cost no HP: it reads as the same fully-absorbed word, not as silence.
+  if (parts.amount === 0 && (parts.poise || parts.magicPoise)) return 'blocked';
   return null;
 }
 
@@ -1615,16 +1666,17 @@ export function calloutForEvent(e = {}) {
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
     case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
-    case 'attackMissed': kind = 'missed'; break;
+    // Owner, 2026-11-14: a hit an Evade stack cancelled reads Evaded; every other miss (out of range) reads Missed.
+    case 'attackMissed': kind = e.missReason === 'evaded' ? 'evaded' : 'missed'; break;
     case 'contestPassed': kind = 'contestPassed'; break;
     case 'contestFailed': kind = 'contestFailed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
     case 'enemyStaggered': if (!e.cause || e.cause === 'weakness') kind = 'staggered'; break;
     case 'weaknessTriggered': kind = 'weak'; break;
-    case 'playerStaggered': kind = 'staggered'; break;
+    case 'playerStaggered': if (!e.broken) kind = 'staggered'; break; // a Broken player already got the BREAK word from poiseBroken
     case 'enemyInterrupted': kind = 'interrupted'; break;
-    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    // A Smash's Block break is the BLOCK BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
     case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
@@ -1709,7 +1761,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Guard') ? 'Guard' : undefined); // the spark stays; its word follows the floater policy
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Block') ? 'Block' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -1739,8 +1791,9 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
-            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls);
-            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls);
+            // A hit fully absorbed floats its white (Block) and yellow (Poise) numbers; the word stays screen-reader text only.
+            if (outcome === 'blocked' && parts.guard) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+            if (parts.poise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.poise.text, parts.poise.cls, undefined, { immediate: true });
             return;
           }
           const anchor = ctx.anchorFor(e.targetId);
@@ -1748,8 +1801,11 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // all at the same x. The layers the hit met come first, then the hit's HP loss.
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls);
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls);
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls);
-          if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls);
+          // The three parts of the hit, each its own number (owner, 2026-11-14): the damage Block absorbed (white), the Poise
+          // it removed (yellow) and the HP it took (red, below, spawned last: nearest the HP bar).
+          // They spawn together (immediate), the red one last so it sits nearest the HP bar: the hit is read at a glance, not over 2 s.
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, undefined, { immediate: true });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls);
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls);
           // A pierced hit that cost no HP has no outcome word, so its full number floats here.
@@ -1757,7 +1813,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.full, maxHp));
+            floatNum(ctx.layer, anchor, parts.damage.text, e.targetBroken ? 'dmg crit' : dmgClass(parts.residual, maxHp));
           }
         },
       };
@@ -1869,7 +1925,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
         },
       };
-    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    // A Smash's Block break shows as BLOCK BREAK alone: no burst and no sound for it here.
     case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
     case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
     case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');

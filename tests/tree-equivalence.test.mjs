@@ -80,6 +80,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   // Core 2's approved Adept name changes only the Cantrip blurb; its stable
   // tag identity and all other registered metadata remain under this proof.
   const tacticalMetadata = {
+    // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
+    'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
+    'from:armor': { label: 'Armour' },
+    'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
     'camp:spell': { glyph: '✧' },
@@ -173,9 +177,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 

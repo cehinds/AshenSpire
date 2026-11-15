@@ -36,27 +36,27 @@ const upgrade = (registries, run, ref = WEAPON) => {
   return commitBlacksmithUpgrade(registries, run, quote);
 };
 
-test('Core Blacksmith: tiers 1, 2, 3 cost 0, 1, 2 stones and 60, 100, 150 cinders; a fourth is refused and keeps both purses', () => {
-  const run = smithRun(coreOut, 7);
+test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 25,50,85,135,195,255 cinders; the seventh is refused and keeps both purses', () => {
+  const run = smithRun(coreOut, 12);
   const spent = [];
   const paid = [];
-  for (let tier = 1; tier <= 3; tier++) {
+  for (let n = 1; n <= 6; n++) {
     const before = run.smithingStones, purse = run.cinders;
     const receipt = upgrade(coreOut, run);
-    assert.equal(receipt.afterLevel, tier);
+    assert.equal(receipt.n, n);
     spent.push(before - run.smithingStones);
     paid.push(purse - run.cinders);
   }
-  assert.deepEqual(spent, [0, 1, 2]);
-  assert.deepEqual(paid, [60, 100, 150]);
-  assert.equal(run.itemUpgradeLevels[WEAPON], 3);
+  assert.deepEqual(spent, [1, 1, 1, 2, 2, 2]);
+  assert.deepEqual(paid, [25, 50, 85, 135, 195, 255]);
+  assert.equal(run.itemUpgradePicks[WEAPON].length, 6);
   const left = run.smithingStones, cinders = run.cinders;
   const quote = blacksmithUpgradePlan(coreOut, run, WEAPON);
   assert.equal(quote.ok, false);
   assert.throws(() => commitBlacksmithUpgrade(coreOut, run, quote));
   assert.equal(run.smithingStones, left);
   assert.equal(run.cinders, cinders);
-  assert.equal(run.itemUpgradeLevels[WEAPON], 3);
+  assert.equal(run.itemUpgradePicks[WEAPON].length, 6);
 });
 
 test('Core merchant: an upgrade pays the plan price for tiers 1..3', () => {
@@ -95,9 +95,11 @@ test('Core Blacksmith and merchant upgrades re-derive the pools like the rest Sm
     const { run, ref } = armorRun(coreOut, `pools-${name}`);
     const before = pools(run);
     commit(coreOut, run, ref);
-    assert.equal(run.itemUpgradeLevels[ref], 1);
+    // The merchant promotes the fixed tier (which moves a maximum); the Blacksmith stores a picked option (W25).
+    if (name === 'Blacksmith') assert.equal(run.itemUpgradePicks[ref].length, 1);
+    else assert.equal(run.itemUpgradeLevels[ref], 1);
     const after = pools(run);
-    assert.notDeepEqual(after, before, `${name}: an equipped armour tier moves a maximum`);
+    if (name !== 'Blacksmith') assert.notDeepEqual(after, before, `${name}: an equipped armour tier moves a maximum`);
     const settled = structuredClone(run);
     rederivePools(coreOut, settled, 'check');
     assert.deepEqual(pools(settled), after, `${name}: the maxima are already re-derived`);

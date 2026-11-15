@@ -1,4 +1,5 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
@@ -53,6 +54,9 @@ function syncPoolsAfterStatus(ctx, target) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  // An item property can make a status smaller on the player (W25 step 6); one shortened to nothing is not applied.
+  const shortened = ItemStatusStacks(target, statusId, stacks);
+  if (shortened !== stacks) { if (shortened <= 0) return; stacks = shortened; }
   // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
   if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);
@@ -239,6 +243,24 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
   if (!opts.silent) {
     ctx.emit('statusExpired', { targetId: target.id, status: statusId, reason: opts.reason || 'removed' });
   }
+}
+
+/** ClearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
+export function ClearTurnBoosts(ctx, entity) {
+  const boosts = entity.turnBoosts;
+  if (!boosts) return;
+  const bases = entity.turnBoostBases || {};
+  for (const [statusId, stacks] of Object.entries(boosts)) {
+    const inst = entity.statuses?.[statusId];
+    if (!inst) continue;
+    // Remove at most the boost still present: a loss since the grant takes the boost first, so stacks the owner held
+    // before it (or gained since, without `thisTurn`) are never eaten. A boost saved without a base keeps the old subtraction.
+    const present = Number.isFinite(bases[statusId]) ? Math.max(0, Math.min(stacks, inst.stacks - bases[statusId])) : stacks;
+    inst.stacks -= present;
+    if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
+  }
+  delete entity.turnBoosts;
+  delete entity.turnBoostBases;
 }
 
 /**

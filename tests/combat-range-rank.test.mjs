@@ -1,7 +1,7 @@
 // Owner, 2026-11-05: "use the front and back rows to indicate melee and reach". Display only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../src/ui/models/CombatRangeRankModel.js';
+import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot, StageRangeRanks, RangeRankDecided } from '../src/ui/models/CombatRangeRankModel.js';
 import { alternativeFormation } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { createRangeState, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
@@ -195,4 +195,23 @@ test('playback: Hit and Run from Reach steps in on its Advance beat and back out
   }
   assert.deepEqual(seen, ['front', 'back']);
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
+});
+
+test('a decided fight keeps its pose: the stage draws the last ranks from before the deciding death', () => {
+  const ranks = StageRangeRanks();
+  const alive = ranks(rangeRankSnapshot(fight({ e1: 0 })));
+  assert.equal(alive.get('player:player'), 'front');
+  const over = rangeRankSnapshot(fight({ e1: 0 }, { dead: ['e1'] }));
+  assert.ok(RangeRankDecided(over));
+  assert.deepEqual([...ranks(over)], [...alive], 'the last foe dying does not send the winner to the back');
+  // Reviewer's path: melee with e1, reach with e2; e1 dies (the party re-ranks to the back), then e2 dies at range.
+  // The fallen e1's old melee band must not pull the winner back to the front on the last death.
+  const stage = StageRangeRanks();
+  stage(rangeRankSnapshot(fight({ e1: 0, e2: 1 })));
+  const afterFirst = stage(rangeRankSnapshot(fight({ e1: 0, e2: 1 }, { dead: ['e1'] })));
+  assert.equal(afterFirst.get('player:player'), 'back', 'with a foe still standing, a death still re-ranks the party');
+  const end = stage(rangeRankSnapshot(fight({ e1: 0, e2: 1 }, { dead: ['e1', 'e2'] })));
+  assert.deepEqual([...end], [...afterFirst], 'the decided pose is the one drawn just before the deciding death');
+  // The pure ranking still ranks only the living.
+  assert.deepEqual([...combatRangeRanks(fight({ e1: 0 }, { dead: ['e1'] }))].filter(([k]) => k === 'enemy:e1'), []);
 });

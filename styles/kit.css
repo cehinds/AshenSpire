@@ -1746,6 +1746,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
 .reward-door .rp-next { justify-self: end; }
+/* A reward door over the fight owns the screen: the hand overlay (z 900, above the veil) would show through the door's
+   fade-in and sit over its buttons, so it leaves the layout while any reward veil is open. */
+body:has(.reward-veil) .hand-overlay { visibility: hidden; }
+/* ONE VICTORY SCREEN: the spoils strip above the card choice (components/victorySpoils.js). */
+.reward-door .victory-spoils { width: 100%; max-width: 30rem; display: grid; gap: .5rem; justify-items: center; }
+.reward-door .victory-spoils .reward-progress { width: 100%; }
+.reward-door .spoils-line { margin: 0; color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; text-align: center; }
+.reward-door .spoils-points { display: grid; gap: .5rem; width: 100%; justify-items: center; }
+.reward-door .spoils-points .reward-stat-allocation { border-top: 0; padding-top: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
@@ -1762,6 +1771,11 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    A phone keeps its two-column rule below (the narrow layout never reaches here). */
 :root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px)); }
 :root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px + 2 * var(--modal-inset) + 20px)); }
+
+/* The door's width follows the offered count, which only the grid carries (as an inline custom property, unreadable from here): without these the door stayed at its 3-card width and five cards shrank to 106 px. */
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 4']) { --modal-rung-width: max(57rem, calc(4 * var(--card-w-glance, 182.4px) + 3 * 12px + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--card-w-glance, 182.4px) + 4 * 12px + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--card-w-glance, 182.4px) + 5 * 12px + 2 * var(--modal-inset) + 20px)); }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
@@ -3896,6 +3910,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { width:100%; max-width:none; min-width:0; }
 .armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
 .epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
+.rank-up-offer-card .epc-art-glyph { display:grid; place-items:center; width:100%; height:100%; color:var(--gold); }
+.rank-up-offer-card .epc-art-glyph .engraved-icon { width:62%; height:62%; }
 .collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
 /* THE SAME BARGAIN THE ARMAMENT OFFER MAKES, and for a second reason here:
    `box-sizing` is border-box repo-wide, so the tile's 8px of padding and its
@@ -4002,7 +4018,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-fact strong { font-size:var(--epc-text-factValue, 16px); }
 .epc-tag { font-size:var(--epc-text-tag, 10px); }
 .epc-heading { font-size:var(--epc-text-heading, 10px); }
-.epc-bonus { font-size:var(--epc-text-bonus, 13px); line-height:1.3; }
+.epc-bonus { font-size:calc(var(--epc-text-bonus, 13px) * var(--epc-bonus-fit, 1)); line-height:1.3; }
 .epc-flavor { font-size:var(--epc-text-flavor, 12px); }
 .epc-footer { font-size:var(--epc-text-footer, 10px); }
 
@@ -5199,6 +5215,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   filter: drop-shadow(0 0 4px #83b885);
 }
 .combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+/* A card is still playable: End Turn still ends the turn on one tap, but it says what it will throw away. */
+.combat-action-row .end-turn.end-turn--cards-left:not(:disabled) { box-shadow: 0 0 0 2px var(--gold); }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) { box-shadow: none; }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) .footer-art-face { filter: drop-shadow(0 0 4px var(--gold)); }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) text { fill: var(--gold); }
 :root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
 .combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
 :root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
@@ -5762,6 +5783,11 @@ button[data-button-size] {
 .dialogue-foot > .modal-foot-actions > button {
   height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));
   min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));
+}
+/* A mouse window: the three actions are one right-aligned group sized to their labels, not thirds of the width. */
+@media (pointer: fine) and (hover: hover) {
+  :root[data-layout='wide'] .dialogue-foot > .modal-foot-actions { display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 0.8rem; }
+  :root[data-layout='wide'] .dialogue-foot > .modal-foot-actions > button { container-type: normal; overflow: visible; text-overflow: clip; flex: 0 0 auto; width: auto; min-width: 9rem; padding-inline: 1.8rem; height: var(--dialogue-action-h, calc(40px / var(--ui-zoom, 1))); min-height: var(--dialogue-action-h, calc(40px / var(--ui-zoom, 1))); }
 }
 /* A layer switched off (sceneLayouts layering.layers[].enabled) draws nothing:
    the bands' own display rules must not outrank `hidden`. */

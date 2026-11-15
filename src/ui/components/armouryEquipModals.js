@@ -6,7 +6,7 @@
 // focus returns to `opener`. The host owns the equip and every refusal.
 import { openModal, button, el } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
-import { optionRowList } from './optionRowList.js';
+import { optionRowList, markOptionRows } from './optionRowList.js';
 import { t } from '../strings.js';
 
 /**
@@ -17,23 +17,31 @@ import { t } from '../strings.js';
  */
 export function openSlotChoiceModal({ options, onChoose, opener }) {
   const back = button({ label: t('common.back'), role: 'exit' });
+  const choose = button({ label: t('common.choose'), weight: 'primary', disabled: true });
   let list = null;
+  let selected = null;
   const shell = openModal({
-    title: t('armoury.slot.title'), size: 'md', className: 'equip-slot-choice', deferFocus: true,
-    opener, closeLabel: t('common.back'), secondary: [back],
-    initialFocus: () => list?.querySelector('button:not([disabled])') || null,
+    title: t('armoury.slot.title'), size: 'md', className: 'option-choice equip-slot-choice', deferFocus: true,
+    opener, closeLabel: t('common.back'), secondary: [back], primary: choose,
+    initialFocus: () => [...(list?.querySelectorAll('[data-slot-option]') || [])].find((row) => !row.disabled) || null,
     body(host) {
       list = optionRowList(options.map((option) => ({
         id: option.id, name: option.label, text: option.disabled && option.hint ? option.hint : option.sub,
         disabled: !!option.disabled, className: 'equip-slot-option',
       })), {
         idAttr: 'data-slot-option',
-        onSelect: (id) => { shell.close(); onChoose?.(id); },
+        onSelect: (id, row) => {
+          selected = id;
+          row?.focus?.({ preventScroll: true });
+          markOptionRows(list, 'data-slot-option', [id]);
+          choose.disabled = false;
+        },
       });
       host.append(list);
     },
   });
   back.addEventListener('click', () => shell.close());
+  choose.addEventListener('click', () => { if (selected == null) return; shell.close(); onChoose?.(selected); });
   return shell;
 }
 

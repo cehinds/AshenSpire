@@ -59,7 +59,7 @@
 
 /* Approved B + B: solid warm-gold identity, in the existing frame. */
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
-:root .card-sigil-band .card-type-name {font:700 7cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
+:root .card-sigil-band .card-type-name {font:700 7.8cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
 :root .illustrated-card-face .card-tag-rail {
   /* No stacking context of its own: the symbols sit above the hand's hit lane (z 20), so a tap explains a symbol and never plays the card. */
   position:absolute;z-index:auto;right:9%;top:16%;display:flex;flex-direction:column;align-items:flex-end;gap:2cqw;
@@ -72,7 +72,7 @@
    decoration, takes no pointer, and a tap on it is a tap on the card. */
 :root :is(.card-inspection-modal, .card-inspection-layout) .card-tag-symbol {pointer-events:auto;cursor:pointer;}
 :root .card-tag-rail .card-tag-symbol {position:relative;z-index:21;}
-:root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:6cqw;height:6cqw;box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 5.2cqw/5.3cqw Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
+:root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:max(6cqw,14px);height:max(6cqw,14px);box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 max(5.2cqw,11px)/max(5.3cqw,12px) Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
 /* The range chip (combat hand): the tag chip's own box, sized in card units with a readable floor. */
@@ -125,3 +125,8 @@
 :root[data-performance='lite'] .hand .card.illustrated-card:is(:hover,:focus-visible):not(.selected,.inspection-selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px rgba(255,255,255,.6);
 }
+
+/* Wave 2 (sizes): the secondary numbers and the range chip are not on a resting face (a 150 px face has no room for 11 px type
+   beside the rules); they show while the card is hovered, focused, selected or in the inspector. */
+:root .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:none;}
+:root :is(.card:hover, .card:focus-visible, .card:focus-within, .card.selected, .card[data-selected="true"], .card-inspection-modal, .card-inspection-layout) .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:block;}

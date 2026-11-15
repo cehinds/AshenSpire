@@ -23,6 +23,8 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 function fight({ classId = 'starseer', enemyId = 'wanderingSoldier' } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: [enemyId] });
+  // The Shocked contest is the pre-W25 lightning rule, kept for fights saved without `elements` rules; the Shock status is tests/element-lightning-identity.test.mjs.
+  delete combat.fixCoreRules.elements;
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 0, max: 20 }, attributes: { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 }, level: 1 });
   delete enemy.combatStance; delete enemy.combatCounter;
@@ -46,7 +48,7 @@ function pinContestDice(combat, ...dice) {
 const SPARK = { cardId: 'core.spark', tags: ['school:lightning', 'rank.cantrip'], rank: 1 };
 const dcOf = (combat, enemy) => shockContestPreview(combat, combat.player, enemy, SPARK).dc;
 
-test('Spark is a Core cantrip: 3 Lightning magic damage (4 upgraded), 1 SP, no Mana, lightning tag', () => {
+test('Spark is a Core cantrip: 3 Lightning magic damage (4 upgraded; cantrip damage halved back, owner 2026-11-15), 1 SP, no Mana, lightning tag', () => {
   const card = reg.cards.get('core.spark');
   assert.ok(card.tags.includes('rank.cantrip') && card.tags.includes('school:lightning'));
   assert.deepEqual([card.staminaCost, card.manaCost, card.damageSchool], [1, 0, 'magic']);
@@ -55,7 +57,7 @@ test('Spark is a Core cantrip: 3 Lightning magic damage (4 upgraded), 1 SP, no M
   assert.ok(isLightning(card));
 });
 
-test('Spark deals 3 base damage (plus the caster\'s attributes, like every Core spell) and its face reads the same as Frost Nip', () => {
+test('Spark deals 3 base damage (a cantrip: not doubled; plus the caster\'s attributes, like every Core spell) and its face reads the same as Frost Nip', () => {
   const play = id => {
     const { combat, enemy } = fight();
     const hand = combat.piles.hand[0];
@@ -342,11 +344,11 @@ test('Fire damage that costs HP dries a Damp target', () => {
   assert.equal(getStacks(f.enemy, 'damp'), 0);
 });
 
-// A Spark whose Accuracy die is pinned to a natural 1: it misses.
+// A Spark that misses: the enemy holds a stack of Evade, which cancels the next attack (owner, 2026-11-14: attacks no longer roll a d20).
 function missSpark(f, ...dice) {
   const hand = f.combat.piles.hand[0];
   hand.cardId = 'core.spark'; hand.upgraded = false;
-  primeAccuracyRolls(f.combat, { die: 1 });
+  f.enemy.statuses.evade = { stacks: 1 };
   primeContestDice(f.combat, ...dice);
   const hp = [f.player.hp, f.enemy.hp];
   dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
