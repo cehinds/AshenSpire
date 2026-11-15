@@ -90,6 +90,8 @@ node tools/verify-external.mjs
 node tools/plantsites.mjs --check
 ```
 
+`node tools/attic/redraw-audit.mjs --viewport 320x568@2 --throttle 6 --summary` (iPhone SE 1st gen stand-in) counts, for an idle window, one card play and a second idle window, the DOM writes, how many of them are no-ops, rebuilt nodes identical to the ones they replaced, `<img>` insertions, and each paint's clip. On 2026-11-15 `dev`: idle wrote and painted nothing; one card play made 1096 writes, 823 of them no-ops, and 19 of its 22 paints covered the whole viewport. `tools/attic/perf-probe.mjs --viewport WxH@DPR` runs the probe at another phone size.
+
 Browser QA covers 390×844 touch and 1440×900 desktop: combat load, selection
 without play, Information → Play, an enemy turn, the next hand, and Armoury.
 Both external-art and standalone HTML also run through the phone flow. A CDP
