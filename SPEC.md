@@ -3525,7 +3525,7 @@ Owner requests of 2026-11-14 (the "Wave 2.5" list). Each rule is keyed on a new 
 
 - Reward choices keep a separate Inspect action (existing read-only inspectors) before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
 - Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.
-- Positive status grants (self-buffs and grants from another actor, player or enemy) show `+N Status name` above the recipient, using the registry's displayed name. N is the actual increase after caps and refresh/unique stacking (none shown if nothing added). Buildup and hostile feedback keep their channels. Labels share the overhead queue and add no combat steps or waits.
+- Positive status grants (self-buffs and grants from another actor, player or enemy) show the status's one word above the recipient, with a count from 2 ("Strengthened", "Strengthened ×2"; *Statuses always shown* under Wave 2 adjustments (batch 1)). The count is the actual increase after caps and refresh/unique stacking (none shown if nothing added). Buildup and hostile feedback keep their channels. Labels share the overhead queue and add no combat steps or waits.
 
 #### Notes and history
 
