@@ -159,7 +159,8 @@
     "kind": "weapon",
     "rarity": "common",
     "tags": [
-      "bow"
+      "bow",
+      "retreat"
     ],
     "setPoints": {
       "dexterity": 1
@@ -262,7 +263,8 @@
     "tags": [
       "polearm",
       "heavy",
-      "stagger"
+      "stagger",
+      "retreat"
     ],
     "setPoints": {},
     "points": {
@@ -969,7 +971,8 @@
     "rarity": "uncommon",
     "tags": [
       "sceptre",
-      "blight"
+      "blight",
+      "retreat"
     ],
     "setPoints": {
       "intelligence": 1
@@ -1021,7 +1024,8 @@
     "kind": "staff",
     "rarity": "rare",
     "tags": [
-      "sceptre"
+      "sceptre",
+      "retreat"
     ],
     "setPoints": {
       "intelligence": 1
@@ -1179,7 +1183,8 @@
     "tags": [
       "sceptre",
       "burn",
-      "bleed"
+      "bleed",
+      "retreat"
     ],
     "setPoints": {},
     "points": {
