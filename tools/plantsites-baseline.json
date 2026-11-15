@@ -12,11 +12,6 @@
       "id": "9fb86f9153777bc0"
     },
     {
-      "tool": "tools/hybrid-input-parity.mjs",
-      "target": "AshenSpire.html",
-      "id": "10b27e1d20e4ffd9"
-    },
-    {
       "tool": "tools/menufit.mjs",
       "target": "styles/ui.css",
       "id": "7b52b505469be5a0"
@@ -30,16 +25,6 @@
       "tool": "tools/placement.mjs",
       "target": "styles/ui.css",
       "id": "d6870f4a9cfa5e42"
-    },
-    {
-      "tool": "tools/tapsize.mjs",
-      "target": "dist/AshenSpire.html",
-      "id": "7ad7f0db704a0c32"
-    },
-    {
-      "tool": "tools/tapsize.mjs",
-      "target": "dist/AshenSpire.html",
-      "id": "7ad7f0db704a0c32"
     }
   ],
   "unreadable": {
