@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { bandsFight, pairOf } from './helpers/bands-fight.mjs';
+import { quoteRangeActions } from '../src/engine/combatEngagement.js';
+import { SyncBandRows } from '../src/engine/bandRows.js';
 
 test('enemies stand in rows: a reach starter is back, the rest front; encounter placement wins', () => {
   const combat = bandsFight();
@@ -98,4 +100,18 @@ test('Approaching: a back-row enemy plans the step forward before any move that 
     if (plan.includes('advance')) approaches++;
   }
   assert.ok(approaches > 0, 'the step forward is planned at least once');
+});
+
+test('a melee Counter return across to a back-row attacker costs +1 (a reach return pays normal), none when Advanced', () => {
+  const quote = (combat, range) => {
+    const card = { cardId: 'x', type: 'skill', tags: [`range:${range}`, 'maneuver:counter'], counterReturnAttack: true,
+      combatProfile: { camp: 'physical', maneuver: 'attack', range, targeting: 'single' } };
+    const actions = ['damage', 'poiseDamage'].map(op => ({ source: combat.player, owner: combat.player, target: combat.enemies[1], card, effect: { op, amount: 1 }, meta: {} }));
+    return quoteRangeActions(combat, combat.player, actions, { route: 'advance', preview: true }).advanceSp;
+  };
+  const combat = bandsFight();
+  assert.equal(quote(combat, 'melee'), 1, 'the melee return reaches the back row for +1');
+  assert.equal(quote(combat, 'reach'), 0, 'a reach return pays normal');
+  combat.player.advanced = 2; SyncBandRows(combat);
+  assert.equal(quote(combat, 'melee'), 0, 'Advanced: the attacker is in reach');
 });
