@@ -26,6 +26,8 @@ const reg = regs.wanderingSoldier;
 function live(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: regs[enemyId], classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: regs[enemyId], run, rng: createRng(511), enemyIds: [enemyId] });
+  // W25-F legacy fixture: these tests price the printed Counter costs; the spell cost rule (+1 MP) has its own tests (spell-costs-flux.test.mjs).
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   const enemy = combat.enemies[0];
   // The Counter's return is an attack with its own opposed roll, so the player needs the same flat Precision (below).
   combat.player.basePrecisionBonus = 1000;

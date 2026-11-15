@@ -116,9 +116,22 @@ function validateStanceBenefits(rows) {
     if (!fields || typeof row !== 'object' || row === null || Object.entries(row).some(([key, value]) => !fields.includes(key) || !Number.isFinite(value) || value < 0)) throw new Error(`FixCore stanceBenefits.${stance} requires non-negative numbers for ${(fields || []).join(', ')}`);
   }
 }
+// Owner, 2026-11-15 (W25-F): spell costs and the elemental flux stance, in data. A missing block (a fight saved before this ruling) keeps today's costs and has no flux.
+// spellCosts: manaSurcharge (every spell), staminaSurcharge (every spell except a `cantripTag` one), preparedStaminaDiscount (in Prepared), focusManaDiscount (a Focus item held). Logic: src/engine/spellCosts.js.
+// elementFlux: multiplier of the next card of the flux element (floored per number). Logic: src/engine/elementFlux.js.
+const SPELL_COST_INTEGERS = Object.freeze(['manaSurcharge', 'staminaSurcharge', 'preparedStaminaDiscount', 'focusManaDiscount']);
+function validateSpellCosts(row) {
+  if (row === undefined) return;
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'cantripTag', ...SPELL_COST_INTEGERS].includes(key))
+    || SPELL_COST_INTEGERS.some(key => !Number.isInteger(row[key]) || row[key] < 0) || typeof row.cantripTag !== 'string' || !row.cantripTag) throw new Error(`FixCore spellCosts requires version 1, a cantripTag and whole numbers >= 0 for ${SPELL_COST_INTEGERS.join(', ')}`);
+}
+function validateElementFlux(row) {
+  if (row === undefined) return;
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'multiplier'].includes(key)) || !(Number.isFinite(row.multiplier) && row.multiplier >= 1)) throw new Error('FixCore elementFlux requires {version:1, multiplier:number >= 1}');
+}
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0)))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
@@ -134,6 +147,8 @@ export function validateFixCoreRules(rules) {
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
   fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
   validateStanceBenefits(rules.stanceBenefits);
+  validateSpellCosts(rules.spellCosts);
+  validateElementFlux(rules.elementFlux);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');

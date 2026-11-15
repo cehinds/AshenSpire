@@ -43,6 +43,8 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
         persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
         combatStance: e.combatStance ? { ...e.combatStance } : null,
+        // W25-F: the caster's elemental flux (the second stance icon), advanced by `elementFluxChanged`.
+        elementFlux: e.elementFlux || null,
         // Wave 3: a Poise break makes the owner Broken (poise.breakRule "broken") until `brokenEnded`.
         broken: !!e.broken,
         combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
@@ -305,6 +307,12 @@ export function ApplyCombatBeat(disp, events, {
                 if (t && e.broken)
                 {
                     t.broken = true;
+                }
+                break;
+            case 'elementFluxChanged':
+                if (t)
+                {
+                    t.elementFlux = e.element || null;
                 }
                 break;
             case 'brokenEnded':

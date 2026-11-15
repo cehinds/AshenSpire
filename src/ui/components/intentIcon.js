@@ -1,4 +1,4 @@
-import { ACTION_SIGILS } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS } from '../../content/combatSigils.js';
 
 // Original monochrome UI geometry, in the same vocabulary as card sigils.
 export const INTENT_ICON_SHAPES = Object.freeze({
@@ -22,5 +22,20 @@ export function intentIcon(id) {
   const action = id === 'cast' ? 'spell' : id === 'buff' ? 'power' : id;
   if (ACTION_SIGILS[action]?.solid) node.setAttribute('data-solid', 'true');
   node.innerHTML = INTENT_ICON_SHAPES[id] || '';
+  return node;
+}
+
+// The elemental flux marks (W25-F): the school mark of each flux element (Necrotic wears Decay's), and the plain Spell mark for a spell with no element.
+export const FLUX_ELEMENT_SCHOOL = Object.freeze({ fire: 'fire', lightning: 'lightning', frost: 'frost', divine: 'divine', necrotic: 'decay', force: 'force' });
+export function FluxIcon(element) {
+  const sigil = element ? SCHOOL_SIGILS[FLUX_ELEMENT_SCHOOL[element]] : ACTION_SIGILS.spell;
+  const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  node.setAttribute('viewBox', '0 0 32 32');
+  node.setAttribute('class', 'intent-icon flux-icon');
+  node.dataset.flux = element || 'magic';
+  node.setAttribute('aria-hidden', 'true');
+  node.setAttribute('focusable', 'false');
+  if (sigil.solid) node.setAttribute('data-solid', 'true');
+  node.innerHTML = sigil.shape;
   return node;
 }

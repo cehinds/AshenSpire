@@ -82,6 +82,8 @@ import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { focusManaDiscount, applyFocusManaDiscount } from '../model/focusMana.js';
+import { SpellCostRules, SpellCostAdjust } from './spellCosts.js';
+import { FluxAfterPlay, ClearFlux, FluxScale, FluxMultiplier } from './elementFlux.js';
 import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
@@ -493,6 +495,7 @@ function endCheck(combat) {
 
 function finishCombat(combat, result) {
   RestoreLiveStats(combat); // every attribute and derived value returns to its fight-start value (HP trimmed)
+  ClearFlux(combat, combat.player); // elemental flux ends with the fight
   combat.result = result;
   combat.phase = 'ended';
   Reactions.finishReactions(combat);
@@ -606,6 +609,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   S.ClearTurnBoosts(combat, p);
   ClearTurnAttributeBoosts(combat, p);
+  ClearFlux(combat, p); // elemental flux ends with the player's turn (W25-F)
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -1564,6 +1568,14 @@ function resolvedCardPriceReceipt(combat,def) {
  }
  // Focus (owner, 2026-11-01): in the Prepared stance a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
  // affordability checks, the bot and the payment all read the same number.
+ // Owner, 2026-11-15 (W25-F): a fight with `spellCosts` rules prices every spell through engine/spellCosts.js instead (+1 Mana, +1 Stamina unless a cantrip,
+ // Prepared -1 Stamina, a Focus item -1 Mana in any stance); a fight created before the ruling keeps the Prepared-only Focus rule above.
+ if(SpellCostRules(combat)) {
+  const paid=SpellCostAdjust(combat,def,{stamina:result.paid.stamina,mana:result.paid.mana}),shown=SpellCostAdjust(combat,def,{stamina:result.display.stamina,mana:result.display.mana});
+  result.paid={...result.paid,mana:paid.mana,stamina:paid.stamina,...(def.cost==='X' ? {} : {energy:paid.stamina})};
+  result.display={...result.display,mana:shown.mana,stamina:shown.stamina,...(def.cost==='X' ? {} : {action:shown.stamina})};
+  return result;
+ }
  const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
  if(focus>0) {
   result.paid={...result.paid,mana:applyFocusManaDiscount(result.paid.mana,focus)};
@@ -1942,6 +1954,7 @@ function finishAbilityPlay(combat) {
   if (!play) return;
   const inst = play.instance;
   const def = resolveCombatCard(combat, inst);
+  FluxAfterPlay(combat, combat.player, play.ref, def); // the cast's element becomes the flux once its own effects have resolved (W25-F)
 
   // Expanded Powers carry Exhaust; legacy Powers without it leave play.
   // The destination is the framework's call; this engine moves the card.
@@ -2363,13 +2376,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       }
       case 'applyStatus': {
         entry.status = eff.status;
-        entry.value = evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0);
+        entry.value = FluxScale(combat, p, action.card, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0));
         break;
       }
       case 'heal':
         {
           const amount = evalPreview(combat, action, eff.amount, primary);
-          entry.value = Math.floor((amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0)) * stanceEffectiveness(combat, p, action.card));
+          entry.value = Math.floor((amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0)) * stanceEffectiveness(combat, p, action.card) * FluxMultiplier(combat, p, action.card));
         }
         break;
       case 'buildup':

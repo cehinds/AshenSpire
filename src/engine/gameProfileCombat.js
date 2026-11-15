@@ -18,6 +18,7 @@ import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
 import { AttackDamageMultiplier, PoiseLossAdjust } from './stanceBenefits.js';
+import { FluxMultiplier } from './elementFlux.js';
 import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
@@ -137,6 +138,9 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-11-14 (Wave 2.5): the attacker's own stance benefit (Attack +20%, Prepared +25%), then a Sweep splash hit's share of that damage.
   const benefitMultiplier = flatReturn ? 1 : AttackDamageMultiplier(ctx,source,carrier);
   raw = transition('stance-benefit','Stance benefit',raw,raw*benefitMultiplier,'offense',benefitMultiplier);
+  // Owner, 2026-11-15 (W25-F): the player's elemental flux lifts the next card of its element by x1.25 (engine/elementFlux.js), in the same chain as Prepared's bonus so the quote equals the hit.
+  const fluxMultiplier = flatReturn ? 1 : FluxMultiplier(ctx,source,carrier);
+  raw = transition('element-flux','Elemental flux',raw,raw*fluxMultiplier,'offense',fluxMultiplier);
   const splashMultiplier = flatReturn ? 1 : carrier.stanceSplash > 0 && carrier.stanceSplash < 1 ? carrier.stanceSplash : 1;
   raw = transition('sweep-splash','Sweep splash',raw,raw*splashMultiplier,'offense',splashMultiplier);
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);

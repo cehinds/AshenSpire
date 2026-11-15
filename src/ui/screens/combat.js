@@ -41,7 +41,10 @@ import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, SetPlayerFlux, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { PlayerFluxView } from '../models/StanceBenefitModel.js';
+import { ElementFluxRules } from '../../engine/elementFlux.js';
+import { inPreparedStance } from '../../model/focusMana.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
@@ -997,12 +1000,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const previous = player.querySelector('.player-action-intent');
     // The glyph node is built once and kept (owner, 2026-11-06): a new maneuver only switches which of its drawn
     // glyphs shows, so nothing is removed, re-created or refitted for it.
-    if (previous) { setPlayerActionManeuver(previous, profile); return; }
+    // W25-F: a caster's second stance icon: the elemental flux (or the plain magic mark), from the display state so it moves with the paced beats.
+    const fluxView = PlayerFluxView(ElementFluxRules(combat), dv(combat.player), inPreparedStance(dv(combat.player)));
+    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
+      SetPlayerFlux(action, fluxView);
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');
