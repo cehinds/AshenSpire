@@ -82,6 +82,22 @@ export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   return true;
 }
 
+/** SwapEnemyRows(ctx, target): the target and the nearest living enemy (by place in the fight) in the other row trade rows and ranks; with none there, the target alone crosses. */
+export function SwapEnemyRows(ctx, target) {
+  if (!BandsActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;
+  const at = ctx.enemies.indexOf(target), row = target.row === 'back' ? 'front' : 'back';
+  const other = ctx.enemies.filter(enemy => enemy.alive && enemy !== target && enemy.row === row)
+    .sort((a, b) => Math.abs(ctx.enemies.indexOf(a) - at) - Math.abs(ctx.enemies.indexOf(b) - at) || ctx.enemies.indexOf(a) - ctx.enemies.indexOf(b))[0] || null;
+  const cells = [target.formationCell, other?.formationCell];
+  SetEnemyRow(ctx, target, row, 'swap');
+  if (other) {
+    SetEnemyRow(ctx, other, row === 'back' ? 'front' : 'back', 'swap');
+    if (cells[0] && cells[1]) [target.formationCell, other.formationCell] = [cells[1], cells[0]];
+  }
+  ctx.emit?.('combatRowsSwapped', { targetId: target.id, otherId: other?.id || null });
+  return true;
+}
+
 function endAdvance(ctx, entity) {
   entity.advanced = 0;
   for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'back') setPair(ctx, entity, enemy, 1);

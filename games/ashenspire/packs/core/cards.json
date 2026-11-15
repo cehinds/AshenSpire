@@ -417,6 +417,32 @@
     "textTemplate": "Step back."
   },
   {
+    "id": "core.upsetRanks",
+    "name": "Upset the Ranks",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "swapRows",
+        "target": "enemy"
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "textTemplate": "Swap the target's row with the nearest enemy in the other row.",
+    "flavor": "Shove the archer to the front and the brute to the back."
+  },
+  {
     "id": "core.closingDodge",
     "name": "Closing Dodge",
     "class": "colorless",

@@ -61,6 +61,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'retain',
   'dodgeRoll',
   'moveEngagement',
+  'swapRows',
   'applyStatus',
   'changeAttribute',
   'removeStatus',
@@ -577,6 +578,7 @@ export const EFFECT_SPECS = Object.freeze({
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
+  swapRows: { allowed: [], required: ['target'], refs: {} },
   changeAttribute: { allowed: ['attribute', 'amount', 'thisTurn'], required: ['attribute', 'amount'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks', 'tags', 'thisTurn'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
