@@ -22,6 +22,7 @@
 //     Enter/Space. `yieldTap` lets a host hand the tap on (combat: a card or
 //     flask is armed, so a tap on an enemy's pip is a play on that enemy).
 import { planIconTray } from '../models/IconTrayModel.js';
+import { setVar } from '../domWrite.js';
 import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
@@ -216,8 +217,8 @@ export function fitIconTray(row, width, { iconPx = iconSizes.get(row) || 0, extr
   const { zoom, rem } = trayMetrics();
   const plan = planIconTray({ count: items.length, width: width / zoom, rem },
     iconPx > 0 ? { ...wireframeUi.iconTray, iconRem: iconPx / zoom / rem } : wireframeUi.iconTray);
-  row.style.setProperty('--icon-tray-size', `${plan.size}px`);
-  row.style.setProperty('--icon-tray-gap', `${plan.gap}px`);
+  setVar(row, '--icon-tray-size', `${plan.size}px`);
+  setVar(row, '--icon-tray-gap', `${plan.gap}px`);
   const shown = extraHidden > 0 ? Math.min(items.length, Math.max(0, plan.capacity - 1)) : plan.shown;
   const hidden = items.length - shown + extraHidden;
   const key = `${shown}/${extraHidden}`;
