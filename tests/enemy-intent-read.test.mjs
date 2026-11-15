@@ -67,5 +67,5 @@ test('a move that closes a range band reads Approaching with the melee line, not
   const combat = { registries: { enemies: { get: () => ({ moves: { advance: { name: 'Advance', effects: [{ op: 'moveEngagement', bands: -1 }] } } }) } } };
   const view = enemyIntentRead(combat, { enemyId: 'x' }, { preview: { kind: 'buff', moveId: 'advance', hidden: false, revealed: true, stance: 'prepared', actionEffects: [{ op: 'moveEngagement', bands: -1 }] } });
   assert.equal(view.name, 'Approaching');
-  assert.match(view.detail, /steps into melee range before it attacks/);
+  assert.match(view.detail, /Steps into melee range before it attacks/);
 });
