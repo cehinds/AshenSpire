@@ -113,3 +113,10 @@ export function withoutStatusCapsRule(build) {
 
 /** Runs `build` while the shipped default rules lack the Counter-stack keys (batch 5, 2026-11-15): a fight or card face from before the ruling. */
 export function withoutCounterStackDefaults(build) { return guarded(build); }
+
+/** Runs `build` while the shipped Counter stack table lacks Quickstep (W25-EvadeCards, 2026-11-15): a fight whose rules were snapshotted before Quickstep joined `counter.stacksByCard`. */
+export function withoutQuickstepCounterStacks(build) {
+  const table = fixCoreMechanics.counter.stacksByCard, held = table.quickstep;
+  delete table.quickstep;
+  try { return build(); } finally { table.quickstep = held; }
+}

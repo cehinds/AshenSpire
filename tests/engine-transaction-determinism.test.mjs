@@ -15,7 +15,7 @@ import { withoutBands } from './legacyBandsRules.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults, withoutQuickstepCounterStacks } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
@@ -195,9 +195,20 @@ for (const [setup, expected] of PRE_BATCH5_PINNED) {
     assert.deepEqual(digest(play(withoutCounterStackDefaults(() => fight(setup)), 5)), expected);
   });
 }
-const PINNED = [
+// Recaptured 2026-11-15 for W25-EvadeCards (Quickstep joins `counter.stacksByCard`): log, event counts and turns are identical, only the state hashes move, through the new key in the fight's rules
+// snapshot. Verified: a fight built through withoutQuickstepCounterStacks reproduces PRE_EVADECARDS_PINNED (the values shipped before) exactly.
+const PRE_EVADECARDS_PINNED = [
   [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '33eb4180cba351fa', events: 194, turn: 6 }],
   [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '8a7b6f7b35a08604', events: 195, turn: 6 }],
+];
+for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
+  test(`pre-Evade-cards fight ${setup[0]}/${setup[1]} still reproduces the digest from before Quickstep's Counter stack`, () => {
+    assert.deepEqual(digest(play(withoutQuickstepCounterStacks(() => fight(setup)), 5)), expected);
+  });
+}
+const PINNED = [
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '0b43d27657af6bb0', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '782874823ef24c18', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
