@@ -74,8 +74,9 @@ export function installFooterArt(row) {
 const pendingCaps = new Map();
 const pendingCompactRows = new Set();
 // The measurements are one job of frameMeasure's shared read phase: every reader queued for the frame reads, then every
-// writer writes, so this frame's one flush serves them all. A compact line's own font-size is reset when it is queued
-// (below), so the read phase has nothing to write first.
+// writer writes, so this frame's one flush serves them all. A compact line that already holds a fitted font-size is
+// reset to measure its natural width, and re-fitted, inside this one task: never cleared at queue time, which would
+// paint a frame at the natural size before the next frame's job ran.
 let capQueued = false;
 function readCaps() {
   capQueued = false;
@@ -85,6 +86,7 @@ function readCaps() {
   const lines = [...pendingCompactRows].filter(row => row.isConnected && row.dataset.footerCompact === 'true')
     .flatMap(row => [...row.querySelectorAll('.footer-compact-line')]);
   pendingCompactRows.clear();
+  for (const line of lines) if (line.style.fontSize) line.style.removeProperty('font-size');
   const sizes = lines.map(line => ({ line, width: line.getBoundingClientRect().width,
     available: line.parentElement.getBoundingClientRect().width,
     font: parseFloat(getComputedStyle(line).fontSize) }));
@@ -108,7 +110,6 @@ function scheduleCaps() {
 export function fitFooterCompactLabels(row) {
   if (!row) return;
   pendingCompactRows.add(row);
-  if (row.dataset?.footerCompact === 'true') for (const line of row.querySelectorAll('.footer-compact-line')) line.style.removeProperty('font-size');
   scheduleCaps();
 }
 export function paintFooterArt(row, values = {}) {
