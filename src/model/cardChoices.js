@@ -69,3 +69,11 @@ export function CardModeEffects(def, chosen) {
   if (!def?.choiceModes?.length) return def;
   return { ...def, effects: (def.effects || []).filter((effect) => !effect.mode || effect.mode === chosen) };
 }
+
+/** Auto battle's answer to a card's pending choice (W25-EvadeCards): a card of named modes plays its first mode (Dodge Roll: Advance), as a headless
+ * play does; a card that needs a stance pick is left to the player. { playable, choice } with `choice` null when the card has no choice. */
+export function AutoCardChoice(plan) {
+  if (!plan) return { playable: true, choice: null };
+  if (plan.kind === 'mode' && plan.options.length) return { playable: true, choice: plan.options[0].id };
+  return { playable: false, choice: null };
+}
