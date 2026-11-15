@@ -25,7 +25,7 @@ function playCopy(cardId, upgraded) {
   return { combat, instance, hit, resolved: resolveCombatCard(combat, instance) };
 }
 
-for (const [cardId, base, up] of [['core.pommelStrike', [5, 4], [7, 6]], ['core.hammerBlow', null, null]]) {
+for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6, undefined]], ['core.hammerBlow', null, null]]) {
   test(`${cardId}: upgraded copy resolves, renders and plays at the upgraded grade`, () => {
     const b = playCopy(cardId, false), u = playCopy(cardId, true);
     const baseDef = projectGameCard(b.combat, cardId), upDef = baseDef.upgrade;

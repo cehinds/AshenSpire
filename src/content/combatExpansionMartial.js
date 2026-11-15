@@ -68,8 +68,10 @@ function martialProjection(def) {
   // Mounted basics already carry their weapon's authoritative role and camp.
   // Preserve a bow's Ranged Strike or a staff's spell rather than overwriting it.
   const existing = tags.find(tag => tag.startsWith('maneuver:'))?.slice(9);
+  // A bow's Strike is an ordinary attack that reaches (owner, 2026-11-14): keep its authored range tag with its maneuver.
+  const existingRange = tags.find(tag => tag.startsWith('range:'))?.slice(6);
   const role = def.equipmentRole && !['dodgeRoll', 'evasiveGuard'].includes(def.id) && existing
-    ? { ...row, maneuver: existing } : row;
+    ? { ...row, maneuver: existing, ...(existingRange && !row.range ? { range: existingRange } : {}) } : row;
   const range = def.range || role.range || (RANGED.has(def.id) ? 'ranged' : role.maneuver === 'ranged' ? 'reach' : 'melee');
   const targeting = def.targeting || (role.maneuver === 'sweep' || AREA.has(def.id) ? 'area' : 'single');
   const rewritten = tagsFor(tags, role, range, targeting);
