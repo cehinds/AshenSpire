@@ -113,7 +113,14 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   const qualifier = part => /( ×\d+| to all| to random enemy)$/.exec(plain(part).trim())?.[1] ?? '';
   if (parts.length > 1 && parts.some(part => qualifier(part) !== qualifier(parts[parts.length - 1]))) return null;
   if (parts.length < 2 || parts.some(part => wordCount(part) > words || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
-  return parts.map(html => ({ ...line, html }));
+  // Short neighbours share a clause ("Evade 1, Draw 2") so a card with four small effects still fits the three-clause face.
+  const packed = [];
+  for (const part of parts) {
+    const last = packed[packed.length - 1];
+    if (last !== undefined && wordCount(`${last}, ${part}`) <= words) packed[packed.length - 1] = `${last}, ${part}`;
+    else packed.push(part);
+  }
+  return packed.map(html => ({ ...line, html }));
 }
 
 // Split only complete authored sentences. A following qualification belongs

@@ -66,7 +66,7 @@ test('a conditional Evade is shown with version-two entry bonuses without duplic
   const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
   assert.deepEqual(evade, ['While Prone: Prepare one Evade with Advantage']);
   assert.ok(all.some(line => line.startsWith('Entry: ')), JSON.stringify(all));
-  assert.ok(text('crawlingShot').some(line => /Evade/.test(line)) && text('crawlingShot').some(line => /^Retreat/.test(line)), 'the shipped card says Evade and Retreat');
+  assert.ok(text('crawlingShot').some(line => /Evade/.test(line)) && text('crawlingShot').some(line => /\bRetreat\b/.test(line)), 'the shipped card says Evade and Retreat');
 });
 
 test('a card with an effect it cannot phrase returns null', () => {
