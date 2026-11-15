@@ -267,3 +267,7 @@
 /* Two visible ranks: a back-row enemy stands a little behind and above its front-row neighbour, smaller, and its HUD plates move with it
    (individual translate/scale leave the stage's own transform alone). */
 :root .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-14px / var(--ui-zoom,1)); scale:.9; transform-origin:50% 100%; }
+
+/* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
+   and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
+:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-40px / var(--ui-zoom,1)); }

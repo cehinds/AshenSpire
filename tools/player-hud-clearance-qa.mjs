@@ -159,6 +159,38 @@ try {
     } catch(error) { report.failures.push(error.message); }
     await page.close();
   }
+  // W25-BANDS, 390x844: with a back-row enemy in the left lane (three enemies make two ranks), the player's visible HUD (bars, badges, status icons)
+  // must touch no enemy plate or sprite. Front-row sprite boxes are inset 10% a side for their transparent margin; a back-row sprite is taken whole.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    await page.goto('http://127.0.0.1:' + server.server.address().port + '/?shot=combat&shotClass=reaver&shotExpansion=ward&gameProfile=core&shotSeed=1&shotEnemyCount=3', { timeout: 60000 });
+    await page.waitForFunction(() => !!window.__combat);
+    await page.locator('.combatant.player .target-hud-overhead-meters .combat-health-row').first().waitFor({ timeout: 60000 });
+    await page.evaluate(async () => { await document.fonts.ready; });
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => {
+      const box = e => { const r = e.getBoundingClientRect(); return { l:r.left, r:r.right, t:r.top, b:r.bottom }; };
+      const rack = document.querySelector('.combatant.player .target-hud-overhead-meters');
+      const parts = [rack, ...rack.querySelectorAll('*')].filter(e => e.matches('.meters,.combat-health-row') || !e.children.length).map(box).filter(q => q.r > q.l && q.b > q.t);
+      const hud = { l:Math.min(...parts.map(q => q.l)), r:Math.max(...parts.map(q => q.r)), t:Math.min(...parts.map(q => q.t)), b:Math.max(...parts.map(q => q.b)) };
+      const hits = [], ranks = [];
+      for (const en of document.querySelectorAll('.combatant.enemy')) {
+        ranks.push(en.dataset.bandRow || '');
+        for (const sel of ['.sprite', '.target-hud-overhead-meters', '.band-row-tag']) for (const e of en.querySelectorAll(sel)) {
+          let q = box(e); if (!(q.r - q.l)) continue;
+          if (sel === '.sprite' && en.dataset.bandRow !== 'back') { const w = (q.r - q.l) * .1; q = { ...q, l:q.l + w, r:q.r - w }; }
+          if (q.r > hud.l && q.l < hud.r && q.b > hud.t && q.t < hud.b) hits.push((en.dataset.bandRow || 'single') + ' ' + sel);
+        }
+      }
+      return { hud, hits, ranks };
+    });
+    report.phoneRows = rows;
+    try {
+      assert.ok(rows.ranks.includes('back'), 'phone rows: a back-row enemy stands in the fight');
+      assert.deepEqual(rows.hits, [], 'phone rows: the player HUD intersects no enemy sprite or plate');
+    } catch(error) { report.failures.push(error.message); }
+    await page.close();
+  }
   writeFileSync(resolve(out,'report.json'),JSON.stringify(report,null,2)+'\n');
   console.log('HUD_REPORT '+JSON.stringify(report));
   assert.equal(report.failures.length,0,report.failures.join('\n'));
