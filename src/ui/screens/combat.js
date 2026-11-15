@@ -2029,8 +2029,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         bars.insertBefore(row, next);
         if (poiseEl) {
           poiseEl.dataset.broken = String(!!v.broken);
-          // The player's HP number is larger than its bar row: the Poise number starts after it, not under it.
-          if (entity.kind === 'player') poiseEl.style.setProperty('--hp-chars', String((el.querySelector('.m-value')?.textContent || '').length));
           // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
           const poiseValue = poiseEl.querySelector('.m-value');
           if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
