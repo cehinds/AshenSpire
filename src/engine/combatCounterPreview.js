@@ -16,6 +16,7 @@ import {
     counterBeats,
     counterStacksAfterCard,
     counterReturn,
+    CounterHitAnswers,
 } from './counterRule.js';
 import { counterStackCount } from './guardStacks.js';
 import { FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
@@ -94,8 +95,6 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     const perHit = [];
     for (let hit = 0; hit < hits; hit++)
     {
-        // Card-stack rule: each answered hit spends consumePerHit; with none held a later hit gets no return (it still lands).
-        const answered = !cardStacks || held > 0;
         // Later contacts see earlier Reflect, Poise and stance changes on the detached state.
         const view = previewAttackerView(state, enemy);
         const seen = profileDamageReceipt(
@@ -105,6 +104,8 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
             enemy.intent.damage,
             carrier,
         ).damageReceipt?.hits?.[0]?.incoming ?? 0;
+        // Card-stack rule (same predicate as counterReturnForReceipt): a hit answers only while stacks are held and it has incoming damage; each answered hit spends consumePerHit.
+        const answered = !cardStacks || CounterHitAnswers(held, seen);
         const row = !answered
             ? { hp: 0, poise: 0, block: 0 }
             : cardStacks
