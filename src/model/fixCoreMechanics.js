@@ -283,10 +283,11 @@ export function damageReceipt(targetId, hits) {
 // Read-only status projection for cards, PIPs, logs and inspectors. The base
 // registry is explicit so UI facades cannot recursively query themselves.
 /** The off-combat phrase for Evade's configured (and card-scoped) stack grant. */
-export function evadeStackGainPhrase(ctx, carrier = null) {
+export function evadeStackGainPhrase(ctx, carrier = null, per = 1) {
   const accuracy = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
-  if (FixCoreHitRollOff({ accuracy })) return String(accuracy.evadeStacksPerCard ?? 1);
-  const { evadeStackBase: base, evadeStackDex: dex } = accuracy;
+  // `per` is the card's multiplier on the configured gain (an upgraded Evade card reads per 2).
+  if (FixCoreHitRollOff({ accuracy })) return String(Math.floor((accuracy.evadeStacksPerCard ?? 1) * per));
+  const base = accuracy.evadeStackBase * per, dex = accuracy.evadeStackDex * per;
   return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
 }
 /** A card whose whole authored rule is its configured self Evade grant. */

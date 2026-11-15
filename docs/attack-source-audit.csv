@@ -7,7 +7,7 @@
 "card","","gorefireSlash","attack","true","false","weapon","slashing","physical","attack","","","delivery:melee","","theme:blood"
 "card","","crimsonCleave","attack","true","false","weapon","slashing","physical","sweep","","","delivery:area|delivery:melee","technique:cleave","theme:blood"
 "card","","shieldBash","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
-"card","","quickstep","skill","false","false","unarmed","","physical","defend","","","","technique:flourish",""
+"card","","quickstep","skill","true","false","unarmed","equipped source","physical","defend","","","","technique:flourish",""
 "card","","guardCounter","attack","false","true","weapon","equipped source","physical","counter","","melee","delivery:melee","technique:flourish|technique:counter",""
 "card","","ironResolve","skill","false","false","","","physical","defend","","","","",""
 "card","","serratedBlade","attack","true","false","weapon","slashing","physical","attack","","","delivery:melee","","theme:blood"

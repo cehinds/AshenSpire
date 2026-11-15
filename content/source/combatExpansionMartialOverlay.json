@@ -309,25 +309,25 @@
     "maneuver": "counter"
   },
   "evasiveGuard": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "dodgeRoll": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "quickstep": {
     "maneuver": "counter"
   },
   "backstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "acrobaticsRogue": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "shadowstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "progression-nightstep": {
-    "maneuver": "counter"
+    "maneuver": "defend"
   },
   "aspDart": {
     "maneuver": "attack",

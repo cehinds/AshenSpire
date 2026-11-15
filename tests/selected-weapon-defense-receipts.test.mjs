@@ -14,6 +14,8 @@ import {selectedWeaponCounterFor} from '../src/model/selectedWeaponStances.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
+import { legacyRules } from './legacyHitRules.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT as pilot } from '../src/model/selectedWeaponStances.js';
 
 const registries=createRegistries(contentBundle);
@@ -66,12 +68,15 @@ test('real Invulnerability and successful Evade remain distinct from Decoy and s
 
 
 test('paid production Guard and Evasion counters associate only their actual absorbed incoming action',()=>{
-  for(const [cardId,kind]of [['guardCounter','counter-guard'],['dodgeRoll','counter-evade'],['evasiveGuard','counter-guard']])for(const seed of [6,11]) {
+  for(const [cardId,kind]of [['guardCounter','counter-guard'],['dodgeRoll','counter-evade'],['evasiveGuard','counter-guard']])for(const seed of cardId==='guardCounter'?[6,11]:[6]) {
+    // W25-EvadeCards: Dodge Roll and Evasive Guard no longer carry a Counter (they add Evade stacks), so only the avoided-hit branch (seed 6) applies to them.
     const run=createRunState({registries,classId:'reaver',seed,combatExpansionVersion:2,startingHands:{rightHand:'greatsword',leftHand:null}});
     const guard=run.deck.find(row=>row.equipmentRole==='guard');
     const counter=run.deck.find(row=>row.cardId===cardId)||{cardId,instanceId:'actual:'+cardId};
     run.deck=[guard,counter,...run.deck.filter(row=>row!==guard&&row!==counter)];
     const combat=createRunCombat({registries,run,rng:createRng(seed),enemyIds:['wanderingSoldier'],settings:{playInDeckOrder:true}});
+    // W25-EvadeCards: Dodge Roll and Evasive Guard add Evade stacks, which exist only under FixCore; this fixture primes the d20, so the fight carries the FixCore rules of one saved before the exact-hits ruling.
+    combat.fixCoreRules=legacyRules(fixCoreMechanics);
     dispatch(combat,{type:'setReactions',enabled:false});
     for(const inst of [guard,counter])assert.ok(dispatch(combat,{type:'playCard',cardInstanceId:inst.instanceId,targetId:'player'}).events.some(row=>row.type==='cardPlayed'));
     primeAccuracy(combat,cardId!=='guardCounter'&&seed===6 ? [1,1] : [20]);

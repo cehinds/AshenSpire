@@ -14,8 +14,9 @@ test('Counter summary distinguishes protection from return and includes card Eva
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Gain \d+ Block/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Return.*Poise/);
   const dodge = combatCardSummary(card('dodgeRoll'), null, reg);
-  assert.match(dodge, /Prepare one Evade/);
-  assert.match(dodge, /Return.*damage/);
+  // W25-EvadeCards (intended by the design): Dodge Roll grants Evade stacks instead of preparing one Evade.
+  assert.match(dodge, /Gain 1 Evade/);
+  assert.match(dodge, /Advance or Retreat/);
 });
 test('new spell summary contains its explicit gauge pressure and chance', () => {
   const text = combatCardSummary(card('emberDart'), null, reg);

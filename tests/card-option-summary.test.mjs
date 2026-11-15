@@ -190,10 +190,12 @@ test('the text fallback fills template tokens with the card numbers', () => {
   const live = summarizeCardOption(registriesByProfile.current, null, { id: 'g', name: 'Guilt' }, { defOf: () => guilt, previewOf: () => ({ tokens: { loseHp: 3 }, values: [] }) });
   assert.match(live.html, /lose 3 HP/);
 });
-test('gainPoise (Dodge Roll) reads as a Poise guard gain, not Poise damage', () => {
-  const registries = registriesByProfile.current, def = registries.cards.get('dodgeRoll');
+test('gainPoise reads as a Poise guard gain, not Poise damage', () => {
+  // W25-EvadeCards (intended by the design): Dodge Roll now grants Evade and no shipped card gains Poise, so a fixture built on it stands in.
+  const registries = registriesByProfile.current;
+  const def = { ...registries.cards.get('dodgeRoll'), effects: [{ op: 'gainPoise', target: 'self', amount: 3 }], textTemplate: 'Gain {gainPoise} Poise guard.' };
   const gain = def.effects.find(effect => effect.op === 'gainPoise');
-  assert.ok(gain, 'Dodge Roll gains Poise');
+  assert.ok(gain, 'it gains Poise');
   const summary = summarizeCardOption(registries, null, { id: 'd', name: def.name }, { defOf: () => def, previewOf: () => null });
   const row = summary.line.find(part => part.label === 'poiseGuard' || /Poise guard/.test(`${part.before}${part.after}`));
   assert.ok(row, JSON.stringify(summary.line));

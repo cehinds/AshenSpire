@@ -1114,7 +1114,7 @@ Reward pool: 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.j
 | Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
 | Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
 | Shield Bash | C | 1 | Attack | Deal 3 to the selected enemy. | none; rank-up (§13.4o) |
-| Quickstep | C | 1 | Skill | Gain 4 Block. | none; rank-up (§13.4o) |
+| Quickstep | C | 1 | Skill | Gain 1 Evade. Prepare Counter. Draw 1. | none; rank-up (§13.4o) |
 | Guard Counter | C | 1 | Attack | Prepare Melee Counter. Prepare 3 base reply damage. | none; rank-up (§13.4o) |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
@@ -1878,10 +1878,9 @@ Shipped per item ([docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3); cha
 
 ### 12.1 Dodge and action feedback
 
-- **Dodge Roll card** does not roll. (Under §13.4p the Ward guard is retired: it grants Block and a Poise guard.) Evasive Guard alone carries the roll.
-  - Grants 3 Block, 3 Poise, 3 Ward, each plus the DR bonus a physical skill's Block reads (`cardRatingBonus`). Block also takes Dexterity and Frail; the guards do not.
-  - Poise and Ward are guards (`gainPoise` / `gainWard`, §3.4): absorb physical or magical impact before the Poise or Ward meter fills; expire with Block at the player's next turn start.
-  - No upgrade. Keeps live Weight Class action and stamina costs (`weightClassPriced: true`); compound cards keep their authored cost rules.
+- **Dodge Roll card** does not roll. (Under §13.4p the Ward guard is retired: it grants Block and a Poise guard.) (W25-EvadeCards, 2026-11-15: no card rolls any more; Evasive Guard now gives an Evade stack and 2 Block.)
+  - Superseded (W25-EvadeCards): the Dodge Roll card now grants Evade 1 and lets you choose Advance or Retreat; its upgrade is Evade 2 (§17, Wave 2 adjustments (batch 5)). The 3 Block / 3 Poise / 3 Ward grant below is the legacy design kept for saved runs on the old rules.
+  - Legacy: grants 3 Block, 3 Poise, 3 Ward, each plus the DR bonus a physical skill's Block reads (`cardRatingBonus`). Block also takes Dexterity and Frail; the guards do not. Poise and Ward are guards (`gainPoise` / `gainWard`, §3.4) that expire with Block at the player's next turn start. Keeps live Weight Class action and stamina costs (`weightClassPriced: true`); compound cards keep their authored cost rules.
 - **`dodgeRoll` opcode** (unchanged): roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class to the framework difficulty; on success grant the framework's temporary guard through ordinary Block.
   - Not guaranteed avoidance, invulnerability, or cancellation of the enemy's next attack.
 - **No dodge-result widget**: no receipt, float, dialog or live announcement for `dodgeRolled`. Success shows as Block gain plus the dodge visual; the event stays in the log.
@@ -3532,7 +3531,7 @@ Owner requests of 2026-11-14 after Wave 2 shipped. Every rule change is keyed on
 - **Spells deal double base damage** (authored spell damage, base and upgrade, ×2; cantrips were halved back to their earlier damage in batch 4). Spell damage still meets Poise before HP.
 - **Ward and Barrier are Poise effects.** Each stack gives +5 maximum and current Poise (Barrier: `barrier.poisePerStack` in the ratings rules, `ratingsRules.barrier`; Ward: `ward.poisePerStack` in the fight's FixCore rules, absent means none); each stack lost removes its +5. While its owner is Broken, a new stack raises the maximum only, never the current Poise. While the holder has Ward, Block is taken first and Poise then absorbs the whole rest (`ward.routing: "blockFirst"`; a fight saved without the key keeps the earlier Poise-first routing; see §4.1a). Barrier reads "Gain N Poise" in every player text. `ward.enabled` stays false (no separate Ward pool).
 - **Range.** Core has two bands of card reach, melee and reach. No shipped weapon, card or enemy uses the ranged band (the shortbow reaches the reach band).
-- **Backstep costs 2 Stamina. Reactions:** Defense and Counter cards are reactions by default; Jab carries `trait:reaction`; any other card can gain the Reaction trait as an upgrade (below). A reaction card is offered in the reaction prompt against an incoming attack and resolves before the hit.
+- **Backstep costs 1 Stamina (batch 5: Evade 1, Retreat, Prepared 1). Reactions:** Defense and Counter cards are reactions by default; Jab carries `trait:reaction`; any other card can gain the Reaction trait as an upgrade (below). A reaction card is offered in the reaction prompt against an incoming attack and resolves before the hit.
 - **Card upgrades.**
   - A card can carry as many upgrades as its rank (an unranked card counts as rank 1) plus its weapon's Smith level plus 1, at most 10. The weapon is the card's own source weapon, else the equipped main weapon.
   - At a rest site, upgrades 1–3 offer one option with one effect; from the 4th the player picks from two options, each with one effect (80%) or two (20%). The roll is seeded and the preview equals the commit.
@@ -3589,6 +3588,16 @@ Owner decisions of 2026-11-15 (Ward and Barrier, "less confusing"). Presentation
 - **Divine Smite is in the quote.** A divine hit that breaks Poise also deals half the hit straight to HP; the card face and target quote carry that HP, so the quoted number is the HP the play takes (shown = dealt).
 - **A frost card whose own Chill (3 or more) soaks the target's whole Poise pool is offered no Poise upgrade step**: its Poise damage never gets Poise to spend, so the step would change a shown number and nothing else.
 - **Map fog.** The Core act map is fog again ("hide rests as well, just the path you traveled"). Only the entrance, the bosses, the traveled path and the nodes one step from the current node are lit (`routes.fogTrailOnly`); rest sites are not revealed early; route lines and node types beyond them stay hidden. Map nodes are spaced wider (rows +45%, columns +28%). Wave 1's map shape (more forks, more fights, a shop in reach, preselected start node, `hiddenTypes: []`) is unchanged. `routes.fogRevealRests` (true lights every rest from the start) exists but Core authors it false. Core authors `mapMode: "fog"`; a stale viewer `path` setting does not override it; a run saved before this change keeps its pinned `mapMode`.
+
+### Wave 2 adjustments (batch 5)
+
+Owner decisions of 2026-11-15 (front and back rows, "advancing and retreating"). Every rule is keyed on the `bands` block of `content/source/fixCoreMechanics.json` (`bands.rows: true`, `advancedTurnEnds`, `retreatTag`, `retreatCardId`, `formationBlock`); a fight made without it plays as before. The rules are written under *Range* above:
+
+- **Rows and the Advance.** Front shields back: a melee card at a back enemy costs +1 Stamina and Advances you; reach cards and spells are unaffected; shown = paid. A melee Counter against a back-row attacker costs +1 extra. A back-row melee enemy first steps forward ("Approaching") unless you are Advanced. An empty front row sends the back row forward.
+- **Retreat.** Bows, the halberd and sceptres add one free Ethereal Retreat card per turn, which ends the Advance. The owner removed "archers step back".
+- **Force, Swap, Formation, spell lanes.** Force pushes front to back and pulls back to front; Upset the Ranks swaps two enemies' rows; two or more enemies in one row gain 2 Block at their turn start; Fire's spread stays in the aimed row and Lightning's chain prefers the same row.
+- **The old Evade cards grant Evade stacks (W25-EvadeCards).** Each is `applyStatus evade` by the configured stack metric (one stack per card in Core; `per: 2` reads as 2). Evasive Guard (1 SP): Evade 1, 2 Block. Dodge Roll (1 SP): Evade 1, then **choose Advance or Retreat** when played (a two-row prompt, Choose or Cancel; a headless play with no pick takes the first mode). Quickstep (1 SP, Reaver weapon art): Evade 1, Counter, draw 1. Backstep, Rogue and `core.backstep` (1 SP): Evade 1, Retreat, Prepared 1. Acrobatics (1 SP): Evade 1, +1 Dexterity this turn, draw 2, discard 1 at random. Shadowstep (2 SP, 1 SP upgraded): Evade 2, Advance, Prepared 1. Crawling Shot (1 SP): its 4-damage Reach shot, Evade 1, Retreat. Nightstep (1 SP + 1 MP): Evade 2, +1 Intelligence this turn. Upgrades: Evasive Guard, Dodge Roll and Acrobatics go to Evade 2; Shadowstep goes to 1 SP; Quickstep and Rogue Backstep reach Evade 2 at rank 3 (their grade tables); Crawling Shot and Nightstep have no upgrade beyond their grade rows. Played as a reaction, Dodge Roll takes its first mode (Advance), as headless play does. Numbers are a first pass.
+- **Advance and Retreat on a card** are `moveEngagement` on `self` with bands -1 and +1; each is a no-op in a fight without `bands.rows`. The **temporary stat boost** is `changeAttribute` with `thisTurn` (shown "+1 DEX this turn", gone at turn end). A card's **modes** are `choiceModes` plus a `mode` on the effects each mode plays. Nightstep pays its printed Mana with no spell surcharge (it is a physical card, not a spell). Counter on Quickstep uses the existing Counter payload and stacks: `counter.stacksByCard` grants it 1 stack per play (shown = dealt).
 
 #### Notes and history
 

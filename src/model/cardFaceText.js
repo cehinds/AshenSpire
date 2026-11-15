@@ -246,7 +246,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         if (effect.chance !== undefined && partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
-      case 'changeAttribute': return frag('gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
+      case 'changeAttribute': return frag(effect.thisTurn === true ? 'bonus' : 'gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
       case 'applyStatus': {
         // Unmodelled per-application tags (for example Persistent) may carry
         // authored rules. Preserve that prose rather than silently dropping it.
@@ -263,6 +263,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const out = [];
         // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
         if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
+        // Evade reads "Evade N." as Block reads "N Block": the face says the stacks, not only the side tag (owner review, 2026-11-15).
+        else if (effect.target === 'self' && effect.status === 'evade' && !duration && effect.thisTurn !== true) out.push({ cat: 'bonus', text: name });
         else if (effect.target === 'self' && effect.thisTurn === true) out.push({ cat: 'gain', text: `${name} this turn` });
         else if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
@@ -285,12 +287,12 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
-        if (effect.target === 'self') return frag('bonus', 'Step back');
+        if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
-      case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
+      case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
       case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
@@ -362,6 +364,11 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const unconditional = [], groups = new Map();
   for (const [index, effect] of (def.effects || []).entries()) {
     if (representedEffects.includes(index)) continue;
+    // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
+    if (effect.mode && def.choiceModes?.length) {
+      if (index === def.effects.findIndex(row => row.mode)) unconditional.push({ cat: 'bonus', text: def.choiceModes.map(mode => esc(mode.name)).join(' or ') });
+      continue;
+    }
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
     if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed

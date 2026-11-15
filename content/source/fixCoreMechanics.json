@@ -40,7 +40,7 @@
     "stacksUpgradeBonus": 1,
     "stacksMax": 3,
     "stacksByCard": {
-      "core.counter": 1, "guardCounter": 1, "riposte": 2, "rondelParry": 1, "wardingStar": 1, "nockAndWait": 1,
+      "core.counter": 1, "guardCounter": 1, "quickstep": 1, "riposte": 2, "rondelParry": 1, "wardingStar": 1, "nockAndWait": 1,
       "lowGuardRiposte": 2, "spikedReprisal": 2, "progression-crimson-reprisal": 2, "progression-rime-mirror": 2,
       "umbralWard": 3, "bindingParry": 3,
       "frostCounter": 1, "fireCounter": 1, "lightningCounter": 1, "forceCounter": 1, "alterationCounter": 1,
