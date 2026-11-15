@@ -498,6 +498,8 @@ async function main(argv) {
   console.log(`  ${r.mechanics} mechanics (${r.portable} portable, ${r.legacy} legacy, ${r.data} data), ${r.components} components, ${r.screens} screens, ${r.maps} maps, ${r.assets} assets, ${r.unboundTags} unbound tags, ${r.missingIcons} mechanic icons missing, ${r.unresolvedAssets} unresolved ui asset slots`);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// import.meta.url is the realpath; argv[1] is not (macOS /var -> /private/var), so compare realpaths.
+const isMain = (() => { try { return !!process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url)); } catch { return false; } })();
+if (isMain) {
   main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 }
