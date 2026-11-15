@@ -27,6 +27,7 @@ import { observeIconTray, unobserveIconTray, setIconTrayItems, setIconTrayOverfl
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { el, statPair, button, html, openModal, detailCard, optionCard, flavour, keycap } from '../kit/index.js';
 import { scheduleLayoutPass, cancelLayoutPass } from '../layoutFrame.js';
+import { setAttr } from '../domWrite.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 export function pileButton(kind, label) {
@@ -117,7 +118,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana,
   const drawNode = row.querySelector('.pile.draw');
   if (drawNode) {
     drawNode.querySelector('.sp-v').textContent = draw;
-    drawNode.setAttribute('aria-label', `Draw pile, ${draw}`);
+    setAttr(drawNode, 'aria-label', `Draw pile, ${draw}`);
   }
   const spent = row.querySelector('.pile.spent');
   if (spent) {
@@ -127,7 +128,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana,
     const [discardWord, exhaustWord] = [t('combat.discard'), t('combat.exhaust')];
     const spentHtml = `<span>${esc(discardWord)} ${discard}</span><small>${esc(exhaustWord)} ${exhaust}</small>`;
     if (!row.dataset?.footerArt && spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
-    spent.setAttribute('aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}. Open piles`);
+    setAttr(spent, 'aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}. Open piles`);
   }
 }
 

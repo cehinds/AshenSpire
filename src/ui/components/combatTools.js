@@ -9,6 +9,7 @@ import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
 import { openCombatLogModal } from './combatLogModal.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
+import { setAttr, setData } from '../domWrite.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -290,17 +291,17 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const toggle = ChildModel(model, UI.reactionToggle).properties;
     const log = ChildModel(model, UI.combatLogDrawer).properties;
     reaction.disabled = toggle.disabled;
-    reaction.setAttribute('aria-checked', String(toggle.enabled));
+    setAttr(reaction, 'aria-checked', toggle.enabled);
     const stateLabel = t(toggle.enabled ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
-    reaction.setAttribute('aria-label', t('combat.reactions.state', { state: stateLabel }));
-    reaction.dataset.enabled = String(toggle.enabled);
+    setAttr(reaction, 'aria-label', t('combat.reactions.state', { state: stateLabel }));
+    setData(reaction, 'enabled', toggle.enabled);
     value.textContent = stateLabel;
     autoSupported = !!toggle.supported;
     if (!autoBusy) auto.disabled = !autoSupported;
-    auto.setAttribute('aria-checked', String(!!autoOn));
-    auto.dataset.enabled = String(!!autoOn);
+    setAttr(auto, 'aria-checked', !!autoOn);
+    setData(auto, 'enabled', !!autoOn);
     const autoLabel = t(autoOn ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
-    auto.setAttribute('aria-label', t('combat.auto.state', { state: autoLabel }));
+    setAttr(auto, 'aria-label', t('combat.auto.state', { state: autoLabel }));
     autoValue.textContent = autoLabel;
     const labelKey = stateLabel + '|' + autoLabel + '|' + !!onAutoToggle;
     if (labelKey !== toolbarLabelKey) { toolbarLabelKey = labelKey; heightKey = ''; }
