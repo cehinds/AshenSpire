@@ -120,7 +120,8 @@ test('an older Core save without the card gets it on the next reconcile', () => 
   assert.equal(JSON.parse(JSON.stringify(run)).deck.length, run.deck.length, 'JSON round trip keeps it');
 });
 
-test('playing Mana Surge in a Core fight costs 1 SP and adds 2 Mana', () => {
+// Owner, 2026-11-15 (W25-F): a spell that is no cantrip costs 1 more SP, and every spell 1 more MP; the sceptre's Focus takes that MP back, so the Mana nets +2.
+test('playing Mana Surge in a Core fight costs 2 SP (1 printed, 1 spell surcharge) and adds 2 Mana', () => {
   const run = start('herald');
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
@@ -132,7 +133,7 @@ test('playing Mana Surge in a Core fight costs 1 SP and adds 2 Mana', () => {
   combat.player.stamina = Math.max(combat.player.stamina, 3);
   const sp = combat.player.stamina;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
+  assert.equal(combat.player.stamina, sp - 2, 'costs 2 SP');
   assert.equal(combat.player.mana, 2, 'gains 2 Mana');
 });
 
