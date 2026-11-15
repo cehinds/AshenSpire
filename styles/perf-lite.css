@@ -1,5 +1,5 @@
 /* Lite rendering budget (iPhone SE 1st gen: A9, 2 GB, 320x568@2).
-   Loaded LAST in index.html. Everything here sits under
+   Loaded just before the generated HUD sheet, which index.html keeps last (tests/hud-layout-css.test.mjs). Everything here sits under
    :root[data-performance='lite'], so Full (Effects on) is untouched.
 
    Why: a CSS `filter` (drop-shadow, blur, brightness, grayscale) or a
@@ -96,7 +96,7 @@
 /* 7. Text shadows: the multi-layer blurred HUD shadow (--hud-text-shadow, set
    per form factor in hud-layout.generated.css) becomes one tight shadow; the
    title's 43px glow and 12px menu shadow shrink to a few pixels. */
-:root[data-performance='lite'] { --hud-text-shadow: 0 1px 1px black; }
+:root:root[data-performance='lite'] { --hud-text-shadow: 0 1px 1px black; }
 :root[data-performance='lite'] .title-glow { text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 42%, transparent); }
 :root[data-performance='lite'] .title-screen .as-titlemenu { text-shadow: 0 1px 2px black; }
 :root[data-performance='lite'] .combat :is(.combat-health-badge, .combat-health-badge-value, .combat-health-counter-icon, .combat-health-evade-icon, .combat-health-precision-icon, .combat-health-reflect-icon) { text-shadow: 0 1px 0 black; }

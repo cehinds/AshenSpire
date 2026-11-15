@@ -10,9 +10,9 @@ const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const hrefs = [...index.matchAll(/<link\b[^>]*\brel=["']stylesheet["'][^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
 const css = stripCssComments(readFileSync(new URL('../styles/perf-lite.css', import.meta.url), 'utf8'));
 
-test('perf-lite.css exists and is the last stylesheet index.html lists (so the bundler inlines it last)', () => {
+test('perf-lite.css exists and is the last stylesheet before the generated HUD sheet, which stays last', () => {
   assert.ok(existsSync(new URL('../styles/perf-lite.css', import.meta.url)));
-  assert.equal(hrefs.at(-1), 'styles/perf-lite.css');
+  assert.deepEqual(hrefs.slice(-2), ['styles/perf-lite.css', 'styles/hud-layout.generated.css']);
   assert.equal(hrefs.filter((h) => h === 'styles/perf-lite.css').length, 1);
 });
 
@@ -21,7 +21,7 @@ test('every rule in perf-lite.css is scoped to Lite', () => {
   assert.ok(rules.length > 10);
   for (const selectorList of rules) {
     for (const selector of selectorList.split(/,\s*(?![^()]*\))/)) {
-      assert.ok(selector.trim().startsWith(":root[data-performance='lite']"), `not Lite-scoped: ${selector.trim()}`);
+      assert.match(selector.trim(), /^:root(:root)?\[data-performance='lite'\]/, `not Lite-scoped: ${selector.trim()}`);
     }
   }
 });
