@@ -211,7 +211,14 @@ export function layoutForCap(cap, vw, vh) {
   if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, compact: false, short: false };
   const z = UI.uiScale;
   const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
-  const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
+  // A mouse-and-keyboard window is not a small screen blown up to fit: Auto stops growing the UI past
+  // balance.ui.uiScale.fineMax there, so a 1920-wide desktop shows more of the game, not a bigger one.
+  // Only Auto (an infinite cap) is held back; a named size the player picked is still honoured, and a
+  // phone (coarse pointer) and every parameterised sweep (no window, no media query) are unchanged.
+  const fine = cap === Infinity && z.fineMax != null && typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: fine) and (hover: hover)').matches;
+  const zoomMax = fine ? Math.min(z.max, z.fineMax) : z.max;
+  const clamp = (v) => Math.max(z.min, Math.min(zoomMax, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
   const capped = (v) => Math.min(v, cap);
   // One derived band and the same answer on every return path. `gateBelowH`

@@ -276,6 +276,7 @@ export function mountDialogue(app, options) {
     // The responses form one grid; the stage picks its columns and placement
     // so that up to behavior.maxVisibleResponses fit without scrolling.
     responseBox.replaceChildren(...v.responses.map(responseButton));
+    stage.apply(); // re-measures the band split too: a desktop context panel is sized to this beat's text
     stage.fitResponses();
     // The footer is drawn at t=0 but opens only when the context has appeared.
     back.disabled = !entered || !v.controls.back.enabled;
