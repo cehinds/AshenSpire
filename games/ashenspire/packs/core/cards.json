@@ -321,7 +321,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 6
       }
     ],
     "tags": [
@@ -801,7 +801,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -824,7 +824,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -958,7 +958,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "moveEngagement",
@@ -979,7 +979,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 5
         },
         {
           "op": "moveEngagement",
@@ -2929,7 +2929,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2952,7 +2952,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -2983,7 +2983,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       }
     ],
     "tags": [
@@ -3000,7 +3000,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         }
       ]
     },
@@ -3025,7 +3025,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3048,7 +3048,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -3148,7 +3148,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3178,7 +3178,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -3214,7 +3214,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -3239,7 +3239,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -3320,7 +3320,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3350,7 +3350,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -3386,7 +3386,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 2
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -3417,7 +3417,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -3622,7 +3622,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -3646,7 +3646,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -3676,7 +3676,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3700,7 +3700,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -3730,7 +3730,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -3754,7 +3754,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -3837,7 +3837,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3867,7 +3867,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -3903,7 +3903,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -3932,7 +3932,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "poiseDamage",
@@ -3967,7 +3967,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       }
     ],
     "mirrors": "attack",
@@ -3985,7 +3985,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 6
         }
       ]
     },
@@ -4009,7 +4009,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -4033,7 +4033,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "poiseDamage",
@@ -4062,7 +4062,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "moveEngagement",
@@ -4085,7 +4085,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 5
         },
         {
           "op": "moveEngagement",
