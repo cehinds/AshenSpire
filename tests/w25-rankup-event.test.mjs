@@ -5,7 +5,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { executeAction } from '../src/engine/actions.js';
 import { InstanceRank, RankUpCandidates } from '../src/model/rankUpService.js';
-import { choiceAffordable, choiceUnmetRequirement, commitEventChoice } from '../src/engine/quests.js';
+import { choiceAffordable, ChoiceUnmetRequirement, commitEventChoice } from '../src/engine/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
 
@@ -58,7 +58,7 @@ test('with no card able to rise the choice is unavailable, keeps the cinders and
   run.gameProfile.modules.progression.cardRanks = false;
   const choice = smithChoice();
   assert.equal(choiceAffordable(choice, run, registries), false);
-  assert.equal(choiceUnmetRequirement(choice, run, registries), 'rankableCard');
+  assert.equal(ChoiceUnmetRequirement(choice, run, registries), 'rankableCard');
   const historyBefore = JSON.stringify(run.history);
   assert.throws(() => commitEventChoice({ run, registries, rng: { float: () => 0.5, pick: (_s, l) => l[0] } }, { eventId: 'sleepingSmith', choiceId: choice.id }));
   assert.equal(run.cinders, 100);
@@ -73,5 +73,5 @@ test('with a candidate and the cinders the choice is open and commits: rank rise
   commitEventChoice({ run, registries, rng: { float: () => 0.5, pick: (_s, l) => l[0] } }, { eventId: 'sleepingSmith', choiceId: choice.id });
   assert.equal(run.cinders, 60);
   assert.equal(run.deck.reduce((n, card, i) => n + InstanceRank(card) - ranks[i], 0), 1);
-  assert.equal(choiceUnmetRequirement(choice, { ...run, cinders: 10 }, registries), 'cinders');
+  assert.equal(ChoiceUnmetRequirement(choice, { ...run, cinders: 10 }, registries), 'cinders');
 });
