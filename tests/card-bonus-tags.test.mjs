@@ -115,7 +115,7 @@ test('generic v2 protection uses amount tags while configured Core does not prom
   assert.match(text(faceWith(generic, tags, null, legacy)), /10 Block/);
   assert.doesNotMatch(text(faceWith(generic, tags, null, legacy)), /On stance change|Entry/);
   const magicalMove = { ...generic, type: undefined, cardTags: ['camp:spell', 'maneuver:defend', 'school:frost', 'range:melee'] };
-  assert.deepEqual(cardBonusTags(magicalMove, null, legacy).map(tag => [tag.id, tag.count]), [['effect:block', 2], ['effect:barrier', 1]]);
+  assert.deepEqual(cardBonusTags(magicalMove, null, legacy).map(tag => [tag.id, tag.count]), [['effect:block', 2], ['effect:barrier', 5]]);
   assert.deepEqual(cardBonusTags(generic, null, core), [], 'configured Core has no automatic Block/Barrier grant');
 });
 

@@ -242,7 +242,8 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
-  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Each stack gives +${rules.ward.poisePerStack} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Ward gives Poise: each stack adds ${rules.ward.poisePerStack} maximum and current Poise. ${rules.ward.routing === 'blockFirst' ? 'While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP.' : 'While Ward is above 0, all damage goes to Poise first, then Block, then HP.'} Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'barrier') { const per = ctx?.ratingsRules?.barrier?.poisePerStack ?? ctx?.registries?.balance?.combatRatings?.barrier?.poisePerStack ?? 5; row.tooltip = row.description = `Poise gained above your maximum. Each stack is +${per} maximum and current Poise. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${per} maximum Poise with it.`; }
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }

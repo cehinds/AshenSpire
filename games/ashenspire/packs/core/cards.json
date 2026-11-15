@@ -3104,7 +3104,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block, {barrier} Barrier and {ward} Ward. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -3583,7 +3583,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Gain {regen} Regen.",
+    "textTemplate": "Gain {block} Block and {gainBarrier} Poise. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {

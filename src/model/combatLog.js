@@ -5,6 +5,7 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
+import { BarrierPoisePerStack } from './combatRatings.js';
 import { t } from './strings.js';
 
 /**
@@ -24,7 +25,7 @@ const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 
   statusOnly: 'a status effect', attack: 'this attack' };
 const RESOURCE_WORDS = { stamina: 'Stamina', mana: 'Mana' };
 // What an engine `source` string means when no card, move or trigger raised the effect.
-const SOURCE_WORDS = { poise: 'Poise overflow', defendStance: 'Defend stance', sleep: 'Sleep', barrier: 'Barrier overflow',
+const SOURCE_WORDS = { poise: 'Poise overflow', defendStance: 'Defend stance', sleep: 'Sleep', barrier: 'Bonus Poise overflow',
   rating: 'rating change', recovery: 'Recovery', flux: 'flux' };
 // What moved a break meter, by ratingImpact `cause`; a relic or status cause names itself.
 const IMPACT_WORDS = { hit: 'the hit', poiseDamage: 'Poise damage', 'trait:impact': 'Impact', 'trait:guard': 'a Defend guard',
@@ -262,7 +263,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           ...(typed < 0 ? [`${kind}weakness +${-typed} (${incoming} → ${layered})`] : []),
           // Ward (SPEC 4.1a): all damage meets Poise first, then Block, then HP, so Poise is read before Block.
           ...(event.wardRouted && !event.wardBlockFirst && poise ? [`Ward: Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
-          ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
+          ...(barrier ? [`Bonus Poise absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           // A piercing hit: the part that went past Block, and how much of it Poise took 1:1 first.
           ...(event.pierced > 0 ? [t(event.piercePoise > 0 ? 'combat.receipt.piercedPoise' : 'combat.receipt.pierced', { n: event.pierced, poise: event.piercePoise || 0 })] : []),
@@ -304,7 +305,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         lineReceipts = receipts;
         break;
       }
-      case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
+      case 'barrierBroken': text = `${target}'s bonus Poise broke${paren(causeText())}.`; break;
       case 'wardBroken': case 'poiseBroken': {
         const pool = event.type === 'wardBroken' ? 'Ward' : 'Poise';
         const toll = event.poiseBreak ? 'staggered' : event.poiseBreak === false ? null : event.interrupted ? 'interrupted'
@@ -320,7 +321,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value})${by ? ` from ${by.replace(/^from /, '')}` : ''}.`;
         }
         break;
-      case 'barrierGained': text = `${target} gained ${event.amount} Barrier${paren(causeText())}.`; break;
+      case 'barrierGained': text = `${target} gained ${event.amount} Poise${paren(causeText())}.`; break;
       // The break meters (stagger for Poise, disruption for Ward). One blow can move one several times
       // (its hit, its damage-type rider, its printed Poise damage, its Impact trait): `cause` says which.
       case 'ratingImpact': {
@@ -343,6 +344,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'statusApplied': {
         const stacks = event.stacks > 1 ? `${event.stacks} ` : '';
+        // Barrier stacks read as the Poise they give (owner, 2026-11-15: "Gain N Poise").
+        if (event.status === 'barrier' && Number.isFinite(event.stacks)) { text = `${target} gained ${event.stacks * BarrierPoisePerStack(registries)} Poise${paren(causeText())}.`; break; }
         text = `${target} gained ${stacks}${statusName(registries, event.status)}${paren(causeText())}.`;
         break;
       }

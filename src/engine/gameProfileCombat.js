@@ -287,10 +287,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       sources.push(...poise.sources);
       if (magicPoise > 0) sources.push({id:'poise-magic',label:'Poise meets the spell',amount:-magicPoise,requested:magical,effective:magicAfterPoise,stage:'mitigation',operation:'add'});
       if (magicBlocked > 0) sources.push({id:'block-magic',label:'Block (after Poise)',amount:-magicBlocked,requested:magicAfterPoise,effective:magicAfterBlock,stage:'mitigation',operation:'add'});
-      transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
+      transition('barrier','Bonus Poise',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
     } else {
       transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
-      transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
+      transition('barrier','Bonus Poise',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
       sources.push(...poise.sources);
     }
     sources.push(...ward.sources);

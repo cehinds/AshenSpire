@@ -69,7 +69,7 @@ import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import { ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
-import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum, BarrierPoisePerStack } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
@@ -2424,7 +2424,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       const token = tokenByIndexField.get(`${authoredIndex}:${valueField}`);
       if (token) {
         entry.token = token;
-        tokens[token] = entry.faceValue ?? entry.value;
+        // Barrier stacks are printed as the Poise they give (owner, 2026-11-15).
+        { const shown = entry.faceValue ?? entry.value;
+          tokens[token] = typeof shown === 'number' && (eff.op === 'gainBarrier' || (eff.op === 'applyStatus' && eff.status === 'barrier')) ? shown * BarrierPoisePerStack(combat) : shown; }
         if (entry.defenseSplit) {
           tokens[`${token}.block`] = entry.defenseSplit.block;
           tokens[`${token}.ward`] = entry.defenseSplit.ward;

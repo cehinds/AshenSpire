@@ -1,3 +1,4 @@
+import { BarrierPoisePerStack } from './combatRatings.js';
 import { statusPresentationDefinition } from './statusPresentation.js';
 import { cardSummaryContext } from './playingCard.js';
 import { withChargedEffects } from './cardFaceText.js';
@@ -14,7 +15,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules,
     gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
   const core = fixCoreEnabled(ctx), facts = new Map();
-  const protection = { block: { name: 'Block' }, barrier: { name: 'Barrier' } };
+  const protection = { block: { name: 'Block' }, barrier: { name: 'Poise' } };
   const definition = status => registries.statuses.has(status) ? registries.statuses.get(status) : protection[status];
   const add = (status, fact) => {
     if (!definition(status)) return;
@@ -63,7 +64,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
       }
       const live = status === 'precision' && core && Number.isInteger(preview?.entryPrecision) ? preview.entryPrecision : null;
       const formula = null; // the entry grant is exactly the authored stacks (owner, 2026-10-31); the stat mix is Precision, not a stack count
-      const count = live ?? base, name = definition(status)?.name || status;
+      const count = live ?? (status === 'barrier' ? base * BarrierPoisePerStack(registries) : base), name = definition(status)?.name || status; // Barrier stacks read as Poise (owner, 2026-11-15)
       add(status, { count, formula, entry: status,
         text: `On changing stance, gain ${count}${formula ? ' + ' + formula : ''} ${name}. Repeating the same stance grants none.` });
     }

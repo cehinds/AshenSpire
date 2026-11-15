@@ -23,6 +23,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 
 import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
+import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
@@ -126,7 +127,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const fromToken = token === undefined ? undefined : tokens[token];
     if (typeof fromToken === 'number') return fromToken;
-    return typeof effect[field] === 'number' ? effect[field] : undefined;
+    return typeof effect[field] === 'number' ? effect[field] * BarrierPoiseFactor(effect, registries) : undefined;
   };
 
   // A number as a span; up or down only when a live preview has moved it off its base.
@@ -229,7 +230,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag('gain', `${num(n, base)} Block`);
       }
       // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
-      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Barrier`);
+      // Owner, 2026-11-15: the word Barrier is gone from player text; N stacks read "Gain N x poisePerStack Poise" (it can exceed the maximum).
+      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Poise`);
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
@@ -254,7 +256,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           if (partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
-        const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
+        const bonusPoise = effect.status === 'barrier';
+        const name = bonusPoise ? `${num(stacks, stacksBase)} Poise` : `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
         // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
         if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
@@ -421,7 +424,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const statMixGrant = entry.precision > 0 && coreProfile;
     const grants = Object.entries(entry).filter(([id, amount]) => amount > 0 && !representedEntry.includes(id)).map(([id, amount]) => (id === 'precision' && statMixGrant
       ? entryPrecisionText(amount, preview)
-      : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      : '+' + num(id === 'barrier' ? amount * BarrierPoisePerStack(registries) : amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Poise' })[id]); // Barrier stacks read as Poise (owner, 2026-11-15)
     if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', tag: true, text: esc(entryLabel) + ': ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);

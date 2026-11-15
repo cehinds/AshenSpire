@@ -127,7 +127,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15: changeAttribute gains its engine/runtime/ops.json row (mechanics-runtime artifact), which moves the runtime hash (a4c872... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (batch 3): the Broken wording on cards, relics and the Prepared status moves the runtime hash; batch-2's a4c872... and ad67bc... are kept (a2854a... was batch 3's own pin before merging dev).
   // Re-pinned 2026-11-15 (W25-W): Ward's `ward.routing` rule and the Barrier -> "Gain N Poise" wording move the runtime hash (batch 3's 753eed... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:ebfcad97a0d076a7d8bdf564390590cf167d9d824de24b24cbfd35258937c0bd');
+  assert.equal(profile.lock.runtimeHash, 'sha256:88084a3ffd78831912b510139e99867780bf1a24e12a038ab7bd3150d4a58395');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
