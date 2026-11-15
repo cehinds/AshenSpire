@@ -67,6 +67,7 @@ export function dialogueModel({ eventId, title = '', text = '', speaker, portrai
       choiceId: String(response.choiceId),
       label: String(response.label ?? ''),
       affordable: response.affordable !== false,
+      unmet: response.unmet ? String(response.unmet) : null,
       binding: !!response.binding,
       resultText: String(response.resultText ?? ''),
     })))

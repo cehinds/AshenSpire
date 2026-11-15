@@ -371,7 +371,8 @@
       {
         "label": "Press a coin into his hand (pay 40 cinders, rank up a random card)",
         "requires": {
-          "cinders": 40
+          "cinders": 40,
+          "rankableCard": true
         },
         "effects": [
           {

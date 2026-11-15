@@ -669,6 +669,7 @@ event.status.limited,,{available} of {total} available,A price closes some respo
 event.status.resolved,,Resolved,Your response is taken; continue when ready.,
 event.continue,,Continue,Move on from this event.,Continue
 event.continue.combat,,Steel yourself,The event leads into a fight.,Steel yourself
+event.noRankableCard,,No card can rank up,None of your cards can rise in rank right now.,
 # ---- the quest dialogue (W4c, WGQ0–WGQ8) ------------------------------------
 dialogue.eyebrow,,Quest,A step of a quest you are following.,Quest
 dialogue.region,,Conversation with {speaker},,
