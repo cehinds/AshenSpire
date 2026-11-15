@@ -334,8 +334,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
       // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.
-      const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && raw.per === undefined
-        ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
+      const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && (raw.per === undefined || (Number.isInteger(raw.per) && raw.per > 0))
+        && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
+        ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def, raw.per ?? 1) : undefined;
       const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
       // Weapon-scaled attacks have a static authored multiplier even though

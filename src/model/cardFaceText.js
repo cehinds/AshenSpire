@@ -263,6 +263,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const out = [];
         // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
         if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
+        // Evade reads "Evade N." as Block reads "N Block": the face says the stacks, not only the side tag (owner review, 2026-11-15).
+        else if (effect.target === 'self' && effect.status === 'evade' && !duration && effect.thisTurn !== true) out.push({ cat: 'bonus', text: name });
         else if (effect.target === 'self' && effect.thisTurn === true) out.push({ cat: 'gain', text: `${name} this turn` });
         else if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
