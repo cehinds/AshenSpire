@@ -30,14 +30,14 @@ const VIEWPORTS = ['1280x800', '390x844'];
 // Budgets: `min` values must be at least the number, `max` values at most. Today's values until the targets are set.
 const BUDGET = {
   // Targets (Wave 2, sizes), effective px. No visible text under 11; hand and reward faces: effect 13, name 12, type 11, cost 16;
-  // the player's HP and the enemy intent are the two largest numbers (22 or more, everything else smaller); at most 8 number
+  // the enemy intent is the largest number (22 or more, everything else smaller; the player's HP matches the enemy mini HUD's, owner 2026-11-15); at most 8 number
   // sizes on the combat screen; every control on the phone at least 44 px in both directions.
   minText: { min: 11 },
   cardEffect: { min: 13 },
   cardName: { min: 12 },
   cardType: { min: 11 },
   cardCost: { min: 16 },
-  playerHp: { min: 22 },
+  playerHp: { min: 11 },
   enemyIntent: { min: 22 },
   numberSizes: { max: 8 },
   minTapTarget: { min: 44 },
@@ -225,7 +225,7 @@ async function main() {
   let red = 0;
   for (const s of scans.filter((x) => x.screen === 'combat')) {
     const get = (k) => checks.find((c) => c.name === `${s.vp} combat ${k}`)?.value;
-    if (!(get('largestOtherNumber') < Math.min(get('playerHp'), get('enemyIntent')))) { console.log(`FAIL ${s.vp} combat largestOtherNumber: ${fmt(get('largestOtherNumber'))} is not under both focus numbers`); red += 1; }
+    if (!(get('largestOtherNumber') < get('enemyIntent'))) { console.log(`FAIL ${s.vp} combat largestOtherNumber: ${fmt(get('largestOtherNumber'))} is not under the enemy intent number`); red += 1; }
   }
   const useBudget = argOf('--budgets', '') !== 'none';
   for (const c of checks) {
