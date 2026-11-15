@@ -16,12 +16,14 @@ test('perf-lite.css exists and is the last stylesheet before the generated HUD s
   assert.equal(hrefs.filter((h) => h === 'styles/perf-lite.css').length, 1);
 });
 
-test('every rule in perf-lite.css is scoped to Lite', () => {
+test('every rule in perf-lite.css is scoped to Lite AND to a phone layout (desktop Lite is unchanged)', () => {
   const rules = [...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].map((m) => m[1].trim());
   assert.ok(rules.length > 10);
   for (const selectorList of rules) {
     for (const selector of selectorList.split(/,\s*(?![^()]*\))/)) {
-      assert.match(selector.trim(), /^:root(:root)?\[data-performance='lite'\]/, `not Lite-scoped: ${selector.trim()}`);
+      const sel = selector.trim();
+      assert.match(sel, /^:root(:root)?\[data-performance='lite'\]/, `not Lite-scoped: ${sel}`);
+      assert.ok(sel.includes(":is([data-layout='narrow'], [data-form-factor='mobile'])"), `not phone-scoped: ${sel}`);
     }
   }
 });
