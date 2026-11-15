@@ -22,7 +22,7 @@
    scene filter and tint wash (--prologue-filter, .prologue-wash) are the one
    exception: they are the picture, drawn once, on a screen that holds nothing
    else moving. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.sprite .facing[style*='drop-shadow']),
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
   filter: none !important;
@@ -40,6 +40,31 @@
 /* The card art's colour treatment was a `color` blend over the art; a flat
    low-alpha tint is the nearest paint without a blend. */
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) [data-art-background-color] { opacity: .16; }
+
+/* 1b. Filters that HIDE or CARRY a state, kept on purpose.
+   - Compendium pieces the player has not found are drawn as a black silhouette
+     (`brightness(0) invert(1)`, kit.css; compendium.js hides them deliberately).
+     Without it the art would show, so it stays.
+   - The enemy buff aura (enemyStates.js sets one drop-shadow per theme on the
+     one `.facing` element, only while a buff is active; Effects off keeps it on
+     purpose, combat.css) is exempt in rule 1 above, not restored here. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .is-ghost > .as-artwell img:not(#lite-nofilter),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter) {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* 1c. A hit used to flash the sprite red through filter keyframes (combat.css
+   hitflash). Effects off already swapped that for a plain shake; on phones Lite
+   this adds a cheap cue back: a red outline that holds for the first 45% of the
+   hurt animation, then clears. Outline paints without an offscreen surface. */
+@keyframes hitOutlineLite {
+  0%, 44.99% { outline-color: var(--danger); }
+  45%, 100% { outline-color: transparent; }
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) body:not(.motion-hit-off) .sprite.hitflash {
+  outline: calc(2px / var(--ui-zoom, 1)) solid var(--danger); outline-offset: calc(1px / var(--ui-zoom, 1));
+  animation: hitOutlineLite var(--hurt-duration, 220ms) linear;
+}
 
 /* 2. Target relationship colours (green friend / yellow neutral / red foe).
    The 1px coloured drop-shadow silhouette becomes a 1px solid outline in the
@@ -83,11 +108,10 @@
   box-shadow: 0 0 0 calc(2px / var(--ui-zoom, 1)) var(--selection-color, var(--green));
 }
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card.unaffordable:not(.illustrated-card) { opacity: .6; }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card.illustrated-card.unaffordable .illustrated-card-face { opacity: .6; }
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card-drag-ghost[data-drop-state='illegal'] { opacity: .6; }
 
 /* 5. Map: the selected node's glow becomes a parchment stroke. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 3; }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); }
 
 /* 6. Title and startup: the dimmed city was `brightness(.28) saturate(.82)`;
    the same darkening as a flat overlay (no second url(), which would add an ASSET_CSS slot). */

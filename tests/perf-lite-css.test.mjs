@@ -8,7 +8,9 @@ import { stripCssComments } from '../tools/css-strip.mjs';
 
 const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const hrefs = [...index.matchAll(/<link\b[^>]*\brel=["']stylesheet["'][^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
-const css = stripCssComments(readFileSync(new URL('../styles/perf-lite.css', import.meta.url), 'utf8'));
+const rawCss = stripCssComments(readFileSync(new URL('../styles/perf-lite.css', import.meta.url), 'utf8'));
+// @keyframes steps are not selectors.
+const css = rawCss.replace(/@keyframes[^{]+\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
 
 test('perf-lite.css exists and is the last stylesheet before the generated HUD sheet, which stays last', () => {
   assert.ok(existsSync(new URL('../styles/perf-lite.css', import.meta.url)));
@@ -31,6 +33,21 @@ test('every rule in perf-lite.css is scoped to Lite AND to a phone layout (deskt
 test('perf-lite.css never adds a filter, backdrop filter or blend of its own', () => {
   for (const m of css.matchAll(/(^|[;{\s])(filter|backdrop-filter|mix-blend-mode)\s*:\s*([^;}]+)/g)) {
     const value = m[3].replace(/!important/, '').trim();
-    assert.ok(value === 'none' || value === 'normal', `${m[2]}: ${value}`);
+    assert.ok(value === 'none' || value === 'normal' || value === 'brightness(0) invert(1)', `${m[2]}: ${value}`);
   }
+});
+
+test('unfound compendium pieces stay hidden (silhouette filter kept) and the enemy buff aura is exempt from the reset', () => {
+  const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(kit, /\.as-option\.is-ghost > \.as-artwell img \{[^}]*brightness\(0\) invert\(1\)/);
+  assert.match(kit, /\.cp-detail:not\(\[data-state='held'\]\) > \.as-artwell img \{[^}]*brightness\(0\) invert\(1\)/);
+  assert.match(css, /\.is-ghost > \.as-artwell img:not\(#lite-nofilter\),\s*:root[^{]*\.cp-detail:not\(\[data-state='held'\]\) > \.as-artwell img:not\(#lite-nofilter\) \{\s*filter: brightness\(0\) invert\(1\) !important;/);
+  assert.ok(css.includes(":not(.sprite .facing[style*='drop-shadow'])"));
+});
+
+test('phone Lite keeps a red hit cue and does not dim the illustrated card face a second time', () => {
+  assert.match(rawCss, /@keyframes hitOutlineLite/);
+  assert.match(rawCss, /\.sprite\.hitflash \{[^}]*animation: hitOutlineLite/);
+  assert.ok(!/illustrated-card-face\s*\{\s*opacity/.test(css));
+  assert.ok(!/stroke-width/.test(css), 'the selected map node keeps its base stroke width');
 });
