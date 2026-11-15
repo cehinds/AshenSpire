@@ -6542,7 +6542,7 @@
         "frozen": true
       },
       "MAP_TERRAIN_REVEAL_RADIUS": {
-        "__number": "74"
+        "__number": "100"
       },
       "MEGA_MAPS": {
         "__array": [

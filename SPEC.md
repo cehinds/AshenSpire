@@ -1347,7 +1347,7 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
   - `variedNeighbours`: a free node never repeats the type of the lane beside it on the same depth when another type can roll.
   - `shopsPerBranch` 1: each branch holds one guaranteed shop on a non-rest depth 4–8, never on a guaranteed elite slot.
   - `forkPercent` replaces `FORK_PERCENT` (Core 70). `crossLinkPercent` replaces the remerge rule (Core 100): every pair of neighbouring lanes present on both depths of a gap draws ONE diagonal edge, direction 50/50, dropped if it would cross an edge already in that gap; the rest-depth exception does not apply.
-  - Core 2 hides no node type (`hiddenTypes: []`) and draws the whole map (`mapMode: "path"`).
+  - Core 2 hides no node type (`hiddenTypes: []`). Its map is fog (`mapMode: "fog"`, `fogRevealRests: true`; owner, 2026-11-15, see *Wave 2 adjustments (batch 4)*): the fog light is lit only for rest sites, the trail already travelled, the split ahead, the entrance and the bosses.
   - Measured over 300 Act 1 seeds (`tests/core-map-shape.test.mjs`): 5.0 fights per walk (was 4.5), a shop in every branch (was 47% of maps), 57% of type-free steps offer two or more node types (was 23%; rest rows and the boss cannot fork by type, and edges that never cross cap this near two thirds).
 
 ### Rewards after combat and merchant prices
@@ -3558,6 +3558,8 @@ Owner decisions of 2026-11-15 (Ward and Barrier, "less confusing"). Presentation
 - **Cantrip damage is halved back.** The x2 spell-damage bump (Wave 2 adjustments, batch 2) now applies to spells that are not cantrips; every `rank.cantrip` card, base and upgrade, deals its pre-doubling damage (floor, minimum 1). Statuses are unchanged.
 - **Mana Surge is a cantrip** (`rank.cantrip`): it pays no Stamina surcharge (1 SP) and still pays the +1 Mana surcharge, so it restores 2 Mana for a net +1 (+2 with a Focus item); its restore is unchanged.
 - **Mana is unchanged.** Owner: "Keep, no refill": the surcharge adds no new Mana refill and the existing Mana rules stand.
+- **Map fog.** The Core act map is fog again ("hide rests as well, just the path you traveled"). The traveled path stays revealed (fog never closes behind you), with the old circle of light: the nodes one step ahead of each node you have stood on, plus the entrance and every boss from the start. Rest sites are not revealed early; route lines and node types beyond the circle stay hidden. Wave 1's map shape (more forks, more fights, a shop in reach, preselected start node, `hiddenTypes: []`) is unchanged. `routes.fogRevealRests` (true lights every rest from the start) exists but Core authors it false. Core authors `mapMode: "fog"`; a stale viewer `path` setting does not override it; a run saved before this change keeps its pinned `mapMode`.
+- **Fog shows only the trail (`routes.fogTrailOnly`).** The Core act map is fog again: only the entrance, the bosses, the traveled path and the nodes one step from the current node are lit; rest sites are not revealed. Map nodes are spaced wider (rows +45%, columns +28%). A saved run keeps its pinned `mapMode`.
 
 #### Notes and history
 

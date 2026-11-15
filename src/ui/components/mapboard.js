@@ -308,7 +308,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const fog = mode === 'fog';
   const know = mapKnowledge({
     graph: map,
-    run: { path: viewer.path || [], mapNodeId: current },
+    run: { path: viewer.path || [], mapNodeId: current, gameProfile: viewer.gameProfile },
     mode,
     reveal,
   });
