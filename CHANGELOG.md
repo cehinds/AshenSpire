@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-15
 
+- **Less measuring in combat** ([#2781](https://github.com/cehinds/AshenSpire/pull/2781), `0.7.4.96`). The markers above enemies, the combat log row and the footer labels no longer force the screen to be re-measured on every update, so phones do less work each turn. Nothing looks different.
 - **Fewer needless updates in combat** ([#2777](https://github.com/cehinds/AshenSpire/pull/2777), `0.7.4.96`). Playing a card no longer re-writes hundreds of unchanged details on the combat screen, so phones do less work on every play. Nothing looks different.
 - **Hand cards stay put when they update** ([#2778](https://github.com/cehinds/AshenSpire/pull/2778), `0.7.4.94`). Cards in your hand keep their art and buttons in place when only their cost or numbers change, instead of being rebuilt on every play, so phones do less work. Nothing looks different.
 - **Phone speed measurements** ([#2775](https://github.com/cehinds/AshenSpire/pull/2775), `0.7.4.92`). Developer tools only: the phone performance probe can now pretend to be any phone screen (such as an iPhone SE), and a new check counts how much of the combat screen is rewritten and repainted when you play a card. Nothing in the game changes.
