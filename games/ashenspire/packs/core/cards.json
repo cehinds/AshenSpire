@@ -442,7 +442,6 @@
       "classification.skill"
     ],
     "textTemplate": "Swap the target's row with the nearest enemy in the other row.",
-    "faceTemplate": ["Swap rows with nearest foe."],
     "flavor": "Shove the archer to the front and the brute to the back."
   },
   {
