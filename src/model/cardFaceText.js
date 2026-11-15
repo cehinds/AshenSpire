@@ -281,7 +281,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const cat = effect.target === 'self' && dependentStatuses.has(effect.status) ? 'consume' : 'remove';
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
-      case 'swapRows': return frag('bonus', 'Swap its row with the nearest enemy in the other row');
+      case 'swapRows': return frag('bonus', 'Swap rows with nearest foe');
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
