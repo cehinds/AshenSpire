@@ -131,7 +131,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15 (W25-W): Ward's `ward.routing` rule and the Barrier -> "Gain N Poise" wording move the runtime hash (batch 3's 753eed... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move it again (the branch pins 63e86f... and 8af5d7... are now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-BANDS): the `bands` rules block (fixCoreMechanics.json, src/model/fixCoreMechanics.js) moves the runtime hash (3e2a30... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:5b4af5bc7a4392da72001450ac193e05875dd8df1ec0bccf9edcd91d7b2f78cf');
+  assert.equal(profile.lock.runtimeHash, 'sha256:eb76303d1d3613e52717a20d58633bbeefc5b5f38fe16ba64338d9e830833f8b');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

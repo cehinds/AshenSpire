@@ -84,10 +84,11 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:8af5d70cc4e5608e15f4536e058782426af5c8de0b6c6c76713a5f730d6ceda2',
   'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434',
   'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30',
+  'sha256:5b4af5bc7a4392da72001450ac193e05875dd8df1ec0bccf9edcd91d7b2f78cf',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
-// pinned once at the batch-4 merge. Moved again by the bands rules (fixCoreMechanics.json `bands`, src/model/fixCoreMechanics.js) in W25-BANDS.
-const FIXED_EVASION_RUNTIME = 'sha256:5b4af5bc7a4392da72001450ac193e05875dd8df1ec0bccf9edcd91d7b2f78cf';
+// pinned once at the batch-4 merge. Moved again by the bands rules (fixCoreMechanics.json `bands`, src/model/fixCoreMechanics.js) in W25-BANDS, then by the swapRows op, the Upset the Ranks card, formation Block and the spell lanes (rules 6-9).
+const FIXED_EVASION_RUNTIME = 'sha256:eb76303d1d3613e52717a20d58633bbeefc5b5f38fe16ba64338d9e830833f8b';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
