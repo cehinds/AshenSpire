@@ -198,6 +198,7 @@
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",
+        "fogRevealRests": "fogRevealRests",
         "startNodeRefills": "startNodeRefills",
         "typeWeights": "typeWeights",
         "variedNeighbours": "variedNeighbours",

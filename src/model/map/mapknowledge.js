@@ -381,6 +381,11 @@ export function litNodes({ graph, run }) {
   for (const id of (graph.startIds || [])) add(id);
   for (const id of graph.bossIds || Object.values(graph.nodes).filter((node) => node.type === 'boss').map((node) => node.id)) add(id);
   add(graph.bossId); // legacy singular graphs
+  // routes.fogRevealRests (owner, 2026-11-15: "only unfog rest locations and locations already
+  // traveled"): every rest site of the act is lit from the start. A rule key, absent = plain fog.
+  if (gameModule(run, 'routes')?.fogRevealRests === true) {
+    for (const node of Object.values(graph.nodes)) if (node.type === 'shrine') add(node.id);
+  }
   const path = (run && run.path) || [];
   for (const id of path) { shine(id); shrineAhead(id); }
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
