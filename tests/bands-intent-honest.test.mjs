@@ -102,6 +102,20 @@ test('an auto-Advance from a melee card aimed at the back row flips the intent t
 
 // Review follow-ups (W25Bands, 2026-11-15). The cleanup baseline's historical dragon moved because its opener is now priced against the projected bands:
 // its start enemyAI draws went 2 -> 0 and its live draws 3 -> 1 (not "one fewer"); commit 3473e2bb81's message said the latter loosely.
+test('a back-row melee opener with a front ally shows Approaching at once, and ending the turn runs it', () => {
+  for (const seed of seeds) {
+    const combat = bandsFight({ enemyIds: ['fellWarden', 'wanderingSoldier'], seed, encounter: { id: 'x', rows: ['back', 'front'] } });
+    const warden = combat.enemies[0];
+    assert.equal(warden.row, 'back');
+    assert.equal(warden.intent.moveId, 'advance', `seed ${seed}: the opener is shown as the step forward`);
+    assert.equal(warden.intent.approachFor, 'caneStrike');
+    const before = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    const done = combat.eventLog.slice(before).filter(e => e.type === 'enemyMoveStarted' && e.sourceId === warden.id).map(e => e.moveId);
+    assert.equal(done[0], 'advance', `seed ${seed}: the move done is the move shown`);
+  }
+});
+
 test('a plan never hides an attack the pool cannot pay: every stored approachFor attack is affordable', () => {
   let hidden = 0;
   const ids = [...registries.enemies.ids()].filter(id => !registries.enemies.get(id).boss).slice(0, 80);

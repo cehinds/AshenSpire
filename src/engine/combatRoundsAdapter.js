@@ -149,6 +149,17 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
     pricingEnemy.approachFor = undefined; // set by the pick when a back-row enemy's attack was planned as the step forward
     let moveId = opener ?? pick(pricingEnemy, def, pool - spent, pricing);
+    // Rows (W25-BANDS): an opener is planned like any other move, so a back-row enemy's melee opener shows (and plays) the step forward at once.
+    if (opener && policy && BandsActive(combat) && def.moves[opener]) {
+      const closingId = def.rangeClosingMove, closing = def.moves[closingId];
+      const left = pool - spent;
+      const oq = enemyMoveQuote(def.moves[opener], { enemy: pricingEnemy, moveId: opener, combat: pricing });
+      if (closing && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId)) && closing.effects?.some(effect => effect.op === 'moveEngagement')
+        && closingId !== opener && oq.advanceSp > 0 && oq.totalSp <= left && BandsEnemyBackAtPhase(combat, enemy)
+        && enemyMoveQuote(closing, { enemy: pricingEnemy, moveId: closingId, combat: pricing }).totalSp <= left) {
+        pricingEnemy.approachFor = opener; moveId = closingId;
+      }
+    }
     if (policy && moveId != null && enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing }).totalSp > pool - spent) moveId = pick(pricingEnemy, def, pool - spent, pricing);
     if (!policy && moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity, pricing);
     if (moveId == null) break;
