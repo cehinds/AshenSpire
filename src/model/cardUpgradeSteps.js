@@ -202,6 +202,8 @@ const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
+/** Chill stacks a card applies at or above which a frost hit leaves its Poise damage nothing to spend (see freezesTarget). */
+const FREEZING_CHILL = 3;
 // Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
 const basicDef = (def) => {
   const tags = def.tags || [];
@@ -222,7 +224,10 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
   // A Smash card's Poise damage is derived from the hit it lands (gameProfileCombat smashRule), so its printed Poise number
   // never reaches the engine: a Poise step on it would change a shown number and nothing else (W25 upgrades, step 1).
-  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash') {
+  // Glacial Spike (3 Chill, a frost hit that soaks the whole Poise pool before its Poise damage lands): measured in the no-op probe against Chilled targets of every
+  // pool size, Poise rating and Constitution tried, a Poise step on it changes nothing the engine does, so none is offered (batch 4 review).
+  const freezesTarget = familyValue(tags, 'school:') === 'frost' && effects.some((e) => e.op === 'applyStatus' && e.status === 'chill' && e.target !== 'self' && (e.stacks || 0) >= FREEZING_CHILL);
+  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash' && !freezesTarget) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.poise = { n };

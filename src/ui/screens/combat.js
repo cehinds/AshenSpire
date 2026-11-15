@@ -1,10 +1,11 @@
+import { SetFaceCostCombat, ReleaseFaceCostCombat } from '../../model/faceCosts.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { TargetQuote } from '../models/TargetQuoteModel.js';
 import { acFor } from '../models/acBadge.js';
-import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay, PlayCostEvents, RequoteHeldHand } from '../models/CombatPlaybackModel.js';
@@ -41,7 +42,10 @@ import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, SetPlayerFlux, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { PlayerFluxView } from '../models/StanceBenefitModel.js';
+import { ElementFluxRules } from '../../engine/elementFlux.js';
+import { inPreparedStance } from '../../model/focusMana.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
@@ -140,7 +144,7 @@ import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
-import { combatHealthRow } from '../components/combatHealth.js';
+import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
 import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -251,6 +255,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
@@ -997,12 +1002,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const previous = player.querySelector('.player-action-intent');
     // The glyph node is built once and kept (owner, 2026-11-06): a new maneuver only switches which of its drawn
     // glyphs shows, so nothing is removed, re-created or refitted for it.
-    if (previous) { setPlayerActionManeuver(previous, profile); return; }
+    // W25-F: a caster's second stance icon: the elemental flux (or the plain magic mark), from the display state so it moves with the paced beats.
+    const fluxView = PlayerFluxView(ElementFluxRules(combat), dv(combat.player), inPreparedStance(dv(combat.player)));
+    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
+      SetPlayerFlux(action, fluxView);
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');
@@ -2032,6 +2040,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
           const poiseValue = poiseEl.querySelector('.m-value');
           if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
+          // Bonus Poise (owner, 2026-11-15): "8/8" in yellow then "+5" in blue, and a blue segment on the bar, while Poise is above its base maximum.
+          if (!v.broken) ApplyPoiseBonus(poiseEl, PoiseBonusView(v.persistentPoise));
         }
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -4196,6 +4206,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
 
   function releaseCombatMount() {
+    ReleaseFaceCostCombat(combat);
     if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
     autoCombatTimer = null;
     document.removeEventListener('pointerdown', pauseAutoCombat, true);

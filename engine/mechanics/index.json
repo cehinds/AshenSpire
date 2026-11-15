@@ -242,6 +242,13 @@
       "modules": []
     },
     {
+      "id": "cost.manaOnly",
+      "tag": "cost.manaOnly",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
       "id": "cost.stamina",
       "tag": "cost.stamina",
       "family": "cost",

@@ -51,6 +51,9 @@ export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(ru
 export const FixCoreHitRollOff = rules => rules?.accuracy?.hitRoll === false;
 export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === false;
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
+// Owner, 2026-11-15 (W25-W): every hit meets Block first; a target holding Ward stacks then has its Poise absorb the whole remainder 1:1 before HP.
+// `ward.routing: "blockFirst"` turns it on; a fight saved without the key keeps the Poise-first Ward routing (the whole hit to Poise, the rest to Block).
+export const FixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
 // Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
 // of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
 export const FIXCORE_PR_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
@@ -116,11 +119,26 @@ function validateStanceBenefits(rows) {
     if (!fields || typeof row !== 'object' || row === null || Object.entries(row).some(([key, value]) => !fields.includes(key) || !Number.isFinite(value) || value < 0)) throw new Error(`FixCore stanceBenefits.${stance} requires non-negative numbers for ${(fields || []).join(', ')}`);
   }
 }
+// Owner, 2026-11-15 (W25-F): spell costs and the elemental flux stance, in data. A missing block (a fight saved before this ruling) keeps today's costs and has no flux.
+// spellCosts: manaSurcharge (every spell), staminaSurcharge (every spell except a `cantripTag` one), preparedStaminaDiscount (in Prepared), focusManaDiscount (a Focus item held), optional manaOnlyTag (a spell with it pays 0 Stamina; a fight without the key ignores the tag). Logic: src/engine/spellCosts.js.
+// elementFlux: multiplier of the next card of the flux element (floored per number). Logic: src/engine/elementFlux.js.
+const SPELL_COST_INTEGERS = Object.freeze(['manaSurcharge', 'staminaSurcharge', 'preparedStaminaDiscount', 'focusManaDiscount']);
+function validateSpellCosts(row) {
+  if (row === undefined) return;
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'cantripTag', 'manaOnlyTag', ...SPELL_COST_INTEGERS].includes(key))
+    || SPELL_COST_INTEGERS.some(key => !Number.isInteger(row[key]) || row[key] < 0) || typeof row.cantripTag !== 'string' || !row.cantripTag
+    || (row.manaOnlyTag !== undefined && (typeof row.manaOnlyTag !== 'string' || !row.manaOnlyTag))) throw new Error(`FixCore spellCosts requires version 1, a cantripTag and whole numbers >= 0 for ${SPELL_COST_INTEGERS.join(', ')}`);
+}
+function validateElementFlux(row) {
+  if (row === undefined) return;
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'multiplier'].includes(key)) || !(Number.isFinite(row.multiplier) && row.multiplier >= 1)) throw new Error('FixCore elementFlux requires {version:1, multiplier:number >= 1}');
+}
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
-  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack'].includes(key))
-    || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0)))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number}');
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
+    || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
+    || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
@@ -134,6 +152,8 @@ export function validateFixCoreRules(rules) {
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
   fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
   validateStanceBenefits(rules.stanceBenefits);
+  validateSpellCosts(rules.spellCosts);
+  validateElementFlux(rules.elementFlux);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
@@ -238,7 +258,8 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
-  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Each stack gives +${rules.ward.poisePerStack} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Ward gives Poise: each stack adds ${rules.ward.poisePerStack} maximum and current Poise. ${rules.ward.routing === 'blockFirst' ? 'While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP.' : 'While Ward is above 0, all damage goes to Poise first, then Block, then HP.'} Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'barrier') { const per = ctx?.ratingsRules?.barrier?.poisePerStack ?? ctx?.registries?.balance?.combatRatings?.barrier?.poisePerStack ?? 5; row.tooltip = row.description = `Poise gained above your maximum. Each stack is +${per} maximum and current Poise. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${per} maximum Poise with it.`; }
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }

@@ -1322,17 +1322,17 @@
     "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose 1 stack at the start of your turn.",
+    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 stack at the start of your turn.",
     "sharedWord": true
   },
   {
     "id": "barrier",
-    "name": "Barrier",
+    "name": "Bonus Poise",
     "icon": "skill",
     "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
+    "tooltip": "Poise gained above your maximum. Each stack is +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
     "sharedWord": true
   },
   {

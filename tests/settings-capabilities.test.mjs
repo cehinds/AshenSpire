@@ -39,9 +39,10 @@ test('disabled configured resources/equipment/routes remove their dependent opti
   const display=categoryHtml('General',{settingsGeneralCategory:'Display','settingsGeneralTopic.Display':'Map'},null,null,null,null,'',false,profile);
   assert(!display.includes('data-key="mapZoom"'));assert(display.includes('data-key="viewPreset"'));
 });
-test('Core authors the path map, and a pinned fog profile keeps fog over a stale viewer setting (owner, 2026-10-19)',()=>{
-  assert.equal(core.modules.routes.mapMode,'path');
-  assert.equal(resolveMapMode({}, {gameProfile:core}),'path');
+test('Core authors the fog map (owner, 2026-11-15), and a pinned fog profile keeps fog over a stale viewer setting (owner, 2026-10-19)',()=>{
+  assert.equal(core.modules.routes.mapMode,'fog');
+  assert.equal(resolveMapMode({}, {gameProfile:core}),'fog');
+  assert.equal(resolveMapMode({settings:{mapMode:'path'}}, {gameProfile:core}),'fog');
   const oldCore=legacyCoreProfile();
   assert.equal(oldCore.modules.routes.mapMode,'fog');
   assert.equal(resolveMapMode({}, {gameProfile:oldCore}),'fog');

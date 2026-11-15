@@ -3,8 +3,8 @@
   "tag": "status.barrier",
   "version": "1.0.0",
   "family": "status",
-  "label": "Barrier",
-  "description": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
+  "label": "Bonus Poise",
+  "description": "Poise gained above your maximum. Each stack is +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
   "attaches": [
     "status"
   ],

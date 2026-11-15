@@ -107,7 +107,11 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
     defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) { previewPoiseBreak(ctx, defender); if (!receipt.evaded) ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id); }
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+      previewPoiseBreak(ctx, defender);
+      // Shown = dealt: a divine hit that breaks Poise also Smites (live: elementIdentity OnPoiseBreak), so the quoted HP carries it.
+      if (!receipt.evaded) receipt.hpLoss += ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id, receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount) || 0;
+    }
   }
 }
 

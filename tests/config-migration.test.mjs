@@ -101,6 +101,7 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // entry gains `biomes` and `terrain` on each of the three MEGA_MAPS paintings
 // (biome framing and battle terrain zones). Only those 12 leaves change; no
 // whole-fixture recapture.
+// Map spacing (2026-11-15, owner "spread them out"): MAP_TERRAIN_REVEAL_RADIUS 74 -> 100, the fog light scaling with COL_X 75 -> 96.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

@@ -120,7 +120,8 @@ test('an older Core save without the card gets it on the next reconcile', () => 
   assert.equal(JSON.parse(JSON.stringify(run)).deck.length, run.deck.length, 'JSON round trip keeps it');
 });
 
-test('playing Mana Surge in a Core fight costs 1 SP and adds 2 Mana', () => {
+// Owner, 2026-11-15 (W25-F, batch 4): every spell costs 1 more MP and a non-cantrip 1 more SP. Mana Surge is a cantrip (`rank.cantrip`), so it stays at 1 SP; the sceptre's Focus takes the extra MP back, so the Mana nets +2.
+test('playing Mana Surge in a Core fight costs 1 SP (a cantrip pays no SP surcharge) and nets 2 Mana with the sceptre Focus', () => {
   const run = start('herald');
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');

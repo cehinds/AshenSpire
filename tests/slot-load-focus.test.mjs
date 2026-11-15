@@ -67,6 +67,7 @@ function loadDoor(context, error = null) {
     const registryBuildKey = () => null;
     const configureTooltipGlossary = () => {}, setClassGlyphs = () => {};
     const resetArmouryTraySession = () => {};
+    const SetFaceCostRun = () => {}; // the face cost module follows the adopted run (batch 4)
     ${loadThroughAdoption}
     return {
       start: () => resumeRun(2, { onLoaded: () => {

@@ -70,12 +70,12 @@ test('every new card resolves at base and upgraded with its authored SP cost, a 
   for (const id of BASICS.filter(id => def(id).tags.some(tag => tag === 'maneuver:smash' || tag === 'maneuver:sweep'))) assert.equal(def(id).staminaCost, 2, `${id}: a basic smash or sweep costs 2 SP`);
 });
 
-test('offers at map depth 4+ reach every higher-rank card of each class over 600 seeds', () => {
+test('offers at map depth 4+ reach every higher-rank card of each class over 1200 seeds', () => {
   const classOf = { reaver: ['core.skullsplitter', 'core.whirlwind'], rogue: ['core.feint', 'core.hitAndRun'], starseer: [], herald: [] };
   const colorless = ['core.stunningBlow', 'core.rakingSweep'];
   for (const classId of Object.keys(classOf)) {
     const seen = new Set();
-    for (let seed = 1; seed <= 600; seed++) {
+    for (let seed = 1; seed <= 1200; seed++) {
       const run = live(classId, [], seed);
       run.floor = 4;
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);

@@ -48,16 +48,16 @@ function pinContestDice(combat, ...dice) {
 const SPARK = { cardId: 'core.spark', tags: ['school:lightning', 'rank.cantrip'], rank: 1 };
 const dcOf = (combat, enemy) => shockContestPreview(combat, combat.player, enemy, SPARK).dc;
 
-test('Spark is a Core cantrip: 6 Lightning magic damage (8 upgraded; spells deal double, owner 2026-11-14), 1 SP, no Mana, lightning tag', () => {
+test('Spark is a Core cantrip: 3 Lightning magic damage (4 upgraded; cantrip damage halved back, owner 2026-11-15), 1 SP, no Mana, lightning tag', () => {
   const card = reg.cards.get('core.spark');
   assert.ok(card.tags.includes('rank.cantrip') && card.tags.includes('school:lightning'));
   assert.deepEqual([card.staminaCost, card.manaCost, card.damageSchool], [1, 0, 'magic']);
-  assert.equal(card.effects[0].amount, 6);
-  assert.equal(card.upgrade.effects[0].amount, 8);
+  assert.equal(card.effects[0].amount, 3);
+  assert.equal(card.upgrade.effects[0].amount, 4);
   assert.ok(isLightning(card));
 });
 
-test('Spark deals 6 base damage (spells deal double; plus the caster\'s attributes, like every Core spell) and its face reads the same as Frost Nip', () => {
+test('Spark deals 3 base damage (a cantrip: not doubled; plus the caster\'s attributes, like every Core spell) and its face reads the same as Frost Nip', () => {
   const play = id => {
     const { combat, enemy } = fight();
     const hand = combat.piles.hand[0];
@@ -68,9 +68,9 @@ test('Spark deals 6 base damage (spells deal double; plus the caster\'s attribut
     return { row, dealt: 500 - enemy.hp };
   };
   const spark = play('core.spark'), nip = play('core.frostNip');
-  assert.equal(spark.row.splitBase, 6, 'printed damage 6');
-  assert.equal(spark.row.damageReceipt.hits[0].sources.find(s => s.id === 'base').amount, 6);
-  assert.equal(spark.row.faceValue, nip.row.faceValue, 'the face matches the other 6-damage cantrip');
+  assert.equal(spark.row.splitBase, 3, 'printed damage 3');
+  assert.equal(spark.row.damageReceipt.hits[0].sources.find(s => s.id === 'base').amount, 3);
+  assert.equal(spark.row.faceValue, nip.row.faceValue, 'the face matches the other 3-damage cantrip');
   assert.equal(spark.dealt, spark.row.faceValue, 'the face is what the hit does');
 });
 

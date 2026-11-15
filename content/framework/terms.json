@@ -35,6 +35,7 @@
     { "id": "term.stamina", "canonicalText": "Stamina" },
     { "id": "term.mana", "canonicalText": "Mana" },
     { "id": "term.alternativeCost", "canonicalText": "Alternative Cost", "pluralText": "Alternative Costs" },
+    { "id": "term.manaOnly", "canonicalText": "Mana-only" },
 
     { "id": "term.innate", "canonicalText": "Innate" },
     { "id": "term.retain", "canonicalText": "Retain" },
@@ -106,6 +107,7 @@
     { "id": "term.tooltip.stamina", "canonicalText": "Costs Stamina to play. Refills at the start of every turn." },
     { "id": "term.tooltip.mana", "canonicalText": "Costs Mana to play. Mana refills at Rest Spots, not between turns." },
     { "id": "term.tooltip.alternativeCost", "canonicalText": "May be paid with a complete alternative option instead of its listed cost." },
+    { "id": "term.tooltip.manaOnly", "canonicalText": "A spell that costs Mana but no Stamina: the spell Stamina surcharge does not apply." },
 
     { "id": "term.tooltip.innate", "canonicalText": "Starts each combat on top of your draw pile." },
     { "id": "term.tooltip.retain", "canonicalText": "Stays in your hand at the end of your turn." },
