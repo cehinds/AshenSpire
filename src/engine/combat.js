@@ -99,7 +99,7 @@ import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolv
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { limitEnemyIds } from '../model/combatLimits.js';
-import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
+import { cardChoice, assertCardChoice, CardModeEffects } from '../model/cardChoices.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
 
@@ -1787,6 +1787,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
   def=selectCardVariant(combat,def,{energy:cost,mana:manaCost,stamina:staminaCost},targetId ? findEntity(combat,targetId) : null);
+  def = CardModeEffects(def, chosen);
 
   const players = [{ id: p.id, alive: p.alive, connected: true }];
   const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });

@@ -489,8 +489,8 @@
     "name": "Backstep",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -509,8 +509,19 @@
       },
       {
         "op": "moveEngagement",
-        "target": "enemy",
+        "target": "self",
         "bands": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "prepared",
+        "stacks": {
+          "f": "add",
+          "args": [
+            1
+          ]
+        }
       }
     ],
     "tags": [
@@ -522,7 +533,38 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade.\nRetreat one band."
+    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "prepared",
+          "stacks": {
+            "f": "add",
+            "args": [
+              1
+            ]
+          }
+        }
+      ]
+    }
   },
   {
     "id": "core.jab",

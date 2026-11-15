@@ -278,9 +278,19 @@
     "flavor": "Retreat of the lower-river ice-cutters.\n\nThe cutters know which ice beneath the bridges holds and which only seems to, and sell the knowledge by the season. Their map is drawn inside a cutter's coat and passed down with it.\n\nIts present wearer says it has been wrong since the second winter.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 6
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": 1
       },
       {
         "op": "applyStatus",
@@ -294,13 +304,24 @@
         }
       }
     ],
-    "textTemplate": "Gain {block} Block. Become Prepared.",
+    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 9
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1
         },
         {
           "op": "applyStatus",
@@ -1111,9 +1132,21 @@
     "flavor": "The rooftop road of the frozen docks.\n\nBridge rail, lamp post, gutter, never the street. The Court's watch walked only the paved ways, for the paving had been blessed at the Founding and the rooftops had not.\n\nWhether the watch was pious or idle is not agreed.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 7
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "changeAttribute",
+        "target": "self",
+        "attribute": "dexterity",
+        "amount": 1,
+        "thisTurn": true
       },
       {
         "op": "draw",
@@ -1125,17 +1158,30 @@
         "random": true
       }
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} cards. Discard 1 at random.",
+    "textTemplate": "Gain {evade} Evade. +1 DEX this turn. Draw {draw} cards. Discard 1 at random.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 9
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "changeAttribute",
+          "target": "self",
+          "attribute": "dexterity",
+          "amount": 1,
+          "thisTurn": true
         },
         {
           "op": "draw",
-          "amount": 3
+          "amount": 2
         },
         {
           "op": "discard",
@@ -1294,16 +1340,27 @@
     "name": "Shadowstep",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "keywords": [],
     "icon": "progression",
     "flavor": "Step through a pier's shadow.\n\nThe shadows beneath the bridges are let by the season, and rent is owed to whoever held the pier before. Tenancies pass down like a trade.\n\nThe oldest belongs to one not seen since the Decree. The rent is always paid.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 5
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self",
+          "per": 2
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": -1
       },
       {
         "op": "applyStatus",
@@ -1315,19 +1372,27 @@
             1
           ]
         }
-      },
-      {
-        "op": "draw",
-        "amount": 1
       }
     ],
-    "textTemplate": "Gain {block} Block. Become Prepared. Draw {draw} card.",
+    "textTemplate": "Gain {evade} Evade. Advance. Become Prepared.",
     "upgrade": {
+      "cost": 1,
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 7
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": -1
         },
         {
           "op": "applyStatus",
@@ -1339,13 +1404,10 @@
               1
             ]
           }
-        },
-        {
-          "op": "draw",
-          "amount": 1
         }
       ]
-    }
+    },
+    "costRule": "fixed"
   },
   {
     "id": "afterimageCard",

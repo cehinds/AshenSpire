@@ -553,7 +553,9 @@ test('compiled tooltips resolve every word through TermRegistry', () => {
 // ---- the runtime bridge (ported legacy consumers) ---------------------------
 
 const { createRegistries, resolveCard } = await import('../src/model/registries.js');
-const LEGACY_REG = createRegistries(contentBundle);
+// W25-EvadeCards: Dodge Roll and Evasive Guard no longer ship as a flat guard and a roll, so the weight-class and roll paths run against the legacy fixture (tests/helpers/legacy-dodge-cards.mjs).
+const { legacyDodgeRegistries } = await import('./helpers/legacy-dodge-cards.mjs');
+const LEGACY_REG = legacyDodgeRegistries();
 
 // The import boundary refuses a malformed armament row instead of carrying it
 // into a candidate the gate would then call clean (review on #519).

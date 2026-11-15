@@ -30,6 +30,8 @@ function weaponArtIds(registries) {
 
 export function cardManaCategory(registries, def, policy = cardManaPolicy) {
   const tags = def.cardTags ?? def.tags ?? [];
+  // Approved design (W25-EvadeCards): Quickstep is a 1 Stamina card although the shortbow lists it as a weapon art; only Nightstep costs Mana.
+  if (policy.manaFreeCards?.includes(def.id)) return null;
   // Real weapon-art identity takes precedence over its card type: a mounted
   // art can itself be a Power. An unarmed fallback assigned a UI mount is not
   // enough to turn a basic Dodge/Strike into a weapon art.

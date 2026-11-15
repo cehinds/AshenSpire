@@ -143,7 +143,8 @@ export function rangeHitContact(ctx, source, target, carrier) {
 export function executeEngagementMovement(ctx, action) {
   if (!ctx.rangeState?.policy.enabled) return;
   // The Retreat card (W25-BANDS): the owner steps back out of the Advance. It moves nothing else, and does nothing in a fight without rows.
-  if (action.effect.target === 'self') { if (BandsActive(ctx)) SetAdvanced(ctx, action.source, false); return; }
+  // An Evade card's own Advance (bands -1, no target; owner 2026-11-15, W25-EvadeCards) steps the owner in the same way, also only with rows.
+  if (action.effect.target === 'self') { if (BandsActive(ctx)) SetAdvanced(ctx, action.source, action.effect.bands < 0); return; }
   let target = action.target;
   if (action.effect.target === 'pendingAttacker' && (!target || target.kind === action.source.kind)) target = ctx.enemies.find(row => row.id === ctx._reactionSourceId) || ctx._reactionSource;
   if (!target || target.kind === action.source.kind) throw Error('Engagement movement requires an opposing target');

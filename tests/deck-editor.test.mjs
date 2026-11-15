@@ -1611,12 +1611,10 @@ test('DOM: a Counter shows a range only when its reply deals damage (v2)', async
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
-    // Version-two Poise replies are offensive payloads and show their return range.
-    assert.equal(rangeOf('evasiveGuard'), 'melee', 'Evasive Guard returns Poise at Melee');
-    assert.equal(rangeOf('backstep'), 'melee', 'Backstep returns Poise at Melee');
-    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
-    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
-    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // W25-EvadeCards (2026-11-15): Evasive Guard, Backstep and Dodge Roll add Evade stacks and carry no reply, so they show no return range.
+    for (const cardId of ['evasiveGuard', 'backstep', 'dodgeRoll']) assert.equal(rangeOf(cardId), undefined, `${cardId} has no reply range`);
+    // Quickstep adds a Counter stack that returns damage, so it reads Melee.
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with its Counter stack');
     // Guard Counter's reply is a damage effect, so it keeps its Melee range.
     assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
     editor.close();

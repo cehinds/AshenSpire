@@ -72,6 +72,7 @@ test('all eighty focused grade-zero/one recipes execute in the real interpreter'
     const before = { hp: combat.enemies[0].hp, block: combat.player.block };
     resolveRecipe(combat, card, rank);
     if (effect.op === 'damage') assert.equal(before.hp - combat.enemies[0].hp, effect.amount * (effect.hits || 1), `${card.id}/${rank}`);
+    else if (effect.op === 'applyStatus' && effect.status === 'evade') assert.deepEqual([effect.stacks.metric, effect.stacks.per], ['evadeStackGain', 2], `${card.id}/${rank} (W25-EvadeCards: Nightstep grants Evade, not Block; the configured stack metric is Core-only, so the fixture checks its shape and tests/evade-cards.test.mjs plays it)`);
     else assert.equal(combat.player.block - before.block, effect.amount, `${card.id}/${rank}`);
     assert(!profile.effects.some(e => ['loseHp', 'grantCardCharge'].includes(e.op)), 'advanced rider inactive');
     assert.equal(combat.enemies[1].hp, 1000, 'low grade stays focused');

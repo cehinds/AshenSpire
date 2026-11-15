@@ -74,7 +74,9 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
     // A pure Evade card prints its short grant in the body; its keyword tag
     // keeps the explanation without repeating the quantity.
     const bodyGrant = core && evadeGrantOnlyCard(def);
-    const single = !bodyGrant && grants.length === 1 ? grants[0] : null;
+    // A body line that says "Evade N." keeps the tag's explanation without repeating the quantity or hiding that line.
+    const bodyEvade = status === 'evade' && grants.some(grant => grant.index !== undefined);
+    const single = !bodyGrant && !bodyEvade && grants.length === 1 ? grants[0] : null;
     return { id: `${protection[status] ? 'effect' : 'status'}:${status}`, label: resolved.name,
       blurb: [...grants.map(grant => grant.text), resolved.tooltip || resolved.name].join(' '),
       ...(single ? { count: single.count, ...(single.formula ? { countFormula: single.formula } : {}) } : {}),

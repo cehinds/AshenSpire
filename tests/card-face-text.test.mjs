@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { legacyCrawlingRegistries } from './helpers/legacy-crawling-shot.mjs';
 
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
@@ -59,10 +60,13 @@ test('a Defend card labels per-play gains separately from its Entry clause', () 
 });
 
 test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
-  const all = text('crawlingShot');
+  // The legacy Crawling Shot keeps the "While Prone" preparation covered (W25-EvadeCards gave the shipped card Evade stacks and a Retreat).
+  const legacy = legacyCrawlingRegistries();
+  const all = (cardFaceLines(applyCombatExpansionCard(legacy.cards.get('crawlingShot')), null, legacy) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
   const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
   assert.deepEqual(evade, ['While Prone: Prepare one Evade with Advantage']);
   assert.ok(all.some(line => line.startsWith('Entry: ')), JSON.stringify(all));
+  assert.ok(text('crawlingShot').some(line => /Evade/.test(line)) && text('crawlingShot').some(line => /\bRetreat\b/.test(line)), 'the shipped card says Evade and Retreat');
 });
 
 test('a card with an effect it cannot phrase returns null', () => {

@@ -1,4 +1,6 @@
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { legacyRules } from './legacyHitRules.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -135,6 +137,8 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
     firstMove: 'triple', moves: { triple: { ...attack, damage: 10, hits: 3 } } };
   const registries = createRegistries({ ...contentBundle, enemies: [...contentBundle.enemies, enemy] });
   const { combat } = fixture({ registries, enemyId: enemy.id, counter: true, responseCard: 'evasiveGuard' });
+  // W25-EvadeCards: Evasive Guard adds Evade stacks, which exist only under FixCore; this case primes the d20, so the fight carries the rules of one saved before the exact-hits ruling.
+  combat.fixCoreRules = legacyRules(fixCoreMechanics);
   combat.player.attributes.dexterity = combat.attributes.dexterity = 100;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);

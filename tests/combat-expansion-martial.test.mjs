@@ -202,10 +202,13 @@ test('player action carriers expose actual electrical equipment traits to an ene
   assert.ok(!card.combatProfile.traits.includes('conductive'));
 });
 
-test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
+test('permanent grades retain Quickstep Evade, bonus draws and once-per-turn support', () => {
   const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
-  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 19);
-  assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
+  // W25-EvadeCards (intended by the design): Quickstep no longer gains a base Block (it grants Evade stacks, a Counter and a draw),
+  // so there is no base Block for the grade to scale and its one authored draw is the only base draw; the grade keeps its Evade, reply damage and the once-per-turn Block and draw.
+  assert.equal(card.effects.some(effect => effect.op === 'block' && !effect.oncePerTurn), false);
+  assert.equal(card.effects.find(effect => effect.op === 'applyStatus' && effect.status === 'evade').stacks.per, 2);
+  assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 1);
   assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
   assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
 });

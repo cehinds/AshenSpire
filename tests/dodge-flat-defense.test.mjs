@@ -17,7 +17,9 @@ import { isPureDodge } from '../src/framework/importer.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { combatEffectForEvent } from '../src/model/combatEffectEvents.js';
 
-const registries = createRegistries(contentBundle);
+import { legacyDodgeRegistries } from './helpers/legacy-dodge-cards.mjs';
+// W25-EvadeCards: Dodge Roll and Evasive Guard no longer ship this way; the flat-guard path is covered against the legacy fixture (tests/helpers/legacy-dodge-cards.mjs).
+const registries = legacyDodgeRegistries();
 
 function fight({ ratings = false } = {}) {
   return createCombat({

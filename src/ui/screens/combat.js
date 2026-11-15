@@ -79,6 +79,7 @@ import { createReactionNote, latestReactionNote } from '../components/reactionNo
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { AutoCardChoice } from '../../model/cardChoices.js';
 import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
@@ -1420,7 +1421,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Auto battle (owner, 2026-10-26, overriding D12): with auto combat on, the player's own turn is played too. One
   // step per call: pick a card with chooseCardPlay (seat-visible info only), play it through playCard, the same
   // function a click reaches, or end the turn through commitEndTurn, the same function the End Turn control reaches.
-  // Cards that would open a prompt (a choice card) are left to the player, so the loop never starts a modal.
+  // A card that would open a stance prompt is left to the player, so the loop never starts a modal; a card of named modes
+  // (Dodge Roll's Advance or Retreat, the unarmed fallback) plays its first mode, the same as a headless play (AutoCardChoice).
   let autoPlays = 0;
   let autoPlayReadyAt = 0;
   let autoRejected = new Set(); // cards the engine or the screen refused this turn: never re-picked
@@ -1444,14 +1446,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const def = resolveCombatCard(combat, inst, { upcastRanks: ranks });
         const plan = cardTargets(inst.instanceId);
         const friendly = friendlyTargetPlan({ ...def, combatPreview: pv }, combat.player.id, [{ ...combat.player, connected: true }]);
-        const playable = !isUnplayable(inst) && !cardChoicePlan(combat, inst.instanceId)
+        const autoChoice = AutoCardChoice(cardChoicePlan(combat, inst.instanceId));
+        const playable = !isUnplayable(inst) && autoChoice.playable
           && (!pv.needsTarget || livingIds.length > 0) && !(friendly.active && !friendly.legalIds.length)
           && !autoRejected.has(inst.instanceId)
           // An X-cost card with nothing to spend would play for X = 0.
           && !(pv.costIsX && combat.player.energy <= 0);
         entry = { id: inst.instanceId, kind: combatProfileFor(def)?.maneuver ?? kindForCard(def)?.maneuver ?? null, offense: pv.needsTarget === true,
           cost: pv.costIsX ? 0 : pv.cost, manaCost: pv.manaCost, staminaCost: pv.staminaCost || 0, playable };
-        byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, rank: ranks ?? def.upcast?.baseTier ?? 0 });
+        byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, choice: autoChoice.choice, rank: ranks ?? def.upcast?.baseTier ?? 0 });
       } catch { /* a card the preview cannot resolve is not playable */ }
       hand.push(entry);
     }
@@ -1483,7 +1486,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!targetId) return endTurn();
     }
     autoPlays += 1;
-    playCard(picked.id, targetId, null, info.rank);
+    playCard(picked.id, targetId, info.choice, info.rank);
     // A play that started sets busy; anything else was refused, and the same card is not tried again this turn.
     if (!busy) autoRejected.add(picked.id);
     return true;
