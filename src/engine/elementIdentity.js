@@ -201,6 +201,23 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
   }
 }
 
+/**
+ * The statuses a Poise break of an element adds to the target, applied to a DETACHED copy (a card quote or an enemy intent), so the later hits of
+ * the same action are priced against them as live play meets them (Shock raises later lightning damage, Burn all later damage). Mirrors OnPoiseBreak
+ * for the statuses only; Smite's HP, Knockback and the push are not carried. No events, no rng.
+ */
+export function ElementPreviewBreak(ctx, attacker, defender, element) {
+  const rules = ElementRulesOf(ctx);
+  if (!rules || !defender || !element) return;
+  const add = (id, stacks, cap = Infinity) => {
+    const have = defender.statuses?.[id]?.stacks || 0, give = Math.min(Math.floor(stacks), Math.max(0, cap - have));
+    if (give > 0) defender.statuses = { ...defender.statuses, [id]: { ...defender.statuses?.[id], stacks: have + give } };
+  };
+  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, ElementAttribute(ctx, attacker, rules.fire.burnAttribute)), Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
+  else if (element === 'lightning') add('shock', Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0), rules.shock.cap);
+  else if (element === 'frost' && (defender.statuses?.chill?.stacks || 0) > 0) { add('freeze', 1); add('brittle', 1); }
+}
+
 // ---------------------------------------------------------------------------
 // Which enemies a hit reaches
 // ---------------------------------------------------------------------------
