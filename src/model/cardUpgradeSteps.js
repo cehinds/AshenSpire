@@ -226,7 +226,7 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   // never reaches the engine: a Poise step on it would change a shown number and nothing else (W25 upgrades, step 1).
   // A frost card whose own Chill (3 or more) Freezes the target wipes the Poise pool it just hit, so a Poise step on it changes a shown number and
   // nothing else either (Glacial Spike, W25 batch 4).
-  const freezesTarget = tags.includes('school:frost') && effects.some((e) => e.op === 'applyStatus' && e.status === 'chill' && e.target !== 'self' && (e.stacks || 0) >= FREEZING_CHILL);
+  const freezesTarget = familyValue(tags, 'school:') === 'frost' && effects.some((e) => e.op === 'applyStatus' && e.status === 'chill' && e.target !== 'self' && (e.stacks || 0) >= FREEZING_CHILL);
   if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash' && !freezesTarget) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
