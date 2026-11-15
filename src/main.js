@@ -164,10 +164,6 @@ import { SetFaceCostRunSource, SetFaceCostPricer } from './model/faceCosts.js';
 import { SpellCostAdjust } from './engine/spellCosts.js';
 void DEBUG_CHROME_READY;
 
-// Older WebKit (iOS 15, an iPhone SE 1st gen): repair the stylesheets and add container queries and popovers
-// before anything renders. A no-op where the browser has them all (docs/qa/IOS15-COMPAT.md).
-installLegacyBrowser();
-
 const app = document.getElementById('app');
 
 // ---- content validation at boot (SPEC §3.14) — loud, on-screen -------------
@@ -452,6 +448,11 @@ let settingsChoiceChecked = !!shotState;
 // rebuilds with: a saved newGameProfile must not cost a second validation there.
 rebuildRegistries(activeSettings, selectedGameProfile);
 const audio = initAudio(activeSettings);
+
+// Older WebKit (iOS 15, an iPhone SE 1st gen): repair the stylesheets and add container queries and popovers
+// before the first screen renders. A no-op where the browser has them all (docs/qa/IOS15-COMPAT.md). It sits
+// after the boot-registry prefix that tests/startup-registry-flow.test.mjs evaluates on its own.
+installLegacyBrowser();
 SetFaceCostRunSource(() => run); // faces read the shell's current run live, so no adoption or refusal path has to tell the model
 SetFaceCostPricer(SpellCostAdjust); // the model layer may not import the engine, so the shell hands it the spell cost rule
 // Route existing sound cues through the procedural audio engine.

@@ -5,7 +5,7 @@
 //
 // What it is NOT: a top layer. An open popover is `position: fixed` with a large
 // z-index, so an ancestor with a transform or `contain` can still trap it. The
-// game's own popovers (the customize ☰ menu, the equipment "more" tags) place
+// game's own popovers (the customize menu button, the equipment "more" tags) place
 // themselves with `position: fixed` coordinates, so that is enough for them.
 //
 // `:popover-open` is a SyntaxError for `matches()` in such a browser, so callers
