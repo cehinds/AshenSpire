@@ -1,6 +1,7 @@
 import { engravedIcon, engravedIconUrl } from './components/engravedIcon.js';
 import { uiIconText } from '../content/uiIcons.js';
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
+import { Cq } from './cqCompat.js';
 import { enemyExpansionSprite } from './enemyExpansionStage.js';
 import { createAlternativeCardStage } from './alternativeCardStage.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
@@ -436,6 +437,7 @@ export function medallionOverlay(classId, tint, sigil) {
   // figures and stays one in any frame this is drawn in. The glyph rides the
   // disc's own size (`cqh` against the disc as a container) so it cannot
   // drift out of proportion with it.
+  med.dataset.container = 'size'; // read by the container shim: a browser without container queries drops `container-type` below
   med.style.cssText =
     `position:absolute;left:${anchor.x}%;top:${anchor.y}%;transform:translate(-50%,-50%);`
     + 'height:7%;aspect-ratio:1;border-radius:50%;background:#14100c;'
@@ -445,7 +447,7 @@ export function medallionOverlay(classId, tint, sigil) {
   // container's own font-size cannot be expressed in its own `cq` units.
   const mark = document.createElement('span');
   mark.textContent = sigil;
-  mark.style.cssText = 'font-size:62cqh;line-height:1;';
+  mark.style.cssText = Cq('font-size:62cqh;line-height:1;');
   med.appendChild(mark);
   return med;
 }

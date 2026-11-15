@@ -2,6 +2,7 @@
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
 import { effectiveD20Percent } from './d20Chance.js';
+import { SplitAfter } from './splitAfter.js';
 
 export const FACE_EFFECT_LINES = 3;
 // Owner, 2026-10-31: one to three lines, at most five words per line. A line
@@ -42,8 +43,13 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
 // What a summary must never lose from the full text, by kind: a cost or downside, a discard, something consumed, a cap or
 // limit, "random", a chance, a lock or reveal rule, Exhaust/Ethereal. The check reads the full rules, not hand-picked cards.
+// A verb of cost not directly after "whenever/when/if you". Written without a RegExp lookbehind (a parse-time SyntaxError
+// before Safari 16.4); only `.test` is used on a qualifier, so this stands where the regex stood.
+const COST_VERB = /\b(?:take|lose|loses|pay|offer|skip)\b/gi, COST_AFTER_CONDITION = /\b(?:whenever|when|if) you $/i, COST_PLAIN = /\bcosts? \+|\bunplayable\b/i;
+const COST_QUALIFIER = { test: text => COST_PLAIN.test(text)
+  || [...String(text).matchAll(COST_VERB)].some(m => !COST_AFTER_CONDITION.test(String(text).slice(0, m.index))) };
 export const QUALIFIERS = [
-  ['cost', /(?<!\b(?:whenever|when|if) you )\b(?:take|lose|loses|pay|offer|skip)\b|\bcosts? \+|\bunplayable\b/i],
+  ['cost', COST_QUALIFIER],
   ['discard', /\bdiscards?\b/i],
   ['consume', /\bremoves?\b|\bconsum/i],
   ['cap', /\bcap(?:s|ped)?\b|\bmax(?:imum)?\b|\bstops? at\b|\bat most\b/i],
@@ -126,7 +132,7 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
 // Split only complete authored sentences. A following qualification belongs
 // to the preceding sentence (caps, generated-card costs and pronoun riders).
 function authoredClauses(html) {
-  const sentences = html.split(/(?<=[.!?])\s+(?=[A-Z(])/), out = [];
+  const sentences = SplitAfter(html, /[.!?]\s+(?=[A-Z(])/), out = [];
   for (const sentence of sentences) {
     if (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
     else out.push(sentence);
