@@ -36,10 +36,10 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
   const steps = [
     { k: 'fx', fx: 'block', n: 4 }, { k: 'fx', fx: 'draw', n: 1 }, { k: 'fx', fx: 'cycle', n: 1 }, { k: 'fx', fx: 'cull' }, { k: 'fx', fx: 'copy' },
     { k: 'fx', fx: 'shuffle' }, { k: 'fx', fx: 'retain' }, { k: 'fx', fx: 'innate' }, { k: 'fx', fx: 'holdOne' }, { k: 'fx', fx: 'boost', stat: 'strength', n: 2 },
-    { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }];
+    { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }, { k: 'fx', fx: 'counter', n: 1 }];
   // Batch 2: INT / WIS boosts exist, for this turn or the rest of the fight. They are the same kind ('boost'), so the kind count is unchanged.
   const attributeBoosts = [{ k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' }, { k: 'fx', fx: 'boost', stat: 'wisdom', n: 1, until: 'fight' }];
-  assert.equal(FX_KINDS.length, steps.length + 1, 'unexhaust is the thirteenth kind');
+  assert.equal(FX_KINDS.length, steps.length + 1, 'unexhaust is the thirteenth kind; counter (batch 5) is the fourteenth');
   for (const step of steps) {
     assert.deepEqual(upgradeStepsProblems(withSteps([step]), 'x'), [], JSON.stringify(step));
     assert.notDeepEqual(JSON.stringify(applyUpgradeSteps(strike(), [step])), JSON.stringify(applyUpgradeSteps(strike(), [{ k: 'dmg', n: 0 }])), step.fx);
@@ -52,6 +52,7 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
   assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'boost', stat: 'constitution', n: 2, until: 'turn' }]), 'x')[0], /stat/);
   assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'boost', stat: 'wisdom', n: 2 }]), 'x')[0], /until/, 'only STR / DEX keep the legacy no-duration boost');
   assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'block', n: 0 }]), 'x')[0], /\.n/);
+  assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'counter', n: 4 }]), 'x')[0], /\.n/, 'one +Counter step never grants more than 3');
 });
 
 test('a card is only offered what it lacks', () => {
