@@ -133,7 +133,7 @@ export function playerActionIntent(profile, onTarget) {
   }
   // W25-F: a caster's second stance icon, the elemental flux (or the plain magic mark), drawn once beside the stance glyph; shown by setPlayerFlux.
   const flux = document.createElement('span'); flux.className = 'intent-action player-flux'; flux.dataset.valueKind = 'count'; flux.hidden = true;
-  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = fluxIcon(element); icon.hidden = true; flux.append(icon); }
+  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = fluxIcon(element); icon.setAttribute('hidden', ''); flux.append(icon); }
   row.append(flux);
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
@@ -156,7 +156,8 @@ export function setPlayerFlux(node, view) {
   setData(node, 'flux', flux);
   setData(node, 'fluxMultiplier', view ? view.multiplier : '');
   if (group.hidden !== !view) group.hidden = !view;
-  for (const icon of group.querySelectorAll('.flux-icon')) { const hidden = icon.dataset.flux !== flux; if (icon.hidden !== hidden) icon.hidden = hidden; }
+  // An SVG has no `hidden` property, only the attribute (the stylesheet hides `.flux-icon[hidden]`).
+  for (const icon of group.querySelectorAll('.flux-icon')) { const hidden = icon.dataset.flux !== flux; if (icon.hasAttribute('hidden') !== hidden) icon.toggleAttribute('hidden', hidden); }
 }
 
 /** Shows `profile`'s glyph on a node playerActionIntent built; writes only what differs, replaces nothing. */
