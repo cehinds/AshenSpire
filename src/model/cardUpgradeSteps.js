@@ -20,6 +20,10 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8 });
+// A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
+// cantrip upgrades add +1 stack); every other status keeps STACK_CAPS, or none.
+const CANTRIP_STACK_CAP = 5;
+const stackCap = (status, card) => STACK_CAPS[status] ?? (tagsOf(card).includes(RANK_DOWN_TAG) ? CANTRIP_STACK_CAP : undefined);
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -109,12 +113,13 @@ function options(base, current, applied, limits) {
   const stackable = effects.find((e) => {
     if (!isPlainStatus(e) || seenStatus.has(e.status)) return false;
     seenStatus.add(e.status);
-    if (STACK_CAPS[e.status] === undefined || e.stacks + 1 > STACK_CAPS[e.status]) return false;
+    const cap = stackCap(e.status, current);
+    if (cap === undefined || e.stacks + 1 > cap) return false;
     const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
     return finalStacks(stepped, e.status) > finalStacks(current, e.status);
   });
   if (stackable) {
-    const n = biggest(1, scale, (k) => stackable.stacks + k <= STACK_CAPS[stackable.status]
+    const n = biggest(1, scale, (k) => stackable.stacks + k <= stackCap(stackable.status, current)
       && finalStacks(applyUpgradeSteps(base, [...applied, { k: 'stk', status: stackable.status, n: k }]), stackable.status) > finalStacks(current, stackable.status));
     found.stk = { status: stackable.status, n };
   }

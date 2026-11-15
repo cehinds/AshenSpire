@@ -834,6 +834,12 @@
         "op": "heal",
         "target": "self",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -846,13 +852,19 @@
       "fx:heal",
       "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal {heal} HP. Exhaust.",
+    "textTemplate": "Heal {heal} HP. Gain {regen} Regen. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "heal",
           "target": "self",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -3039,6 +3051,12 @@
         "target": "enemy",
         "status": "weak",
         "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3050,7 +3068,7 @@
       "school:fire",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
@@ -3063,6 +3081,12 @@
           "target": "enemy",
           "status": "weak",
           "stacks": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 1
         }
       ]
     },
@@ -3087,6 +3111,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3099,13 +3129,19 @@
       "rank.cantrip",
       "range:melee"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
           "amount": 10
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 2
         }
       ]
     },
@@ -3130,6 +3166,12 @@
         "op": "block",
         "target": "self",
         "amount": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3140,13 +3182,19 @@
       "school:fire",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block.",
+    "textTemplate": "Gain {block} Block. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
           "op": "block",
           "target": "self",
           "amount": 7
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 1
         }
       ]
     },
@@ -3358,6 +3406,12 @@
         "target": "self",
         "status": "precision",
         "stacks": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3368,7 +3422,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {precision} Precision.",
+    "textTemplate": "Gain {precision} Precision. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
@@ -3376,6 +3430,12 @@
           "target": "self",
           "status": "precision",
           "stacks": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -3403,6 +3463,12 @@
         "op": "gainBarrier",
         "target": "self",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3413,7 +3479,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier.",
+    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
@@ -3425,6 +3491,12 @@
           "op": "gainBarrier",
           "target": "self",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -3447,6 +3519,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3458,13 +3536,19 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
           "amount": 12
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 2
         }
       ]
     },
@@ -3656,6 +3740,12 @@
         "target": "enemy",
         "status": "bleed",
         "stacks": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3667,7 +3757,7 @@
       "school:decay",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -3680,6 +3770,12 @@
           "target": "enemy",
           "status": "bleed",
           "stacks": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
         }
       ]
     },
@@ -3709,6 +3805,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "venom",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3720,7 +3822,7 @@
       "school:decay",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {venom} Venom.",
     "upgrade": {
       "effects": [
         {
@@ -3732,6 +3834,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "venom",
+          "stacks": 1
         }
       ]
     },
