@@ -1,11 +1,12 @@
 // Owner, 2026-11-15 (W25-BANDS) rule 5: retreat weapons put a free, Ethereal Retreat card in hand each turn; it ends the Advance and does nothing else.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import gear from '../games/ashenspire/packs/core/gear.json' with { type: 'json' };
+import { readFileSync } from 'node:fs';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { bandsFight, registries, pairOf } from './helpers/bands-fight.mjs';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
 
+const gear = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/gear.json', import.meta.url), 'utf8'));
 const RETREAT_WEAPONS = ['shortbow', 'halberd', 'boneSceptre', 'emberlightSceptre', 'gorefireBrand'];
 
 test('every bow, the halberd and the sceptres carry the retreat tag, and no other weapon does', () => {

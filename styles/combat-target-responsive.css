@@ -55,6 +55,7 @@
 /* W25-F: the caster's second stance icon (elemental flux, or the plain magic mark) sits beside the stance glyph; an SVG ignores [hidden], so say it. */
 :root .combat .player-action-intent .flux-icon[hidden] { display:none; }
 :root .combat .player-action-intent .player-flux { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); }
+:root .combat .player-action-intent .player-advanced { margin-inline-start:calc(2px / var(--ui-zoom,1)); padding-inline-start:calc(5px / var(--ui-zoom,1)); border-inline-start:1px solid var(--line-soft); font-weight:700; color:var(--grace); }
 :root .combat .player-action-intent .flux-icon[data-flux='fire'] { color:var(--ember); }
 :root .combat .player-action-intent .flux-icon[data-flux='frost'] { color:var(--frost); }
 :root .combat .player-action-intent .flux-icon[data-flux='divine'] { color:var(--grace); }
