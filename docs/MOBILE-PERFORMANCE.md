@@ -90,7 +90,7 @@ node tools/verify-external.mjs
 node tools/plantsites.mjs --check
 ```
 
-`node tools/attic/redraw-audit.mjs --viewport 320x568@2 --throttle 6 --summary` (iPhone SE 1st gen stand-in) counts, for an idle window, one card play and a second idle window, the DOM writes, how many of them are no-ops, rebuilt nodes identical to the ones they replaced, `<img>` insertions, and each paint's clip. On 2026-11-15 `dev`: idle wrote and painted nothing; one card play made 1096 writes, 823 of them no-ops, and 19 of its 22 paints covered the whole viewport. `tools/attic/perf-probe.mjs --viewport WxH@DPR` runs the probe at another phone size.
+`node tools/attic/redraw-audit.mjs --viewport 320x568@2 --throttle 6 --summary` (iPhone SE 1st gen stand-in) counts, for an idle window, one card play and a second idle window, the DOM writes, how many of them are no-ops, rebuilt nodes identical to the ones they replaced, `<img>` insertions. On 2026-11-15 `dev`: idle wrote and painted nothing; one card play made 1096 writes, 823 of them no-ops. Its Paint-event clips are per frame (`#document`), not per layer, so they do not show what was repainted; CDP LayerTree does: everything stacked above the sprite canvas (hand, HUD, formation grid, target HUD) is squashed into one viewport-sized layer, so a change to any of them re-rasterises that layer. `tools/attic/perf-probe.mjs --viewport WxH@DPR` runs the probe at another phone size.
 
 Browser QA covers 390×844 touch and 1440×900 desktop: combat load, selection
 without play, Information → Play, an enemy turn, the next hand, and Armoury.

@@ -2,8 +2,8 @@
 // idle, during one card play, and idle again. MEASURES ONLY; prints JSON to stdout.
 // Counts DOM mutation records, no-op writes (an attribute or text set to the value it
 // already had), rebuilt nodes identical to the ones they replaced, <img> insertions,
-// style/layout/paint events and each paint's clip (a full-viewport clip on every
-// paint means nothing is isolated on its own layer).
+// style/layout/paint events and each paint's clip. The clip is the frame's paint
+// (`#document`), not a layer's dirty rect: use CDP LayerTree to see layering.
 //
 //   node tools/attic/redraw-audit.mjs                          375x667@2, 4x CPU
 //   node tools/attic/redraw-audit.mjs --viewport 320x568@2 --throttle 6   iPhone SE 1st gen stand-in
