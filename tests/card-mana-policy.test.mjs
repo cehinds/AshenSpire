@@ -13,6 +13,8 @@ test('every authored weapon-package art and actual non-power spell has at least 
   assert.ok(ids.length > 20);
   for (const id of ids) {
     const card = resolveCard(registries, { cardId: id });
+    // W25-EvadeCards (intended by the design): Quickstep is on the shortbow's art list but pays 1 Stamina and no Mana (policy.manaFreeCards).
+    if (cardManaPolicy.manaFreeCards.includes(id)) { assert.equal(cardManaCategory(registries, card), null, id); assert.equal(card.manaCost || 0, 0, id); continue; }
     assert.equal(cardManaCategory(registries, card), 'weaponArt', id);
     assert.ok(card.manaCost >= 1, id);
   }

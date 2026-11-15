@@ -59,3 +59,17 @@ test('the Counter line on the Quickstep face equals the reply it deals (shown = 
   assert.equal(trigger.counterBase, shown, `face "${face}" shows the base the reply deals`);
   assert.equal(trigger.amount, shown + Math.floor(trigger.counterIncoming * 0.1 * trigger.counterStacks));
 });
+
+test('Quickstep pays 1 Stamina and no Mana, though the shortbow lists it as a weapon art', () => {
+  const { combat } = live();
+  combat.piles.hand.push({ instanceId: 'q', cardId: 'quickstep' });
+  const before = { stamina: combat.player.stamina, mana: combat.player.mana, energy: combat.player.energy };
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'q' });
+  const played = out.events.find(event => event.type === 'cardPlayed');
+  assert.ok(played);
+  assert.equal(registries.cards.get('quickstep').manaCost || 0, 0);
+  assert.equal(combat.player.mana, before.mana, 'no Mana paid');
+  assert.equal(before.stamina - combat.player.stamina, 1, 'one Stamina paid');
+  const face = cardPlainText(registries, { cardId: 'quickstep' }, { rules: { combatExpansionVersion: 2, gameProfile: profile } });
+  assert.ok(face);
+});
