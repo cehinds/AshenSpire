@@ -1,6 +1,7 @@
 import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreHitRollOff } from './fixCoreMechanics.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
+import { ElementStatusTooltip } from './elementIdentityRules.js';
 
 // UI wording is separate from the versioned mechanic source: changing a label
 // must not invalidate saved rules. Adapt only known legacy wording here, never
@@ -29,6 +30,9 @@ function present(ctx, id, definition, holder) {
       resolved = { ...resolved, tooltip: text, description: text };
     }
   }
+  // Element identity (W25): Burn's tooltip states the reworked rule when the fight plays under the element rules.
+  const element = resolved && typeof resolved === 'object' && resolved.tooltip === LEGACY_TOOLTIPS[id] ? ElementStatusTooltip(ctx, id) : null; // only the shipped wording, never a custom tooltip
+  if (element) resolved = { ...resolved, tooltip: element, description: element };
   return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
 }
 function presentationWording(ctx, id, resolved, core, changedDefinition = false) {

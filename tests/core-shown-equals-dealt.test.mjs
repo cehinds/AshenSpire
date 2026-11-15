@@ -127,7 +127,8 @@ function playChecked(combat, card, targetId, tally, label) {
       };
       assert.ok(explains(0, 0), `${label}: ${card.cardId} -> ${id} HP lost per hit [${got}] equals the face [${priced}]`);
       const sure = list.filter(row => !row.conditional).reduce((n, row) => n + row.hits.length, 0);
-      if (enemyAlive(combat, id) && cut < 0) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
+      // A fight the target's own Counter reply ended (the player fell mid-card) cuts the remaining hits off like a death does.
+      if (enemyAlive(combat, id) && cut < 0 && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
       tally.hits += got.length;
     }
     void enemiesBefore;
@@ -159,6 +160,9 @@ function checkFloaters(events, tally, label) {
 /** A prompt and the contact it answers share one key: a Broken player prices each hit of one action differently, so one number per source is not enough. */
 const reactionKey = (sourceId, preview) => `${sourceId}/${preview?.contactIndex ?? ''}`;
 
+// A multi-contact action can prompt twice under one key (a re-planned contact starts again at index 0): the numbers queue, in the order the prompts came.
+const noteReaction = (map, key, amount) => map.set(key, [...(map.get(key) || []), amount]);
+
 function checkEnemyActions(events, reactionNumbers, tally, label) {
   let action = null;
   let contact = null;
@@ -173,9 +177,9 @@ function checkEnemyActions(events, reactionNumbers, tally, label) {
     if ((event.type === 'enemyMoveStarted' || event.type === 'combatHitStarted') && event.intentPreview) {
       const shown = IncomingHpLoss(event.intentPreview);
       const key = reactionKey(event.sourceId, event.intentPreview);
-      const row = shown === null ? null : { moveId: event.moveId, shown, lost: 0, reaction: reactionNumbers.get(key) };
+      const row = shown === null ? null : { moveId: event.moveId, shown, lost: 0, reaction: reactionNumbers.get(key)?.[0] };
       if (event.intentPreview.damageScope === 'contact') { settle(contact, 'contact'); contact = row; } else { settle(action, 'action'); action = row; }
-      if (row && reactionNumbers.has(key)) reactionNumbers.delete(key);
+      if (row && reactionNumbers.has(key)) { const left = reactionNumbers.get(key).slice(1); if (left.length) reactionNumbers.set(key, left); else reactionNumbers.delete(key); }
     }
     if (event.type === 'damageDealt' && event.targetId === 'player' && event.sourceId !== 'player') {
       if (action) action.lost += event.hpLoss;
@@ -248,8 +252,8 @@ function playFight(classId, seed, tally) {
         // The prompt states the incoming action and each option's result as the HP the player will lose.
         if (Number.isFinite(offer.incomingHp)) assert.ok(offer.incomingHp >= 0, `${label}: the prompt's incoming HP`);
         // The prompt's top-level "Lose N HP" is what skipping it costs; an option's number is what taking it costs (checked per action below).
-        if (option) { reactionNumbers.set(reactionKey(offer.sourceId, offer.intentPreview), option.incomingHp); tally.reactions++; }
-        else if (Number.isFinite(offer.incomingHp)) { reactionNumbers.set(reactionKey(offer.sourceId, offer.intentPreview), offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
+        if (option) { noteReaction(reactionNumbers, reactionKey(offer.sourceId, offer.intentPreview), option.incomingHp); tally.reactions++; }
+        else if (Number.isFinite(offer.incomingHp)) { noteReaction(reactionNumbers, reactionKey(offer.sourceId, offer.intentPreview), offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
         dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option ? option.id : null });
       } else if (combat.pendingCardChoice) {
         const pending = combat.pendingCardChoice;

@@ -120,6 +120,7 @@ try {
   await mount(page, true, false, { equipItemId: 'ashStaff' });
   await slotModal(page).waitFor();
   await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).click();
+  await slotModal(page).locator('button', { hasText: 'Choose' }).click();
   await compareModal(page).waitFor();
   assert.equal(await slotModal(page).count(), 0, 'the slot modal closed');
   assert.equal(await page.locator('.equip-picker-row').count(), 0, 'no second item picker after the slot choice');

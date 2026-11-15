@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.necroticBuildup",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

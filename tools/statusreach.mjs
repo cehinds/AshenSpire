@@ -224,6 +224,42 @@ export const CODE_APPLIERS = [
     needle: `applyStatus(ctx, enemy, row.status, row.stacks`,
     why: 'an enemy row\'s authored startStatuses (Stitch Crab opens Damp, SPEC 4.7) is seeded at spawn',
   },
+  {
+    status: 'shock',
+    file: 'src/engine/elementIdentity.js',
+    needle: `addCapped(ctx, target, 'shock'`,
+    why: 'a lightning hit that breaks Poise adds Shock = max(INT, WIS) (element rules, W25)',
+  },
+  {
+    status: 'chill',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'chill'`,
+    why: 'every frost hit applies Chill (element rules, W25)',
+  },
+  {
+    status: 'freeze',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'freeze'`,
+    why: 'a frost Poise break on a Chilled target Freezes it (element rules, W25)',
+  },
+  {
+    status: 'brittle',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'brittle'`,
+    why: 'a frost Poise break on a Chilled target makes it Brittle (element rules, W25)',
+  },
+  {
+    status: 'necroticBuildup',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'necroticBuildup'`,
+    why: 'every necrotic hit adds build-up (element rules, W25)',
+  },
+  {
+    status: 'knockback',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'knockback'`,
+    why: 'a force Poise break knocks the target back (element rules, W25)',
+  },
 ];
 
 // The op that applies a status. One string, in one place, on purpose — this is

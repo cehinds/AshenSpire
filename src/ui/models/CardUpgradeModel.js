@@ -62,7 +62,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target, and the keywords / traits.
   const extras = (def) => [...new Set((def?.effects || []).flatMap((e) => (e.op === 'draw' || e.op === 'discard' || e.op === 'exhaust' || e.op === 'addCard' || e.op === 'shuffleDiscardIntoDraw' || e.op === 'retain'
-    ? [e.op] : e.op === 'applyStatus' && e.thisTurn ? [`${e.status} this turn`] : e.op === 'damage' && (e.target === 'randomEnemy' || e.target === 'otherEnemy') ? ['extra target'] : [])))].sort().join(', ') || 'none';
+    ? [e.op] : e.op === 'applyStatus' && e.thisTurn ? [`${e.status} this turn`] : e.op === 'changeAttribute' ? [`${e.attribute} ${e.thisTurn ? 'this turn' : 'for the fight'}`] : e.op === 'damage' && (e.target === 'randomEnemy' || e.target === 'otherEnemy') ? ['extra target'] : []))), ...Object.entries(def?.runAttributeBonus || {}).map(([stat, n]) => `+${n} ${stat} for the run`)].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.effects'), extras(before), extras(after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
@@ -95,7 +95,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
     // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
-    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith }), combos: false } : RestUpgradeRule(instance);
+    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false } : RestUpgradeRule(instance);
     const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.

@@ -34,9 +34,12 @@ import { renderCard } from '../components/card.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
 import { smithingPlan } from '../../model/smithing.js';
+import { coreSmithingActive } from '../../model/smithingCore.js';
+import { OpenSmithOptionsModal, OpenSmithKeepModal } from '../components/smithOptionsModal.js';
+import { KeepableProperties, KeepLimit, CategoryChoices } from '../../model/smithCategory.js';
 import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
-import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../../model/blacksmith.js';
+import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 
 const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
 
@@ -167,6 +170,28 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       }
     },
     upgrade(shelf) {
+      if (coreSmithingActive(run)) {
+        // Core 2: every owned weapon, shield, armour and relic with a slot left. The action opens its rolled options.
+        for (const candidate of serviceCandidates(registries, run, 'upgrade')) {
+          const plan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
+          const held = KeepableProperties(run, candidate.itemRef).map((row) => row.text);
+          const host = tile(GLYPH.upgrade, candidate.itemName, [t('blacksmith.upgrade.slotLine', { n: candidate.nextLevel, max: candidate.slots }), ...(held.length ? [held.join(', ')] : [])].join(' · '), '', { visual: equipmentVisual(candidate.itemId) });
+          host.dataset.itemRef = candidate.itemRef;
+          const action = addAction(host, { label: t('blacksmith.verb.upgrade'), kind: 'service', ok: !!plan.ok, reason: plan.reason, price: priceLine({ stones: plan.stones, cinders: plan.cost }) });
+          action.run = (event) => openItemOptions(plan, event.currentTarget, host);
+          // A weapon can also be reforged into another category (W25 step 5): the same Smith row, a second action.
+          if (CanChangeCategory(registries, run, candidate.itemRef)) {
+            const change = CategoryChangePlan(registries, run, candidate.itemRef, CategoryChoices(run, candidate.itemRef)[0], KeepableProperties(run, candidate.itemRef).slice(0, 1).map((row) => row.key), { priceMult });
+            const second = addAction(host, { label: t('blacksmith.category.action'), kind: 'service', ok: change.ok || change.code === 'category', reason: change.ok ? '' : change.reason, price: priceLine({ stones: change.stones, cinders: change.cinders }) });
+            second.run = (event) => openCategoryChange(candidate, event.currentTarget, host);
+          }
+          const rank = ItemRankUpPlan(registries, run, candidate.itemRef, { priceMult });
+          const third = addAction(host, { label: t('blacksmith.itemRank.action'), kind: 'service', ok: rank.ok, reason: rank.reason, price: priceLine({ stones: rank.stones, cinders: rank.cost }) });
+          third.run = () => act(host, () => CommitItemRankUp(registries, run, rank, { priceMult }));
+          shelf.append(host);
+        }
+        return;
+      }
       // An item with no name of its own is a raw id; the screen never shows one.
       for (const candidate of smithingPlan(registries, run, undefined, { stoneDiscount }).candidates.filter((row) => row.itemName)) {
         const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { from: candidate.currentLevel, to: candidate.nextLevel }), '', { visual: equipmentVisual(candidate.itemId) });
@@ -186,6 +211,37 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       shelf.append(host);
     },
   };
+
+  // Core 2 item upgrade: the player picks one of the rolled options; the quote is the plan the modal showed.
+  function openItemOptions(plan, opener, host) {
+    OpenSmithOptionsModal({
+      title: t('blacksmith.options.title', { name: plan.name }),
+      eyebrow: t('blacksmith.upgrade.slotLine', { n: plan.n, max: plan.smith.slots }),
+      price: t('blacksmith.options.price', { stones: plan.stones, plural: plural(plan.stones), cinders: plan.cost }),
+      options: plan.options.map((option) => ({ id: option.id, name: option.text, text: '' })),
+      opener,
+      onChoose: (optionId) => act(host, () => commitBlacksmithUpgrade(registries, run, { ...plan, optionId }, { priceMult })),
+    });
+  }
+
+  // Core 2 category change: pick the new category, then the old properties to keep (the new ones roll live from that choice).
+  function openCategoryChange(candidate, opener, host) {
+    const base = CategoryChangePlan(registries, run, candidate.itemRef, CategoryChoices(run, candidate.itemRef)[0], [], { priceMult });
+    OpenSmithOptionsModal({
+      title: t('blacksmith.category.title', { name: candidate.itemName }),
+      price: t('blacksmith.category.price', { stones: base.stones, plural: plural(base.stones), cinders: base.cinders }),
+      options: CategoryChoices(run, candidate.itemRef).map((category) => ({ id: category, name: category.charAt(0).toUpperCase() + category.slice(1), text: '' })),
+      opener,
+      onChoose: (category) => OpenSmithKeepModal({
+        title: t('blacksmith.category.keepTitle', { name: candidate.itemName, category }),
+        price: t('blacksmith.category.price', { stones: base.stones, plural: plural(base.stones), cinders: base.cinders }),
+        rows: KeepableProperties(run, candidate.itemRef), limit: KeepLimit(run, candidate.itemRef),
+        quoteFor: (keys) => CategoryChangePlan(registries, run, candidate.itemRef, category, keys, { priceMult }),
+        opener,
+        onConfirm: (keys) => act(host, () => CommitCategoryChange(registries, run, CategoryChangePlan(registries, run, candidate.itemRef, category, keys, { priceMult }), { priceMult })),
+      }),
+    });
+  }
 
   function openUpgradeModal(itemRef, returnFocusElement) {
     let selection = itemRef;

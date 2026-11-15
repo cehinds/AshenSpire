@@ -15,6 +15,7 @@
 // copies a card may have and what the bounds are all come from
 // model/deckRules.js; this file only says them in the editor's shape.
 
+import { ItemMinDeckDelta } from '../../model/itemProperties.js';
 import {
   addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
   deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
@@ -215,8 +216,9 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const deck = run.deck || [];
   const sideboard = run.sideboard || [];
   const count = deck.length;
-  const bounds = deckEditBounds(settings);
-  const refusal = deckEditRefusal(count, settings);
+  const minDelta = ItemMinDeckDelta(run);
+  const bounds = deckEditBounds(settings, minDelta);
+  const refusal = deckEditRefusal(count, settings, minDelta);
   const maxText = bounds.max === Infinity ? t('deckEditor.unlimited') : String(bounds.max);
   const ordered = playInDeckOrder(settings);
 
@@ -470,7 +472,7 @@ export function openDeckEdit(registries, run, settings = {}) {
     },
     confirm() {
       live();
-      const refusal = deckEditRefusal(run.deck.length, settings);
+      const refusal = deckEditRefusal(run.deck.length, settings, ItemMinDeckDelta(run));
       if (refusal) return { ok: false, refusal };
       closed = true;
       history.length = 0;

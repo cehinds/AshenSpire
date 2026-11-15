@@ -28,6 +28,11 @@
 // Batch 1 fix pass (preview skips an unmet conditional row; Reaction upgrade on any stance): the batch-1 hash 6c4dab... is kept for saves made on the merged tree.
 // Batch 1 (Ward Poise + Poise break together) has its own hash 6c4dab...; each branch's hash (1551ec..., e4f237...) is kept for worker saves.
 // The batch-1 CI fixes (Broken plan forecast, otherEnemy target, boost clearing, Ward refill guard) move the hash again; e6c9b9... joins the previous set.
+// the batch-2 merge of w25-modals (blacksmith/option modals, item properties) moves the runtime hash; earlier batch-1 668f10... is kept.
+// the batch-2 merge of w25-stances (stance natural benefits, stanceBenefits rules) moves the runtime hash; w25-stances' own 211930... and the earlier f2b79e... are kept.
+// Sweep has no extra benefit (owner: sweeps are AoE for full damage): the sweep row leaves stanceBenefits and the hash moves; the batch-2 stances merge hash 28288b... is kept.
+// the batch-2 merge of w25-elements (element identity: fixCoreMechanics.json elements, the shock/chill/freeze/brittle/necroticBuildup/knockback statuses, the receipt stages) moves the runtime hash; a save made before keeps its snapshotted rules, which lack elements, and plays as before. w25-elements' own 33931a... and cc8bab... and the earlier 093f55... are kept.
+// the batch-2 merge of w25-stats (PR from max(INT, WIS): ratings.prAttributes; live attribute changes in a fight) moves the runtime hash; a fight saved without the key keeps INT-only PR. w25-stats' own 4d6cf7... and the earlier f47819... are kept.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -57,8 +62,18 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:e4f2378397bc3baef53d6c38b2609fe181c47096a64e38ebd2e84c61c8f3bf76',
   'sha256:6c4dab6e49b3a99427f623babb5529761cb178596bf3b919f2db7bdaf8910156',
   'sha256:e6c9b9af71d93d0662ca2e9c06266a59a059ec112c3f2e7fd75eb8fb4a27c0d4',
+  'sha256:668f10ab6f6139504fbe7e63a661d203bc487eebaadfea604d4deab63ff7364e',
+  'sha256:f2b79eabc865dd5e317c63a86bbff25afe81675a7fc2f2c491a4d4b5f24766b5',
+  'sha256:211930bddff697aa6894291370d65bfa6ebc2a9e5c673a840ce68f37c4d4b891',
+  'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
+  'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
+  'sha256:093f5541161859e8ed91a74baa580c44f24058e377cd0b930d33c9da7aa6b372',
+  'sha256:33931a536301d048ab52e76fb6a2df49e92b7ff5aac774da88167cab19b30701',
+  'sha256:cc8babb17366b93494ea58ce367ed435052f603b593beeee598698a6251ab1cf',
+  'sha256:f478198585239b6625dabf7f8541ce4a9e7e7cb4e6d93fdd4bbae847b0274c73',
+  'sha256:4d6cf722bb83154aa34bd78b6aeb320fa05b98d557e25bc1155e9fd9297c9d63',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:668f10ab6f6139504fbe7e63a661d203bc487eebaadfea604d4deab63ff7364e';
+const FIXED_EVASION_RUNTIME = 'sha256:a4c872ecda5683fecafdd96805411896a32b11bceef517168221600647f189ce';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

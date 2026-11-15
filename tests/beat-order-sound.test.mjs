@@ -69,7 +69,8 @@ test('sequential: a guarded hit\'s block sound comes with its number', (t) => {
   const trace = drive(t, enemyHit(5, 5));
   // Owner 2026-11-06: the damage numbers lead the numbers stage, so the block sound comes with its number and the BLOCKED word follows it.
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:5'));
-  assert.ok(timeOf(trace, (w) => w === 'word:BLOCKED') > timeOf(trace, (w) => w === 'sound:block'), 'the word follows the numbers');
+  // Owner 2026-11-14: the white Block number says it; the BLOCKED word still shows with its sound.
+  assert.ok(timeOf(trace, (w) => w === 'word:BLOCKED') >= timeOf(trace, (w) => w === 'sound:block'), 'the word does not lead its sound');
   assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the spark stays at the contact');
 });
 

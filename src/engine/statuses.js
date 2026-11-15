@@ -1,4 +1,5 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
@@ -53,6 +54,9 @@ function syncPoolsAfterStatus(ctx, target) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  // An item property can make a status smaller on the player (W25 step 6); one shortened to nothing is not applied.
+  const shortened = ItemStatusStacks(target, statusId, stacks);
+  if (shortened !== stacks) { if (shortened <= 0) return; stacks = shortened; }
   // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
   if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);

@@ -858,6 +858,12 @@ export const RUN_SHAPE = [
   // migration door.
   { key: 'smithingStonesRefined', type: 'number' },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
+  // The Blacksmith's item work (W25 steps 4-6; model/itemPicks.js): the options picked per item, a weapon's category
+  // after a category change, ranks raised, properties rolled. Absent means none done, so no migration is needed.
+  { key: 'itemUpgradePicks', type: 'object', optional: true },
+  { key: 'itemCategories', type: 'object', optional: true },
+  { key: 'itemRanks', type: 'object', optional: true },
+  { key: 'itemProps', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },

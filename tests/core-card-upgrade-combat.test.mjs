@@ -49,6 +49,9 @@ test('combat plays exactly the face the steps give', () => {
   const play = (upgradeSteps) => {
     const { combat, card } = fightWith(upgradeSteps);
     const instance = card();
+    // Legacy rules fixture: a fight created before the 2026-11-14 stance benefits has no `stanceBenefits` block, so dealt - face stays one constant
+    // (the Attack +20% multiplies the face; tests/stance-benefits.test.mjs owns that arithmetic).
+    { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; }
     for (const pile of Object.values(combat.piles)) { const at = pile.indexOf(instance); if (at >= 0) pile.splice(at, 1); }
     combat.piles.hand.push(instance);
     const enemy = combat.enemies[0];

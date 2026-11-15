@@ -55,3 +55,5 @@
 /* Wave 3: the Poise the play removes, beside the HP it takes; a play that empties the bar says BREAK, in the Broken colour. */
 .target-quote-poise { font-size: .8em; color: var(--gold); white-space: nowrap; }
 .target-quote-poise[data-break='true'] { color: var(--danger); font-weight: 700; letter-spacing: .04em; }
+/* A Sweep's splash (Wave 2.5): the extra line under this enemy's own quote when another enemy is the one aimed at. */
+.target-quote-splash { font-size: .8em; color: var(--green); }
