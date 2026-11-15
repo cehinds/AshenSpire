@@ -130,7 +130,7 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRowChanged', 'combatAdvancedChanged', 'combatRetreatGranted', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered', 'impactDealt', 'manaRecovered',
@@ -1101,6 +1101,7 @@ export const SCHEMAS = Object.freeze({
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     startingRange: opt(en('melee', 'reach', 'ranged')),
+    row: opt(en('front', 'back')), // the row the enemy starts in (W25-BANDS); absent: back when it starts at reach, else front
     rangeClosingMove: opt(str),
     rangeRetreatMove: opt(str),
     rangeRoutePolicy: opt(en('advance')),
@@ -1144,6 +1145,7 @@ export const SCHEMAS = Object.freeze({
   encounter: obj({
     id: str,
     enemies: arr(ref('enemies')),
+    rows: opt(arr(en('front', 'back'))), // per-enemy starting rows, parallel to `enemies` (W25-BANDS)
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),

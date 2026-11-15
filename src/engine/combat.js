@@ -1,5 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyPhaseStart, BandsPlayerTurnEnd } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -122,7 +123,7 @@ const QUEUE_GUARD = 10000;
  * Setup events are in combat.eventLog.
  */
 export function createCombat({
-  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], enemyRows = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -349,6 +350,7 @@ export function createCombat({
 
   initializeFormationOccupancy(combat);
   initializeCombatRange(combat, rangePolicy);
+  InitBandRows(combat, enemyRows);
   if (knowledge) initializeCombatKnowledge(combat, knowledge);
   else if (fixCoreEnabled(combat)) initializeCombatKnowledge(combat, { rules: snapshotEnemyKnowledgeRules(registries) });
   if (configuredCombat(combat)) {
@@ -565,6 +567,7 @@ function startPlayerTurn(combat) {
   const restDraw = NeutralExtraDraw(combat, p, combat.turn);
   if (restDraw > 0) combat.handMax += restDraw;
   A.drawCards(combat, baseDraw + restDraw);
+  GrantRetreatCard(combat); // rows (W25-BANDS): a retreat weapon puts a free Retreat card in hand
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
@@ -584,6 +587,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   // (4) playerTurnEnd triggers first…
   combat.emit('playerTurnEnd', { turn: combat.turn });
+  BandsPlayerTurnEnd(combat); // rows (W25-BANDS): one turn end of the Advance is spent
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
@@ -659,6 +663,7 @@ function finishPlayerHand(combat, preserveLockedHand = false) {
 // The enemy turn start (SPEC §4.1 step 5): the start event, then each living enemy loses its block.
 function enemyTurnStart(combat) {
   combat.emit('enemyTurnStart', { turn: combat.turn });
+  BandsEnemyPhaseStart(combat); // rows (W25-BANDS): an empty front row lets the back row step forward
   // Enemies lose their block at the start of THEIR turn.
   for (const e of combat.enemies) {
     if (!e.alive) continue;
@@ -900,7 +905,8 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
   if (fixCoreEnabled(combat)) {
     const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
     const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
-    if(!prepaid && required>available && rangeQuote?.advanceSp > 0) {
+    // Rows (W25-BANDS): a melee move from the back row first steps forward, one move, unless the player is Advanced (then the quote needs no Advance).
+    if(!prepaid && rangeQuote?.advanceSp > 0 && (required>available || (BandsActive(combat) && enemy.row === 'back'))) {
       const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
       const closingEligible = !core2ActionPolicyEnabled(combat) || (!closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId)));
       if (closingEligible && closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId);
@@ -1091,6 +1097,8 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
       if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
+      // Rows (W25-BANDS): from the back row a move that needs an Advance is planned as the step forward ("Approaching").
+      if (canClose && quote.advanceSp > 0 && id !== closingId && enemy.row === 'back' && BandsActive(combat)) { replacements.set(id, closingId); return true; }
       if (quote.totalSp <= maxSp) return true;
       // Preserve the authored attack choice when only its approach is too
       // expensive. Commit its owned, affordable closing move in the forecast,
