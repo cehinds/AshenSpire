@@ -87,3 +87,18 @@ test('a short purse refuses it', () => {
   assert.equal(quote.ok, false);
   assert.match(quote.reason, /Insufficient cinders/);
 });
+
+test('a fresh stock with the rank-up shelf takes one more than a plain stock, so the shelf never costs a real item; a saved stock is unchanged', () => {
+  const plainRun = newRun(21);
+  const plain = gameProfileShopStock(registries, plainRun, createRng(plainRun.seed), { shopId: '1:plain' });
+  assert.equal(shelf(plain), -1);
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const real = stock.options.filter((option) => option.kind !== 'rankUps').length;
+  assert.equal(stock.options.length, real + 1);
+  assert.equal(stock.takeCount, plain.takeCount + 1);
+  assert.ok(stock.takeCount >= real + 1, 'every real item and the shelf can all be bought');
+  assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plain.takeCount + 1);
+  const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
+  assert.equal(again.takeCount, plain.takeCount + 1, 'a reload does not raise it again');
+});

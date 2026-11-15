@@ -389,7 +389,7 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   if(stock.price===undefined)stock.price=module.price??rules.price;
   // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
   // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
-  if(fresh&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)&&ShopStocksRankUp(registries,run,shopId))stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});
+  if(fresh&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)&&ShopStocksRankUp(registries,run,shopId)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
