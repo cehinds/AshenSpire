@@ -4508,12 +4508,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 22
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 12
+        "amount": 29
       }
     ],
     "tags": [
@@ -4524,18 +4519,13 @@
       "school:force",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 30
-        },
-        {
-          "op": "poiseDamage",
-          "target": "enemy",
-          "amount": 16
+          "amount": 38
         }
       ]
     },
