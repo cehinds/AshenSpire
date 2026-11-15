@@ -78,6 +78,7 @@ import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
+import { isPopoverOpen } from '../popoverPolyfill.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -354,7 +355,7 @@ export function mountCustomize(app, {
     // an open by any other route — the keyboard, a future invoker — is placed
     // too rather than left wherever it was last.
     headTools.addEventListener('toggle', (event) => {
-      menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open')));
+      menu.setAttribute('aria-expanded', String(isPopoverOpen(headTools)));
       if (event.newState !== 'open') return;
       // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
       // This used to be its own arithmetic, and it read the zoom off the WRONG
