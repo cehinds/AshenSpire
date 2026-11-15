@@ -114,6 +114,10 @@ export function digest(combat) {
 // fights 195 -> 193 and 193 -> 188; turns unchanged). Verified: the fights built with `poise.breakRule` and `brokenDamageMultiplier` absent (a fight saved before the rule, STAGGERED_LEGACY
 // below, which keeps the Staggered stance) reproduce the previous legacy digests exactly, and the shipped fights built that way reproduce the previous shipped logs 68045e4bda0ffd02 / 714e5d0f2a83d7e3 (218/215 events, logs aa763c4b47aaef38 / 75301c4daabf3238,
 // states 1050e65e93b6c50b / 74dc222af3960b7b), so only the rule moved. The roll-legacy fights under the shipped Broken rule have their own pin.
+// Recaptured 2026-11-15 for batch 3's Core card content (school-matched status riders and cantrip statuses: Pommel Strike +Weak, Driving Thrust +Bleed,
+// Hammer Blow +Vulnerable, Whirlwind +Bleed, Hit and Run +Draw and others; 21 core cards in all, the Reaver's deck among them). The legacy-rules, roll-legacy
+// and pre-batch-2 fights moved too, because card content is not a rule key: all eight fights play the extra effects (+4 events each, +1 for the shipped 4242 fight) and no turn moves. Verified: with only those 21 cards' content reverted to the pre-batch-3 catalog (a scratch run over the old gameProfiles.js card rows),
+// all nine previous pins reproduce exactly, and every RNG counter of every fight is identical with and without the riders, so no rng stream moved.
 /** Runs `build` with the shipped rules reading as a fight saved before the Broken rule (no `poise.breakRule`): it keeps the Staggered stance. */
 function withStaggeredRule(build) {
   const held = { breakRule: fixCoreMechanics.poise.breakRule, mult: fixCoreMechanics.poise.brokenDamageMultiplier };
@@ -121,8 +125,8 @@ function withStaggeredRule(build) {
   try { return build(); } finally { fixCoreMechanics.poise.breakRule = held.breakRule; fixCoreMechanics.poise.brokenDamageMultiplier = held.mult; }
 }
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: '1050e65e93b6c50b', events: 218, turn: 6 }],
-  [[4242, 'reaver'], { log: '75301c4daabf3238', state: '74dc222af3960b7b', events: 215, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'cbd4b75ce1f76ec8', state: '9a896733712286eb', events: 222, turn: 6 }],
+  [[4242, 'reaver'], { log: 'ebf2ff90af3f523f', state: '4b9bc8f45a337096', events: 219, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
@@ -131,8 +135,8 @@ for (const [setup, expected] of LEGACY_PINNED) {
   });
 }
 const LEGACY_ROLL_BROKEN_PINNED = [
-  [['PERF1', 'reaver'], { log: '5168315291534335', state: '8dab5013cd98b2e7', events: 216, turn: 6 }],
-  [[4242, 'reaver'], { log: '13ddf561f5c08a05', state: '3694a509fa76fb62', events: 214, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '88015cbf67e2810a', state: '030723ddf1557346', events: 220, turn: 6 }],
+  [[4242, 'reaver'], { log: 'c8d3876a5cc18243', state: '7b93ec1901f14eb1', events: 218, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
   test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
@@ -142,8 +146,8 @@ for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
 // Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
 // (one created earlier) still reproduces them exactly, which is the proof that the new PINNED values below moved only through those rules.
 const PRE_BATCH2_PINNED = [
-  [['PERF1', 'reaver'], { log: 'c8189971a46a6f90', state: '7f8f814257486e75', events: 193, turn: 6 }],
-  [[4242, 'reaver'], { log: 'a52d738bc31c957b', state: 'aa8f6ae8b9909f33', events: 188, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '5a55d1ad4cb62806', state: '3b6f75f6b40ed4d5', events: 197, turn: 6 }],
+  [[4242, 'reaver'], { log: 'f58b92f7261b4fa5', state: '171d2b48760768e8', events: 192, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH2_PINNED) {
   test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
@@ -152,8 +156,8 @@ for (const [setup, expected] of PRE_BATCH2_PINNED) {
 }
 // Recaptured 2026-11-14 for batch 2 (stance benefits, element identities, PR from max(INT, WIS)): PRE_BATCH2_PINNED above reproduces the previous digests with those three keys removed.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '50af6954c8e19ec4', state: 'f8b057861924c9a5', events: 190, turn: 6 }],
-  [[4242, 'reaver'], { log: '3b77f6acdf90134f', state: '9bd3ce06dca00077', events: 194, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: 'ec18b722c511f64a', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'be10dc76fcfdcf39', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

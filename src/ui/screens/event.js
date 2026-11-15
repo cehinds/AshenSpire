@@ -8,7 +8,7 @@
 // A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
 // to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { commitEventChoice, choiceAffordable, choiceUnmetRequirement } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
 import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
@@ -152,7 +152,7 @@ export function mountEvent(app, opts) {
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
-    const unmet = choiceUnmetRequirement(choice, run, registries);
+    const unmet = ChoiceUnmetRequirement(choice, run, registries);
     const affordable = unmet === null;
     responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 

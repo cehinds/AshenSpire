@@ -32,7 +32,7 @@ import { RankUpCandidates } from '../model/rankUpService.js';
  * can rise), or null (open). The engine and both event screens read this one function, so they agree. `registries` is needed only for
  * the rankableCard requirement; without it that requirement is not judged.
  */
-export function choiceUnmetRequirement(choice, run, registries = null) {
+export function ChoiceUnmetRequirement(choice, run, registries = null) {
   const requires = choice && choice.requires;
   if (!requires) return null;
   if (typeof requires.cinders === 'number' && !(run.cinders >= requires.cinders)) return 'cinders';
@@ -42,7 +42,7 @@ export function choiceUnmetRequirement(choice, run, registries = null) {
 
 /** A choice's price and requirements, read the one way both event screens read it. */
 export function choiceAffordable(choice, run, registries = null) {
-  return choiceUnmetRequirement(choice, run, registries) === null;
+  return ChoiceUnmetRequirement(choice, run, registries) === null;
 }
 
 /**

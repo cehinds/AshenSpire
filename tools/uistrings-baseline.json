@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 201,
-  "distinct": 174,
+  "sites": 200,
+  "distinct": 173,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -36,7 +36,6 @@
     "src/ui/components/smithUpgradeModal.js": 2,
     "src/ui/models/ArmouryModels.js": 2,
     "src/ui/previews/tooltipReviewScene.js": 2,
-    "src/ui/screens/event.js": 2,
     "src/ui/screens/title.js": 2,
     "src/ui/components/arcaneExposure.js": 1,
     "src/ui/components/armamentRadial.js": 1,
@@ -55,6 +54,7 @@
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
     "src/ui/screens/about.js": 1,
+    "src/ui/screens/event.js": 1,
     "src/ui/screens/map.js": 1
   }
 }

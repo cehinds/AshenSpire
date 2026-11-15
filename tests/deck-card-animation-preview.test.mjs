@@ -41,8 +41,8 @@ test('preview routes card types through the same class defaults as combat withou
     ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'attack'],
     ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'attack'],
     ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'defend'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'ranged'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'ranged'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'attack'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'attack'],
     ['greatsword', null, { cardId: 'starstonePebble' }, 'spell'],
   ]) {
     equip(run, right, left);

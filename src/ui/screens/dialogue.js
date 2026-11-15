@@ -24,7 +24,7 @@
 // reload reopens the exchange at its first beat. A run-HUD remount keeps the
 // beat and the answered state, so a flask drunk after answering can never
 // offer the responses a second time, and it does not replay the entrance.
-import { commitEventChoice, choiceAffordable, choiceUnmetRequirement } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
@@ -79,7 +79,7 @@ export function mountDialogue(app, options) {
     choiceId: choice.id,
     label: choice.label,
     affordable: choiceAffordable(choice, run, registries),
-    unmet: choiceUnmetRequirement(choice, run, registries),
+    unmet: ChoiceUnmetRequirement(choice, run, registries),
     binding: isBindingChoice(choice, registries),
     resultText: choice.resultText,
   }));

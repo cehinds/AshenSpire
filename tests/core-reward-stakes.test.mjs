@@ -24,12 +24,19 @@ const fresh = (seed, classId = 'reaver', registries = reg) => createRunState({ s
 const allow = fresh(1).gameProfile.content.rewards.eligibility.relics.allow;
 const manaOf = (run, id) => (run.gameProfile.content.cards.find(card => card.id === id)?.manaCost || 0);
 
-test('a Reaver combat offer is 3-5 cards or weapon arts over 300 seeds', () => {
+test('a Reaver combat offer is 3-5 cards or weapon arts over 300 seeds, plus the rare rank-up service option', () => {
+  let rankUps = 0, bonus = 0;
   for (let i = 0; i < 300; i++) {
-    const options = gameProfileRewardOffers(reg, fresh(i + 1), createRng(500 + i), { offerId: 'f' }).options;
+    const all = gameProfileRewardOffers(reg, fresh(i + 1), createRng(500 + i), { offerId: 'f' }).options;
+    const options = all.filter(option => option.kind !== 'rankUps');
+    assert.ok(all.length - options.length <= 1, `seed ${i}: at most one rank-up option`);
+    rankUps += all.length - options.length; bonus += all.filter(option => option.bonus).length;
     assert.ok(options.length >= 3 && options.length <= 5, `seed ${i}: ${options.length} options`);
     for (const option of options) assert.ok(['combatCards', 'weaponArts'].includes(option.kind), `seed ${i}: ${option.kind}`);
   }
+  // Owner 2026-11-14: a won normal fight offers a rank-up about 5% of the time, a quarter of those as a bonus pick.
+  assert.ok(rankUps > 0 && rankUps < 60, `rank-up offered ${rankUps}/300 times`);
+  assert.ok(bonus <= rankUps);
 });
 
 test('no offered card costs mana the class cannot pay; a Starseer still sees mana cards', () => {
