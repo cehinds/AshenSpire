@@ -158,7 +158,8 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
-import { SetFaceCostRun } from './model/faceCosts.js'; // last: an earlier import would reorder the production bundle's cyclic module init
+// Keep this import last: an earlier one reorders the production bundle's cyclic module init.
+import { SetFaceCostRun } from './model/faceCosts.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
