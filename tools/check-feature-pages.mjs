@@ -53,6 +53,14 @@ const PRIMARY_FIELDS = ['branch', 'commit', 'ordinal', 'version', 'digest', 'sta
 const SHA = /^[a-f0-9]{40}$/, HASH = /^[a-f0-9]{64}$/;
 const safeDigest = value => typeof value === 'string' && /^[0-9A-Za-z._-]{0,128}$/.test(value);
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+// "BUILD 0.7.4.83 · src x" -> [0,7,4,83]; null when unreadable. Used to tell a newer published build from a stale one.
+const stampTuple = (stamp) => stamp?.match(/BUILD (\d+)\.(\d+)\.(\d+)\.(\d+)/)?.slice(1).map(Number) ?? null;
+const isNewerStamp = (observed, expected) => {
+  const a = stampTuple(observed), b = stampTuple(expected);
+  if (!a || !b) return false;
+  for (let i = 0; i < 4; i++) if (a[i] !== b[i]) return a[i] > b[i];
+  return false;
+};
 const observedCommit = (card) => card?.match(/\/commit\/([a-f0-9]{40})/)?.[1] || 'missing';
 function cacheContext(response) {
   return [['Age', 'age'], ['ETag', 'etag'], ['Last-Modified', 'last-modified']].map(([label, header]) =>
@@ -140,6 +148,12 @@ export async function checkPrimaryChannels({ baseUrl, targets, fetchImpl = fetch
       for (const expected of targets) {
         const { branch, commit, ordinal, stamp } = expected;
         const card = cards.find(row => row.includes(`<h3>${branch}</h3>`));
+        // A later dev build already owns the site: this run's build is superseded, not failed.
+        const observedStamp = card?.match(/<p class="stamp">([^<]*)<\/p>/)?.[1];
+        if (branch === 'dev' && isNewerStamp(observedStamp, stamp)) {
+          verified.push(`Public Pages primary superseded: ${branch} ${stamp} was replaced by newer published ${observedStamp} (commit ${observedCommit(card)}); a later run owns it, nothing to verify here.`);
+          continue;
+        }
         if (!card?.includes(`href="${branch}/${ordinal}/"`) || !card.includes(`/commit/${commit}`)
           || !card.includes(`<p class="stamp">${stamp}</p>`)) throw new Error(`${branch}: stale or missing public index card; expected ${commit} ${stamp}, observed ${observedCommit(card)}; ${cacheContext(indexResponse)}`);
         const route = `${branch}/latest/`, metadataResponse = await request(`${route}build.json`);
@@ -179,7 +193,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     } else {
       const targets = JSON.parse(process.env.PREVIEW_TARGETS || '[]');
       const primaryTargets = process.env.PRIMARY_TARGETS === undefined ? undefined : JSON.parse(process.env.PRIMARY_TARGETS);
-      const count = await checkFeaturePages({ baseUrl: process.env.PAGES_URL, targets, primaryTargets });
+      // 100 tries at 3 s is about 5 minutes for CDN propagation.
+      const count = await checkFeaturePages({ baseUrl: process.env.PAGES_URL, targets, primaryTargets, attempts: 100 });
       console.log(`Public Pages HTTP verification passed for ${count} feature preview(s).`);
     }
   } catch (error) {
