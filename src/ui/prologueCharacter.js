@@ -7,6 +7,26 @@ export function prologueCharacterDimensions(canvas) {
   return CHARACTER_DIMENSIONS.get(canvas);
 }
 
+// Canvas `ctx.filter` does not exist in Safari (iOS 15 included), where assigning it is
+// silently ignored: the ground shadow would be drawn as a coloured reflection of the
+// figure and the figure would not be dimmed. Stand in for the two filters with a scratch
+// canvas: `darken` is the black laid over the figure's own pixels (1 = brightness(0),
+// .21 = brightness(79%)), `scale` < 1 draws it small so scaling it back up softens it
+// (the shadow's blur). The result is a canvas the caller draws in place of the image.
+function silhouetteWithoutFilter(canvas, image, darken, scale) {
+  const doc = canvas.ownerDocument || globalThis.document;
+  const w = Math.max(1, Math.round(image.naturalWidth * scale)), h = Math.max(1, Math.round(image.naturalHeight * scale));
+  const scratch = doc.createElement('canvas');
+  scratch.width = w; scratch.height = h;
+  const g = scratch.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(image, 0, 0, w, h);
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = `rgba(0,0,0,${darken || 1})`;
+  g.fillRect(0, 0, w, h);
+  return scratch;
+}
+
 export function paintPrologueCharacter(canvas, image, strength = .7) {
   const w = image.naturalWidth, h = image.naturalHeight, pad = Math.ceil(h * .6);
   canvas.width = w + pad * 2;
@@ -17,10 +37,11 @@ export function paintPrologueCharacter(canvas, image, strength = .7) {
   const footX = pad + w * .6, footY = h * .98;
   ctx.save();
   ctx.globalAlpha = strength * .48;
-  ctx.filter = `brightness(0) blur(${h * .009}px)`;
+  const filtered = ctx.filter !== undefined;
+  if (filtered) ctx.filter = `brightness(0) blur(${h * .009}px)`;
   ctx.translate(footX, footY);
   ctx.transform(1, 0, .5, -.23, 0, 0);
-  ctx.drawImage(image, -w * .6, -h * .98);
+  ctx.drawImage(filtered ? image : silhouetteWithoutFilter(canvas, image, 0, .25), -w * .6, -h * .98, w, h);
   ctx.restore();
   // A tighter contact patch joins the soles to uneven ground, with a softer
   // outer falloff instead of a floating drop shadow around the whole figure.
@@ -34,9 +55,9 @@ export function paintPrologueCharacter(canvas, image, strength = .7) {
   ctx.fillStyle = contact;
   ctx.fillRect(-1, -1, 2, 2);
   ctx.restore();
-  ctx.filter = 'brightness(79%)';
-  ctx.drawImage(image, pad, 0);
-  ctx.filter = 'none';
+  if (filtered) ctx.filter = 'brightness(79%)';
+  ctx.drawImage(filtered ? image : silhouetteWithoutFilter(canvas, image, .21, 1), pad, 0, w, h);
+  if (filtered) ctx.filter = 'none';
   return canvas;
 }
 
