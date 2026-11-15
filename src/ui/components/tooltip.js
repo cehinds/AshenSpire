@@ -444,7 +444,7 @@ const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
  */
 export function syncHeldTriggers(root) {
   for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
-    if (heldBackInCard(el)) { el.tabIndex = -1; el.dataset.heldBack = 'true'; }
+    if (heldBackInCard(el)) { if (el.getAttribute('tabindex') !== '-1') el.tabIndex = -1; if (el.dataset.heldBack !== 'true') el.dataset.heldBack = 'true'; }
     else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
   }
 }
