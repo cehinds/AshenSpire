@@ -55,7 +55,7 @@ const THROTTLE = Number(arg('--throttle', 4)) || 4;
 const VIEWPORT = (() => {
   const m = /^(\d+)x(\d+)(?:@(\d+(?:\.\d+)?))?$/.exec(arg('--viewport', '390x844@3'));
   if (!m) throw new Error('--viewport wants WxH@DPR, e.g. 375x667@2');
-  return { width: Number(m[1]), height: Number(m[2]), dpr: Number(m[3] || 1) };
+  return { width: Number(m[1]), height: Number(m[2]), dpr: Number(m[3] || 3) };
 })();
 const OUT = resolve(arg('--out', join(process.env.TMPDIR || tmpdir(), 'ashen-perf')));
 const KEEP_TRACE = argv.includes('--keep-trace');
@@ -722,7 +722,7 @@ if (FROM) {
 mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summaries, null, 1));
 
-console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, ${CERTIFY ? 'trimmed median (min and max dropped) of' : 'median of'} ${RUNS} run(s)\n`);
+console.log(`# perf-probe: ${THROTTLE}x CPU throttle, ${VIEWPORT.width}x${VIEWPORT.height} @${VIEWPORT.dpr}x, seed ${SEED}, ${CERTIFY ? 'trimmed median (min and max dropped) of' : 'median of'} ${RUNS} run(s)\n`);
 if (CERTIFY) { for (const s of summaries) console.log(certify(s.scenario, allRuns[s.scenario]).text); console.log(); }
 
 console.log('| scenario | window s | frames | median ms | p95 | p99 | >16.7 % | >33 % | long tasks (n / total ms / blocking ms) | peak anims (running / transitions / infinite) |');

@@ -17,7 +17,7 @@ const argv = process.argv.slice(2);
 const arg = (n, d) => (argv.includes(n) ? argv[argv.indexOf(n) + 1] : d);
 const THROTTLE = Number(arg('--throttle', 4)) || 4;
 const VP = /^(\d+)x(\d+)(?:@(\d+(?:\.\d+)?))?$/.exec(arg('--viewport', '375x667@2'));
-if (!VP) throw new Error('--viewport wants WxH@DPR, e.g. 320x568@2');
+if (!VP) throw new Error('--viewport wants WxH@DPR, e.g. 320x568@2 (DPR defaults to 2)');
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -39,20 +39,40 @@ const INIT = `(() => {
   };
   new MutationObserver((list) => {
     if (!A.on) return;
-    for (const m of list) {
+    // A record's oldValue is the value before its write; the value right after it is the
+    // next record's oldValue for the same target and attribute, or the live value for the
+    // last one. Comparing every record against the live value miscounts A->B->A toggles.
+    const after = new Array(list.length);
+    const next = new Map();
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      if (m.type === 'childList') continue;
+      const key = m.target;
+      const slot = next.get(key) || new Map(); next.set(key, slot);
+      const k = m.type === 'attributes' ? 'a:' + m.attributeName : 'text';
+      after[i] = slot.has(k) ? slot.get(k) : (m.type === 'attributes' ? m.target.getAttribute(m.attributeName) : m.target.data);
+      slot.set(k, m.oldValue);
+    }
+    // Identical rebuilds are matched across the whole batch per parent, so a clear followed
+    // by one append per child (several records) still pairs removed and added nodes.
+    const pools = new Map();
+    for (const m of list) if (m.type === 'childList') {
+      const pool = pools.get(m.target) || new Map(); pools.set(m.target, pool);
+      for (const x of m.removedNodes) { const h = x.outerHTML ?? x.textContent; pool.set(h, (pool.get(h) || 0) + 1); }
+    }
+    list.forEach((m, i) => {
       const r = { t: m.type, at: name(m.target) };
-      if (m.type === 'attributes') { r.attr = m.attributeName; r.noop = m.oldValue === m.target.getAttribute(m.attributeName); }
-      else if (m.type === 'characterData') r.noop = m.oldValue === m.target.data;
+      if (m.type === 'attributes') { r.attr = m.attributeName; r.noop = m.oldValue === after[i]; }
+      else if (m.type === 'characterData') r.noop = m.oldValue === after[i];
       else {
-        const rem = [...m.removedNodes].map((x) => x.outerHTML ?? x.textContent);
-        const add = [...m.addedNodes].map((x) => x.outerHTML ?? x.textContent);
-        r.added = add.length; r.removed = rem.length;
-        const pool = new Map(); for (const h of rem) pool.set(h, (pool.get(h) || 0) + 1);
-        let same = 0; for (const h of add) { const k = pool.get(h); if (k) { same++; pool.set(h, k - 1); } }
+        const pool = pools.get(m.target);
+        let same = 0;
+        for (const x of m.addedNodes) { const h = x.outerHTML ?? x.textContent; const k = pool.get(h); if (k) { same++; pool.set(h, k - 1); } }
+        r.added = m.addedNodes.length; r.removed = m.removedNodes.length;
         r.identical = same; r.imgs = [...m.addedNodes].reduce((s, x) => s + (x.nodeType === 1 ? (x.tagName === 'IMG' ? 1 : x.querySelectorAll('img').length) : 0), 0);
       }
       A.recs.push(r);
-    }
+    });
   }).observe(document, { subtree: true, childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true });
 })();`;
 
@@ -101,7 +121,7 @@ async function phase(page, client, label, act) {
 const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
 const base = `http://localhost:${server.server.address().port}/`;
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: Number(VP[1]), height: Number(VP[2]) }, deviceScaleFactor: Number(VP[3] || 1), isMobile: true, hasTouch: true });
+const ctx = await browser.newContext({ viewport: { width: Number(VP[1]), height: Number(VP[2]) }, deviceScaleFactor: Number(VP[3] || 2), isMobile: true, hasTouch: true });
 await ctx.addInitScript(INIT);
 const page = await ctx.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(String(e)));
