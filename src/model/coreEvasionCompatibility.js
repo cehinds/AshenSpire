@@ -87,7 +87,7 @@ const PREVIOUS_RUNTIMES = new Set([
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // pinned once at the batch-4 merge, then moved by the Counter stack rule (counter.stackSource and friends, Wave 2 batch 5).
-const FIXED_EVASION_RUNTIME = 'sha256:fdb1c31b7cd692c67c55223dcd46c36a36cdcd2a1ecd75490de2d331eb09d467';
+const FIXED_EVASION_RUNTIME = 'sha256:fd966dab88e5d25f38037c91ae136d5bf8f7e6c97dd3800e05d449750d21c572';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

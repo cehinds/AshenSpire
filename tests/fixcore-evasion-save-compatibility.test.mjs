@@ -130,7 +130,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15 (W25-F): spell costs and elemental flux rules (spellCosts/elementFlux) move the runtime hash (0ea717..., 9f3348... are now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-W): Ward's `ward.routing` rule and the Barrier -> "Gain N Poise" wording move the runtime hash (batch 3's 753eed... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move it again (the branch pins 63e86f... and 8af5d7... are now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:fdb1c31b7cd692c67c55223dcd46c36a36cdcd2a1ecd75490de2d331eb09d467');
+  assert.equal(profile.lock.runtimeHash, 'sha256:fd966dab88e5d25f38037c91ae136d5bf8f7e6c97dd3800e05d449750d21c572');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
