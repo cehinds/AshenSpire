@@ -304,7 +304,9 @@ export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you ha
 /**
  * litNodes({ graph, run }) → Set of ids the fog is not covering.
  *
- * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION.
+ * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION. (Under `routes.fogTrailOnly`, the Core rule since 2026-11-15, the trail
+ * itself still never goes dark, but it no longer widens: a node you stood on lights only itself and only the node you stand on opens its
+ * split, so "Fog never closes behind you" below describes the older, wider reading, which a run without the key keeps.)
  *
  *   "flashlight is nice but previously visited locations remain revealed"
  *
