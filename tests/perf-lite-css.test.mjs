@@ -45,9 +45,8 @@ test('unfound compendium pieces stay hidden (silhouette filter kept) and the ene
   assert.ok(css.includes(":not(.sprite .facing[style*='drop-shadow'])"));
 });
 
-test('phone Lite keeps a red hit cue and does not dim the illustrated card face a second time', () => {
-  assert.match(rawCss, /@keyframes hitOutlineLite/);
-  assert.match(rawCss, /\.sprite\.hitflash \{[^}]*animation: hitOutlineLite/);
+test('phone Lite adds no hit cue of its own and does not dim the illustrated card face a second time', () => {
+  assert.ok(!/hitflash/.test(rawCss), 'Lite already shakes without a tint (Effects off); phones keep that');
   assert.ok(!/illustrated-card-face\s*\{\s*opacity/.test(css));
   assert.ok(!/stroke-width/.test(css), 'the selected map node keeps its base stroke width');
 });

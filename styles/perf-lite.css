@@ -53,19 +53,6 @@
   filter: brightness(0) invert(1) !important;
 }
 
-/* 1c. A hit used to flash the sprite red through filter keyframes (combat.css
-   hitflash). Effects off already swapped that for a plain shake; on phones Lite
-   this adds a cheap cue back: a red outline that holds for the first 45% of the
-   hurt animation, then clears. Outline paints without an offscreen surface. */
-@keyframes hitOutlineLite {
-  0%, 44.99% { outline-color: var(--danger); }
-  45%, 100% { outline-color: transparent; }
-}
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) body:not(.motion-hit-off) .sprite.hitflash {
-  outline: calc(2px / var(--ui-zoom, 1)) solid var(--danger); outline-offset: calc(1px / var(--ui-zoom, 1));
-  animation: hitOutlineLite var(--hurt-duration, 220ms) linear;
-}
-
 /* 2. Target relationship colours (green friend / yellow neutral / red foe).
    The 1px coloured drop-shadow silhouette becomes a 1px solid outline in the
    same colour. */
