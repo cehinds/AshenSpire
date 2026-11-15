@@ -376,6 +376,9 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
+  // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
+  // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
+  if(fresh&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)&&ShopStocksRankUp(registries,run,shopId))stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
@@ -404,6 +407,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
@@ -414,7 +418,9 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
   const offerId=`shop:${shopId}`,price=plan.price;
   const instanceId=`reward:${offerId}:${index}:${run.gameProfileRewardOffers?.[offerId]?.tradeRevision||0}`;
   const draft=structuredClone(run);draft.cinders-=price;
-  const receipt=claimGameProfileReward(registries,draft,offerId,index);
+  const receipt=claimGameProfileReward(registries,draft,offerId,index,{instanceId:quote?.instanceId??null});
+  // A rank-up service is a one-off shelf: no replacement is stocked in its place, and what was paid is no resale ceiling.
+  if(receipt.kind===RANK_UP_OPTION.kind){draft.gameProfileRewardOffers[offerId].tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};}
   // Old saves can offer a much lower flat price. Retain that paid-price
   // ceiling across reloads and later merchants so resale cannot profit.
   draft.gameProfileShopPurchasePrices ||= {};

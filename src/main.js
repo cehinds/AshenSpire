@@ -2646,6 +2646,12 @@ function showShop() {
   audio.music('shop');
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
     onTake: (index, quote) => {
+      // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
+      if (offer.options[index]?.kind === 'rankUps') {
+        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
+          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+        }, () => {});
+      }
       const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
       offerShopCardDestination(receipt);
     },
