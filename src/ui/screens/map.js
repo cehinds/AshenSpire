@@ -305,7 +305,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     return { portBox, inset, visibleBottom };
   }
   const trayInset = () => trayViewport(trayReveal.scrollHeight).inset;
+  // A preselected start node opens the tray at mount. When the player's own
+  // saved camera was just restored (Armaments closing, Continue), that open
+  // must not centre on the node and throw their pan away.
+  let keepRestoredCamera = false;
   function nodeComfortablyVisible(revealHeight) {
+    if (keepRestoredCamera) return true;
     // Touch only: a finger that just tapped the node is about to tap it again.
     // Use that activation's pointer, not the device's primary-pointer media
     // query: hybrids can be touched while their primary pointer is a mouse,
@@ -340,7 +345,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       if (!nodeComfortablyVisible(height)) {
         trayCentred = true;
         board.centerOnNode(selection.selectedId, { inset: trayInset, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayInset });
+      } else board.holdLook(selection.selectedId, { inset: trayInset, keepRestored: keepRestoredCamera });
+      keepRestoredCamera = false; // the restored camera is kept for the opening only
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
@@ -447,6 +453,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (reading) readings.set(startId, reading);
     selection = { selectedId: startId, selectedAt: performance.now() };
     renderSelection();
+    keepRestoredCamera = board.scroll.dataset.cameraRestore === 'restored';
     openTray();
   }
 

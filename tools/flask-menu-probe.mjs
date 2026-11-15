@@ -473,7 +473,10 @@ async function persistenceProbe(cdp, base, check) {
       await __fm.closeModal('run-potion-menu');
       const node = document.querySelector('.mapscreen .map-node.reachable');
       if (!node) return { why: 'no reachable node' };
-      node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      // A new run's one start node comes preselected with its tray opening, and
+      // a second press on a selected node travels: click only a node that is
+      // not already the selection.
+      if (!node.classList.contains('selected')) node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
       // What the tray says about it: the kind's name and its lines.
       const tray = [...document.querySelectorAll('.map-context .map-context-title, .map-context .map-context-line')].map((p) => p.textContent.trim());
