@@ -29,7 +29,7 @@
 export const FLAGS = ['colorMix', 'cqUnits', 'containers', 'overflowClip', 'userSelect', 'backdropFilter', 'popover'];
 
 /** Which repairs this browser needs, from CSS.supports (a function (prop, value) or (condition)). */
-export function detectFlags(supports) {
+export function DetectFlags(supports) {
   const ok = (...args) => { try { return !!supports(...args); } catch { return true; } };
   const gaps = {
     colorMix: !ok('color', 'color-mix(in srgb, red 50%, blue)'),
@@ -45,10 +45,10 @@ export function detectFlags(supports) {
   return { ...gaps, userSelect: rewriting, backdropFilter: rewriting };
 }
 
-export const anyFlag = (flags) => FLAGS.some((name) => flags[name]);
+export const AnyFlag = (flags) => FLAGS.some((name) => flags[name]);
 
 /** State shared by every stylesheet of one page: the token table, the container queries and the containers found. */
-export function createContext() {
+export function CreateContext() {
   return { vars: new Map(), loose: new Map(), queries: [], queryKeys: new Map(), containers: [], unresolvedColorMix: [], approximatedColorMix: [] };
 }
 
@@ -88,7 +88,7 @@ function matchBrace(s, i) {
 }
 
 /** Split `text` at top-level occurrences of `sep` (outside strings, comments, parentheses, brackets, braces). */
-export function splitTop(text, sep) {
+export function SplitTop(text, sep) {
   const parts = [];
   let start = 0, square = 0;
   for (let i = 0; i < text.length; i += 1) {
@@ -108,7 +108,7 @@ export function splitTop(text, sep) {
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
 
 /** A stylesheet (or a block body) as a list of `{ prelude, body }` blocks and `{ raw }` statements. */
-export function parseBlocks(css) {
+export function ParseBlocks(css) {
   const out = [];
   let start = 0;
   for (let i = 0; i < css.length; i += 1) {
@@ -147,7 +147,7 @@ function number(text, scale = 1) {
 }
 
 /** A colour string -> { r, g, b, a } (0-255, 0-1), or null when it is not a constant colour. */
-export function parseColor(text, ctx, depth = 0) {
+export function ParseColor(text, ctx, depth = 0) {
   const t = stripComments(String(text)).trim();
   if (!t || depth > 8) return null;
   const lower = t.toLowerCase();
@@ -178,28 +178,28 @@ export function parseColor(text, ctx, depth = 0) {
   }
   m = /^var\(([\s\S]*)\)$/i.exec(t);
   if (m) {
-    const [name, ...fallback] = splitTop(m[1], ',');
+    const [name, ...fallback] = SplitTop(m[1], ',');
     const known = ctx?.vars.get(name.trim()) ?? ctx?.loose.get(name.trim());
-    const own = known !== undefined ? parseColor(known, ctx, depth + 1) : null;
+    const own = known !== undefined ? ParseColor(known, ctx, depth + 1) : null;
     if (own) return own;
-    return fallback.length ? parseColor(fallback.join(','), ctx, depth + 1) : null;
+    return fallback.length ? ParseColor(fallback.join(','), ctx, depth + 1) : null;
   }
-  if (/^color-mix\(/i.test(t)) return mixColors(t, ctx, depth + 1);
+  if (/^color-mix\(/i.test(t)) return MixColors(t, ctx, depth + 1);
   return null;
 }
 
 /** `color-mix(in srgb, A p%, B q%)` -> { r, g, b, a } using premultiplied sRGB, or null. */
-export function mixColors(text, ctx, depth = 0) {
+export function MixColors(text, ctx, depth = 0) {
   const m = /^color-mix\(([\s\S]*)\)$/i.exec(stripComments(text).trim());
   if (!m) return null;
-  const args = splitTop(m[1], ',').map((a) => a.trim());
+  const args = SplitTop(m[1], ',').map((a) => a.trim());
   if (args.length !== 3 || !/^in\s+srgb$/i.test(args[0])) return null;
   const operand = (arg) => {
     let mm = /^([\s\S]*?)\s+(-?[\d.]+)%$/.exec(arg);
-    if (mm) return { color: parseColor(mm[1], ctx, depth + 1), pct: parseFloat(mm[2]) };
+    if (mm) return { color: ParseColor(mm[1], ctx, depth + 1), pct: parseFloat(mm[2]) };
     mm = /^(-?[\d.]+)%\s+([\s\S]*)$/.exec(arg);
-    if (mm) return { color: parseColor(mm[2], ctx, depth + 1), pct: parseFloat(mm[1]) };
-    return { color: parseColor(arg, ctx, depth + 1), pct: null };
+    if (mm) return { color: ParseColor(mm[2], ctx, depth + 1), pct: parseFloat(mm[1]) };
+    return { color: ParseColor(arg, ctx, depth + 1), pct: null };
   };
   const one = operand(args[1]), two = operand(args[2]);
   // A runtime-only operand (a custom property a script sets inline) has no static value: the nearest static colour is
@@ -217,23 +217,23 @@ export function mixColors(text, ctx, depth = 0) {
   return { r: mix('r'), g: mix('g'), b: mix('b'), a: a * scale };
 }
 
-export function colorToCss({ r, g, b, a }) {
+export function ColorToCss({ r, g, b, a }) {
   const c = (v) => Math.max(0, Math.min(255, Math.round(v)));
   const alpha = Math.round(Math.max(0, Math.min(1, a)) * 1000) / 1000;
   return `rgba(${c(r)}, ${c(g)}, ${c(b)}, ${alpha})`;
 }
 
 /** Every `color-mix(...)` in `value` replaced by its static colour; null when any one cannot be resolved. */
-export function replaceColorMix(value, ctx) {
+export function ReplaceColorMix(value, ctx) {
   let out = '', i = 0;
   const lower = value.toLowerCase();
   for (;;) {
     const at = lower.indexOf('color-mix(', i);
     if (at < 0) return out + value.slice(i);
     const end = skipParens(value, at + 'color-mix'.length);
-    const color = mixColors(value.slice(at, end), ctx);
+    const color = MixColors(value.slice(at, end), ctx);
     if (!color) return null;
-    out += value.slice(i, at) + colorToCss(color);
+    out += value.slice(i, at) + ColorToCss(color);
     i = end;
   }
 }
@@ -246,7 +246,7 @@ const CQ_UNIT = /(-?)(\d*\.?\d+)(cqw|cqh|cqi|cqb|cqmin|cqmax)(?![\w-])/gi;
 const CQ_VARIABLE = { cqw: '--cqw', cqi: '--cqw', cqh: '--cqh', cqb: '--cqh' };
 
 /** `1.5cqw` -> `calc(1.5 * var(--cqw, 1%))`, `-.5cqw` -> `calc(-.5 * var(--cqw, 1%))`. */
-export function replaceCqUnits(value) {
+export function ReplaceCqUnits(value) {
   return value.replace(CQ_UNIT, (whole, sign, n, unit) => {
     const u = unit.toLowerCase();
     const one = (name) => `var(${name}, 1%)`;
@@ -289,7 +289,7 @@ function parseFeature(text) {
 }
 
 /** The condition of an `@container` prelude as a small tree, or null when it uses something unsupported (style(), scroll-state()). */
-export function parseCondition(text) {
+export function ParseCondition(text) {
   const src = stripComments(text).trim();
   let i = 0;
   const ws = () => { while (i < src.length && /\s/.test(src[i])) i += 1; };
@@ -300,7 +300,7 @@ export function parseCondition(text) {
     if (src[i] !== '(') return null;
     const end = skipParens(src, i), inside = src.slice(i + 1, end - 1);
     i = end;
-    if (/^\s*\(/.test(inside) || /^\s*not\b/i.test(inside)) { const sub = parseCondition(inside); return sub; }
+    if (/^\s*\(/.test(inside) || /^\s*not\b/i.test(inside)) { const sub = ParseCondition(inside); return sub; }
     return parseFeature(inside);
   }
   function expr() {
@@ -328,12 +328,12 @@ export function parseCondition(text) {
 const asksForMinimum = (node) => (node.t === 'cmp' ? node.op === '>' || node.op === '>=' : node.t === 'not' ? false : (node.a || []).some(asksForMinimum));
 
 /** `@container` prelude -> { name, condition } or null. */
-export function parseContainerPrelude(prelude) {
+export function ParseContainerPrelude(prelude) {
   const text = stripComments(prelude).replace(/^\s*@container\b/i, '').trim();
   let name = null, rest = text;
   const m = /^([a-z_][\w-]*)\s*(?=\(|$)/i.exec(text);
   if (m && !/^(not|and|or|style)$/i.test(m[1])) { name = m[1]; rest = text.slice(m[0].length); }
-  const condition = parseCondition(rest);
+  const condition = ParseCondition(rest);
   return condition ? { name, condition } : null;
 }
 
@@ -366,7 +366,7 @@ function subjectEnd(selector) {
 const ROOT_COMPOUND = /^(:root|html)(?![\w-])/i;
 
 /** One selector gated on container-query token `key`; null when it could never match (it names the container itself). */
-export function gateSelector(selector, key, exclude) {
+export function GateSelector(selector, key, exclude) {
   const s = selector.trim();
   if (!s) return null;
   const token = `:where([data-cq~="${key}"])`;
@@ -408,7 +408,7 @@ function containerDeclaration(prop, value) {
 }
 
 function rewriteDeclarations(body, selector, flags, ctx) {
-  const pieces = splitTop(body, ';');
+  const pieces = SplitTop(body, ';');
   const hasPrefixed = (prop) => pieces.some((p) => stripComments(p).trim().toLowerCase().startsWith(`${prop}:`));
   const declared = {};
   const out = [];
@@ -426,11 +426,11 @@ function rewriteDeclarations(body, selector, flags, ctx) {
     }
     let changed = false;
     if (flags.colorMix && /color-mix\(/i.test(value)) {
-      const replaced = replaceColorMix(value, ctx);
+      const replaced = ReplaceColorMix(value, ctx);
       if (replaced === null) { ctx.unresolvedColorMix.push(`${selector.trim()} { ${prop}:${value.trim()} }`); continue; }
       value = replaced; changed = true;
     }
-    if (flags.cqUnits && /cq(?:w|h|i|b|min|max)\b/i.test(value)) { value = replaceCqUnits(value); changed = true; }
+    if (flags.cqUnits && /cq(?:w|h|i|b|min|max)\b/i.test(value)) { value = ReplaceCqUnits(value); changed = true; }
     if (flags.overflowClip && (prop === 'overflow' || prop === 'overflow-x' || prop === 'overflow-y') && /\bclip\b/i.test(value)) { value = value.replace(/\bclip\b/gi, 'hidden'); changed = true; }
     if (flags.userSelect && prop === 'user-select' && !hasPrefixed('-webkit-user-select')) out.push(`${lead}-webkit-user-select:${value}`);
     if (flags.backdropFilter && prop === 'backdrop-filter' && !hasPrefixed('-webkit-backdrop-filter')) out.push(`${lead}-webkit-backdrop-filter:${value}`);
@@ -452,13 +452,13 @@ function rewriteBlocks(blocks, flags, ctx, gates) {
     const head = stripComments(block.prelude).trim();
     if (head.startsWith('@')) {
       if (/^@container\b/i.test(head) && flags.containers) {
-        const parsed = parseContainerPrelude(head);
+        const parsed = ParseContainerPrelude(head);
         if (!parsed) continue;                                    // a query this shim does not understand matches nothing
         const key = registerQuery(ctx, parsed.name, parsed.condition);
-        const inner = rewriteBlocks(parseBlocks(block.body), flags, ctx, [...gates, { key, exclude: ctx.queries[key].exclude }]);
+        const inner = rewriteBlocks(ParseBlocks(block.body), flags, ctx, [...gates, { key, exclude: ctx.queries[key].exclude }]);
         out.push(...inner);
       } else if (NESTS_RULES.test(head) || /^@container\b/i.test(head)) {
-        out.push({ prelude: block.prelude, body: emit(rewriteBlocks(parseBlocks(block.body), flags, ctx, gates)) });
+        out.push({ prelude: block.prelude, body: emit(rewriteBlocks(ParseBlocks(block.body), flags, ctx, gates)) });
       } else {
         out.push(block);
       }
@@ -467,9 +467,9 @@ function rewriteBlocks(blocks, flags, ctx, gates) {
     let selectors = rewriteSelector(block.prelude, flags);
     if (gates.length) {
       const gated = [];
-      for (const sel of splitTop(stripComments(selectors), ',')) {
+      for (const sel of SplitTop(stripComments(selectors), ',')) {
         let current = sel;
-        for (const gate of gates) { current = current === null ? null : gateSelector(current, gate.key, gate.exclude); }
+        for (const gate of gates) { current = current === null ? null : GateSelector(current, gate.key, gate.exclude); }
         if (current !== null) gated.push(current);
       }
       if (!gated.length) continue;
@@ -481,14 +481,14 @@ function rewriteBlocks(blocks, flags, ctx, gates) {
 }
 
 /** Read the `:root { --token: colour }` table (last declaration wins) so color-mix can resolve var(--token). */
-export function collectVars(css, ctx) {
+export function CollectVars(css, ctx) {
   const visit = (blocks) => {
     for (const block of blocks) {
       if (block.raw !== undefined) continue;
       const head = stripComments(block.prelude).trim();
-      if (head.startsWith('@')) { if (NESTS_RULES.test(head)) visit(parseBlocks(block.body)); continue; }
+      if (head.startsWith('@')) { if (NESTS_RULES.test(head)) visit(ParseBlocks(block.body)); continue; }
       const root = /^(?::root|html)$/i.test(head);
-      for (const piece of splitTop(block.body, ';')) {
+      for (const piece of SplitTop(block.body, ';')) {
         const clean = stripComments(piece), colon = clean.indexOf(':');
         if (colon < 0) continue;
         const prop = clean.slice(0, colon).trim();
@@ -497,15 +497,15 @@ export function collectVars(css, ctx) {
         // The :root table is the theme. A token defined only on some component (--level-ready-blue on .reward-door)
         // still gets its first value as a fallback so a mix on that component resolves.
         if (root) ctx.vars.set(prop, value);
-        else if (!ctx.loose.has(prop) && parseColor(value, ctx)) ctx.loose.set(prop, value);
+        else if (!ctx.loose.has(prop) && ParseColor(value, ctx)) ctx.loose.set(prop, value);
       }
     }
   };
-  visit(parseBlocks(css));
+  visit(ParseBlocks(css));
 }
 
 /** One stylesheet's text, repaired for the flags that are set. Unchanged text comes back as the same string. */
-export function downlevelCss(css, flags, ctx = createContext()) {
-  if (!anyFlag(flags)) return css;
-  return emit(rewriteBlocks(parseBlocks(css), flags, ctx, []));
+export function DownlevelCss(css, flags, ctx = CreateContext()) {
+  if (!AnyFlag(flags)) return css;
+  return emit(rewriteBlocks(ParseBlocks(css), flags, ctx, []));
 }

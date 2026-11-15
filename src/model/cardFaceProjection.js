@@ -2,7 +2,7 @@
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
 import { effectiveD20Percent } from './d20Chance.js';
-import { splitAfter } from './splitAfter.js';
+import { SplitAfter } from './splitAfter.js';
 
 export const FACE_EFFECT_LINES = 3;
 // Owner, 2026-10-31: one to three lines, at most five words per line. A line
@@ -132,7 +132,7 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
 // Split only complete authored sentences. A following qualification belongs
 // to the preceding sentence (caps, generated-card costs and pronoun riders).
 function authoredClauses(html) {
-  const sentences = splitAfter(html, /[.!?]\s+(?=[A-Z(])/), out = [];
+  const sentences = SplitAfter(html, /[.!?]\s+(?=[A-Z(])/), out = [];
   for (const sentence of sentences) {
     if (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
     else out.push(sentence);

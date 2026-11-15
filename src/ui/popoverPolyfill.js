@@ -9,7 +9,7 @@
 // themselves with `position: fixed` coordinates, so that is enough for them.
 //
 // `:popover-open` is a SyntaxError for `matches()` in such a browser, so callers
-// ask `isPopoverOpen(el)`. In CSS the rewriter (src/ui/legacyCss.js) copies each
+// ask `IsPopoverOpen(el)`. In CSS the rewriter (src/ui/legacyCss.js) copies each
 // rule that names `:popover-open` onto `[data-popover-open]`, the marker this
 // polyfill keeps on an open popover.
 
@@ -24,7 +24,7 @@ export const POPOVER_UA_CSS = `
 `;
 
 /** True when a native `:popover-open` exists, or the polyfill's marker is set. */
-export function isPopoverOpen(element) {
+export function IsPopoverOpen(element) {
   if (!element) return false;
   try { return element.matches(':popover-open'); } catch { return element.hasAttribute?.(OPEN_ATTRIBUTE) === true; }
 }
@@ -36,7 +36,7 @@ const kindOf = (element) => String(element.getAttribute('popover') ?? '').trim()
  * Install the polyfill on `win` (default: the page's window) unless the browser
  * has the real API. Returns true when it installed, false when native.
  */
-export function installPopoverPolyfill(win = globalThis.window) {
+export function InstallPopoverPolyfill(win = globalThis.window) {
   const Element = win?.HTMLElement;
   if (!Element || typeof Element.prototype.showPopover === 'function') return false;
   const doc = win.document;

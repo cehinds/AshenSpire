@@ -1,7 +1,7 @@
 // The Popover API polyfill (Safari before 17, iOS 15 included): docs/qa/IOS15-COMPAT.md row 7.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { installPopoverPolyfill, isPopoverOpen, OPEN_ATTRIBUTE, POPOVER_UA_CSS } from '../src/ui/popoverPolyfill.js';
+import { InstallPopoverPolyfill, IsPopoverOpen, OPEN_ATTRIBUTE, POPOVER_UA_CSS } from '../src/ui/popoverPolyfill.js';
 
 // The smallest DOM the polyfill touches: elements with attributes, containment, ids and events.
 function makeWindow({ native = false } = {}) {
@@ -34,20 +34,20 @@ const press = (target, type) => { const e = new Event(type, { bubbles: true }); 
 
 test('a browser with the real API is left alone', () => {
   const { win, doc } = makeWindow({ native: true });
-  assert.equal(installPopoverPolyfill(win), false);
+  assert.equal(InstallPopoverPolyfill(win), false);
   assert.equal(doc.head.kids.length, 0, 'no stylesheet injected');
 });
 
 test('show, hide and toggle mark the popover and fire toggle with its states', () => {
   const { win, doc, add } = makeWindow();
-  assert.equal(installPopoverPolyfill(win), true);
+  assert.equal(InstallPopoverPolyfill(win), true);
   const menu = add(doc.body, { popover: 'auto', id: 'menu' });
   const events = [];
   menu.addEventListener('toggle', (e) => events.push(`${e.oldState}>${e.newState}`));
-  assert.equal(isPopoverOpen(menu), false);
+  assert.equal(IsPopoverOpen(menu), false);
   menu.showPopover();
   assert.equal(menu.hasAttribute(OPEN_ATTRIBUTE), true);
-  assert.equal(isPopoverOpen(menu), true, 'matches(":popover-open") throws here; the marker answers');
+  assert.equal(IsPopoverOpen(menu), true, 'matches(":popover-open") throws here; the marker answers');
   menu.showPopover();
   assert.deepEqual(events, ['closed>open'], 'showing an open popover does nothing');
   assert.equal(menu.togglePopover(), false);
@@ -56,52 +56,52 @@ test('show, hide and toggle mark the popover and fire toggle with its states', (
   assert.deepEqual(events, ['closed>open', 'open>closed', 'closed>open', 'open>closed']);
   menu.removeAttribute('popover');
   menu.showPopover();
-  assert.equal(isPopoverOpen(menu), false, 'only an element with the attribute is a popover');
+  assert.equal(IsPopoverOpen(menu), false, 'only an element with the attribute is a popover');
 });
 
 test('popovertarget invokers toggle, and a press on the invoker does not light-dismiss', () => {
   const { win, doc, add } = makeWindow();
-  installPopoverPolyfill(win);
+  InstallPopoverPolyfill(win);
   const menu = add(doc.body, { popover: 'auto', id: 'menu' });
   const button = add(doc.body, { popovertarget: 'menu' });
   doc.dispatchEvent(press(button, 'pointerdown')); doc.dispatchEvent(press(button, 'click'));
-  assert.equal(isPopoverOpen(menu), true);
+  assert.equal(IsPopoverOpen(menu), true);
   doc.dispatchEvent(press(button, 'pointerdown')); doc.dispatchEvent(press(button, 'click'));
-  assert.equal(isPopoverOpen(menu), false, 'the invoker closes the menu it opened');
+  assert.equal(IsPopoverOpen(menu), false, 'the invoker closes the menu it opened');
 });
 
 test('light dismiss: a press outside or Escape closes an auto popover; manual stays', () => {
   const { win, doc, add } = makeWindow();
-  installPopoverPolyfill(win);
+  InstallPopoverPolyfill(win);
   const auto = add(doc.body, { popover: 'auto', id: 'a' });
   const inside = add(auto);
   const manual = add(doc.body, { popover: 'manual', id: 'm' });
   const elsewhere = add(doc.body);
   auto.showPopover(); manual.showPopover();
   doc.dispatchEvent(press(inside, 'pointerdown'));
-  assert.equal(isPopoverOpen(auto), true, 'a press inside stays open');
+  assert.equal(IsPopoverOpen(auto), true, 'a press inside stays open');
   doc.dispatchEvent(press(elsewhere, 'pointerdown'));
-  assert.equal(isPopoverOpen(auto), false);
-  assert.equal(isPopoverOpen(manual), true, 'manual never light-dismisses');
+  assert.equal(IsPopoverOpen(auto), false);
+  assert.equal(IsPopoverOpen(manual), true, 'manual never light-dismisses');
   auto.showPopover();
   doc.dispatchEvent(key('Escape'));
-  assert.equal(isPopoverOpen(auto), false);
+  assert.equal(IsPopoverOpen(auto), false);
   doc.dispatchEvent(key('Escape'));
-  assert.equal(isPopoverOpen(manual), true, 'Escape does not close a manual popover');
+  assert.equal(IsPopoverOpen(manual), true, 'Escape does not close a manual popover');
 });
 
 test('opening one auto popover closes the others', () => {
   const { win, doc, add } = makeWindow();
-  installPopoverPolyfill(win);
+  InstallPopoverPolyfill(win);
   const a = add(doc.body, { popover: 'auto' }), b = add(doc.body, { popover: '' });
   a.showPopover(); b.showPopover();
-  assert.equal(isPopoverOpen(a), false);
-  assert.equal(isPopoverOpen(b), true);
+  assert.equal(IsPopoverOpen(a), false);
+  assert.equal(IsPopoverOpen(b), true);
 });
 
 test('the injected UA rules hide closed popovers and are zero-specificity', () => {
   const { win, doc } = makeWindow();
-  installPopoverPolyfill(win);
+  InstallPopoverPolyfill(win);
   assert.equal(doc.head.kids.length, 1);
   assert.equal(doc.head.kids[0].textContent, POPOVER_UA_CSS);
   assert.match(POPOVER_UA_CSS, /:where\(\[popover\]:not\(\[data-popover-open\]\)\)\s*\{\s*display: none/);

@@ -7,8 +7,8 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { splitAfter } from '../src/model/splitAfter.js';
-import { abortWithin } from '../src/ui/abortWithin.js';
+import { SplitAfter } from '../src/model/splitAfter.js';
+import { AbortWithin } from '../src/ui/abortWithin.js';
 import { QUALIFIERS } from '../src/model/cardFaceProjection.js';
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url));
@@ -45,12 +45,12 @@ test('no module in src/ uses a syntax or API Safari 15.6 lacks', () => {
   assert.deepEqual(found, []);
 });
 
-test('splitAfter matches the lookbehind splits it replaced', () => {
+test('SplitAfter matches the lookbehind splits it replaced', () => {
   const samples = ['', 'One.', 'One. Two. Three', 'Deal 6 damage. Apply 2 Weak! (Once per turn.) Draw 1?  Next', 'a.b c.  D', 'No stop', '...  X', 'Ends. '];
   for (const s of samples) {
-    assert.deepEqual(splitAfter(s, /[.!?]\s+(?=[A-Z(])/), s.split(new RegExp('(?<=[.!?])\\s+(?=[A-Z(])')), JSON.stringify(s));
-    assert.deepEqual(splitAfter(s, /\.\s+/), s.split(new RegExp('(?<=\\.)\\s+')), JSON.stringify(s));
-    assert.equal(splitAfter(s, /[.!?]\s/)[0], s.split(new RegExp('(?<=[.!?])\\s'))[0], JSON.stringify(s));
+    assert.deepEqual(SplitAfter(s, /[.!?]\s+(?=[A-Z(])/), s.split(new RegExp('(?<=[.!?])\\s+(?=[A-Z(])')), JSON.stringify(s));
+    assert.deepEqual(SplitAfter(s, /\.\s+/), s.split(new RegExp('(?<=\\.)\\s+')), JSON.stringify(s));
+    assert.equal(SplitAfter(s, /[.!?]\s/)[0], s.split(new RegExp('(?<=[.!?])\\s'))[0], JSON.stringify(s));
   }
 });
 
@@ -62,20 +62,20 @@ test('the cost qualifier says what its lookbehind regex said', () => {
   }
 });
 
-test('abortWithin aborts with the parent signal or after the timeout', async () => {
+test('AbortWithin aborts with the parent signal or after the timeout', async () => {
   const parent = new AbortController();
-  const signal = abortWithin(parent.signal, 60_000);
+  const signal = AbortWithin(parent.signal, 60_000);
   assert.equal(signal.aborted, false);
   parent.abort(new Error('stop'));
   assert.equal(signal.aborted, true);
   assert.equal(signal.reason.message, 'stop');
 
-  const late = abortWithin(new AbortController().signal, 5);
+  const late = AbortWithin(new AbortController().signal, 5);
   await new Promise((resolve) => late.addEventListener('abort', resolve, { once: true }));
   assert.equal(late.reason.name, 'TimeoutError');
 
   const done = new AbortController(); done.abort();
-  assert.equal(abortWithin(done.signal, 60_000).aborted, true);
+  assert.equal(AbortWithin(done.signal, 60_000).aborted, true);
 });
 
 test('the prologue traveller paints without canvas ctx.filter (absent in Safari)', async () => {

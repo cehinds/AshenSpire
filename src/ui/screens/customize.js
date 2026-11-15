@@ -78,8 +78,8 @@ import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
-import { isPopoverOpen } from '../popoverPolyfill.js';
-import { colorMix } from '../colorMixCompat.js';
+import { IsPopoverOpen } from '../popoverPolyfill.js';
+import { ColorMix } from '../colorMixCompat.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -356,7 +356,7 @@ export function mountCustomize(app, {
     // an open by any other route — the keyboard, a future invoker — is placed
     // too rather than left wherever it was last.
     headTools.addEventListener('toggle', (event) => {
-      menu.setAttribute('aria-expanded', String(isPopoverOpen(headTools)));
+      menu.setAttribute('aria-expanded', String(IsPopoverOpen(headTools)));
       if (event.newState !== 'open') return;
       // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
       // This used to be its own arithmetic, and it read the zoom off the WRONG
@@ -658,7 +658,7 @@ export function mountCustomize(app, {
     refreshAbilitySelection();
     // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
-    portrait.style.boxShadow = colorMix(`0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`);
+    portrait.style.boxShadow = ColorMix(`0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`);
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
       ? (state.spriteStyle === 'classic'
         ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic')

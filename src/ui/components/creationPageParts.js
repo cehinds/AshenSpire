@@ -7,7 +7,7 @@ import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { CREATION_FEAT_ART } from './creationFeatArt.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { splitAfter } from '../../model/splitAfter.js';
+import { SplitAfter } from '../../model/splitAfter.js';
 
 const MATERIAL = 'assets/player-polish/materials/soot-leather-material.webp';
 const FRAME = 'assets/player-polish/ui/components/panel-frame.svg';
@@ -201,7 +201,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     for (const row of group?.rows || []) {
       const key = keyOf(row, group);
       const tile = creationChoiceTile({ id: row.id, title: row.name,
-        description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : splitAfter(row.description || '', /[.!?]\s/)[0]),
+        description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : SplitAfter(row.description || '', /[.!?]\s/)[0]),
         art: creationFeatEmblem(row.id), onChoose: () => inspect(key),
         attrs: { 'aria-controls': labels.detailId || null, dataset: { feat: row.id, featKey: key, featGroup: group.id, locked: String(!!row.locked) } },
       });

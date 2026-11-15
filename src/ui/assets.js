@@ -1,7 +1,7 @@
 import { engravedIcon, engravedIconUrl } from './components/engravedIcon.js';
 import { uiIconText } from '../content/uiIcons.js';
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
-import { cq } from './cqCompat.js';
+import { Cq } from './cqCompat.js';
 import { enemyExpansionSprite } from './enemyExpansionStage.js';
 import { createAlternativeCardStage } from './alternativeCardStage.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
@@ -447,7 +447,7 @@ export function medallionOverlay(classId, tint, sigil) {
   // container's own font-size cannot be expressed in its own `cq` units.
   const mark = document.createElement('span');
   mark.textContent = sigil;
-  mark.style.cssText = cq('font-size:62cqh;line-height:1;');
+  mark.style.cssText = Cq('font-size:62cqh;line-height:1;');
   med.appendChild(mark);
   return med;
 }

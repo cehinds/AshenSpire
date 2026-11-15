@@ -26,7 +26,7 @@
 //  * Width/height are read from computed style (the element's own, zoom-local,
 //    CSS pixels), minus padding and border when box-sizing is border-box.
 
-import { replaceCqUnits } from './legacyCss.js';
+import { ReplaceCqUnits } from './legacyCss.js';
 
 // An element whose own style says it is a container, or that a script marked: a browser without container
 // queries drops `container-type` from a CSSOM-written style, so such a script sets data-container too.
@@ -35,12 +35,12 @@ const HAS_CQ = /cq(?:w|h|i|b|min|max)\b/i;
 
 const CONTAINING_TYPES = new Set(['size', 'inline-size']);
 
-/** Evaluate a parsed `@container` condition (legacyCss.parseCondition) against a container's measurements. */
-export function evaluateCondition(node, m) {
+/** Evaluate a parsed `@container` condition (legacyCss.ParseCondition) against a container's measurements. */
+export function EvaluateCondition(node, m) {
   if (!node) return false;
-  if (node.t === 'and') return node.a.every((n) => evaluateCondition(n, m));
-  if (node.t === 'or') return node.a.some((n) => evaluateCondition(n, m));
-  if (node.t === 'not') return !evaluateCondition(node.a, m);
+  if (node.t === 'and') return node.a.every((n) => EvaluateCondition(n, m));
+  if (node.t === 'or') return node.a.some((n) => EvaluateCondition(n, m));
+  if (node.t === 'not') return !EvaluateCondition(node.a, m);
   if (node.t !== 'cmp') return false;
   if (node.f === 'orientation') {
     if (m.type !== 'size') return false;
@@ -67,17 +67,17 @@ export function evaluateCondition(node, m) {
 }
 
 /** The tokens a measured container earns: { cq: [keys satisfied], no: [keys unsatisfied that exclude] }. */
-export function tokensFor(queries, names, m) {
+export function TokensFor(queries, names, m) {
   const cq = [], no = [];
   queries.forEach((query, key) => {
     if (query.name && !names.includes(query.name)) return;
-    if (evaluateCondition(query.condition, m)) cq.push(key); else if (query.exclude) no.push(key);
+    if (EvaluateCondition(query.condition, m)) cq.push(key); else if (query.exclude) no.push(key);
   });
   return { cq, no };
 }
 
 /** What the rules and the inline style say a given element is: { type, names } or null when it is no container. */
-export function containerOf(element, containers) {
+export function ContainerOf(element, containers) {
   let type, names = [];
   for (const rule of containers) {
     let hit = false;
@@ -103,7 +103,7 @@ export function containerOf(element, containers) {
  * Start tracking containers on `win`'s document. `queries` and `containers` are the registry legacyCss filled.
  * Returns { refresh, stop, tracked }.
  */
-export function startContainerShim({ win = globalThis.window, queries, containers }) {
+export function StartContainerShim({ win = globalThis.window, queries, containers }) {
   const doc = win.document;
   const valid = [];
   for (const rule of containers) {
@@ -135,7 +135,7 @@ export function startContainerShim({ win = globalThis.window, queries, container
     if (!info || !element.isConnected) return;
     const m = measure(element, info);
     if (!m) return;
-    const { cq, no } = tokensFor(queries, info.names, m);
+    const { cq, no } = TokensFor(queries, info.names, m);
     const next = { cq: cq.join(' '), no: no.join(' '), w: `${Math.round(m.width * 100) / 10000}px`, h: `${Math.round(m.height * 100) / 10000}px` };
     const was = info.written;
     // Only write what changed: a write is a mutation, and the page watches mutations.
@@ -146,7 +146,7 @@ export function startContainerShim({ win = globalThis.window, queries, container
     info.written = next;
   }
   function track(element) {
-    const found = containerOf(element, valid);
+    const found = ContainerOf(element, valid);
     const current = tracked.get(element);
     if (!found) { if (current) untrack(element); return; }
     if (current) return;                // already measured: a moved node keeps its container, and its tokens
@@ -162,7 +162,7 @@ export function startContainerShim({ win = globalThis.window, queries, container
   // rewritten in place; this runs in the mutation callback, a microtask before the next paint.
   function repairInlineStyle(element) {
     const text = element.getAttribute('style');
-    if (text && HAS_CQ.test(text)) element.setAttribute('style', replaceCqUnits(text));
+    if (text && HAS_CQ.test(text)) element.setAttribute('style', ReplaceCqUnits(text));
   }
   function scan(root) {
     if (root.nodeType !== 1) return;

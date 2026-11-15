@@ -6,7 +6,7 @@ import { t } from '../strings.js';
 import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
 import { openConfirmationModal } from './confirmationModal.js';
-import { abortWithin } from '../abortWithin.js';
+import { AbortWithin } from '../abortWithin.js';
 
 function saveFile(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -125,7 +125,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   let manifest = null, prepared = null, busy = false;
   const controller = new AbortController();
   const request = async url => {
-    const response = await fetch(url, { cache: 'no-store', signal: abortWithin(controller.signal, offlinePlay.requestTimeoutMs) });
+    const response = await fetch(url, { cache: 'no-store', signal: AbortWithin(controller.signal, offlinePlay.requestTimeoutMs) });
     if (!response.ok) throw new Error('This branch download is unavailable. Try another branch or check again when online.');
     return response;
   };

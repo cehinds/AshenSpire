@@ -1,5 +1,5 @@
 // The one door for older WebKit: iOS 15 (Safari 15.6), the newest OS an iPhone
-// SE 1st gen runs. main.js imports this FIRST and calls installLegacyBrowser()
+// SE 1st gen runs. main.js imports this FIRST and calls InstallLegacyBrowser()
 // before anything renders. In a browser that has every feature it does nothing
 // at all: no stylesheet is read or touched. docs/qa/IOS15-COMPAT.md.
 //
@@ -7,17 +7,17 @@
 //                   fallback path can be looked at and tested; the page also
 //                   behaves as if container queries and cq units are absent.
 //   ?legacy=off     force them off.
-import { anyFlag, collectVars, createContext, detectFlags, downlevelCss, FLAGS } from './legacyCss.js';
-import { startContainerShim } from './containerShim.js';
-import { forceCqFallback } from './cqCompat.js';
-import { forceColorMixFallback } from './colorMixCompat.js';
-import { installPopoverPolyfill } from './popoverPolyfill.js';
+import { AnyFlag, CollectVars, CreateContext, DetectFlags, DownlevelCss, FLAGS } from './legacyCss.js';
+import { StartContainerShim } from './containerShim.js';
+import { ForceCqFallback } from './cqCompat.js';
+import { ForceColorMixFallback } from './colorMixCompat.js';
+import { InstallPopoverPolyfill } from './popoverPolyfill.js';
 
 // A sheet with none of these needs no rewrite (and most of the 28 stylesheets do not need all of them).
 const NEEDS_REPAIR = /color-mix\(|cq(?:w|h|i|b|min|max)\b|@container|container(?:-type|-name)?\s*:|overflow(?:-[xy])?\s*:[^;}]*\bclip|user-select|backdrop-filter|:popover-open/i;
 
 /** Which repairs apply: the URL override, else what CSS.supports says. */
-export function legacyFlags(win = globalThis.window) {
+export function LegacyFlags(win = globalThis.window) {
   const override = (() => { try { return new win.URLSearchParams(win.location.search).get('legacy'); } catch { return null; } })();
   if (override === 'off') return Object.fromEntries(FLAGS.map((name) => [name, false]));
   if (override === 'ios15') {
@@ -25,7 +25,7 @@ export function legacyFlags(win = globalThis.window) {
     return Object.fromEntries(FLAGS.map((name) => [name, name !== 'popover']));
   }
   const supports = win.CSS && typeof win.CSS.supports === 'function' ? win.CSS.supports.bind(win.CSS) : () => true;
-  return detectFlags(supports);
+  return DetectFlags(supports);
 }
 
 const absolutizeUrls = (css, base) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^'")]+)\1\s*\)/gi, (whole, q, ref) => {
@@ -47,22 +47,22 @@ async function sheetTexts(doc) {
  * Repair the page for this browser. Returns null when nothing is needed, else
  * { flags, context, shim, done } where `done` resolves once every stylesheet is rewritten.
  */
-export function installLegacyBrowser(win = globalThis.window) {
+export function InstallLegacyBrowser(win = globalThis.window) {
   if (!win?.document) return null;
-  const flags = legacyFlags(win);
-  if (!anyFlag(flags)) return null;
+  const flags = LegacyFlags(win);
+  if (!AnyFlag(flags)) return null;
   const doc = win.document;
-  if (flags.popover) installPopoverPolyfill(win);
-  if (flags.cqUnits) forceCqFallback(true);
-  if (flags.colorMix) forceColorMixFallback(true);
-  const context = createContext();
+  if (flags.popover) InstallPopoverPolyfill(win);
+  if (flags.cqUnits) ForceCqFallback(true);
+  if (flags.colorMix) ForceColorMixFallback(true);
+  const context = CreateContext();
   const result = { flags, context, shim: null, done: null };
 
   const rewrite = (sheets) => {
-    if (flags.colorMix) for (const { css } of sheets) collectVars(css, context);
+    if (flags.colorMix) for (const { css } of sheets) CollectVars(css, context);
     for (const { node, css } of sheets) {
       if (!css || !NEEDS_REPAIR.test(css)) continue;
-      const out = downlevelCss(css, flags, context);
+      const out = DownlevelCss(css, flags, context);
       if (node.tagName === 'STYLE') node.textContent = out;
       else {
         const style = doc.createElement('style');
@@ -72,7 +72,7 @@ export function installLegacyBrowser(win = globalThis.window) {
         node.remove();
       }
     }
-    if (flags.containers && !result.shim) result.shim = startContainerShim({ win, queries: context.queries, containers: context.containers });
+    if (flags.containers && !result.shim) result.shim = StartContainerShim({ win, queries: context.queries, containers: context.containers });
   };
 
   const inline = [...doc.querySelectorAll('style')];
@@ -86,7 +86,7 @@ export function installLegacyBrowser(win = globalThis.window) {
   return result;
 }
 
-/** installLegacyBrowser that can never stop the game booting: a failure is logged and the page runs unrepaired. */
-export function installLegacyBrowserSafely(win = globalThis.window, log = console) {
-  try { return installLegacyBrowser(win); } catch (error) { log.error?.('[legacy-browser] repairs failed; booting without them', error); return null; }
+/** InstallLegacyBrowser that can never stop the game booting: a failure is logged and the page runs unrepaired. */
+export function InstallLegacyBrowserSafely(win = globalThis.window, log = console) {
+  try { return InstallLegacyBrowser(win); } catch (error) { log.error?.('[legacy-browser] repairs failed; booting without them', error); return null; }
 }

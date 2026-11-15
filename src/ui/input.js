@@ -42,7 +42,7 @@ import { padGlyph } from './uiContent.js';
 import { topVeil } from './components/veil.js';
 import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
 import { t } from './strings.js';
-import { isPopoverOpen } from './popoverPolyfill.js';
+import { IsPopoverOpen } from './popoverPolyfill.js';
 
 const FOCUS_SELECTOR = [
   'summary',
@@ -833,8 +833,8 @@ let backAim = null;
 const LIGHT_DISMISS = new Set(['', 'auto', 'hint']);
 function openPopover(root) {
   // `:popover-open` is a SyntaxError for querySelectorAll before Safari 17, so ask each [popover] instead
-  // (isPopoverOpen answers for the polyfill, src/ui/popoverPolyfill.js).
-  return [...root.querySelectorAll('[popover]')].filter(isPopoverOpen)
+  // (IsPopoverOpen answers for the polyfill, src/ui/popoverPolyfill.js).
+  return [...root.querySelectorAll('[popover]')].filter(IsPopoverOpen)
     .find((el) => LIGHT_DISMISS.has(String(el.getAttribute('popover') ?? '').trim().toLowerCase())) || null;
 }
 function backIn(root) {
@@ -855,7 +855,7 @@ function onBackKey(ev) {
   setTimeout(() => {
     if (ev.defaultPrevented) return;
     if (aim.popover) {
-      if (!ev.isTrusted && aim.popover.isConnected && isPopoverOpen(aim.popover)) aim.popover.hidePopover?.();
+      if (!ev.isTrusted && aim.popover.isConnected && IsPopoverOpen(aim.popover)) aim.popover.hidePopover?.();
       return;
     }
     // The Back pressed is the one the player was looking at when they pressed:

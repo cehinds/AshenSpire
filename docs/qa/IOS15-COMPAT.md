@@ -23,7 +23,7 @@ Severity: **blocks load** (the page or a module fails to start), **layout**
 | 4 | Container query units `cqw` `cqh` | 148 uses in CSS (`illustrated-cards.css` 21 lines, `player-polish.css` 8, `kit.css` 7, `responsive-type.css` 7, `prologue.css` 3, `ui.css` 1), 21 lines in `src/` (`cardArtLayers.js`) | as listed | 16.0 | **Layout.** A declaration with an unknown unit is dropped wholesale: the illustrated card face loses its title stroke, shadows, glyph size, sigil band type sizes. | Rewritten to `calc(N * var(--cqw))`; the shim publishes `--cqw` / `--cqh` on each container. |
 | 5 | `color-mix()` | 58 in CSS (`kit.css` 38, `player-polish.css` 6, `ui.css` 4, `combat.css` 3, `base.css` 2, `illustrated-cards.css` 2, `combat-range-action.css` 1, `combat-target-responsive.css` 1, `weakness-chips.css` 1) + 1 in `src/ui/screens/customize.js` | as listed | 16.2 | **Visual.** The whole declaration is dropped: missing panel tints, borders, glows, shadows. All 58 are `in srgb`; operands are tokens (`var(--gold)`), keywords (`transparent`, `black`, `white`), hex, or `var(--x, fallback)`. | Static fallback colour computed in the shim from the `:root` token table. |
 | 6 | `overflow: clip` / `overflow-x|y: clip` | 34 | `kit.css` 21, `combat.css` 8, `ui.css` 3, `player-polish.css` 1, `responsive-type.css` 1 | 16.0 | **Layout.** Declaration dropped, so overflow is visible: text and art spill out of their boxes. | Fallback `hidden` declared first. |
-| 7 | Popover API (`popover` attribute, `showPopover`, `hidePopover`, `togglePopover`, `:popover-open`, `popovertarget`) | 3 files, ~15 call sites | `src/ui/components/compactEquipmentDetails.js`, `src/ui/screens/customize.js`, `src/ui/input.js`; CSS in `base.css`, `kit.css` | 17.0 | **Blocks feature.** `showPopover is not a function` throws on the customize menu and equipment "more" tags; `el.matches(':popover-open')` throws a SyntaxError (unknown pseudo-class) in `input.js`'s back handler; the popover contents render permanently inline because the UA `display:none` for closed popovers is absent. | Small polyfill + `isPopoverOpen()` helper; fallback CSS injected only when unsupported. |
+| 7 | Popover API (`popover` attribute, `showPopover`, `hidePopover`, `togglePopover`, `:popover-open`, `popovertarget`) | 3 files, ~15 call sites | `src/ui/components/compactEquipmentDetails.js`, `src/ui/screens/customize.js`, `src/ui/input.js`; CSS in `base.css`, `kit.css` | 17.0 | **Blocks feature.** `showPopover is not a function` throws on the customize menu and equipment "more" tags; `el.matches(':popover-open')` throws a SyntaxError (unknown pseudo-class) in `input.js`'s back handler; the popover contents render permanently inline because the UA `display:none` for closed popovers is absent. | Small polyfill + `IsPopoverOpen()` helper; fallback CSS injected only when unsupported. |
 | 8 | `Array.prototype.toSorted` | 6 | `src/ui/models/CombatOverheadModel.js` | 16.0 | **Blocks combat HUD.** TypeError while placing the overhead controls. | `[...a].sort(...)` |
 | 9 | `AbortSignal.any` / `AbortSignal.timeout` | 1 | `src/ui/components/offlinePlay.js` | 17.4 / 16.0 | TypeError on every offline-play download request. | Local helper using `AbortController` + `setTimeout`. |
 | 10 | Canvas `ctx.filter` | 5 uses | `src/ui/prologueCharacter.js` (3), `src/ui/alternativeAuraRenderer.js` (guarded setter) | not in Safari (any of 15-17) | **Visual.** Prologue character: the contact shadow is drawn as an un-darkened coloured reflection and the figure is not dimmed. Alternative card aura: glow/brightness silently absent. | Prologue: pre-composited silhouette via `source-atop` and an overlay. Aura: left as graceful degradation (cosmetic, opt-in), listed under *Not fixed*. |
@@ -75,7 +75,7 @@ JS gaps are fixed at the source with tiny local fallbacks (no dependencies):
 `src/ui/abortWithin.js` (AbortSignal), a scratch-canvas stand-in for `ctx.filter`
 in `src/ui/prologueCharacter.js`, and `src/ui/popoverPolyfill.js`
 (`showPopover`/`hidePopover`/`togglePopover`, `popovertarget`, light dismiss,
-Escape, the `toggle` event; callers ask `isPopoverOpen(el)` because
+Escape, the `toggle` event; callers ask `IsPopoverOpen(el)` because
 `el.matches(':popover-open')` throws before Safari 17). `tests/ios15-compat-js.test.mjs`
 scans every module in `src/` for the banned syntax and APIs, so a regression
 fails CI rather than a phone.
@@ -113,7 +113,7 @@ rewrite on the old phone at boot (below).
   even when an outer one passes), and `--cqw`/`--cqh`. It also rewrites cq
   units inside `style="..."` attribute text as nodes arrive (the parser keeps
   text it does not understand).
-* **Script-written styles** (`src/ui/cqCompat.js` `cq()`/`cqStyle()`,
+* **Script-written styles** (`src/ui/cqCompat.js` `cq()`/`CqStyle()`,
   `src/ui/colorMixCompat.js` `colorMix()`) cover the places a script assigns
   a value the browser would reject: `cardAppearance.js` (card-layout.json
   styles, five `Object.assign(el.style, ...)` and one `fontSize`), `assets.js`

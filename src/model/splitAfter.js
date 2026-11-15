@@ -3,8 +3,8 @@
 // SyntaxError before Safari 16.4 (iOS 15 stops loading the whole module), so
 // the game never writes one: give this the separator WITHOUT the lookbehind,
 // starting at the character the lookbehind would have asserted (docs/qa/IOS15-COMPAT.md).
-//   splitAfter('A. B', /[.!?]\s+/)   // ['A.', 'B']
-export function splitAfter(text, separator) {
+//   SplitAfter('A. B', /[.!?]\s+/)   // ['A.', 'B']
+export function SplitAfter(text, separator) {
   const source = String(text);
   const re = new RegExp(separator.source, separator.flags.includes('g') ? separator.flags : `${separator.flags}g`);
   const pieces = [];
