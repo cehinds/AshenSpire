@@ -1,0 +1,26 @@
+{
+  "id": "status.freeze",
+  "tag": "status.freeze",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Freeze",
+  "description": "A Poise break on a Chilled unit froze it: it loses its next action.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.freeze"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "OnPoiseBreak"
+  }
+}

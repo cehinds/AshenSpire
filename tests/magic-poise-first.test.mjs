@@ -29,7 +29,8 @@ function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
   return { receipt, combat, target, poiseAfter: poise - receipt.poiseMitigated, blockAfter: receipt.blockRemaining };
 }
 const physical = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
-const spell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
+// A poison spell: a fire spell ignores some Poise under the element rules (W25; tests/element-fire.test.mjs), which this suite isolates from.
+const spell = { combatProfile: { camp: 'spell', damageType: 'poison', magicShare: 1 } };
 const arcane = { combatProfile: { camp: 'spell', damageType: 'arcane' }, magicShare: 0.5 };
 
 test('(a) pure spell 10 vs Poise 6, Block 5: Poise 6->0 first, the 4 left meets Block 5->1, HP 0', () => {

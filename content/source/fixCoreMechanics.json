@@ -129,5 +129,62 @@
     "reachPrecisionBonus": 1,
     "throwPrecisionPenalty": 1,
     "maxRange": "reach"
+  },
+  "elements": {
+    "version": 1,
+    "fire": {
+      "spreadMultiplier": 0.6,
+      "spreadNeedsOtherEnemies": true,
+      "poiseIgnorePerPoint": 1,
+      "poiseIgnoreAttributes": [
+        "wisdom",
+        "intelligence"
+      ],
+      "burnAttribute": "intelligence",
+      "burnMin": 1
+    },
+    "burn": {
+      "damageTakenPerStack": 0.05,
+      "explodeChancePerStack": 5,
+      "cap": null
+    },
+    "lightning": {
+      "chainMultiplier": 0.5,
+      "shockAttributes": [
+        "intelligence",
+        "wisdom"
+      ]
+    },
+    "shock": {
+      "actionLossChancePerStack": 5,
+      "lightningTakenPerStack": 0.05,
+      "decayPerTurn": 1,
+      "cap": 10,
+      "playerStaminaLoss": 1
+    },
+    "divine": {
+      "healAttribute": "wisdom",
+      "cleanseAttribute": "wisdom",
+      "undeadMultiplier": 1.5,
+      "smiteFraction": 0.5
+    },
+    "necrotic": {
+      "damageMultiplier": 0.7,
+      "buildupAttribute": "intelligence",
+      "buildupMin": 1,
+      "undeadTag": "undead"
+    },
+    "frost": {
+      "chillBase": 1,
+      "chillIntPerExtra": 3,
+      "chillDamageDealtPerStack": 0.05,
+      "chillStacksPerStaminaLoss": 3,
+      "chillDecayPerTurn": 1,
+      "brittleMultiplier": 1.5,
+      "freezePlayerStaminaLoss": 2
+    },
+    "force": {
+      "poiseMultiplier": 1.5
+    }
   }
 }

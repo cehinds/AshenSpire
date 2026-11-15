@@ -67,11 +67,14 @@ export const STREAM_NAMES = Object.freeze([
   // Insight contests (SPEC §17 Contests): the d20 of a Read Intent / status contest.
   // Appended last; an untouched run writes no key for it.
   'combatContest',
+  // Element rules (W25): the explosion, Shock action-loss and similar rolls of content/source/fixCoreMechanics.json `elements`.
+  // Appended last; omitted from saves while untouched, so every existing seed and save is unchanged.
+  'elements',
 ]);
 
 // Streams whose zero counter is left out of getCounters() (and so out of a
 // save). Their counter is restored as 0 when missing.
-const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds', 'combatContest']);
+const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds', 'combatContest', 'elements']);
 
 const MULBERRY_INC = 0x6d2b79f5;
 

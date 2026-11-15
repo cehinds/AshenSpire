@@ -23,6 +23,8 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 function fight({ classId = 'starseer', enemyId = 'wanderingSoldier' } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: [enemyId] });
+  // The Shocked contest is the pre-W25 lightning rule, kept for fights saved without `elements` rules; the Shock status is tests/element-lightning-identity.test.mjs.
+  delete combat.fixCoreRules.elements;
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 0, max: 20 }, attributes: { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 }, level: 1 });
   delete enemy.combatStance; delete enemy.combatCounter;

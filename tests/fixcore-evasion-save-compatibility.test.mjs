@@ -122,7 +122,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-14: stance natural benefits (stanceBenefits rules, src/engine/stanceBenefits.js) move the runtime hash (68d4... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-stances (stance natural benefits, stanceBenefits rules) moves the runtime hash; w25-stances' own 211930... and the earlier f2b79e... are kept.
   // Re-pinned 2026-11-14 (batch 2): Sweep has no extra benefit (owner: sweeps are AoE for full damage): the sweep row leaves stanceBenefits and the hash moves; the batch-2 stances merge hash 28288b... is kept.
-  assert.equal(profile.lock.runtimeHash, 'sha256:093f5541161859e8ed91a74baa580c44f24058e377cd0b930d33c9da7aa6b372');
+  // Re-pinned 2026-11-14 (batch 2): the batch-2 merge of w25-elements (element identity: fixCoreMechanics.json elements, the shock/chill/freeze/brittle/necroticBuildup/knockback statuses, the receipt stages) moves the runtime hash; a save made before keeps its snapshotted rules, which lack elements, and plays as before. w25-elements' own 33931a... and cc8bab... and the earlier 093f55... are kept.
+  assert.equal(profile.lock.runtimeHash, 'sha256:f478198585239b6625dabf7f8541ce4a9e7e7cb4e6d93fdd4bbae847b0274c73');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
