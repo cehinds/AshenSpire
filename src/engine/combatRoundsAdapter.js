@@ -240,7 +240,7 @@ export function takePlannedMove(combat, enemy, def, { isFirstTurn = false, pick 
   const plan = enemy.plannedMoves ?? (enemy.plannedMoves = []);
   extendEnemyQueue(enemy, def, plan, { isFirstTurn, pick, combat });
   const head = plan.shift();
-  enemy.headApproachFor = head?.approachFor; // the attack a back-row enemy's shown step forward stands for (rows, W25-BANDS)
+  if (head?.approachFor) enemy.headApproachFor = head.approachFor; else delete enemy.headApproachFor; // the attack a back-row enemy's shown step forward stands for (rows, W25-BANDS)
   return head?.moveId ?? null;
 }
 
