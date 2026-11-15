@@ -192,3 +192,15 @@ test('frozen rules text equals the unfrozen key; partly frozen rules are never t
   assert.notEqual(keyFor(frozen, frozen.player), keyFor(loose, loose.player), 'replacing a frozen rules object is a new key');
   assert.deepEqual(cached(frozen, frozen.player), uncached(frozen, frozen.player));
 });
+
+test('a candidate shares frozen rules by reference and still clones unfrozen rules', async () => {
+  const { candidateState } = await import('../src/engine/combatRules.js');
+  const combat = fight();
+  const loose = candidateState(combat, { detached: true });
+  assert.notEqual(loose.fixCoreRules, combat.fixCoreRules, 'unfrozen rules are cloned');
+  assert.deepEqual(loose.fixCoreRules, combat.fixCoreRules);
+  deepFreezeRules(combat.fixCoreRules);
+  const shared = candidateState(combat, { detached: true });
+  assert.equal(shared.fixCoreRules, combat.fixCoreRules, 'frozen rules are shared');
+  assert.deepEqual(cached(shared, shared.player), uncached(combat, combat.player));
+});
