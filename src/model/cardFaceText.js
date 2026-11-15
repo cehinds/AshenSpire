@@ -23,6 +23,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 
 import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
+import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
@@ -126,7 +127,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const fromToken = token === undefined ? undefined : tokens[token];
     if (typeof fromToken === 'number') return fromToken;
-    return typeof effect[field] === 'number' ? effect[field] : undefined;
+    return typeof effect[field] === 'number' ? effect[field] * BarrierPoiseFactor(effect, registries) : undefined;
   };
 
   // A number as a span; up or down only when a live preview has moved it off its base.
@@ -229,12 +230,14 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag('gain', `${num(n, base)} Block`);
       }
       // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
-      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Barrier`);
-      case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
+      // Owner, 2026-11-15: the word Barrier is gone from player text; N stacks read "Gain N x poisePerStack Poise" (it can exceed the maximum).
+      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Poise`);
+      case 'gainWard': return frag('restore', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
-      case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
+      // Owner, 2026-11-15: Gain may exceed the maximum, Restore stops at it. restoreMana, restoreStamina and gainWard are capped; gainEnergy and gainPoise are not.
+      case 'restoreMana': return frag('restore', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
-      case 'restoreStamina':
+      case 'restoreStamina': return frag('restore', `${num(n, base)} Stamina`);
       case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
       case 'buildup': {
@@ -254,7 +257,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           if (partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
-        const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
+        const bonusPoise = effect.status === 'barrier';
+        const name = bonusPoise ? `${num(stacks, stacksBase)} Poise` : `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
         // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
         if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
@@ -313,7 +317,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const segmentsOf = (fragments, extraBonus = [], isUnconditional = fragments === unconditional) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
+    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), restore = of('restore'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
     if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
@@ -321,6 +325,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
+    if (restore.length) out.push({ kind: 'gain', text: `Restore ${joinList(restore)}` });
     if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? joinList(defenseRestore) + '. ' + joinList(bonus) : joinList(bonus) });
     else if (defenseRestore.length) out.push({ kind: 'bonus', text: joinList(defenseRestore) });
     return out;
@@ -421,7 +426,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const statMixGrant = entry.precision > 0 && coreProfile;
     const grants = Object.entries(entry).filter(([id, amount]) => amount > 0 && !representedEntry.includes(id)).map(([id, amount]) => (id === 'precision' && statMixGrant
       ? entryPrecisionText(amount, preview)
-      : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      : '+' + num(id === 'barrier' ? amount * BarrierPoisePerStack(registries) : amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Poise' })[id]); // Barrier stacks read as Poise (owner, 2026-11-15)
     if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', tag: true, text: esc(entryLabel) + ': ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);

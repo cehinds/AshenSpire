@@ -97,3 +97,35 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   row.append(badges);
   return row;
 }
+
+/**
+ * Draws Bonus Poise on a Poise meter (owner, 2026-11-15): the number reads "8/8" in yellow followed by "+5" in blue, and the bonus part of the
+ * bar is a blue segment past the base maximum. `view` is PoiseBonusView(pool); the meter was drawn from the pool's full max, so the segment
+ * sits at base/max of the track. Idempotent.
+ */
+export function ApplyPoiseBonus(meter, view) {
+  if (!meter || !view) return;
+  meter.dataset.bonus = String(view.bonus);
+  const track = meter.querySelector('.m-track');
+  if (track && !track.querySelector('.m-bonus-seg') && view.max > 0) {
+    const seg = document.createElement('span');
+    seg.className = 'm-bonus-seg';
+    seg.setAttribute('aria-hidden', 'true');
+    const from = `${Math.round(1000 * view.base / view.max) / 10}%`, width = `${Math.round(1000 * view.bonus / view.max) / 10}%`;
+    seg.dataset.from = from; seg.dataset.width = width;
+    seg.style.setProperty('--bonus-from', from);
+    seg.style.setProperty('--bonus-width', width);
+    track.append(seg);
+  }
+  const value = meter.querySelector('.m-value');
+  if (value) {
+    const label = t('combat.protection.poiseBonusAria', { value: view.shown, max: view.base, bonus: view.bonus });
+    value.textContent = `${view.shown}/${view.base}`;
+    const extra = document.createElement('span');
+    extra.className = 'm-bonus';
+    extra.textContent = ` +${view.bonus}`;
+    value.append(extra);
+    value.setAttribute('aria-label', label);
+  }
+  meter.setAttribute('aria-label', t('combat.protection.poiseBonusAria', { value: view.shown, max: view.base, bonus: view.bonus }));
+}

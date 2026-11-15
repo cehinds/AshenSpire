@@ -360,7 +360,7 @@
       "maneuver:casting",
       "classification.skill"
     ],
-    "textTemplate": "Gain {restoreMana} Mana.",
+    "textTemplate": "Restore {restoreMana} Mana.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
   {
@@ -924,7 +924,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana.",
+    "textTemplate": "Draw {draw} card. Restore {restoreMana} Mana.",
     "upgrade": {
       "effects": [
         {
@@ -937,7 +937,7 @@
           "amount": 1
         }
       ],
-      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana."
+      "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
@@ -2080,7 +2080,7 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {restoreMana} Mana.",
+    "textTemplate": "Deal {damage} damage. Restore {restoreMana} Mana.",
     "upgrade": {
       "effects": [
         {
@@ -3104,7 +3104,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block, {barrier} Barrier and {ward} Ward. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -3583,7 +3583,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Gain {regen} Regen.",
+    "textTemplate": "Gain {block} Block and {gainBarrier} Poise. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {

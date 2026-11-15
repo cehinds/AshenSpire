@@ -301,6 +301,18 @@ export function ApplyCombatBeat(disp, events, {
                     {
                         t.persistentPoise.max = e.max;
                     }
+                    // Bonus Poise (Barrier stacks) above the base maximum drives the blue bonus segment of the bar.
+                    if (Number.isFinite(e.barrierBonus))
+                    {
+                        if (e.barrierBonus > 0)
+                        {
+                            t.persistentPoise.barrierBonus = e.barrierBonus;
+                        }
+                        else
+                        {
+                            delete t.persistentPoise.barrierBonus;
+                        }
+                    }
                 }
                 break;
             case 'combatStanceChanged':

@@ -43,7 +43,7 @@ import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -118,8 +118,10 @@ export function cardSummaryContext(def, preview = null, registries = null, rules
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
-    return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
-      ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+    // Barrier stacks read as the Poise they give (owner, 2026-11-15): tokens are already scaled, live values and literals are not.
+    const factor = BarrierPoiseFactor(effect, registries), scale = amount => typeof amount === 'number' ? amount * factor : amount;
+    return preview?.tokens?.[token] ?? scale(live?.op === effect.op ? live.value : undefined)
+      ?? tokens[token] ?? scale(typeof effect[field] === 'number' ? effect[field] : '?');
   };
   const defenseValue = (effect, index) => {
     const live = preview?.values?.[index];
@@ -209,7 +211,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
       case 'gainBarrier': {
-        text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Barrier`;
+        text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Poise`;
         break;
       }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
@@ -218,6 +220,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'applyStatus': {
         if (['invulnerability', 'decoy', 'grounded', 'sleep'].includes(effect.status)) return null;
         if (effect.duration !== undefined && typeof effect.duration !== 'number') return null;
+        if (effect.status === 'barrier' && effect.target === 'self') { const stacks = value(effect, index, 'stacks'); text = `Gain ${stacks} Poise`; break; }
         text = `${effect.target === 'self' ? 'Gain' : 'Apply'} ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' to target' : effect.target === 'ally' ? ' to an ally' : area}${effect.duration !== undefined ? ` for ${effect.duration} turns` : ''}`;
         if (effect.status === 'concealed') {
           const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
@@ -317,7 +320,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
     const effect = effects[binding.index] || {};
     const raw = effect[binding.field];
     const value = constant(raw);
-    if (typeof value === 'number') tokens[binding.token] = value;
+    // Owner, 2026-11-15: Barrier stacks are printed as the Poise they give.
+    const barrierScale = effect.op === 'gainBarrier' || (effect.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(registries) : 1;
+    if (typeof value === 'number') tokens[binding.token] = value * barrierScale;
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
       // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.

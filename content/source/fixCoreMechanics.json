@@ -3,7 +3,8 @@
   "enabled": true,
   "ward": {
     "enabled": false,
-    "poisePerStack": 5
+    "poisePerStack": 5,
+    "routing": "blockFirst"
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]
