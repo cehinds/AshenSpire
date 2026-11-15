@@ -19,7 +19,7 @@ import { ApplyElementReceipt, OnPoiseBreak, ElementTargets, ElementChain } from 
 import { gainCounterStacks, CounterStackGrant, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
-import { counterBlockBonus, counterStackRule, counterReturnSpent, paidCounterContact } from './counterRule.js';
+import { counterBlockBonus, CounterStackRule, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
 import { ChangeAttribute } from './liveStats.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
@@ -1206,7 +1206,7 @@ export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
   // (Card-stack rule: the charge stays armed while stacks remain, so an armed Counter is remembered too.)
-  if (entity?.combatCounter?.charges === 0 || (entity?.combatCounter && counterStackRule(ctx, entity))) entity.combatCounterStaggered = entity.combatCounter.serial;
+  if (entity?.combatCounter?.charges === 0 || (entity?.combatCounter && CounterStackRule(ctx, entity))) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
   // Owner, 2026-11-14: under `poise.breakRule: "broken"` a Poise break (only that cause) makes the owner Broken (brokenRule.js)
   // instead of Staggered; weakness and Smash-advantage staggers keep the stance below.

@@ -7,7 +7,7 @@ import { counterStackReturn, counterStackCount, STACK_CEILING, CounterStackGrant
 export const counterRuleActive = ctx => fixCoreEnabled(ctx);
 
 /** The card-stack Counter rule (owner 2026-11-15) belongs to the player alone; an enemy Counter keeps the previous path (no stacks, charge-based). */
-export const counterStackRule = (ctx, owner) => owner?.kind === 'enemy' ? null : FixCoreCounterStacks(ctx);
+export const CounterStackRule = (ctx, owner) => owner?.kind === 'enemy' ? null : FixCoreCounterStacks(ctx);
 
 /** True when a Counter stance beats the incoming maneuver in the stances module's matchup table. */
 export function counterBeats(ctx, incomingManeuver) {
@@ -24,7 +24,7 @@ export function counterReturn(ctx, incoming, advantaged, { stacks = 0, base = 0,
   const whole = Math.max(0, Math.floor(Number(incoming) || 0));
   if (!whole) return { hp: 0, poise: 0, block: 0 };
   // Owner 2026-11-15: under the card-stack rule each stack returns returnPerStack of the hit and the advantage share is data (0 shipped).
-  const cardStacks = counterStackRule(ctx, owner);
+  const cardStacks = CounterStackRule(ctx, owner);
   const hp = Math.max(0, Math.floor(Number(base) || 0)) + counterStackReturn(stacks, whole, cardStacks?.returnPerStack)
     + (advantaged ? Math.floor((cardStacks ? cardStacks.advantageShare : cfg.advantageIncomingFraction) * whole) : 0);
   return {
@@ -49,7 +49,7 @@ export const CounterHitAnswers = (held, incoming) => held > 0 && incoming > 0;
  */
 export function counterReturnForReceipt(ctx, receipt, { stacks = 0, base = 0, owner = null } = {}) {
   const total = { hp: 0, poise: 0, block: 0, incoming: 0, stackShare: 0 };
-  const cardStacks = counterStackRule(ctx, owner);
+  const cardStacks = CounterStackRule(ctx, owner);
   if (cardStacks) {
     total.hits = []; total.consumed = 0;
     let held = Math.max(0, Math.floor(Number(stacks) || 0));
