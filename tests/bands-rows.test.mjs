@@ -145,3 +145,36 @@ test('a card-stack Counter (counter.stackSource "card", batch 5) aimed at a back
   assert.equal(price('back'), 1);
   assert.equal(price('front'), 0);
 });
+
+// A real fight under the shipped rules (bands.rows, counter.stackSource "card"): the Counter card is played, an enemy attacks, and the return
+// goes through the engine's own authorization (combatMatchups, then combatEngagement.acceptRangeActions), not a hand-built carrier.
+const counterFight = row => {
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier', 'wanderingSoldier'], hand: ['core.counter'], seed: 2 });
+  assert.equal(combat.fixCoreRules.counter.stackSource, 'card');
+  assert.equal(combat.enemies[0].intent.moveId, 'slash', 'seed 2: the first soldier attacks, the second guards');
+  SetEnemyRow(combat, combat.enemies[0], row, 'test');
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
+  assert.equal(combat.player.counterStacks, 1, 'the card granted its stack (counter.stacksByCard)');
+  const mark = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  return { combat, events: combat.eventLog.slice(mark) };
+};
+const paid = events => events.filter(e => e.type === 'energySpent').reduce((sum, e) => sum + e.amount, 0);
+
+test('a real Counter return from a front-row attacker costs +0 and its forecast is the damage resolved (shown = dealt)', () => {
+  const { events } = counterFight('front');
+  const triggered = events.find(e => e.type === 'combatCounterTriggered');
+  assert.ok(triggered, 'the Counter answered the attack');
+  assert.equal(paid(events), 0, 'no Advance surcharge is paid for the return');
+  const dealt = events.find(e => e.type === 'damageDealt' && e.sourceId === 'player');
+  assert.equal(dealt.damageReceipt.hits[0].incoming, triggered.amount, 'the forecast amount is the amount that was resolved');
+});
+
+test('a back-row melee attacker steps forward before it strikes, so the Counter return that follows is quoted at the front row (+0)', () => {
+  const { combat, events } = counterFight('back');
+  const moves = events.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === 'e1').map(e => e.moveId);
+  assert.deepEqual(moves, ['advance'], 'its turn went on stepping forward; no attack, so nothing to return');
+  assert.equal(combat.enemies[0].row, 'front');
+  assert.equal(events.some(e => e.type === 'combatCounterTriggered'), false);
+  assert.equal(paid(events), 0);
+});

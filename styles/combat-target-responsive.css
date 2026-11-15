@@ -268,8 +268,6 @@
    (individual translate/scale leave the stage's own transform alone). */
 :root .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-14px / var(--ui-zoom,1)); scale:.9; transform-origin:50% 100%; }
 
-/* W25-BANDS, phone: the player's HUD hung above the figure, in the enemy rows' band, where a back-row enemy's lower body overlapped its bars.
-   It sits beside the player's own figure instead (the figure's width right, level with its body), clear of every enemy sprite and plate. */
-:root[data-layout='narrow'] .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters {
-  translate: calc(104px / var(--ui-zoom, 1)) calc(98px / var(--ui-zoom, 1));
-}
+/* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
+   and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
+:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }

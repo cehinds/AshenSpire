@@ -16,7 +16,7 @@ for (const racked of [false, true]) test(`player action survives actual frame up
   document.body.appendChild(player);
   const combatEl = node('combat'), events = [], calls = [];
   combatEl.addEventListener('combatantselectionchange', e => events.push(e.detail));
-  const context = { combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, upcastRanksByCard: new Map(), RESTING_PLAYER_ACTION, playerActionIntent, setPlayerActionManeuver,
+  const context = { combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerFlux: () => {}, SetPlayerAdvanced: () => {}, upcastRanksByCard: new Map(), RESTING_PLAYER_ACTION, playerActionIntent, setPlayerActionManeuver,
     resolveCombatCard: (_combat, inst) => inst, kindForCard: def => def.profile,
     selfArm: null, selectCombatant: id => calls.push(['select', id]), playCard: (...args) => calls.push(['play', ...args]),
     combatEl, CustomEvent: class extends Event { constructor(type, options) { super(type); this.detail = options.detail; } } };
