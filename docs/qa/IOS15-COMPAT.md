@@ -70,50 +70,106 @@ four literals above; no static blocks, no `#x in obj` brand checks outside what
 
 ## Approach
 
-All CSS fixes are **runtime and capability-gated**, in one new module,
-`src/ui/legacyBrowser.js`, whose pure CSS rewriter lives in
-`src/ui/legacyCss.js` (node-testable, no DOM). A modern browser takes
-`CSS.supports()` yes on every probe, the shim does nothing, and its stylesheets
-are not touched: the native path is byte-identical to `origin/dev`. This was
-chosen over a bundler transform because (a) it leaves the shipped bytes and the
-native rendering untouched, (b) it also covers the unbundled dev server and CI
-screenshots, (c) a bundler transform would have to be applied twice (pack shape
-and `--single-file`) and could not cover the two JS inline-style sites.
+JS gaps are fixed at the source with tiny local fallbacks (no dependencies):
+`src/model/splitAfter.js` (lookbehind), `[...a].sort` (toSorted),
+`src/ui/abortWithin.js` (AbortSignal), a scratch-canvas stand-in for `ctx.filter`
+in `src/ui/prologueCharacter.js`, and `src/ui/popoverPolyfill.js`
+(`showPopover`/`hidePopover`/`togglePopover`, `popovertarget`, light dismiss,
+Escape, the `toggle` event; callers ask `isPopoverOpen(el)` because
+`el.matches(':popover-open')` throws before Safari 17). `tests/ios15-compat-js.test.mjs`
+scans every module in `src/` for the banned syntax and APIs, so a regression
+fails CI rather than a phone.
 
-* **color-mix**: each declaration containing `color-mix(in srgb, A p%, B q%)` is
-  preceded by the same declaration with the mix computed (premultiplied sRGB,
-  as the spec) from the token table read out of the stylesheets' `:root` rules.
-  Where an operand is `var(--x, fallback)` the token table, then the fallback,
-  is used. Unresolvable operands (runtime-set custom properties with no
-  fallback) get no fallback; that count is asserted in the tests.
-* **overflow:clip, user-select, backdrop-filter**: fallback declaration first.
-* **Container queries**: `@container` blocks are rewritten, in place, to rules
-  gated by `data-cq` tokens on the container element, which a `ResizeObserver`
-  keeps current. See the shim section of the module header for the nearest
-  container approximation and limits.
-* **JS**: tiny local fallbacks; no dependencies.
+CSS is repaired **at runtime and capability-gated**, not by a bundler transform.
+`src/ui/legacyBrowser.js` (called first thing from `main.js`) probes
+`CSS.supports()`; a browser with every feature does nothing and its
+stylesheets are not read or touched, so the native path is byte-identical to
+`origin/dev`. This replaces the build-transform option because it leaves the
+shipped bytes alone, also covers the unbundled dev server and CI screenshots
+(`tools/bundle.mjs` has two stylesheet paths, pack shape and `--single-file`),
+and is the same code in the page and under node. The price is paying the
+rewrite on the old phone at boot (below).
 
-## Not fixed / needs a real device
+* **`src/ui/legacyCss.js`** (pure text -> text, node-tested): `color-mix(in
+  srgb, ...)` becomes a static `rgba()` (premultiplied sRGB, tokens read from
+  the stylesheets' `:root` rules, then any rule that defines a token, then the
+  `var()` fallback; a runtime-only operand takes the other operand's colour);
+  `Ncqw` becomes `calc(N * var(--cqw, 1%))`; `overflow: clip` becomes `hidden`;
+  `-webkit-user-select` and `-webkit-backdrop-filter` are added;
+  `:popover-open` becomes `[data-popover-open]`; every `container*`
+  declaration is recorded and removed; every `@container` block is replaced in
+  place by its rules gated on `:where([data-cq~="K"])` (zero specificity, so the
+  cascade is unchanged), nested `@media`/`@supports` kept, a selector that
+  names the container itself dropped as a native query would. On the real
+  stylesheets: 46 distinct queries, 20 container declarations, 0 unresolved
+  `color-mix` (2 mixes take the static operand because the other is set by a
+  script). The one `color-mix` left is inside `@starting-style`, which the
+  browser skips whole.
+* **`src/ui/containerShim.js`**: a `ResizeObserver` per container element
+  (found from the recorded selectors, plus `style="...container-type..."` and a
+  `data-container` marker, kept current by a `MutationObserver`) writes
+  `data-cq` (queries it satisfies), `data-cq-no` (for unnamed min-width
+  queries, so an inner container that fails a query excludes its descendants
+  even when an outer one passes), and `--cqw`/`--cqh`. It also rewrites cq
+  units inside `style="..."` attribute text as nodes arrive (the parser keeps
+  text it does not understand).
+* **Script-written styles** (`src/ui/cqCompat.js` `cq()`/`cqStyle()`,
+  `src/ui/colorMixCompat.js` `colorMix()`) cover the places a script assigns
+  a value the browser would reject: `cardAppearance.js` (card-layout.json
+  styles, five `Object.assign(el.style, ...)` and one `fontSize`), `assets.js`
+  (the sigil disc, which also gets `data-container="size"` because the
+  `style` text is dropped there), `customize.js` (one `boxShadow`). A browser
+  with the feature gets the string back unchanged.
 
-* `ctx.filter` in `alternativeAuraRenderer.js` (alternative card stage glow).
-* Real WebKit behaviour of `ResizeObserver` size under CSS `zoom` (the body is
-  zoomed by `--ui-zoom`). The shim measures `clientWidth/Height` and subtracts
-  padding, which is zoom-local in both engines as far as the specs and bug
-  reports say, but this is unverified in WebKit.
-* Size containment is not emulated, so a container whose intrinsic width used
-  to collapse to zero now sizes to content in Safari 15.
-* `body.cb-safe` (colour-blind palette) tints computed for the default tokens.
-* Performance of the shim on an A9 phone (a 700 KB stylesheet rewrite at boot).
-* Files owned by concurrent branches that this branch did not touch:
-  `styles/combat-layers.css`, `styles/combat.css`, `src/ui/components/hand.js`
-  (uses `CSS.supports`, checked: guarded), `card.js`, `cardInspection.js`,
-  `tooltip.js`, `holdconfirm.js`, `footerArt.js`. The shim rewrites their CSS at
-  runtime, so no edit to them is needed; their JS was read for the audit only.
+## Not fixed, or not verifiable without a device
+
+* `ctx.filter` in `src/ui/alternativeAuraRenderer.js`: the optional alternative
+  card stage loses its glow and brightness on Safari (cosmetic, opt-in).
+* `equipmentCard.js` sets `--epc-text-*` custom properties to `clamp(.., Ncqw, ..)`;
+  a custom property is substituted where it is declared, not where it is used, so
+  on Safari 15 those type sizes fall back to the inherited size. Readable,
+  not tuned. Fixing it means declaring them on the `.epc-frame` container.
+* Size containment is not emulated, so a container whose width used to ignore
+  its content now sizes to it in Safari 15.
+* Unnamed queries use the "nearest container" approximation described in
+  `containerShim.js`; it is exact for the 107 `game-viewport` queries and the
+  3 named ones, and for the 13 unnamed ones as long as inner containers are not
+  wider than outer ones.
+* `body.cb-safe` (colour-blind palette) mixes are computed from the default
+  tokens.
+* **Real WebKit.** Only Chromium was available. Unverified on WebKit: that
+  `getComputedStyle().width` under `body { zoom }` is zoom-local (what the shim
+  reads for containers inside the body), `ResizeObserver` timing before first
+  paint, `:where()`/`:not(complex)` in the gated selectors, `CSS.supports()` of
+  the probes, and the popover polyfill's focus and top-layer behaviour.
+* **Speed on an A9.** Rewriting the 28 stylesheets (1.1 MB) measures about
+  60 ms (variable scan) plus 130 ms (rewrite) in Chromium on this machine;
+  scale by the A9's single-thread gap (several times) for the one-off cost at
+  boot. No cache yet.
+* Concurrent branches' files that this branch read but did not edit:
+  `styles/combat-layers.css`, `styles/combat.css`, `styles/perf-lite.css`,
+  `hand.js`, `card.js`, `cardInspection.js`, `tooltip.js`, `holdconfirm.js`,
+  `footerArt.js`. The runtime rewrite covers their CSS, so none needs an edit;
+  any new script-written style that carries a `cqw` value or `color-mix()` must
+  go through `cq()`/`colorMix()`.
 
 ## Verification
 
-Unit tests under `tests/` (`ios15-*.test.mjs`) cover every rewriter. The browser
-check forces the fallback path in Chromium (`?legacy=ios15`: the shim runs with
-every probe false, strips native `container-*` and rewrites cq units) and
-compares `?shot=combat&shotSeed=PERF1`, `?shot=map` and the title at 320x568@2
-and 375x667@2 with native. Screenshots stay in the worktree, not the tree.
+* `tests/ios15-compat-js.test.mjs`, `ios15-popover.test.mjs`,
+  `ios15-legacy-css.test.mjs`, `ios15-container-shim.test.mjs`,
+  `ios15-legacy-browser.test.mjs` (node, no browser).
+* Forced fallback in Chromium: `?legacy=ios15` makes the page behave as if
+  `color-mix`, container queries, cq units, `overflow: clip`, the `-webkit-`
+  prefixes were missing (the rewritten CSS no longer contains any of them), with
+  an init script that rejects cq/`color-mix` values written through
+  `element.style`, as Safari does. Compared with the native page at 320x568@2,
+  375x667@2 and 1280x800@1 (combat `?shot=combat&shotSeed=PERF1`, `?shot=map`,
+  title, customize, rest, shop, reward, event, profile, settings, prologue,
+  compendium, smith, about): 0.00 to 0.45 percent of pixels differ, in
+  animation and line-colour noise only; with the `ResizeObserver` removed the
+  same combat screen differs by 2.7 percent, so the comparison is sensitive.
+  The single-file bundle (`node tools/bundle.mjs --single-file`) forced the same
+  way matches the dev server. Native path (`legacy` absent) against `origin/dev`:
+  pixel-identical on combat, map, customize, rest, reward, prologue at all three
+  sizes; the title and profile screens differ by their own animation noise
+  (0.09 percent between two runs of the same build).
