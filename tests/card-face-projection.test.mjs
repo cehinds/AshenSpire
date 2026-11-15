@@ -198,7 +198,8 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all', 'Bleed 1 to all']);
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
-  assert.ok(backFace.clauses.some(line => plain(line.html) === 'Retreat 1 band'));
+  // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").
+  assert.ok(backFace.clauses.some(line => /^Evade 1\b/.test(plain(line.html)) && /Retreat/.test(plain(line.html))), backFace.clauses.map(line => plain(line.html)).join(' | '));
 });
 
 test('a line with a tag rider reads its faceHtml on the face and drops when that is empty', () => {
