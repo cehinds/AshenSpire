@@ -14,12 +14,14 @@ import { withoutCounterStacks } from './legacyStanceRules.mjs';
 import { validateFixCoreRules, CounterStacksForCard } from '../src/model/fixCoreMechanics.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
+import { CounterHitAnswers, counterReturnForReceipt } from '../src/engine/counterRule.js';
+import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const bundle = hits => ({ ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage: 8, hits, weight: 45 } } } : e) });
-const regFor = hits => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle(hits), profile)), profile);
+const bundle = (hits, damage = 8) => ({ ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits, weight: 45 } } } : e) });
+const regFor = (hits, damage = 8) => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle(hits, damage), profile)), profile);
 const reg = regFor(1), reg3 = regFor(3);
-function live({ registries = reg, hits = 1, legacy = false } = {}) {
+function live({ registries = reg, hits = 1, legacy = false, damage = 8 } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   if (legacy) withoutCounterStacks(combat);
@@ -29,7 +31,7 @@ function live({ registries = reg, hits = 1, legacy = false } = {}) {
   Object.assign(enemy, { hp: 5000, maxHp: 5000, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 }, basePrecisionBonus: 1000 });
   enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
   Object.assign(enemy, { maxStamina: 3, stamina: 3, plannedMoves: [] });
-  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage, hits, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
   dispatch(combat, { type: 'setReactions', enabled: false });
   return { combat, enemy };
 }
@@ -158,4 +160,44 @@ test('auto-Counter in Counter stance (no card, base 0) returns floor(incoming x 
   assert.equal(trig.counterBase, 0);
   assert.equal(trig.amount, Math.floor(trig.counterIncoming * 0.1 * 5));
   assert.equal(combat.player.counterStacks, 4 - 1 + 0, 'one spent by the hit, one faded at the next turn start');
+});
+
+// Review fix (2026-11-15): the card-stack rule is the player's; an armed ENEMY Counter keeps the previous path, so it returns what it returned before.
+function enemyCounterHit(legacy) {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['gildedKnight'] });
+  if (legacy) withoutCounterStacks(combat);
+  const enemy = combat.enemies[0];
+  Object.assign(combat.player, { basePrecisionBonus: 1000, hp: 9999, maxHp: 9999, energy: 99, block: 0, evasion: 0, wardBlock: 0 });
+  Object.assign(enemy, { hp: 5000, maxHp: 5000, statuses: {}, basePrecisionBonus: 1000 });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const move = reg.enemies.get('gildedKnight').moves.parry;
+  primeEnemyCounter(combat, enemy, move, 'parry');
+  for (let n = 0; combat.queue.length && n < 100; n++) combat.queue.shift();
+  give(combat, 'k', 'core.strike');
+  const from = combat.eventLog.length, hp = combat.player.hp;
+  play(combat, 'k');
+  const events = combat.eventLog.slice(from);
+  return { combat, trig: events.find(e => e.type === 'combatCounterTriggered'), taken: hp - combat.player.hp };
+}
+
+test('an armed enemy Counter returns under the shipped card-stack rules exactly as on the previous path (not 0), and the player takes it', () => {
+  const now = enemyCounterHit(false), before = enemyCounterHit(true);
+  assert.ok(before.trig.amount > 0, 'the legacy path returns');
+  assert.equal(now.trig.amount, before.trig.amount);
+  assert.equal(now.trig.counterHits, undefined, 'an enemy keeps one lump return, no per-hit stack list');
+  assert.equal(now.taken, before.taken);
+  assert.ok(now.taken > 0, 'the return damages the player');
+});
+
+test('forecast and live share one predicate: a hit answers only with stacks held AND incoming damage, and a skipped hit spends nothing', () => {
+  assert.equal(CounterHitAnswers(2, 0), false, 'a 0-incoming hit keeps its stack');
+  assert.equal(CounterHitAnswers(0, 5), false, 'no stacks, no return');
+  assert.equal(CounterHitAnswers(1, 1), true);
+  // A multi-hit receipt whose first hit has 0 incoming: the live return skips it and spends no stack; the second hit still sees both stacks.
+  const { combat } = live();
+  const receipt = { covered: [true, true, true], incomings: [0, 9, 9], profiles: [] };
+  const out = counterReturnForReceipt(combat, receipt, { stacks: 2, base: 4, owner: combat.player });
+  assert.deepEqual(out.hits.map(row => row.stacksBefore), [2, 1], 'the 0-incoming hit spent no stack');
+  assert.equal(out.consumed, 2);
 });
