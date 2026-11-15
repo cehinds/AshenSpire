@@ -905,6 +905,8 @@ export const SCHEMAS = Object.freeze({
     targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
+    // Named modes the player picks when playing (model/cardChoices.js); an effect with `mode` plays only when its mode was picked.
+    choiceModes: opt(arr(obj({ id: str, name: str, tooltip: opt(str), icon: opt(str) }))),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),

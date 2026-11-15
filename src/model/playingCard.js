@@ -180,6 +180,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
   const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
+    // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
+    if (effect.mode && def.choiceModes?.length) {
+      if (index === def.effects.findIndex(row => row.mode)) parts.push(`Choose: ${def.choiceModes.map(mode => mode.name).join(' or ')}`);
+      continue;
+    }
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
       : effect.target === 'randomEnemy' ? ' to a random enemy' : effect.target === 'otherEnemy' ? ' to another enemy' : '';
     let text;
@@ -253,7 +258,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
-        if (effect.target === 'self') { text = 'Step back'; break; }
+        if (effect.target === 'self') { text = effect.bands < 0 ? 'Advance' : 'Retreat'; break; }
         const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
         break;

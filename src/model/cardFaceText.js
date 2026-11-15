@@ -284,7 +284,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
-        if (effect.target === 'self') return frag('bonus', 'Step back');
+        if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
@@ -361,6 +361,11 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const unconditional = [], groups = new Map();
   for (const [index, effect] of (def.effects || []).entries()) {
     if (representedEffects.includes(index)) continue;
+    // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
+    if (effect.mode && def.choiceModes?.length) {
+      if (index === def.effects.findIndex(row => row.mode)) unconditional.push({ cat: 'bonus', text: def.choiceModes.map(mode => esc(mode.name)).join(' or ') });
+      continue;
+    }
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
     if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed

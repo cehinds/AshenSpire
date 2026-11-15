@@ -36,6 +36,8 @@ export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver'])
  * refusal stays the engine's one rule, not a second copy here.
  */
 export function cardChoice(registries, def, classId, activeStanceId = null) {
+  // A card with named modes (owner 2026-11-15, W25-EvadeCards: Dodge Roll's "Advance or Retreat"): one row per mode, no stance.
+  if (def?.choiceModes?.length) return { kind: 'mode', options: def.choiceModes.map((m) => ({ id: m.id, name: m.name, icon: m.icon || '', tooltip: m.tooltip || '', active: false })) };
   const effect = (def && def.effects || []).find((e) => e && e.op === 'enterStance' && e.choose);
   if (!effect) return null;
   if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting'].map(id=>({id,name:maneuverLabel(registries,id),icon:'',tooltip:id,active:activeStanceId===id}))};
@@ -55,7 +57,13 @@ export function assertCardChoice(plan, choice) {
     return null;
   }
   if (!plan.options.some((o) => o.id === choice)) {
-    throw new Error(`Choose a stance: ${plan.options.map((o) => o.id).join(', ')}`);
+    throw new Error(`${plan.kind === 'mode' ? 'Choose one' : 'Choose a stance'}: ${plan.options.map((o) => o.id).join(', ')}`);
   }
   return choice;
+}
+
+/** The card with only the effects of the chosen mode (an effect with no `mode` always plays); a card with no modes comes back unchanged. */
+export function CardModeEffects(def, chosen) {
+  if (!def?.choiceModes?.length) return def;
+  return { ...def, effects: (def.effects || []).filter((effect) => !effect.mode || effect.mode === chosen) };
 }
