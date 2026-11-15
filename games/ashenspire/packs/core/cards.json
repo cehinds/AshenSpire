@@ -4576,7 +4576,7 @@
       "cost.manaOnly",
       "lifecycle.exhaust"
     ],
-    "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana. Exhaust.",
+    "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana. Exhaust.",
     "upgrade": {
       "effects": [
         {
