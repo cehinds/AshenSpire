@@ -94,6 +94,7 @@
     "designH": 730,
     "min": 0.62,
     "max": 1.7,
+    "fineMax": 1.1,
     "narrowW": 430,
     "narrowH": 780,
     "narrowMax": 520,
