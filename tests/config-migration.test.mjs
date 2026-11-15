@@ -89,6 +89,8 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // Settings descriptions (2026-10-26): the tooltipHelp baseline re-points exactly
 // two string leaves, the hoverTooltips and tooltipDelay notes, to the owner's
 // one-short-sentence copy. Nothing else in the module moves.
+// Broken wording (2026-11-14): the tooltipHelp baseline re-points exactly two string leaves, messages.playerPoise
+// (Your Stagger threshold -> The threshold that Breaks you) and messages.enemyPoise (Fill it to Stagger -> Break).
 // Quick menu Console row (2026-10-25): the uiContent baseline adds the console
 // row to MENU (map/combat/overlay), MENU_ACTS and the three menuRows probes.
 // Nothing else in that entry changes.
