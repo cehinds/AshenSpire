@@ -30,7 +30,7 @@ export function gameProfileRestModel(registries, run, visit) {
   const describe = id => {
     if (id === 'rest') {
       const fraction = RestHpFraction(run);
-      return fraction >= 1 ? t('gameProfile.rest.description.restFull') : t('gameProfile.rest.description.rest', { hp: RestHpGain(run), percent: Math.round(fraction * 100) });
+      return fraction >= 1 ? t('gameProfile.rest.description.restFull') : RestHpGain(run) <= 0 ? t('gameProfile.rest.description.restHpFull') : t('gameProfile.rest.description.rest', { hp: RestHpGain(run), percent: Math.round(fraction * 100) });
     }
     if (pick && (id === 'smith' || id === 'upgradeCard')) return t(`gameProfile.rest.description.${id}Pick`);
     return t(restServicesAll(run) ? `gameProfile.rest.description.${id === 'smith' && !restSmithFree(run) ? 'smithAllPaid' : `${id}All`}` : `gameProfile.rest.description.${id}`);
