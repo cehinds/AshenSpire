@@ -41,7 +41,7 @@ import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, setPlayerFlux, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, SetPlayerFlux, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { PlayerFluxView } from '../models/StanceBenefitModel.js';
 import { ElementFluxRules } from '../../engine/elementFlux.js';
 import { inPreparedStance } from '../../model/focusMana.js';
@@ -1002,13 +1002,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // glyphs shows, so nothing is removed, re-created or refitted for it.
     // W25-F: a caster's second stance icon: the elemental flux (or the plain magic mark), from the display state so it moves with the paced beats.
     const fluxView = PlayerFluxView(ElementFluxRules(combat), dv(combat.player), inPreparedStance(dv(combat.player)));
-    if (previous) { setPlayerActionManeuver(previous, profile); setPlayerFlux(previous, fluxView); return; }
+    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
-      setPlayerFlux(action, fluxView);
+      SetPlayerFlux(action, fluxView);
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');

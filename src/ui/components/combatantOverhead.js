@@ -1,6 +1,6 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
-import { intentIcon, fluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
+import { intentIcon, FluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
@@ -131,9 +131,9 @@ export function playerActionIntent(profile, onTarget) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = icon; group.dataset.valueKind = ['defend', 'counter', 'prepare'].includes(icon) ? 'count' : 'damage';
     group.append(intentIcon(icon)); row.append(group);
   }
-  // W25-F: a caster's second stance icon, the elemental flux (or the plain magic mark), drawn once beside the stance glyph; shown by setPlayerFlux.
+  // W25-F: a caster's second stance icon, the elemental flux (or the plain magic mark), drawn once beside the stance glyph; shown by SetPlayerFlux.
   const flux = document.createElement('span'); flux.className = 'intent-action player-flux'; flux.dataset.valueKind = 'count'; flux.hidden = true;
-  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = fluxIcon(element); icon.setAttribute('hidden', ''); flux.append(icon); }
+  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = FluxIcon(element); icon.setAttribute('hidden', ''); flux.append(icon); }
   row.append(flux);
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
@@ -149,7 +149,7 @@ export function playerActionIntent(profile, onTarget) {
 }
 
 /** Shows the flux icon of `view` ({ element|null, multiplier }) on a node playerActionIntent built, or hides it (view null); writes only what differs. */
-export function setPlayerFlux(node, view) {
+export function SetPlayerFlux(node, view) {
   const group = node.querySelector('.player-flux');
   if (!group) return;
   const flux = view ? view.element || 'magic' : '';

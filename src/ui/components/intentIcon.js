@@ -27,7 +27,7 @@ export function intentIcon(id) {
 
 // The elemental flux marks (W25-F): the school mark of each flux element (Necrotic wears Decay's), and the plain Spell mark for a spell with no element.
 export const FLUX_ELEMENT_SCHOOL = Object.freeze({ fire: 'fire', lightning: 'lightning', frost: 'frost', divine: 'divine', necrotic: 'decay', force: 'force' });
-export function fluxIcon(element) {
+export function FluxIcon(element) {
   const sigil = element ? SCHOOL_SIGILS[FLUX_ELEMENT_SCHOOL[element]] : ACTION_SIGILS.spell;
   const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   node.setAttribute('viewBox', '0 0 32 32');
