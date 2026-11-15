@@ -41,7 +41,7 @@ test('unfound compendium pieces stay hidden (silhouette filter kept) and the ene
   const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
   assert.match(kit, /\.as-option\.is-ghost > \.as-artwell img \{[^}]*brightness\(0\) invert\(1\)/);
   assert.match(kit, /\.cp-detail:not\(\[data-state='held'\]\) > \.as-artwell img \{[^}]*brightness\(0\) invert\(1\)/);
-  assert.match(css, /\.is-ghost > \.as-artwell img:not\(#lite-nofilter\),\s*:root[^{]*\.cp-detail:not\(\[data-state='held'\]\) > \.as-artwell img:not\(#lite-nofilter\) \{\s*filter: brightness\(0\) invert\(1\) !important;/);
+  assert.match(css, /\.is-ghost > \.as-artwell img:not\(#lite-nofilter\):not\(#lite-nofilter-2\),\s*:root[^{]*\.cp-detail:not\(\[data-state='held'\]\) > \.as-artwell img:not\(#lite-nofilter\):not\(#lite-nofilter-2\) \{\s*filter: brightness\(0\) invert\(1\) !important;/);
   assert.ok(css.includes(":not(.sprite .facing[style*='drop-shadow'])"));
 });
 

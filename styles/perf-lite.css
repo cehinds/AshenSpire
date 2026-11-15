@@ -48,8 +48,8 @@
    - The enemy buff aura (enemyStates.js sets one drop-shadow per theme on the
      one `.facing` element, only while a buff is active; Effects off keeps it on
      purpose, combat.css) is exempt in rule 1 above, not restored here. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .is-ghost > .as-artwell img:not(#lite-nofilter),
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter) {
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .is-ghost > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2) {
   filter: brightness(0) invert(1) !important;
 }
 
