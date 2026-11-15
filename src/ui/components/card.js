@@ -1,4 +1,5 @@
 import { BarrierPoisePerStack } from '../../model/combatRatings.js';
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { bindDamageReceipt, cardDamageReceipt, damageReceiptHtml } from './damageReceipt.js';
 import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
@@ -884,7 +885,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
-  const pools = liveCosts || registries.framework.costProfile(def);
+  const pools = liveCosts || FaceCostProfile(registries, def);
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`

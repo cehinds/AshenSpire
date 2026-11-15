@@ -1,3 +1,4 @@
+import { SetFaceCostRun } from './model/faceCosts.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
@@ -728,7 +729,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
     classId, customization, custom, startingKitId, startingHands, startingArmourId,
     startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, quickStart,
   });
-  run = prepared.run;
+  run = prepared.run; SetFaceCostRun(run);
   rng = prepared.rng;
 
   if (run.custom.deckMode === 'draft') return showDraft();
@@ -859,7 +860,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = loaded;
+  run = loaded; SetFaceCostRun(run);
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
@@ -998,7 +999,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
       closeOverlay();
       audio.stopMusic();
       xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-      run = null;
+      run = null; SetFaceCostRun(null);
       showCollapsedTitle();
     },
   });
@@ -1156,7 +1157,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   audio.music('title');
   resetArmouryTraySession();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = null;
+  run = null; SetFaceCostRun(null);
   if (startupGatePending && !skipStartup) {
     showStartupGate();
     return;
@@ -1533,7 +1534,7 @@ function quitGame() {
   closeOverlay();
   audio.stopMusic();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = null;
+  run = null; SetFaceCostRun(null);
   mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
 

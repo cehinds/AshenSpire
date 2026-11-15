@@ -1,4 +1,5 @@
 import { projectGameCard } from './gameProfile.js';
+import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
@@ -414,7 +415,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   // preview the framework's cost profile is the authority. Both paths land in one record
   // so the badge and the tooltip cannot drift, which they could before —
   // each computed its own.
-  const profile = preview ? null : registries.framework.costProfile(def);
+  const profile = preview ? null : FaceCostProfile(registries, def);
   const costs = freeze({
     variable: preview ? !!preview.costIsX : !!profile.variable,
     action: preview ? (preview.displayCosts?.action ?? preview.cost) : profile.action,

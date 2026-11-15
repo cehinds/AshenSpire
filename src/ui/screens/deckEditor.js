@@ -1,3 +1,4 @@
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { cardCutoutUrl } from '../layeredCardArt.js';
 import { matchViewMedia } from '../viewViewport.js';
 import { anchorLocalBox } from '../fx.js';
@@ -421,7 +422,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // own counts are its meta line, never a badge.
   const typeName = row => row.cardCategory[0].toUpperCase() + row.cardCategory.slice(1);
   function rowCosts(row, lead = []) {
-    const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
+    const pools = FaceCostProfile(registries, resolveCard(registries, row.ref));
     return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
       el('span', { class: `deck-editor-cost resource-${id}${art ? ' illustrated' : ''}`, title: `${label}: ${value}`,
         'aria-label': `${label}: ${value}` }, [
