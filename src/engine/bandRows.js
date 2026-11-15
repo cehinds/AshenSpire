@@ -63,7 +63,8 @@ export function InitBandRows(ctx, placements = []) {
   if (!BandsActive(ctx)) return;
   ctx.enemies.forEach((enemy, i) => {
     enemy.row = DefaultEnemyRow(ctx.registries.enemies.get(enemy.enemyId), placements?.[i]);
-    for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, enemy.row === 'back' ? 1 : 0);
+    // A front enemy keeps the distance the fight began at (a shortbow wearer starts at reach); a back enemy is at least at reach.
+    if (enemy.row === 'back') for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, Math.max(1, pairBand(ctx, player, enemy) ?? 1));
   });
   // Seat each enemy in its row's column (a cell another enemy holds is skipped; an enemy with no free cell there keeps its own).
   for (const enemy of ctx.enemies) placeInRow(ctx, enemy);
@@ -115,7 +116,11 @@ export function BandsEnemyPhaseStart(ctx) {
 /** BandsMoveEngagement(ctx, source, target, bands): a moveEngagement effect under rows. Returns true when rows handled it (the pair band is not moved by the caller). */
 export function BandsMoveEngagement(ctx, source, target, bands) {
   if (!BandsActive(ctx)) return false;
-  if (source.kind === 'enemy') { SetEnemyRow(ctx, source, bands > 0 ? 'back' : 'front', bands > 0 ? 'retreat' : 'approach'); return true; }
+  if (source.kind === 'enemy') {
+    if (bands > 0) { SetEnemyRow(ctx, source, 'back', 'retreat'); return true; }
+    if (source.row === 'back') { SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
+    return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
+  }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
