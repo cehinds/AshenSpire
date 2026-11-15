@@ -1,11 +1,11 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
-import { intentIcon } from './intentIcon.js';
+import { intentIcon, fluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 import { setAttr, setData, onLive } from '../domWrite.js';
-import { StanceBenefitTip } from '../models/StanceBenefitModel.js';
+import { StanceBenefitTip, FluxTip } from '../models/StanceBenefitModel.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -131,12 +131,32 @@ export function playerActionIntent(profile, onTarget) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = icon; group.dataset.valueKind = ['defend', 'counter', 'prepare'].includes(icon) ? 'count' : 'damage';
     group.append(intentIcon(icon)); row.append(group);
   }
+  // W25-F: a caster's second stance icon, the elemental flux (or the plain magic mark), drawn once beside the stance glyph; shown by setPlayerFlux.
+  const flux = document.createElement('span'); flux.className = 'intent-action player-flux'; flux.dataset.valueKind = 'count'; flux.hidden = true;
+  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = fluxIcon(element); icon.hidden = true; flux.append(icon); }
+  row.append(flux);
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
   setPlayerActionManeuver(node, profile);
-  // Wave 2.5: the held stance names its natural benefit (read live from the node, so a kept node shows the newest stance).
-  attachTooltip(node, () => { const tip = StanceBenefitTip(node.dataset.maneuver); return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}`; }, { intent: 'above', align: 'center' });
+  // Wave 2.5: the held stance names its natural benefit (read live from the node, so a kept node shows the newest stance); W25-F adds the flux's own line when it shows.
+  attachTooltip(node, () => {
+    const tip = StanceBenefitTip(node.dataset.maneuver);
+    const view = node.dataset.flux ? { element: node.dataset.flux === 'magic' ? null : node.dataset.flux, multiplier: Number(node.dataset.fluxMultiplier) } : null;
+    const fluxTip = view ? FluxTip(view) : null;
+    return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}${fluxTip ? `<div class="tt-title">${esc(fluxTip.title)}</div>${esc(fluxTip.body)}` : ''}`;
+  }, { intent: 'above', align: 'center' });
   return node;
+}
+
+/** Shows the flux icon of `view` ({ element|null, multiplier }) on a node playerActionIntent built, or hides it (view null); writes only what differs. */
+export function setPlayerFlux(node, view) {
+  const group = node.querySelector('.player-flux');
+  if (!group) return;
+  const flux = view ? view.element || 'magic' : '';
+  setData(node, 'flux', flux);
+  setData(node, 'fluxMultiplier', view ? view.multiplier : '');
+  if (group.hidden !== !view) group.hidden = !view;
+  for (const icon of group.querySelectorAll('.flux-icon')) { const hidden = icon.dataset.flux !== flux; if (icon.hidden !== hidden) icon.hidden = hidden; }
 }
 
 /** Shows `profile`'s glyph on a node playerActionIntent built; writes only what differs, replaces nothing. */
@@ -144,7 +164,7 @@ export function setPlayerActionManeuver(node, profile) {
   const maneuver = profile?.maneuver || 'prepare', icon = playerActionIcon(profile);
   setData(node, 'maneuver', maneuver);
   setAttr(node, 'aria-label', `Selected action: ${maneuver}`);
-  for (const group of node.querySelectorAll('.intent-action')) {
+  for (const group of node.querySelectorAll('.intent-action:not(.player-flux)')) {
     const hidden = group.dataset.action !== icon;
     if (group.hidden !== hidden) group.hidden = hidden;
   }

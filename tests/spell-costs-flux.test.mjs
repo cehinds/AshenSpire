@@ -29,11 +29,18 @@ import { cardManaCategory } from '../src/model/cardManaPolicy.js';
 
 const SPELLS = profile.content.cards.filter(card => cardManaCategory(reg, reg.cards.get(card.id)) === 'spell');
 const PREPARED = { maneuver: 'casting', camp: 'spell' };
+const fightCache = new Map();
+// One fight per (hand, stance, rules) is reused for every card: pricing reads the fight and never changes it.
 function costsIn({ hand, stance, id, legacy = false }) {
-  const { combat } = fight({ legacy });
-  if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
-  combat.loadout.sets.rightHand[0] = hand;
-  if (stance) combat.player.combatStance = { ...stance };
+  const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}`;
+  if (!fightCache.has(key)) {
+    const { combat } = fight({ legacy });
+    if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
+    combat.loadout.sets.rightHand[0] = hand;
+    if (stance) combat.player.combatStance = { ...stance };
+    fightCache.set(key, combat);
+  }
+  const combat = fightCache.get(key);
   const card = combat.piles.hand[0];
   card.cardId = id;
   return { costs: cardPlayCosts(combat, card.instanceId), preview: previewCard(combat, card.instanceId), combat };
@@ -72,7 +79,8 @@ test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/2 in Prepared, 2/1 wit
 });
 
 test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the payment equals the face', () => {
-  const { combat } = costsIn({ hand: 'boneSceptre', stance: null, id: 'core.cometLance' });
+  const { combat } = fight(); // its own fight: this test plays cards
+  combat.loadout.sets.rightHand[0] = 'boneSceptre';
   const [first, second] = combat.piles.hand;
   first.cardId = 'core.cometLance'; second.cardId = 'core.cantrip';
   const open = cardPlayCosts(combat, second.instanceId);
@@ -215,4 +223,34 @@ test('flux ends at the end of the turn and with the fight', () => {
   dispatch(other, { type: 'playCard', cardInstanceId: other.piles.hand[0].instanceId, targetId: other.enemies[0].id });
   assert.equal(other.result, 'victory');
   assert.equal(other.player.elementFlux, undefined, 'the fight is over: no flux');
+});
+
+// ---- The caster's second stance icon (src/ui/models/StanceBenefitModel.js) ----
+import { PlayerFluxView, FluxTip } from '../src/ui/models/StanceBenefitModel.js';
+import { ElementFluxRules } from '../src/engine/elementFlux.js';
+
+test('the second stance icon shows for a caster: the flux element, or the plain magic mark in Prepared; nothing without the rules or a stance', () => {
+  const { combat } = fight(), rules = ElementFluxRules(combat);
+  assert.equal(rules.multiplier, 1.25);
+  assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'fire' }, true), { element: 'fire', multiplier: 1.25 });
+  assert.deepEqual(PlayerFluxView(rules, {}, true), { element: null, multiplier: 1.25 }, 'Prepared with no flux wears the magic mark');
+  assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'frost' }, false), { element: 'frost', multiplier: 1.25 });
+  assert.equal(PlayerFluxView(rules, {}, false), null, 'no stance and no flux: hidden');
+  assert.equal(PlayerFluxView(null, { elementFlux: 'fire' }, true), null, 'a fight without the rule shows none');
+  const old = fight().combat; delete old.fixCoreRules.elementFlux;
+  assert.equal(ElementFluxRules(old), null);
+});
+
+test('the flux tooltip names the element, the multiplier and the rounding', () => {
+  assert.deepEqual(FluxTip({ element: 'fire', multiplier: 1.25 }).title, 'Fire flux');
+  assert.match(FluxTip({ element: 'fire', multiplier: 1.25 }).body, /Next Fire cards ×1\.25 \(rounded down\)/);
+  assert.match(FluxTip({ element: 'necrotic', multiplier: 1.25 }).title, /Necrotic flux/);
+  assert.equal(FluxTip({ element: null, multiplier: 1.25 }).title, 'Magic');
+  assert.match(FluxTip({ element: null, multiplier: 1.25 }).body, /only the stance bonus/);
+});
+
+test('a change of flux is announced once: set, replaced, cleared, and nothing when it did not change', () => {
+  const { combat } = sequence([DART, DART, NIP, ARC]);
+  const events = combat.eventLog.filter(row => row.type === 'elementFluxChanged').map(row => row.element);
+  assert.deepEqual(events, ['fire', 'frost', null]);
 });

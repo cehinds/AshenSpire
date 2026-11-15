@@ -495,7 +495,7 @@ function endCheck(combat) {
 
 function finishCombat(combat, result) {
   RestoreLiveStats(combat); // every attribute and derived value returns to its fight-start value (HP trimmed)
-  ClearFlux(combat.player); // elemental flux ends with the fight
+  ClearFlux(combat, combat.player); // elemental flux ends with the fight
   combat.result = result;
   combat.phase = 'ended';
   Reactions.finishReactions(combat);
@@ -609,7 +609,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   S.ClearTurnBoosts(combat, p);
   ClearTurnAttributeBoosts(combat, p);
-  ClearFlux(p); // elemental flux ends with the player's turn (W25-F)
+  ClearFlux(combat, p); // elemental flux ends with the player's turn (W25-F)
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 

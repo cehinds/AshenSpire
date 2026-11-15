@@ -14,3 +14,22 @@ export function StanceBenefitTip(maneuver) {
   if (STANCES.has(id)) return { title: t(`stance.name.${id}`), body: t(`stance.benefit.${id}`) };
   return { title: t('stance.tip.rest'), body: `${t('stance.benefit.prepared')} ${t('stance.benefit.neutral')}` };
 }
+
+/**
+ * PlayerFluxView(rules, player) → what the caster's second stance icon shows, or null when it is hidden (W25-F, owner 2026-11-15).
+ * It shows while the fight has `elementFlux` rules and the player holds a flux or the Prepared stance: the flux element's icon, or the plain magic icon
+ * (element null) after a spell with no element. `multiplier` is the rule's, read for the tooltip. Headless: no DOM.
+ */
+export function PlayerFluxView(rules, player, prepared) {
+  if (!rules) return null;
+  const element = player?.elementFlux || null;
+  if (!element && !prepared) return null;
+  return { element, multiplier: rules.multiplier };
+}
+
+/** FluxTip(view) → { title, body } of the second stance icon (the element's flux, or the plain magic mark). */
+export function FluxTip(view) {
+  if (!view?.element) return { title: t('stance.flux.plain.title'), body: t('stance.flux.plain.body') };
+  const element = t(`stance.flux.name.${view.element}`);
+  return { title: t('stance.flux.title', { element }), body: t('stance.flux.body', { element, multiplier: view.multiplier }) };
+}

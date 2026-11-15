@@ -51,12 +51,17 @@ export function FluxScale(ctx, source, carrier, value) {
  */
 export function FluxAfterPlay(ctx, player, carrier, def) {
   if (!ElementFluxRules(ctx) || ctx?.phase === 'enemy' || player?.kind !== 'player' || !IsSpellForCost(ctx, def)) return;
-  const element = ElementOfHit(carrier);
-  if (element) player.elementFlux = element;
-  else delete player.elementFlux;
+  SetFlux(ctx, player, ElementOfHit(carrier));
 }
 
-/** ClearFlux(player) -> the end of the player's turn, or of the fight. */
-export function ClearFlux(player) {
-  if (player && player.elementFlux !== undefined) delete player.elementFlux;
+/** ClearFlux(ctx, player) -> the end of the player's turn, or of the fight. */
+export function ClearFlux(ctx, player) {
+  SetFlux(ctx, player, null);
+}
+
+// The one writer: a change is announced (the HUD's second stance icon follows it beat by beat); no change says nothing.
+function SetFlux(ctx, player, element) {
+  if (!player || (player.elementFlux || null) === element) return;
+  if (element) player.elementFlux = element; else delete player.elementFlux;
+  ctx?.emit?.('elementFluxChanged', { targetId: player.id, element });
 }
