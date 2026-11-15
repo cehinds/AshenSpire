@@ -62,3 +62,10 @@ test('the intent tooltip projects a fresh current read without opening full comb
   assert.match(tooltip, /disp\?\.ents\[enemy.id\]\?\.intentPreview/);
   assert.doesNotMatch(tooltip, /combatantSubject|enemyDeckInspection|Object\.keys/);
 });
+
+test('a move that closes a range band reads Approaching with the melee line, not the engine move name', () => {
+  const combat = { registries: { enemies: { get: () => ({ moves: { advance: { name: 'Advance', effects: [{ op: 'moveEngagement', bands: -1 }] } } }) } } };
+  const view = enemyIntentRead(combat, { enemyId: 'x' }, { preview: { kind: 'buff', moveId: 'advance', hidden: false, revealed: true, stance: 'prepared', actionEffects: [{ op: 'moveEngagement', bands: -1 }] } });
+  assert.equal(view.name, 'Approaching');
+  assert.match(view.detail, /steps into melee range before it attacks/);
+});

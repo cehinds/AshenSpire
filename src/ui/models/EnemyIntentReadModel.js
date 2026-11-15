@@ -37,5 +37,10 @@ export function enemyIntentRead(combat, enemy, { preview = projectCombatIntent(c
   const charging = preview.charging, later = charging && intentDamageRead(preview)?.label;
   const lead = charging ? [later != null ? t('combat.intent.chargingAria', { amount: later, when: ChargingWhen(charging.turnsLeft) }) : t('combat.intent.chargingNote', { when: ChargingWhen(charging.turnsLeft) }),
     charging.block != null ? t('combat.intent.chargingBlock', { amount: charging.block }) : null].filter(Boolean).join(' ') : null;
+  // A move that only closes a range band reads as Approaching, not by the engine's move name (Advance).
+  const effects = Array.isArray(preview.actionEffects) ? preview.actionEffects : combat.registries.enemies.get(enemy.enemyId)?.moves?.[moveId]?.effects;
+  if ((effects || []).some(effect => effect?.op === 'moveEngagement' && effect.bands < 0)) {
+    return { ...shared, name: t('combat.intent.advancing'), detail: lead ? `${lead} ${t('combat.intent.advancingDetail')}` : t('combat.intent.advancingDetail') };
+  }
   return { ...shared, name: row?.name || words(moveId), detail: lead ? `${lead} ${detail}` : detail };
 }
