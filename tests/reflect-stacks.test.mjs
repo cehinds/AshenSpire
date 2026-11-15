@@ -9,7 +9,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { legacyRolls } from './legacyHitRules.mjs';
+import { legacyRolls, withoutBatch2Rules } from './legacyHitRules.mjs';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -292,7 +292,11 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(broken.forecast.hp, broken.liveHp, 'Reflect breaks the attacker\'s Poise: forecast == live return damage');
   const control = run(0);
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
-  assert.equal(control.forecast.hp, 111, 'control forecast unchanged');
+  // The Counter stance benefit (Wave 2.5, `stanceBenefits`) raises the return; a fight saved before batch 2 keeps the old number.
+  assert.equal(control.forecast.hp, 147, 'control forecast with the shipped stance benefits');
+  const legacy = withoutBatch2Rules(() => run(0));
+  assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
+  assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });
 
