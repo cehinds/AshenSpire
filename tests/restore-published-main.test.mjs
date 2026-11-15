@@ -146,6 +146,16 @@ test('transient download failures retry within a bound, and permanent errors do 
   assert.equal(failures, 3);
 });
 
+test('HTTP 429 backs off (honouring Retry-After) for more tries than other transient errors, then fails', async () => {
+  let n = 0; const waits = [];
+  const ok = () => new Response('x', { status: 200 });
+  const reader = siteReader(site, { pause: async ms => { waits.push(ms); }, fetchImpl: async () => (++n < 6 ? new Response(null, { status: 429, headers: { 'retry-after': '2' } }) : ok()) });
+  assert.equal((await reader('builds.json')).toString(), 'x'); assert.equal(n, 6); assert.deepEqual(waits, [2000, 2000, 2000, 2000, 2000]);
+  let m = 0;
+  await assert.rejects(siteReader(site, { pause: async () => {}, fetchImpl: async () => { m++; return new Response(null, { status: 429 }); } })('builds.json'), /HTTP 429/);
+  assert.equal(m, 8);
+});
+
 test('an existing output is preserved, never overwritten by a restore', async t => {
   const f = fixture(t); mkdirSync(f.options.out); writeFileSync(join(f.options.out, 'mine'), 'keep');
   await assert.rejects(restorePublishedMain(f.options), /already exists/);
