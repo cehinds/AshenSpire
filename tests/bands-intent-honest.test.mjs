@@ -3,7 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dispatch } from '../src/engine/combat.js';
-import { bandsFight, pairOf } from './helpers/bands-fight.mjs';
+import { bandsFight, pairOf, registries } from './helpers/bands-fight.mjs';
+import { enemyTurnSp, enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
 
 const moves = combat => combat.eventLog.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === 'e1').map(e => e.moveId);
@@ -97,4 +98,24 @@ test('an auto-Advance from a melee card aimed at the back row flips the intent t
     checked++;
   }
   assert.ok(checked > 0);
+});
+
+// Review follow-ups (W25Bands, 2026-11-15). The cleanup baseline's historical dragon moved because its opener is now priced against the projected bands:
+// its start enemyAI draws went 2 -> 0 and its live draws 3 -> 1 (not "one fewer"); commit 3473e2bb81's message said the latter loosely.
+test('a plan never hides an attack the pool cannot pay: every stored approachFor attack is affordable', () => {
+  let hidden = 0;
+  const ids = [...registries.enemies.ids()].filter(id => !registries.enemies.get(id).boss).slice(0, 80);
+  for (const id of ids) for (const seed of [1, 2, 3]) {
+    let combat;
+    try { combat = bandsFight({ enemyIds: [id, 'wanderingSoldier'], seed, encounter: { id: 'x', rows: ['back', 'front'] } }); } catch { continue; }
+    const [enemy] = combat.enemies, def = registries.enemies.get(id);
+    const pool = enemyTurnSp(enemy, def, combat);
+    for (const entry of [{ moveId: enemy.intent?.moveId, approachFor: enemy.intent?.approachFor }, ...(enemy.plannedMoves || [])]) {
+      if (!entry.approachFor) continue;
+      hidden++;
+      const quote = enemyMoveQuote(def.moves[entry.approachFor], { enemy, moveId: entry.approachFor, combat });
+      assert.ok(quote.totalSp <= pool, `${id} seed ${seed}: ${entry.approachFor} costs ${quote.totalSp} of ${pool}`);
+    }
+  }
+  assert.ok(hidden > 0, 'some enemy hides an attack behind the step forward');
 });

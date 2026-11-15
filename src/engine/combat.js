@@ -1113,7 +1113,7 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
       // Rows (W25-BANDS): from the back row a move that needs an Advance is planned as the step forward ("Approaching").
-      if (canClose && quote.advanceSp > 0 && id !== closingId && BandsEnemyBackAtPhase(combat, enemy)) { replacements.set(id, closingId); rowIds.add(id); return true; }
+      if (canClose && quote.advanceSp > 0 && id !== closingId && BandsEnemyBackAtPhase(combat, enemy) && quote.totalSp <= maxSp) { replacements.set(id, closingId); rowIds.add(id); return true; } // only an affordable attack hides behind the step: the stored approachFor attack must fit the pool when it returns
       if (quote.totalSp <= maxSp) return true;
       // Preserve the authored attack choice when only its approach is too
       // expensive. Commit its owned, affordable closing move in the forecast,
