@@ -698,7 +698,8 @@ test('Core: a spell Counter face with no revealed attack describes a return with
   const view = previewCard(combat, 'cq1');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
   assert.match(text, /Return damage and Poise/);
-  assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
+  // "Gain N Poise" is the Barrier line (owner, 2026-11-15); only a fixed Poise fraction of the return would be wrong here.
+  assert.doesNotMatch(text, /(?<!Gain )\b\d+ Poise(?! and)|\d Ward damage/, text);
 });
 
 // A Core profile may override the stances module (engine/modules/stances/guide.md): omit prepared or counter.

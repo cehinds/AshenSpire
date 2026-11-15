@@ -70,7 +70,8 @@ const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[6],[]],"cind
 // Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
 test('every non-cantrip Spell card deals twice its earlier damage, and a cantrip is back at its earlier damage', () => {
   const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
-  const spells = cards.filter(row => row.tags.includes('camp:spell') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
+  // The nine cost.manaOnly spells are new in batch 4 and authored at their final damage: neither doubled nor halved.
+  const spells = cards.filter(row => row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
   assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length);
   for (const row of spells) {
     const [base, upgraded] = SPELL_DAMAGE_BEFORE[row.id.replace('core.', '')];
