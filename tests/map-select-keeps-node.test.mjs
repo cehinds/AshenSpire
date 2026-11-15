@@ -70,8 +70,8 @@ test('closeTray resets the framing only when the tray moved the camera', () => {
 test('a pick that is not centred still leaves its look for a re-fit (#1142)', () => {
   const map = readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8');
   const board = readFileSync(new URL('../src/ui/components/mapboard.js', import.meta.url), 'utf8');
-  assert.match(board, /function holdLook\(id, \{ inset = 0 \} = \{\}\) \{[\s\S]*?insetBottom = Math\.max\(0, typeof inset === 'function' \? inset\(\) : inset\);[\s\S]*?look = \{ id, inset \};/, 'the current value is resolved while the original provider is retained for a later re-fit');
-  assert.equal((map.match(/else board\.holdLook\(selection\.selectedId, \{ inset: trayInset \}\)/g) || []).length, 2, 'both held looks retain the live tray inset provider');
+  assert.match(board, /function holdLook\(id, \{ inset = 0(?:, keepRestored = false)? \} = \{\}\) \{[\s\S]*?insetBottom = Math\.max\(0, typeof inset === 'function' \? inset\(\) : inset\);[\s\S]*?look = \{ id, inset \};/, 'the current value is resolved while the original provider is retained for a later re-fit');
+  assert.equal((map.match(/else board\.holdLook\(selection\.selectedId, \{ inset: trayInset(?:, keepRestored: keepRestoredCamera)? \}\)/g) || []).length, 2, 'both held looks retain the live tray inset provider (the preselect open may also keep a just-restored camera)');
   assert.match(board, /function releaseLook\(\) \{[\s\S]*?look = null;/);
   assert.equal((map.match(/else board\.holdLook\(selection\.selectedId/g) || []).length, 2, 'both open paths hold the look when they skip the move');
   assert.match(map, /else board\.releaseLook\(\);/, 'closing a tray that never moved the camera forgets the look without re-framing');
