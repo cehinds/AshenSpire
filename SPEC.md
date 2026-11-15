@@ -1346,7 +1346,7 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
   - `variedNeighbours`: a free node never repeats the type of the lane beside it on the same depth when another type can roll.
   - `shopsPerBranch` 1: each branch holds one guaranteed shop on a non-rest depth 4–8, never on a guaranteed elite slot.
   - `forkPercent` replaces `FORK_PERCENT` (Core 70). `crossLinkPercent` replaces the remerge rule (Core 100): every pair of neighbouring lanes present on both depths of a gap draws ONE diagonal edge, direction 50/50, dropped if it would cross an edge already in that gap; the rest-depth exception does not apply.
-  - Core 2 hides no node type (`hiddenTypes: []`) and draws the whole map (`mapMode: "path"`).
+  - Core 2 hides no node type (`hiddenTypes: []`). Its map is fog (`mapMode: "fog"`, `fogRevealRests: true`; owner, 2026-11-15, see *Wave 2 adjustments (batch 4)*): the fog light is lit only for rest sites, the trail already travelled, the split ahead, the entrance and the bosses.
   - Measured over 300 Act 1 seeds (`tests/core-map-shape.test.mjs`): 5.0 fights per walk (was 4.5), a shop in every branch (was 47% of maps), 57% of type-free steps offer two or more node types (was 23%; rest rows and the boss cannot fork by type, and edges that never cross cap this near two thirds).
 
 ### Rewards after combat and merchant prices
@@ -3540,6 +3540,12 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 - Reward choices keep a separate Inspect action (existing read-only inspectors) before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
 - Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.
 - Positive status grants (self-buffs and grants from another actor, player or enemy) show the status's one word above the recipient, with a count from 2 ("Strengthened", "Strengthened ×2"; *Statuses always shown* under Wave 2 adjustments (batch 1)). The count is the actual increase after caps and refresh/unique stacking (none shown if nothing added). Buildup and hostile feedback keep their channels. Labels share the overhead queue and add no combat steps or waits.
+
+### Wave 2 adjustments (batch 4)
+
+Owner request of 2026-11-15. Rule changes are keyed, so a run pinned before keeps its map.
+
+- **Map fog.** The Core act map is fog again ("fog like before, but only unfog rest locations and locations already traveled"). Fog is the old circle of light: a node you have stood on, and the nodes one step ahead of it, stay lit; the entrance and every boss are lit from the start; fog never closes behind you. Added: with `routes.fogRevealRests` true (Core), every rest site (type `shrine`) of the act is lit from the start, with its icon. Nothing else ahead is revealed: route lines and node types beyond the split stay hidden. Wave 1's map shape (more forks, more fights, a shop in reach, preselected start node, `hiddenTypes: []`) is unchanged. `fogRevealRests` absent or false is the plain fog. Core authors `mapMode: "fog"`; a stale viewer `path` setting does not override it. A run saved before this change keeps the `mapMode` it pinned.
 
 #### Notes and history
 
