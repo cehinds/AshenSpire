@@ -11,6 +11,7 @@ const ids = registries.cards.all().filter((c) => c.id.startsWith('core.')).map((
 const RAMP = new Set(['core.flick', 'core.brace', 'core.temperedEdge', 'core.hexmark']);
 // Menu steps whose effect is not in the single play (end of turn, start of the next fight, a trait): tests/w25-upgrade-menu.test.mjs proves each in the engine.
 const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction']);
+// A run-long INT / WIS step (`attr`) raises the rating of every later fight while the card is in the deck: tests/w25-live-stats-run-bonus.test.mjs proves it.
 const PER_CARD = 14;
 
 test('every rolled upgrade option changes what the card does when played', () => {
@@ -24,7 +25,7 @@ test('every rolled upgrade option changes what the card does when played', () =>
       const run = { seed: 7, gameProfile: profile, rangePolicy: {} };
       const inst = { instanceId: 'probe-1', cardId: id, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
       const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true })
-        .filter((step) => !(step.k === 'fx' && DEFERRED.has(step.fx))).slice(0, PER_CARD);
+        .filter((step) => !(step.k === 'fx' && DEFERRED.has(step.fx)) && step.k !== 'attr').slice(0, PER_CARD);
       for (const step of options) {
         checked += 1;
         // A second-target step can only show itself with a second enemy on the field.

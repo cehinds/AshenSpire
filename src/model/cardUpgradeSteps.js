@@ -25,7 +25,9 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
 // A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
 // cantrip upgrades add +1 stack); every other status keeps STACK_CAPS, or none.
 const CANTRIP_STACK_CAP = 5;
-const stackCap = (status, card) => STACK_CAPS[status] ?? (tagsOf(card).includes(RANK_DOWN_TAG) ? CANTRIP_STACK_CAP : undefined);
+// Venom stops at 3 stacks when a card plays (a fourth shows on the face and does nothing), so a cantrip may not be offered past it.
+const ENGINE_STACK_CAPS = Object.freeze({ venom: 3 });
+const stackCap = (status, card) => STACK_CAPS[status] ?? ENGINE_STACK_CAPS[status] ?? (tagsOf(card).includes(RANK_DOWN_TAG) ? CANTRIP_STACK_CAP : undefined);
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
