@@ -31,9 +31,11 @@ export function legacyRules(rules) {
  * perception.roll). A fight snapshots its rules when it is created, so build the fight inside and play it outside. Restores the keys after.
  */
 export function withLegacyDefaults(build) {
-  const held = { spellCosts: fixCoreMechanics.spellCosts, elementFlux: fixCoreMechanics.elementFlux, stanceBenefits: fixCoreMechanics.stanceBenefits, elements: fixCoreMechanics.elements, ratings: fixCoreMechanics.ratings, hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
+  const held = { wardRouting: fixCoreMechanics.ward.routing, spellCosts: fixCoreMechanics.spellCosts, elementFlux: fixCoreMechanics.elementFlux, stanceBenefits: fixCoreMechanics.stanceBenefits, elements: fixCoreMechanics.elements, ratings: fixCoreMechanics.ratings, hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
+  delete fixCoreMechanics.ward.routing; // W25-W: Ward's block-first routing is newer than every earlier fight
   delete fixCoreMechanics.accuracy.hitRoll; delete fixCoreMechanics.accuracy.evadeStacksPerCard; delete fixCoreMechanics.perception.roll; delete fixCoreMechanics.stanceBenefits; delete fixCoreMechanics.elements; delete fixCoreMechanics.ratings; delete fixCoreMechanics.spellCosts; delete fixCoreMechanics.elementFlux;
   try { return build(); } finally {
+    fixCoreMechanics.ward.routing = held.wardRouting;
     fixCoreMechanics.spellCosts = held.spellCosts; fixCoreMechanics.elementFlux = held.elementFlux; // W25-F: spell costs and elemental flux are absent from an earlier fight too
     fixCoreMechanics.elements = held.elements; fixCoreMechanics.ratings = held.ratings; // the element identities and PR from max(INT, WIS) (batch 2) are absent from an earlier fight too
     fixCoreMechanics.stanceBenefits = held.stanceBenefits; // the 2026-11-14 stance benefits (Wave 2.5) are also absent from a fight saved earlier
@@ -54,13 +56,14 @@ export function withoutStanceBenefitDefaults(build) {
  */
 export function withoutBatch2Rules(build) {
   const held = { spellCosts: fixCoreMechanics.spellCosts, elementFlux: fixCoreMechanics.elementFlux, stanceBenefits: fixCoreMechanics.stanceBenefits, elements: fixCoreMechanics.elements, ratings: fixCoreMechanics.ratings };
+  const wardRouting = fixCoreMechanics.ward.routing; delete fixCoreMechanics.ward.routing; // W25-W: newer than batch 2
   delete fixCoreMechanics.stanceBenefits; delete fixCoreMechanics.elements; delete fixCoreMechanics.ratings; delete fixCoreMechanics.spellCosts; delete fixCoreMechanics.elementFlux; // W25-F keys are newer than batch 2
-  try { return build(); } finally { Object.assign(fixCoreMechanics, held); }
+  try { return build(); } finally { Object.assign(fixCoreMechanics, held); fixCoreMechanics.ward.routing = wardRouting; }
 }
 
 /** Runs `build` while the shipped default rules lack only the W25-F keys (`spellCosts`, `elementFlux`): a fight created before the spell cost and flux ruling. */
 export function withoutSpellCostRules(build) {
-  const held = { spellCosts: fixCoreMechanics.spellCosts, elementFlux: fixCoreMechanics.elementFlux };
-  delete fixCoreMechanics.spellCosts; delete fixCoreMechanics.elementFlux;
-  try { return build(); } finally { Object.assign(fixCoreMechanics, held); }
+  const held = { spellCosts: fixCoreMechanics.spellCosts, elementFlux: fixCoreMechanics.elementFlux }, wardRouting = fixCoreMechanics.ward.routing;
+  delete fixCoreMechanics.spellCosts; delete fixCoreMechanics.elementFlux; delete fixCoreMechanics.ward.routing; // W25-W: Ward routing is newer than the spell cost ruling's base
+  try { return build(); } finally { Object.assign(fixCoreMechanics, held); fixCoreMechanics.ward.routing = wardRouting; }
 }
