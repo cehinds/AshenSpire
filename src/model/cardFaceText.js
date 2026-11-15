@@ -281,8 +281,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
       case 'moveEngagement': {
-        if (!['enemy', 'pendingAttacker'].includes(effect.target) || ![-1, 1].includes(effect.bands)
+        if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
+        if (effect.target === 'self') return frag('bonus', 'Step back out of the Advance');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }

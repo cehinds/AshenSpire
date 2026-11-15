@@ -390,6 +390,33 @@
     "textTemplate": "Close one band."
   },
   {
+    "id": "core.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [
+      "ethereal"
+    ],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Step back out of the Advance."
+  },
+  {
     "id": "core.closingDodge",
     "name": "Closing Dodge",
     "class": "colorless",
