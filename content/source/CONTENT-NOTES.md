@@ -2485,3 +2485,11 @@ directly and re-run `node tools/content-build.mjs`.
 - Semantic head/body and authored floor landmarks in source raster pixels.
 - Per-pose visual estimates reviewed on source-raster grids; no alpha/idle fallback.
 - Head anchors exclude weapons, smoke, halos, puppet bars and decorative crests.
+
+## W25 cantrips, bows and status riders (owner, 2026-11-14)
+
+- The nine bow cards (`aspDart`, `ricochet`, `fanOfKnives`, `toxicVolley`, `pinningShot`, `arrowVolley`, `aimedShot`, `barbedArrow`, plus `crawlingShot` and the `bowPierceAttack` basic profile) are ordinary attacks at Reach (`maneuver: attack`, `range: reach`, projectile delivery) like `lethalDose`. `nockAndWait` stays a Counter at Reach. `maneuver:ranged` stays in the schema, `nodes.csv` and `actionCosts.json` so an old save or an enemy move that names it still loads; no card carries it.
+- A school cantrip carries at least 1 stack of its school's status at both grades: fire Burn, frost Frost, divine Regen, decay Venom / Weak / Necrotic Blight. Lightning cantrips Shock through the Lightning contest rule on the hit, so they print no status. A cantrip is free of Mana and costs 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip).
+- TODO(batch2): once `content/source/statuses.json` carries `chill` and `shock` (branch w25-elements), swap Frost for Chill on the frost cantrips and `cometLance`, and let the Lightning cantrips print Shock. The test table `SCHOOL_STATUS` in tests/w25-cantrips-bows.test.mjs already accepts both ids.
+- A cantrip's own status may gain stacks (up to 5) on a rolled upgrade (`CANTRIP_STACK_CAP`, src/model/cardUpgradeSteps.js); other cards keep `STACK_CAPS`.
+- Riders (both grades): Pommel Strike Weak 1, Driving Thrust Bleed 2, Hammer Blow Vulnerable 1, Comet Lance Frost 2, Smite Regen 1 (self), Meteor Burn 3, Ironbreaker Vulnerable 2, Whirlwind Bleed 1 (all enemies); Hit and Run draws 1.
