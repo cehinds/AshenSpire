@@ -121,8 +121,9 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   });
 }
 
-// Each form factor authors its own fan; all distances scale with the card. Wave 2 (sizes): every face is at least 150 viewport px
-// wide, so the rules type (31/360 of the face) reads at 13 px; the desktop fan no longer overlaps by a third.
+// Each form factor authors its own fan; all distances scale with the card. Wave 2 (sizes): tablet faces are at least 150 viewport px
+// wide, so the rules type (31/360 of the face) reads at 13 px; the desktop fan no longer overlaps by a third. Owner 2026-11-16: the
+// phone face is 30% of the hand width (116 to 119 px), so its rules type rests near the 13 px fitter floor and long text shows Inspect.
 // The tool-row reserve every other form factor keeps below the fan.
 export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
