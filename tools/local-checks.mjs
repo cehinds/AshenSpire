@@ -2,7 +2,7 @@
 // Shared finite local QA payload. Run in an owned background worker when needed.
 // Tests use a separate Git checkout so later edits cannot mix heads.
 import { spawn } from 'node:child_process';
-import { createWriteStream } from 'node:fs';
+import { createWriteStream, realpathSync } from 'node:fs';
 import { mkdir, writeFile, readFile, readdir, rm, cp, access, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,7 +20,12 @@ if (!['combat', 'core', 'tools', 'build'].includes(suite)) throw new Error('Unkn
 if (!options.output || !path.isAbsolute(options.output)) throw new Error('An absolute, new output directory is required');
 const output = path.resolve(options.output);
 const normalized = value => process.platform === 'win32' ? value.toLowerCase() : value;
-if (normalized(output) === normalized(root) || normalized(output).startsWith(normalized(root + path.sep))) throw new Error('Outputs must be outside the checkout');
+// Compare real paths: import.meta.url is already resolved (macOS /var -> /private/var), the --output
+// argument is not, and it may not exist yet, so resolve its nearest existing ancestor.
+const realOrSelf = value => { try { return realpathSync(value); } catch { return value; } };
+const realExisting = value => { let base = value, rest = []; for (;;) { try { return path.join(realpathSync(base), ...rest); } catch { const up = path.dirname(base); if (up === base) return value; rest.unshift(path.basename(base)); base = up; } } };
+const realRoot = realOrSelf(root), realOutput = realExisting(output);
+if (normalized(realOutput) === normalized(realRoot) || normalized(realOutput).startsWith(normalized(realRoot + path.sep))) throw new Error('Outputs must be outside the checkout');
 await mkdir(path.dirname(output), { recursive: true });
 await mkdir(output); // Exclusive: never overwrite another session's evidence.
 
