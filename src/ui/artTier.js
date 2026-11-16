@@ -100,7 +100,7 @@ export function displaySceneryTier(env = {}) {
 // Painted scene backdrops are static, drawn once, and read badly upscaled from the
 // 256px phone files, so phones get the full scene art unless the player chose
 // Light or Data Saver is on (Auto's narrow-layout "light" does not apply here).
-export function sceneryFullArt(env = {}) {
+export function SceneryFullArt(env = {}) {
   const choice = artQualityChoice(lastSettings);
   if (choice === ART_LIGHT) return false;
   if (choice === ART_HIGH) return true;
