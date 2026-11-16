@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-16
+
+- **Tidier combat card styles** ([#2796](https://github.com/cehinds/AshenSpire/pull/2796), `0.7.4.112`). Old card-size rules that the combat hand no longer used are gone, so tuning card size has one place to look. Nothing looks different.
+
 ## 2026-11-15
 
 - **Local checks recognise the game folder on a Mac** ([#2793](https://github.com/cehinds/AshenSpire/pull/2793), `0.7.4.110`). The local test runner again refuses to write its results inside the game folder when started through a linked folder, as macOS does for temporary files. Nothing in play changes.
