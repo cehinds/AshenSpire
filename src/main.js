@@ -1,3 +1,4 @@
+import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
@@ -67,6 +68,7 @@ import { peakClassLevel } from './model/classSwap.js';
 import { allocateAttributePoint, awardLevelXp, combatXpReceipt } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
+import { freezeProfile } from './engine/gameProfileCombat.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
@@ -447,6 +449,11 @@ let settingsChoiceChecked = !!shotState;
 // rebuilds with: a saved newGameProfile must not cost a second validation there.
 rebuildRegistries(activeSettings, selectedGameProfile);
 const audio = initAudio(activeSettings);
+
+// Older WebKit (iOS 15, an iPhone SE 1st gen): repair the stylesheets and add container queries and popovers
+// before the first screen renders. A no-op where the browser has them all (docs/qa/IOS15-COMPAT.md). It sits
+// after the boot-registry prefix that tests/startup-registry-flow.test.mjs evaluates on its own.
+InstallLegacyBrowserSafely();
 SetFaceCostRunSource(() => run); // faces read the shell's current run live, so no adoption or refusal path has to tell the model
 SetFaceCostPricer(SpellCostAdjust); // the model layer may not import the engine, so the shell hands it the spell cost rule
 // Route existing sound cues through the procedural audio engine.
@@ -2021,6 +2028,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     playerStatuses: cm.playerStatuses,
   });
   stampCombatPlaysEver(run, combat); // pile copies carry the deck copy's lifetime plays (Honed cards)
+  // The live fight's rules are never edited once it starts: freezing them lets the rules cache key them by identity and a preview share them by reference.
+  if (combat.fixCoreRules) freezeProfile(combat.fixCoreRules);
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,

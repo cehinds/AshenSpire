@@ -43,7 +43,7 @@ test('a detailed HUD rack rebuild cannot temporarily position a legacy leading h
   const frame = { dataset: {}, querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : null };
   const field = { querySelectorAll: () => [frame], closest: () => combat };
   const place = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    field, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
+    field, fieldSizeKey: null, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: {} } } } },
     separateRackedIntents() {}, currentSpriteArtBounds: () => ({}), schedule() {}, scheduleArt() {},
     targetOverheadPlacement: () => ({ dx: 25, dy: -60 }),

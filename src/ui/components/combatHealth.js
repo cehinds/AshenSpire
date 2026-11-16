@@ -1,4 +1,5 @@
 import { tagSymbolSvg } from './cardTagSymbols.js';
+import { setAttr, setData, setStyle } from '../domWrite.js';
 import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
 import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
@@ -28,24 +29,24 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   row.dataset.ward = String(model.ward);
   // The row's width is a layout token, not the max-HP trough length: the HP and Poise bars fill the same fixed column.
   const track = hp.querySelector('.m-track');
-  track.style.width = '';
+  setStyle(track, 'width', '');
   const poiseTrack = poise?.querySelector('.m-track');
-  if (poiseTrack) poiseTrack.style.width = '';
-  const poiseWell = poise?.querySelector('.m-well'); if (poiseWell) poiseWell.style.width = '';
-  const hpWell = hp.querySelector('.m-well'); if (hpWell) hpWell.style.width = '';
-  hp.classList.add('combat-health-meter');
-  hp.dataset.protected = String(model.protected);
-  hp.dataset.warded = String(model.warded);
+  if (poiseTrack) setStyle(poiseTrack, 'width', '');
+  const poiseWell = poise?.querySelector('.m-well'); if (poiseWell) setStyle(poiseWell, 'width', '');
+  const hpWell = hp.querySelector('.m-well'); if (hpWell) setStyle(hpWell, 'width', '');
+  if (!hp.classList.contains('combat-health-meter')) hp.classList.add('combat-health-meter');
+  setData(hp, 'protected', model.protected);
+  setData(hp, 'warded', model.warded);
   // The fill's colour: the highest layer still standing (see healthGuardTone). No Poise trim or overlay on the HUD (owner 2026-11-07).
-  hp.dataset.guard = model.guard;
-  hp.dataset.poised = 'false';
-  hp.dataset.wardActive = String(model.wardActive);
+  setData(hp, 'guard', model.guard);
+  setData(hp, 'poised', 'false');
+  setData(hp, 'wardActive', model.wardActive);
   const healthValue = hp.querySelector('.m-value');
   if (healthValue) {
     // Narrow phone lanes show current HP; the full fraction remains the
     // accessible label, tooltip, and wide-layout text.
-    healthValue.dataset.currentHp = healthValue.textContent.split('/')[0].trim();
-    healthValue.setAttribute('aria-label', healthValue.textContent);
+    setData(healthValue, 'currentHp', healthValue.textContent.split('/')[0].trim());
+    setAttr(healthValue, 'aria-label', healthValue.textContent);
   }
   const { shown, overflow } = visibleBadges(model.badges.filter(badge => badge.kind !== 'poise'));
   // Owner (2026-11-06): a HUD row (`persistent`) carries one node for every badge kind, in a fixed order, and a kind with

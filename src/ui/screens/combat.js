@@ -916,7 +916,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const armed = !!dragInstanceId || !!selected || !!selfArm || selectedFlask != null;
     const plan = pendingTargetPlan(dragInstanceId || selected || selfArm);
     const layer = targetLayer({ armed: armed && plan.mode === 'enemy', enemies: combat.enemies });
-    combatEl.dataset.targetLayer = layer.active ? 'armed' : 'idle';
+    { const mode = layer.active ? 'armed' : 'idle'; if (combatEl.dataset.targetLayer !== mode) combatEl.dataset.targetLayer = mode; }
     updateTargetHud(armed ? plan.legalIds : []);
     combatEl.querySelectorAll('.combatant').forEach(frame => {
       const id = frame.classList.contains('player') ? combat.player.id : frame.dataset.eid;

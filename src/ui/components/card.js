@@ -192,6 +192,17 @@ function splitFace(html) {
   const skeleton = html.replace(TEXT_ROW, (_m, open, inner, close) => { rows.push(inner); return open + close; });
   return { skeleton, rows };
 }
+// Writes new words into a text row, replacing only the child nodes that differ: a clause that did not change
+// (and the nodes inside it) stays the node it was. Falls back to the whole row when the shapes differ.
+function writeRow(row, html) {
+  const doc = row.ownerDocument;
+  const holder = doc?.createElement?.('template');
+  if (!holder || !holder.content || typeof row.replaceChild !== 'function') { row.innerHTML = html; return; }
+  holder.innerHTML = html;
+  const next = [...holder.content.childNodes], old = [...row.childNodes];
+  if (next.length !== old.length || old.some(node => typeof node.isEqualNode !== 'function')) { row.innerHTML = html; return; }
+  next.forEach((node, i) => { if (!old[i].isEqualNode(node)) row.replaceChild(node, old[i]); });
+}
 // Moves the painted nodes of `from` into `into` when the new face html is the
 // old one or the old one with other words in its text rows. Returns the rows
 // it rewrote (empty when none), or null when the face cannot be taken over, in
@@ -219,8 +230,10 @@ function takeOverFace(into, from, prior, html, receipt) {
     const row = texts[i];
     if (row.dataset.customImage || row.querySelector('[data-card-decoration]')) return null;
   }
-  for (const node of painted) into.append(node);
-  for (const i of rewrite) texts[i].innerHTML = next.rows[i];
+  // A card taking over its own face already holds those nodes in place: moving them would remove and insert
+  // each one again (the artwork <img> with them) for no change.
+  if (into !== from) for (const node of painted) into.append(node);
+  for (const i of rewrite) writeRow(texts[i], next.rows[i]);
   return { rewrite, texts };
 }
 
@@ -454,7 +467,9 @@ export function renderCard(registries, ref, opts = {}) {
     paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
     // The fitter swaps in the roomy reading as fresh nodes: their damage numbers take the receipt binding too.
     if (!receiptRebound.has(el)) { receiptRebound.add(el); el.addEventListener?.('facereadingchange', () => bindDamageReceipt(el, opts.preview)); }
-    for (const node of kept)el.append(node);
+    // The kept nodes (the key badge, the info button, the hit lane) stay where they are when the face was
+    // taken over in place; anything else rebuilt the element's children and puts them back.
+    if (!(taken && donor === el)) for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);

@@ -1,4 +1,5 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
+import {setData,setStyle} from '../domWrite.js';
 import {layoutMetrics} from '../layoutMetrics.js';
 import {uiConfig} from '../../config/generated/ui.js';
 import {FACE_BUDGET} from '../../model/cardFaceBudget.js';
@@ -250,12 +251,12 @@ export function fitIllustratedCards(cards) {
     fitResults.set(row.fitKey,row.result);
   }
   for(const row of texts){
-    row.text.style.fontSize=row.result+'px';
+    setStyle(row.text,'fontSize',row.result+'px');
     row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);
-    row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);
-    row.text.style.display='block';
-    row.text.dataset.fittedFont=String(row.result/row.scale);
-    if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
+    setStyle(row.text,'webkitLineClamp',row.rules?'unset':String(row.lines));
+    setStyle(row.text,'display','block');
+    setData(row.text,'fittedFont',String(row.result/row.scale));
+    if(row.compact)setData(row.face,'rulesOverflow',String(row.overflow));
   }
   // Last resorts for rules that still overflow at the smallest size: tighten the
   // line height, then clamp with an ellipsis. Text never leaves the parchment.
@@ -266,16 +267,16 @@ export function fitIllustratedCards(cards) {
   const overBudget=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded){
     row.omitSecondary=overBudget(row)||Boolean(row.clipped);
-    if(row.omitSecondary||row.hasHiddenRules)row.face.dataset.faceOmitted='true';
-    row.face.dataset.rulesExpanded='false';
-    row.face.dataset.rulesDense='false';
-    row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
-    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.hasHiddenRules);
-    row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
+    if(row.omitSecondary||row.hasHiddenRules)setData(row.face,'faceOmitted','true');
+    setData(row.face,'rulesExpanded','false');
+    setData(row.face,'rulesDense','false');
+    setData(row.face,'rulesNarrowFit',String(row.omitSecondary));
+    setData(row.face,'rulesOverflow',String(row.omitSecondary||row.hasHiddenRules));
+    setData(row.text,'rulesComplete',String(!row.omitSecondary&&!row.hasHiddenRules));
   }
   for(const row of rules){
-    row.face.dataset.rulesExpanded='false';
-    row.face.dataset.rulesNarrowFit='false';
+    setData(row.face,'rulesExpanded','false');
+    setData(row.face,'rulesNarrowFit','false');
   }
   // Content beyond the readable floor remains available through inspection.
   for(const row of rules){
@@ -289,10 +290,10 @@ export function fitIllustratedCards(cards) {
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }
   for(const row of rules){
-    row.text.style.maxHeight='100%';
-    row.layer.style.justifyContent=row.overflow?'flex-start':'';
-    row.text.dataset.rulesComplete=String(!row.overflow);
-    row.face.dataset.rulesOverflow=String(row.overflow);
+    setStyle(row.text,'maxHeight','100%');
+    setStyle(row.layer,'justifyContent',row.overflow?'flex-start':'');
+    setData(row.text,'rulesComplete',String(!row.overflow));
+    setData(row.face,'rulesOverflow',String(row.overflow));
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
   faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,fitSignature(face,widths[i]));});
