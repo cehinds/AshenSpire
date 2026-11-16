@@ -155,16 +155,14 @@ export function handLayout(
   });
 }
 
-// Tool-row reserve kept below the fan by every form factor except mobile
-export const HAND_TOOL_ROW_RESERVE_PX = 66;
-// Per-form-factor fan style. `arc` and `spread` scale with the card; the phone face is 30% of the
-// hand width (116-119px) so its rules text stays near the 13px fitter floor.
-export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .3, minPx: 116, maxPx: 119 },
-  tablet: { spread: .8, angle: 4, arc: .045, dock: .96, widthFraction: .2, minPx: 150, maxPx: 160 },
-  desktop: { spread: .86, angle: 4, arc: .045, dock: .96 },
-  widescreen: { spread: .86, angle: 4, arc: .045, dock: .96 },
-});
+// Fan style per form factor and the tool-row reserve: content/config/ui/scenes/w4a-combat.json
+// (sizing.responsiveHand, sizing.handToolRowReservePx). Edit the JSON, not this file.
+// mobile/tablet: card width = widthFraction of the hand width, clamped to minPx..maxPx.
+// desktop/widescreen: card size comes from handLayout; `spread` sets the overlap.
+export const HAND_TOOL_ROW_RESERVE_PX = uiConfig.scenes.w4a.sizing.handToolRowReservePx;
+export const RESPONSIVE_HAND = Object.freeze(Object.fromEntries(
+  Object.entries(uiConfig.scenes.w4a.sizing.responsiveHand).map(([name, style]) => [name, Object.freeze({ ...style })]),
+));
 
 /**
  * Lays out the hand for the input's form factor, on top of a size plan from `handLayout`.
