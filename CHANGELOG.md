@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-16
 
+- **Smaller hand cards on phones** ([#2798](https://github.com/cehinds/AshenSpire/pull/2798), `0.7.4.113`). On a phone the combat hand's cards are a quarter smaller (30% of the hand's width instead of 40%), leaving more of the battlefield in view. Tablet and desktop are unchanged.
 - **Tidier combat card styles** ([#2796](https://github.com/cehinds/AshenSpire/pull/2796), `0.7.4.112`). Old card-size rules that the combat hand no longer used are gone, so tuning card size has one place to look. Nothing looks different.
 
 ## 2026-11-15

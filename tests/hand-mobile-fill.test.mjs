@@ -24,7 +24,7 @@ test('mobile fan touches both side insets whenever the full-width step fits with
   }
 });
 
-// Wave 2 (sizes): phone faces are 150 px or wider, so only a two-card hand is short enough to be capped at one card width.
+// Phone faces are 30% of the hand width (owner 2026-11-16), so a hand of up to three cards is short enough to be capped at one card width.
 test('a short mobile hand is capped at one card width apart and stays centred', () => {
   for (const count of [2]) {
     const p = plan('mobile', 412, 260, count, true);
