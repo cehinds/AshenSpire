@@ -97,6 +97,20 @@ export function displaySceneryTier(env = {}) {
   return requestedTier(lastSettings, { ...env, defaultTier: 'high' });
 }
 
+// Painted scene backdrops are static, drawn once, and read badly upscaled from the
+// 256px phone files, so phones get the full scene art unless the player chose
+// Light, Data Saver is on, or the device reports little memory (Auto's
+// narrow-layout "light" does not apply here).
+export function SceneryFullArt(env = {}) {
+  const choice = artQualityChoice(lastSettings);
+  if (choice === ART_LIGHT) return false;
+  if (choice === ART_HIGH) return true;
+  const nav = env.nav ?? globalThis.navigator;
+  if (nav?.connection?.saveData === true) return false;
+  const memory = Number(nav?.deviceMemory);
+  return !(Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB);
+}
+
 let lastChoice = null; // the choice the art on screen was loaded for
 let switching = false;
 let retrying = false; // a Retry (step 5) is running

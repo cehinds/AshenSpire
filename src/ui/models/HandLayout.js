@@ -1,22 +1,22 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
-// The combat hand reserves a 30px compact row plus four physical pixels of
-// separation before card geometry begins. Keep the band allocator and the
-// renderer on the same physical floor.
+// Combat tool row: 30px row plus 4px gap. The band allocator and renderer share this floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
-// The desktop tool row is 36 physical px (styles/combat-layers.css), so its
-// reserve is that row plus the same four px. hand.js measures the live row and
-// uses this only when the row cannot be measured.
+// Desktop tool row is 36px plus the same 4px gap. Used only when hand.js cannot measure the live row.
 export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 40;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
-// Presentation order is local, keyed by instance, and never mutates a pile.
+/** Keeps the previous display order for cards still in hand, then appends new cards. */
 export function reconcileHandOrder(previous, current) {
   const live = new Set(current);
-  return [...previous.filter((id) => live.delete(id)), ...current.filter((id) => live.delete(id))];
+  return [
+    ...previous.filter((id) => live.delete(id)),
+    ...current.filter((id) => live.delete(id)),
+  ];
 }
 
+/** Returns a copy of `order` with `id` moved to `slot` (clamped to the list). */
 export function moveHandInstance(order, id, slot) {
   if (!order.includes(id)) return [...order];
   const next = order.filter((value) => value !== id);
@@ -24,163 +24,233 @@ export function moveHandInstance(order, id, slot) {
   return next;
 }
 
-// `headroom` is band above `height` (the phone's compact tool row) that a
-// selected card may rise into. Its lift, and its chooser's rise, are reserved
-// only where they exceed that headroom, so the resting fan sits right under
-// the row instead of under an empty band, and the reclaimed height goes to
-// the cards.
-// Every form factor takes this one plan: the card is sized by the hand band
-// (the face fills the band less the lift, arc and insets), and the phone's
-// compact path keeps its own readable floor and cap.
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
+/**
+ * Sizes and places the fanned hand inside a `width` x `height` band.
+ * `headroom` is spare space above the band (the phone's tool row) that a selected card may rise into.
+ * Returns a frozen plan: card size, spacing, per-card { x, y, angle } and the resting/clearance edges.
+ */
+export function handLayout(
+  { width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 },
+  config = wireframeUi.hand,
+) {
+  // Vertical space available for the card
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   const liftReserve = Math.max(0, lift - headroom);
-  // The selected face already rises by lift, and the chooser's correction
-  // (handInspectionOverlay) may raise it on through the headroom. Reserve only
-  // the additional space its below-card controls need, before selection or a
-  // touch begins.
+  // The selected card already rises by `lift`; reserve only the extra room its controls need below it.
   const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
-  const progress = Math.max(0, Math.min(1,
-    (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
-  const requested = Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
-  // A phone fan keeps every card's description and type line readable: each
-  // card shows at least cardVisibleFraction of its width past its neighbour,
-  // and the outer rotated corners keep cardSideGutterPx from the hand's edges.
-  // `spread` is the rotated face's extra half-width per unit of card width.
+
+  // How many cards fit side by side, from the width
+  const widthRange = config.wideWidthRem - config.narrowWidthRem;
+  const progress = Math.max(0, Math.min(1, (width / rem - config.narrowWidthRem) / widthRange));
+  const capacityRange = config.maxCapacity - config.minCapacity;
+  const requested = Math.round(config.minCapacity + progress * capacityRange);
+
+  // Phone fan: each card shows `cardVisibleFraction` of its width past its neighbour, and the
+  // rotated outer corners stay `cardSideGutterPx` from the edges. `spread` is the extra half-width
+  // a rotated card gains per unit of card width.
   const fanAngle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
   const spread = (Math.sin(fanAngle) / wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2;
   const gutter = compact ? compactCard.cardSideGutterPx / zoom : 0;
   const fanCount = Math.max(1, Math.min(count, requested));
-  const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
-  // The non-phone face fills the band up to the shared cap (hand.maxWidthRem).
+  const fanWidthUnits = 1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2;
+  const readableWidth = (width - gutter * 2) / fanWidthUnits;
+
+  // Card size: phones fill the band between a floor and a cap, others up to the shared cap
+  const fillWidth = available * wireframeUi.card.ratio;
   const cardWidth = compact
-    // Phone cards fill the band between a readable floor and a cap, both in
-    // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
-    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
-    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+    ? Math.max(
+      compactCard.cardMinWidthPx / zoom,
+      Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, fillWidth),
+    )
+    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, fillWidth));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
-  // Horizontal margin: the vertical inset everywhere but a phone, which keeps
-  // its gutter clear of the outer cards' rotated corners.
+  // Horizontal margin: the inset, except on a phone, which keeps its gutter clear of rotated corners
   const side = compact ? Math.max(inset, gutter + spread * cardWidth) : inset;
+
+  // Horizontal spacing
   const touch = config.exposedTargetPx / zoom;
-  const capacity = Math.max(1, Math.min(requested, Math.floor(Math.max(0, width - cardWidth) / touch) + 1));
+  const fitCapacity = Math.floor(Math.max(0, width - cardWidth) / touch) + 1;
+  const capacity = Math.max(1, Math.min(requested, fitCapacity));
   const visible = Math.max(1, Math.min(count, capacity));
-  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
+  const fullStep = (width - cardWidth - side * 2) / (visible - 1);
+  let step = 0;
+  if (visible > 1) step = Math.max(touch, Math.min(cardWidth, fullStep));
+  else if (count > 1) step = touch;
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
   const start = Math.max(side, (width - span) / 2);
+
+  // Rotated corners must clear the footer, with one physical pixel to spare
   const middle = (count - 1) / 2;
-  // The rotated outside corners, not just the unrotated face, must clear
-  // the footer. Keep one physical pixel between the fan and that next band.
-  const angle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
-  const rotatedExtra = Math.max(0, (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2);
-  const bottomLimit = height - cardHeight - (count > 1 ? arc + rotatedExtra : 0) - controlsReserve - 1 / zoom;
-  const cards = Array.from({ length: count }, (_, index) => ({
-    x: start + index * step,
-    angle: count > 1 ? (index - middle) / Math.max(1, middle) * config.fanAngleDegrees : 0,
-    y: count > 1 ? Math.pow((index - middle) / Math.max(1, middle), 2) * arc : 0,
-  }));
-  // The resting rotated edge is independent of hover and selected-card lift.
-  const restLeft = cards.length ? Math.min(...cards.map(card => {
-    const radians = card.angle * Math.PI / 180;
-    return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
-      + Math.abs(Math.sin(radians)) * cardHeight) / 2;
-  })) : 0;
-  // A phone docks the fan right under its tool row; a width-bound fan leaves
-  // its spare height below the cards, not in a gap under the row.
+  const rotatedExtra = Math.max(
+    0,
+    (Math.sin(fanAngle) * cardWidth + Math.cos(fanAngle) * cardHeight - cardHeight) / 2,
+  );
+  const fanDepth = count > 1 ? arc + rotatedExtra : 0;
+  const bottomLimit = height - cardHeight - fanDepth - controlsReserve - 1 / zoom;
+
+  // Card positions
+  const cards = Array.from({ length: count }, (_, index) => {
+    const offset = (index - middle) / Math.max(1, middle);
+    return {
+      x: start + index * step,
+      angle: count > 1 ? offset * config.fanAngleDegrees : 0,
+      y: count > 1 ? Math.pow(offset, 2) * arc : 0,
+    };
+  });
+  // Resting left edge of the rotated fan (ignores hover and selection lift)
+  const restLeft = cards.length
+    ? Math.min(...cards.map((card) => {
+      const radians = card.angle * Math.PI / 180;
+      const halfWidth = (Math.abs(Math.cos(radians)) * cardWidth + Math.abs(Math.sin(radians)) * cardHeight) / 2;
+      return card.x + cardWidth / 2 - halfWidth;
+    }))
+    : 0;
+
+  // Vertical placement: a phone docks right under its tool row; others centre in the spare height
   const centred = compact ? 0 : (height - controlsReserve - cardHeight - arc) / 2;
   const base = Math.max(inset + liftReserve, centred);
-  // A phone's fan sits a little lower, into the space its tool row leaves. The
-  // drop is limited by each card's own resting edge, and only a card that
-  // carries a chooser reserves the chooser's extra space below it (a plain
-  // card's outer corner does not, which the uniform bottom limit assumed; with
-  // no list every card is taken to carry one).
+  // A phone drops a little lower into its tool row's space, limited by each card's own bottom edge.
+  // Only a card with a chooser reserves room below it; with no `controlled` list every card does.
   const drop = compact ? (config.compactDropRem || 0) * rem : 0;
   const reach = Math.max(...cards.map((card, index) => {
     const radians = card.angle * Math.PI / 180;
     const reserve = !controlled || controlled.includes(index) ? controlsReserve : 0;
-    return card.y + cardHeight / 2 + (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2 + reserve;
+    const halfHeight = (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2;
+    return card.y + cardHeight / 2 + halfHeight + reserve;
   }), 0);
   const top = drop > 0
     ? Math.max(0, Math.min(Math.max(bottomLimit, height - 1 / zoom - reach), base + drop))
     : Math.max(0, Math.min(bottomLimit, base));
-  const restTop = cards.length ? Math.min(...cards.map(card => {
-    const radians = card.angle * Math.PI / 180;
-    return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
-      + Math.abs(Math.cos(radians)) * cardHeight) / 2;
-  })) : 0;
-  // The chooser's bounded vertical correction may lift its owner to the hand
-  // clipping edge. Reserve that possible face before selection, not afterwards.
-  const clearanceTop = controlsHeight > 0 ? 0 - headroom : Math.min(restTop, Math.max(0 - Math.min(headroom, lift), top - lift));
-  return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft, restTop, clearanceTop, controlsReserve,
+  const restTop = cards.length
+    ? Math.min(...cards.map((card) => {
+      const radians = card.angle * Math.PI / 180;
+      const halfHeight = (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2;
+      return top + card.y + cardHeight / 2 - halfHeight;
+    }))
+    : 0;
+
+  // Selection clearance: a chooser may lift its card to the clipping edge, so reserve that room up front
+  const clearanceTop = controlsHeight > 0
+    ? 0 - headroom
+    : Math.min(restTop, Math.max(0 - Math.min(headroom, lift), top - lift));
+
+  return Object.freeze({
+    cardWidth,
+    cardHeight,
+    capacity,
+    span,
+    start,
+    step,
+    lift,
+    restLeft,
+    restTop,
+    clearanceTop,
+    controlsReserve,
     top,
     cards,
   });
 }
 
-// Each form factor authors its own fan; all distances scale with the card. Wave 2 (sizes): every face is at least 150 viewport px
-// wide, so the rules type (31/360 of the face) reads at 13 px; the desktop fan no longer overlaps by a third.
-// The tool-row reserve every other form factor keeps below the fan.
-export const HAND_TOOL_ROW_RESERVE_PX = 66;
-export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .4, minPx: 154, maxPx: 158 },
-  tablet: { spread: .8, angle: 4, arc: .045, dock: .96, widthFraction: .2, minPx: 150, maxPx: 160 },
-  desktop: { spread: .86, angle: 4, arc: .045, dock: .96 },
-  widescreen: { spread: .86, angle: 4, arc: .045, dock: .96 },
-});
+// Fan style per form factor and the tool-row reserve: content/config/ui/scenes/w4a-combat.json
+// (sizing.responsiveHand, sizing.handToolRowReservePx). Edit the JSON, not this file.
+// mobile/tablet: card width = widthFraction of the hand width, clamped to minPx..maxPx.
+// desktop/widescreen: card size comes from handLayout; `spread` sets the overlap.
+export const HAND_TOOL_ROW_RESERVE_PX = uiConfig.scenes.w4a.sizing.handToolRowReservePx;
+export const RESPONSIVE_HAND = Object.freeze(Object.fromEntries(
+  Object.entries(uiConfig.scenes.w4a.sizing.responsiveHand).map(([name, style]) => [name, Object.freeze({ ...style })]),
+));
 
+/**
+ * Lays out the hand for the input's form factor, on top of a size plan from `handLayout`.
+ * Returns the size plan with card size, positions, step, span, top and rest/clearance edges replaced.
+ */
 export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const style = RESPONSIVE_HAND[input.formFactor] || RESPONSIVE_HAND.mobile;
   const { width, height, count, zoom = 1 } = input;
+
+  // Card size
   const profileWidth = style.widthFraction
     ? Math.max(style.minPx / zoom, Math.min(style.maxPx / zoom, width * style.widthFraction))
     : sizePlan.cardWidth;
-  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - (sizePlan.fitReservePx ?? 40) / zoom) * wireframeUi.card.ratio);
+  const fitReserve = (sizePlan.fitReservePx ?? 40) / zoom;
+  const cardWidth = Math.min(
+    profileWidth,
+    (height - sizePlan.controlsReserve - fitReserve) * wireframeUi.card.ratio,
+  );
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   const angle = style.angle * Math.PI / 180;
   const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
   const side = Math.max(2 / zoom, edge + 2 / zoom);
-  // Owner 2026-11-07: a phone's cards fill the full width. The step is the full-width step, capped at one card width
-  // (no gaps); the other form factors keep five overlapping, fewer spreading further and larger hands compressing.
+
+  // Horizontal spacing: a phone fills the full width with no gaps; other form factors keep about
+  // five cards overlapping, spread further for fewer and compress for more
   const fill = (width - cardWidth - side * 2) / Math.max(1, count - 1);
-  const preferred = style.spread ? cardWidth * Math.min(.94, style.spread * Math.sqrt(5 / Math.max(1, count))) : cardWidth;
-  const step = count > 1 ? Math.max(0, input.formFactor === 'mobile' ? Math.min(cardWidth, fill) : Math.min(preferred, fill)) : 0;
+  const preferred = style.spread
+    ? cardWidth * Math.min(.94, style.spread * Math.sqrt(5 / Math.max(1, count)))
+    : cardWidth;
+  let step = 0;
+  if (count > 1) step = Math.max(0, input.formFactor === 'mobile' ? Math.min(cardWidth, fill) : Math.min(preferred, fill));
   const span = count ? cardWidth + (count - 1) * step : 0;
-  const start = (width - span) / 2, middle = (count - 1) / 2;
+  const start = (width - span) / 2;
+  const middle = (count - 1) / 2;
+
+  // Card positions
   const arc = cardHeight * style.arc;
   const cards = Array.from({ length: count }, (_, index) => {
     const t = count > 1 ? (index - middle) / middle : 0;
     return { x: start + index * step, y: t * t * arc, angle: t * style.angle };
   });
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
-  // The size plan may own the docking: the desktop footer plan docks the fan to the hand box's bottom with no
-  // tool-row reserve (its handGapPx buffer above End Turn replaces it); every other plan keeps the 66 px reserve.
-  // Owner (2026-11-01): a phone's fan sits lower, into the band above its tool strip (mobileHandReservePx).
-  const reserve = sizePlan.reserve ?? (input.formFactor === 'mobile' ? uiConfig.scenes.w4a.sizing.mobileHandReservePx : HAND_TOOL_ROW_RESERVE_PX), dock = sizePlan.dock ?? style.dock;
-  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - reserve / zoom) * dock);
-  const restTop = cards.length ? Math.min(...cards.map(card => {
-    const radians = card.angle * Math.PI / 180;
-    return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
-  })) : 0;
-  return { ...sizePlan, cardWidth, cardHeight, cards, step, span, start, top, capacity: Math.max(1, count),
-    restLeft: start - edge, restTop, clearanceTop: Math.min(restTop, top - sizePlan.lift) };
+
+  // Vertical placement: the size plan may set its own reserve and dock (the desktop footer plan docks
+  // to the hand box bottom); a phone sits lower than the default tool-row reserve
+  const defaultReserve = input.formFactor === 'mobile'
+    ? uiConfig.scenes.w4a.sizing.mobileHandReservePx
+    : HAND_TOOL_ROW_RESERVE_PX;
+  const reserve = sizePlan.reserve ?? defaultReserve;
+  const dock = sizePlan.dock ?? style.dock;
+  const top = Math.max(
+    0,
+    (height - cardHeight - arc - extra - sizePlan.controlsReserve - reserve / zoom) * dock,
+  );
+  const restTop = cards.length
+    ? Math.min(...cards.map((card) => {
+      const radians = card.angle * Math.PI / 180;
+      const halfHeight = (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
+      return top + card.y + cardHeight / 2 - halfHeight;
+    }))
+    : 0;
+
+  return {
+    ...sizePlan,
+    cardWidth,
+    cardHeight,
+    cards,
+    step,
+    span,
+    start,
+    top,
+    capacity: Math.max(1, count),
+    restLeft: start - edge,
+    restTop,
+    clearanceTop: Math.min(restTop, top - sizePlan.lift),
+  };
 }
 
-// Owner 2026-11-05: "When playing cards, try not to move hand position too much so players can easily play multiple
-// cards." The fan is centred on its count, so taking one card out slid every other card by half a step (and more
-// where the step itself grows). `holdPlaySlots` keeps each survivor on the slot it already had, leaving the played
-// card's gap open, for `holdMs` after the last play; the hand then closes up once (hand.js settles it with a short
-// ease). Authored in content/config/ui/scenes/w4a-combat.json (behavior.hand.playSettle); `maxShiftPx` is the most a
-// held card may differ from where it was: sub-pixel rounding, far below the exposed touch target.
+// After a card is played, survivors keep their slots (the played card's gap stays open) for `holdMs`,
+// then the hand closes up once. Authored in w4a-combat.json (behavior.hand.playSettle); `maxShiftPx`
+// is the largest allowed difference from the held layout.
 export const HAND_PLAY_SETTLE = Object.freeze({ ...uiConfig.scenes.w4a.behavior.hand.playSettle });
 
 /**
- * previous: { ids, key, plan } as last applied; ids: the hand now, in order; plan: the fresh plan for `ids`; key: the
- * geometry the plan was made from (anything but the count). Returns the previous plan restricted to the surviving
- * cards, or null when the hand did not only lose cards (a draw, a reorder, a resize) and must lay out fresh.
+ * Keeps surviving cards on their previous slots after a play.
+ * `previous` is { ids, key, plan } as last applied; `ids` the hand now; `plan` the fresh plan; `key`
+ * the geometry key the plan was made from. Returns the previous plan restricted to the survivors,
+ * or null when the hand did more than lose cards (a draw, reorder or resize).
  */
 export function holdPlaySlots(previous, ids, plan, key, { maxShiftPx = HAND_PLAY_SETTLE.maxShiftPx } = {}) {
   if (!previous || previous.key !== key || !(ids.length && ids.length < previous.ids.length)) return null;
@@ -191,22 +261,31 @@ export function holdPlaySlots(previous, ids, plan, key, { maxShiftPx = HAND_PLAY
     if (i === undefined || i <= last) return null;
     last = i;
   }
-  if (Math.abs(plan.cardWidth - previous.plan.cardWidth) > maxShiftPx || Math.abs(plan.top - previous.plan.top) > maxShiftPx) return null;
-  const cards = ids.map(id => previous.plan.cards[at.get(id)]);
-  // Survivors keep their old x, so each one's clickable lane runs to its next survivor (capped at the card width):
-  // the part of a card the played gap exposed stays tappable. The last card keeps its full width.
-  const hitWidths = cards.map((card, i) => i === cards.length - 1 ? plan.cardWidth
-    : Math.min(plan.cardWidth, Math.max(0, cards[i + 1].x - card.x)));
+  const cardWidthShift = Math.abs(plan.cardWidth - previous.plan.cardWidth);
+  const topShift = Math.abs(plan.top - previous.plan.top);
+  if (cardWidthShift > maxShiftPx || topShift > maxShiftPx) return null;
+  const cards = ids.map((id) => previous.plan.cards[at.get(id)]);
+  // Each survivor's tap lane runs to the next survivor (capped at card width), so the gap stays tappable
+  const hitWidths = cards.map((card, i) => (i === cards.length - 1
+    ? plan.cardWidth
+    : Math.min(plan.cardWidth, Math.max(0, cards[i + 1].x - card.x))));
   return { ...previous.plan, cards, hitWidths };
 }
 
+/** Cache key for the hand's geometry inputs. */
 export function handGeometryKey({ width, height, zoom, fontSize, left }) {
   return [width, height, zoom, fontSize, left].join(':');
 }
 
-// Convert the authored resting fan, not live transformed cards, to screen px.
-// A stale or absent hand-layout receipt falls back to the finite hand viewport.
-export function restingHandEnvelope({ rect, clientWidth, clientHeight, fontSize, geometry, restLeft, restTop, clearanceTop }, previous) {
+/**
+ * Converts the authored resting fan (not live transformed cards) to screen px.
+ * Returns null if the rect is unusable, an unvalidated rect-based envelope if the layout receipt is
+ * stale or missing, or the validated envelope (reusing `previous` when nothing changed).
+ */
+export function restingHandEnvelope(
+  { rect, clientWidth, clientHeight, fontSize, geometry, restLeft, restTop, clearanceTop },
+  previous,
+) {
   if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top) || !(clientWidth > 0)
     || !(rect.width > 0)) return null;
   const zoom = rect.width / clientWidth;
@@ -214,24 +293,47 @@ export function restingHandEnvelope({ rect, clientWidth, clientHeight, fontSize,
   if (geometry !== key || !Number.isFinite(restLeft) || !Number.isFinite(restTop) || !Number.isFinite(clearanceTop)) {
     return { key, validated: false, left: rect.left, top: rect.top, clearanceTop: rect.top };
   }
-  if (previous?.key === key && previous.originTop === rect.top && previous.restLeft === restLeft && previous.restTop === restTop
-    && previous.localClearanceTop === clearanceTop) return previous;
-  return { key, validated: true, originTop: rect.top, restLeft, restTop, localClearanceTop: clearanceTop,
-    left: rect.left + restLeft * zoom, top: rect.top + restTop * zoom, clearanceTop: rect.top + clearanceTop * zoom };
+  const unchanged = previous?.key === key
+    && previous.originTop === rect.top
+    && previous.restLeft === restLeft
+    && previous.restTop === restTop
+    && previous.localClearanceTop === clearanceTop;
+  if (unchanged) return previous;
+  return {
+    key,
+    validated: true,
+    originTop: rect.top,
+    restLeft,
+    restTop,
+    localClearanceTop: clearanceTop,
+    left: rect.left + restLeft * zoom,
+    top: rect.top + restTop * zoom,
+    clearanceTop: rect.top + clearanceTop * zoom,
+  };
 }
 
-// The reading door remains above its owner and outside the clipped hand.
-// Pick a free horizontal anchor before moving it above an obstructing HUD.
+/**
+ * Places the info door above its card and inside the hand's port, avoiding HUD obstacles.
+ * Tries a free horizontal anchor first, then moves above the obstructing HUD.
+ * Returns { left, top }.
+ */
 export function handInfoPosition({ card, port, size, gap, viewportWidth, obstacles = [] }) {
-  const left = Math.max(0, port.left), right = Math.min(viewportWidth, port.right);
-  const clamp = value => Math.max(left + size / 2, Math.min(right - size / 2, value));
+  const left = Math.max(0, port.left);
+  const right = Math.min(viewportWidth, port.right);
+  const clamp = (value) => Math.max(left + size / 2, Math.min(right - size / 2, value));
   const top = Math.max(0, card.top - size - gap);
-  const centers = [...new Set([clamp(card.left + card.width / 2), clamp(card.right - size / 2),
-    right - size / 2, left + size / 2])];
-  const blocked = (center, y) => obstacles.some(box => center + size / 2 > box.left && center - size / 2 < box.right &&
-    y + size > box.top && y < box.bottom);
-  const free = centers.find(center => !blocked(center, top));
+  const centers = [...new Set([
+    clamp(card.left + card.width / 2),
+    clamp(card.right - size / 2),
+    right - size / 2,
+    left + size / 2,
+  ])];
+  const blocked = (center, y) => obstacles.some((box) => center + size / 2 > box.left
+    && center - size / 2 < box.right
+    && y + size > box.top
+    && y < box.bottom);
+  const free = centers.find((center) => !blocked(center, top));
   if (free !== undefined) return { left: free, top };
-  const above = Math.max(0, Math.min(top, ...obstacles.map(box => box.top - size - gap)));
-  return { left: centers.find(center => !blocked(center, above)) ?? centers[0], top: above };
+  const above = Math.max(0, Math.min(top, ...obstacles.map((box) => box.top - size - gap)));
+  return { left: centers.find((center) => !blocked(center, above)) ?? centers[0], top: above };
 }
