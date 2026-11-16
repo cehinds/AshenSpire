@@ -50,3 +50,9 @@ test('phone Lite adds no hit cue of its own and does not dim the illustrated car
   assert.ok(!/illustrated-card-face\s*\{\s*opacity/.test(css));
   assert.ok(!/stroke-width/.test(css), 'the selected map node keeps its base stroke width');
 });
+
+test('Lite keeps the painted combat backdrop blurs (static art, blurred once)', () => {
+  const rule1 = css.match(/([^{}]+)\{\s*filter: none !important;\s*\}/)[1];
+  for (const cls of ['.alternative-scene-fill', '.alternative-scene-edge'])
+    assert.ok(rule1.includes(`:not(${cls})`), `${cls} must be exempt from Lite rule 1`);
+});
