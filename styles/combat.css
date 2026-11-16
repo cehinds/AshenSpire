@@ -961,14 +961,10 @@
   /* No negative margin: cards in a scroller must not overlap, or the one on
      top eats the taps meant for the one beneath — the same mechanism as #21,
      one level down. */
-  /* THE CARD'S BOX IS THE CARD'S (styles/kit.css §THE CARD): its height is
-     spelled out from its own landmarks, so a phone may set the card's WIDTH —
-     five faces have to fit a 390 px scroller — and must not retype its height
-     or its landmarks. The old block did (`height: 17.4rem` plus four inner
-     sizes) and the kit face then overflowed its own box by 21 px, which the
-     hand's scroller reported as 12 px of vertical travel (hintstrip H6,
-     measured). One home per fact: the width here, the box there. */
-  :root[data-layout='narrow'] .hand .card { margin: 0; --card-w: 11.6rem; }
+  /* A hand card's size is not set here. hand.js lays the fan out
+     (src/ui/models/HandLayout.js, RESPONSIVE_HAND) and the wireframe-hand rule
+     in styles/kit.css applies it as --hand-card-width / --hand-card-height. */
+  :root[data-layout='narrow'] .hand .card { margin: 0; }
   /* A lift of 56px inside an overflow container is clipped, and the container
      has to clip or it cannot scroll. So the selected card grows in place. */
   :root[data-layout='narrow'] .hand .card:hover,
@@ -1074,7 +1070,7 @@
  padding: calc(48px / var(--ui-zoom,1)) 24px calc(12px / var(--ui-zoom,1)); gap: 0; overflow-x: auto; scrollbar-width: thin;
 }
 :root .combat.combat .hand .card {
- --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
+ --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
  margin: 0; touch-action: pan-x;
 }
@@ -1099,7 +1095,6 @@
 
 @container game-viewport (max-width: 480px) {
   :root .combat.combat .hand { padding-inline: 16px; }
-  :root .combat.combat .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
 }
 
 /* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
@@ -1127,21 +1122,14 @@
   :root .combat.combat .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
-/* A hand card has one portrait profile; viewport changes never resize one axis
-   alone. The profile itself is authored once, in card.json, and reaches here as
-   --card-ratio / --card-height-per-width (src/ui/models/CardSizeModel.js): the
-   1.4 that used to sit in this calc was 7/5 written out by hand. */
-:root .combat.combat .hand .card {
-  height: calc(var(--card-w) * var(--card-height-per-width)); aspect-ratio: var(--card-ratio);
-  --card-art-h: calc(var(--card-w) * 0.30);
-  --card-name-h: calc(var(--card-w) * 0.18);
-}
+/* A hand card has one portrait profile, authored once in card.json and
+   reaching here as --card-ratio (src/ui/models/CardSizeModel.js). */
+:root .combat.combat .hand .card { aspect-ratio: var(--card-ratio); }
 :root .combat.combat .hand .card .art { overflow: hidden; contain: layout paint; }
 :root .combat.combat .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
 
-/* Scale the complete playing face, including costs and text, in one step. */
+/* The playing face's inner landmarks. */
 :root .combat.combat .hand .card {
-  zoom:var(--hand-card-zoom,1); --card-w:178px; width:var(--card-w); padding:20px 8px 8px;
   --card-name-h:32px; --card-art-h:53.4px; --card-band-h:17px;
   --card-row:22px; --card-pad:8px; --card-gap:4px;
 }
