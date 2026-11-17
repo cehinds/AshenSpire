@@ -1,5 +1,4 @@
-// The Core reward door: the victory receipt (XP bars, attribute points) and the rank-up chooser.
-// Row meaning and Continue rules live in model/rewardplan.js; this screen draws and forwards taps.
+// The Core reward door: victory receipt and rank-up chooser.
 
 import { uiIconText } from '../../content/uiIcons.js';
 import { StatAllocationSection } from '../components/statAllocation.js';
@@ -43,13 +42,20 @@ import { ownedCopies } from '../../model/deckRules.js';
 
 const SKILL_RANK_UP = 'skillRankUp';
 const SMITHING_STONE = 'smithingStone';
-const KIND_GLYPHS = { smithingStone: 'smith', skillRankUp: 'progression' };
+const KIND_GLYPHS = {
+    smithingStone: 'smith',
+    skillRankUp: 'progression',
+};
 
 const STATE_PENDING = 'pending';
 const STATE_TAKEN = 'taken';
 const STATE_SKIPPED = 'skipped';
 const STATE_BLOCKED = 'blocked';
-const LOCKED_STATES = new Set([STATE_TAKEN, STATE_BLOCKED, STATE_SKIPPED]);
+const LOCKED_STATES = new Set([
+    STATE_TAKEN,
+    STATE_BLOCKED,
+    STATE_SKIPPED,
+]);
 const STATE_COPY_IDS = {
     taken: 'reward.state.taken',
     blocked: 'reward.state.blocked',
@@ -58,7 +64,14 @@ const STATE_COPY_IDS = {
 
 const CLAIM_LAYOUT_SELECTOR = '.reward-claim-layout';
 const MENU_SELECTOR = '.reward-menu';
-const CONTINUE_SELECTOR = '#reward-continue';
+const CONTINUE_ID = 'reward-continue';
+const CONTINUE_SELECTOR = `#${CONTINUE_ID}`;
+const CONFIRM_BUTTON_ID = 'reward-card-confirm';
+const INSPECT_BUTTON_ID = 'reward-inspect';
+const CHOSEN_CLASS = 'is-chosen';
+const SELECTED_CLASS = 'reward-selected';
+const CONTINUE_LABEL_ID = 'common.continue';
+const INSPECT_LABEL_ID = 'deckEditor.inspectAction';
 const HOLD_NOTE_ID = 'reward-hold-copy';
 const UNLOCKED_ROW_SELECTOR = '.reward-kind:not(.locked)';
 const CHOOSER_STRIP_SELECTOR = '.reward-row';
@@ -84,11 +97,49 @@ const POWER_ROW_LABEL = 'Combat-power victory bonus';
 const BONUS_ROW_LABEL = 'Character XP bonus';
 const BATTLE_ROW_LABEL = 'Battle XP';
 
-const isProgressionReward = (row) => row.kind === SKILL_RANK_UP;
-const cardRank = (instance) => (
-    Number.isInteger(instance?.rank) && instance.rank > 1 ? instance.rank : 1
-);
-const isReducedMotion = () => document.body.classList.contains(REDUCED_MOTION_CLASS);
+function isProgressionReward(row)
+{
+    return row.kind === SKILL_RANK_UP;
+}
+
+function cardRank(instance)
+{
+    const hasRank = Number.isInteger(instance?.rank) && instance.rank > 1;
+    return hasRank
+        ? instance.rank
+        : 1;
+}
+
+function isReducedMotion()
+{
+    return document.body.classList.contains(REDUCED_MOTION_CLASS);
+}
+
+function pauseFor(milliseconds)
+{
+    return milliseconds > 0
+        ? new Promise((resolve) => setTimeout(resolve, milliseconds))
+        : Promise.resolve();
+}
+
+function victoryTitle(rewards)
+{
+    return rewards.title || translate(TITLE_VICTORY_ID);
+}
+
+function noteHtml(token)
+{
+    const text = escapeHtml(translate(`reward.note.${token}`));
+    return `<p class="reward-note" data-note="${escapeHtml(token)}">${text}</p>`;
+}
+
+function skipButtonHtml(row, title)
+{
+    const label = escapeHtml(translate('reward.skip'));
+    const aria = escapeHtml(translate('reward.skip.aria', { kind: title }));
+    return `<button class="subtle reward-skip" data-skip="${escapeHtml(row.key)}"`
+        + ` data-focusable="true" aria-label="${aria}">${label}</button>`;
+}
 
 function tooltipHtml(title, body = '')
 {
@@ -129,7 +180,9 @@ function progressLabel(row)
     }
     if (row.kind === 'class')
     {
-        return translate('reward.progress.classTrack', { class: row.label });
+        return translate('reward.progress.classTrack', {
+            class: row.label,
+        });
     }
     return row.label;
 }
@@ -142,9 +195,12 @@ function compactRowLabel(row)
     }
     if (row.kind === 'enemy')
     {
-        return `${row.name || translate('combat.log.role.enemy')} · ${levelText(row.level || 1)}`;
+        const enemyName = row.name || translate('combat.log.role.enemy');
+        return `${enemyName} · ${levelText(row.level || 1)}`;
     }
-    return row.kind === 'bonus' ? BONUS_ROW_LABEL : BATTLE_ROW_LABEL;
+    return row.kind === 'bonus'
+        ? BONUS_ROW_LABEL
+        : BATTLE_ROW_LABEL;
 }
 
 export function MountRewards(appRoot, {
@@ -160,10 +216,19 @@ export function MountRewards(appRoot, {
     receiptOnly = false,
 })
 {
-    // The selection store is page-wide; a beat spent on an earlier screen must not carry over.
     clearSelection();
-    const plan = rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 0 });
-    const scopeProgress = (value) => (receiptOnly ? scopeXpProgress(value) : value);
+    const plan = rewardPlan(rewards, {
+        flaskSlotsFree: 0,
+        armamentSlotsFree: 0,
+    });
+
+    function scopeProgress(value)
+    {
+        return receiptOnly
+            ? scopeXpProgress(value)
+            : value;
+    }
+
     let progress = null;
     if (rewards.xpGains)
     {
@@ -171,9 +236,10 @@ export function MountRewards(appRoot, {
         progress = scopeProgress(gains);
     }
     const canLoadMeta = Boolean(saves && saves.loadMeta);
-    const settings = (canLoadMeta && (saves.loadMeta().settings || {})) || {};
-    const meta = (canLoadMeta && saves.loadMeta()) || {};
-    // Each paint builds a new Continue control, so the previous one is disarmed first.
+    const loadedSettings = canLoadMeta && (saves.loadMeta().settings || {});
+    const settings = loadedSettings || {};
+    const loadedMeta = canLoadMeta && saves.loadMeta();
+    const meta = loadedMeta || {};
     let disarmContinue = null;
     let xpAnimationDone = !progress
         || !rewards.xpBefore
@@ -181,14 +247,17 @@ export function MountRewards(appRoot, {
         || isReducedMotion();
     const animatedTracks = new Set();
     let receiptContinued = false;
+    const stonesPaid = smithingStonesPaid(rewards.smithingStoneReceipt);
+    const stoneStates = stonesPaid
+        ? { smithingStone: STATE_TAKEN }
+        : {};
     const states = {
         ...(checkpoint?.states || {}),
-        ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: STATE_TAKEN } : {}),
+        ...stoneStates,
     };
     const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
     const pendingByKey = {};
     const pendingBonusByKey = {};
-    // One door per screen: later views swap its contents so the fade-in does not replay.
     let doorView = 0;
     const doorOwner = {};
 
@@ -209,7 +278,7 @@ export function MountRewards(appRoot, {
     }
 
     const applyByKind = {
-        // Stones are granted at combat resolution and start Taken, so reaching here is a bug.
+        // Stones start Taken, so reaching this is a bug.
         smithingStone()
         {
             return false;
@@ -271,7 +340,13 @@ export function MountRewards(appRoot, {
         run.skills = snapshot.skills;
         if (snapshot.rankUp)
         {
-            const { instance, rank, steps, upgraded, chosen } = snapshot.rankUp;
+            const {
+                instance,
+                rank,
+                steps,
+                upgraded,
+                chosen,
+            } = snapshot.rankUp;
             setOrDelete(instance, 'rank', rank);
             setOrDelete(instance, 'upgradeSteps', steps);
             setOrDelete(instance, 'upgraded', upgraded);
@@ -290,7 +365,6 @@ export function MountRewards(appRoot, {
         {
             return false;
         }
-        // Only a refused save puts a spent rank-up back.
         const snapshot = snapshotBeforeTake(row);
         if (!applyByKind[row.kind](row))
         {
@@ -323,15 +397,23 @@ export function MountRewards(appRoot, {
         }
         if (row.kind !== SKILL_RANK_UP)
         {
-            return { title: row.kind, body: '' };
+            return {
+                title: row.kind,
+                body: '',
+            };
         }
         const label = escapeHtml(skillLabel(row.skillId));
-        const title = translate('reward.skillRankUp.title', { skill: label, level: row.level });
+        const title = translate('reward.skillRankUp.title', {
+            skill: label,
+            level: row.level,
+        });
         if (state === STATE_TAKEN)
         {
             const instance = ownedInstance(chosenRankUps[row.key]);
             const definition = instance && registries.cards.get(instance.cardId);
-            const cardName = (definition && definition.name) || chosenRankUps[row.key] || '';
+            const cardName = (definition && definition.name)
+                || chosenRankUps[row.key]
+                || '';
             return {
                 title,
                 body: translate('reward.skillRankUp.raised', {
@@ -341,8 +423,13 @@ export function MountRewards(appRoot, {
             };
         }
         const hasCandidates = rankUpCandidates(registries, run, row.skillId).length > 0;
-        const bodyId = hasCandidates ? 'reward.skillRankUp.body' : NONE_ID;
-        return { title, body: translate(bodyId, { skill: label }) };
+        const bodyId = hasCandidates
+            ? 'reward.skillRankUp.body'
+            : NONE_ID;
+        return {
+            title,
+            body: translate(bodyId, { skill: label }),
+        };
     }
 
     function statAllocationSection()
@@ -376,7 +463,6 @@ export function MountRewards(appRoot, {
             return;
         }
         host.xpAnimationRunning = true;
-        // DOM order is Class, Character, then skills by their current level.
         const bars = [...host.querySelectorAll('.rp-layered-bar[data-animate="1"]')];
         const requested = Number(settings.victoryXpSeconds);
         const seconds = Number.isFinite(requested) ? requested : DEFAULT_XP_SECONDS;
@@ -402,11 +488,12 @@ export function MountRewards(appRoot, {
             const target = `${bar.dataset.target}%`;
             if (duration > 0)
             {
+                const transition = `width ${duration}ms linear`;
                 bar.getBoundingClientRect();
-                green.style.transition = `width ${duration}ms linear`;
-                yellow.style.transition = `width ${duration}ms linear`;
+                green.style.transition = transition;
+                yellow.style.transition = transition;
                 setBarWidths(bar, target);
-                await new Promise((resolve) => setTimeout(resolve, duration));
+                await pauseFor(duration);
                 if (!isCurrentLayout(host))
                 {
                     return;
@@ -417,7 +504,6 @@ export function MountRewards(appRoot, {
                 setBarWidths(bar, target);
             }
             animatedTracks.add(bar.dataset.track);
-            // Full bars turn blue now; they stay plain progress bars until the sequence settles.
             if (Number(bar.dataset.target) >= 100)
             {
                 bar.classList.add('rp-bar-ready');
@@ -435,7 +521,10 @@ export function MountRewards(appRoot, {
     function openDoor(options)
     {
         doorView += 1;
-        return MountRewardDoor(appRoot, { owner: doorOwner, ...options });
+        return MountRewardDoor(appRoot, {
+            owner: doorOwner,
+            ...options,
+        });
     }
 
     function focusRewardTarget(focusKind)
@@ -450,7 +539,7 @@ export function MountRewards(appRoot, {
         const continueButton = button({
             label: translate('reward.continue'),
             weight: 'primary',
-            id: 'reward-continue',
+            id: CONTINUE_ID,
             disabled: !xpAnimationDone,
             attrs: {
                 'aria-describedby': HOLD_NOTE_ID,
@@ -466,17 +555,22 @@ export function MountRewards(appRoot, {
         const note = foot.querySelector('.modal-foot-note');
         note.id = HOLD_NOTE_ID;
         note.setAttribute('aria-live', 'polite');
-        return { continueButton, foot, note };
+        return {
+            continueButton,
+            foot,
+            note,
+        };
     }
 
     function bindSkipButtons()
     {
         for (const skipButton of appRoot.querySelectorAll('[data-skip]'))
         {
-            attachTooltip(skipButton, () => tooltipHtml(
-                translateTip('reward.skip'),
-                translateFull('reward.skip'),
-            ));
+            attachTooltip(skipButton, () =>
+                tooltipHtml(
+                    translateTip('reward.skip'),
+                    translateFull('reward.skip'),
+                ));
             skipButton.addEventListener('click', (event) =>
             {
                 event.stopPropagation();
@@ -490,7 +584,7 @@ export function MountRewards(appRoot, {
     function armContinue(continueButton, note)
     {
         // Continue only leaves: a rank-up is owed by the player, never auto-taken.
-        const finish = () =>
+        function finish()
         {
             if (!xpAnimationDone)
             {
@@ -499,8 +593,9 @@ export function MountRewards(appRoot, {
             onDone();
             disarmContinue?.();
             disarmContinue = null;
-        };
-        const leave = () =>
+        }
+
+        function leave()
         {
             if (!receiptOnly)
             {
@@ -520,7 +615,8 @@ export function MountRewards(appRoot, {
                 receiptContinued = false;
                 note.textContent = error.message;
             }
-        };
+        }
+
         disarmContinue?.();
         disarmContinue = beatArmer(meta, registries)(continueButton, 'rewardContinue', {
             onConfirm: () =>
@@ -543,12 +639,13 @@ export function MountRewards(appRoot, {
 
     function renderMenu(focusKind = null)
     {
-        const notesHtml = rewardNotes(rewards)
-            .map((token) => `<p class="reward-note" data-note="${escapeHtml(token)}">`
-                + `${escapeHtml(translate(`reward.note.${token}`))}</p>`)
-            .join('');
+        const notesHtml = rewardNotes(rewards).map(noteHtml).join('');
         const rowsHtml = plan.rows.map(rowHtml).join('');
-        const { continueButton, foot, note } = buildFoot();
+        const {
+            continueButton,
+            foot,
+            note,
+        } = buildFoot();
         const claim = rewardClaimStatus(plan, states);
         const hasRows = plan.rows.length > 0;
         const claimedStatus = hasRows
@@ -569,13 +666,19 @@ export function MountRewards(appRoot, {
                 }),
             })
             : null;
+        const eyebrowId = hasRows
+            ? 'reward.eyebrow.claim'
+            : 'reward.eyebrow.spoils';
         openDoor({
-            eyebrow: translate(hasRows ? 'reward.eyebrow.claim' : 'reward.eyebrow.spoils'),
-            title: rewards.title || translate(TITLE_VICTORY_ID),
+            eyebrow: translate(eyebrowId),
+            title: victoryTitle(rewards),
             status: claimedStatus,
             body: buildElement(
                 'div',
-                { class: 'reward-claim-layout', 'aria-busy': String(!xpAnimationDone) },
+                {
+                    class: 'reward-claim-layout',
+                    'aria-busy': String(!xpAnimationDone),
+                },
                 [
                     buildElement('div', {
                         class: 'class-row reward-menu',
@@ -592,10 +695,11 @@ export function MountRewards(appRoot, {
 
         bindRows(appRoot);
         bindSkipButtons();
-        attachTooltip(continueButton, () => tooltipHtml(
-            translate('reward.continue'),
-            LEAVE_TOOLTIP_COPY,
-        ));
+        attachTooltip(continueButton, () =>
+            tooltipHtml(
+                translate('reward.continue'),
+                LEAVE_TOOLTIP_COPY,
+            ));
         armContinue(continueButton, note);
 
         followUp(appRoot.querySelector(CLAIM_LAYOUT_SELECTOR));
@@ -613,12 +717,11 @@ export function MountRewards(appRoot, {
         const lockedClass = LOCKED_STATES.has(state) ? ' locked' : '';
         const offerClass = isOffer ? ' reward-level-offer' : '';
         const chipId = STATE_COPY_IDS[state];
-        const chip = chipId ? `<span class="chip">${escapeHtml(translate(chipId))}</span>` : '';
-        const skipLabel = escapeHtml(translate('reward.skip'));
-        const skipAria = escapeHtml(translate('reward.skip.aria', { kind: title }));
+        const chip = chipId
+            ? `<span class="chip">${escapeHtml(translate(chipId))}</span>`
+            : '';
         const skipHtml = state === STATE_BLOCKED
-            ? `<button class="subtle reward-skip" data-skip="${escapeHtml(row.key)}"`
-                + ` data-focusable="true" aria-label="${skipAria}">${skipLabel}</button>`
+            ? skipButtonHtml(row, title)
             : '';
         const glyph = engravedIconHtml(KIND_GLYPHS[row.kind])
             || escapeHtml(uiIconText(KIND_GLYPHS[row.kind] || '?'));
@@ -643,7 +746,6 @@ export function MountRewards(appRoot, {
         {
             const row = plan.rows.find((candidate) => candidate.key === rowElement.dataset.key);
             const state = rowElement.dataset.state;
-            // The blocked row's tooltip switches on the model's token, never on a re-derivation.
             attachTooltip(rowElement, () =>
             {
                 if (state === STATE_BLOCKED)
@@ -683,8 +785,7 @@ export function MountRewards(appRoot, {
         }
     }
 
-    const hasUnclaimedReward = () =>
-        plan.rows.some((row) => !states[row.key] && !row.blockedBy);
+    const hasUnclaimedReward = () => plan.rows.some((row) => !states[row.key] && !row.blockedBy);
 
     function holdNote()
     {
@@ -703,7 +804,7 @@ export function MountRewards(appRoot, {
         return translate(allResolved ? 'reward.hold.complete' : 'reward.hold.leavesRest');
     }
 
-    // The timer is bound to THIS layout, so a later render that replaces it strands the timer.
+    // The timer is bound to THIS layout: a render that replaces it strands the timer.
     function followUp(host)
     {
         if (!host || xpAnimationDone || !progress || !rewards.xpBefore)
@@ -756,18 +857,20 @@ export function MountRewards(appRoot, {
         followUp(layout);
     }
 
-    // One column so the XP ledger and the claim status read together; null when both are empty.
     function sideColumn(claim)
     {
         const progression = progressPanel();
-        const claimPanel = !progression && plan.rows.length ? claimStatusPanel(claim) : null;
+        const claimPanel = !progression && plan.rows.length
+            ? claimStatusPanel(claim)
+            : null;
         const children = [progression, claimPanel].filter(Boolean);
-        return children.length ? buildElement('div', { class: 'reward-side' }, children) : null;
+        return children.length
+            ? buildElement('div', { class: 'reward-side' }, children)
+            : null;
     }
 
     function progressRow(row, label)
     {
-        // Only a cap leaves a row without a next level, so `capped` alone decides this.
         let nextText = translate('reward.progress.next', { level: row.level + 1 });
         if (row.capped)
         {
@@ -777,7 +880,10 @@ export function MountRewards(appRoot, {
         {
             nextText = levelText(row.level + 1);
         }
-        const nextLevel = buildElement('span', { class: 'rp-next', text: nextText });
+        const nextLevel = buildElement('span', {
+            class: 'rp-next',
+            text: nextText,
+        });
         const targetPercent = row.fraction * 100;
         const before = row.kind === 'character'
             ? rewards.xpBefore?.character
@@ -791,11 +897,16 @@ export function MountRewards(appRoot, {
             && !animatedTracks.has(row.id);
         const under = buildElement('span', { class: 'rp-under' });
         const over = buildElement('span', { class: 'rp-over' });
-        under.style.width = `${animate ? startPercent : targetPercent}%`;
-        over.style.width = `${animate ? startPercent : targetPercent}%`;
+        const shownPercent = animate
+            ? startPercent
+            : targetPercent;
+        under.style.width = `${shownPercent}%`;
+        over.style.width = `${shownPercent}%`;
         const xpTotal = row.xpToNext || row.xp;
         const xpShown = Math.min(row.xp, xpTotal);
-        const readyClass = !animate && row.fraction >= 1 ? ' rp-bar-ready' : '';
+        const readyClass = !animate && row.fraction >= 1
+            ? ' rp-bar-ready'
+            : '';
         const bar = buildElement(
             'div',
             {
@@ -816,7 +927,10 @@ export function MountRewards(appRoot, {
             [
                 under,
                 over,
-                buildElement('span', { class: 'rp-bar-text', text: `${xpShown} / ${xpTotal}` }),
+                buildElement('span', {
+                    class: 'rp-bar-text',
+                    text: `${xpShown} / ${xpTotal}`,
+                }),
             ],
         );
         const levelNow = row.kind === 'character'
@@ -839,18 +953,27 @@ export function MountRewards(appRoot, {
             'li',
             {
                 class: 'reward-progress-row',
-                dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
+                dataset: {
+                    kind: row.kind,
+                    track: row.id,
+                    gained: String(row.gained),
+                },
             },
             [
-                buildElement('span', { class: 'rp-name', text: label }),
-                buildElement('span', { class: 'rp-level', text: levelNow }),
+                buildElement('span', {
+                    class: 'rp-name',
+                    text: label,
+                }),
+                buildElement('span', {
+                    class: 'rp-level',
+                    text: levelNow,
+                }),
                 bar,
                 nextLevel,
                 gainedNode,
                 discardedNode,
             ],
         );
-        // The row carries the shape of the climb; the exact numbers are the tooltip.
         attachTooltip(node, () =>
         {
             const detail = row.capped
@@ -901,14 +1024,21 @@ export function MountRewards(appRoot, {
                 'li',
                 {
                     class: 'reward-claim-row',
-                    dataset: { kind: entry.kind, key: entry.key, state: entry.state },
+                    dataset: {
+                        kind: entry.kind,
+                        key: entry.key,
+                        state: entry.state,
+                    },
                 },
                 [
                     buildElement('span', {
                         class: 'reward-claim-name',
                         text: rowBody(entryRow).title,
                     }),
-                    buildElement('span', { class: 'reward-claim-state', text: translate(stateId) }),
+                    buildElement('span', {
+                        class: 'reward-claim-state',
+                        text: translate(stateId),
+                    }),
                 ],
             );
         });
@@ -934,7 +1064,10 @@ export function MountRewards(appRoot, {
             : null;
         return buildElement(
             'aside',
-            { class: 'reward-claim-status', 'aria-label': translate('reward.claim.heading') },
+            {
+                class: 'reward-claim-status',
+                'aria-label': translate('reward.claim.heading'),
+            },
             [
                 buildElement('h3', {
                     class: 'as-eyebrow',
@@ -946,7 +1079,6 @@ export function MountRewards(appRoot, {
         );
     }
 
-    // A rank-up chooses among the run's own cards, each shown at the rank it would rise to.
     function renderChooser(row)
     {
         const isTaken = () => states[row.key];
@@ -964,15 +1096,15 @@ export function MountRewards(appRoot, {
         const confirmButton = button({
             label: translate('reward.confirm'),
             weight: 'primary',
-            id: 'reward-card-confirm',
+            id: CONFIRM_BUTTON_ID,
             className: 'reward-confirm',
             disabled: true,
         });
         const inspectButton = button({
-            label: translate('deckEditor.inspectAction'),
-            id: 'reward-inspect',
+            label: translate(INSPECT_LABEL_ID),
+            id: INSPECT_BUTTON_ID,
             disabled: true,
-            attrs: { 'aria-label': translate('deckEditor.inspectAction') },
+            attrs: { 'aria-label': translate(INSPECT_LABEL_ID) },
         });
         inspectButton.addEventListener('click', () =>
         {
@@ -983,7 +1115,7 @@ export function MountRewards(appRoot, {
         });
         openDoor({
             eyebrow: rowBody(row).title,
-            title: rewards.title || translate(TITLE_VICTORY_ID),
+            title: victoryTitle(rewards),
             body: buildElement('div', {
                 class: 'reward-row',
                 role: 'radiogroup',
@@ -1003,12 +1135,23 @@ export function MountRewards(appRoot, {
             hidden: true,
         });
         strip.after(message);
-        const bonusOptionsOf = (instanceId) => (
-            instanceId ? rankUpBonusOptions(registries, run, ownedInstance(instanceId)) : []
-        );
-        const needsBonus = () => !!selectedCardId
-            && bonusOptionsOf(selectedCardId).length > 0
-            && !(pendingBonusByKey[row.key] >= 0);
+
+        function bonusOptionsOf(instanceId)
+        {
+            if (!instanceId)
+            {
+                return [];
+            }
+            return rankUpBonusOptions(registries, run, ownedInstance(instanceId));
+        }
+
+        function needsBonus()
+        {
+            return !!selectedCardId
+                && bonusOptionsOf(selectedCardId).length > 0
+                && !(pendingBonusByKey[row.key] >= 0);
+        }
+
         // A press in flight is a beat, not a reason, so it stays quiet.
         const confirmReason = reasonWhenDisabled(confirmButton, () =>
         {
@@ -1025,14 +1168,17 @@ export function MountRewards(appRoot, {
             hidden: true,
         });
         strip.after(bonusPanel);
-        const faceOf = (instance) => (
-            projectGameCard(run, instance) || resolveCard(registries, instance)
-        );
-        const syncActionButtons = () =>
+
+        function faceOf(instance)
+        {
+            return projectGameCard(run, instance) || resolveCard(registries, instance);
+        }
+
+        function syncActionButtons()
         {
             inspectButton.disabled = !inspectionFaces.has(selectedCardId);
             confirmReason();
-        };
+        }
 
         function renderBonusPanel()
         {
@@ -1044,7 +1190,11 @@ export function MountRewards(appRoot, {
                 return;
             }
             const instance = ownedInstance(selectedCardId);
-            const before = faceOf({ ...instance, rank: cardRank(instance) + 1 });
+            const risenInstance = {
+                ...instance,
+                rank: cardRank(instance) + 1,
+            };
+            const before = faceOf(risenInstance);
             bonusPanel.appendChild(buildElement('p', {
                 class: 'reward-rank-bonus-title',
                 text: translate('reward.rankBonus.label'),
@@ -1052,13 +1202,19 @@ export function MountRewards(appRoot, {
             options.forEach((option, index) =>
             {
                 const changes = cardUpgradeChanges(registries, before, faceOf(option.after));
-                const summary = changes
+                const changeText = changes
                     .map((change) => `${change.label} ${change.before}${ARROW}${change.after}`)
-                    .join(', ') || translate('reward.rankBonus.option', { n: index + 1 });
+                    .join(', ');
+                const summary = changeText || translate('reward.rankBonus.option', {
+                    n: index + 1,
+                });
                 const chosen = pendingBonusByKey[row.key] === index;
+                const chosenClass = chosen
+                    ? ` ${CHOSEN_CLASS}`
+                    : '';
                 const choice = button({
                     label: summary,
-                    className: `class-pick reward-bonus-option${chosen ? ' is-chosen' : ''}`,
+                    className: `class-pick reward-bonus-option${chosenClass}`,
                     attrs: {
                         role: 'radio',
                         'aria-checked': String(chosen),
@@ -1067,7 +1223,9 @@ export function MountRewards(appRoot, {
                             total: options.length,
                             summary,
                         }),
-                        dataset: { bonusIndex: String(index) },
+                        dataset: {
+                            bonusIndex: String(index),
+                        },
                     },
                 });
                 choice.addEventListener('click', () => selectBonus(index));
@@ -1103,16 +1261,16 @@ export function MountRewards(appRoot, {
                 // A text button wears the green trim only, so one option reads as one lit card.
                 if (!candidate.classList.contains('reward-choice-button'))
                 {
-                    candidate.classList.toggle('reward-selected', selected);
+                    candidate.classList.toggle(SELECTED_CLASS, selected);
                 }
-                candidate.classList.toggle('is-chosen', selected);
+                candidate.classList.toggle(CHOSEN_CLASS, selected);
                 candidate.setAttribute('aria-checked', String(selected));
             }
             for (const face of strip.querySelectorAll('.reward-choice-face'))
             {
                 const selected = face.dataset.pickId === cardId;
-                face.classList.toggle('reward-selected', selected);
-                face.classList.toggle('is-chosen', selected);
+                face.classList.toggle(SELECTED_CLASS, selected);
+                face.classList.toggle(CHOSEN_CLASS, selected);
             }
         }
 
@@ -1153,22 +1311,31 @@ export function MountRewards(appRoot, {
             const option = isSelected
                 ? bonusOptionsOf(instance.instanceId)[pendingBonusByKey[row.key]]
                 : null;
-            const shown = option ? option.after : { ...instance, rank: cardRank(instance) + 1 };
-            const face = renderCard(registries, shown, {
-                rules: run,
-                owned: ownedCopies(run, instance.cardId),
-                actionOwnsTouch: true,
-                surface: 'reward',
-                only: [],
-            });
+            const shown = option
+                ? option.after
+                : {
+                    ...instance,
+                    rank: cardRank(instance) + 1,
+                };
+            const face = renderCard(
+                registries,
+                shown,
+                {
+                    rules: run,
+                    owned: ownedCopies(run, instance.cardId),
+                    actionOwnsTouch: true,
+                    surface: 'reward',
+                    only: [],
+                },
+            );
             face.dataset.cardId = instance.cardId;
             face.dataset.pickId = instance.instanceId;
             inspectionFaces.set(instance.instanceId, face);
             face.classList.add('reward-pick');
             face.setAttribute('role', 'radio');
             face.setAttribute('aria-checked', String(isSelected));
-            face.classList.toggle('reward-selected', isSelected);
-            face.classList.toggle('is-chosen', isSelected);
+            face.classList.toggle(SELECTED_CLASS, isSelected);
+            face.classList.toggle(CHOSEN_CLASS, isSelected);
             face.addEventListener('click', () => selectCard(instance.instanceId));
             return face;
         }
@@ -1227,13 +1394,13 @@ export function MountRewards(appRoot, {
         function enterReview()
         {
             reviewing = true;
-            confirmButton.textContent = translate('common.continue');
+            confirmButton.textContent = translate(CONTINUE_LABEL_ID);
             backButton.textContent = translate('common.back');
             strip.setAttribute('aria-label', translate('reward.confirm'));
             for (const option of strip.children)
             {
-                option.hidden = !option.matches('.reward-selected')
-                    && !option.querySelector('.reward-selected')
+                option.hidden = !option.matches(`.${SELECTED_CLASS}`)
+                    && !option.querySelector(`.${SELECTED_CLASS}`)
                     && option.dataset.pickId !== selectedCardId;
             }
             for (const control of strip.querySelectorAll('button.reward-pick'))
@@ -1305,15 +1472,22 @@ export function MountRewards(appRoot, {
         renderMenu();
     }
 
-    // An older saved reward has no itemized receipt: show its paid total as one row.
     function compactReceiptRows()
     {
-        const total = Math.max(0, Math.floor(Number(rewards.xpGains?.level) || 0));
+        const paidLevel = Number(rewards.xpGains?.level) || 0;
+        const total = Math.max(0, Math.floor(paidLevel));
         const savedRows = rewards.xpReceipt?.rows;
         const isItemized = Array.isArray(savedRows)
             && savedRows.every((row) => Number.isSafeInteger(row.amount))
             && savedRows.reduce((sum, row) => sum + row.amount, 0) === total;
-        return isItemized ? savedRows : [{ kind: 'legacy', amount: total }];
+        return isItemized
+            ? savedRows
+            : [
+                {
+                    kind: 'legacy',
+                    amount: total,
+                },
+            ];
     }
 
     function renderCompactVictory()
@@ -1322,7 +1496,7 @@ export function MountRewards(appRoot, {
         const options = victoryXpPresentation(settings, isReducedMotion());
         const timing = victoryXpTiming(rows.length, options);
         const openButton = button({
-            label: translate('common.continue'),
+            label: translate(CONTINUE_LABEL_ID),
             weight: 'primary',
             id: 'reward-expand',
             className: 'reward-compact-continue',
@@ -1339,7 +1513,10 @@ export function MountRewards(appRoot, {
         const arithmetic = buildElement(
             'span',
             { class: 'reward-compact-arithmetic' },
-            [formula, moreButton],
+            [
+                formula,
+                moreButton,
+            ],
         );
         const value = buildElement('strong', {
             class: 'reward-compact-value',
@@ -1361,8 +1538,13 @@ export function MountRewards(appRoot, {
         rowList.style.setProperty('--receipt-rows', String(options.visibleRows));
         const modal = openDoor({
             eyebrow: '',
-            title: rewards.title || translate(TITLE_VICTORY_ID),
-            attrs: { dataset: { size: 'sm', victoryCompact: 'true' } },
+            title: victoryTitle(rewards),
+            attrs: {
+                dataset: {
+                    size: 'sm',
+                    victoryCompact: 'true',
+                },
+            },
             body: buildElement('div', { class: 'reward-compact-xp' }, [summary, rowList]),
             foot: modalFooter({
                 primary: openButton,
@@ -1370,17 +1552,22 @@ export function MountRewards(appRoot, {
                 size: FOOT_SIZE,
             }),
         });
-        const fullCalculation = () =>
+
+        function fullCalculation()
         {
             const { full } = victoryXpFormula(rows, rows.length, options.formulaTerms);
             return `<div class="tt-title">${FULL_CALCULATION_TITLE}</div>`
                 + `<div>${escapeHtml(full)}</div>`;
-        };
+        }
+
         const tooltipPlacement = {
             intent: 'above',
             align: 'end',
             clear: modal,
-            appearance: { maxWidthRem: 30, maxHeightRatio: 0.5 },
+            appearance: {
+                maxWidthRem: 30,
+                maxHeightRatio: 0.5,
+            },
         };
         attachTooltip(moreButton, fullCalculation, tooltipPlacement);
         moreButton.addEventListener('click', () =>
@@ -1390,9 +1577,13 @@ export function MountRewards(appRoot, {
         let ready = false;
         let shown = 0;
         const viewAtMount = doorView;
-        const isActive = () => modal.isConnected
-            && doorView === viewAtMount
-            && appRoot.querySelector('.reward-door') === modal;
+
+        function isActive()
+        {
+            return modal.isConnected
+                && doorView === viewAtMount
+                && appRoot.querySelector('.reward-door') === modal;
+        }
 
         function updateFormula()
         {
@@ -1434,48 +1625,48 @@ export function MountRewards(appRoot, {
             }
         }
 
-        const pauseFor = (milliseconds) => (
-            milliseconds > 0
-                ? new Promise((resolve) => setTimeout(resolve, milliseconds))
-                : Promise.resolve()
-        );
-
-        const countUp = (from, to, milliseconds, renderValue) => new Promise((resolve) =>
+        function countUp(from, to, milliseconds, renderValue)
         {
-            if (milliseconds <= 0)
+            return new Promise((resolve) =>
             {
-                renderValue(to);
-                resolve();
-                return;
-            }
-            const start = performance.now();
-            const frame = (now) =>
-            {
-                if (!isActive())
+                if (milliseconds <= 0)
                 {
+                    renderValue(to);
                     resolve();
                     return;
                 }
-                const fraction = Math.min(1, (now - start) / milliseconds);
-                renderValue(from + Math.round((to - from) * fraction));
-                if (fraction >= 1)
+                const start = performance.now();
+                const frame = (now) =>
                 {
-                    resolve();
-                }
-                else
-                {
-                    requestAnimationFrame(frame);
-                }
-            };
-            requestAnimationFrame(frame);
-        });
+                    if (!isActive())
+                    {
+                        resolve();
+                        return;
+                    }
+                    const fraction = Math.min(1, (now - start) / milliseconds);
+                    renderValue(from + Math.round((to - from) * fraction));
+                    if (fraction >= 1)
+                    {
+                        resolve();
+                    }
+                    else
+                    {
+                        requestAnimationFrame(frame);
+                    }
+                };
+                requestAnimationFrame(frame);
+            });
+        }
 
         function showRow(row, running)
         {
             const amount = addRow(row);
             return (next) =>
             {
-                amount.textContent = `${next < 0 ? MINUS : '+'}${Math.abs(next)}`;
+                const sign = next < 0
+                    ? MINUS
+                    : '+';
+                amount.textContent = `${sign}${Math.abs(next)}`;
                 value.textContent = `${running + next} XP`;
             };
         }
@@ -1540,7 +1731,8 @@ export function MountRewards(appRoot, {
         {
             appRoot.querySelector('.reward-veil')?.addEventListener('click', (event) =>
             {
-                const onControl = event.target === openButton || event.target === moreButton;
+                const onControl = event.target === openButton
+                    || event.target === moreButton;
                 if (ready && isActive() && !onControl)
                 {
                     expandVictory();
