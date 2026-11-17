@@ -47,7 +47,7 @@ import {
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { relicText, renderCard as renderCardFace, scheduleCardFits } from '../components/card.js';
 import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { RenderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
@@ -917,7 +917,7 @@ export function mountCustomize(app, {
       }
       renderCharacterPreview(); updateStartRefusal();
     };
-    const allocation = renderStatAllocationCard(app, {
+    const allocation = RenderStatAllocationCard(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,

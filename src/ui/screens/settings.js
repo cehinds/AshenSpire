@@ -23,7 +23,7 @@ import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { openModal, button, settingRowOpenHtml, settingLabelStackHtml } from '../kit/index.js';
-import { openConfirmationModal } from '../components/confirmationModal.js';
+import { OpenConfirmationModal } from '../components/confirmationModal.js';
 import { t, tFull } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
@@ -750,7 +750,7 @@ export function allResettableKeys(stored = {}) {
 
 /** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
 export function confirmResetAll(onConfirm, returnFocusElement = document.activeElement) {
-  return openConfirmationModal({
+  return OpenConfirmationModal({
     title: t('settings.resetAll.title'),
     message: tFull('settings.resetAll.title'),
     confirmLabel: t('settings.resetAll.confirm'),

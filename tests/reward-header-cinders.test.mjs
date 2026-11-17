@@ -24,5 +24,5 @@ test('the reward door syncs the header purse before it opens, after the reward-s
   const sync = src.indexOf('SyncHudCinders(app, run.cinders)', open);
   const mount = src.indexOf('mountGameProfileOfferDoor(pending', open);
   assert.ok(open > 0 && sync > open && sync < mount, 'the sync runs first in showGameProfileReward');
-  assert.ok(src.indexOf("from './ui/components/hudmeta.js'") > src.indexOf("import { mountRewards } from './ui/screens/reward.js'"), 'imported after reward.js');
+  assert.ok(src.indexOf("from './ui/components/hudmeta.js'") > src.indexOf("import { MountRewards } from './ui/screens/reward.js'"), 'imported after reward.js');
 });

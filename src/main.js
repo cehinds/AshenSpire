@@ -3,7 +3,7 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
-import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -101,7 +101,7 @@ import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
-import { mountRewards } from './ui/screens/reward.js';
+import { MountRewards } from './ui/screens/reward.js';
 // After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
 import { VictorySpoils } from './ui/components/victorySpoils.js';
 import { SyncHudCinders } from './ui/components/hudmeta.js';
@@ -131,7 +131,7 @@ import { shouldPlayPrologue, runSupportsPrologue, pendingPrologueScene, migrateP
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
-import { openConfirmationModal } from './ui/components/confirmationModal.js';
+import { OpenConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
 import { openNewerSaveNotice, openRefusedSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
 import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
@@ -950,7 +950,7 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     facts: summary ? slotFacts(summary) : null,
     seed: summary?.seedString ?? null,
   });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -993,7 +993,7 @@ function loadActiveSlot({ returnFocusElement } = {}) {
 }
 
 function quitWithoutSaving({ returnFocusElement } = {}) {
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: 'Quit without saving?',
     // W2e: the run this leaves, named the way its save slot names it.
     target: run ? runIdentity({
@@ -2512,7 +2512,7 @@ function showGameProfileReward() {
   const combined = !!(pending.victoryReceipt && !pending.noticeOnly && !pending.offerDone && pending.source === 'combat'
     && run.gameProfileRewardOffers?.[pending.offerId]);
   if (combined) return mountGameProfileOfferDoor(pending, { combined: true });
-  if (pending.victoryReceipt) return mountRewards(app, { registries, run,
+  if (pending.victoryReceipt) return MountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
     // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
@@ -2540,7 +2540,7 @@ function showGameProfileReward() {
     // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
     const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
     if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
-    else return mountRewards(app, { registries, run, saves, rng,
+    else return MountRewards(app, { registries, run, saves, rng,
       rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
       checkpoint: (pending.rankUpCheckpoint ||= {}),
       onPersist: persistContinuing,
@@ -2596,7 +2596,7 @@ function mountGameProfileOfferDoor(pending, { combined }) {
     settings, onPersist: persistContinuing,
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
   }) : null;
-  mountGameProfileOffers(app, { registries, run, settings, offer, spoils,
+  MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
     title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
     // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
     onTake: index => (offer.options[index]?.kind === 'rankUps'

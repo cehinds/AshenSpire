@@ -1,6 +1,6 @@
 import { skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
 import { el, button } from '../kit/index.js';
-import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
+import { ModalHead, ModalFooter, BindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
 import { renderBookArt } from './bookArt.js';
@@ -19,7 +19,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: UI.bookLearning } });
   const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
   activeClose = close;
-  const head = modalHead({ title: t('book.read.title', { name: plan.def?.name || id }), titleId: 'book-learning-title', onClose: close });
+  const head = ModalHead({ title: t('book.read.title', { name: plan.def?.name || id }), titleId: 'book-learning-title', onClose: close });
   const trackSelect = el('select', { id: 'book-learning-track', 'aria-label': t('book.read.track') });
   for (const track of plan.tracks) trackSelect.appendChild(el('option', { value: track.id, text: track.label }));
   trackSelect.value = plan.skillId || '';
@@ -84,9 +84,9 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
     el('p', { class: 'book-learning-rarity', text: t('book.read.rarity') }), search,
     el('div', { class: 'book-lesson-columns' }, [choices, detail]), error,
   ]);
-  panel.append(head, body, modalFooter({ secondary: [cancel], primary: confirm }));
+  panel.append(head, body, ModalFooter({ secondary: [cancel], primary: confirm }));
   veil.appendChild(panel); document.body.appendChild(veil);
-  release = bindModalDismiss({ veil, panel, close });
+  release = BindModalDismiss({ veil, panel, close });
   draw(); showDetail(); search.focus();
   return close;
 }
@@ -110,7 +110,7 @@ function showClassBookReceipt({ registries, def, receipt }) {
   }
   if (!receipt.bonuses.card) body.append(el('p', { text: t('book.read.noBonus') }));
   const done = button({ label: t('book.read.done') }); done.addEventListener('click', close);
-  panel.append(modalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, modalFooter({ primary: done }));
+  panel.append(ModalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, ModalFooter({ primary: done }));
   veil.append(panel); document.body.append(veil);
-  release = bindModalDismiss({ veil, panel, close }); done.focus();
+  release = BindModalDismiss({ veil, panel, close }); done.focus();
 }

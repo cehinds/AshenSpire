@@ -27,7 +27,7 @@ import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
 import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { el, prose, flavour, button } from '../kit/index.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
 
@@ -65,7 +65,7 @@ export function mountMountServiceModal(host, initialModel, {
   const count = el('p', { class: 'smith-pane-status as-flavor', role: 'status', dataset: { mountCount: '' } });
   const consequence = el('p', { class: 'as-flavor smith-consequence', id: 'mount-modal-consequence' });
   const listHost = el('div', { class: 'mount-service-list', role: 'listbox', 'aria-label': t('smith.items.mount') });
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'md',
     className: 'option-choice smith-upgrade-modal mount-service-modal',
     title: p0.title,

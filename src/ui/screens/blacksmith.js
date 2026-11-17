@@ -18,7 +18,7 @@
 import { servicePortrait } from '../components/servicePortrait.js';
 import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
-import { modalHead, modalFooter } from '../components/modalShell.js';
+import { ModalHead, ModalFooter } from '../components/modalShell.js';
 import { button, statusText, el, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
@@ -26,7 +26,7 @@ import { showRunReceipt } from '../components/whatChangedModal.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
-import { mountCardUpgradeModal } from '../components/cardUpgradeModal.js';
+import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { wireShopLayout } from './shop.js';
 import { arrangeMerchantOffer } from '../components/merchantOffer.js';
@@ -273,7 +273,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // The rows are priced as the Blacksmith charges (cinders, no stones), not as a rest site does.
     const quote = (instanceId) => { const p = upgradeArtPlan(registries, run, instanceId, { priceMult }); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
     const model = () => cardUpgradeModel(registries, run, selection, { quote, blacksmith: true });
-    const modal = mountCardUpgradeModal(app, model(), {
+    const modal = MountCardUpgradeModal(app, model(), {
       registries, meta, returnFocusElement, focusInstanceId,
       // A confirmed upgrade lands back on this list, refreshed (modalReturn.js); Back names the Blacksmith, not the Shrine.
       parent: { place: t('common.place.blacksmith'), reopen: (focus) => {
@@ -325,7 +325,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const stonesHeld = run.smithingStones || 0;
     // Core has no refining, so its purse never names refined stones.
     const purse = t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
-    frame.prepend(modalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: statusText(purse, { class: 'modal-head-status' }) }));
+    frame.prepend(ModalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: statusText(purse, { class: 'modal-head-status' }) }));
 
     const idle = {};
     for (const key of categories) {
@@ -357,7 +357,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const leave = button({ label: t('blacksmith.leave'), role: 'exit', id: 'leave-shop' });
     leave.addEventListener('click', onLeave);
     const footHost = el('div', { class: 'shop-foot-host' });
-    footHost.append(modalFooter({ secondary: [leave], primary: null, className: 'shop-foot' }));
+    footHost.append(ModalFooter({ secondary: [leave], primary: null, className: 'shop-foot' }));
     frame.appendChild(footHost);
 
     function paint() {

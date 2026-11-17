@@ -67,13 +67,13 @@ try {
  await send('Page.enable');await send('Runtime.enable');
  const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
  await send('Page.navigate',{url:'http://localhost:8402/index.html?shot=combat'});for(let i=0;i<150;i++){if(await ev('!!document.querySelector("#combat-menu")'))break;await wait(100);}
- await ev('(async()=>{const {openModal}=await import("/src/ui/components/modalShell.js");window.baseDialog=openModal({tabs:[{id:"settings",label:"Settings",selected:true},{id:"controls",label:"Controls"}],showMenuButton:false,onTab:id=>window.chosenTab=id,body:el=>el.textContent="Modal keyboard regression"});})()');await wait(300);
+ await ev('(async()=>{const {OpenModal}=await import("/src/ui/components/modalShell.js");window.baseDialog=OpenModal({tabs:[{id:"settings",label:"Settings",selected:true},{id:"controls",label:"Controls"}],showMenuButton:false,onTab:id=>window.chosenTab=id,body:el=>el.textContent="Modal keyboard regression"});})()');await wait(300);
  const key=async(key,code,modifiers=0)=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers});};
  const results=[];
  await ev('document.querySelector(".modal-tab").focus()');
  await key('ArrowRight','ArrowRight');
  results.push({name:'arrow activates next tab',pass:await ev('document.activeElement?.textContent.trim()==="Controls" && document.activeElement.getAttribute("aria-selected")==="true"')});
- await ev('(async()=>{const {openModal}=await import("/src/ui/components/modalShell.js");window.polishDialog=openModal({title:"Keyboard check",body:el=>{el.innerHTML="<button id=first>First</button><button disabled>Disabled</button><button hidden>Hidden</button><button id=last>Last</button>"}});})()');
+ await ev('(async()=>{const {OpenModal}=await import("/src/ui/components/modalShell.js");window.polishDialog=OpenModal({title:"Keyboard check",body:el=>{el.innerHTML="<button id=first>First</button><button disabled>Disabled</button><button hidden>Hidden</button><button id=last>Last</button>"}});})()');
  await ev('document.querySelector("#last").focus()');await key('Tab','Tab');
  results.push({name:'Tab wraps to close',pass:await ev('document.activeElement===window.polishDialog.panel.querySelector(".modal-close")')});
  await key('Tab','Tab',8);results.push({name:'Shift Tab wraps to last visible control',pass:await ev('document.activeElement.id==="last"')});

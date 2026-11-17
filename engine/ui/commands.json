@@ -198,22 +198,22 @@
     },
     "reward.allocateStat": {
       "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards.onAllocateStat",
+      "handler": "src/ui/screens/reward.js#MountRewards.onAllocateStat",
       "description": "Spend a stat point from the reward screen."
     },
     "reward.claim": {
       "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards",
+      "handler": "src/ui/screens/reward.js#MountRewards",
       "description": "Claim the chosen reward offer."
     },
     "reward.done": {
       "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards.onDone",
+      "handler": "src/ui/screens/reward.js#MountRewards.onDone",
       "description": "Finish the reward screen."
     },
     "reward.skip": {
       "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards",
+      "handler": "src/ui/screens/reward.js#MountRewards",
       "description": "Skip a reward offer."
     },
     "run.continue": {

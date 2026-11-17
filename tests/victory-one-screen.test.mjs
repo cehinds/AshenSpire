@@ -5,9 +5,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { rewardDom } from './helpers/dom.mjs';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { VictorySpoils } from '../src/ui/components/victorySpoils.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 
 const p = resolveGameProfile('core'), reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
 
@@ -29,7 +29,7 @@ test('the combined door carries the title, "Cinders +N (total)" and the offer on
     const app = document.createElement('main'); document.body.append(app);
     const offer = { id: 'one', options: [{ kind: 'combatCards', id: 'core.strike' }], taken: [], claimed: null, takeCount: 1 };
     const spoils = VictorySpoils(reg, run, receipt(), {});
-    mountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', spoils, onTake() {}, onContinue() {} });
+    MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', spoils, onTake() {}, onContinue() {} });
     assert.equal(app.querySelectorAll('.reward-door').length, 1, 'one door');
     assert.equal(app.querySelector('.reward-door').getAttribute('aria-label'), 'VICTORY');
     assert.match(app.querySelector('.spoils-cinders').textContent, /^Cinders \+58 \(78\)$/);
@@ -62,7 +62,7 @@ test('Add to deck, Add to library and a relic Confirm leave without a Continue p
       const offer = { id: `o-${kind}-${button}`, options: [{ kind, id }], taken: [], claimed: null, takeCount: 1 };
       const calls = [];
       const claim = i => { calls.push('claim'); offer.taken.push(i); offer.claimed = i; };
-      mountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake: claim, onAddToDeck: claim, addRefusal: () => '', onContinue() { calls.push('continue'); } });
+      MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake: claim, onAddToDeck: claim, addRefusal: () => '', onContinue() { calls.push('continue'); } });
       app.querySelector('.reward-pick').click();
       app.querySelector(button).click(); await settle();
       assert.deepEqual(calls, ['claim', 'continue'], `${kind} ${button}: two clicks (select + take) reach what follows`);
@@ -77,7 +77,7 @@ test('a weapon keeps the review foot (Equip now / Continue)', async () => {
     const app = document.createElement('main'); document.body.append(app);
     const offer = { id: 'wep', options: [{ kind: 'weapons', id: reg.equipment.armaments[0].id }], taken: [], claimed: null, takeCount: 1 };
     const calls = [];
-    mountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', canEditEquipment: true, onEditEquipment() {}, onTake: i => { calls.push('claim'); offer.taken.push(i); offer.claimed = i; }, onContinue() { calls.push('continue'); } });
+    MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', canEditEquipment: true, onEditEquipment() {}, onTake: i => { calls.push('claim'); offer.taken.push(i); offer.claimed = i; }, onContinue() { calls.push('continue'); } });
     app.querySelector('.reward-pick').click(); app.querySelector('#reward-card-confirm').click(); await settle();
     assert.deepEqual(calls, [], 'Confirm only opens the review');
     assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
@@ -91,7 +91,7 @@ test('Skip then "Leave it" is two clicks', async () => {
     const app = document.createElement('main'); document.body.append(app);
     const offer = { id: 'skip', options: [{ kind: 'combatCards', id: 'core.strike' }], taken: [], claimed: null, takeCount: 1 };
     let exits = 0;
-    mountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake() { throw new Error('never'); }, onContinue() { exits++; } });
+    MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake() { throw new Error('never'); }, onContinue() { exits++; } });
     app.querySelector('#reward-continue').click();
     document.querySelector('.confirmation-confirm').click();
     assert.equal(exits, 1);
@@ -119,7 +119,7 @@ test('a receipt without an offer still mounts the receipt screen, with the cinde
     const run = { class: 'reaver', deck: [], cinders: 78, level: { level: 1, xp: 22 }, attributes: {} };
     const app = document.createElement('main'); document.body.append(app);
     let done = 0;
-    mountRewards(app, { registries: reg, run, rewards: receipt(), receiptOnly: true, onDone() { done++; } });
+    MountRewards(app, { registries: reg, run, rewards: receipt(), receiptOnly: true, onDone() { done++; } });
     assert.equal(app.querySelectorAll('.reward-door').length, 1);
     assert.match(text(app), /Cinders \+58 \(78\)/);
     assert.ok(app.querySelector('#reward-continue'));
