@@ -1,0 +1,775 @@
+{
+  "request": "Unify 7 choice dialogs on one shared choice modal (OpenChoiceModal): the combat reaction prompt, the combat discard choice and the Armoury equip-slot choice gain the as-pane card-choice-body body and the short footer; the Blacksmith keep-properties dialog drops its empty price line and a tapped row takes focus; Blacksmith options, rank-up card pick and card-choice dialogs look unchanged.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "reaction-prompt",
+      "url": "?shot=combat&shotSeed=4&shotReaction=counter",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.end-turn"
+        },
+        {
+          "wait": {
+            "ms": 2500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Reaction prompt dialog is on screen",
+          "selector": ".modal.reaction-choice"
+        },
+        {
+          "kind": "count",
+          "label": "Reaction prompt body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.reaction-choice .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Reaction prompt footer is the short button row",
+          "selector": ".modal.reaction-choice .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Reaction prompt footer has two buttons",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Reaction prompt secondary footer button is inside the panel",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.reaction-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Reaction prompt primary footer button is inside the panel",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button.primary",
+          "container": ".modal.reaction-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Reaction prompt secondary button is not clipped by its footer row",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.reaction-choice .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Reaction prompt primary button is not clipped by its footer row",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button.primary",
+          "container": ".modal.reaction-choice .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Reaction prompt footer buttons do not overlap",
+          "a": ".modal.reaction-choice .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.reaction-choice .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Reaction prompt panel stays inside the viewport veil",
+          "selector": ".modal.reaction-choice",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "text",
+          "label": "Reaction secondary button reads Skip",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button:not(.primary)",
+          "matches": "^Skip$"
+        },
+        {
+          "kind": "text",
+          "label": "Reaction primary button reads Play",
+          "selector": ".modal.reaction-choice .modal-foot-actions > button.primary",
+          "matches": "^Play$"
+        },
+        {
+          "kind": "count",
+          "label": "Guard Counter is offered as a reaction row",
+          "selector": ".modal.reaction-choice [data-reaction-option]",
+          "min": 1
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Reaction prompt footer is still the old medium row",
+          "selector": ".modal.reaction-choice .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Reaction prompt body lacks the shared option pane",
+          "selector": ".modal.reaction-choice .modal-body.card-choice-body",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "armoury-slot-choice",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-armaments",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#shop-cat-armaments"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": "button.merchant-offer-action:visible:has-text(\"Buy\")"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": ".what-changed-modal .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".shop-buy-choice .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Equip-slot choice dialog is on screen",
+          "selector": ".modal.equip-slot-choice"
+        },
+        {
+          "kind": "count",
+          "label": "Equip-slot choice body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.equip-slot-choice .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Equip-slot choice footer is the short button row",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Equip-slot choice footer has two buttons",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Equip-slot choice secondary footer button is inside the panel",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.equip-slot-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Equip-slot choice primary footer button is inside the panel",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions > button.primary",
+          "container": ".modal.equip-slot-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Equip-slot choice secondary button is not clipped by its footer row",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.equip-slot-choice .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Equip-slot choice primary button is not clipped by its footer row",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions > button.primary",
+          "container": ".modal.equip-slot-choice .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Equip-slot choice footer buttons do not overlap",
+          "a": ".modal.equip-slot-choice .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.equip-slot-choice .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Equip-slot choice panel stays inside the viewport veil",
+          "selector": ".modal.equip-slot-choice",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "Two slot rows are offered",
+          "selector": ".modal.equip-slot-choice [data-slot-option]",
+          "eq": 2
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Equip-slot choice footer is still the old medium row",
+          "selector": ".modal.equip-slot-choice .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Equip-slot choice body lacks the shared option pane",
+          "selector": ".modal.equip-slot-choice .modal-body.card-choice-body",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "smith-options",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-upgrade",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.merchant-offer-action:has-text(\"Upgrade\")"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Smith options dialog is on screen",
+          "selector": ".modal.smith-options"
+        },
+        {
+          "kind": "count",
+          "label": "Smith options body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.smith-options .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Smith options footer is the short button row",
+          "selector": ".modal.smith-options .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Smith options footer has two buttons",
+          "selector": ".modal.smith-options .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Smith options secondary footer button is inside the panel",
+          "selector": ".modal.smith-options .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.smith-options"
+        },
+        {
+          "kind": "within",
+          "label": "Smith options primary footer button is inside the panel",
+          "selector": ".modal.smith-options .modal-foot-actions > button.primary",
+          "container": ".modal.smith-options"
+        },
+        {
+          "kind": "within",
+          "label": "Smith options secondary button is not clipped by its footer row",
+          "selector": ".modal.smith-options .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.smith-options .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Smith options primary button is not clipped by its footer row",
+          "selector": ".modal.smith-options .modal-foot-actions > button.primary",
+          "container": ".modal.smith-options .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Smith options footer buttons do not overlap",
+          "a": ".modal.smith-options .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.smith-options .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Smith options panel stays inside the viewport veil",
+          "selector": ".modal.smith-options",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "Upgrade options are listed",
+          "selector": ".modal.smith-options [data-smith-option]",
+          "min": 2
+        },
+        {
+          "kind": "text",
+          "label": "Price line is shown",
+          "selector": ".modal.smith-options .smith-options-price",
+          "matches": "Smithing Stone"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Smith options footer is still the old medium row",
+          "selector": ".modal.smith-options .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Smith options body lacks the shared option pane",
+          "selector": ".modal.smith-options .modal-body.card-choice-body",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "Empty price line present",
+          "selector": ".modal.smith-options p.smith-options-price:empty",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "smith-keep",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-upgrade",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.merchant-offer-action:has-text(\"Upgrade\")"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".smith-options [data-smith-option]"
+        },
+        {
+          "click": ".smith-options .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": ".what-changed-modal .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": "button.merchant-offer-action:has-text(\"Change type\")"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".smith-options [data-smith-option=\"greatsword\"]"
+        },
+        {
+          "click": ".smith-options .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1000
+          }
+        },
+        {
+          "click": ".smith-keep [data-smith-keep]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Keep-properties dialog is on screen",
+          "selector": ".modal.smith-keep"
+        },
+        {
+          "kind": "count",
+          "label": "Keep-properties body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.smith-keep .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Keep-properties footer is the short button row",
+          "selector": ".modal.smith-keep .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Keep-properties footer has two buttons",
+          "selector": ".modal.smith-keep .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Keep-properties secondary footer button is inside the panel",
+          "selector": ".modal.smith-keep .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.smith-keep"
+        },
+        {
+          "kind": "within",
+          "label": "Keep-properties primary footer button is inside the panel",
+          "selector": ".modal.smith-keep .modal-foot-actions > button.primary",
+          "container": ".modal.smith-keep"
+        },
+        {
+          "kind": "within",
+          "label": "Keep-properties secondary button is not clipped by its footer row",
+          "selector": ".modal.smith-keep .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.smith-keep .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Keep-properties primary button is not clipped by its footer row",
+          "selector": ".modal.smith-keep .modal-foot-actions > button.primary",
+          "container": ".modal.smith-keep .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Keep-properties footer buttons do not overlap",
+          "a": ".modal.smith-keep .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.smith-keep .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Keep-properties panel stays inside the viewport veil",
+          "selector": ".modal.smith-keep",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "An old property row is offered",
+          "selector": ".modal.smith-keep [data-smith-keep]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "The tapped property row has focus",
+          "selector": ".modal.smith-keep [data-smith-keep]:focus",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one price line",
+          "selector": ".modal.smith-keep .smith-options-price",
+          "eq": 1
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Keep-properties footer is still the old medium row",
+          "selector": ".modal.smith-keep .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Keep-properties body lacks the shared option pane",
+          "selector": ".modal.smith-keep .modal-body.card-choice-body",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "Empty price line present",
+          "selector": ".modal.smith-keep p.smith-options-price:empty",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "rank-up-pick",
+      "url": "?shot=reward&shotPool=elite&shotSeed=1",
+      "ready": "button.reward-pick",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.reward-pick[data-pick-id=\"3\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": "button.reward-confirm"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Rank-up card pick dialog is on screen",
+          "selector": ".modal.rank-up-pick"
+        },
+        {
+          "kind": "count",
+          "label": "Rank-up card pick body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.rank-up-pick .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Rank-up card pick footer is the short button row",
+          "selector": ".modal.rank-up-pick .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Rank-up card pick footer has two buttons",
+          "selector": ".modal.rank-up-pick .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Rank-up card pick secondary footer button is inside the panel",
+          "selector": ".modal.rank-up-pick .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.rank-up-pick"
+        },
+        {
+          "kind": "within",
+          "label": "Rank-up card pick primary footer button is inside the panel",
+          "selector": ".modal.rank-up-pick .modal-foot-actions > button.primary",
+          "container": ".modal.rank-up-pick"
+        },
+        {
+          "kind": "within",
+          "label": "Rank-up card pick secondary button is not clipped by its footer row",
+          "selector": ".modal.rank-up-pick .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.rank-up-pick .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Rank-up card pick primary button is not clipped by its footer row",
+          "selector": ".modal.rank-up-pick .modal-foot-actions > button.primary",
+          "container": ".modal.rank-up-pick .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Rank-up card pick footer buttons do not overlap",
+          "a": ".modal.rank-up-pick .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.rank-up-pick .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Rank-up card pick panel stays inside the viewport veil",
+          "selector": ".modal.rank-up-pick",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "Rankable cards are listed",
+          "selector": ".modal.rank-up-pick [data-rank-up-card]",
+          "min": 1
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Rank-up card pick footer is still the old medium row",
+          "selector": ".modal.rank-up-pick .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Rank-up card pick body lacks the shared option pane",
+          "selector": ".modal.rank-up-pick .modal-body.card-choice-body",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "card-choice-upcast",
+      "url": "?shot=combat&shotSeed=4&shotExpansion=1&shotSettings=%7B%22askToUpcastAfterTarget%22%3Atrue%7D",
+      "ready": ".hand .card[data-card-id=\"emberDart\"]",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "key": "1"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".enemy-pose-stage"
+        },
+        {
+          "wait": {
+            "ms": 1000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Card choice dialog is on screen",
+          "selector": ".modal.card-choice"
+        },
+        {
+          "kind": "count",
+          "label": "Card choice body is the shared option pane (as-pane card-choice-body)",
+          "selector": ".modal.card-choice .modal-body.as-pane.card-choice-body",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Card choice footer is the short button row",
+          "selector": ".modal.card-choice .modal-foot-actions[data-authored-size=\"short\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Card choice footer has two buttons",
+          "selector": ".modal.card-choice .modal-foot-actions > button",
+          "eq": 2
+        },
+        {
+          "kind": "within",
+          "label": "Card choice secondary footer button is inside the panel",
+          "selector": ".modal.card-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.card-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Card choice primary footer button is inside the panel",
+          "selector": ".modal.card-choice .modal-foot-actions > button.primary",
+          "container": ".modal.card-choice"
+        },
+        {
+          "kind": "within",
+          "label": "Card choice secondary button is not clipped by its footer row",
+          "selector": ".modal.card-choice .modal-foot-actions > button:not(.primary)",
+          "container": ".modal.card-choice .modal-foot-actions"
+        },
+        {
+          "kind": "within",
+          "label": "Card choice primary button is not clipped by its footer row",
+          "selector": ".modal.card-choice .modal-foot-actions > button.primary",
+          "container": ".modal.card-choice .modal-foot-actions"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Card choice footer buttons do not overlap",
+          "a": ".modal.card-choice .modal-foot-actions > button:not(.primary)",
+          "b": ".modal.card-choice .modal-foot-actions > button.primary"
+        },
+        {
+          "kind": "within",
+          "label": "Card choice panel stays inside the viewport veil",
+          "selector": ".modal.card-choice",
+          "container": ".modal-veil"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "Upcast tiers are listed",
+          "selector": ".modal.card-choice [data-choice]",
+          "min": 2
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Card choice footer is still the old medium row",
+          "selector": ".modal.card-choice .modal-foot-actions[data-authored-size=\"medium\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Card choice body lacks the shared option pane",
+          "selector": ".modal.card-choice .modal-body.card-choice-body",
+          "eq": 0
+        }
+      ]
+    }
+  ]
+}
