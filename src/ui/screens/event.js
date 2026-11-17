@@ -20,7 +20,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
-import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
+import { el, modalFooter, prose, options, optionCard, button } from '../kit/index.js';
 import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
@@ -74,13 +74,17 @@ export function mountEvent(app, opts) {
   if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
   const screen = el('div', { class: 'screen event-screen room-screen' });
   app.appendChild(screen);
-  screen.appendChild(scenePainting('event'));
+  // The image is the event's own art when it has one, large at the top (owner, 2026-11-17: at least half the
+  // height); otherwise the event scene painting. The body no longer repeats it in a small art well.
+  const painting = scenePainting('event');
+  if (eventArt) painting.querySelector('img').src = assetUrl(eventArt);
+  painting.dataset.eventArt = eventArt ? 'event' : 'scene';
+  screen.appendChild(painting);
   const door = mountChoiceBody(screen, {
     className: 'event-door',
     // No "EVENT" eyebrow (owner, 2026-11-17): the title alone heads the door.
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
-      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || 'relic' }),
       prose(def.text),
     ]),
     consequences: el('div', { class: 'choice-body-responses event-responses' },
