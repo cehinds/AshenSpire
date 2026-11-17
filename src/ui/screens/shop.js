@@ -48,7 +48,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   if (hud) {
     const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
     app.append(...band.childNodes);
-    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud }) });
+    wireRunHud(app, { ...hud, registries, run, meta });
   }
   const root = el('div', { class: 'screen room-screen shop-workspace merchant-workspace', dataset: { wireframe: 'W1d', shopRail: 'dock' } });
   const paneHead = el('div', { class: 'as-pane-head shop-pane-head' });
