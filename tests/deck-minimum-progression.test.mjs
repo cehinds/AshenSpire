@@ -149,6 +149,14 @@ test('the Armoury floor and the ladder follow the deck-size settings the editor 
   assert.equal(row.grants.find((g) => g.kind === 'deckMinimumDown').amount, 13);
 });
 
+test('the ladder shows a deck minimum grant only if the minimum actually falls', async () => {
+  const { characterLadder } = await import('../src/ui/models/CharacterSheetModel.js');
+  const deckMinimumGrants = (settings) => characterLadder(registries, make(), undefined, settings).rows
+    .flatMap(({ level, grants }) => grants.filter(({ kind }) => kind === 'deckMinimumDown').map(({ amount }) => [level, amount]));
+  assert.deepEqual(deckMinimumGrants({ deckMinUnlimited: true }), []);
+  assert.deepEqual(deckMinimumGrants({ deckMinSize: 2 }), [[4, 1]]);
+});
+
 // Owner, 2026-11-17 (decision on #2815): relics and levels may take the minimum below 8; only the hard safety
 // floor of 1 holds, so a deck is never empty. A player's own lower setting is kept as set.
 test('relics and levels may go below 8; the safety floor of 1 keeps a deck from ever being empty', async () => {

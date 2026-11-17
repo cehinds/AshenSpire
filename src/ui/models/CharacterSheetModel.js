@@ -87,6 +87,7 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, 
   const rules = run && run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rules;
   const classDef = rules && registries.classes && typeof registries.classes.get === 'function' ? registries.classes.get(run.class) : null;
   const floorAt = (level) => deckMinimum(registries, { level: { level } });
+  const coreFloorAt = (level) => CoreDeckMinimum({ ...run, level: { ...run.level, level } }, settings);
   // Core (owner, 2026-11-17): the sheet lists what a claimed level really pays — the authored points,
   // the pools at that level (the odd-level class bonus included), the class bonus itself, the deck
   // minimum dropping, and the level's card choice. No feat or class-tree pick is offered there.
@@ -114,7 +115,10 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, 
         }
       }
       if (core) {
-        if (deckRules.minimumReductionLevels.includes(level)) grants.push({ kind: 'deckMinimumDown', amount: CoreDeckMinimum({ ...run, level: { ...(run.level || {}), level } }, settings) });
+        if (deckRules.minimumReductionLevels.includes(level)) {
+          const minimum = coreFloorAt(level);
+          if (minimum < coreFloorAt(level - 1)) grants.push({ kind: 'deckMinimumDown', amount: minimum });
+        }
         grants.push({ kind: 'levelCard' });
         rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
         continue;
