@@ -1,11 +1,9 @@
-// The shared themed confirmation dialog; nothing commits until the primary button.
 import { t as translate } from '../strings.js';
 import { UI_COMPONENTS, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el as buildElement, prose, stampModalSize } from '../kit/index.js';
 import { registerModal, topModal } from '../modalState.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 
-let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
 export const CONFIRMATION_INPUT_SHIELD_MS = 600;
 
@@ -61,7 +59,9 @@ const SELECTOR = Object.freeze({
     pickedOption: '[aria-checked="true"]',
 });
 
-function classWhen(baseClass, condition, extraClass)
+let closeActiveConfirmation = null;
+
+function appendClassWhen(baseClass, condition, extraClass)
 {
     return condition ? `${baseClass} ${extraClass}` : baseClass;
 }
@@ -80,18 +80,34 @@ function isLiveTabStop(control)
     );
 }
 
-function liveDetailsTabStops(detailsPanel)
+function findLiveDetailsTabStops(detailsPanel)
 {
     const detailsControls = [...detailsPanel.querySelectorAll(SELECTOR.detailsTabStops)];
     return detailsControls.filter(isLiveTabStop);
 }
 
-function focusControl(control)
+function focusWithoutScrolling(control)
 {
     control.focus({ preventScroll: true });
 }
 
-function makeButton({ className, label })
+function findAnswerButton(eventTarget)
+{
+    const canQuery = typeof eventTarget?.closest === 'function';
+    return canQuery
+        ? eventTarget.closest(SELECTOR.answers)
+        : null;
+}
+
+function isRepeatClick(event)
+{
+    return (
+        event.type === EVENT.click
+        && Number(event.detail) > 1
+    );
+}
+
+function buildButton({ className, label })
 {
     const button = document.createElement('button');
     button.type = 'button';
@@ -100,44 +116,101 @@ function makeButton({ className, label })
     return button;
 }
 
-function holdNavigationInputShield({ veil, durationMs })
+function buildVeil()
+{
+    const veil = document.createElement('div');
+    veil.className = CLASS.veil;
+    return veil;
+}
+
+function buildDialog({ isDanger, component, tone })
+{
+    const dialog = document.createElement('section');
+    dialog.className = appendClassWhen(
+        CLASS.dialog,
+        isDanger,
+        CLASS.danger,
+    );
+    stampModalSize(dialog, MODAL_SIZE);
+    ModalModelFor('confirm').apply(dialog);
+    const dialogRole = isDanger
+        ? 'alertdialog'
+        : 'dialog';
+    dialog.setAttribute('role', dialogRole);
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', ELEMENT_ID.dialogTitle);
+    dialog.setAttribute('aria-describedby', ELEMENT_ID.copy);
+    dialog.tabIndex = -1;
+    markUiComponent(dialog, component, tone);
+    return dialog;
+}
+
+function buildTargetLine(target)
+{
+    if (!target)
+    {
+        return null;
+    }
+    return buildElement(
+        'p',
+        {
+            class: CLASS.target,
+            id: ELEMENT_ID.target,
+        },
+        String(target),
+    );
+}
+
+function buildDetailsPanel({ detailsHtml, detailsNode })
+{
+    const detailsPanel = document.createElement('div');
+    detailsPanel.className = CLASS.details;
+    detailsPanel.hidden = !detailsHtml && !detailsNode;
+    if (detailsHtml)
+    {
+        detailsPanel.innerHTML = detailsHtml;
+    }
+    if (detailsNode)
+    {
+        detailsPanel.append(detailsNode);
+    }
+    return detailsPanel;
+}
+
+function buildCancelButton(cancelLabel)
+{
+    const cancelButton = buildButton({
+        className: CLASS.cancel,
+        label: cancelLabel,
+    });
+    markUiComponent(cancelButton, UI_COMPONENTS.confirmationCancel, 'neutral');
+    return cancelButton;
+}
+
+function buildConfirmButton({
+    confirmLabel,
+    isDanger,
+    confirmEnabled,
+    tone,
+})
+{
+    const confirmButton = buildButton({
+        className: appendClassWhen(CLASS.confirm, isDanger, CLASS.confirmDanger),
+        label: confirmLabel,
+    });
+    confirmButton.hidden = !confirmEnabled;
+    markUiComponent(confirmButton, UI_COMPONENTS.confirmationAction, tone);
+    return confirmButton;
+}
+
+function markVeilAsInputShield(veil)
 {
     veil.className += ` ${CLASS.inputShield}`;
     veil.setAttribute('aria-hidden', 'true');
+}
 
-    let timer = null;
-    let released = false;
-    const release = () =>
-    {
-        if (released)
-        {
-            return;
-        }
-        released = true;
-        if (timer != null)
-        {
-            clearTimeout(timer);
-        }
-        SHIELD_EVENTS.forEach((type) =>
-        {
-            veil.removeEventListener(type, consume, true);
-        });
-        KEY_EVENTS.forEach((type) =>
-        {
-            window.removeEventListener(type, consume, true);
-        });
-        veil.remove();
-    };
-    const consume = (event) =>
-    {
-        event.preventDefault?.();
-        event.stopImmediatePropagation?.();
-        // A second click can land on the shield after the button is gone; release then.
-        if (event.type === EVENT.click && Number(event.detail) > 1)
-        {
-            queueMicrotask(release);
-        }
-    };
+function addInputShieldListeners(veil, consume)
+{
     SHIELD_EVENTS.forEach((type) =>
     {
         veil.addEventListener(type, consume, true);
@@ -146,11 +219,55 @@ function holdNavigationInputShield({ veil, durationMs })
     {
         window.addEventListener(type, consume, true);
     });
+}
+
+function removeInputShieldListeners(veil, consume)
+{
+    SHIELD_EVENTS.forEach((type) =>
+    {
+        veil.removeEventListener(type, consume, true);
+    });
+    KEY_EVENTS.forEach((type) =>
+    {
+        window.removeEventListener(type, consume, true);
+    });
+}
+
+function holdNavigationInputShield({ veil, durationMs })
+{
+    markVeilAsInputShield(veil);
+
+    let releaseTimer = null;
+    let released = false;
+    const release = () =>
+    {
+        if (released)
+        {
+            return;
+        }
+        released = true;
+        if (releaseTimer != null)
+        {
+            clearTimeout(releaseTimer);
+        }
+        removeInputShieldListeners(veil, consume);
+        veil.remove();
+    };
+    const consume = (event) =>
+    {
+        event.preventDefault?.();
+        event.stopImmediatePropagation?.();
+        if (isRepeatClick(event))
+        {
+            queueMicrotask(release);
+        }
+    };
+    addInputShieldListeners(veil, consume);
 
     const armRelease = () =>
     {
         const delayMs = Math.max(0, Number(durationMs) || 0);
-        timer = setTimeout(release, delayMs);
+        releaseTimer = setTimeout(release, delayMs);
     };
     const afterDestinationPaint = () =>
     {
@@ -171,7 +288,7 @@ function holdNavigationInputShield({ veil, durationMs })
 
 export function CloseConfirmationModal({ restoreFocus = false } = {})
 {
-    activeClose?.({ restoreFocus });
+    closeActiveConfirmation?.({ restoreFocus });
 }
 
 export function OpenConfirmationModal({
@@ -196,105 +313,35 @@ export function OpenConfirmationModal({
     CloseConfirmationModal();
 
     const isDanger = tone === TONE_DANGER;
-    const veil = document.createElement('div');
-    veil.className = CLASS.veil;
-
-    const dialog = document.createElement('section');
-    dialog.className = classWhen(
-        CLASS.dialog,
+    const veil = buildVeil();
+    const dialog = buildDialog({
         isDanger,
-        CLASS.danger,
-    );
-    stampModalSize(dialog, MODAL_SIZE);
-    ModalModelFor('confirm').apply(dialog);
-    const dialogRole = isDanger
-        ? 'alertdialog'
-        : 'dialog';
-    dialog.setAttribute('role', dialogRole);
-    dialog.setAttribute('aria-modal', 'true');
-    dialog.setAttribute('aria-labelledby', ELEMENT_ID.dialogTitle);
-    dialog.setAttribute('aria-describedby', ELEMENT_ID.copy);
-    dialog.tabIndex = -1;
-    markUiComponent(dialog, component, tone);
-
-    const header = modalHead({
-        eyebrow: consequence,
-        title: title || 'Confirm action',
-        titleId: ELEMENT_ID.dialogTitle,
-        closeLabel: cancelLabel,
-        onClose: () => cancel(),
+        component,
+        tone,
     });
-    header.querySelector?.(SELECTOR.modalClose)?.classList.add(CLASS.close);
-    header.querySelector?.(SELECTOR.modalEyebrow)?.classList.add(CLASS.eyebrowTag);
-
-    const targetLine = target
-        ? buildElement(
-            'p',
-            {
-                class: CLASS.target,
-                id: ELEMENT_ID.target,
-            },
-            String(target),
-        )
-        : null;
+    const header = buildHeader();
+    const targetLine = buildTargetLine(target);
     if (targetLine)
     {
         const describedBy = `${ELEMENT_ID.target} ${ELEMENT_ID.copy}`;
         dialog.setAttribute('aria-describedby', describedBy);
     }
-    const messageNode = prose(message || '', {
+    const messageCopy = prose(message || '', {
         id: ELEMENT_ID.copy,
         class: CLASS.copy,
     });
-
-    const detailsPanel = document.createElement('div');
-    detailsPanel.className = CLASS.details;
-    detailsPanel.hidden = !detailsHtml && !detailsNode;
-    if (detailsHtml)
-    {
-        detailsPanel.innerHTML = detailsHtml;
-    }
-    if (detailsNode)
-    {
-        detailsPanel.append(detailsNode);
-    }
-
-    const cancelButton = makeButton({
-        className: CLASS.cancel,
-        label: cancelLabel,
+    const detailsPanel = buildDetailsPanel({
+        detailsHtml,
+        detailsNode,
     });
-    markUiComponent(cancelButton, UI_COMPONENTS.confirmationCancel, 'neutral');
-
-    const confirmButton = makeButton({
-        className: classWhen(CLASS.confirm, isDanger, CLASS.confirmDanger),
-        label: confirmLabel,
+    const cancelButton = buildCancelButton(cancelLabel);
+    const confirmButton = buildConfirmButton({
+        confirmLabel,
+        isDanger,
+        confirmEnabled,
+        tone,
     });
-    confirmButton.hidden = !confirmEnabled;
-    markUiComponent(confirmButton, UI_COMPONENTS.confirmationAction, tone);
-
-    const footer = modalFooter({
-        secondary: [cancelButton],
-        primary: confirmButton,
-        className: CLASS.footer,
-        size: FOOTER_SIZE,
-    });
-    const bodyPanel = buildElement(
-        'div',
-        {
-            class: CLASS.bodyPanel,
-        },
-        [targetLine, messageNode, detailsPanel],
-    );
-    const bodyNode = buildElement(
-        'div',
-        {
-            class: CLASS.body,
-        },
-        bodyPanel,
-    );
-    dialog.append(header, bodyNode, footer);
-    veil.appendChild(dialog);
-    document.body.appendChild(veil);
+    mountDialog();
 
     const unregisterModal = registerModal('confirmation', dialog);
     let closed = false;
@@ -317,9 +364,9 @@ export function OpenConfirmationModal({
         {
             veil.remove();
         }
-        if (activeClose === close)
+        if (closeActiveConfirmation === close)
         {
-            activeClose = null;
+            closeActiveConfirmation = null;
         }
         if (restoreFocus && isFocusReturnTarget(returnFocusElement))
         {
@@ -329,7 +376,7 @@ export function OpenConfirmationModal({
         // and one of those may replace the element focus just returned to.
         unregisterModal();
     };
-    activeClose = close;
+    closeActiveConfirmation = close;
 
     const cancel = () =>
     {
@@ -341,10 +388,112 @@ export function OpenConfirmationModal({
         onCancel();
     };
 
-    function onKeydown(event)
+    cancelButton.addEventListener(EVENT.click, cancel);
+    confirmButton.addEventListener(EVENT.click, commitConfirmation);
+    listenForScrimAndAnswerClicks();
+    window.addEventListener('keydown', onKeydown, true);
+    setTimeout(focusInitialControl, 0);
+
+    return Object.freeze({
+        veil,
+        dialog,
+        cancelButton,
+        confirmButton,
+        close,
+        cancel,
+    });
+
+    function buildHeader()
+    {
+        const modalHeader = modalHead({
+            eyebrow: consequence,
+            title: title || 'Confirm action',
+            titleId: ELEMENT_ID.dialogTitle,
+            closeLabel: cancelLabel,
+            onClose: () => cancel(),
+        });
+        modalHeader.querySelector?.(SELECTOR.modalClose)?.classList.add(CLASS.close);
+        modalHeader.querySelector?.(SELECTOR.modalEyebrow)?.classList.add(CLASS.eyebrowTag);
+        return modalHeader;
+    }
+
+    function mountDialog()
+    {
+        const footer = modalFooter({
+            secondary: [cancelButton],
+            primary: confirmButton,
+            className: CLASS.footer,
+            size: FOOTER_SIZE,
+        });
+        const bodyPanel = buildElement(
+            'div',
+            {
+                class: CLASS.bodyPanel,
+            },
+            [targetLine, messageCopy, detailsPanel],
+        );
+        const modalBody = buildElement(
+            'div',
+            {
+                class: CLASS.body,
+            },
+            bodyPanel,
+        );
+        dialog.append(header, modalBody, footer);
+        veil.appendChild(dialog);
+        document.body.appendChild(veil);
+    }
+
+    function isCoveredByAnotherModal()
     {
         const topOpenModal = topModal();
-        if (topOpenModal && topOpenModal.element !== dialog)
+        return (
+            topOpenModal
+            && topOpenModal.element !== dialog
+        );
+    }
+
+    function readTabOrder()
+    {
+        const detailsTabStops = detailsNode
+            ? findLiveDetailsTabStops(detailsPanel)
+            : [];
+        const confirmTabStops = confirmEnabled
+            ? [confirmButton]
+            : [];
+        return [
+            ...detailsTabStops,
+            cancelButton,
+            ...confirmTabStops,
+        ];
+    }
+
+    function trapTabFocus(event)
+    {
+        const tabOrder = readTabOrder();
+        const focusedIndex = tabOrder.indexOf(document.activeElement);
+        const lastIndex = tabOrder.length - 1;
+        if (
+            event.shiftKey
+            && focusedIndex <= 0
+        )
+        {
+            event.preventDefault();
+            focusWithoutScrolling(tabOrder[lastIndex]);
+        }
+        else if (
+            !event.shiftKey
+            && focusedIndex === lastIndex
+        )
+        {
+            event.preventDefault();
+            focusWithoutScrolling(tabOrder[0]);
+        }
+    }
+
+    function onKeydown(event)
+    {
+        if (isCoveredByAnotherModal())
         {
             return;
         }
@@ -359,39 +508,11 @@ export function OpenConfirmationModal({
         {
             return;
         }
-        const detailsTabStops = detailsNode
-            ? liveDetailsTabStops(detailsPanel)
-            : [];
-        const confirmTabStops = confirmEnabled
-            ? [confirmButton]
-            : [];
-        const tabOrder = [
-            ...detailsTabStops,
-            cancelButton,
-            ...confirmTabStops,
-        ];
-        const focusedIndex = tabOrder.indexOf(document.activeElement);
-        if (event.shiftKey && focusedIndex <= 0)
-        {
-            event.preventDefault();
-            focusControl(tabOrder[tabOrder.length - 1]);
-        }
-        else if (!event.shiftKey && focusedIndex === tabOrder.length - 1)
-        {
-            event.preventDefault();
-            focusControl(tabOrder[0]);
-        }
+        trapTabFocus(event);
     }
 
-    cancelButton.addEventListener(EVENT.click, cancel);
-    confirmButton.addEventListener(EVENT.click, () =>
+    function dispatchCommitEvent()
     {
-        if (!confirmEnabled || closed)
-        {
-            return;
-        }
-        close({ restoreFocus: false, retainInputShield: true });
-        const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
         const commitEvent = new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
             detail: {
                 component,
@@ -399,11 +520,28 @@ export function OpenConfirmationModal({
             },
         });
         window.dispatchEvent(commitEvent);
+    }
+
+    function commitConfirmation()
+    {
+        if (
+            !confirmEnabled
+            || closed
+        )
+        {
+            return;
+        }
+        close({ restoreFocus: false, retainInputShield: true });
+        const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
+        dispatchCommitEvent();
         let awaitingDestination = false;
         try
         {
             const destination = onConfirm?.();
-            if (destination && typeof destination.then === 'function')
+            if (
+                destination
+                && typeof destination.then === 'function'
+            )
             {
                 awaitingDestination = true;
                 const { afterDestinationPaint } = shield;
@@ -412,51 +550,50 @@ export function OpenConfirmationModal({
         }
         finally
         {
-            // Two paints let the new surface's hit-test tree settle first.
             if (!awaitingDestination)
             {
                 shield.afterDestinationPaint();
             }
         }
-    });
+    }
 
-    // Scrim and answer clicks count only if the press began there (a trailing touch click).
-    // Duck-typed: the contract test runs in a minimal DOM with no `Element`.
-    const answerButtonOf = (eventTarget) =>
+    function listenForScrimAndAnswerClicks()
     {
-        const canQuery = typeof eventTarget?.closest === 'function';
-        return canQuery
-            ? eventTarget.closest(SELECTOR.answers)
-            : null;
-    };
-    let pressBeganOnScrim = false;
-    let pressBeganOnAnswer = null;
-    veil.addEventListener(EVENT.pointerDown, (event) =>
-    {
-        pressBeganOnScrim = event.target === veil;
-        pressBeganOnAnswer = answerButtonOf(event.target);
-    }, true);
-    veil.addEventListener(EVENT.click, (event) =>
-    {
-        const answerButton = answerButtonOf(event.target);
-        const pressedAnswerButton = pressBeganOnAnswer;
-        pressBeganOnAnswer = null;
-        if (answerButton && event.detail > 0 && pressedAnswerButton !== answerButton)
+        let pressBeganOnScrim = false;
+        let pressBeganOnAnswer = null;
+        veil.addEventListener(EVENT.pointerDown, (event) =>
         {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
-        }
-        const scrimWasPressed = pressBeganOnScrim;
-        pressBeganOnScrim = false;
-        if (event.target === veil && scrimWasPressed)
+            pressBeganOnScrim = event.target === veil;
+            pressBeganOnAnswer = findAnswerButton(event.target);
+        }, true);
+        veil.addEventListener(EVENT.click, (event) =>
         {
-            cancel();
-        }
-    }, true);
-    window.addEventListener('keydown', onKeydown, true);
-    // Deferred so this modal, not the covered screen, owns final focus.
-    setTimeout(() =>
+            const answerButton = findAnswerButton(event.target);
+            const pressedAnswerButton = pressBeganOnAnswer;
+            pressBeganOnAnswer = null;
+            if (
+                answerButton
+                && event.detail > 0
+                && pressedAnswerButton !== answerButton
+            )
+            {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+            const scrimWasPressed = pressBeganOnScrim;
+            pressBeganOnScrim = false;
+            if (
+                event.target === veil
+                && scrimWasPressed
+            )
+            {
+                cancel();
+            }
+        }, true);
+    }
+
+    function focusInitialControl()
     {
         if (closed)
         {
@@ -466,14 +603,5 @@ export function OpenConfirmationModal({
             ? detailsPanel.querySelector(SELECTOR.pickedOption)
             : null;
         (picked || cancelButton).focus({ preventScroll: true });
-    }, 0);
-
-    return Object.freeze({
-        veil,
-        dialog,
-        cancelButton,
-        confirmButton,
-        close,
-        cancel,
-    });
+    }
 }
