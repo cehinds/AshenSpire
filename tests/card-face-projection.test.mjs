@@ -6,6 +6,7 @@ import { playingCardDefinition, staticCardTokens } from '../src/model/playingCar
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_CHARACTERS } from '../src/model/cardFaceProjection.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
+import { roomyFloor } from '../src/ui/components/illustratedCardFitter.js';
 import { tokenRe } from '../src/model/validate.js';
 
 const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
@@ -247,6 +248,14 @@ const projectRoomy = (def) => {
 test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 13 px (Wave 2 sizes: was 10)', () => {
   assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 13]);
   assert.equal(FACE_BUDGET.clauses, 5);
+});
+
+test('the roomy fitting floor allows the same 2pt reduction as other phone rules text', () => {
+  const phoneShrinkPx = 2 * 4 / 3;
+  const phoneFloor = FACE_BUDGET.minPx - phoneShrinkPx;
+  const phoneMaximum = 10.4222; // Rite of Cinders in a 152px phone reward face.
+  assert.equal(roomyFloor(phoneMaximum, phoneFloor, 1, phoneShrinkPx), phoneFloor);
+  assert.equal(roomyFloor(16, 13, 1), 13);
 });
 
 test('a long-rules card carries a roomy projection with its conditional rider; a one-liner is unchanged', () => {

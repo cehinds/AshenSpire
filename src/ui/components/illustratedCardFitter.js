@@ -49,10 +49,11 @@ export function showReading(text,reading){
   text.dataset.faceReading='roomy';
   return true;
 }
-// The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
-// FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
-export function roomyFloor(high,low,zoom){
-  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+// The roomy reading uses the configured floor with the same phone reduction as the compact reading.
+// A face whose full size is already below that keeps its full size as the floor.
+export function roomyFloor(high,low,zoom,phoneShrink=0){
+  const minimumOnScreen=FACE_BUDGET.minPx-phoneShrink;
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(minimumOnScreen/zoom,high)));
 }
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
@@ -216,7 +217,7 @@ export function fitIllustratedCards(cards) {
   // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
   const roomyRows=texts.filter(row=>row.hasRoomy);
   for(const row of roomyRows){
-    row.floor=roomyFloor(row.high,row.low,zoom);
+    row.floor=roomyFloor(row.high,row.low,zoom,phoneShrink);
     showReading(row.text,'roomy');
     Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
   }
