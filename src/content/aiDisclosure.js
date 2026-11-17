@@ -126,11 +126,11 @@ export const AI_DISCLOSURE = Object.freeze({
   sections: Object.freeze([
     Object.freeze({
       heading: 'Code and design',
-      body: `The engine, interface, tools, and the design specification were written by AI assistants working as a team of specialist personas, under the direction of the human developer — who set the goals, reviewed the work, played the builds, and holds final approval on everything that ships.`,
+      body: `The engine, interface, tools, and the design specification were written by AI assistants working as a team of specialist personas, under the direction of the human developer, who set the goals, reviewed the work, played the builds, and holds final approval on everything that ships.`,
     }),
     Object.freeze({
       heading: 'Writing',
-      body: `All game text — card names and rules text, interface copy, flavour — was AI-authored under that same direction.`,
+      body: `All game text (card names and rules text, interface copy, flavour) was AI-authored under that same direction.`,
     }),
     Object.freeze({
       heading: 'Art',
@@ -146,7 +146,7 @@ export const AI_DISCLOSURE = Object.freeze({
     }),
     Object.freeze({
       heading: 'Your saves',
-      body: `Your profile and runs are yours. When something cannot be read, it is set aside rather than deleted, and Profile on the title screen lists the copies still in the drawer — with a button to save any of them to a file. Profile copies are never deleted to make room. Run copies are kept for up to six months, with the newest 12 in the drawer.`,
+      body: `Your profile and runs are yours. When something cannot be read, it is set aside rather than deleted, and Profile on the title screen lists the copies still in the drawer, with a button to save any of them to a file. Profile copies are never deleted to make room. Run copies are kept for up to six months, with the newest 12 in the drawer.`,
     }),
   ]),
 
@@ -170,7 +170,7 @@ export const AI_DISCLOSURE = Object.freeze({
   runtimeCheck: Object.freeze({
     claim: RUNTIME_CLAIM,
     verifyWith: `node tools/ai-disclosure.mjs --evidence`,
-    networkNote: `A separate grep for network primitives finds no AI endpoint: every site fetches the game's own files or the player's own data — src/ui/audio.js (the music folder: the player's own, or the shipped music/ beside the page), src/ui/bootArt.js (art files beside the page), src/ui/components/offlinePlay.js (the game's own GitHub Pages site, cehinds.github.io/AshenSpire, for the latest build), src/ui/offlineInstall.js (registers the game's own service worker, which caches the build), src/ui/screens/prologueSceneEditor.js (the local dev editor server) and src/model/settingsSync.js (the player's own opt-in GitHub settings repo).`,
+    networkNote: `A separate grep for network primitives finds no AI endpoint: every site fetches the game's own files or the player's own data: src/ui/audio.js (the music folder: the player's own, or the shipped music/ beside the page), src/ui/bootArt.js (art files beside the page), src/ui/components/offlinePlay.js (the game's own GitHub Pages site, cehinds.github.io/AshenSpire, for the latest build), src/ui/offlineInstall.js (registers the game's own service worker, which caches the build), src/ui/screens/prologueSceneEditor.js (the local dev editor server) and src/model/settingsSync.js (the player's own opt-in GitHub settings repo).`,
   }),
 });
 
@@ -192,7 +192,7 @@ export const DISCLOSURE_PARTS = Object.freeze([
  */
 export function disclosureAsText(d = AI_DISCLOSURE, version = null) {
   return [
-    version ? `Ashen Spire — AI use acknowledgement (${version})` : `Ashen Spire — AI use acknowledgement`,
+    version ? `Ashen Spire: AI use acknowledgement (${version})` : `Ashen Spire: AI use acknowledgement`,
     '',
     d.storeForm,
     '',

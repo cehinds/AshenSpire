@@ -16,7 +16,7 @@ export const offlinePlay = {
     'Download the HTML file on your computer, then double-click it to play in your browser.',
     'Solo play works without internet. Offline maps use simpler artwork; online multiplayer needs a connection.',
     'Keep the game in the same folder and browser. Export your saves before moving it or downloading an update.',
-    'On a phone or tablet, use the link below the button — it saves the file through the browser instead of holding it in the page. From a downloaded copy it opens the build page on the site, where the download saves.',
+    'On a phone or tablet, use the link below the button. It saves the file through the browser instead of holding it in the page. From a downloaded copy it opens the build page on the site, where the download saves.',
     'Online and downloaded copies keep separate saves. Use Export and Import to move your progress. Phone file-opening support varies.',
   ],
   // "Make available offline" (docs/EXTERNAL-ASSETS-PLAN.md §5 A, step 6b):

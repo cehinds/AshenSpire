@@ -42,11 +42,11 @@ import { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED, SO
  * WHICH half is missing rather than implying the whole stamp is worthless.
  */
 const WHY = !BUILD_IS_STAMPED
-  ? `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
+  ? `Build ${BUILD_VERSION}: this page was opened without the launcher, so the`
     + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`
   : BUILD_IS_ORDERED
-    ? `Build ${BUILD_VERSION} — a higher last number is a newer build. Quote this whole line when something looks wrong.`
-    : `Build ${BUILD_VERSION} — served from an edited working copy, so it has no build number yet; the source id`
+    ? `Build ${BUILD_VERSION}: a higher last number is a newer build. Quote this whole line when something looks wrong.`
+    : `Build ${BUILD_VERSION}: served from an edited working copy, so it has no build number yet; the source id`
       + ` beside it still names this exact tree. Quote this whole line when something looks wrong.`;
 
 /**

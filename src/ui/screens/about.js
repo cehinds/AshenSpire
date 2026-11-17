@@ -143,7 +143,7 @@ export function renderAboutSection(container, {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       say('Saved.');
     } catch (e) {
-      say('Couldn’t save the file here — the text above is the whole of it.');
+      say('Couldn’t save the file here. The text above is the whole of it.');
     }
   });
 }
