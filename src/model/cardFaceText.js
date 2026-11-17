@@ -21,7 +21,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
+import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, playConditionPhrase } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -478,6 +478,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
   for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
+  const playGate = playConditionPhrase(def.playIf);
+  if (playGate) byKind.condition.unshift(esc(playGate));
 
   const lines = [];
   for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push(faceText.has(html) ? { kind, html, faceHtml: faceText.get(html) } : { kind, html });

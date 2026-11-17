@@ -126,3 +126,10 @@ test('playIf: a reach-only card is allowed at reach and refused at melee', () =>
   assert.equal(playConditionReachable(combat, def), false, 'no living enemy can be aimed to meet it');
   assert.equal(playConditionMet(combat, { id: 'plain' }, enemy), true, 'a card without playIf is always allowed');
 });
+
+test('a playIf range gate reads on the card face', async () => {
+  const { playConditionPhrase } = await import('../src/model/playingCard.js');
+  assert.equal(playConditionPhrase({ p: 'atRange', range: 'reach' }), 'Only at Reach');
+  assert.equal(playConditionPhrase({ p: 'inStance', of: 'target', stance: 'idle' }), 'Only while the target is Idle');
+  assert.equal(playConditionPhrase(undefined), null);
+});
