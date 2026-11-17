@@ -141,5 +141,12 @@
       "base.strike",
       "base.smash"
     ]
+  },
+  "base.needs-allies": {
+    "members": [
+      "base.guard-allies",
+      "base.drain-allies",
+      "base.buff-ally"
+    ]
   }
 }

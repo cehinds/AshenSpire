@@ -160,7 +160,9 @@
     "excludeCardIds": [
       "core.guidingWhisper",
       "base.evade",
-      "base.buff-ally"
+      "base.buff-ally",
+      "base.drain-allies",
+      "base.guard-allies"
     ],
     "weapons": {
       "groups": [

@@ -4050,7 +4050,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],
@@ -6665,7 +6666,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],
@@ -7135,7 +7137,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],

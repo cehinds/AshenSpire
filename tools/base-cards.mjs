@@ -70,7 +70,8 @@ export function compileBaseCards(root = ROOT) {
   const values = {
     baseCardDefinitions: rows.map(row => row.definition),
     baseCardTagging: rows.flatMap(row => row.tags.map(tagId => ({ family: 'card', objectId: row.definition.id, tagId }))),
-    baseCardRewardIds: groups['base.current-rewards'].members,
+    // Owner 2026-11-17: no ally mechanics exist yet, so a card that targets, buffs or costs allies (base.needs-allies) is offered by no pool.
+    baseCardRewardIds: groups['base.current-rewards'].members.filter(id => !groups['base.needs-allies']?.members.includes(id)),
     baseCardPresentation: Object.fromEntries(rows.map(row => [row.definition.id, { ...row.presentation, textTemplate: row.definition.textTemplate }])),
     baseCardStatuses: statusSource.statuses,
     baseCardStatusRules: statusSource.rules,

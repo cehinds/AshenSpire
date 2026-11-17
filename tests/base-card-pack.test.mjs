@@ -145,7 +145,8 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   const selected=new Set();
   for(let seed=1;seed<=200;seed++)for(const id of rollCardRewardIds(legacy,createRng(seed),{classId:'reaver',pool:'normal'}))if(id.startsWith('base.'))selected.add(id);
   assert.ok(selected.size>30,`${selected.size} base rewards actually drawn`);
-  for(const id of pack.groups['base.current-rewards'].members)assert.ok(legacy.classes.get('reaver').cardPool.includes(id),id);
+  // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
+  for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
   assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
 });

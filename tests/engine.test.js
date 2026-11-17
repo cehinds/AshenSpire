@@ -1986,11 +1986,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
   });
 
-  test("23. 'ally' target falls back to self in solo; co-op cards validate", () => {
-    // Solo: no teammate exists, so Rallying Banner's ally-block lands on the player.
+  test("23. 'ally' target reaches no one in solo; co-op cards validate", () => {
+    // Owner 2026-11-17: no ally mechanics exist yet. Solo, Rallying Banner's ally Block lands on no one (it used to fall back to the player).
     const c = makeCombat({ deck: ['rallyingBanner', 'strike', 'strike', 'strike', 'strike'] });
     playFromHand(c, 'rallyingBanner');
-    eq(c.player.block, 10, "ally-targeted Block resolves to the player when there's no ally");
+    eq(c.player.block, 0, "ally-targeted Block reaches no one when there's no ally");
     // The co-op set is registered, special-rarity (kept out of pools/shops).
     for (const id of ['rallyingBanner', 'sharedFlame', 'ashOath']) {
       assert(REG.cards.has(id), `co-op card '${id}' registered`);

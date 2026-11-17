@@ -79,17 +79,53 @@ test('Pebble Throw is a Reach attack', async () => {
   assert.equal(combatCardRange(registries.cards.get('core.flick')), 'melee', 'Flick, its zero-cost sibling, stays Melee');
 });
 
-test('cards that buff a team member are kept out of every Core reward and shop pool, but stay defined', () => {
-  const buffsAlly = (card) => (card.effects || []).some((e) => e.op === 'applyStatus' && ['ally', 'allAllies'].includes(e.target));
-  assert.ok(registries.cards.has('base.buff-ally'), 'Ally Empowerment stays defined for saved decks');
+// Owner 2026-11-17: no ally mechanics exist yet, so every card that targets, buffs or costs an ally is disabled until they do.
+const ALLY_CARDS = ['base.buff-ally', 'base.drain-allies', 'base.guard-allies', 'rallyingBanner', 'sharedFlame', 'ashOath'];
+const touchesAllies = (card) => /"target":"(ally|allAllies)"/.test(JSON.stringify([card.effects, card.upgrade, card.gradeProfiles]))
+  || /guard-allies/.test(JSON.stringify(card.effects));
+
+test('the ally-card list is every card that targets, buffs or costs an ally', () => {
+  const found = registries.cards.all().filter(touchesAllies).map((card) => card.id).sort();
+  assert.deepEqual(found, [...ALLY_CARDS].sort());
+});
+
+test('ally cards are in no Core reward, shop or starter pool, nor any class pool, but stay defined', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  for (const id of ALLY_CARDS) assert.ok(registries.cards.has(id), `${id} stays defined for saved decks`);
   for (const classId of CLASSES) {
     const run = createRunState({ registries, classId, seed: 1, profileMeta: unlocked });
     run.maxMana = 20;
-    const offered = gameProfileRewardPools(registries, run).combatCards.filter((id) => buffsAlly(registries.cards.get(id)));
-    assert.deepEqual(offered, [], classId);
+    const pools = gameProfileRewardPools(registries, run);
+    const offered = Object.values(pools).flat().filter((id) => ALLY_CARDS.includes(id));
+    assert.deepEqual(offered, [], `${classId} reward and shop pools`);
+    assert.deepEqual(run.deck.map((card) => card.cardId ?? card).filter((id) => ALLY_CARDS.includes(id)), [], `${classId} starter deck`);
   }
+  for (const cls of contentBundle.classes) assert.deepEqual(cls.cardPool.filter((id) => ALLY_CARDS.includes(id)), [], `${cls.id} class pool`);
 });
 
+test('a saved deck that still holds an ally card plays it safely: the ally part does nothing', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const played = {};
+  for (const id of ALLY_CARDS) {
+    const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: unlocked });
+    const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    for (const pile of Object.values(combat.piles)) pile.length = 0;
+    combat.piles.hand.push({ instanceId: 'x', cardId: id, upgraded: false });
+    combat.player.stamina = combat.player.maxStamina = 20;
+    combat.player.mana = combat.player.maxMana = 20;
+    const hp = combat.player.hp;
+    assert.doesNotThrow(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'x' }), id);
+    assert.ok(!combat.piles.hand.some((card) => card.instanceId === 'x'), `${id} left the hand`);
+    played[id] = { hp: hp - combat.player.hp, block: combat.player.block, strength: combat.player.statuses.strength?.stacks || 0 };
+  }
+  assert.deepEqual(played['base.buff-ally'], { hp: 0, block: 0, strength: 0 }, 'no ally, so no Strength lands on the player');
+  assert.equal(played['base.drain-allies'].hp, 0, 'no ally loses HP, and neither does the player');
+  assert.ok(played['base.drain-allies'].block > 0, 'its own Block still applies');
+  assert.deepEqual(played.rallyingBanner, { hp: 0, block: 0, strength: 0 }, 'the ally Block reaches no one');
+  assert.equal(played.ashOath.strength, 1, 'Oath of Ash: only its own 1 Strength applies');
+});
 // Item 14: an unupgraded card that deals at least OVERTUNED times Strike's damage for each Stamina and Mana it costs pays a penalty.
 const OVERTUNED = 2.5;
 const PENALTIES = ['exhaust', 'ethereal', 'risingCost', 'selfDamage'];
