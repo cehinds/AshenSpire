@@ -200,3 +200,10 @@ test('an authored Grounded effect on a version-two Counter retains its stacks an
   const wording = cardFaceLines(def, null, reg).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
   assert.match(wording, /Grounded 1.*2 turns/);
 });
+
+test('a card that changes a chosen hand card reads as one short effect line', () => {
+  // Owner, 2026-11-17: Reframe's face said only "Choose a hand card." while its rules change that card's stance.
+  const face = id => cardFaceLines(card(id), null, reg, null, { stanceEntry: false }).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.deepEqual(face('base.modify-card-stance'), ["Change 1 card's stance to Smash this combat"]);
+  assert.deepEqual(face('base.modify-card-range'), ["Change 1 card's range to Reach this combat"]);
+});
