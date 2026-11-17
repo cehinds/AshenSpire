@@ -128,6 +128,6 @@ test('leaving rewards unclaimed asks once with the specific line; nothing unclai
   assert.match(offers, /offer\.claimed === null\s+&& !offer\.taken\.length\s+&& offer\.options\.length/);
   assert.match(offers, /cancelLabel: (?:t|translate)\('reward\.leave\.take'\)/, 'the default (Back) button returns to the door');
   const reward = read('src/ui/screens/reward.js');
-  assert.match(reward, /const hasUnclaimedReward = \(\) =>\s*plan\.rows\.some\(\(\w+\) =>\s*!states\[\w+\.key\] && !\w+\.blockedBy\)/);
+  assert.match(reward, /const hasUnclaimedReward = \(\) =>\s*plan\.rows\.some\(\(\w+\) =>\s*!states\[\w+\.key\]\s*&&\s*!\w+\.blockedBy\s*\)/);
   assert.match(reward, /if \(!hasUnclaimedReward\(\)\)\s*\{?\s*return leave\(\);/);
 });
