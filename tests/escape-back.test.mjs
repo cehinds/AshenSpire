@@ -439,7 +439,6 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   const { readFileSync } = await import('node:fs');
   const marked = {
     'src/ui/screens/history.js': '#hx-back',
-    'src/ui/screens/compendium.js': '#cp-back',
     'src/ui/screens/customize.js': '#cz-back',
     'src/ui/screens/dialogue.js': '#dialogue-back',
     'src/ui/screens/reward.js': '#reward-back',
@@ -455,6 +454,18 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
     assert.ok(optionBlocks.length, `${file} builds ${id}`);
     for (const block of optionBlocks) assert.match(block, /'data-back': ''/, `${file}: ${id} is marked data-back`);
   }
+  // A knowledge door's Back id is its config's backId, and the door builds every Back marked data-back.
+  const { ResolveKnowledgeDoorConfig } = await import('../src/ui/components/knowledgeDoor.js');
+  const knowledgeDoors = { 'src/ui/screens/compendium.js': 'compendium', 'src/ui/screens/bestiary.js': 'bestiary' };
+  const doorSource = readFileSync(new URL('../src/ui/components/knowledgeDoor.js', import.meta.url), 'utf8');
+  const doorBack = enclosingObjectText(doorSource, doorSource.indexOf('id: config.backId'));
+  assert.match(doorBack, /'data-back': ''/, "knowledgeDoor.js: the door's Back is marked data-back");
+  for (const [file, screen] of Object.entries(knowledgeDoors)) {
+    const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    assert.ok(source.includes('MountKnowledgeDoor(app, {') && source.includes(`screen: '${screen}'`), `${file} mounts the ${screen} door`);
+    marked[file] = `#${ResolveKnowledgeDoorConfig(screen).backId}`;
+  }
+  assert.equal(marked['src/ui/screens/compendium.js'], '#cp-back');
   const { SCREENS, NOT_DRIVEN, READY } = await import('../tools/escape-back.mjs');
   for (const row of SCREENS) {
     assert.ok(READY[row.shot], `${row.id}: ?shot=${row.shot} names the landmark it must show`);

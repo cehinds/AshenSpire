@@ -46,6 +46,7 @@ const COMPACT_ROWS_PROPERTY = '--knowledge-compact-rows';
  * @property {string} screen
  * @property {ReadonlyArray<any>} [entries]
  * @property {string | null} [selectedId]
+ * @property {string | null} [listLabel]
  * @property {(entry: any) => string} [readEntryId]
  * @property {(entry: any) => HTMLElement} buildEntry
  * @property {(entry: any, detail: HTMLElement) => ReadonlyArray<Node | null>} renderDetail
@@ -184,13 +185,15 @@ export function MountKnowledgeDoor(
         screen,
         entries = [],
         selectedId = null,
+        listLabel = null,
         readEntryId = readOwnId,
         buildEntry,
         renderDetail,
         frameBody = frameInPane,
         textParams = {},
         findLanding = () => null,
-        onBack = () => {},
+        onBack = () =>
+        {},
     },
 )
 {
@@ -231,7 +234,9 @@ export function MountKnowledgeDoor(
             detail.replaceChildren(...renderDetail(entry, detail).filter(Boolean));
             return;
         }
-        detail.replaceChildren(...(config.detailEmptyKey ? [statusText(t(config.detailEmptyKey))] : []));
+        detail.replaceChildren(
+            ...(config.detailEmptyKey ? [statusText(t(config.detailEmptyKey))] : []),
+        );
     }
 
     function select(entryId)
@@ -249,14 +254,18 @@ export function MountKnowledgeDoor(
     }
 
     /** @param {KnowledgeDoorEntries} model */
-    function update({ entries: nextEntries, selectedId: nextId = null, listLabel = null })
+    function update(
+        { entries: nextEntries, selectedId: nextId = null, listLabel: nextLabel = null },
+    )
     {
         shownEntries = [...nextEntries];
-        currentId = findEntry(nextId) ? nextId : (shownEntries[0] ? readEntryId(shownEntries[0]) : null);
+        currentId = findEntry(nextId)
+            ? nextId
+            : (shownEntries[0] ? readEntryId(shownEntries[0]) : null);
         entryControls = shownEntries.map(buildEntryControl);
-        if (listLabel !== null)
+        if (nextLabel !== null)
         {
-            list.setAttribute('aria-label', listLabel);
+            list.setAttribute('aria-label', nextLabel);
         }
         list.replaceChildren(...entryControls);
         if (!shownEntries.length && config.listEmptyKey)
@@ -283,7 +292,7 @@ export function MountKnowledgeDoor(
         onClose: leave,
     });
 
-    update({ entries, selectedId });
+    update({ entries, selectedId, listLabel });
     app.replaceChildren(buildScreen(config, door));
     back.addEventListener('click', leave);
     land(findLanding() || entryControls[0] || back);
