@@ -146,3 +146,16 @@ test('detailed HUD selection coalesces its board fit without losing legacy synch
     assert.equal(queued, 1, 'both presentations refit before their next paint');
   }
 });
+
+// Owner, playtest 2026-11-17: the player's HUD sits halfway between its place wholly above the head and the head itself.
+test('a drop fraction lowers the rack that share of the way toward the head', async () => {
+  const { targetBodyHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+  const { uiConfig: config } = await import('../src/config/generated/ui.js');
+  const body = { top: 300, headY: 300, left: 100, right: 200 }, frame = { top: 0, left: 0 };
+  const above = targetBodyHudPlacement({ body, frame, groupHeight: 80, gap: 10 });
+  const halfway = targetBodyHudPlacement({ body, frame, groupHeight: 80, gap: 10, drop: .5 });
+  assert.equal(above.miniTop, 210);
+  assert.equal(halfway.miniTop, (210 + 300) / 2, 'halfway from the old top to the head');
+  assert.equal(halfway.selectedTop - above.selectedTop, 45, 'the selected intent moves with it');
+  assert.equal(config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction, .5);
+});

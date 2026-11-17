@@ -25,9 +25,11 @@ export function statureMultiplier(ratio, config = CONFIG) {
 //
 // Every figure (the player, allies and enemies alike) takes `combatantScale` on
 // top (owner, 2026-11-04: every figure at 80%), so relative sizes are unchanged.
-export function targetBodyHeight({ viewportHeight, portraitPhone, ratio }, config = CONFIG) {
+//
+// The player's own figure takes `playerBodyScale` too (owner, playtest 2026-11-17: the player sprite is 60% larger).
+export function targetBodyHeight({ viewportHeight, portraitPhone, ratio, side = null }, config = CONFIG) {
   return viewportHeight * bodyHeightFraction(portraitPhone, config) * statureMultiplier(ratio, config)
-    * config.combatantScale;
+    * config.combatantScale * (side === 'player' ? config.playerBodyScale ?? 1 : 1);
 }
 
 // Spread one row (same side and depth band) left to right: clamp to the field
@@ -62,7 +64,7 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
   handTop = null, solo = false, unit = 1 }) {
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
   const margin = config.edgeMarginPx * unit;
-  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio }, config) }));
+  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio, side: a.side ?? a.slot?.side }, config) }));
   // A row is one depth band on one side (visualBand); lanes within it share the floor.
   const floor = a => solo && Number.isFinite(handTop) && handTop > 0 && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
   const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
