@@ -12,7 +12,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
@@ -324,4 +324,26 @@ test('rule 5: the real core.strike and core.smash (no authored range: melee) tak
     assert.ok(on > off, `${cardId}: a Prepared target takes more (${on} against ${off})`);
     assert.ok(on >= Math.floor(off * 1.25) - 1 && on <= Math.ceil(off * 1.25) + 1, `${cardId}: about x1.25 (${on} against ${off})`);
   }
+});
+
+/** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
+function cleave({ block, poise }) {
+  const { combat, enemy } = live();
+  Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'cleave', cardId: 'cleavingBlow' });
+  const view = previewCard(combat, 'cleave', enemy.id);
+  const rider = view.values.find(value => value.op === 'poiseDamage')?.perTargetPoise?.[enemy.id];
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cleave', targetId: enemy.id });
+  return { rider, poise: enemy.persistentPoise.value, broke: combat.eventLog.slice(from).some(e => e.type === 'poiseBroken' && e.targetId === enemy.id) };
+}
+
+test('rules 2-3: the preview keeps the Defend Poise floor the live rider keeps (Cleaving Blow, 100 Block, 3 Poise)', () => {
+  const r = cleave({ block: 100, poise: 3 });
+  assert.equal(r.poise, 1, 'live: the rider leaves 1 Poise');
+  assert.equal(r.broke, false);
+  assert.ok(r.rider, 'the preview quotes the rider');
+  assert.equal(r.rider.breaks, false, 'the preview does not say BREAK');
+  assert.equal(r.rider.removed, 2, 'the preview removes what live removes (3 -> 1)');
 });

@@ -11,6 +11,7 @@ import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { ElementPreviewBreak } from './elementIdentity.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
@@ -87,7 +88,9 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
   } else return 0;
-  const spent = Math.min(poise.value, Math.max(0, Math.floor(amount)));
+  // Live poiseDamage carries its card (drainFixCorePoise), so a Defend-stance target holding Block keeps the Poise floor here too (theme B, 2026-11-17).
+  const keep = effect.op === 'poiseDamage' && card ? Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender))) : 0;
+  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount)));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   if (poise.value === 0) previewPoiseBreak(ctx, defender);
