@@ -64,7 +64,9 @@
       "heavy",
       "stagger"
     ],
-    "setPoints": {},
+    "setPoints": {
+      "strength": 3
+    },
     "points": {
       "ar": 0,
       "dr": 0,
@@ -75,7 +77,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 3,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -91,7 +93,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 3,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -123,7 +125,10 @@
       "flurry",
       "throw"
     ],
-    "setPoints": {},
+    "setPoints": {
+      "dexterity": 1,
+      "strength": 1
+    },
     "points": {
       "ar": 0,
       "dr": 0,
@@ -134,7 +139,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -150,7 +155,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -1089,7 +1094,8 @@
       "retreat"
     ],
     "setPoints": {
-      "intelligence": 1
+      "intelligence": 2,
+      "wisdom": 1
     },
     "points": {
       "ar": 0,
@@ -1104,7 +1110,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 2
     },
     "values": {
@@ -1120,7 +1126,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 2
     },
     "modifiers": [

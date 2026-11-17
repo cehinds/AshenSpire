@@ -145,7 +145,12 @@
             8
           ]
         },
-        "effectiveLevelHp": true
+        "effectiveLevelHp": true,
+        "hpScaleByTier": {
+          "minion": 0.55,
+          "elite": 0.6,
+          "boss": 0.65
+        }
       }
     },
     "formation": {

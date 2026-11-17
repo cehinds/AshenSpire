@@ -213,7 +213,7 @@ test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective S
   }
 });
 
-test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bosses 4/6/8); normal enemies are unchanged', async () => {
+test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bosses 4/6/8); normal enemies keep their own level', async () => {
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const { characterSettings, enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
@@ -226,7 +226,9 @@ test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bos
       const enemy = createRunCombat({ registries, run, rng: createRng(5), enemyIds: [row.id] }).enemies[0];
       const def = registries.enemies.get(row.id);
       if (!LEVELS[row.tier]) {
-        assert.ok(enemy.maxHp >= def.hp[0] && enemy.maxHp <= def.hp[1], `${row.id} keeps its authored HP`);
+        // A normal enemy keeps its own level and its authored range, scaled by its tier (enemies.hpScaleByTier, #2820 review).
+        const scale = settings.hpScaleByTier?.[row.tier] ?? 1;
+        assert.ok(enemy.maxHp >= Math.max(1, Math.round(def.hp[0] * scale)) && enemy.maxHp <= Math.max(1, Math.round(def.hp[1] * scale)), `${row.id} keeps its authored HP range, scaled ${scale}`);
         assert.equal(enemy.level === undefined || enemy.level <= 5, true, `${row.id} keeps its own level`);
         continue;
       }
@@ -236,7 +238,8 @@ test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bos
       const own = enemy.ownAttributes;
       assert.equal(Object.values(own).reduce((a, b) => a + b, 0), 5 + level, `${row.id}: budget 5 + level`);
       const pools = enemyPools({ ...row, level, resolvedAttributes: own }, settings, level, enemyItemBonuses(row, profile.content, profile.modules.gear));
-      assert.equal(enemy.maxHp, pools.hp, `act ${act} ${row.id}: HP is the level's HP row`);
+      const scale = settings.hpScaleByTier?.[row.tier] ?? 1;
+      assert.equal(enemy.maxHp, Math.max(1, Math.round(pools.hp * scale)), `act ${act} ${row.id}: HP is the level's HP row, scaled ${scale}`);
     }
   }
 });

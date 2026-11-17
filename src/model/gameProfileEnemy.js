@@ -21,5 +21,7 @@ export function gameProfileEnemyRatings(ctx,enemy,{actLevelled=false}={}) {
       poise:(enemy.ratings?.poise || 0)+(bonus.poise || 0),ward:(enemy.ratings?.ward || 0)+(bonus.ward || 0)},
     // Its HP is the characters module's HP row at that level instead of the authored range (effectiveLevelHp).
     ...(effective && settings.effectiveLevelHp ? {effectiveMaxHp:pools.hp} : {}),
+    // Either HP is then scaled by its tier (enemies.hpScaleByTier, #2820 review balance pass).
+    ...(Number.isFinite(settings.hpScaleByTier?.[definition.tier]) ? {hpScale:settings.hpScaleByTier[definition.tier]} : {}),
     mechanicTags:definition.mechanicTags,mechanicBindings:definition.mechanicBindings};
 }

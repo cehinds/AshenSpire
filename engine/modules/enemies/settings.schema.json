@@ -138,6 +138,14 @@
     },
     "effectiveLevelHp": {
       "type": "boolean"
+    },
+    "hpScaleByTier": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 10
+      }
     }
   },
   "required": [

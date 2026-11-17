@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:1064720f4735e7b78141122d593892a26f58620d452d3a3465a26d2b9de19af8",
+      "hash": "sha256:bb9957552c92c334f126c70af995c6c765a862cf3d778d92126184d62595cd71",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -232,7 +232,7 @@
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:3b17b5a4288d649c78e1fbf5bb7955c1b417e9621ceea3653c137ad5a84593c8"
+          "hash": "sha256:e693d1a52509dcc381a1d2ed45770fc7755c0ee435ab9619162d9633dbb7a55d"
         },
         {
           "path": "engine/modules/enemy-relics/defaults.json",
@@ -586,7 +586,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:c79962b15bc47acb008880412188c1fc529801f96da717ccd97c2684bbd4441b"
+          "hash": "sha256:ca7dedd8bff3b679ec5d78cf2a491fec561913259dc6dd335acc5efe92fef8ec"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -664,7 +664,7 @@
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:ae85527aef878b247c6ad011b86af6c9e4ab71f41389f91ad3d521326227cb2e"
+          "hash": "sha256:524f470471163ade7a246dd3ca526003b66783e06b271bf583e71affb104bf97"
         },
         {
           "path": "games/ashenspire/packs/core/pack.json",
@@ -712,7 +712,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:5d961bc4afd0ab11a3e5b7a81a4e82b9a0e8882faed4161bb9da94d7313473b8"
+          "hash": "sha256:84fb22b27d0e69ba9bd4366d656bbbdb8bac2111c8a95964ccd6db21cc781412"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:c569dee21009eb36ba8a7cc8b2437f843aae9c2c784d5ae4fcab36ebcffeed4f"
     },
     "core": {
-      "hash": "sha256:1064720f4735e7b78141122d593892a26f58620d452d3a3465a26d2b9de19af8",
+      "hash": "sha256:bb9957552c92c334f126c70af995c6c765a862cf3d778d92126184d62595cd71",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -956,7 +956,7 @@
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:3b17b5a4288d649c78e1fbf5bb7955c1b417e9621ceea3653c137ad5a84593c8"
+          "hash": "sha256:e693d1a52509dcc381a1d2ed45770fc7755c0ee435ab9619162d9633dbb7a55d"
         },
         {
           "path": "engine/modules/enemy-relics/defaults.json",
@@ -1310,7 +1310,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:c79962b15bc47acb008880412188c1fc529801f96da717ccd97c2684bbd4441b"
+          "hash": "sha256:ca7dedd8bff3b679ec5d78cf2a491fec561913259dc6dd335acc5efe92fef8ec"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -1388,7 +1388,7 @@
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:ae85527aef878b247c6ad011b86af6c9e4ab71f41389f91ad3d521326227cb2e"
+          "hash": "sha256:524f470471163ade7a246dd3ca526003b66783e06b271bf583e71affb104bf97"
         },
         {
           "path": "games/ashenspire/packs/core/pack.json",
@@ -1436,7 +1436,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:5d961bc4afd0ab11a3e5b7a81a4e82b9a0e8882faed4161bb9da94d7313473b8"
+          "hash": "sha256:84fb22b27d0e69ba9bd4366d656bbbdb8bac2111c8a95964ccd6db21cc781412"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",

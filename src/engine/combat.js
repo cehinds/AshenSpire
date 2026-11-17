@@ -368,10 +368,12 @@ export function createCombat({
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
-        const { effectiveMaxHp, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
+        const { effectiveMaxHp, hpScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
         Object.assign(enemy, ratings);
         // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
         if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
+        // Then its tier's HP scale (enemies.hpScaleByTier), on the level HP or the rolled range alike.
+        if (Number.isFinite(hpScale) && hpScale !== 1) enemy.hp = enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hpScale));
       }
     }
   }
