@@ -16,7 +16,7 @@
   },
   "components": { "rulesFace": {
     "rulesBoxGrow": 0.3,
-    "rulesText": { "minPx": 13, "lineHeightFloor": 0.92, "lineHeightStep": 0.04 },
+    "rulesText": { "minPx": 13, "phoneShrinkPt": 2, "lineHeightFloor": 0.92, "lineHeightStep": 0.04 },
     "face": { "maxLines": 5, "wordsPerLine": 7, "minScale": 0.7, "minPx": 13 }
   } },
   "behavior": {
