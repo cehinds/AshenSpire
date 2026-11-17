@@ -384,7 +384,13 @@ export function createShotStates(ctx) {
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
-      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal' });
+      // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
+      // attribute point waiting, paid through the production XP ledger, so its level-up modal can be reached.
+      const victory = shotParams.get('shotVictory') === 'points';
+      if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
+        pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
+      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
+        ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
       // four POOL doors (which sit above the shot branches, right after newRun,
