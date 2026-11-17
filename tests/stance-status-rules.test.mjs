@@ -455,3 +455,15 @@ test('item 5: under the whole-action contact policy each Poise row reads the Blo
     assert.equal(breaks, enemy.persistentPoise.value === 0, `${label}: the preview says BREAK exactly when live empties it`);
   }
 });
+
+test('review #2822: Ward damage drained into Poise (Ward off) follows its card, so a spell Ward Break still breaks, in the preview and live', () => {
+  const { combat, enemy } = live({ classId: 'starseer' });
+  Object.assign(enemy, { block: 5, persistentPoise: { value: 4, max: 20 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'w', cardId: 'base.break-ward' });
+  const row = previewCard(combat, 'w', enemy.id).values.find(value => value.op === 'wardDamage')?.perTargetPoise?.[enemy.id];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'w', targetId: enemy.id });
+  assert.ok(row, 'the preview quotes the Poise the Ward damage drains');
+  assert.equal(row.breaks, true, 'a spell is magic: no Defend floor without Ward stacks');
+  assert.equal(enemy.persistentPoise.value, 0, 'live agrees: Poise breaks');
+});

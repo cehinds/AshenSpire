@@ -1810,7 +1810,9 @@ export const OPCODE_HANDLERS = Object.freeze({
         if (fixCoreWardDisabled(ctx) && t.persistentPoise) {
           const drained = drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
             * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1)
-            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1));
+            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1),
+            // The card decides the Defend floor (its magic and Smash rules); only Poise damage with no card at all is treated as physical.
+            action.card, row?.receipt?.blockBefore);
           // Same bookkeeping as the Ward path, recorded as the Poise pressure it now is.
           trackOwnPressure(ctx, action, t, 'poiseDealt', drained);
           creditKnowledgeImpact(ctx, t, drained);
