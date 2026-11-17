@@ -10,6 +10,7 @@ import { validateEffects, validatePredicate } from './effectGrammar.js';
 import { validateCardRamp, validateCardContest, validateCardTemplates, validateRelicTemplate } from './templates.js';
 import { relicPropertyTagIndex } from './propertyRules.js';
 import { validateSigils } from './sigilRows.js';
+import { UPGRADE_OPTION_KINDS } from '../cardUpgradeSteps.js';
 
 export function entityCrossProblems(b, err, ctx) {
   const { ids, vctx } = ctx;
@@ -25,6 +26,7 @@ export function entityCrossProblems(b, err, ctx) {
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
+    for (const [i, kind] of (Array.isArray(card.upgradeMenu) ? card.upgradeMenu : []).entries()) if (!UPGRADE_OPTION_KINDS.includes(kind)) err(`${path}.upgradeMenu[${i}]`, `unknown upgrade option '${kind}'`);
     for (const [growth, at] of [[card.costGrowth, `${path}.costGrowth`], [card.upgrade?.costGrowth, `${path}.upgrade.costGrowth`]]) {
       if (!growth) continue;
       for (const key of ['stamina','mana']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || Math.abs(growth[key])>10)) err(`${at}.${key}`,'must be an integer from -10 to 10');

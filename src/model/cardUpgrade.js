@@ -73,7 +73,8 @@ export const MAX_CARD_UPGRADES = 10;
 // retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
 // for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
 // card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter'));
+// unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -273,6 +274,9 @@ function applyFx(card, step) {
     case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
     case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag('lifecycle.ethereal'); break;
+    // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
+    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
     case 'boost':
       // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).

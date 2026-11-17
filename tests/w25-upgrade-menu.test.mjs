@@ -39,7 +39,8 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
     { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }, { k: 'fx', fx: 'counter', n: 1 }];
   // Batch 2: INT / WIS boosts exist, for this turn or the rest of the fight. They are the same kind ('boost'), so the kind count is unchanged.
   const attributeBoosts = [{ k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' }, { k: 'fx', fx: 'boost', stat: 'wisdom', n: 1, until: 'fight' }];
-  assert.equal(FX_KINDS.length, steps.length + 1, 'unexhaust is the thirteenth kind; counter (batch 5) is the fourteenth');
+  // unexhaust, unethereal and steady change nothing on Strike (it has no Exhaust, Ethereal or rising cost); tests/card-cost-balance.test.mjs covers the last two.
+  assert.equal(FX_KINDS.length, steps.length + 3, 'unexhaust is the thirteenth kind; counter (batch 5) the fourteenth; unethereal and steady (theme C) the last two');
   for (const step of steps) {
     assert.deepEqual(upgradeStepsProblems(withSteps([step]), 'x'), [], JSON.stringify(step));
     assert.notDeepEqual(JSON.stringify(applyUpgradeSteps(strike(), [step])), JSON.stringify(applyUpgradeSteps(strike(), [{ k: 'dmg', n: 0 }])), step.fx);

@@ -901,6 +901,8 @@ export const SCHEMAS = Object.freeze({
     playLimit:opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
+    upgradeMenu: opt(arr(str)),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
     targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
