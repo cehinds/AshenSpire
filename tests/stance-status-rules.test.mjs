@@ -302,3 +302,9 @@ test('rule 5: the shipped data turns the weaknesses on', () => {
   assert.equal(shipped.stanceBenefits.prepared.meleeDamageTakenMultiplier, 1.25);
   assert.equal(shipped.stanceBenefits.neutral.damageTakenMultiplier, 1.25);
 });
+
+test('rule 5 edge: an un-aimed hit (no target, a card face out of a fight) takes no stance weakness', () => {
+  const { combat } = live();
+  const plain = profileDamageReceipt(combat, combat.player, null, 40, { ...structuredClone(PHYSICAL), skipRatingBonus: true });
+  assert.equal(plain.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness'), undefined);
+});
