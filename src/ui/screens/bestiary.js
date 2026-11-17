@@ -15,17 +15,19 @@ function readLearnedDefinitions(registries, learned)
 // Bestiary lists none rather than spoil them. Unencountered enemies are never projected.
 function projectLearnedEnemies(registries, learned, { combatExpansionVersion, stanceRules })
 {
-    return readLearnedDefinitions(registries, learned).map((definition) => projectEnemyKnowledge(
-        definition,
-        learned[definition.id],
-        {
-            registries,
-            ratingsRules: registries.balance?.combatRatings || null,
-            combatExpansionVersion,
-            stanceRules,
-            weaknesses: [],
-        },
-    ));
+    return readLearnedDefinitions(registries, learned).map((definition) =>
+        projectEnemyKnowledge(
+            definition,
+            learned[definition.id],
+            {
+                registries,
+                ratingsRules: registries.balance?.combatRatings || null,
+                combatExpansionVersion,
+                stanceRules,
+                weaknesses: [],
+            },
+        )
+    );
 }
 
 function buildEnemyEntry(view)
@@ -64,7 +66,10 @@ export function mountBestiary(
     const learned = meta.enemyKnowledge?.enemies || {};
     return MountKnowledgeDoor(app, {
         screen: 'bestiary',
-        entries: projectLearnedEnemies(registries, learned, { combatExpansionVersion, stanceRules }),
+        entries: projectLearnedEnemies(registries, learned, {
+            combatExpansionVersion,
+            stanceRules,
+        }),
         selectedId: initialEnemyId,
         buildEntry: buildEnemyEntry,
         renderDetail: renderEnemyDetail,
