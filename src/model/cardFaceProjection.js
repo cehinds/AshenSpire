@@ -90,11 +90,14 @@ const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
 // clause each; a longer conditional or sentence returns null and stays whole in
 // Information rather than being cut mid-condition.
+// A clause drops its leading verb ("Deal 5 damage" reads "5 damage"), but "Deal damage equal to ..." keeps it: without
+// the verb it reads as a fragment (owner, 2026-11-17: Shield Crash).
+const LEADING_VERB = /^(?:Deal|Apply|Inflict) (?!damage\b)/;
 const CONDITIONAL_START = /^(?:When|If|Unless|While|After|Before|At|Once|Turn)\b/;
 function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   if (wordCount(line.html) <= words) return [line];
   // A longer clause drops its leading verb ("Deal 5 Slashing damage to all" reads "5 Slashing damage to all").
-  const bare = line.html.replace(/^(?:Deal|Apply|Inflict) /, '');
+  const bare = line.html.replace(LEADING_VERB, '');
   if (bare !== line.html && wordCount(bare) <= words) return [{ ...line, html: bare }];
   // A turn trigger carrying a downside splits into two triggers, so the cost is never lost ("Turn start: take 1 damage").
   const trigger = /^(Turn (?:start|end)): (.+?)(?:,| and) ((?:take|lose) .+)$/.exec(line.html);
@@ -111,7 +114,7 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
     if (parts.length && (parts[parts.length - 1].split('(').length !== parts[parts.length - 1].split(')').length)) parts[parts.length - 1] += ', ' + piece;
     else parts.push(piece);
   }
-  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
+  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(LEADING_VERB, '');
   // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
   // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
   const whole = part => /^\d+ [A-Za-z]+ \+ \d+ [A-Za-z]+(?: ×\d+)?$/.test(plain(part).trim()) || (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)) || /^\+\d+ [A-Z]{3} this turn$/.test(plain(part).trim()))) || COST_RE.test(plain(part));
