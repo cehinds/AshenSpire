@@ -6,6 +6,7 @@ import { renderCard } from '../components/card.js';
 import { openBoundCardInspection } from '../components/cardInspection.js';
 import { esc as escapeHtml, attachTooltip, showTooltipFor } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
+import { MarkSelected } from '../selection.js';
 import { isEngaged, focusFirst } from '../input.js';
 import {
     rewardPlan,
@@ -1658,15 +1659,26 @@ export function MountRewards(appRoot, {
                 {
                     pick.classList.toggle(SELECTED_CLASS, isSelected);
                 }
-                pick.classList.toggle(CHOSEN_CLASS, isSelected);
-                pick.setAttribute('aria-checked', String(isSelected));
+                MarkSelected(
+                    pick,
+                    isSelected,
+                    {
+                        className: CHOSEN_CLASS,
+                        ariaAttribute: 'aria-checked',
+                    },
+                );
             }
-            for (const face of strip.querySelectorAll('.reward-choice-face'))
-            {
-                const isSelected = face.dataset.pickId === cardId;
-                face.classList.toggle(SELECTED_CLASS, isSelected);
-                face.classList.toggle(CHOSEN_CLASS, isSelected);
-            }
+            MarkSelected(
+                strip.querySelectorAll('.reward-choice-face'),
+                face => face.dataset.pickId === cardId,
+                {
+                    className: [
+                        SELECTED_CLASS,
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: null,
+                },
+            );
         }
 
         function selectCard(cardId)
@@ -1742,9 +1754,17 @@ export function MountRewards(appRoot, {
             inspectionFaces.set(instance.instanceId, face);
             face.classList.add('reward-pick');
             face.setAttribute('role', 'radio');
-            face.setAttribute('aria-checked', String(isSelected));
-            face.classList.toggle(SELECTED_CLASS, isSelected);
-            face.classList.toggle(CHOSEN_CLASS, isSelected);
+            MarkSelected(
+                face,
+                isSelected,
+                {
+                    className: [
+                        SELECTED_CLASS,
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: 'aria-checked',
+                },
+            );
             face.addEventListener('click', () => selectCard(instance.instanceId));
             return face;
         }

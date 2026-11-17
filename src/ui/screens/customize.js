@@ -80,6 +80,7 @@ import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { IsPopoverOpen } from '../popoverPolyfill.js';
 import { ColorMix } from '../colorMixCompat.js';
+import { MarkSelected } from '../selection.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -1912,12 +1913,7 @@ export function mountCustomize(app, {
   function selectRailItem(member) {
     currentStepIndicator.textContent = t('creation.step.progress', { index: categories.indexOf(member) + 1, count: categories.length, category: categoryLabel(member) });
     paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
-    for (const item of railItems) {
-      const on = item.dataset.member === member;
-      item.classList.toggle('on', on);
-      item.setAttribute('aria-selected', String(on));
-      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-    }
+    MarkSelected(railItems, item => item.dataset.member === member, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
   }
   function activate(id) {
     if (id === 'character') id = 'attributes';

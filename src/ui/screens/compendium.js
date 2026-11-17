@@ -1,4 +1,5 @@
 import { hideOnError } from '../artFallback.js';
+import { MarkSelected } from '../selection.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 // src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
 //
@@ -279,11 +280,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
   // The selected entry's known facts: the tooltip's decision at a larger
   // magnification, never more than it.
   function paintDetail() {
-    for (const node of grid.children) {
-      const on = node.dataset.member === view.selected?.piece.id;
-      node.classList.toggle('is-selected', on);
-      node.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
+    MarkSelected(grid.children, node => node.dataset.member === view.selected?.piece.id);
     if (!view.selected) { detail.replaceChildren(); return; }
     const { piece, reveal } = view.selected;
     const facts = entryDetail(piece, reveal, {

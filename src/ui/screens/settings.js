@@ -1,4 +1,5 @@
 import { combatPacingChanges } from '../../model/autoCombatPolicy.js';
+import { MarkSelected } from '../selection.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
 import { SETTINGS_ROWS, UI_DEFAULTS, resolveGraceRefill, bindSettingsRowHooks } from '../models/SettingsRowsModel.js';
 import { mountGameProfileSettings, readNewGameProfile } from '../components/gameProfileSelector.js';
@@ -1620,7 +1621,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const shownGroups = visibleAdvancedGroups(pageDebug(), profile);
     const active = activeAdvancedGroup(settings, profile);
     const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
-      + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
+      + ` type="button" role="tab" aria-selected="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     // ONLY THE OPEN SECTION, AND ONLY ITS OPEN TOPIC, IS DRAWN. The others are
     // empty shells marked `data-lazy`; choosing one repaints the panel.
@@ -1998,12 +1999,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(group)}"]`)?.focus({ preventScroll: true });
         return;
       }
-      container.querySelectorAll('.set-subtab').forEach((candidate) => {
-        const selected = candidate.dataset.advancedGroup === group;
-        candidate.classList.toggle('on', selected);
-        candidate.setAttribute('aria-selected', String(selected));
-        candidate.setAttribute('aria-pressed', String(selected));
-      });
+      MarkSelected(container.querySelectorAll('.set-subtab'), candidate => candidate.dataset.advancedGroup === group, { className: 'on', ariaAttribute: 'aria-selected' });
       container.querySelectorAll('.set-advanced-group').forEach((panel) => {
         panel.hidden = panel.dataset.advancedPanel !== group;
       });
@@ -2035,11 +2031,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
       settings[key] = topic;
       onChange({ [key]: topic });
-      section.querySelectorAll('[data-topic]').forEach(tab => {
-        const active = tab.dataset.topic === topic;
-        tab.setAttribute('aria-selected', String(active));
-        tab.classList.toggle('on', active);
-      });
+      MarkSelected(section.querySelectorAll('[data-topic]'), tab => tab.dataset.topic === topic, { className: 'on', ariaAttribute: 'aria-selected' });
       repaintPanel();
       container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
@@ -2094,11 +2086,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // The swatch row is the readout as well as the control: a colour picked on
     // the wheel lights its swatch if it happens to be one, and lights none if
     // it is not.
-    container.querySelectorAll(`.set-swatch[data-key="${CSS.escape(key)}"]`).forEach(chip => {
-      const on = chip.dataset.color.toLowerCase() === value.toLowerCase();
-      chip.classList.toggle('on', on);
-      chip.setAttribute('aria-pressed', String(on));
-    });
+    MarkSelected(container.querySelectorAll(`.set-swatch[data-key="${CSS.escape(key)}"]`), chip => chip.dataset.color.toLowerCase() === value.toLowerCase(), { className: 'on' });
     const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(key)}"]`);
     if (wheel && wheel.value.toLowerCase() !== value.toLowerCase()) wheel.value = value;
   };
@@ -2264,8 +2252,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange(changes);
       for (const choice of container.querySelectorAll('[data-key="combatPacingPreset"]')) {
         if (choice.matches('.choice')) {
-          const selected = choice.dataset.val === settings.combatPacingPreset;
-          choice.classList.toggle('on', selected); choice.setAttribute('aria-pressed', String(selected));
+          MarkSelected(choice, choice.dataset.val === settings.combatPacingPreset, { className: 'on' });
         } else choice.value = settings.combatPacingPreset || 'custom';
       }
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
@@ -2638,9 +2625,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     choices.forEach((choice, index) => {
       choice.disabled = disabled[index];
       if (choice.matches('.choice')) {
-        const on = String(selected) === choice.dataset.val;
-        choice.classList.toggle('on', on);
-        choice.setAttribute('aria-pressed', String(on));
+        MarkSelected(choice, String(selected) === choice.dataset.val, { className: 'on' });
       } else choice.value = String(selected);
     });
     for (const name of ['combatStepPause', 'animationStepDuration']) {
@@ -2787,12 +2772,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // choice is per-mount there. Stated, not hidden — and not new: the armoury
     // view has always been per-mount at that same call site.
     onChange({ [CAT_KEY]: cat });
-    container.querySelectorAll('.set-tab').forEach((b) => {
-      const on = b.dataset.member === cat;
-      b.classList.toggle('on', on);
-      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-      b.setAttribute('aria-selected', String(on));
-    });
+    MarkSelected(container.querySelectorAll('.set-tab'), tab => tab.dataset.member === cat, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
     // A tab switch is a new screenful: repaintPanel starts it at the top, or
     // the player lands mid-way down a section they have never seen.
     repaintPanel();
