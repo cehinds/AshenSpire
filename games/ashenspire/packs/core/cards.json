@@ -495,7 +495,9 @@
     "costRule": "fixed",
     "type": "skill",
     "icon": "evade",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "applyStatus",
@@ -528,12 +530,13 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "trait:reaction"
+      "trait:reaction",
+      "lifecycle.exhaust"
     ],
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
+    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared. Exhaust.",
     "upgrade": {
       "effects": [
         {

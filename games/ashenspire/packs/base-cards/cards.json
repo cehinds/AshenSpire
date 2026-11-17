@@ -1266,7 +1266,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -1275,7 +1275,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Evade {base.evade}.",
+        "textTemplate": "Gain {base.evade} Evade. Exhaust.",
         "icon": "shield",
         "flavor": "Footwork of the weald's narrow river crossings.\n\nBridge keepers taught travelers to turn sideways when a laden cart passed. During the fighting, the movement became a way to let steel pass just as closely. It requires little ground, and leaves little room for doubt.\n\nThe river took those who stepped twice."
       },
@@ -1349,7 +1349,7 @@
       "presentation": {
         "canonicalCardRef": "dodgeRoll",
         "faceLines": [
-          "Gain Evade 1."
+          "Gain 1 Evade. Exhaust."
         ],
         "sourceFaceLines": [
           "Gain Evade 1"
@@ -1367,7 +1367,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Gain Evade 1.",
+        "chosenRules": "Gain 1 Evade. Exhaust.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
