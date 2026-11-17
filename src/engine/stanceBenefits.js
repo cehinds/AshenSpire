@@ -22,6 +22,7 @@ import * as Engagement from './combatEngagement.js';
 
 const ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
 const count = value => Number.isFinite(value) ? value : 0;
+const PHYSICAL_POISE = Object.freeze({ combatProfile: Object.freeze({ camp: 'physical' }) });
 
 /** The `stanceBenefits` block this fight plays under, or null (not Core 2, or a fight created before the ruling). */
 export function StanceBenefitRules(ctx) {
@@ -104,7 +105,9 @@ function magicHit(ctx, carrier) {
 export function DefendPoiseFloor(ctx, target, carrier, defendingStance, blockBefore = target?.block || 0) {
   const rules = StanceBenefitRules(ctx)?.defend;
   const floor = Math.max(0, Math.floor(count(rules?.poiseFloorWhileBlock)));
-  if (!floor || !carrier || isReturn(carrier) || (ALIASES[defendingStance] || defendingStance) !== 'defend' || !(blockBefore > 0)) return 0;
+  // Poise damage with no card of its own (a relic, a trigger) is physical: it keeps the floor too (owner decision, 2026-11-17).
+  carrier = carrier || PHYSICAL_POISE;
+  if (!floor || isReturn(carrier) || (ALIASES[defendingStance] || defendingStance) !== 'defend' || !(blockBefore > 0)) return 0;
   if (configuredStance(carrier) === 'smash' || carrier?.combatProfile?.maneuver === 'smash') return 0;
   if (magicHit(ctx, carrier) && !(count(rules.poiseFloorWardMagic) > 0 && (target?.statuses?.ward?.stacks || 0) > 0)) return 0;
   return floor;

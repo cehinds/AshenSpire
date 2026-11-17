@@ -318,7 +318,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
-    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true }) });
+    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true, carrier }) });
   for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
@@ -356,9 +356,9 @@ export function drainFixCorePoise(ctx, source, target, amount, carrier = null, b
   const poise = target?.persistentPoise, n = Math.max(0, Math.floor(amount));
   if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
   // Owner, 2026-11-17 (theme B): the Poise rider of a physical hit cannot take a Defend-stance target holding Block below the floor either.
-  // A drain with no known carrier keeps the earlier rule.
+  // Poise damage with no card of its own (a relic's or a trigger's, the Forsaken Medallion) is physical and keeps the floor too (owner decision, 2026-11-17).
   // The floor reads the Block held when the hit arrived (the rider follows the hit that may have spent it): SPEC, Owner decisions of 2026-11-17.
-  const keep = carrier ? Math.min(poise.value, DefendPoiseFloor(ctx, target, carrier, HeldStance(target), Math.max(target.block || 0, blockAtHit || 0))) : 0;
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, target, carrier, HeldStance(target), Math.max(target.block || 0, blockAtHit || 0)));
   const spent = Math.min(poise.value - keep, n);
   if (!(spent > 0)) return 0;
   poise.value -= spent;
@@ -1553,7 +1553,7 @@ function splitSmashPressure(ctx, action, target, row) {
   const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
-    dealPoiseDamage(ctx, target, poise);
+    dealPoiseDamage(ctx, target, poise, { carrier: action.card }); // a Smash: it may break a Defend target's last Poise
     trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
@@ -2113,7 +2113,10 @@ export const OPCODE_HANDLERS = Object.freeze({
           : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, blockAtHit: row?.receipt?.blockBefore });
+        // Block at the hit: the card's own (its action receipt), or for a trigger on a landed hit (a relic: the Forsaken Medallion) that hit's damageDealt.
+        const hit = action.meta?.event?.targetId === t.id && Number.isFinite(action.meta.event.blockRemaining) ? action.meta.event : null;
+        const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
+        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }

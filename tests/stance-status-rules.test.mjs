@@ -348,11 +348,11 @@ test('rule 5: the real core.strike and core.smash (no authored range: melee) mee
 
 /** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
 // The Starseer: the Reaver's starting Forsaken Medallion adds its own triggered Poise damage to the first attack, which is not this card's rider.
-function cleave({ block, poise }) {
-  const { combat, enemy } = live({ classId: 'starseer' });
+function cleave({ block, poise, classId = 'starseer', cardId = 'cleavingBlow' }) {
+  const { combat, enemy } = live({ classId });
   Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
   enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
-  combat.piles.hand.push({ instanceId: 'cleave', cardId: 'cleavingBlow' });
+  combat.piles.hand.push({ instanceId: 'cleave', cardId });
   const view = previewCard(combat, 'cleave', enemy.id);
   const rider = view.values.find(value => value.op === 'poiseDamage')?.perTargetPoise?.[enemy.id];
   const from = combat.eventLog.length;
@@ -400,4 +400,25 @@ test('rule 4 edge: the badge goes when the Counter is cleared, by a stagger or a
     assert.equal(enemy.combatCounter, undefined, `${clear}: the Counter is cleared`);
     assert.equal(enemy.counterStacks ?? 0, 0, `${clear}: no stale badge`);
   }
+});
+
+test('decision 2: relic Poise damage keeps the Defend floor too (the Reaver Forsaken Medallion on the first attack)', () => {
+  // The Medallion rides the first attack that lands: like a card rider it reads the Block held when that hit arrived, so a hit that spends the
+  // last Block (Cleaving Blow into 8 Block) still leaves 1 Poise after the rider and the Medallion's 4.
+  const r = cleave({ block: 8, poise: 8, classId: 'reaver' });
+  assert.equal(r.poise, 1, 'the hit, its rider and the Medallion 4 Poise leave 1 Poise');
+  assert.equal(r.broke, false);
+  const smash = cleave({ block: 5, poise: 4, classId: 'reaver', cardId: 'core.smash' });
+  assert.equal(smash.poise, 0, 'a Smash still empties it');
+});
+
+test('decision 2: carrier-less physical Poise damage keeps the floor; a Smash carrier does not', () => {
+  const { combat, enemy } = live();
+  Object.assign(enemy, { block: 3, persistentPoise: { value: 4, max: 5 }, statuses: {} });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  dealPoiseDamage(combat, enemy, 10, { cause: 'relic' });
+  assert.equal(enemy.persistentPoise.value, 1);
+  enemy.block = 0;
+  dealPoiseDamage(combat, enemy, 10, { cause: 'relic' });
+  assert.equal(enemy.persistentPoise.value, 0, 'at 0 Block it breaks');
 });
