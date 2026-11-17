@@ -13,9 +13,8 @@ import { hideOnError } from '../artFallback.js';
 import { cardCutoutUrl } from '../layeredCardArt.js';
 import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { effectLine } from './cardOptionGrid.js';
+import { MarkSelected, RovingList } from '../selection.js';
 
-const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
-const VERTICAL = new Set(['ArrowDown', 'ArrowUp']);
 const COLUMN_LIST_MAX = 3;
 
 /** optionColumns(count) -> columns of the list: one column up to 3 options, then ceil(sqrt(count)). */
@@ -78,19 +77,7 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
   const cells = items.flatMap((item, index) => (rows[index].detail ? [item, el('div', { class: 'option-row-detail', role: 'region', [`${idAttr}-detail`]: rows[index].id }, rows[index].detail)] : [item]));
   const list = el('div', { class: 'option-row-list', role: 'group', 'data-columns': String(columns) }, cells);
   list.style?.setProperty?.('--option-columns', String(columns));
-  list.addEventListener('keydown', event => {
-    const dir = ARROWS[event.key];
-    if (!dir) return;
-    // Grid mode (DOM order is row-major): Up/Down move a whole row of tiles, Left/Right one tile.
-    const step = dir * (columns > 1 && VERTICAL.has(event.key) ? columns : 1);
-    const live = items.filter(item => !item.disabled);
-    const at = live.indexOf(event.target?.closest?.('.option-row') ?? event.target);
-    if (at < 0) return;
-    event.preventDefault?.();
-    const next = live[(((at + step) % live.length) + live.length) % live.length];
-    next.focus?.({ preventScroll: true });
-    next.scrollIntoView?.({ block: 'nearest' });
-  });
+  RovingList(list, { items: () => items.filter(item => !item.disabled), columns });
   return list;
 }
 
@@ -99,5 +86,5 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
  * @type {import('../contracts.js').PickerMark}
  */
 export function markOptionRows(list, idAttr, ids) {
-  for (const item of list.querySelectorAll(`[${idAttr}]`)) item.setAttribute('aria-pressed', String(ids.includes(item.getAttribute(idAttr))));
+  MarkSelected(list.querySelectorAll(`[${idAttr}]`), item => ids.includes(item.getAttribute(idAttr)), { className: null });
 }

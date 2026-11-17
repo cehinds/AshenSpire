@@ -1,6 +1,7 @@
 import { t } from '../strings.js';
 import { resolveGameProfile, isCoreProfile } from '../../model/gameProfile.js';
 import { retiredProfileReason } from '../../model/retiredProfile.js';
+import { CreateBusyLock } from '../pressable.js';
 
 // Store author JSON rather than a resolved snapshot: the next build resolves it
 // against its own catalog. A running save retains its immutable snapshot.
@@ -84,16 +85,17 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   status.setAttribute('role', 'status');
   status.style.cssText = 'width:100%;font-size:.9em;overflow-wrap:anywhere';
   status.textContent = t('gameProfile.settings.future', { profile: names[chosen] });
-  let pending = false;
+  const profileLock = CreateBusyLock();
   const apply = async value => {
-    if (pending) return false;
-    pending = true; select.disabled = true; upload.disabled = true; importButton.disabled = true;
-    try { await onSelect(value); return true; }
-    catch (error) {
-      status.textContent = t('gameProfile.settings.invalid', { error: error.message });
-      select.value = chosen;
-      return false;
-    } finally { pending = false; select.disabled = false; upload.disabled = false; importButton.disabled = false; }
+    if (profileLock.IsBusy()) return false;
+    return profileLock.Run([select, upload, importButton], async () => {
+      try { await onSelect(value); return true; }
+      catch (error) {
+        status.textContent = t('gameProfile.settings.invalid', { error: error.message });
+        select.value = chosen;
+        return false;
+      }
+    });
   };
   select.addEventListener('change', () => apply(select.value));
   upload.addEventListener('change', async () => {

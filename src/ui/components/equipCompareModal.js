@@ -12,6 +12,11 @@ import { deltaNode } from './smithPaneParts.js';
 import { t as translate } from '../strings.js';
 import { UI_COMPONENTS } from '../models/UiComponentId.js';
 import { ModalModelFor } from '../models/ModalModel.js';
+import {
+    ModalController,
+    NO_SCROLL,
+    ReadReturnFocus,
+} from './modalController.js';
 
 const VERDICT_DIRECTION = Object.freeze({
     better: 'up',
@@ -25,24 +30,11 @@ const SIDE = Object.freeze({
 });
 const BACK_LABEL_KEY = 'common.back';
 const TITLE_ID = 'equip-compare-title';
-const NO_SCROLL = Object.freeze({ preventScroll: true });
-const ARIA_MODAL_SELECTOR = '[aria-modal="true"]';
+const MODAL_NAME = 'equip-compare';
 const CLICK_EVENT = 'click';
 const CURRENT_CAPTION_KEY = 'armoury.compare.current';
 const NEW_CAPTION_KEY = 'armoury.compare.new';
 const UNCHANGED_VERDICT = 'same';
-
-function isVisibleButton(candidateButton)
-{
-    return !candidateButton.hidden
-        && candidateButton.getClientRects().length;
-}
-
-function findFocusableButtons(root)
-{
-    const enabledButtons = root.querySelectorAll('button:not([disabled])');
-    return [...enabledButtons].filter(isVisibleButton);
-}
 
 function buildCompareFace(registries, side, sideEquipment)
 {
@@ -84,55 +76,6 @@ function buildCompareFace(registries, side, sideEquipment)
             caption,
         ],
     );
-}
-
-function isTopmostModal(modal)
-{
-    return [...document.querySelectorAll(ARIA_MODAL_SELECTOR)].at(-1) === modal;
-}
-
-function trapTabFocus(event, modal)
-{
-    const focusableButtons = findFocusableButtons(modal);
-    if (!focusableButtons.length)
-    {
-        return;
-    }
-
-    const firstButton = focusableButtons[0];
-    const lastButton = focusableButtons[focusableButtons.length - 1];
-    const activeElement = document.activeElement;
-    const wrapsBackward = event.shiftKey && activeElement === firstButton;
-    const wrapsForward = !event.shiftKey && activeElement === lastButton;
-
-    if (wrapsBackward)
-    {
-        event.preventDefault();
-        lastButton.focus();
-    }
-    else if (wrapsForward)
-    {
-        event.preventDefault();
-        firstButton.focus();
-    }
-    else if (!modal.contains(activeElement))
-    {
-        event.preventDefault();
-        const entryButton = event.shiftKey
-            ? lastButton
-            : firstButton;
-        entryButton.focus();
-    }
-}
-
-function readReturnFocus(returnFocusElement)
-{
-    const activeElement = document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    return returnFocusElement instanceof HTMLElement
-        ? returnFocusElement
-        : activeElement;
 }
 
 function buildVeil()
@@ -295,7 +238,7 @@ export function MountEquipCompareModal(
     },
 )
 {
-    const returnFocus = readReturnFocus(returnFocusElement);
+    const returnFocus = ReadReturnFocus(returnFocusElement);
     const veil = buildVeil();
     const modal = buildDialog();
     const {
@@ -311,90 +254,26 @@ export function MountEquipCompareModal(
     veil.appendChild(modal);
     host.appendChild(veil);
 
-    let isClosed = false;
-
-    function close({ restoreFocus = true } = {})
-    {
-        if (isClosed)
-        {
-            return;
-        }
-        isClosed = true;
-        window.removeEventListener(
-            'keydown',
-            handleKeydown,
-            true,
-        );
-        veil.remove();
-        if (
-            restoreFocus
-            && returnFocus?.isConnected
-        )
-        {
-            returnFocus.focus(NO_SCROLL);
-        }
-    }
-
-    function goBack()
-    {
-        close();
-        onBack?.();
-    }
+    const controller = new ModalController({
+        name: MODAL_NAME,
+        veil,
+        panel: modal,
+        returnFocus,
+        onBack,
+    }).Open();
+    const goBack = () => controller.BackOut();
 
     function confirmEquip()
     {
-        close({ restoreFocus: false });
+        controller.Close({ restoreFocus: false });
         onEquip?.();
     }
 
-    function handleKeydown(event)
-    {
-        if (
-            event.defaultPrevented
-            || event.repeat
-        )
-        {
-            return;
-        }
-
-        if (!isTopmostModal(modal))
-        {
-            return;
-        }
-
-        if (event.key === 'Escape')
-        {
-            event.preventDefault();
-            event.stopPropagation();
-            goBack();
-            return;
-        }
-        if (event.key === 'Tab')
-        {
-            trapTabFocus(event, modal);
-        }
-    }
-
-    function bindListeners()
-    {
-        veil.addEventListener(CLICK_EVENT, (event) =>
-        {
-            if (event.target === veil)
-            {
-                goBack();
-            }
-        });
-        backButton.addEventListener(CLICK_EVENT, goBack);
-        equipButton.addEventListener(CLICK_EVENT, confirmEquip);
-        modal.querySelector('.modal-close')?.addEventListener(CLICK_EVENT, goBack);
-        window.addEventListener(
-            'keydown',
-            handleKeydown,
-            true,
-        );
-    }
-
-    bindListeners();
+    backButton.addEventListener(CLICK_EVENT, goBack);
+    equipButton.addEventListener(CLICK_EVENT, confirmEquip);
+    modal.querySelector('.modal-close')?.addEventListener(CLICK_EVENT, goBack);
     queueMicrotask(() => equipButton.focus(NO_SCROLL));
-    return { close };
+    return {
+        close: (closeOptions) => controller.Close(closeOptions),
+    };
 }
