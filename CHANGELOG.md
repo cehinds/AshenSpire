@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-17
 
+- **Menus and modals, playtest pass** ([#2817](https://github.com/cehinds/AshenSpire/pull/2817), `0.7.4.132`). A card upgrade takes one Confirm, selling asks first, and skill rank-ups use the Blacksmith's upgrade picker with deck cards listed first and marked In deck. Reward cards are smaller with no name button, the event panel leaves room for the art, event rewards open the shop's receive dialog, phone card text is smaller and complete, and traders differ, some with a Blacksmith.
 - **One set of button styles** ([#2812](https://github.com/cehinds/AshenSpire/pull/2812), `0.7.4.132`). Button hover, press, disabled and focus styles now come from one shared set of values, with duplicate and dead style rules removed. Nothing looks different.
 - **Dialogs that close the same way** ([#2809](https://github.com/cehinds/AshenSpire/pull/2809), `0.7.4.130`). The equipment compare, Smith upgrade and book dialogs now behave like every other dialog: the back button closes them, a drag that ends on the backdrop no longer closes them by accident, and the page behind is locked while they are open.
 - **Consistent selection and holds** ([#2810](https://github.com/cehinds/AshenSpire/pull/2810), `0.7.4.128`). Selected tabs, chips and rows, Enter/Space activation, arrow-key menus and long-presses now share one implementation each, so they behave the same everywhere. A combat or radial hold now cancels if the window loses focus or a second finger lands, like every other hold.
