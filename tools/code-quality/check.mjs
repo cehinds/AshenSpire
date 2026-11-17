@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { AuditNames, CreateProgram, IsAuthoredSource } from './naming.mjs';
 import { FormatSource } from './format.mjs';
+import { CONTRACT_NAMES } from '../../src/ui/contracts.js';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const readJson = name => JSON.parse(readFileSync(new URL(name, import.meta.url), 'utf8'));
@@ -72,6 +73,15 @@ function validatePolicy(policy, files)
     }
 }
 
+function contractProblems(files)
+{
+    const path = 'src/ui/contracts.js';
+    const source = readFileSync(files.get(path), 'utf8');
+    return CONTRACT_NAMES
+        .filter(name => !new RegExp(`@(typedef \\{[^}]+\\}|callback) ${name}\\b`).test(source))
+        .map(name => `${path}: CONTRACT_NAMES lists ${name}, which has no @typedef or @callback`);
+}
+
 function syntaxProblems(program, files)
 {
     const messages = [];
@@ -138,7 +148,7 @@ function main(mode)
         console.log(JSON.stringify(result.inventory, null, 2));
         return;
     }
-    diagnostics.push(...result.diagnostics);
+    diagnostics.push(...result.diagnostics, ...contractProblems(files));
     if (mode === 'check')
     {
         for (const { path } of formatChanges(files, policy.enrolled))
