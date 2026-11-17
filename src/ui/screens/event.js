@@ -77,7 +77,7 @@ export function mountEvent(app, opts) {
   screen.appendChild(scenePainting('event'));
   const door = mountChoiceBody(screen, {
     className: 'event-door',
-    eyebrow: 'Event',
+    // No "EVENT" eyebrow (owner, 2026-11-17): the title alone heads the door.
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
       artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || 'relic' }),
