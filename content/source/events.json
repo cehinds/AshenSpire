@@ -3,22 +3,22 @@
     "id": "turncoatMirror",
     "name": "The Turncoat's Mirror",
     "art": "🪞",
-    "text": "A standing mirror in a ruined chapel, its silver gone to smoke. In it you are someone else: the same hands, the same scars, another calling. It waits to see whether you will step through.",
+    "text": "A tall mirror stands in a ruined chapel. In it, you have the same scars but a different class.",
     "choices": [
       {
-        "label": "Step through (take up another class; your class levels start over)",
+        "label": "Step through (new class, class levels reset)",
         "effects": [
           {
             "op": "swapClass",
             "random": true
           }
         ],
-        "resultText": "The glass gives like water. On the far side your weight sits differently, and the old name will not come."
+        "resultText": "You come out the other side trained in a different class."
       },
       {
         "label": "Turn away",
         "effects": [],
-        "resultText": "The figure in the glass turns away too, a moment after you do."
+        "resultText": "Your reflection turns away a moment after you do."
       }
     ]
   },
@@ -26,7 +26,7 @@
     "id": "goldboughAvatar",
     "name": "Goldbough Avatar",
     "art": "🌳",
-    "text": "A hulking avatar kneels in a clearing, grown into the roots of a golden sapling. It does not attack. It holds out one massive hand, palm up, waiting.",
+    "text": "A huge figure kneels in a clearing, its legs grown into the roots of a golden sapling. It holds out one open hand.",
     "choices": [
       {
         "label": "Offer a card (lose a random card, take 6 damage)",
@@ -41,7 +41,7 @@
             "amount": 6
           }
         ],
-        "resultText": "The card crumbles to gold leaf in its palm. Its other hand closes around yours — the blessing is not gentle."
+        "resultText": "The card turns to gold leaf, and its grip on your hand draws blood."
       },
       {
         "label": "Pray (heal 20% max HP, gain a Guilt curse)",
@@ -60,12 +60,12 @@
             "card": "guilt"
           }
         ],
-        "resultText": "Warmth knits your wounds shut. Something else follows you out of the clearing."
+        "resultText": "Your wounds close, but guilt follows you out of the clearing."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "The hand stays open behind you for a long time."
+        "resultText": "Its hand stays open as you go."
       }
     ]
   },
@@ -73,10 +73,10 @@
     "id": "abandonedCart",
     "name": "Abandoned Merchant Cart",
     "art": "🛒",
-    "text": "A trader’s cart lies tipped in the mud, one wheel still turning. Cinder-light glints from a split strongbox. The mud around it is churned with bootprints.",
+    "text": "A trader's cart lies tipped in the mud beside a split strongbox. Fresh bootprints lead away from it.",
     "choices": [
       {
-        "label": "Loot the strongbox (gain 75 cinders; the owners may object)",
+        "label": "Loot the strongbox (gain 75 cinders, the owners may return)",
         "effects": [
           {
             "op": "addCinders",
@@ -91,12 +91,12 @@
             }
           }
         ],
-        "resultText": "You scoop the cinders from the mud. Behind you, someone clears their throat."
+        "resultText": "As you pocket the cinders, someone behind you clears their throat."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "Not every gift is free. You keep walking."
+        "resultText": "You leave the cart where it lies."
       }
     ]
   },
@@ -104,10 +104,10 @@
     "id": "weepingPilgrim",
     "name": "Wayward Pilgrim",
     "art": "🧎",
-    "text": "A pilgrim sits at the roadside, robes soaked through, cradling something wrapped in cloth. \"Fifty cinders,\" she says, without looking up. \"It was my sister’s. I can’t carry it further.\"",
+    "text": "A soaked pilgrim holds out a cloth bundle. \"Fifty cinders, and my sister's keepsake is yours.\"",
     "choices": [
       {
-        "label": "Give 50 cinders (gain a random relic)",
+        "label": "Pay 50 cinders (gain a random relic)",
         "requires": {
           "cinders": 50
         },
@@ -121,12 +121,12 @@
             "random": true
           }
         ],
-        "resultText": "She presses the bundle into your hands and walks into the rain without counting."
+        "resultText": "She hands you the bundle and walks off into the rain."
       },
       {
         "label": "Refuse",
         "effects": [],
-        "resultText": "She nods, as if she expected nothing else."
+        "resultText": "She nods as if she expected that."
       }
     ]
   },
@@ -134,7 +134,7 @@
     "id": "bloodstainedAltar",
     "name": "Bloodstained Altar",
     "art": "🩸",
-    "text": "An altar of dark stone, its channels worn smooth by use. The instructions are carved plainly: the stone sharpens what is given to it, and it keeps a portion.",
+    "text": "A dark stone altar has channels cut for blood. It sharpens what you give it and keeps a share.",
     "choices": [
       {
         "label": "Offer your blood (upgrade 2 random cards, lose 8% max HP)",
@@ -152,12 +152,12 @@
             "pct": 8
           }
         ],
-        "resultText": "The channels drink. Two of your cards come back keener than any smith could make them."
+        "resultText": "The channels fill, and two of your cards come back sharper."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "The altar does not care. It has waited longer than you."
+        "resultText": "The altar waits for someone else."
       }
     ]
   },
@@ -165,10 +165,10 @@
     "id": "wanderingPhysician",
     "name": "Wandering Physician",
     "art": "🩺",
-    "text": "A physician in a rain-rotted coat unrolls his instruments without being asked. \"I can cut something out of you,\" he says. \"The procedure is not painless. Or I can simply patch you.\"",
+    "text": "A physician in a rotting coat lays out his knives. \"I can cut something out of you, or just patch you up.\"",
     "choices": [
       {
-        "label": "The procedure (remove a random card, take 4 damage)",
+        "label": "Let him cut (remove a random card, take 4 damage)",
         "effects": [
           {
             "op": "removeCardFromDeck",
@@ -180,10 +180,10 @@
             "amount": 4
           }
         ],
-        "resultText": "He holds something up to the light, nods, and does not let you see it."
+        "resultText": "He holds something up to the light and pockets it before you can look."
       },
       {
-        "label": "The patch (heal 15% max HP)",
+        "label": "Let him patch you (heal 15% max HP)",
         "effects": [
           {
             "op": "heal",
@@ -195,12 +195,12 @@
             }
           }
         ],
-        "resultText": "Competent, quick, and strangely cold. He refuses payment."
+        "resultText": "He stitches you up quickly and refuses payment."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "\"Suit yourself. The spire will finish what I would have started.\""
+        "resultText": "\"Suit yourself. The spire will finish the job.\""
       }
     ]
   },
@@ -208,20 +208,20 @@
     "id": "goldenMoth",
     "name": "Golden Moth",
     "art": "🦋",
-    "text": "A moth the size of a shield rests on a broken pillar, wings dusted with cinder-light. It is dying, slowly and without complaint. Cinders drip from its wings like pollen.",
+    "text": "A moth as big as a shield lies dying on a broken pillar. Cinders drip from its wings.",
     "choices": [
       {
-        "label": "Gather the falling cinders (gain 40 cinders)",
+        "label": "Gather the cinders (gain 40 cinders)",
         "effects": [
           {
             "op": "addCinders",
             "amount": 40
           }
         ],
-        "resultText": "The cinders come away easily. The moth watches you with something like approval."
+        "resultText": "The cinders come away easily, and the moth does not stop you."
       },
       {
-        "label": "Sit with it a while (heal 10% max HP)",
+        "label": "Sit with it (heal 10% max HP)",
         "effects": [
           {
             "op": "heal",
@@ -233,12 +233,12 @@
             }
           }
         ],
-        "resultText": "You keep the vigil. When you rise, some of its lightness has passed to you."
+        "resultText": "You stay until it dies and rise feeling lighter."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "Some deaths are not yours to attend."
+        "resultText": "You leave it to die alone."
       }
     ]
   },
@@ -246,10 +246,10 @@
     "id": "feralShrine",
     "name": "Shrine of the Feral Ember",
     "art": "🐾",
-    "text": "A shrine no church would recognize: antlers, wax, and old blood. Ember pools here anyway — wild, unattended, and guarded by something that has not left claw marks this fresh by accident.",
+    "text": "A crude shrine of antlers and wax. Embers pool at its base, and fresh claw marks circle it.",
     "choices": [
       {
-        "label": "Take the offering (gain a random relic — its keeper objects)",
+        "label": "Take the offering (random relic, its guardian attacks)",
         "effects": [
           {
             "op": "addRelic",
@@ -260,12 +260,12 @@
             "encounterId": "eliteWyrm"
           }
         ],
-        "resultText": "Your hand closes on the relic. Behind you, the undergrowth stands up."
+        "resultText": "You grab the relic, and its guardian comes out of the brush behind you."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "Wild ember keeps its own accounts. You leave the ledger closed."
+        "resultText": "You leave the embers alone."
       }
     ]
   },
@@ -273,7 +273,7 @@
     "id": "ancientRuneStone",
     "name": "Ancient Cinder Stone",
     "art": "🗿",
-    "text": "A standing stone hums with old script. Reading it makes your teeth ache and your hands steadier. It would also break beautifully.",
+    "text": "A standing stone hums with old writing. Reading it hurts, and smashing it would free its cinders.",
     "choices": [
       {
         "label": "Study it (upgrade a random card, lose 7% max HP)",
@@ -287,7 +287,7 @@
             "pct": 7
           }
         ],
-        "resultText": "The script rearranges something behind your eyes. You are sharper, and less."
+        "resultText": "The writing burns into your memory and leaves a headache behind."
       },
       {
         "label": "Smash it (gain 35 cinders)",
@@ -297,12 +297,12 @@
             "amount": 35
           }
         ],
-        "resultText": "The stone comes apart into cinder-light. The hum does not entirely stop."
+        "resultText": "The stone breaks apart into cinders."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "Some doors are better left unread."
+        "resultText": "You leave the stone humming."
       }
     ]
   },
@@ -356,7 +356,7 @@
     "id": "sleepingSmith",
     "name": "Sleeping Smith",
     "art": "🔨",
-    "text": "A smith slumps over his anvil, hammer still loose in one hand. His forge is cold, but the blade laid across it hums like it remembers heat. He does not stir when you approach.",
+    "text": "A smith sleeps slumped over his anvil. His forge is cold, but the blade on it still hums.",
     "choices": [
       {
         "label": "Take the blade (upgrade a random card)",
@@ -366,10 +366,10 @@
             "random": true
           }
         ],
-        "resultText": "The hum quiets the moment it leaves the anvil, as if it was only ever waiting for a hand."
+        "resultText": "The hum stops the moment you lift it."
       },
       {
-        "label": "Press a coin into his hand (pay 40 cinders, rank up a random card)",
+        "label": "Leave him a coin (pay 40 cinders, rank up a random card)",
         "requires": {
           "cinders": 40,
           "rankableCard": true
@@ -381,7 +381,7 @@
             "cost": 40
           }
         ],
-        "resultText": "His eyes stay shut, but the hammer rises and falls once on its own. One of your cards comes back from the anvil a rank higher, still warm."
+        "resultText": "His hammer falls once in his sleep, and one card comes back a rank higher."
       },
       {
         "label": "Wake him (pay 30 cinders, heal 12% max HP)",
@@ -403,12 +403,12 @@
             }
           }
         ],
-        "resultText": "He blinks awake just long enough to press a cold coin into your palm, and something in you settles."
+        "resultText": "He wakes long enough to patch you up, then dozes off again."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "You let him sleep. The blade goes on humming behind you."
+        "resultText": "You let him sleep."
       }
     ]
   },
@@ -416,10 +416,10 @@
     "id": "wyrmTrial",
     "name": "Wyrm Trial",
     "art": "⚔",
-    "text": "A cracked stone ring marks a trial-ground no map names. A single soldier stands within it, unmoving, waiting for someone foolish or hungry enough to step inside.",
+    "text": "A cracked stone ring marks an old trial ground. A lone soldier stands inside it, waiting for a challenger.",
     "choices": [
       {
-        "label": "Enter the ring (fight the soldier for 60 cinders)",
+        "label": "Enter the ring (fight the soldier, gain 60 cinders)",
         "effects": [
           {
             "op": "addCinders",
@@ -430,10 +430,10 @@
             "encounterId": "loneSoldier"
           }
         ],
-        "resultText": "You step across the stone line. The soldier finally moves."
+        "resultText": "You cross the line, and the soldier moves to meet you."
       },
       {
-        "label": "Circle it instead (lose 5% max HP crossing the rubble, gain 20 cinders)",
+        "label": "Go around it (lose 5% max HP, gain 20 cinders)",
         "effects": [
           {
             "op": "loseMaxHpPct",
@@ -444,12 +444,12 @@
             "amount": 20
           }
         ],
-        "resultText": "The rubble takes its toll, but the ring — and whatever waits in it — stays quiet."
+        "resultText": "The rubble cuts you up, but you find some cinders on the way."
       },
       {
         "label": "Leave",
         "effects": [],
-        "resultText": "Some rings are drawn for a reason. You leave this one closed."
+        "resultText": "You leave the ring alone."
       }
     ]
   },
