@@ -282,25 +282,25 @@
   gap: calc(1px / var(--ui-zoom, 1));
   margin-left: calc(1px / var(--ui-zoom, 1));
   color: var(--gold);
-  font: 700 calc(var(--intent-value-size, 16px) * .62)/1 Georgia, serif;
+  font: 700 calc(var(--intent-value-size, 16px) * .72)/1 Georgia, serif;
   white-space: nowrap;
 }
 :root .combat .intent .intent-poise-icon {
-  width: calc(12px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
-  height: calc(12px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  width: calc(15px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  height: calc(15px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
   flex: none;
 }
 :root .combat .intent .intent-poise[data-breaks='true'] { color: var(--danger); }
 :root .combat .intent .intent-poise-break {
   position: absolute;
-  left: 50%;
+  right: 0;
   bottom: 100%;
-  transform: translate(-50%, -1px);
+  transform: translateY(calc(-1px / var(--ui-zoom, 1)));
   padding: 0 calc(2px / var(--ui-zoom, 1));
   border-radius: calc(2px / var(--ui-zoom, 1));
   background: var(--danger);
   color: var(--parchment);
-  font: 700 calc(7px / var(--ui-zoom, 1))/1.2 system-ui, sans-serif;
+  font: 700 calc(8px / var(--ui-zoom, 1))/1.15 system-ui, sans-serif;
   letter-spacing: .04em;
   pointer-events: none;
 }
