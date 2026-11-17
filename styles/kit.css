@@ -1793,6 +1793,12 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 :root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--card-w-glance, 182.4px) + 4 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
 :root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--card-w-glance, 182.4px) + 5 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: var(--modal-option-gap, .6rem); min-width: 0; width: 100%; }
+/* Playtest 2026-11-17 item 44: reward CARDS (not armaments, relics or flasks) are 25% smaller, so four fit without
+   scrolling. A grid of cards only also narrows its columns to the smaller face, so the gap between them holds. */
+.reward-door { --reward-card-scale: .75; }
+.reward-door .reward-choice-option > .card:not(.equipment-poker-card) { max-width: calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)); }
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid:not(:has(.equipment-poker-card)) { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)))); }
+
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
    their common height, including when phone choices wrap onto a second row. */
@@ -4086,6 +4092,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
    shows its (i) in the lane reserved above the row. */
 .reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
+/* Playtest 2026-11-17 item 45: the card-pick grid keeps only a little room above and between its rows, so the chosen
+   card's (i) keeps its place above the face on the top layer, over the note or the row above, never under them. */
+.reward-door .reward-choice-option:has(> .is-chosen) { position:relative; z-index:var(--layer-screen-chrome, 100); }
+.reward-door .reward-choice-face.is-chosen > .card-info-button { z-index:var(--layer-screen-chrome, 100); }
+.reward-door .modal-body:has(.reward-choice-grid) { overflow-x:visible; }
+
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
@@ -5881,6 +5893,8 @@ button[data-button-size] {
 .customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
 .customize .cc-primary-footer { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
 .customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin:0; padding:0; width:auto; background:none; border:0; align-items:center; flex:0 0 auto; }
+/* Playtest 2026-11-17 item 38: when the footer wraps on a phone, the step's Continue keeps to the right edge (the forward side). */
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { margin-inline-start:auto; justify-content:flex-end; }
 .customize .cc-primary-continue-row .cc-primary-continue { flex:0 0 auto; width:max-content; min-width:11rem; padding-inline:1.2rem; }
 .customize .cc-primary-footer .cc-resource-row { display:contents; }
 .cc-derived:has(> .cc-resource-row) { display:flex; flex-direction:column; align-items:stretch; gap:.35rem; }
@@ -6825,6 +6839,11 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }
+
+/* Playtest 2026-11-17 item 45b: upgrade pickers and the deck editor list deck cards first, each wearing this marker. */
+.in-deck-badge { display:inline-block; flex:0 0 auto; align-self:flex-start; width:max-content; max-width:max-content; margin-inline-start:.4rem; padding:.05rem .45rem; border:1px solid var(--gold); border-radius:var(--r-1); background:var(--panel); color:var(--gold); font-size:max(.75rem, calc(11px / var(--ui-zoom, 1))); font-weight:600; letter-spacing:.06em; line-height:1.4; text-transform:uppercase; white-space:nowrap; }
+.deck-editor-tile { position:relative; }
+.deck-editor-tile > .in-deck-badge { position:absolute; top:4px; left:4px; z-index:2; margin:0; pointer-events:none; }
 
 /* Core creation's starting-card chooser (components/startingCardsChooser.js). */
 .starting-cards { display: grid; gap: .6rem; padding: .75rem 1rem; }

@@ -332,7 +332,9 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   }
   const basics = tiles.filter((tile) => tile.unlimited);
   const rest = tiles.filter((tile) => !tile.unlimited && passes(tile, state.filters)).sort(sorter(state.sort));
-  const collection = [...basics.filter((tile) => passes(tile, state.filters)), ...rest].map((tile) => Object.freeze(tile));
+  // Cards in the deck are listed first, then the library (playtest 2026-11-17 item 45b); each half keeps its order.
+  const listed = [...basics.filter((tile) => passes(tile, state.filters)), ...rest];
+  const collection = [...listed.filter((tile) => tile.inDeck > 0), ...listed.filter((tile) => !(tile.inDeck > 0))].map((tile) => Object.freeze(tile));
 
   const typesPresent = [...new Set([...described.map(({ row }) => row.type), ...tiles.map((tile) => tile.type)])].sort();
   const chips = (ids, active, label) => Object.freeze(ids.map((id) => Object.freeze({ id, label: label(id), on: active.includes(id) })));

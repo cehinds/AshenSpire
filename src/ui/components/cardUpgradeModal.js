@@ -10,7 +10,6 @@ import {
     returnToModalParent,
     modalParentLabel,
 } from '../modalReturn.js';
-import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t as translate } from '../strings.js';
 import { UI_COMPONENTS, markUiComponent } from './uiComponents.js';
 import { MarkSelected } from '../selection.js';
@@ -82,7 +81,9 @@ function readUpgradeState(row)
 
 function isHtmlElement(candidate)
 {
-    return candidate instanceof HTMLElement;
+    return typeof HTMLElement === 'function'
+        ? candidate instanceof HTMLElement
+        : candidate?.nodeType === 1;
 }
 
 function readReturnFocus(returnFocusElement)
@@ -261,6 +262,7 @@ export function MountCardUpgradeModal(
         returnFocusElement,
         focusInstanceId = null,
         parent = null,
+        confirmLabel = null,
     },
 )
 {
@@ -275,7 +277,6 @@ export function MountCardUpgradeModal(
     let chosenForInstanceId = null;
     let closed = false;
     let committing = false;
-    let disarmDecision = null;
     let bodyHost = null;
     let listHost = null;
     let detailsHost = null;
@@ -285,6 +286,7 @@ export function MountCardUpgradeModal(
     const backButton = buildBackButton(backLabel);
     const shell = openShell();
     backButton.addEventListener('click', () => shell.close());
+    confirmButton.addEventListener('click', commitSelectedUpgrade);
     markUiComponent(shell.panel, UI_COMPONENTS.smithUpgradeModal, 'cards');
     const stonesStatus = buildStonesStatus();
     bodyHost.append(stonesStatus);
@@ -344,8 +346,6 @@ export function MountCardUpgradeModal(
             return;
         }
         closed = true;
-        disarmDecision?.();
-        disarmDecision = null;
         if (!committing)
         {
             if (parentRecord)
@@ -360,14 +360,11 @@ export function MountCardUpgradeModal(
     {
         const upgradeStatus = row.weaponBound
             ? ''
-            : translate('cardUpgrade.row.status', {
+            : row.status || translate('cardUpgrade.row.status', {
                 from: row.levelFrom,
                 to: row.levelTo,
                 cost: row.costLabel,
             });
-        const inDeckLabel = row.inDeck
-            ? translate('cardUpgrade.row.inDeck')
-            : '';
         const rowClassName = appendClassWhen(
             `${CLASS.row} rarity-${row.rarity}`,
             row.disabled,
@@ -375,7 +372,6 @@ export function MountCardUpgradeModal(
         );
         const costs = [
             upgradeStatus,
-            inDeckLabel,
         ].filter(Boolean);
         return {
             id: row.instanceId,
@@ -572,7 +568,9 @@ export function MountCardUpgradeModal(
     function buildDetailNodes(rawModel)
     {
         const model = readPaneModel(rawModel);
-        const costNode = buildCostNode(model);
+        const costNode = model.purse === false
+            ? null
+            : buildCostNode(model);
         const changeRows = buildChangeRows(model.selected.changes);
         const nodes = upgradeConfirmNodes({
             cost: costNode,
@@ -716,6 +714,15 @@ export function MountCardUpgradeModal(
         }
         const rowIsSelected = isRowSelected(model, row);
         rowElement.dataset.cardId = row.cardId;
+        rowElement.dataset.inDeck = String(Boolean(row.inDeck));
+        if (row.inDeck)
+        {
+            const marker = buildElement('span', {
+                class: 'in-deck-badge',
+                text: translate('cardUpgrade.row.inDeck'),
+            });
+            rowElement.querySelector('.option-row-name, .co-name')?.after(marker);
+        }
         rowElement.dataset.upgradeState = readUpgradeState(row);
         rowElement.setAttribute('role', 'option');
         rowElement.setAttribute('aria-disabled', String(row.disabled));
@@ -757,45 +764,21 @@ export function MountCardUpgradeModal(
         listHost.replaceChildren(candidateList);
     }
 
-    function armConfirmDecision(model, selected)
+    function readBlockedMessage(model)
     {
-        confirmButton.textContent = readConfirmLabel(selected);
-        const blockedMessageText = model.blockedReasons.join(' ')
+        return model.blockedReasons.join(' ')
             || translate('cardUpgrade.unavailable');
-        const selectedRowSelector = selectorForRow(selected.instanceId);
-        const selectedRowElement = candidateList.querySelector(selectedRowSelector);
-        disarmDecision = armOptionDecision(confirmButton, {
-            meta,
-            registries,
-            id: 'smithUpgrade',
-            title: translate('smith.upgrade.title', { name: selected.name }),
-            message: translate('cardUpgrade.decision.message', {
-                from: selected.levelFrom,
-                to: selected.levelTo,
-                then: decisionConsequence,
-            }),
-            consequence: translate('cardUpgrade.permanent'),
-            detailsNode: () => buildConfirmationDetails(currentModel),
-            confirmLabel: readConfirmLabel(selected),
-            cancelLabel: translate('common.back'),
-            onCommit: commitSelectedUpgrade,
-            canCommit: () => canCommitSelection(selected),
-            blockedTitle: translate('cardUpgrade.blocked', { name: selected.name }),
-            blockedMessage: blockedMessageText,
-            blockedDetailsNode: () => buildConfirmationDetails(currentModel),
-            returnFocusElement: selectedRowElement || confirmButton,
-        });
     }
 
     function updateConfirmButton(model, selected)
     {
-        disarmDecision?.();
-        disarmDecision = null;
-        confirmButton.disabled = !selected;
-        if (selected)
-        {
-            armConfirmDecision(model, selected);
-        }
+        confirmButton.disabled = !selected || !canCommitSelection(selected);
+        confirmButton.textContent = selected
+            ? confirmLabel || readConfirmLabel(selected)
+            : confirmLabel || translate('cardUpgrade.confirmIdle');
+        confirmButton.title = selected && confirmButton.disabled
+            ? readBlockedMessage(model)
+            : '';
     }
 
     function restoreRowFocus(focusedInstanceId)
@@ -824,6 +807,7 @@ export function MountCardUpgradeModal(
 
         renderCandidateList(model, selectedInstanceId);
         stonesStatus.textContent = translate('cardUpgrade.stones', { n: model.stones });
+        stonesStatus.hidden = model.purse === false;
         updateConfirmButton(model, selected);
         restoreRowFocus(focusedInstanceId);
     }
