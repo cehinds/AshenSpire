@@ -78,7 +78,9 @@
         100,
         150
       ],
-      "cardUpgrade": 40,
+      "cardUpgrade": 50,
+      "cardUpgradePerUpgrade": 35,
+      "cardUpgradePerRank": 25,
       "rankUp": 120
     },
     "rankUpStones": 1,

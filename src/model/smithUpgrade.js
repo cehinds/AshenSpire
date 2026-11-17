@@ -5,7 +5,7 @@
 // stored in `run.itemUpgradePicks[itemRef]` and read by the gear receipt (gameProfileGear.js) and the item-property
 // summary (itemProperties.js).
 //
-//   cost       cinders 25, 50, 85, 135, then +60 each; Smithing Stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9, ...
+//   cost       cinders 50, 85, 120, 155, then +35 each, +25 per item rank (owner 2026-11-17); Smithing Stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9, ...
 //   slots      an item takes `baseSlots` upgrades (6) plus one per rank it was raised, at most `maxSlots` (12)
 //   options    a martial weapon rolls +AR, +DR or +1 to a related attribute; a magic weapon +10% Poise damage, +1 magic
 //              damage or +1 INT / WIS / Mana; armour +DR or +Ward; and any item can roll a property (itemProperties.json)
@@ -20,11 +20,16 @@ const STAT_LABELS = {
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 
-/** The price of upgrade number `n` (1-based) of one item: { cinders, stones }. */
-export function SmithUpgradeCost(n) {
+/**
+ * The price of upgrade number `n` (1-based) of an item raised `rank` times: { cinders, stones }. Owner, 2026-11-17: the
+ * least is about 50 cinders, rising with the earlier upgrades (the table, then cinderStep) and with rank (cinderPerRank).
+ */
+export function SmithUpgradeCost(n, rank = 0) {
   const upgrade = Math.max(1, Math.floor(n) || 1);
   const table = ITEM_SMITH.cinders;
-  const cinders = upgrade <= table.length ? table[upgrade - 1] : table[table.length - 1] + ITEM_SMITH.cinderStep * (upgrade - table.length);
+  const ranks = Number.isSafeInteger(rank) && rank > 0 ? rank : 0;
+  const cinders = (upgrade <= table.length ? table[upgrade - 1] : table[table.length - 1] + ITEM_SMITH.cinderStep * (upgrade - table.length))
+    + (ITEM_SMITH.cinderPerRank || 0) * ranks;
   return { cinders, stones: Math.ceil(upgrade / ITEM_SMITH.stonesPerBand) };
 }
 
@@ -100,7 +105,7 @@ export function PlanSmithUpgrade(run, itemRef, { priceMult = 1 } = {}) {
   const identity = itemRefIdentity(itemRef);
   const count = ItemUpgradeCount(run, itemRef);
   const n = count + 1;
-  const base = SmithUpgradeCost(n);
+  const base = SmithUpgradeCost(n, ItemRank(run, itemRef));
   const cinders = priceMult === 1 ? base.cinders : Math.ceil(base.cinders * priceMult);
   const slots = SmithUpgradeSlots(run, itemRef);
   const options = identity ? RollSmithOptions(run, itemRef, n) : [];
