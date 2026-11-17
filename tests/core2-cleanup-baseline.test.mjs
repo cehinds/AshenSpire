@@ -16,6 +16,9 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-17 (chore/EventCopy: event copy and player text lost their dashes, and the profile artifacts that carry that text moved the
+// default profile hash 364ec5bc -> ed3ea8e2): only the three current-profile scenarios' profile, snapshot, stored and loaded hashes moved; every events,
+// rng and continuation hash, the historical scenario and the runtime hash are unchanged. The text that is hashed into the mechanics runtime kept its dashes.
 // Recaptured 2026-11-17 (theme B status and stance rules: Counter decay keeps it armed, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses): the
 // three current-profile scenarios change their events and continuations by design; the historical scenario changes only its snapshot, stored and loaded hashes (its events,
 // rng and continuation are identical, so a save from before keeps its rules).
