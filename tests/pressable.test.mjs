@@ -95,7 +95,6 @@ function armed(t, options = {})
     }
     const element = createElement();
     const holds = [];
-    const taps = [];
     const disarm = ArmLongPress(element, {
         holdMs: 450,
         tolerancePx: 12,
@@ -104,11 +103,10 @@ function armed(t, options = {})
             holds.push('hold');
             return true;
         },
-        onTap: () => taps.push('tap'),
         ...options,
     });
     t.after(() => disarm());
-    return { element, holds, taps, disarm };
+    return { element, holds, disarm };
 }
 
 test('ArmLongPress fires at exactly holdMs, not before', (t) =>
@@ -138,17 +136,16 @@ test('ArmLongPress keeps the hold within tolerance and cancels past it', (t) =>
     fakeWindow.fire('pointerup', { pointerId: 1 });
 });
 
-test('ArmLongPress cancels on release or cancel, and an early release is a tap', (t) =>
+test('ArmLongPress cancels on an early release or cancel', (t) =>
 {
     for (const end of ['pointerup', 'pointercancel'])
     {
-        const { element, holds, taps, disarm } = armed(t);
+        const { element, holds, disarm } = armed(t);
         press(element);
         t.mock.timers.tick(200);
         fakeWindow.fire(end, { pointerId: 1 });
         t.mock.timers.tick(1000);
         assert.deepEqual(holds, [], `${end} before holdMs cancels the hold`);
-        assert.deepEqual(taps, end === 'pointerup' ? ['tap'] : [], `${end} tap meaning`);
         disarm();
     }
 });

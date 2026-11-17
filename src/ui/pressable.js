@@ -54,7 +54,6 @@ export function ArmLongPress(element, {
     holdMs,
     tolerancePx,
     onHold,
-    onTap = null,
     isPointerOnly = false,
     isPrimaryOnly = true,
     shouldCapturePointer = true,
@@ -83,15 +82,10 @@ export function ArmLongPress(element, {
         cancelHold();
     };
 
-    const finishPress = (endEvent, { cancelled }) =>
+    const finishPress = () =>
     {
-        const wasTap = holdTimer !== null && !cancelled;
         cancelHold();
         element.removeEventListener('pointerleave', onLeave);
-        if (wasTap && onTap)
-        {
-            onTap(endEvent);
-        }
         return hasFired;
     };
 

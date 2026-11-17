@@ -177,7 +177,6 @@
  * @property {number} holdMs
  * @property {number} [tolerancePx]
  * @property {(event: Event) => boolean | void} onHold
- * @property {((event: Event) => void) | null} [onTap]
  * @property {boolean} [isPointerOnly]
  * @property {boolean} [isPrimaryOnly]
  * @property {boolean} [shouldCapturePointer]
