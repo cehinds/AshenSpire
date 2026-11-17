@@ -30,3 +30,32 @@ test('item 3: Core player HP is 30 + 5 x (CON + level), relic HP on top', () => 
     }
   }
 });
+
+test('item 1: Core halves every card\'s base damage, rounded up, before AR or PR adds', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const { firstAffordableCard, botCardTargetId } = await import('../tools/simbot.mjs');
+  assert.equal(profile.modules.effects.baseDamageMultiplier, 0.5);
+  let checked = 0;
+  for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
+    const run = newRun(classId, 11);
+    const combat = createRunCombat({ registries, run, rng: createRng(11), enemyIds: ['wanderingSoldier'] });
+    for (let plays = 0; plays < 6 && combat.phase === 'player' && !combat.result; plays++) {
+      const card = firstAffordableCard(registries, combat, new Set());
+      if (!card) break;
+      const mark = combat.eventLog.length;
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(registries, combat, card, combat.enemies[0].id) }); } catch { break; }
+      for (const event of combat.eventLog.slice(mark)) {
+        for (const hit of event.type === 'damageDealt' ? event.damageReceipt?.hits || [] : []) {
+          const base = hit.sources.find(row => row.id === 'base')?.amount;
+          const scale = hit.sources.find(row => row.id === 'base-damage-scale');
+          if (!(base > 0)) continue;
+          assert.equal(scale ? scale.effective : base, Math.ceil(base / 2), `${classId}: base ${base} scales to ${Math.ceil(base / 2)}`);
+          checked++;
+        }
+      }
+    }
+  }
+  assert.ok(checked >= 4, `enough player hits were checked: ${checked}`);
+});

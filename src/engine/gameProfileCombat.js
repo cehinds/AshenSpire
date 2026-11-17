@@ -99,7 +99,12 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
   const flatReturn = modern && carrier.counterReturnAttack;
-  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
+  // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or
+  // PR adds; a Counter return is already final damage and is not scaled again.
+  const authoredBase = base, baseMultiplier = !flatReturn && Number.isFinite(effects?.baseDamageMultiplier) ? effects.baseDamageMultiplier : 1;
+  if (baseMultiplier !== 1) base = Math.max(0, Math.ceil(base * baseMultiplier));
+  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:authoredBase,stage:'offense',operation:'set'}];
+  if (base !== authoredBase) sources.push({id:'base-damage-scale',label:'Base damage scale',amount:base-authoredBase,requested:authoredBase,effective:base,stage:'offense',operation:'multiply',multiplier:baseMultiplier});
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
   const whole = value => modern ? Math.max(0, Math.floor(value)) : value;

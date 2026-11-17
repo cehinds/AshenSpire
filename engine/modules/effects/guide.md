@@ -38,6 +38,7 @@ Settings live in `engine/modules/effects/settings.schema.json`; shipped defaults
 - `/spellRanks` (type enum; default `false`; allowed false): Core disables spell ranks.
 - `/attackRatingWeight` (type number; default `1`; range 0..100): Host adapter AR contribution.
 - `/defenseRatingWeight` (type number; default `1`; range 0..100): Confirmed host-adapter contribution to Block gained: `baseBlock + DR × defenseRatingWeight`.
+- `/baseDamageMultiplier` (type number; default `1`; range 0..10): Scales every card's base damage (player and enemy), rounded up, before AR or PR adds. The Core bundle sets 0.5 (owner, 2026-11-17: base damage halved). A Counter return is not scaled again.
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies resolved module fields onto selected content where declared. Arrays replace inherited arrays. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 

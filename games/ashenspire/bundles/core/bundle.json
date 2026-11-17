@@ -32,7 +32,8 @@
       "version": "1.0.0",
       "settings": {
         "fixCoreVersion": 1,
-        "core2ActionRulesVersion": 2
+        "core2ActionRulesVersion": 2,
+        "baseDamageMultiplier": 0.5
       }
     },
     "statuses": {
