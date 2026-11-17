@@ -1,0 +1,552 @@
+{
+  "request": "Survey wave 8, partial updates: stop full redraws for one-piece changes. Armoury refusals show only the notice and Back out of a picked position just deselects it; deck editor filter and sort chips toggle in place and only the lists change, holding a row sets only that row; a Settings topic tab shows its panel without repainting everything, and resetting one key updates one row. The observable result is identical to a full redraw.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "armoury-back-deselects",
+      "url": "?shot=map",
+      "ready": "#open-armoury",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".armament-replace"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".armoury-back"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "One Armoury panel is open",
+          "selector": ".armoury",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "No position is picked any more",
+          "selector": ".armoury.picking",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "No position card is marked selected",
+          "selector": ".armoury [data-slot-position].is-selected",
+          "eq": 0
+        },
+        {
+          "kind": "text",
+          "label": "Back reads Back again",
+          "selector": ".armoury-back",
+          "matches": "^Back$"
+        },
+        {
+          "kind": "visible",
+          "label": "The equipped-slot rows are still drawn",
+          "selector": ".armoury [data-slot-position]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Two Armoury panels",
+          "selector": ".armoury",
+          "min": 2
+        },
+        {
+          "kind": "visible",
+          "label": "The picker is still open after Back",
+          "selector": ".armoury.picking"
+        }
+      ]
+    },
+    {
+      "name": "armoury-deck-tab-refusal",
+      "url": "?shot=map",
+      "ready": "#open-armoury",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".armoury-head [data-modal-tab=\"armory\"]"
+        },
+        {
+          "key": "ArrowRight"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "The refusal shows as the Armoury toast",
+          "selector": ".armoury .as-toast",
+          "includes": "rest site"
+        },
+        {
+          "kind": "count",
+          "label": "The Armory tab stays marked",
+          "selector": ".armoury-head [data-modal-tab=\"armory\"][aria-selected=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "One Armoury panel is open",
+          "selector": ".armoury",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The refused Deck tab is marked selected",
+          "selector": ".armoury-head [data-modal-tab=\"deck\"][aria-selected=\"true\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Two Armoury panels",
+          "selector": ".armoury",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "deck-editor-filter-chip",
+      "url": "?shot=rest",
+      "ready": "#deck-opt",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#deck-opt"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": "summary.deck-editor-filter-toggle"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "click": "[data-focus-key=\"filter:type:skill\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The Skill chip is on and pressed",
+          "selector": ".deck-editor-chip.on[data-focus-key=\"filter:type:skill\"][aria-pressed=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "It is the only filter chip on",
+          "selector": ".deck-editor-tools .deck-editor-chip.on[data-focus-key^=\"filter:\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The collection lists the filtered tiles",
+          "selector": "[data-pane=\"collection\"] .deck-editor-tile",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "One deck editor is open",
+          "selector": ".deck-editor",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Another filter chip turned on",
+          "selector": ".deck-editor-chip[data-focus-key=\"filter:type:attack\"][aria-pressed=\"true\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Two deck editors",
+          "selector": ".deck-editor",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "deck-editor-sort-chip",
+      "url": "?shot=rest",
+      "ready": "#deck-opt",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#deck-opt"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": "summary.deck-editor-filter-toggle"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "click": "[data-focus-key=\"sort:name\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Sort by Name is on and pressed",
+          "selector": ".deck-editor-chip.on[data-focus-key=\"sort:name\"][aria-pressed=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one sort chip is on",
+          "selector": ".deck-editor-chip.on[data-focus-key^=\"sort:\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The collection is still listed",
+          "selector": "[data-pane=\"collection\"] .deck-editor-tile",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Sort by Cost is still pressed",
+          "selector": ".deck-editor-chip[data-focus-key=\"sort:cost\"][aria-pressed=\"true\"]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "deck-editor-hold-row",
+      "url": "?shot=rest&shotSettings=%7B%22playInDeckOrder%22%3Atrue%7D",
+      "ready": "#deck-opt",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#deck-opt"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": "[data-focus-key=\"mobile:draw-order\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": "[data-pane=\"deck\"] .deck-editor-pick"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Exactly one deck row is held",
+          "selector": ".deck-editor-row.held",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Its pick-up button is pressed",
+          "selector": ".deck-editor-pick[aria-pressed=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "One deck editor is open",
+          "selector": ".deck-editor",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one row is held",
+          "selector": ".deck-editor-row.held",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "settings-topic-tab",
+      "url": "?shot=settings",
+      "ready": ".set-tab",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".set-tab[data-member=\"Advanced\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".set-topic-select"
+        },
+        {
+          "key": "ArrowDown"
+        },
+        {
+          "key": "Enter"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The Motif topic's rows are drawn",
+          "selector": ".set-advanced-group:not([hidden]) .set-topic-panel[data-topic-panel=\"Motif\"] .set-row"
+        },
+        {
+          "kind": "text",
+          "label": "The Motif tab is marked selected (the tabs sit behind the topic picker here)",
+          "selector": ".set-advanced-group:not([hidden]) [data-topic][aria-selected=\"true\"]",
+          "matches": "^Motif$"
+        },
+        {
+          "kind": "count",
+          "label": "The Playback panel is emptied back to a lazy shell",
+          "selector": ".set-topic-panel[data-topic-panel=\"Playback\"] .set-row",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "One Settings pane",
+          "selector": ".set-panel",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The Playback panel is still shown",
+          "selector": ".set-topic-panel[data-topic-panel=\"Playback\"]:not([hidden])"
+        },
+        {
+          "kind": "count",
+          "label": "Two topic panels shown at once",
+          "selector": ".set-advanced-group:not([hidden]) .set-topic-panel:not([hidden])",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "settings-reset-one-key",
+      "url": "?shot=settings",
+      "ready": ".set-tab",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".set-tab[data-member=\"Advanced\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".toggle[data-key=\"gameConfig.prologue.presentation.autoAdvance\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"] [data-reset-key]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The row is still drawn",
+          "selector": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"]"
+        },
+        {
+          "kind": "count",
+          "label": "The row no longer reads as changed",
+          "selector": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"][data-modified=\"true\"]",
+          "eq": 0
+        },
+        {
+          "kind": "hidden",
+          "label": "Its Reset is hidden at the default",
+          "selector": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"] [data-reset-key]"
+        },
+        {
+          "kind": "visible",
+          "label": "The Undo bar offers the reset back",
+          "selector": ".set-undo"
+        },
+        {
+          "kind": "count",
+          "label": "The other Playback rows are still drawn",
+          "selector": ".set-topic-panel[data-topic-panel=\"Playback\"] .set-row",
+          "min": 3
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (shrine.ogg 404 is known on dev)",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The row still reads as changed",
+          "selector": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"][data-modified=\"true\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "The row is drawn twice",
+          "selector": "[data-row-key=\"gameConfig.prologue.presentation.autoAdvance\"]",
+          "min": 2
+        }
+      ]
+    }
+  ]
+}
