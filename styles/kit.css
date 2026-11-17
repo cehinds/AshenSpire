@@ -36,8 +36,8 @@
 :root {
   --btn-hover-filter: brightness(1.18);
   --btn-active-filter: brightness(.86);
-  --btn-hover-lift: translateY(-8px) scale(1.06);
-  --btn-hover-lift-shadow: 0 10px 30px rgba(201, 162, 39, 0.25);
+  --card-hover-lift: translateY(-8px) scale(1.06);
+  --card-hover-lift-shadow: 0 10px 30px rgba(201, 162, 39, 0.25);
   --btn-disabled-opacity: 0.55;
   --focus-ring: 2px solid var(--gold);
   --focus-ring-offset: 2px;
@@ -1381,7 +1381,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    focus keep their lift. */
 .card-shelf .card[data-small="true"]:not(:hover, :focus-visible, :focus-within) { transform: none; }
 /* One card lift for a pick row and a shop shelf alike. */
-.reward-row .card:hover, .card-shelf .card:hover { transform: var(--btn-hover-lift); box-shadow: var(--btn-hover-lift-shadow); }
+.reward-row .card:hover, .card-shelf .card:hover { transform: var(--card-hover-lift); box-shadow: var(--card-hover-lift-shadow); }
 
 /* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
 /* The head names the event and its {Status}; the narrative (ArtWell + prose)
