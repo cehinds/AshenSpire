@@ -800,7 +800,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // above it (handLiftMaxFraction). Nothing from an earlier pass is used (owner, 2026-11-06: static layout).
     const planHand = combat.querySelector('.hand'), planHandRect = planHand?.getBoundingClientRect();
     const planHandTop = planHandRect && planHand.clientWidth > 0 ? planHandRect.top - fieldRect.top : null;
-    alternativeFormation(plan, fieldRect.width / planFit, fieldRect.height / planFit, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop / planFit : null, formFactor: document.documentElement.dataset.formFactor });
+    // The resting cards' top inside the strip (hand.js publishes it): the stage can stretch down to it (stageExtent).
+    const planRestTop = parseFloat(planHand?.style.getPropertyValue('--hand-rest-top'));
+    const planCardsTop = Number.isFinite(planHandTop) && Number.isFinite(planRestTop) ? planHandTop + planRestTop * (planHandRect.height / (planHand.clientHeight || planHandRect.height || 1)) : null;
+    alternativeFormation(plan, fieldRect.width / planFit, fieldRect.height / planFit, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop / planFit : null,
+      handCardsTop: Number.isFinite(planCardsTop) ? planCardsTop / planFit : null, formFactor: document.documentElement.dataset.formFactor });
     ScaleFormationPlan(plan, planFit);
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
@@ -883,8 +887,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
       ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
     const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    // The lone player's feet floor: the strip's top, or the resting cards' top where the stage stretches down to them.
+    const cardsFloor = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.stageExtent?.mode === 'handTop'
+      ? parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) * (handRect ? handRect.height / (hand.clientHeight || handRect.height || 1) : 1) : NaN;
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
-      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + (Number.isFinite(cardsFloor) ? cardsFloor : 0) : null,
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1;
     combat.dataset.composition = 'option-c';

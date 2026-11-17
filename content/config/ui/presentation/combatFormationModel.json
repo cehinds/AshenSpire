@@ -89,6 +89,11 @@
       "footprintInsetPx": 6,
       "footInCellFraction": 0.35,
       "handLiftMaxFraction": 0.12,
+      "stageExtent": {
+        "mode": "handTop",
+        "handGapPx": 8,
+        "fixedExtraFraction": 0.2
+      },
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {
