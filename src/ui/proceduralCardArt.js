@@ -43,6 +43,8 @@ function backgroundColor(selected, category) {
       .toString(16).padStart(2, '0')).join(''));
   return { id: `element:${key}`, color };
 }
+// One approved effect layer per presentation `fx:` tag (asset-data/card-art/reviewed-library.json effectLayers).
+const effectLayers = Object.freeze(reviewed.effectLayers || {});
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
@@ -137,7 +139,10 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   // Multiple explicit effects retain the approved catalog's deterministic order.
   const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
     || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
-  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, rank]);
+  // A presentation `fx:` tag paints its approved effect layer while the four visual identities have room (one at most).
+  const effectRoom = Math.min(1, Math.max(0, 3 - Math.min(cueElements.length, 2) - statuses.length));
+  const effects = tags.filter(tag => tag.startsWith('fx:') && Object.hasOwn(effectLayers, tag)).slice(0, effectRoom);
+  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, effects, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
     if (!registryCaches.has(registries)) registryCaches.set(registries, new Map());
@@ -234,6 +239,12 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
       cueSprites.push(cue);
     }
   }
+  for (const tag of effects) {
+    const layer = clone(effectLayers[tag]);
+    layer.zIndex = statusZ++;
+    layer.css.zIndex = String(layer.zIndex);
+    cueSprites.push(layer);
+  }
   const intensity = 0.55 + (Math.min(rank, 5) - 1) * 0.1125;
   art.sprites = [...art.sprites, ...cueSprites].map(sprite => {
     const decorative = sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id);
@@ -248,7 +259,7 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   const result = freeze({ kind: 'simple', path: art.path, fit: 'cover', position: '50% 50%', filter: '',
     category, maneuver, element, elements: selectedElements, rank, variant: Math.min(rank, 5), componentArt: art,
     statuses: statuses.map(id => ({ id })), layers: [],
-    visualCues: [`action:${maneuver}`, ...cueElements.slice(0, 2).map(id => `element:${id}`), ...statuses.map(id => `status:${id}`)] });
+    visualCues: [`action:${maneuver}`, ...cueElements.slice(0, 2).map(id => `element:${id}`), ...statuses.map(id => `status:${id}`), ...effects] });
   if (cache.size >= 512) cache.delete(cache.keys().next().value);
   cache.set(key, result);
   return result;
