@@ -87,7 +87,7 @@ export function mountEvent(app, opts) {
       options([], { id: 'choices', class: 'ev-choices' })),
     foot: modalFooter({ primary: cont, size: 'fill', className: 'choice-foot' }),
   });
-  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
+  if (hud) wireRunHud(app, { ...hud, registries, run, meta });
 
   const box = app.querySelector('#choices');
   const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
@@ -168,7 +168,7 @@ export function mountEvent(app, opts) {
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
         // The header shows the cinders and HP the choice just paid or took, on this same screen.
-        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
+        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud });
         // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
         showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };
