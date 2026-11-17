@@ -743,3 +743,6 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root:not([data-layout='narrow']) .event-screen .polish-scene-painting { flex:1 1 auto; height:auto; min-height:calc(50vh / var(--ui-zoom, 1)); }
 :root:not([data-layout='narrow']) .event-screen .choice-door.event-door { flex:0 0 min(30rem, 38%); width:auto; }
 :root:not([data-layout='narrow']) .event-door .choice-body-columns { grid-template-columns:minmax(0, 1fr); }
+/* A short-wide window keeps the image too (the general short-wide rule hides scene paintings), beside the door. */
+:root[data-composition='short-wide'] .event-screen .polish-scene-painting { display:block; min-height:0; }
+:root[data-composition='short-wide'] .event-screen .choice-door.event-door { flex:0 0 50%; }
