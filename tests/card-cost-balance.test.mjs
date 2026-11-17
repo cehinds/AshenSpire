@@ -8,6 +8,7 @@ import { upgradedDefinition } from '../src/model/cardUpgrade.js';
 import { projectCardBehavior } from '../src/engine/cardBehavior.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
+import { commitCardUpgrade, planCardUpgrade, PlanRestCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
@@ -60,6 +61,28 @@ test('a card upgraded off Ethereal stays in the deck at the end of the turn', ()
   const where = (id) => Object.entries(c.piles).filter(([, pile]) => pile.some((card) => card.instanceId === id)).map(([name]) => name);
   assert.deepEqual(where('plain'), ['exhaust'], 'an Ethereal card left in hand exhausts');
   assert.ok(!where('kept').includes('exhaust'), 'the upgraded copy is not exhausted');
+});
+
+test('rest and blacksmith quotes offer Quickstep only the upgrade its grade applies', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 5 });
+  const quickstep = { ...inst('quickstep', 'quickstep'), abilityRank: 3 };
+  run.sideboard.push(quickstep);
+  const step = { k: 'fx', fx: 'unexhaust' };
+  const rest = PlanRestCardUpgrade(run, registries, quickstep.instanceId);
+  const smith = planCardUpgrade(run, registries, quickstep.instanceId, { choices: 3 });
+
+  assert.ok(rest.ok && smith.ok);
+  assert.deepEqual(rest.step, step);
+  assert.deepEqual(smith.options.map((option) => option.step), [step]);
+  assert.ok(rest.before.keywords.includes('exhaust'));
+  assert.ok(!rest.after.keywords.includes('exhaust'));
+  assert.doesNotMatch(rest.after.textTemplate, /Exhaust/i);
+  assert.equal(rest.after.abilityRank, 3);
+  assert.deepEqual(rest.after.effects, rest.before.effects);
+  assert.ok(Object.isFrozen(rest.after) && Object.isFrozen(rest.after.effects));
+  assert.deepEqual(smith.options[0].after, rest.after);
+  assert.equal(commitCardUpgrade(run, registries, rest).n, 1);
+  assert.deepEqual(quickstep.upgradeSteps, [step]);
 });
 
 // Puts a played copy back in hand, so the same copy can be played again this fight.

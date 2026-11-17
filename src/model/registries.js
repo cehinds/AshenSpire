@@ -685,7 +685,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (result !== base) result = deepFreeze(result);
   if (upgradeCount(instanceOrRef) && !usesAbilityGrade) result = mergeUpgrade(result, upgradeStepsOf(instanceOrRef));
   // A ranked ability card's grade owns its numbers; only a drawback-removal step applies to it (review of #2819).
-  else if (upgradeCount(instanceOrRef)) result = ApplyDrawbackSteps(result, upgradeStepsOf(instanceOrRef));
+  else if (upgradeCount(instanceOrRef)) result = deepFreeze(ApplyDrawbackSteps(result, upgradeStepsOf(instanceOrRef)));
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
   result = applyBaseManaPolicy(registries, result);
