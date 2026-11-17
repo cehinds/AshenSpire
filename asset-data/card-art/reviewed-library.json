@@ -23532,7 +23532,7 @@
           "amount": 3
         },
         {
-          "op": "damage",
+          "op": "loseHp",
           "target": "enemy",
           "amount": 3,
           "if": {
@@ -23713,9 +23713,9 @@
           "amount": 3
         },
         {
-          "op": "damage",
+          "op": "loseHp",
           "target": "enemy",
-          "amount": 3,
+          "amount": 2,
           "if": {
             "p": "inStance",
             "of": "target",
@@ -24610,10 +24610,9 @@
           "amount": 3
         },
         {
-          "op": "applyStatus",
+          "op": "loseHp",
           "target": "enemy",
-          "status": "vulnerable",
-          "stacks": 1,
+          "amount": 2,
           "if": {
             "p": "inStance",
             "of": "target",

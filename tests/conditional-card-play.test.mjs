@@ -9,7 +9,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { actorRangeKey, rangePairKey } from '../src/model/combatEngagement.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -95,13 +95,34 @@ test('Opening Cut and Unguarded Bolt pay off against an Idle target', () => {
   const idle = ({ enemy }, met) => { if (met) delete enemy.combatStance; else enemy.combatStance = stance('attack'); };
   const [met, unmet] = bothSides('reaver', 'openingCut', idle, damageTaken);
   assert.ok(met > unmet, `Idle target takes more (${met} > ${unmet})`);
-  const vulnerable = ['starseer'].flatMap(classId => [true, false].map(on => {
-    const world = live(classId);
-    idle(world, on);
-    play(world.combat, 'unguardedBolt', world.enemy);
-    return world.enemy.statuses.vulnerable?.stacks || 0;
-  }));
-  assert.ok(vulnerable[0] > 0 && vulnerable[1] === 0, `Vulnerable only on an Idle target (${vulnerable})`);
+  const [boltMet, boltUnmet] = bothSides('starseer', 'unguardedBolt', idle, damageTaken);
+  assert.ok(boltMet > boltUnmet, `Idle target takes more (${boltMet} > ${boltUnmet})`);
+});
+
+// Owner, 2026-11-17 (#2816 review): the stance payoffs must not double-dip with the ×1.25 stance weakness. Against a matching
+// target the whole play (weakness included) lands at 1.5–2× the same card's hit on a target in an ordinary stance (Sweep),
+// the rider is a flat HP loss (no Vulnerable), and the preview's rows add up to the live HP lost.
+test('the stance payoffs land at 1.5–2× an ordinary hit, and the preview equals the live play', () => {
+  for (const [classId, cardId, matching] of [['reaver', 'openingCut', 'idle'], ['rogue', 'breakFocus', 'casting'], ['starseer', 'unguardedBolt', 'idle']]) {
+    for (const upgraded of [false, true]) {
+      const hit = maneuver => {
+        const world = live(classId);
+        if (maneuver === 'idle') delete world.enemy.combatStance; else world.enemy.combatStance = stance(maneuver);
+        world.combat.piles.hand.push({ instanceId: 'probe', cardId, upgraded });
+        const preview = previewCard(world.combat, 'probe', world.enemy.id);
+        const rows = preview.values.filter(row => ['damage', 'loseHp'].includes(row.op)).map(row => row.perTarget?.[world.enemy.id] ?? row.value);
+        const hp = world.enemy.hp;
+        dispatch(world.combat, { type: 'playCard', cardInstanceId: 'probe', targetId: world.enemy.id });
+        return { rows, lost: hp - world.enemy.hp, vulnerable: world.enemy.statuses.vulnerable?.stacks || 0 };
+      };
+      const ordinary = hit('sweep'), matched = hit(matching);
+      const ratio = matched.lost / ordinary.lost;
+      assert.ok(ratio >= 1.5 && ratio <= 2, `${cardId}${upgraded ? '+' : ''}: ${matched.lost} vs ${ordinary.lost} is ${ratio.toFixed(2)}×`);
+      assert.equal(matched.vulnerable, 0, `${cardId}: no Vulnerable on top of the stance weakness`);
+      assert.equal(matched.rows.reduce((sum, value) => sum + value, 0), matched.lost, `${cardId}: preview rows add up to the live HP lost`);
+      assert.equal(ordinary.rows[0], ordinary.lost, `${cardId}: unmatched, only the hit lands`);
+    }
+  }
 });
 
 test('Break Focus pays off against a target in Prepared', () => {
