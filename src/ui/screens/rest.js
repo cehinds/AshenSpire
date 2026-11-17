@@ -37,6 +37,7 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { mountRestFrame, restPresentation } from '../components/restFrame.js';
+import { setChoiceStatus } from '../components/choiceBody.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
@@ -85,6 +86,28 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
+// The option card attributes a plan decides; the rest (id, role, the data an
+// armer or markUiComponent wrote) never change after mount.
+const OPTION_STATE_ATTRIBUTES = Object.freeze([
+  'class', 'tabindex', 'aria-disabled',
+  'data-points', 'data-blocked-by', 'data-level', 'data-xp', 'data-xp-to-next',
+]);
+
+// One option card takes a fresh render's state and words in place: the card
+// node and its listeners stay, and only its body is swapped when its words moved.
+function updateOptionCard(card, markup) {
+  const holder = document.createElement('div');
+  holder.innerHTML = markup;
+  const fresh = holder.firstElementChild;
+  for (const name of OPTION_STATE_ATTRIBUTES) {
+    const value = fresh.getAttribute(name);
+    if (value !== null && card.getAttribute(name) !== value) card.setAttribute(name, value);
+  }
+  const body = card.querySelector('.cp-body');
+  const freshBody = fresh.querySelector('.cp-body');
+  if (body && freshBody && body.outerHTML !== freshBody.outerHTML) body.replaceWith(freshBody);
+}
+
 /** The partner kind's authored NAME, never its id — a player has never heard of `mana`. */
 function partnerName(registries, kind) {
   if (!kind) return 'nothing';
@@ -114,10 +137,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // button fires, on a clone, so the line and the result cannot disagree.
   const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus() });
   const relicNoRest = !!stay.restDenied;
-  const preview = relicNoRest ? null : previewRest(stay);
-  const heal = preview ? preview.heal : 0;
-  const manaAfter = preview ? preview.manaAfter : run.mana;
-  const manaGain = Math.max(0, manaAfter - run.mana);
   // A single-use visit whose one choice was already taken (a re-opened visit,
   // `revisit`) stays spent; a rest already taken here, this visit or an earlier
   // one, holds Rest shut.
@@ -130,22 +149,11 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   const noRestCopy = relicNoRest
     ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.`
     : restedHere ? 'You have already rested here.' : t('gameProfile.rest.spent');
-  // Rest at full health and full Mana led the list as if it were the thing to
-  // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
-  // 2026-09-11). It stays a choice (it is still the way to end a visit without
-  // spending anything), reads muted, and says what it would not restore.
-  const nothingToRestore = !noRest && heal <= 0 && manaGain <= 0;
-  const smith = smithingPlan(registries, run);
   // WHICH SERVICES THIS PLACE OFFERS is its tag set (smith, levelUp,
   // restFlasks — model/locations.js); WHICH SMITH SERVICES is the table in
   // balance.smithing.services, resolved at the door and handed in. A screen
   // mounted without the table keeps the upgrade it always had.
   const offered = stay.services.smith ? (services && Array.isArray(services.services) ? services.services : ['upgrade']) : [];
-  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0 && !spentHere;
-  const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
-  const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
-  const extractOpen = !!extract && extract.available && !spentHere;
-  const installOpen = !!install && install.available && !spentHere;
   // THE DECK EDITOR (SPEC §14.1) under Rest sites only: a service the place's
   // tags offer (`deckEdit`) and the door hands in the way to it only when the
   // setting says so (DeckEditorModel.deckEditorDoors). It ends nothing: the
@@ -167,10 +175,32 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // offer and prices nothing — there is no price. The model owns the ledger,
   // the cap, persistence and pool reconciliation; the screen only fixes the
   // size of this one interaction.
-  const level = levelUpPlan(registries, run);
-  // How many points wait — the card offers them all at once and commits them
-  // one applyLevelUp at a time (model/levelup.js).
-  const budget = levelUpBudget(registries, run);
+  // WHAT THE RUN CAN DO HERE NOW, read at mount and again after anything taken
+  // here changes the run (a level, an upgrade, a card service, a flask), so the
+  // cards, the head and the recovery rows update in place (RestOption below).
+  let heal, manaAfter, manaGain, nothingToRestore, smith, canInspectSmithing, extract, install, extractOpen, installOpen, level, budget;
+  const readPlans = () => {
+    const preview = relicNoRest ? null : previewRest(stay);
+    heal = preview ? preview.heal : 0;
+    manaAfter = preview ? preview.manaAfter : run.mana;
+    manaGain = Math.max(0, manaAfter - run.mana);
+    // Rest at full health and full Mana led the list as if it were the thing to
+    // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
+    // 2026-09-11). It stays a choice (it is still the way to end a visit without
+    // spending anything), reads muted, and says what it would not restore.
+    nothingToRestore = !noRest && heal <= 0 && manaGain <= 0;
+    smith = smithingPlan(registries, run);
+    canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0 && !spentHere;
+    extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
+    install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
+    extractOpen = !!extract && extract.available && !spentHere;
+    installOpen = !!install && install.available && !spentHere;
+    level = levelUpPlan(registries, run);
+    // How many points wait — the card offers them all at once and commits them
+    // one applyLevelUp at a time (model/levelup.js).
+    budget = levelUpBudget(registries, run);
+  };
+  readPlans();
   const shrineLayout = restPresentation(registries).optionLayout;
 
   // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
@@ -195,13 +225,64 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // THE LEVEL LINE: where the climb stands — the level, the XP toward the
   // next — and, once a point is pending, how many remain, as the kit's delta.
   // No cinder is named here: a level costs nothing but the fights it took.
-  const levelLineHtml = html(el('p', { class: 'as-kitline level-xp-preview', dataset: { levelXpPreview: '' } }, [
+  const levelLineHtml = () => html(el('p', { class: 'as-kitline level-xp-preview', dataset: { levelXpPreview: '' } }, [
     statPair({ key: `Level ${level.level}`, value: `${level.xp} / ${level.xpToNext} XP` }),
     el('strong', { class: 'level-points-waiting', text: `${level.points} point${level.points === 1 ? '' : 's'} to assign` }),
     el('span', { class: 'as-delta level-points-result', dataset: { levelPointsResult: '', dir: 'down' }, hidden: true }, [
       el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.points} remaining` }),
     ]),
   ]));
+
+  // THE OPTION CARDS, one builder each, so a fresh mount and an in-place
+  // update (RestOption.update below) draw the same markup from the same plans.
+  const restCardHtml = () => `<div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
+          <div class="glyph">${engravedIconHtml('rest')}</div>
+          <div class="cp-body">
+            <h3>${esc(t('rest.eyebrow'))}</h3>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
+          </div>
+        </div>`;
+  const levelCardHtml = () => `<div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             role="button" tabindex="0" aria-haspopup="dialog"
+             aria-disabled="${level.offerable ? 'false' : 'true'}"
+             data-points="${level.points}"
+             data-blocked-by="${level.blockedBy || ''}"
+             data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
+          <div class="glyph">${engravedIconHtml('staggered')}</div>
+          <div class="cp-body">
+            <h3>${esc(t('reward.level.button'))}</h3>
+            <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
+          </div>
+        </div>`;
+  const smithCardHtml = () => `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
+          <div class="glyph">${engravedIconHtml('equipment')}</div>
+          <div class="cp-body">
+            <h3>Upgrade an Item</h3>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : spentHere ? t('gameProfile.rest.spent') : 'No owned armament has an effective tier remaining.'}</p>
+          </div>
+        </div>`;
+  const extractCardHtml = () => `<div class="class-pick${extractOpen ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extractOpen ? '0' : '-1'}"
+             aria-disabled="${extractOpen ? 'false' : 'true'}">
+          <div class="glyph">${engravedIconHtml('settings')}</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(extract.summary)}</p>
+          </div>
+        </div>`;
+  const installCardHtml = () => `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${installOpen ? '0' : '-1'}"
+             aria-disabled="${installOpen ? 'false' : 'true'}">
+          <div class="glyph">${engravedIconHtml('smith')}</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
+          </div>
+        </div>`;
 
   // W1s: the option cards are the choice body's first slot, their markup
   // unchanged. The Shrine's name moves to the head's title, and the flavour
@@ -210,13 +291,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // Order (owner, 2026-10-12): Rest, Level up, Upgrade, Flask, then the rest.
   const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
-        <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
-          <div class="glyph">${engravedIconHtml('rest')}</div>
-          <div class="cp-body">
-            <h3>${esc(t('rest.eyebrow'))}</h3>
-            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
-          </div>
-        </div>
+        ${restCardHtml()}
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -229,7 +304,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
              assign a point" and the screen would eventually disagree with the
              commit path below.
              THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
-             come off ONE level plan, computed once per mount, so a disabled card
+             come off ONE level plan, read at mount and on each update, so a disabled card
              and a refused purchase cannot diverge. An instrument reads them too,
              which is why they are on the element and not in a closure.
              NO BACKTICKS IN THIS BLOCK. It sits inside a template literal. I
@@ -238,29 +313,8 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        ${stay.services.levelUp ? `<div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
-             role="button" tabindex="0" aria-haspopup="dialog"
-             aria-disabled="${level.offerable ? 'false' : 'true'}"
-             data-points="${level.points}"
-             data-blocked-by="${level.blockedBy || ''}"
-             data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
-          <div class="glyph">${engravedIconHtml('staggered')}</div>
-          <div class="cp-body">
-            <h3>${esc(t('reward.level.button'))}</h3>
-            <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
-          </div>
-        </div>` : ''}
-        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
-             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
-          <div class="glyph">${engravedIconHtml('equipment')}</div>
-          <div class="cp-body">
-            <h3>Upgrade an Item</h3>
-            <p>${canInspectSmithing
-              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
-              : spentHere ? t('gameProfile.rest.spent') : 'No owned armament has an effective tier remaining.'}</p>
-          </div>
-        </div>` : ''}
+        ${stay.services.levelUp ? levelCardHtml() : ''}
+        ${stay.services.smith ? smithCardHtml() : ''}
         ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
             <span class="glyph shrine-fold-glyph">${engravedIconHtml('flask-health')}</span>
@@ -288,24 +342,8 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           </div>
           </div>
         </details>` : ''}
-        ${extract ? `<div class="class-pick${extractOpen ? '' : ' locked'}" id="extract-opt"
-             role="button" tabindex="${extractOpen ? '0' : '-1'}"
-             aria-disabled="${extractOpen ? 'false' : 'true'}">
-          <div class="glyph">${engravedIconHtml('settings')}</div>
-          <div class="cp-body">
-            <h3>Extract a Card</h3>
-            <p>${spentHere ? t('gameProfile.rest.spent') : esc(extract.summary)}</p>
-          </div>
-        </div>` : ''}
-        ${install ? `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
-             role="button" tabindex="${installOpen ? '0' : '-1'}"
-             aria-disabled="${installOpen ? 'false' : 'true'}">
-          <div class="glyph">${engravedIconHtml('smith')}</div>
-          <div class="cp-body">
-            <h3>Seat a Card</h3>
-            <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
-          </div>
-        </div>` : ''}
+        ${extract ? extractCardHtml() : ''}
+        ${install ? installCardHtml() : ''}
         ${deckDoor ? `<div class="class-pick" id="deck-opt" role="button" tabindex="0">
           <div class="glyph">${engravedIconHtml('skill')}</div>
           <div class="cp-body">
@@ -318,7 +356,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
 
   // W1s {Status} and availability: one fact per offered choice, read off the
   // same plans that build and wire the cards above — never re-derived.
-  const offeredChoices = [
+  const offeredChoices = () => [
     { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && (restedHere || spentHere) },
     stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
     stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
@@ -326,7 +364,9 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
     extract && { id: 'extract', selector: '#extract-opt', available: extractOpen },
     install && { id: 'install', selector: '#install-opt', available: installOpen },
   ].filter(Boolean);
-  const availability = restChoiceStatus(offeredChoices);
+  const availabilityOf = () => restChoiceStatus(offeredChoices());
+  const statusLine = (status) => t('rest.status.available', { available: status.available, total: status.total });
+  const availability = availabilityOf();
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
   // cards). A single-use place has none — taking a choice is the way on — so
   // its reserved foot collapses rather than inventing a way to leave. EXCEPT
@@ -335,10 +375,13 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // #1195), so the foot is the way out.
   const leave = (multiUse || relicNoRest || revisit?.left || spentHere) ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
+  let runHud = null;
   mountRestFrame(app, {
-    registries, run, meta, hud, remount,
+    registries, run, meta, hud,
+    onFlaskDrunk: () => updateRest(),
+    onRunHud: (handle) => { runHud = handle; },
     title: locationTitle(stay.locationId),
-    status: t('rest.status.available', { available: availability.available, total: availability.total }),
+    status: statusLine(availability),
     choices: el('div', { class: 'choice-body-choices rest-choices', html: choicesHtml }),
     consequences,
     foot: leave ? modalFooter({ primary: leave, size: 'fill', className: 'choice-foot' }) : null,
@@ -346,25 +389,47 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // The second slot: what arriving already restored, then each choice's state.
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
-  const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') });
-  for (const [icon, label, before, after] of [
+  const recoveryRows = () => [
     ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
     ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],
-  ]) {
+  ].map(([icon, label, before, after]) => {
     const gain = after - before;
-    recovery.append(el('div', { class: 'rest-recovery-row', html: `${engravedIconHtml(icon)}<span>${label}</span><span>${before} → <strong>${after}</strong></span><span class="rest-recovery-gain">${gain > 0 ? `+${gain}` : '—'}</span>` }));
-  }
+    return el('div', { class: 'rest-recovery-row', html: `${engravedIconHtml(icon)}<span>${label}</span><span>${before} → <strong>${after}</strong></span><span class="rest-recovery-gain">${gain > 0 ? `+${gain}` : '—'}</span>` });
+  });
+  const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') }, recoveryRows());
   consequences.append(recovery);
+  const choicesOffered = offeredChoices();
+  const availabilityRows = (status) => status.rows.map((entry) => {
+    const card = app.querySelector(choicesOffered.find((choice) => choice.id === entry.id).selector);
+    return el('li', { class: 'choice-status-row', dataset: { option: entry.id, state: entry.state } }, [
+      el('span', { class: 'choice-status-name', text: (card?.querySelector('h3, .on')?.textContent || entry.id).trim() }),
+      el('span', { class: 'choice-status-state', text: t(`rest.state.${entry.state}`) }),
+    ]);
+  });
+  const availabilityList = el('ul', { class: 'choice-status-list' }, availabilityRows(availability));
   consequences.append(el('details', { class: 'rest-availability' }, [
     el('summary', { text: t('rest.consequences.heading') }),
-    el('ul', { class: 'choice-status-list' }, availability.rows.map((entry) => {
-      const card = app.querySelector(offeredChoices.find((choice) => choice.id === entry.id).selector);
-      return el('li', { class: 'choice-status-row', dataset: { option: entry.id, state: entry.state } }, [
-        el('span', { class: 'choice-status-name', text: (card?.querySelector('h3, .on')?.textContent || entry.id).trim() }),
-        el('span', { class: 'choice-status-state', text: t(`rest.state.${entry.state}`) }),
-      ]);
-    })),
+    availabilityList,
   ]));
+  // RestOption.update: a level, an upgrade, a card service or a flask changed
+  // the run here. Each option card, the head's {Status}, the recovery rows,
+  // the availability list and the HUD take the new plans in place; the screen,
+  // the cards and their listeners stay, so focus stays where the player left it.
+  function updateRest() {
+    readPlans();
+    for (const [selector, cardHtml] of [
+      ['#rest-opt', restCardHtml], ['#level-opt', levelCardHtml], ['#smith-opt', smithCardHtml],
+      ['#extract-opt', extractCardHtml], ['#install-opt', installCardHtml],
+    ]) {
+      const card = app.querySelector(selector);
+      if (card) updateOptionCard(card, cardHtml());
+    }
+    const status = availabilityOf();
+    setChoiceStatus(app.querySelector('.rest-door'), statusLine(status));
+    recovery.replaceChildren(...recoveryRows());
+    availabilityList.replaceChildren(...availabilityRows(status));
+    runHud?.update();
+  }
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
@@ -516,8 +581,8 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           allocation.close();
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          remount();
-          app.querySelector('#level-opt')?.focus({ preventScroll: true });
+          updateRest();
+          option.focus({ preventScroll: true });
         },
       };
       if (allocation) {
@@ -538,7 +603,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         shrineScreen.inert = true;
         allocation = RenderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
-        allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
+        allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml() }));
         allocation.card.addEventListener('keydown', (event) => {
           if (event.key !== 'Tab') return;
           const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -556,7 +621,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       result.hidden = false;
       result.querySelector('.d-to').textContent = `${level.points - count} remaining`;
     };
-    const openLevel = () => { if (!allocation) { option.focus(); drawLevelCard(); } };
+    const openLevel = () => { if (!allocation && level.offerable) { option.focus(); drawLevelCard(); } };
     option.addEventListener('click', openLevel);
     option.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -594,8 +659,8 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         },
         onBack: () => {
           if (!multiUse && receipts.length) { onDone(smithReceiptLine(receipts)); return; }
-          remount();
-          app.querySelector('#smith-opt')?.focus({ preventScroll: true });
+          updateRest();
+          smithOption.focus({ preventScroll: true });
         },
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
@@ -604,27 +669,28 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           if (run.smithingStones > 0) { openSmith(done); return; }
-          if (multiUse) { remount(); return; }
+          if (multiUse) { updateRest(); return; }
           onDone(smithReceiptLine(done));
         },
       });
     };
-    smithOption.addEventListener('click', () => openSmith());
+    smithOption.addEventListener('click', () => { if (canInspectSmithing) openSmith(); });
     if (openPanel === 'smith') openSmith();
     smithOption.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
-      openSmith();
+      if (canInspectSmithing) openSmith();
     });
   }
   // THE CARD SERVICES, the same reversible modal transaction as the upgrade:
   // open and select are presentation state; Back and Escape return with the
   // run untouched; Confirm is the one commit, and — like an upgrade — the one
   // path that leaves the Shrine unless multi-use holds it open.
+  const serviceOpen = { '#extract-opt': () => extractOpen, '#install-opt': () => installOpen };
   for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
     const option = app.querySelector(selector);
     if (!option || !offer || !offer.available || spentHere) continue;
-    const open = () => openMountService(app, {
+    const open = () => serviceOpen[selector]() && openMountService(app, {
       service: offer.service,
       registries,
       run,
@@ -635,7 +701,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       onCommitted: (receipt) => {
         onConsumed?.(offer.service);
         sfx.play('shrine');
-        if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+        if (multiUse) { if (onLevelUp) onLevelUp(); updateRest(); return; }
         onDone(mountReceiptLine(receipt));
       },
     });

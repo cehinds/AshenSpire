@@ -51,6 +51,15 @@ test('RunHud update writes HP and cinders into the band it drew, keeping the ban
   });
 });
 
+test('no screen remounts itself when a flask is drunk from the run HUD', () => {
+  for (const file of ['map', 'shop', 'event', 'dialogue', 'blacksmith', 'rest']) {
+    const source = readFileSync(new URL(`../src/ui/screens/${file}.js`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /wireRunHud\(app, \{[^\n]*remount/, `${file}.js hands the HUD no remount`);
+    assert.doesNotMatch(source, /RefreshRunHud\(app, \{[^\n]*remount/, `${file}.js refreshes the HUD without a remount`);
+  }
+  const runHud = readFileSync(new URL('../src/ui/components/runHud.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(runHud, /remount\?\.\(\)/, 'the HUD calls no remount after a drink');
+});
 
 // ---- The Blacksmith: a purchase updates the purse, the shelves and the status in place --------------------------
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -104,5 +113,67 @@ test('a Blacksmith purchase updates the purse and the rows in place, and matches
     assert.equal(app.querySelector('.shop-workspace').outerHTML, fresh.querySelector('.shop-workspace').outerHTML,
       'the updated workspace is what a fresh render of the same run draws (classes, aria, order)');
   });
+});
+
+// ---- The Shrine: a service updates its option, the status and the HUD in place ----------------------------------
+const LEGACY = createRegistries(contentBundle);
+
+function withTimers(dom, fn) {
+  const prior = { HTMLElement: globalThis.HTMLElement, setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout };
+  const timers = new Map();
+  let nextId = 1;
+  globalThis.HTMLElement = dom.document.body.constructor;
+  globalThis.setTimeout = (callback, _ms, ...args) => { const id = nextId++; timers.set(id, () => callback(...args)); return id; };
+  globalThis.clearTimeout = (id) => { timers.delete(id); };
+  try {
+    fn();
+    for (let round = 0; timers.size && round < 20; round++) {
+      const due = [...timers];
+      timers.clear();
+      for (const [, run] of due) run();
+    }
+  } finally {
+    Object.assign(globalThis, prior);
+  }
+}
+
+test('a multi-use Shrine upgrade updates the Smith option in place, and matches a fresh render', () => {
+  withKitDom((dom) => withTimers(dom, () => {
+    const run = createRunState({ seed: 1675, classId: 'reaver', registries: LEGACY });
+    run.smithingStones = 1;
+    const visit = createLocationVisit({ run, registries: LEGACY, rng: null }, 'shrine', {});
+    const mount = () => {
+      const app = dom.document.createElement('main');
+      dom.document.body.append(app);
+      mountRest(app, { registries: LEGACY, run, meta: { settings: {} }, onDone() {}, visit, multiUse: true });
+      return app;
+    };
+    const app = mount();
+    const screen = app.querySelector('.rest-screen');
+    const smith = app.querySelector('#smith-opt');
+    const rest = app.querySelector('#rest-opt');
+    const recovery = app.querySelector('.rest-recovery');
+    const recoveryRows = [...recovery.children];
+    const statusList = app.querySelector('.choice-status-list');
+    const statusRows = [...statusList.children];
+    assert.equal(smith.getAttribute('aria-disabled'), 'false', 'the Smith is open with a stone in hand');
+    smith.click();
+    dom.document.querySelector('.smith-upgrade-modal .smith-candidate-card').click();
+    dom.document.querySelector('.confirmation-confirm').click();
+    assert.equal(run.smithingStones, 0, 'the one stone was spent');
+    assert.equal(app.querySelector('.rest-screen'), screen, 'the Shrine is the same node');
+    assert.equal(app.querySelector('#smith-opt'), smith, 'the Smith option is the same node');
+    assert.equal(app.querySelector('#rest-opt'), rest, 'the Rest option is the same node');
+    assert.equal(app.querySelector('.rest-recovery'), recovery, 'the recovery rows keep their section');
+    assert.ok(recovery.children.length && [...recovery.children].every((row) => !recoveryRows.includes(row)), 'the recovery rows were drawn from the new plans');
+    assert.equal(app.querySelector('.choice-status-list'), statusList, 'the availability list is the same node');
+    assert.ok([...statusList.children].every((row) => !statusRows.includes(row)), 'its rows were drawn from the new plans');
+
+    const fresh = mount();
+    assert.equal(app.querySelector('.rest-choices').outerHTML, fresh.querySelector('.rest-choices').outerHTML,
+      'the updated options are what a fresh render of the same run draws');
+    assert.equal(app.querySelector('[data-choice-status]').textContent, fresh.querySelector('[data-choice-status]').textContent,
+      'the head status matches a fresh render');
+  }));
 });
 
