@@ -172,7 +172,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const list = view.filters[group];
       const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
       view = deckEditorView({ ...view, filters: { ...view.filters, [group]: next } });
-      draw();
+      refreshLists();
     };
     const filterChips = [
       ...f.type.map((c) => chip(c.label, c.on, toggle('type', c.id), `filter:type:${c.id}`)),
@@ -180,12 +180,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ...f.source.map((c) => chip(c.label, c.on, toggle('source', c.id), `filter:source:${c.id}`)),
       chip(f.upgraded.label, f.upgraded.on, () => {
         view = deckEditorView({ ...view, filters: { ...view.filters, upgraded: !view.filters.upgraded } });
-        draw();
+        refreshLists();
       }, 'filter:upgraded'),
     ];
     const sortChips = model.sorts.map((s) => chip(s.label, s.on, () => {
       view = deckEditorView({ ...view, sort: s.id });
-      draw();
+      refreshLists();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
       // A small icon button (owner, 2026-11-15); the word stays for assistive technology and the tooltip.
@@ -544,6 +544,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       next.focus();
       try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
+    return paneSection('collection', '', collectionList(), [
+      tools(),
+      search,
+    ]);
+  }
+
+  function collectionList() {
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
     const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
@@ -582,13 +589,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', '', list, [
-      tools(),
-      search,
-    ]);
+    return list;
   }
 
-  function deckPane() {
+  function deckList() {
     const list = el('div', { class: `deck-editor-list deck-editor-display-${deckDisplay}`, role: 'list' });
     const rows = model.deck.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(deckQuery.trim().toLocaleLowerCase()));
     const groups = new Map();
@@ -648,7 +652,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(details);
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
-    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
+    return list;
+  }
+
+  function deckPane() {
+    const search =searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
     search?.addEventListener('input', () => {
       deckQuery = search.value;
       const caret = search.selectionStart;
@@ -657,8 +665,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       next.focus();
       try { next.setSelectionRange(caret, caret); } catch { /* browser search input */ }
     });
-    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
-      ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => { deckDisplay = id; draw(); }, `display:${id}`)),
+    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, deckList(), [
+      ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => showDeckDisplay(id), `display:${id}`)),
       search,
     ]);
     section.appendChild(el('div', { class: 'deck-editor-dropwell', text: t('deckEditor.dropHere') }));
@@ -788,22 +796,77 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // The refusal is visible text beside Done (FINISH §6), never only a colour.
     const refusal = el('p', {
       id: 'deck-editor-refusal', class: 'deck-editor-refusal', role: 'status', 'aria-live': 'polite',
-      text: notice || model.done.refusal, hidden: !(notice || model.done.refusal),
+      text: refusalText(), hidden: !refusalText(),
     });
-    const keys = el('p', {
-      class: 'deck-editor-keys',
-      text: held
-        ? t('deckEditor.held', { name: model.deck.find((r) => r.instanceId === held)?.name || '' })
-        : t('deckEditor.keys', {
-          panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
-        }),
-    });
+    const keys = el('p', { class: 'deck-editor-keys', text: keysText() });
     const foot = ModalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
     return el('div', { class: 'deck-editor-footer' }, [refusal,
       el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
 
-  function draw() {
+  const refusalText = () => notice || model.done.refusal;
+  const keysText = () => (held
+    ? t('deckEditor.held', { name: model.deck.find((r) => r.instanceId === held)?.name || '' })
+    : t('deckEditor.keys', {
+      panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
+    }));
+
+  // ---- partial updates: each changes only the nodes its state owns ----------
+  function showRefusal() {
+    const line = panel.querySelector('#deck-editor-refusal');
+    line.textContent = refusalText();
+    if (refusalText()) line.removeAttribute('hidden');
+    else line.setAttribute('hidden', 'true');
+  }
+
+  function markHeld() {
+    MarkSelected(panel.querySelectorAll('.deck-editor-row'), node => node.dataset.instanceId === held, { className: 'held', ariaAttribute: [] });
+    MarkSelected(panel.querySelectorAll('.deck-editor-pick'), node => node.dataset.instanceId === held, { className: [] });
+    panel.querySelector('.deck-editor-keys').textContent = keysText();
+    restoreFocus();
+  }
+
+  const shownCardKey = () => {
+    const shown = inspected || selected;
+    return shown ? `${shown.source}:${shown.key}` : '';
+  };
+  function replaceList(paneId, list) {
+    panel.querySelector(`[data-pane="${paneId}"] .deck-editor-list`).replaceWith(list);
+  }
+  function replaceInspector() {
+    const inspector = panel.querySelector('.deck-editor-inspector');
+    inspector.parentNode.insertBefore(inspectPane(), inspector);
+    inspector.remove();
+  }
+  const chipStates = () => new Map([
+    ...['type', 'cost', 'source'].flatMap(group => model.filters[group].map(chipState => [`filter:${group}:${chipState.id}`, chipState.on])),
+    ['filter:upgraded', model.filters.upgraded.on],
+    ...model.sorts.map(sortState => [`sort:${sortState.id}`, sortState.on]),
+  ]);
+
+  // The model filters and sorts the rows, so a chip rebuilds the two lists; the chips, the
+  // head, the footer and the panes stay. The inspector is rebuilt only if its card left the list.
+  function refreshLists() {
+    const shownBefore = shownCardKey();
+    resolveModel();
+    const states = chipStates();
+    MarkSelected(panel.querySelectorAll('.deck-editor-tools .deck-editor-chip'), node => states.get(node.dataset.focusKey), { className: 'on' });
+    replaceList('collection', collectionList());
+    replaceList('deck', deckList());
+    if (shownCardKey() !== shownBefore) replaceInspector();
+    panel.querySelector('.deck-editor-keys').textContent = keysText();
+    restoreFocus();
+  }
+
+  function showDeckDisplay(id) {
+    deckDisplay = id;
+    const displayChips = [...panel.querySelectorAll('.deck-editor-chip')].filter(node => node.dataset.focusKey?.startsWith('display:'));
+    MarkSelected(displayChips, node => node.dataset.focusKey === `display:${id}`, { className: 'on' });
+    replaceList('deck', deckList());
+    restoreFocus();
+  }
+
+  function resolveModel() {
     combatDefCache.clear();
     const rawModel = deckEditorModel({ registries, run, settings, view });
     model = { ...rawModel, collection: deckEditorCollectionRows({ registries, run, collection: rawModel.collection }) };
@@ -822,6 +885,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const currentInspected = inspectedRows.find(row => selectionKey(row, inspected.source) === inspected.key);
       inspected = currentInspected ? { ...inspected, row: currentInspected } : selected;
     }
+  }
+
+  function draw() {
+    resolveModel();
     panel.replaceChildren?.();
     if (!panel.replaceChildren) panel.innerHTML = '';
     panel.dataset.mobileView = mobileView;
@@ -831,7 +898,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
         const result = session.confirm();
-        if (!result.ok) { notice = result.refusal || model.done.refusal; draw(); return; }
+        if (!result.ok) { notice = result.refusal || model.done.refusal; showRefusal(); return; }
         close(); onNavigate(id);
       } });
       for (const tab of head.querySelectorAll('[data-modal-tab]')) progressionTip(tab,
@@ -906,14 +973,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function togglePick(instanceId) {
-    if (held === instanceId) { drop(); draw(); return; }
+    if (held === instanceId) { drop(); markHeld(); return; }
     held = instanceId;
     focusKey = `row-pick:${instanceId}`;
     // While a row is held, the arrows and ▲/▼ on the pad move it instead of
     // the focus cursor; A, X (the End Turn key) or Enter drops it.
     releaseGate?.();
     releaseGate = setInputGate((input) => (input.phase === 'down' ? heldInput(input) : input.phase === 'up' && isHeldKey(input)));
-    draw();
+    markHeld();
   }
 
   function drop() {
@@ -944,7 +1011,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const dropNow = keyboard
       ? (input.key === 'Enter' || matchAction({ key: input.key }, 'endTurn'))
       : [PAD.a, PAD.x].includes(input.button);
-    if (dropNow) { drop(); draw(); return true; }
+    if (dropNow) { drop(); markHeld(); return true; }
     return false;
   }
 
@@ -980,7 +1047,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function doDone() {
     const result = session.confirm();
-    if (!result.ok) { notice = ''; draw(); return result; }
+    if (!result.ok) { notice = ''; showRefusal(); return result; }
     close();
     onDone?.();
     return result;
