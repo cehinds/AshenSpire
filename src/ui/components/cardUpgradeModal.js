@@ -81,7 +81,9 @@ function readUpgradeState(row)
 
 function isHtmlElement(candidate)
 {
-    return candidate instanceof HTMLElement;
+    return typeof HTMLElement === 'function'
+        ? candidate instanceof HTMLElement
+        : candidate?.nodeType === 1;
 }
 
 function readReturnFocus(returnFocusElement)
@@ -260,6 +262,7 @@ export function MountCardUpgradeModal(
         returnFocusElement,
         focusInstanceId = null,
         parent = null,
+        confirmLabel = null,
     },
 )
 {
@@ -357,7 +360,7 @@ export function MountCardUpgradeModal(
     {
         const upgradeStatus = row.weaponBound
             ? ''
-            : translate('cardUpgrade.row.status', {
+            : row.status || translate('cardUpgrade.row.status', {
                 from: row.levelFrom,
                 to: row.levelTo,
                 cost: row.costLabel,
@@ -565,7 +568,9 @@ export function MountCardUpgradeModal(
     function buildDetailNodes(rawModel)
     {
         const model = readPaneModel(rawModel);
-        const costNode = buildCostNode(model);
+        const costNode = model.purse === false
+            ? null
+            : buildCostNode(model);
         const changeRows = buildChangeRows(model.selected.changes);
         const nodes = upgradeConfirmNodes({
             cost: costNode,
@@ -769,8 +774,8 @@ export function MountCardUpgradeModal(
     {
         confirmButton.disabled = !selected || !canCommitSelection(selected);
         confirmButton.textContent = selected
-            ? readConfirmLabel(selected)
-            : translate('cardUpgrade.confirmIdle');
+            ? confirmLabel || readConfirmLabel(selected)
+            : confirmLabel || translate('cardUpgrade.confirmIdle');
         confirmButton.title = selected && confirmButton.disabled
             ? readBlockedMessage(model)
             : '';
@@ -802,6 +807,7 @@ export function MountCardUpgradeModal(
 
         renderCandidateList(model, selectedInstanceId);
         stonesStatus.textContent = translate('cardUpgrade.stones', { n: model.stones });
+        stonesStatus.hidden = model.purse === false;
         updateConfirmButton(model, selected);
         restoreRowFocus(focusedInstanceId);
     }

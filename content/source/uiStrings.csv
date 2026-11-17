@@ -1873,6 +1873,7 @@ cardUpgrade.row.nextDiffers,,Your copies would roll different upgrades. This sho
 cardUpgrade.row.aria,,"{name}, {type}, {n} in deck, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.","{name}, {type}, {n} in deck, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.",
 cardUpgrade.row.copiesLabel,,{n} in deck,{n} in deck,
 cardUpgrade.row.inDeck,,In deck,In deck,
+cardUpgrade.row.rankStatus,,Rank {from} → {to},Rank {from} → {to},
 cardUpgrade.row.copiesLabelSide,,{n} in sideboard,{n} in sideboard,
 cardUpgrade.row.ariaSide,,"{name}, {type}, {n} in sideboard, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.","{name}, {type}, {n} in sideboard, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.",
 smith.upgrade.confirm,,Upgrade ({cost}),Upgrade ({cost}),
