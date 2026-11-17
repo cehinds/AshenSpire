@@ -62,13 +62,19 @@ test('a card upgraded off Ethereal stays in the deck at the end of the turn', ()
   assert.ok(!where('kept').includes('exhaust'), 'the upgraded copy is not exhausted');
 });
 
-// What the third play of a card costs, after two earlier plays (the Attack stance the first play enters takes 1 off, never below 1).
+// Puts a played copy back in hand, so the same copy can be played again this fight.
+function backToHand(c, id) {
+  for (const pile of Object.values(c.piles)) { const at = pile.findIndex((card) => card.instanceId === id); if (at >= 0 && pile !== c.piles.hand) c.piles.hand.push(pile.splice(at, 1)[0]); }
+}
+// What the third play of ONE copy costs, after its two earlier plays (the Attack stance the first play enters takes 1 off, never below 1).
 function thirdPlayCost(cardId, steps, classId = 'reaver') {
-  const c = fight([inst('a', cardId, steps), inst('b', cardId, steps), inst('c', cardId, steps)], classId);
+  const c = fight([inst('a', cardId, steps)], classId);
   dispatch(c, { type: 'playCard', cardInstanceId: 'a', targetId: c.enemies[0].id });
-  dispatch(c, { type: 'playCard', cardInstanceId: 'b', targetId: c.enemies[0].id });
+  backToHand(c, 'a');
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a', targetId: c.enemies[0].id });
+  backToHand(c, 'a');
   const before = { stamina: c.player.stamina, mana: c.player.mana };
-  dispatch(c, { type: 'playCard', cardInstanceId: 'c', targetId: c.enemies[0].id });
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a', targetId: c.enemies[0].id });
   return { stamina: before.stamina - c.player.stamina, mana: before.mana - c.player.mana };
 }
 
@@ -80,13 +86,25 @@ test('a steady upgrade holds the printed cost on every play', () => {
 // The first play enters the casting stance; later plays take its 1-Stamina stance cut (never below 1), so the rise shows from the third play.
 test('Hold Block costs more each play; upgraded it never rises', () => {
   const plays = (steps) => {
-    const ids = ['a', 'b', 'c'];
-    const c = fight(ids.map((id) => ({ instanceId: id, cardId: 'base.retain-block', ...(steps ? { upgraded: true } : { upgraded: false }) })), 'reaver');
-    return ids.map((id) => { const before = c.player.stamina; dispatch(c, { type: 'playCard', cardInstanceId: id }); return before - c.player.stamina; });
+    const c = fight([{ instanceId: 'a', cardId: 'base.retain-block', upgraded: !!steps }], 'reaver');
+    return [0, 1, 2].map(() => { const before = c.player.stamina; backToHand(c, 'a'); dispatch(c, { type: 'playCard', cardInstanceId: 'a' }); return before - c.player.stamina; });
   };
   const base = plays(false);
   const held = plays(true);
   assert.equal(base[2] - base[1], 1, `the third play costs 1 more than the second: ${base}`);
   assert.equal(new Set(held).size, 1, `the upgrade holds the cost: ${held}`);
   assert.equal(base[2], held[2] + 1, `the rising copy pays more by its third play: ${base} vs ${held}`);
+});
+
+test('a rising cost counts plays of each copy, never another copy', () => {
+  const c = fight([inst('up', 'base.retain-block', [{ k: 'authored' }]), inst('a', 'base.retain-block'), inst('b', 'base.retain-block')], 'reaver');
+  for (let n = 0; n < 2; n += 1) { backToHand(c, 'up'); dispatch(c, { type: 'playCard', cardInstanceId: 'up' }); }
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a' });
+  const before = c.player.stamina;
+  dispatch(c, { type: 'playCard', cardInstanceId: 'b' });
+  assert.equal(before - c.player.stamina, 1, 'a fresh copy pays its printed cost (less nothing), whatever other copies did');
+  backToHand(c, 'a');
+  const again = c.player.stamina;
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a' });
+  assert.equal(again - c.player.stamina, 1, 'its second play costs 1 more (2), less the 1-Stamina stance cut');
 });
