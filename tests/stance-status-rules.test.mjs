@@ -24,8 +24,8 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const SLASH = { kind: 'attack', moveId: 'slash', damage: 8, hits: 1,
   combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
 
-function live({ enemyId = 'wanderingSoldier', rules = null, seed = 511 } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+function live({ enemyId = 'wanderingSoldier', rules = null, seed = 511, classId = 'reaver' } = {}) {
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
   if (rules) rules(combat.fixCoreRules);
   const enemy = combat.enemies[0];
@@ -327,8 +327,9 @@ test('rule 5: the real core.strike and core.smash (no authored range: melee) tak
 });
 
 /** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
+// The Starseer: the Reaver's starting Forsaken Medallion adds its own triggered Poise damage to the first attack, which is not this card's rider.
 function cleave({ block, poise }) {
-  const { combat, enemy } = live();
+  const { combat, enemy } = live({ classId: 'starseer' });
   Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
   enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
   combat.piles.hand.push({ instanceId: 'cleave', cardId: 'cleavingBlow' });
@@ -346,4 +347,18 @@ test('rules 2-3: the preview keeps the Defend Poise floor the live rider keeps (
   assert.ok(r.rider, 'the preview quotes the rider');
   assert.equal(r.rider.breaks, false, 'the preview does not say BREAK');
   assert.equal(r.rider.removed, 2, 'the preview removes what live removes (3 -> 1)');
+});
+
+test('rules 2-3: a rider whose own hit spent the last Block still keeps the floor (Cleaving Blow, 5 Block, 4 Poise), in the preview and live', () => {
+  const r = cleave({ block: 5, poise: 4 });
+  assert.equal(r.poise, 1, 'live: the hit arrived while Block remained, so its rider leaves 1 Poise');
+  assert.equal(r.broke, false);
+  assert.equal(r.rider?.breaks, false, 'the preview agrees');
+});
+
+test('rules 2-3 edge: a rider on a hit that arrived at 0 Block breaks Poise normally', () => {
+  const r = cleave({ block: 0, poise: 4 });
+  assert.equal(r.poise, 0);
+  assert.equal(r.broke, true);
+  assert.equal(r.rider?.breaks, true);
 });

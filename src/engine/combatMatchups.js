@@ -582,6 +582,8 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
       counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
       counterDisabledAtStart: Boolean(control.counterDisabled), avoidance: { chance: 0 },
       hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
+      // The Block the target held when the action arrived: its Poise riders keep the Defend floor of that Block (theme B, 2026-11-17).
+      blockBefore: number(target?.block),
       avoided: false, connected: true, completed: false };
   }
   const counterAttack = Hit.attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
