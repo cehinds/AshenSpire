@@ -17,6 +17,13 @@ const SELECTION_MODES = [
     'multi',
 ];
 
+// What a multi-select pick past its limit does: nothing (the default), or swap out the earliest pick (the hand
+// discard, playtest 2026-11-17 item 26).
+const AT_LIMIT_MODES = [
+    'ignore',
+    'swapOldest',
+];
+
 const OPTION_CHOICE_TEXT_KEYS = [
     'size',
     'footSize',
@@ -29,6 +36,7 @@ const OPTION_CHOICE_TEXT_KEYS = [
     'cancelLabelKey',
     'closeLabelKey',
     'emptyTextKey',
+    'atLimit',
 ];
 
 const OPTION_CHOICE_REQUIRED_KEYS = [
@@ -211,6 +219,11 @@ function findOptionChoiceProblems(kind, config, table)
         problems.push(`"selection" must be one of ${SELECTION_MODES.join(', ')}`);
     }
 
+    if (Object.hasOwn(config, 'atLimit') && !AT_LIMIT_MODES.includes(config.atLimit))
+    {
+        problems.push(`"atLimit" must be one of ${AT_LIMIT_MODES.join(', ')}`);
+    }
+
     if (!String(config.idAttribute).startsWith(ID_ATTRIBUTE_PREFIX))
     {
         problems.push(`"idAttribute" must start with "${ID_ATTRIBUTE_PREFIX}"`);
@@ -286,6 +299,11 @@ export class OptionChoiceModalModel extends ChoiceModalModel
     get isMultiSelect()
     {
         return this.config.selection === 'multi';
+    }
+
+    get swapsAtLimit()
+    {
+        return this.config.atLimit === 'swapOldest';
     }
 
     get columns()

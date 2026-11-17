@@ -55,7 +55,7 @@ import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/c
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
-import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
+import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEffectPlan } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
@@ -144,6 +144,7 @@ import { modalOpen } from '../modalState.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { ArmLongPress } from '../pressable.js';
+import { KeepIntentRowsInside } from '../components/intentRowFit.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
@@ -155,7 +156,9 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
-import { weaknessChips } from '../components/weaknessChips.js';
+import { StanceWeaknessChip, weaknessChips } from '../components/weaknessChips.js';
+import { StanceWeaknessFor } from '../../model/stanceWeakness.js';
+import { StanceBenefitRules } from '../../engine/stanceBenefits.js';
 import { discoveredWeaknesses, recordWeaknessDiscoveries, PreviewWithUnknownWeaknessesMarked } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
@@ -524,6 +527,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (moved && stage?.enemy) {
         const pose = enemyActionPose(moved.kind, plan);
         plan = { ...plan, pose };
+      }
+      // A spell or a buff glows over the enemy that casts it, as the player's own spell and buff cards do.
+      if (moved && !returned) {
+        const castEffect = EnemyCastEffectPlan({ enemyId: moved.enemyId, moveId: moved.moveId, intent: moved.kind,
+          profile: combatProfileFor({ ...definition, enemyId: moved.enemyId, moveId: moved.moveId }) });
+        if (castEffect) plan = { ...plan, spriteEffect: castEffect, effectEvents: beat.events };
       }
       actorEl.dataset.actionFamily = plan.family;
       actorEl.dataset.actionMotion = plan.motion;
@@ -1277,9 +1286,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         shouldCapturePointer: false,
         onHold: () => {
           if (!box.isConnected) return false;
-          inspectTarget();
+          // A touch long-press may already have opened the reading through its context menu.
+          if (!modalOpen()) inspectTarget();
           return true;
         },
+      });
+      // A right-click, or the browser's own long-press menu on a phone, reads the fighter instead of
+      // showing the image menu (whose pointercancel used to end the hold before it fired). While a
+      // card or flask is armed the combat screen's own handler cancels the targeting instead.
+      box.addEventListener('contextmenu', event => {
+        if (selected || selectedFlask != null || selfArm) return;
+        event.preventDefault();
+        if (!modalOpen()) inspectTarget();
       });
       box.addEventListener('click', event => {
         if (!selected && selectedFlask == null && selectedCombatantId === box.dataset.eid
@@ -1567,6 +1585,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     battlefieldStage.refresh();
     formationMovement?.refresh();
     applyTargetLayer();
+    KeepIntentRowsInside(combatEl);
     refreshAim(); // re-apply the target glow after the board rebuilds
     decorateRoundsScreen();
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
@@ -1601,6 +1620,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The movement grid's cells follow `busy`, which has just cleared: always refreshed (it writes only on change).
     formationMovement?.refresh();
     applyTargetLayer();
+    KeepIntentRowsInside(combatEl);
     refreshAim();
     decorateRoundsScreen();
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
@@ -2342,7 +2362,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         || projectCombatIntent(combat, enemy.id);
       const intent = enemyIntentRead(combat, enemy, { preview: currentRead,
         unknownDetail: t('combat.targetHud.unknown') });
-      return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
+      const lines = intent.lines?.length ? intent.lines : [intent.detail];
+      return `<div class="tt-title">Intent: ${esc(intent.name)}</div><ul class="ti-list tt-intent-lines">${lines.map(line => `<li>${esc(line)}</li>`).join('')}</ul>`;
     }, registries, { onTarget: () => {
       if (inputBusy() || !getEntity(combat, enemy.id)?.alive || selfArm) {
         if (selected || selectedFlask != null) dlog('ignored', `intent tap ${enemy.id}`, busy ? 'busy' : selfArm ? 'self-armed card' : 'dead target');
@@ -2393,7 +2414,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
-        chips: JSON.stringify(knownWeaknesses(enemy)),
+        chips: JSON.stringify([knownWeaknesses(enemy), enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance, StanceBenefitRules(combat)) : null]),
       };
       const build = {
         classNames,
@@ -2449,7 +2470,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
         statuses: () => statusRow(enemy, {}, statusIn),
-        chips: () => weaknessChips(knownWeaknesses(enemy)),
+        chips: () => [StanceWeaknessChip(enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance, StanceBenefitRules(combat)) : null), ...weaknessChips(knownWeaknesses(enemy))].filter(Boolean),
       };
       const slots = record ? null : {
         role: 'enemy',
@@ -2606,7 +2627,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           availability: { play: playAvailability(inst.instanceId) },
           commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
+      // The turn-start refresh is drawn once: the last hand leaves, then the new one arrives.
+      turnRefresh: disp?.turnRefresh || null,
     });
+    if (disp?.turnRefresh) disp.turnRefresh = null;
     syncHandPager(handList);
     handRenderKey = key;
     handPaintedIds = handIds;

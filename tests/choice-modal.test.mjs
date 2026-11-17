@@ -103,6 +103,46 @@ test('choice modal: an empty kind with empty text shows it and keeps the commit 
     }
 });
 
+test('choice modal: a selected discard can be deselected, and a pick at the limit swaps out the earliest', async () =>
+{
+    const { document, restore } = installDom();
+
+    try
+    {
+        const { OpenChoiceModal } = await import('../src/ui/components/choiceModal.js');
+        const answers = [];
+        OpenChoiceModal({
+            kind: 'discardChoice',
+            title: 'Pick',
+            rows: [
+                { id: 'a', name: 'A' },
+                { id: 'b', name: 'B' },
+            ],
+            commitLabel: 'Drop 1',
+            selectionLimit: 1,
+            opener: null,
+            onCommit: (ids) => answers.push(ids),
+        });
+        const rows = document.querySelectorAll('[data-discard-id]');
+        const [commit] = findButtons(document, 'Drop 1');
+        rows[0].click();
+        assert.equal(rows[0].getAttribute('aria-pressed'), 'true');
+        rows[0].click();
+        assert.equal(rows[0].getAttribute('aria-pressed'), 'false', 'a second tap deselects');
+        assert.equal(commit.disabled, true, 'nothing chosen, nothing to commit');
+        rows[0].click();
+        rows[1].click();
+        assert.equal(rows[0].getAttribute('aria-pressed'), 'false', 'the earlier pick is swapped out');
+        assert.equal(rows[1].getAttribute('aria-pressed'), 'true');
+        commit.click();
+        assert.deepEqual(answers, [['b']]);
+    }
+    finally
+    {
+        restore();
+    }
+});
+
 test('choice modal: a multi-select kind toggles up to the limit and commits the ids in pick order', async () =>
 {
     const { document, restore } = installDom();
@@ -130,10 +170,20 @@ test('choice modal: a multi-select kind toggles up to the limit and commits the 
         rows[0].click();
         rows[2].click();
         findButtons(document, 'Drop 2')[0].click();
-        assert.deepEqual(answers, [['b', 'a']]);
+        assert.deepEqual(answers, [['a', 'c']], 'the third pick swaps out the earliest (b)');
     }
     finally
     {
         restore();
     }
+});
+
+// Review on #2814: the swap at the limit is the hand discard's alone (item 26); every other multi-select kind, the
+// Smith keep among them, still ignores a pick past its limit.
+test('choice modal: only the discard kind swaps at the limit', async () =>
+{
+    const { ModalModelFor } = await import('../src/ui/models/ModalModel.js');
+    assert.equal(ModalModelFor('discardChoice').swapsAtLimit, true);
+    assert.equal(ModalModelFor('smithKeep').swapsAtLimit, false);
+    assert.equal(ModalModelFor('cardChoice').swapsAtLimit, false);
 });

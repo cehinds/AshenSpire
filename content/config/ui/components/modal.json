@@ -80,6 +80,7 @@
       "className": "option-choice discard-choice",
       "idAttribute": "data-discard-id",
       "selection": "multi",
+      "atLimit": "swapOldest",
       "hasCancelButton": false,
       "closeLabelKey": "combat.discard.later"
     },
