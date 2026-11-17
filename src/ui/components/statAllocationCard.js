@@ -1,13 +1,5 @@
-// Shared attribute-allocation card. Character creation and shrine levelling supply the
-// policy (limits, remaining points, commit); this component owns the card and its controls.
-// The hooks the instruments read (.se-pool, .se-row, .se-step, .se-value, .se-controls,
-// [data-stat-action], [data-stat-done], [data-stat-cancel], #cc-stat-title, .cc-stat-modal,
-// .cc-stat-overlay) ride on the kit elements.
 import { primaryStatCards } from './creationCards.js';
-import {
-    UI_COMPONENTS as UI,
-    markUiComponent,
-} from './uiComponents.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
     el as buildElement,
     eyebrow,
@@ -28,106 +20,157 @@ const ARIA_DISABLED = 'aria-disabled';
 const ATTRIBUTES_LABEL_KEY = 'progression.attributes';
 const TITLE_ID = 'cc-stat-title';
 const DISC_FACE_SELECTOR = '.disc-face';
+const EXPANDED_FACE_SELECTOR = `${DISC_FACE_SELECTOR}[aria-expanded="true"]`;
+const STEPPER_HOST_SELECTOR = `${DISC_FACE_SELECTOR} > .as-row`;
 const STEP_ACTION = Object.freeze({
     decrease: 'decrease',
     increase: 'increase',
 });
 
-/** The string an ARIA boolean attribute takes. */
-const ariaFlag = (isOn) => (isOn ? 'true' : 'false');
+const ariaFlag = (isOn) => (isOn
+    ? 'true'
+    : 'false');
 
-function buildStepper(
+function buildStepButton(
     statRowModel,
     {
         onDecrease,
         onIncrease,
     },
-)
-{
-    const buildStepButton = (
+    {
         glyph,
         action,
         isAllowed,
         verbLabel,
-    ) =>
+    },
+)
+{
+    const stepButton = buildElement('button', {
+        type: 'button',
+        class: 'se-step',
+        text: glyph,
+        dataset: {
+            statId: statRowModel.id,
+            statAction: action,
+        },
+        'aria-label': `${verbLabel} ${statRowModel.label}`,
+        [ARIA_DISABLED]: ariaFlag(!isAllowed),
+    });
+
+    function spendPointWithoutTogglingSummary(event)
     {
-        const stepButton = buildElement('button', {
-            type: 'button',
-            class: 'se-step',
-            text: glyph,
-            dataset: {
-                statId: statRowModel.id,
-                statAction: action,
-            },
-            'aria-label': `${verbLabel} ${statRowModel.label}`,
-            [ARIA_DISABLED]: ariaFlag(!isAllowed),
-        });
-        stepButton.addEventListener(CLICK_EVENT, (event) =>
+        event.preventDefault();
+        event.stopPropagation();
+        if (isAllowed)
         {
-            // The controls live in a summary; spending a point must not toggle it.
-            event.preventDefault();
-            event.stopPropagation();
-            if (isAllowed)
-            {
-                (action === STEP_ACTION.decrease ? onDecrease : onIncrease)?.(statRowModel.id);
-            }
-        });
-        return stepButton;
-    };
-    const valueNode = buildElement('span', {
+            const applyStep = action === STEP_ACTION.decrease
+                ? onDecrease
+                : onIncrease;
+            applyStep?.(statRowModel.id);
+        }
+    }
+
+    stepButton.addEventListener(CLICK_EVENT, spendPointWithoutTogglingSummary);
+    return stepButton;
+}
+
+function buildStepper(statRowModel, stepHandlers)
+{
+    const valueLabel = buildElement('span', {
         class: 'seg-value se-value',
         text: String(statRowModel.value),
     });
+    const decreaseButton = buildStepButton(
+        statRowModel,
+        stepHandlers,
+        {
+            glyph: '−',
+            action: STEP_ACTION.decrease,
+            isAllowed: statRowModel.canDecrease,
+            verbLabel: 'Decrease',
+        },
+    );
+    const increaseButton = buildStepButton(
+        statRowModel,
+        stepHandlers,
+        {
+            glyph: '+',
+            action: STEP_ACTION.increase,
+            isAllowed: statRowModel.canIncrease,
+            verbLabel: 'Increase',
+        },
+    );
     return buildElement(
         'span',
         { class: 'as-seg stepper se-controls' },
         [
-            buildStepButton('−', STEP_ACTION.decrease, statRowModel.canDecrease, 'Decrease'),
-            valueNode,
-            buildStepButton('+', STEP_ACTION.increase, statRowModel.canIncrease, 'Increase'),
+            decreaseButton,
+            valueLabel,
+            increaseButton,
         ],
     );
 }
 
-function drawStatRows(rowsHost, statRowModels, handlers)
+function readExpandedFaceIds(rowsHost)
 {
-    const expandedFaces = rowsHost.querySelectorAll(`${DISC_FACE_SELECTOR}[aria-expanded="true"]`);
-    const expandedFaceIds = new Set([...expandedFaces].map((face) => face.dataset.face));
-    const cardModels = statRowModels.map((statRowModel) => ({
+    const expandedFaces = rowsHost.querySelectorAll(EXPANDED_FACE_SELECTOR);
+    return new Set(
+        [...expandedFaces].map((face) => face.dataset.face),
+    );
+}
+
+function buildAttributeCardModels(statRowModels)
+{
+    return statRowModels.map((statRowModel) => ({
         ...statRowModel.card,
         face: {
             ...statRowModel.card.face,
             value: '',
         },
     }));
-    const attributeCards = primaryStatCards(cardModels);
-    const statRowNodes = statRowModels.map((statRowModel, index) =>
+}
+
+function appendMainGain(attributeCard, statRowModel)
+{
+    const mainGain = statRowModel.card?.mainGain;
+    const labelHost = attributeCard.querySelector('.ls-label');
+    if (
+        mainGain
+        && labelHost
+    )
     {
-        const attributeCard = attributeCards[index];
-        attributeCard.classList.add('se-attribute-card');
-        const stepperHost = attributeCard.querySelector(`${DISC_FACE_SELECTOR} > .as-row`);
-        stepperHost.appendChild(buildStepper(statRowModel, handlers));
-        // The largest thing one more point buys; the title lists them all.
-        const mainGain = statRowModel.card?.mainGain;
-        const labelHost = attributeCard.querySelector('.ls-label');
-        if (mainGain && labelHost)
-        {
-            const gainNode = buildElement('span', {
-                class: 'se-gain',
-                text: mainGain.text,
-                title: attributeGainSummary(statRowModel.card.gains),
-            });
-            labelHost.appendChild(gainNode);
-        }
-        const settingRow = buildSettingRow({
-            tag: 'div',
-            setting: true,
-            className: 'se-row',
-            labelNode: attributeCard,
+        const gainLabel = buildElement('span', {
+            class: 'se-gain',
+            text: mainGain.text,
+            title: attributeGainSummary(statRowModel.card.gains),
         });
-        return markUiComponent(settingRow, UI.statAllocationRow);
+        labelHost.appendChild(gainLabel);
+    }
+}
+
+function buildStatRow(attributeCard, statRowModel, stepHandlers)
+{
+    attributeCard.classList.add('se-attribute-card');
+
+    const stepperHost = attributeCard.querySelector(STEPPER_HOST_SELECTOR);
+    stepperHost.appendChild(buildStepper(statRowModel, stepHandlers));
+
+    appendMainGain(attributeCard, statRowModel);
+
+    const settingRow = buildSettingRow({
+        tag: 'div',
+        setting: true,
+        className: 'se-row',
+        labelNode: attributeCard,
     });
-    rowsHost.replaceChildren(...statRowNodes);
+    return markUiComponent(
+        settingRow,
+        UI.statAllocationRow,
+    );
+}
+
+function reopenExpandedFaces(rowsHost, expandedFaceIds)
+{
     for (const face of rowsHost.querySelectorAll(DISC_FACE_SELECTOR))
     {
         if (expandedFaceIds.has(face.dataset.face))
@@ -137,10 +180,96 @@ function drawStatRows(rowsHost, statRowModels, handlers)
     }
 }
 
-/**
- * Renders the allocation card into host (inline, or as the md door when `modal`)
- * and returns { card, rowsHost, cancel, done, close, update }.
- */
+function renderStatRows(rowsHost, statRowModels, stepHandlers)
+{
+    const expandedFaceIds = readExpandedFaceIds(rowsHost);
+    const cardModels = buildAttributeCardModels(statRowModels);
+    const attributeCards = primaryStatCards(cardModels);
+    const statRows = statRowModels.map(
+        (statRowModel, rowIndex) =>
+            buildStatRow(
+                attributeCards[rowIndex],
+                statRowModel,
+                stepHandlers,
+            ),
+    );
+    rowsHost.replaceChildren(...statRows);
+
+    reopenExpandedFaces(rowsHost, expandedFaceIds);
+}
+
+function openAllocationModal(
+    host,
+    {
+        title,
+        bodyNodes,
+        cancelButton,
+        doneButton,
+        onClose,
+    },
+)
+{
+    const door = openModal({
+        size: 'md',
+        className: 'cc-stat-modal',
+        kind: 'statUpgrade',
+        eyebrow: translate(ATTRIBUTES_LABEL_KEY),
+        title,
+        titleId: TITLE_ID,
+        body: buildElement(
+            'div',
+            { class: 'as-pane stat-allocation-card' },
+            bodyNodes,
+        ),
+        secondary: [cancelButton],
+        primary: doneButton,
+        footSize: 'medium',
+        host,
+        onClose,
+    });
+    door.veil.classList.add('cc-stat-overlay');
+    return door;
+}
+
+function renderInlineCard(
+    host,
+    {
+        title,
+        bodyNodes,
+        cancelButton,
+        doneButton,
+    },
+)
+{
+    const actionRow = buttonRow({
+        size: 'medium',
+        buttons: [
+            cancelButton,
+            doneButton,
+        ],
+        className: 'cc-stat-actions',
+    });
+    const card = buildElement(
+        'section',
+        {
+            class: 'as-pane flush stat-allocation-card',
+            tabindex: '-1',
+        },
+        [
+            eyebrow(translate(ATTRIBUTES_LABEL_KEY)),
+            titleS(title, {
+                tag: 'h3',
+                id: TITLE_ID,
+            }),
+            ...bodyNodes,
+            actionRow,
+        ],
+    );
+    host.innerHTML = '';
+    host.appendChild(card);
+    return card;
+}
+
 export function RenderStatAllocationCard(
     host,
     {
@@ -162,13 +291,14 @@ export function RenderStatAllocationCard(
 )
 {
     let isDoneDisabled = doneDisabled;
+
     const remainingPool = statPair({
         key: remainingLabel,
         value: String(remaining),
         attrs: { class: 'se-pool' },
     });
     const rowsHost = buildElement('div', { class: 'as-stack tight cc-allocation-rows' });
-    drawStatRows(rowsHost, rows, { onDecrease, onIncrease });
+    renderStatRows(rowsHost, rows, { onDecrease, onIncrease });
     const cancelButton = button({
         label: cancelLabel,
         attrs: { 'data-stat-cancel': '' },
@@ -181,70 +311,61 @@ export function RenderStatAllocationCard(
             [ARIA_DISABLED]: ariaFlag(isDoneDisabled),
         },
     });
-    cancelButton.addEventListener(CLICK_EVENT, () => onCancel && onCancel());
+    cancelButton.addEventListener(CLICK_EVENT, () => onCancel?.());
     doneButton.addEventListener(CLICK_EVENT, () =>
     {
-        if (!isDoneDisabled && onDone)
+        if (
+            !isDoneDisabled
+            && onDone
+        )
         {
             onDone();
         }
     });
 
-    const noteNode = note ? flavour(note, { class: 'stat-allocation-note' }) : null;
-    const bodyNodes = [
-        remainingPool,
-        noteNode,
-        hairline(),
-        rowsHost,
-    ];
+    const noteNode = note
+        ? flavour(note, { class: 'stat-allocation-note' })
+        : null;
+    const cardParts = {
+        title,
+        bodyNodes: [
+            remainingPool,
+            noteNode,
+            hairline(),
+            rowsHost,
+        ],
+        cancelButton,
+        doneButton,
+    };
     let card;
-    let closeCard = () => {};
+    let closeCard = () =>
+    {};
+
     if (modal)
     {
-        const door = openModal({
-            size: 'md',
-            className: 'cc-stat-modal',
-            kind: 'statUpgrade',
-            eyebrow: translate(ATTRIBUTES_LABEL_KEY),
-            title,
-            titleId: TITLE_ID,
-            body: buildElement(
-                'div',
-                { class: 'as-pane stat-allocation-card' },
-                bodyNodes,
-            ),
-            secondary: [cancelButton],
-            primary: doneButton,
-            footSize: 'medium',
-            host,
+        const door = openAllocationModal(host, {
+            ...cardParts,
             onClose,
         });
-        door.veil.classList.add('cc-stat-overlay');
         card = door.panel;
         closeCard = door.close;
     }
     else
     {
-        const actionRow = buttonRow({
-            size: 'medium',
-            buttons: [cancelButton, doneButton],
-            className: 'cc-stat-actions',
-        });
-        card = buildElement(
-            'section',
-            {
-                class: 'as-pane flush stat-allocation-card',
-                tabindex: '-1',
-            },
-            [
-                eyebrow(translate(ATTRIBUTES_LABEL_KEY)),
-                titleS(title, { tag: 'h3', id: TITLE_ID }),
-                ...bodyNodes,
-                actionRow,
-            ],
-        );
-        host.innerHTML = '';
-        host.appendChild(card);
+        card = renderInlineCard(host, cardParts);
+    }
+
+    function update({
+        remaining: nextRemaining = remaining,
+        rows: nextRows = rows,
+        doneDisabled: nextDoneDisabled = isDoneDisabled,
+    } = {})
+    {
+        const poolValue = remainingPool.querySelector('.sp-v');
+        poolValue.textContent = String(nextRemaining);
+        renderStatRows(rowsHost, nextRows, { onDecrease, onIncrease });
+        isDoneDisabled = nextDoneDisabled;
+        doneButton.setAttribute(ARIA_DISABLED, ariaFlag(isDoneDisabled));
     }
 
     return {
@@ -253,16 +374,6 @@ export function RenderStatAllocationCard(
         cancel: cancelButton,
         done: doneButton,
         close: closeCard,
-        update({
-            remaining: nextRemaining = remaining,
-            rows: nextRows = rows,
-            doneDisabled: nextDoneDisabled = isDoneDisabled,
-        } = {})
-        {
-            remainingPool.querySelector('.sp-v').textContent = String(nextRemaining);
-            drawStatRows(rowsHost, nextRows, { onDecrease, onIncrease });
-            isDoneDisabled = nextDoneDisabled;
-            doneButton.setAttribute(ARIA_DISABLED, ariaFlag(isDoneDisabled));
-        },
+        update,
     };
 }
