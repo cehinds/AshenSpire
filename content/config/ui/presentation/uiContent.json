@@ -4,12 +4,12 @@
       "monster": {
         "icon": "historic-crossed-swords",
         "name": "Monster",
-        "blurb": "A fight — cinders and a card reward."
+        "blurb": "A fight for cinders and a card reward."
       },
       "fight": {
         "icon": "historic-crossed-swords",
         "name": "Monster",
-        "blurb": "A fight — cinders and a card reward."
+        "blurb": "A fight for cinders and a card reward."
       },
       "elite": {
         "icon": "historic-skull",
@@ -55,9 +55,9 @@
       "treasure": "var(--gold)"
     },
     "actNames": {
-      "1": "ACT I — THE FALLOW MARCHES",
-      "2": "ACT II — THE STITCHED COURT",
-      "3": "ACT III — THE ASHEN CROWN"
+      "1": "ACT I: THE FALLOW MARCHES",
+      "2": "ACT II: THE STITCHED COURT",
+      "3": "ACT III: THE ASHEN CROWN"
     },
     "tierNumerals": [
       "I",
@@ -278,11 +278,11 @@
     "copy": {
       "intentTooltips": {
         "unknown": "<div class=\"tt-title\">Intent: Unknown</div>",
-        "staggered": "<div class=\"tt-title\">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.",
+        "staggered": "<div class=\"tt-title\">Staggered</div>Poise broken. This enemy's turn is skipped and it takes +50% damage.",
         "attack": "<div class=\"tt-title\">Intent: Attack</div>Attacking {victim} for <b>{damage}{extra}</b> damage (modifiers included).",
         "attackMultiplier": " × {hits}{total}",
         "attackTotal": " ({totalDamage} total)",
-        "committed": "<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.",
+        "committed": "<br><b>Committed:</b> this delayed attack lands this coming turn. Stagger cancels it.",
         "delayed": "<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.",
         "block": "<div class=\"tt-title\">Intent: Defend</div>Gaining Block.",
         "buff": "<div class=\"tt-title\">Intent: Buff</div>Strengthening itself.",
@@ -300,7 +300,7 @@
         "percentValueToken": "percent"
       },
       "actTitle": {
-        "tiered": "ACT {tier} — {seat}",
+        "tiered": "ACT {tier}: {seat}",
         "numbered": "ACT {act}",
         "cycleSuffix": " · CYCLE {cycle}"
       },

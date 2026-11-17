@@ -79,7 +79,7 @@
         "stamina": "Stamina pays card and combat costs. It refills at the start of every turn.",
         "recovery": " Recovers {amount} per turn.",
         "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
-        "playerPoise": "The threshold that Breaks you — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",
+        "playerPoise": "The threshold that Breaks you. Your Constitution, armament, armour and relics steady it. Enemy impact fills it.",
         "enemyPoise": "Fill it to Break. {effect}",
         "cost": "{amount} required to play {card}.",
         "costAll": "Spend all remaining {resource} to play {card}.",

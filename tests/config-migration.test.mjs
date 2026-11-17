@@ -102,6 +102,9 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // (biome framing and battle terrain zones). Only those 12 leaves change; no
 // whole-fixture recapture.
 // Map spacing (2026-11-15, owner "spread them out"): MAP_TERRAIN_REVEAL_RADIUS 74 -> 100, the fog light scaling with COL_X 75 -> 96.
+// No dashes in player text (2026-11-17, chore/EventCopy): uiContent re-points only the leaves whose em dash
+// became a colon or full stop (the three ACT titles and the two actTitle probes, the two fight blurbs, the
+// staggered and committed tooltips); tooltipHelp re-points messages.playerPoise the same way. No recapture.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
