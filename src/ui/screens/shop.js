@@ -111,7 +111,14 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
         price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
         action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
-      if (quote.ok) arm(sell, 'shopSell', { onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } } });
+      // A sale asks for confirmation (playtest 2026-11-17 item 37): the review names the item and the cinders it returns.
+      if (quote.ok) arm(sell, 'shopSell', {
+        question: t('shop.sell.question', { name: def.name }),
+        target: def.name,
+        message: t('shop.sell.message', { price }),
+        confirmLabel: t('shop.action.sell', { price }),
+        onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } },
+      });
       shelves.get('sell').append(tile);
     }
     if (!sales.length) shelves.get('sell').append(statusText(t('shop.status.nothingWanted')));

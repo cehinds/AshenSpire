@@ -16,6 +16,7 @@ test('the actions that still take a second beat are exactly the ones that lose s
     'deleteSave',      // a save is gone
     'freshProfile',    // a new profile over an unreadable one
     'profileRestore',  // a restored profile replaces the one in play
+    'shopSell',        // a possession sold for good (playtest 2026-11-17 item 37)
     'shopRemove',      // a card burned out of the deck
     'shrineLevelUp',   // a stat point, spent (the stat card's own two steps)
     'smithExtract',    // chooser: review, then a plain Confirm
@@ -25,7 +26,7 @@ test('the actions that still take a second beat are exactly the ones that lose s
 });
 
 test('every action freed in Wave 2 is declared `tap: true` and takes no beat at any edge', () => {
-  const freed = ['endTurn', 'eventChoice', 'rewardContinue', 'shopBuy', 'shopSell', 'useFlask', 'shrineRest'];
+  const freed = ['endTurn', 'eventChoice', 'rewardContinue', 'shopBuy', 'useFlask', 'shrineRest'];
   for (const id of freed) {
     const cells = enumerateBeats().filter((cell) => cell.id === id);
     assert.ok(cells.length, `${id} is in the table`);
@@ -72,7 +73,6 @@ const CASES = [
   ['eventChoice', { binding: false }],
   ['rewardContinue', {}],
   ['shopBuy', {}],
-  ['shopSell', {}],
   ['useFlask', { targeted: false }],
   ['shrineRest', {}],
 ];
@@ -93,12 +93,14 @@ for (const [id, ctx] of CASES) {
 test('a row that still asks keeps its hold and its review', () => {
   assert.equal(beatFor('deleteSave').form, 'hold');
   assert.equal(beatFor('smithUpgrade').form, 'confirm');
+  assert.equal(beatFor('shopSell').form, 'confirm', 'a sale asks for confirmation (playtest 2026-11-17 item 37)');
+  assert.notEqual(beatFor('shopSell').tap, true);
 });
 
 // ---- the screens that wire the freed actions no longer carry a review ---------------------------------
 test('screens wire the freed actions with a commit and no review', () => {
   for (const [file, actionId] of [['src/ui/screens/event.js', 'eventChoice'], ['src/ui/screens/dialogue.js', 'eventChoice'],
-    ['src/ui/screens/shop.js', 'shopBuy'], ['src/ui/screens/shop.js', 'shopSell'], ['src/ui/screens/rest.js', 'shrineRest'],
+    ['src/ui/screens/shop.js', 'shopBuy'], ['src/ui/screens/rest.js', 'shrineRest'],
     ['src/ui/components/combatActionRow.js', 'useFlask'], ['src/ui/screens/combat.js', 'endTurn']]) {
     const src = read(file);
     const call = src.match(new RegExp(`arm\\([^\\n]*'${actionId}',\\s*\\{[\\s\\S]*?\\}\\)\\)?[;,]`))?.[0] || '';
