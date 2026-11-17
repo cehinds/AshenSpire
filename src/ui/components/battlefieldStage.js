@@ -399,7 +399,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Owner, 2026-11-17: the player's HUD stands beside the figure, at a readable size, not over its head.
         const beside = frame.classList?.contains('player') && config.playerHud?.placement === 'beside';
         // An authored body box is exact vertically but spans its whole canvas horizontally: the drawn art gives the right edge.
-        if (beside) racked.at(-1).beside = PlayerHudBeside({ body: { ...body, right: currentSpriteArtBounds(sprite, scheduleArt).right }, frame: frameBox, fieldRight: (fieldBox ||= field.getBoundingClientRect()).right,
+        const art = beside ? currentSpriteArtBounds(sprite, scheduleArt) : null;
+        if (beside) racked.at(-1).beside = PlayerHudBeside({ body: { ...body, left: art.left, right: art.right }, frame: frameBox,
+          fieldLeft: (fieldBox ||= field.getBoundingClientRect()).left, fieldRight: fieldBox.right,
           gap: config.playerHud.gapPx * fit, topFraction: config.playerHud.topFraction, maxWidth: config.playerHud.maxWidthPx * fit,
           minWidth: config.playerHud.minWidthPx * fit, margin: config.playerHud.edgeMarginPx * fit, zoom });
         centerTargetOverheads.watchRack?.(rack);
@@ -412,7 +414,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     commitBadges?.();
     centerTargetOverheads.placedKey = racked.length && racked.every(({ body }) => body.settled !== false) && !plain.length ? key : null;
     for (const { frame, body, placement, beside } of racked) {
+      // Where neither side has room, the HUD stays above the head (the 'above' placement and its drop).
       if (frame.dataset.hudBeside !== String(!!beside)) frame.dataset.hudBeside = String(!!beside);
+      if (beside && frame.dataset.hudSide !== beside.side) frame.dataset.hudSide = beside.side;
+      else if (!beside && frame.dataset.hudSide) delete frame.dataset.hudSide;
       if (beside) for (const [name, value] of [['--combat-player-hud-left', `${beside.left}px`], ['--combat-player-hud-width', `${beside.width}px`]]) {
         if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);
       }

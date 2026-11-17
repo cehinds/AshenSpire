@@ -82,19 +82,28 @@ export function targetHudMatchup(action, intent, rules = {}) {
 // readouts retain a fixed physical gap when a true pose changes its head.
 // `drop` lowers the rack that fraction of the way from its place above the head toward the head itself (0 keeps it
 // wholly above; the player's 0.5 sets it halfway, playtest 2026-11-17).
-// The player's HUD beside the figure (owner, 2026-11-17): it stands `gap` right of the body, its top `topFraction` of the
-// body's height below the head, and takes the room to the field's right edge (less `margin`) up to `maxWidth`, never under
-// `minWidth`. All inputs are screen px except the authored ones, which the caller scales; the result is the frame's local px.
-export function PlayerHudBeside({ body, frame, fieldRight, gap = 10, topFraction = 0.15, maxWidth = 320, minWidth = 140, margin = 8, zoom = 1 })
+// The player's HUD beside the figure (owner, 2026-11-17): it stands `gap` right of the drawn art, its top `topFraction` of
+// the body's height below the head, and takes the room to the field's right edge (less `margin`) up to `maxWidth`. Where
+// that room is under `minWidth` (the rightmost lane) it stands left of the art instead, taking the room to the field's
+// left edge; where neither side has `minWidth`, it returns null and the caller keeps the HUD above the head. Inputs are
+// screen px (the authored ones scaled by the caller); the result is the frame's local px.
+export function PlayerHudBeside({ body, frame, fieldLeft = -Infinity, fieldRight, gap = 10, topFraction = 0.15, maxWidth = 320, minWidth = 140, margin = 8, zoom = 1 })
 {
   const head = Number.isFinite(body.headY) ? body.headY : body.top;
   const height = Math.max(0, body.bottom - head);
-  const room = fieldRight - margin - (body.right + gap);
-  return {
-    left: (body.right + gap - frame.left) / zoom,
-    top: (head + height * topFraction - frame.top) / zoom,
-    width: Math.max(minWidth, Math.min(maxWidth, room)) / zoom,
-  };
+  const top = (head + height * topFraction - frame.top) / zoom;
+  const rightRoom = fieldRight - margin - (body.right + gap);
+  if (rightRoom >= minWidth)
+  {
+    return { side: 'right', left: (body.right + gap - frame.left) / zoom, top, width: Math.min(maxWidth, rightRoom) / zoom };
+  }
+  const leftRoom = body.left - gap - (fieldLeft + margin);
+  if (leftRoom >= minWidth)
+  {
+    const width = Math.min(maxWidth, leftRoom);
+    return { side: 'left', left: (body.left - gap - width - frame.left) / zoom, top, width: width / zoom };
+  }
+  return null;
 }
 
 export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1, drop = 0 }) {

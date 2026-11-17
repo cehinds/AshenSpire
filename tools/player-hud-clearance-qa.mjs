@@ -87,7 +87,7 @@ try {
       // The combat canvas's fit scale (1 without one): the gap is measured in canvas px.
       const viewScale = Number(document.documentElement.dataset.viewScale) || 1;
       const cardsTop = Math.min(...[...document.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().top));
-      return { viewScale, cardsTop, panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+      return { viewScale, cardsTop, hudSide:frame.dataset.hudSide || 'above', panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
         hpTrack:box(hpTrack), poiseTrack:box(poiseTrack), badgeRow:box(badgeRow),
         resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
@@ -152,7 +152,10 @@ try {
       // player is selected.
       assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
       const artMiddle = geometry.art.spriteBox ? (geometry.art.spriteBox.left + geometry.art.spriteBox.right) / 2 : -Infinity;
-      assert.ok(geometry.rack.left >= artMiddle, name+': the HUD stands right of the figure (left '+geometry.rack.left.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
+      // Its side: right of the figure, or left of it in the rightmost lane (data-hud-side); with no room either side it stays above the head.
+      assert.ok(['right', 'left'].includes(geometry.hudSide), name+': the fixture lane has room beside the figure (side '+geometry.hudSide+')');
+      if (geometry.hudSide === 'right') assert.ok(geometry.rack.left >= artMiddle, name+': the HUD stands right of the figure (left '+geometry.rack.left.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
+      else assert.ok(geometry.rack.right <= artMiddle, name+': the HUD stands left of the figure (right '+geometry.rack.right.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
       assert.ok(geometry.rack.top >= geometry.art.top - 0.5, name+': the HUD top is no higher than the art top');
       assert.ok(Number.isFinite(geometry.cardsTop) && geometry.rack.bottom <= geometry.cardsTop + 0.5, name+': the HUD ends above the resting cards');
       assert.ok(geometry.rack.width / geometry.viewScale >= HUD_GRID.playerHud.minWidthPx - 0.5, name+': the HUD is at least its minimum width');

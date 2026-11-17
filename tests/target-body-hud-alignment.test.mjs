@@ -173,6 +173,14 @@ test('the player HUD beside the figure takes the room to the field edge, within 
   assert.equal(phone.top, 230, 'topFraction of the body below the head');
   assert.equal(phone.width, 390 - 8 - 180, 'the room to the field edge');
   assert.equal(PlayerHudBeside({ body, frame, fieldRight: 1280, maxWidth: 320 }).width, 320, 'capped at maxWidth');
-  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 250, minWidth: 150 }).width, 150, 'never under minWidth');
+  assert.equal(phone.side, 'right');
+  // Codex on #2824: the rightmost lane leaves no room on the right, so the HUD stands left of the art; with no room
+  // on either side it is null and the HUD stays above the head.
+  const rightLane = { top: 300, headY: 300, bottom: 500, left: 220, right: 380 };
+  const left = PlayerHudBeside({ body: rightLane, frame: { top: 100, left: 260 }, fieldLeft: 0, fieldRight: 390, gap: 10, minWidth: 150, maxWidth: 320, margin: 8 });
+  assert.equal(left.side, 'left');
+  assert.equal(left.width, 220 - 10 - 8, 'the room to the left field edge');
+  assert.equal(left.left, 8 - 260, 'its right edge gap left of the art, its left edge on the margin');
+  assert.equal(PlayerHudBeside({ body: { ...rightLane, left: 100 }, frame, fieldLeft: 0, fieldRight: 390, minWidth: 150 }), null, 'no side has room');
   assert.equal(PlayerHudBeside({ body, frame, fieldRight: 390, zoom: 2 }).left, 70, 'local px take the zoom');
 });
