@@ -21,7 +21,8 @@ const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c']
 const settle = combat => { while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const plain = { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 };
 
-test('Rogue dagger strike (12) against Block 50 loses floor(0.2 x 12) = 2 HP', () => {
+// The strike is 3 (6 halved by Core's base-damage scale) + AR 1 (STR only; the dagger grants DEX, not AR) + 1 adjustment = 5.
+test('Rogue dagger strike (5) against Block 50 loses floor(0.2 x 5) = 1 HP', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
@@ -31,10 +32,10 @@ test('Rogue dagger strike (12) against Block 50 loses floor(0.2 x 12) = 2 HP', (
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.equal(hit.amount, 12, 'fixture: the dagger strike deals 12');
-  assert.equal(500 - enemy.hp, 2);
-  assert.equal(hit.blocked, 10);
-  assert.equal(enemy.block, 38, 'Block is spent as the same hit without pierce would spend it (12)');
+  assert.equal(hit.amount, 5, 'fixture: the dagger strike deals 5');
+  assert.equal(500 - enemy.hp, 1);
+  assert.equal(hit.blocked, 4);
+  assert.equal(enemy.block, 45, 'Block is spent as the same hit without pierce would spend it (5)');
 });
 
 // An enemy whose Slash is a piercing action of `damage` x `hits`.
@@ -45,7 +46,8 @@ const pierceRegistries = (damage, hits) => Object.freeze({ ...baseRegistries, en
       tags: [...(row.moves.slash.tags || []).filter(tag => !tag.startsWith('damage:')), 'damage:piercing'] } } } : row;
   } } });
 
-function enemyPierce({ damage, hits, block, poise }) { return enemyHit(pierceRegistries(damage, hits), { hits, block, poise }); }
+// `damage` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the move is authored at twice it.
+function enemyPierce({ damage, hits, block, poise }) { return enemyHit(pierceRegistries(damage * 2, hits), { hits, block, poise }); }
 function enemyHit(regs, { hits, block, poise }) {
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
@@ -108,7 +110,7 @@ test('only what Block would have soaked is pierced: with Block 0 a pierce hit is
   assert.equal(guardHitFloatParts(pierceHit.hits[0]).pierced, null);
   // The same 14 slashing hit: identical HP loss and Poise.
   const plainRegistries = Object.freeze({ ...baseRegistries, enemies: { ...baseRegistries.enemies, has: id => baseRegistries.enemies.has(id),
-    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 14, hits: 1 } } } : row; } } });
+    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 28, hits: 1 } } } : row; } } }); // 28 halves to 14
   assert.equal(pierceHit.hits[0].hpLoss, enemyHit(plainRegistries, { hits: 1, block: 0, poise: 8 }).hits[0].hpLoss, 'a pierce hit never deals less HP than the same hit without pierce');
 });
 

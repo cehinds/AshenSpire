@@ -16,7 +16,8 @@ function strongNotQuick() {
   ctx.player.ratings = { ar: 4, dr: 1, pr: 1, ward: 0, poise: 0 };
   return ctx;
 }
-const raw = (ctx, cardId) => profileDamageReceipt(ctx, ctx.player, ctx.enemies[0], 3, { cardId, combatProfile: physical }).raw;
+// Base 6 halves to 3 (Core base-damage scale, ceil) before the Attack rating adds, so each hit below is 3 + AR.
+const raw = (ctx, cardId) => profileDamageReceipt(ctx, ctx.player, ctx.enemies[0], 6, { cardId, combatProfile: physical }).raw;
 
 test('Twinblade Flurry is a finesse card', () => {
   assert.ok(resolveCard(baseRegistries, { cardId: 'twinbladeFlurry' }).tags.includes('finesse'));

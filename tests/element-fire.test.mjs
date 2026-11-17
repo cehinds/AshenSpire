@@ -10,7 +10,8 @@ import { ElementOfHit } from '../src/model/elementIdentityRules.js';
 import { ElementTurnStart } from '../src/engine/elementIdentity.js';
 
 const FIRE = { combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 }, tags: ['school:fire'], magicShare: 1 };
-const hit = (combat, target, carrier = FIRE, base = 10) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Base 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules as 10.
+const hit = (combat, target, carrier = FIRE, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
 test('the element of a hit is its school or damage type: a fire spell is fire even though spells default to arcane damage', () => {

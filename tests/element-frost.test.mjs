@@ -10,7 +10,8 @@ import { ElementTurnStart } from '../src/engine/elementIdentity.js';
 
 const SLASH = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
 const FROST = { combatProfile: { camp: 'spell', school: 'frost', damageType: 'arcane', magicShare: 1 }, tags: ['school:frost'], magicShare: 1 };
-const hit = (combat, source, target, carrier = SLASH, base = 100) => profileDamageReceipt(combat, source, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 100.
+const hit = (combat, source, target, carrier = SLASH, base = 200) => profileDamageReceipt(combat, source, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
 // core.frostNip is a cantrip that prints Chill itself (w25-cantrips: a school cantrip carries its school status), so a hit adds the rule's stacks to it.
@@ -29,6 +30,8 @@ test('every frost hit applies 1 Chill plus 1 per 3 INT, to a single target', () 
 
 test('Chill: -5% of the damage the chilled unit deals, per stack', () => {
   const { combat, enemy, player } = fight({ enemies: 1 });
+  // Empty the target's Poise so the hit lands 1:1 and only Chill moves it (Core gear now grants Poise, whose capped share is not linear).
+  player.persistentPoise.value = 0;
   const plain = hit(combat, enemy, player).hpLoss;
   enemy.statuses.chill = { stacks: 4 };
   const chilled = hit(combat, enemy, player);

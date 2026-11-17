@@ -10,7 +10,8 @@ import { actorRangeKey, engagementBand } from '../src/model/combatEngagement.js'
 import { ElementTurnEnd, ElementPushPull } from '../src/engine/elementIdentity.js';
 
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane', magicShare: 1 }, tags: ['school:force'], magicShare: 1 };
-const hit = (combat, target, carrier = FORCE, base = 10) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
+const hit = (combat, target, carrier = FORCE, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const band = (combat, enemy) => engagementBand(combat.rangeState, actorRangeKey(combat, combat.player), actorRangeKey(combat, enemy));
 test('force deals x1.5 Poise damage: the extra half comes off the pool on top of what absorbed the hit', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 30 });

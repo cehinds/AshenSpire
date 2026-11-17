@@ -249,8 +249,11 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
 
 test('Counter forecast under Reflect equals live: a return that kills the attacker forecasts no Counter; a survivable one forecasts live\'s damage', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
+  // Full base damage: under Core's halving the soldier's 8 Slash returns 1, which its Poise rating absorbs, so the Reflect return could never kill.
+  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1 } } });
+  const fullBase = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile);
   const run = enemyHp => {
-    const { combat, enemy } = live();
+    const { combat, enemy } = live(fullBase);
     enemy.hp = enemyHp;
     combat.player.reflectStacks = 1;
     combat.piles.hand.push({ instanceId: 'rcx', cardId: 'core.counter' });
@@ -275,7 +278,8 @@ test('Counter forecast under Reflect equals live: a return that kills the attack
 // so later hits (and the Counter Block they grant) are priced from the evolving detached attacker, not the original enemy.
 test('per-root Counter forecast prices later contacts from the Poise-broken attacker, forecast == live', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
-  const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage: 20, hits: 3, weight: 45 } } } : e) };
+  // Slash is authored at 40 so Core's base-damage scale (x0.5, ceil) lands each contact at the 20 these numbers were captured with.
+  const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage: 40, hits: 3, weight: 45 } } } : e) };
   const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, profile)), profile);
   const run = poise => {
     const { combat, enemy } = live(triple);
@@ -285,7 +289,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
     if (poise) { enemy.ratings = { poise }; enemy.persistentPoise = { value: poise, max: poise }; }
     enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
     Object.assign(enemy, { maxStamina: 3, stamina: 3, plannedMoves: [] });
-    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 20, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 40, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
     combat.piles.hand.push({ instanceId: 'rcp', cardId: 'core.counter' });
     const forecast = previewCard(combat, 'rcp').counterReturn;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'rcp' });

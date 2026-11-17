@@ -8,7 +8,8 @@ import { getStacks } from '../src/engine/statuses.js';
 import { ElementTurnEnd } from '../src/engine/elementIdentity.js';
 
 const NECROTIC = { combatProfile: { camp: 'spell', school: 'decay', damageType: 'arcane', magicShare: 1 }, tags: ['school:decay'], magicShare: 1 };
-const hit = (combat, target, base = 10) => profileDamageReceipt(combat, combat.player, target, base, { ...NECROTIC, skipRatingBonus: true }, { roll: 0 });
+// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
+const hit = (combat, target, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...NECROTIC, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
 test('necrotic deals x0.7 and ignores Poise: the pool neither absorbs nor drops, Block still soaks', () => {
