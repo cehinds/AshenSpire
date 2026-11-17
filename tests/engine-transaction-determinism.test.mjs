@@ -126,9 +126,13 @@ function withStaggeredRule(build) {
   delete fixCoreMechanics.poise.breakRule; delete fixCoreMechanics.poise.brokenDamageMultiplier;
   try { return build(); } finally { fixCoreMechanics.poise.breakRule = held.breakRule; fixCoreMechanics.poise.brokenDamageMultiplier = held.mult; }
 }
+// Recaptured 2026-11-17 for theme A (base damage halved through the profile's effects module, player HP 30 + 5 x (CON + level), SP and MP at 3 points,
+// gear granting attribute points and Poise instead of AR and DR): these are profile content, not fight rule keys, so every fight below plays them and
+// every pin moved (logs, event counts and states); no turn moved. The layered relations still hold: the pre-W25-F, pre-no-caps, pre-batch-5,
+// pre-Evade-cards and pre-theme-B fights share one log per seed and differ only in state, as before.
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: 'cbd4b75ce1f76ec8', state: '9a896733712286eb', events: 222, turn: 6 }],
-  [[4242, 'reaver'], { log: 'ebf2ff90af3f523f', state: '4b9bc8f45a337096', events: 219, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '71fb1effd12a350c', state: 'bf7b288e86640ba8', events: 219, turn: 6 }],
+  [[4242, 'reaver'], { log: '10bbd55da986139c', state: 'c69b8f286bd15b47', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
@@ -137,8 +141,8 @@ for (const [setup, expected] of LEGACY_PINNED) {
   });
 }
 const LEGACY_ROLL_BROKEN_PINNED = [
-  [['PERF1', 'reaver'], { log: '88015cbf67e2810a', state: '030723ddf1557346', events: 220, turn: 6 }],
-  [[4242, 'reaver'], { log: 'c8d3876a5cc18243', state: '7b93ec1901f14eb1', events: 218, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '9b3d4dabcf7f2d14', state: '7f2e37d4c2623b43', events: 217, turn: 6 }],
+  [[4242, 'reaver'], { log: 'aa0b367a2b370481', state: 'b57d8201fa8618b2', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
   test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
@@ -148,8 +152,8 @@ for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
 // Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
 // (one created earlier) still reproduces them exactly, which is the proof that the new PINNED values below moved only through those rules.
 const PRE_BATCH2_PINNED = [
-  [['PERF1', 'reaver'], { log: '5a55d1ad4cb62806', state: '3b6f75f6b40ed4d5', events: 197, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f58b92f7261b4fa5', state: '171d2b48760768e8', events: 192, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '2529c90af4bc3a44', state: '573218e5ea76345f', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: 'abbb1193fad7f974', state: '93df4c19d4f5b681', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH2_PINNED) {
   test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
@@ -159,8 +163,8 @@ for (const [setup, expected] of PRE_BATCH2_PINNED) {
 // W25-F (spell costs and elemental flux): these are the shipped digests before it. A fight whose rules lack `spellCosts` and `elementFlux` still reproduces them exactly,
 // which is the proof that the new PINNED values below moved only through those rules.
 const PRE_W25F_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: 'ec18b722c511f64a', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'be10dc76fcfdcf39', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '79accbd195a7520f', state: '240ca61d0abf1816', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '5c0680f6518455ad', state: 'f2ecb3131dc56306', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_W25F_PINNED) {
   test(`pre-W25-F fight ${setup[0]}/${setup[1]} still reproduces the digest from before spell costs and flux`, () => {
@@ -175,8 +179,8 @@ for (const [setup, expected] of PRE_W25F_PINNED) {
 // rules snapshot. Verified: PRE_NO_CAPS_PINNED below (the previous shipped values) is reproduced exactly by the shipped rules with `statusCaps` and the Counter-stack keys removed, as are the legacy, roll-legacy,
 // pre-batch-2 and pre-W25-F fights (their helpers in tests/legacyHitRules.mjs remove them too).
 const PRE_NO_CAPS_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '52a937c3967fbd9e', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '287bdd8235e37954', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '79accbd195a7520f', state: 'add0bb655f98f659', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '5c0680f6518455ad', state: 'ca9e2afd953be077', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
   test(`pre-no-caps fight ${setup[0]}/${setup[1]} still reproduces the digest from before statusCaps`, () => {
@@ -187,8 +191,8 @@ for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
 // keys (and keep the stance's hpReturnFraction), built through withoutCounterStackDefaults, reproduces PRE_BATCH5_PINNED (the values shipped after the no-caps rule) exactly, which proves the new PINNED
 // values below moved only through those rules: log, event counts and turns are identical (the Counter is never armed in these fights), only the state hashes move through the new keys in the fight's snapshot.
 const PRE_BATCH5_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '9a0e9981b6b3bd87', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'f63b09461a81f60e', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '79accbd195a7520f', state: '41d08bceea9d2852', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '5c0680f6518455ad', state: 'c05f473ba787d282', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH5_PINNED) {
   test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
@@ -198,8 +202,8 @@ for (const [setup, expected] of PRE_BATCH5_PINNED) {
 // Recaptured 2026-11-15 for W25-EvadeCards (Quickstep joins `counter.stacksByCard`): log, event counts and turns are identical, only the state hashes move, through the new key in the fight's rules
 // snapshot. Verified: a fight built through withoutQuickstepCounterStacks reproduces PRE_EVADECARDS_PINNED (the values shipped before) exactly.
 const PRE_EVADECARDS_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '33eb4180cba351fa', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '8a7b6f7b35a08604', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '79accbd195a7520f', state: 'deb75f258d42a393', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '5c0680f6518455ad', state: '7a79f42234868559', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
   test(`pre-Evade-cards fight ${setup[0]}/${setup[1]} still reproduces the digest from before Quickstep's Counter stack`, () => {
@@ -210,8 +214,8 @@ for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
 // a fight built through withoutThemeBRules reproduces PRE_THEME_B_PINNED (the values shipped before) exactly. PERF1's log moves (an Idle target takes x1.25, same
 // event count and turn); 4242's log is identical and only its state hash moves, through the new keys in the fight's rules snapshot.
 const PRE_THEME_B_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '0b43d27657af6bb0', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '782874823ef24c18', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '79accbd195a7520f', state: '05d5d5e4acf5c444', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '5c0680f6518455ad', state: '945832daf08a42dd', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_THEME_B_PINNED) {
   test(`pre-theme-B fight ${setup[0]}/${setup[1]} still reproduces the digest from before the 2026-11-17 status and stance rules`, () => {
@@ -219,8 +223,8 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
   });
 }
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '36184dbaac4958bf', state: '8f3cc7a77e760f98', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'd272fbdaa2167d09', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '6ce2da808bcfe54c', state: 'b558dd3eec83794d', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: 'e583b9237641479c', state: '05e8c95501e8e4ff', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
