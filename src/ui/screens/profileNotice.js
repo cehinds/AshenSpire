@@ -96,10 +96,10 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
 
   const lead = isNewer
     ? [
-        prose('It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.', { class: 'lead' }),
+        prose('It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it. Nothing has been altered or deleted.', { class: 'lead' }),
         el('p', { class: 'as-prose lead' }, el('strong', { text: 'Update Ashen Spire to open it again.' })),
       ]
-    : [prose('So we’ve set it aside instead of deleting it — it’s still here.', { class: 'lead' })];
+    : [prose('So we’ve set it aside instead of deleting it. It’s still here.', { class: 'lead' })];
 
   const body = decide({
     title: isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile',
@@ -150,7 +150,7 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
       if (res.ok) { onContinue(); return; }
       // Sunna's line, verbatim — the raw parser error goes to the support
       // disclosure, never into the sentence (her D2).
-      say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
+      say('That didn’t work. Those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
     });
   }
 
@@ -185,7 +185,7 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
       eyebrow: 'Profile',
       title: 'Start a new profile?',
       closeLabel: 'Close',
-      body: decide({ children: [prose('Your old one is set aside — this doesn’t delete it. You can come back to it any time from Profile on the title screen.')] }),
+      body: decide({ children: [prose('Your old one is set aside. This doesn’t delete it. You can come back to it any time from Profile on the title screen.')] }),
       secondary: [cancel],
       primary: go,
       footSize: 'medium',
