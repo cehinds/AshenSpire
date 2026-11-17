@@ -263,15 +263,31 @@ function weaknessReceipt(carrier, stance, { base = 40, rules = null } = {}) {
 const weaknessStage = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness');
 
 test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra from a ranged, reach or magic hit', () => {
-  const melee = weaknessReceipt(PHYSICAL, 'casting');
+  // A Sweep does not beat Prepared, so the weakness is the only stance term here (Attack and Smash: the next test).
+  const melee = weaknessReceipt(SWEEP, 'casting');
   assert.equal(weaknessStage(melee)?.multiplier, 1.25, 'the receipt lists the Stance weakness stage');
   assert.equal(weaknessStage(weaknessReceipt(RANGED, 'casting')), undefined);
-  const off = weaknessReceipt(PHYSICAL, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
+  const off = weaknessReceipt(SWEEP, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
   assert.equal(melee.hpLoss, Math.floor(off.hpLoss * 1.25), 'shown = dealt: the hit is 1.25x the same hit without the rule');
   for (const carrier of [RANGED, REACH, MAGIC]) {
     const on = weaknessReceipt(carrier, 'casting');
     const without = weaknessReceipt(carrier, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
     assert.equal(on.hpLoss, without.hpLoss, `${carrier.combatProfile.range}/${carrier.combatProfile.camp}: no Prepared weakness`);
+  }
+});
+
+test('decision 1: an advantage over Prepared and its melee weakness never stack; the hit takes the larger', () => {
+  const dropWeakness = rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; };
+  for (const carrier of [PHYSICAL, SMASH]) {
+    const name = carrier.combatProfile.maneuver;
+    const both = weaknessReceipt(carrier, 'casting'), advantageOnly = weaknessReceipt(carrier, 'casting', { rules: dropWeakness });
+    assert.equal(both.hpLoss, advantageOnly.hpLoss, `${name}: x1.25 in all, not x1.5625`);
+    const advantageStage = both.damageReceipt.hits[0].sources.find(row => row.id === 'stance-advantage' || row.id === 'smash-vs-defensive');
+    assert.equal(advantageStage, undefined, `${name}: the advantage adds nothing over an equal weakness`);
+    const bigger = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.5; } });
+    assert.ok(Math.abs(bigger.hpLoss - advantageOnly.hpLoss / 1.25 * 1.5) <= 1, `${name}: a larger weakness wins (x1.5): ${bigger.hpLoss}`);
+    const smaller = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.1; } });
+    assert.equal(smaller.hpLoss, advantageOnly.hpLoss, `${name}: a smaller weakness leaves the x1.25 advantage`);
   }
 });
 
@@ -309,20 +325,24 @@ test('rule 5 edge: an un-aimed hit (no target, a card face out of a fight) takes
   assert.equal(plain.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness'), undefined);
 });
 
-test('rule 5: the real core.strike and core.smash (no authored range: melee) take the Prepared weakness, played live', () => {
+test('rule 5: the real core.strike and core.smash (no authored range: melee) meet the Prepared weakness, and it never stacks with their advantage', () => {
+  // Strike (Attack) and Smash both beat Prepared (x1.25 advantage). Owner, 2026-11-17: the hit takes the larger of advantage and weakness, never both.
   for (const cardId of ['core.strike', 'core.smash']) {
-    const lost = rules => {
+    const fight = rules => {
       const { combat, enemy } = live({ rules });
       Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
       enemy.combatStance = { maneuver: 'casting', camp: 'spell', range: 'reach' };
+      combat.piles.hand.push({ instanceId: 'x', cardId });
+      const row = previewCard(combat, 'x', enemy.id).values.find(value => value.op === 'damage');
       const hp = enemy.hp;
-      play(combat, 'x', cardId);
-      return hp - enemy.hp;
+      dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id });
+      return { face: row.faceValue, quote: row.perTarget?.[enemy.id], lost: hp - enemy.hp };
     };
-    const on = lost(), off = lost(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
-    assert.ok(off > 0, `${cardId} lands`);
-    assert.ok(on > off, `${cardId}: a Prepared target takes more (${on} against ${off})`);
-    assert.ok(on >= Math.floor(off * 1.25) - 1 && on <= Math.ceil(off * 1.25) + 1, `${cardId}: about x1.25 (${on} against ${off})`);
+    const on = fight(), off = fight(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+    assert.ok(off.lost > 0, `${cardId} lands`);
+    assert.ok(on.face > off.face, `${cardId}: the face carries the melee weakness, so the card counts as melee (${on.face} against ${off.face})`);
+    assert.equal(on.lost, off.lost, `${cardId}: x1.25 in all, as with the advantage alone (not x1.5625)`);
+    assert.equal(on.quote, on.lost, `${cardId}: the preview quote is the HP lost`);
   }
 });
 
