@@ -6,7 +6,6 @@ import { SummarizeOrNull, PlayingCardArtworkOrNull } from './choiceRowSources.js
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 const REACTION_KIND = 'reactionChoice';
-const SKIP_LABEL_KEY = 'common.skip';
 const RESOLVE_LABEL_KEY = 'combat.reaction.resolve';
 const INCOMING_DAMAGE_CLASS = 'reaction-incoming-damage';
 const SKIP_COST_CLASS = 'reaction-skip-cost';
@@ -254,9 +253,9 @@ export function openReactionChoiceModal({
 })
 {
     const isStacked = Array.isArray(stack) && stack.length > 0;
-    const declineLabelKey = isStacked
-        ? RESOLVE_LABEL_KEY
-        : SKIP_LABEL_KEY;
+    const resolveLabel = isStacked
+        ? t(RESOLVE_LABEL_KEY)
+        : undefined;
     let isDismissed = false;
 
     function renderReactionIntro(host)
@@ -296,7 +295,7 @@ export function openReactionChoiceModal({
         rows: collapseIdenticalOptions(reactionEntries),
         eyebrow: t('combat.reaction.eyebrow'),
         title: t('combat.reaction.title'),
-        cancelLabel: t(declineLabelKey),
+        cancelLabel: resolveLabel,
         renderBeforeList: renderReactionIntro,
         onClosed,
         onCommit: answer,
