@@ -790,7 +790,7 @@
         "fit": "contain",
         "svg": {
           "viewBox": "0 0 32 32",
-          "body": "<path d=\"M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z\"/>",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
           "fill": "currentColor"
         }
       },
@@ -1020,7 +1020,7 @@
         "fit": "contain",
         "svg": {
           "viewBox": "0 0 32 32",
-          "body": "<path d=\"M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z\"/>",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
           "fill": "currentColor"
         }
       },
