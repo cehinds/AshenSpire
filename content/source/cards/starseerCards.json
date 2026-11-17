@@ -3517,7 +3517,7 @@
     "flavor": "A spark loosed at a foe who has stopped to breathe.\n\nStarseer duellists measured the pause between an enemy's swings and filled it with light. The bolt itself was weak. What followed it was not, for the struck foe flinched and opened every seam of armour.\n\nPatience was the true weapon.",
     "keywords": [],
     "icon": "poise",
-    "textTemplate": "Deal {damage} damage. If the target is Idle: it loses {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. If the target is Idle: it loses {loseHp} HP, ignoring Block.",
     "faceTemplate": [
       "Deal {damage} damage.",
       "Idle target: loses {loseHp} HP."

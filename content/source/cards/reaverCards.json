@@ -2309,7 +2309,7 @@
     "flavor": "The first stroke, aimed at a guard not yet raised.\n\nDuel-masters of the Marches called it rude and taught it anyway. A fighter caught standing still was a fighter already half beaten. Their students learned to watch the feet, never the eyes.\n\nThe masters died standing still, mostly.",
     "keywords": [],
     "icon": "smith",
-    "textTemplate": "Deal {damage} damage. If the target is Idle: it loses {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. If the target is Idle: it loses {loseHp} HP, ignoring Block.",
     "faceTemplate": [
       "Deal {damage} damage.",
       "Idle target: loses {loseHp} HP."
