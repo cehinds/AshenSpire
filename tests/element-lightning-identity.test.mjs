@@ -118,3 +118,14 @@ test('review #2822: the chained hit has its own contact, so its Block record nev
   assert.equal(receipt.blockBefore, 7, 'the first target keeps the Block its hit met');
   assert.equal(row.carrier.expansionContact.index, 0, 'the planned contact flags carry over');
 });
+
+test('review #2822 follow-up: the chained receipt has its own amounts and incomings, so the chained hit never writes the first target\'s', () => {
+  const { combat, enemies, player } = fight({ enemies: 2 });
+  const receipt = { blockBefore: 7, amount: 10, amounts: [10], incomings: [10] };
+  const [row] = ElementSecondaryPlan(combat, player, enemies[0], { ...SPARK, expansionContact: { index: 0, receipt } });
+  const chained = row.carrier.expansionContact.receipt;
+  assert.notEqual(chained.amounts, receipt.amounts);
+  assert.notEqual(chained.incomings, receipt.incomings);
+  chained.amounts[0] = 5; chained.incomings[0] = 5; // what the chained hit's applyProfileDamage writes
+  assert.deepEqual([receipt.amounts[0], receipt.incomings[0]], [10, 10], 'the first target keeps its own hit for its Counter return');
+});
