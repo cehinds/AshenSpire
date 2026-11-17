@@ -46,3 +46,11 @@ test('every Core card that grants Evade carries a drawback', () => {
 test('the 1-Stamina Evade cards Exhaust, and Sidestep does too', () => {
   for (const id of ['core.backstep', 'quickstep', 'base.evade']) assert.ok(registries.cards.get(id).keywords.includes('exhaust'), id);
 });
+
+test('Hold Block costs 1 more Stamina each play, up to +2, and its authored upgrade holds the cost', () => {
+  const hold = registries.cards.get('base.retain-block');
+  assert.deepEqual(drawbacksOf(hold), ['risingCost']);
+  assert.deepEqual({ stamina: hold.costGrowth.stamina, max: hold.costGrowth.max }, { stamina: 1, max: 2 });
+  assert.equal(hold.upgrade.costGrowth.stamina, 0, 'the upgrade stops the rising cost');
+  assert.ok(registries.cards.get('base.retain-block').effects.some((e) => e.op === 'block' && e.amount === 6), 'still 6 Block');
+});

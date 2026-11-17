@@ -933,6 +933,7 @@ export const SCHEMAS = Object.freeze({
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
+        faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.

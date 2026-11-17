@@ -7826,8 +7826,22 @@
             "amount": 6
           }
         ],
-        "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
-        "faceTemplate": ["Gain {block} Block.", "Retain it {base.retain-block} turn."],
+        "costGrowth": {
+          "stamina": 1,
+          "mana": 0,
+          "perUse": 1,
+          "max": 2
+        },
+        "upgrade": {
+          "costGrowth": {
+            "stamina": 0,
+            "mana": 0
+          },
+          "textTemplate": "Gain {block} Block. Keep it {base.retain-block} turn.",
+          "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn."]
+        },
+        "textTemplate": "Gain {block} Block. Keep it {base.retain-block} turn. Costs 1 more Stamina each play (up to +2).",
+        "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn.", "+1 Stamina each play."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
       },

@@ -76,3 +76,17 @@ test('a steady upgrade holds the printed cost on every play', () => {
   assert.equal(thirdPlayCost('base.cost-per-use', null).stamina, 2, 'the third play costs 2 more, less the stance cut');
   assert.equal(thirdPlayCost('base.cost-per-use', [{ k: 'fx', fx: 'steady' }]).stamina, 1, 'the steady copy keeps its printed cost');
 });
+
+// The first play enters the casting stance; later plays take its 1-Stamina stance cut (never below 1), so the rise shows from the third play.
+test('Hold Block costs more each play; upgraded it never rises', () => {
+  const plays = (steps) => {
+    const ids = ['a', 'b', 'c'];
+    const c = fight(ids.map((id) => ({ instanceId: id, cardId: 'base.retain-block', ...(steps ? { upgraded: true } : { upgraded: false }) })), 'reaver');
+    return ids.map((id) => { const before = c.player.stamina; dispatch(c, { type: 'playCard', cardInstanceId: id }); return before - c.player.stamina; });
+  };
+  const base = plays(false);
+  const held = plays(true);
+  assert.equal(base[2] - base[1], 1, `the third play costs 1 more than the second: ${base}`);
+  assert.equal(new Set(held).size, 1, `the upgrade holds the cost: ${held}`);
+  assert.equal(base[2], held[2] + 1, `the rising copy pays more by its third play: ${base} vs ${held}`);
+});

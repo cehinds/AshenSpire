@@ -91,7 +91,7 @@ test('Hold Block keeps all remaining protection for exactly its displayed number
       // or capping it at the nominal six printed on the unmodified card.
       const expectedBlock=combat.player.block;
       assert.ok(expectedBlock>=initialBlock+6*plays);
-      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block\. Retain Block for 1 turn\./);
+      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block\. Keep it 1 turn\./);
       for(let turn=0;turn<plays;turn++){
         for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
         dispatch(combat,{type:'endTurn'});
