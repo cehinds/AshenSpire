@@ -26406,5 +26406,304 @@
       "sha256": "1a867e2443667622a9bf1fc152f9d1a96a73a837667929395e381d0bfc5b7d08",
       "bytes": 173755
     }
+  },
+  "effectLayers": {
+    "fx:blade": {
+      "assetId": "C.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:guard": {
+      "assetId": "symbol.shield",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:blood": {
+      "assetId": "cue.bleed.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:gorefire": {
+      "assetId": "cue.burn.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:starstone": {
+      "assetId": "symbol.orb",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ritual": {
+      "assetId": "cue.communion.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:blight": {
+      "assetId": "cue.necroticBlight.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:oath": {
+      "assetId": "symbol.ring",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:flourish": {
+      "assetId": "cue.stanceShifted.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ash": {
+      "assetId": "H.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:heavy": {
+      "assetId": "symbol.hammer",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:pierce": {
+      "assetId": "cue.precision.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ranged": {
+      "assetId": "symbol.bolt",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:precision": {
+      "assetId": "symbol.eye",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:guile": {
+      "assetId": "symbol.mask",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:venom": {
+      "assetId": "cue.venom.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:shield": {
+      "assetId": "cue.unbreakable.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:barrier": {
+      "assetId": "cue.stoneskin.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ward": {
+      "assetId": "cue.astralArmor.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:magic": {
+      "assetId": "I.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:arcane": {
+      "assetId": "symbol.spiral",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:dodge": {
+      "assetId": "cue.evade.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:riposte": {
+      "assetId": "symbol.fang",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:bind": {
+      "assetId": "symbol.chain",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:frost": {
+      "assetId": "cue.frost.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:bulwark": {
+      "assetId": "cue.invulnerability.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:utility": {
+      "assetId": "symbol.vial",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    }
   }
 }
