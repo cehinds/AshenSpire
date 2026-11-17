@@ -48,6 +48,9 @@ export function deckRulesTableProblems(table, cards, err, nodes) {
     if (!Array.isArray(values) || values.some((value) => typeof value !== 'string' || !value)) at(`equipmentEligibility.${key}`, 'must be a list of tag ids');
     else values.forEach((value, index) => { if (nodeIds.size && !nodeIds.has(value)) at(`equipmentEligibility.${key}[${index}]`, `names no tag node: '${value}'`); });
   }
+  if (!Number.isInteger(table.minimumReductionSafetyFloor) || table.minimumReductionSafetyFloor < 1) at('minimumReductionSafetyFloor', `must be a whole number of at least 1 (a deck is never empty), got ${JSON.stringify(table.minimumReductionSafetyFloor)}`);
+  const steps = table.minimumReductionLevels;
+  if (!Array.isArray(steps) || steps.some((level, i) => !Number.isInteger(level) || level < 2 || (i && level <= steps[i - 1]))) at('minimumReductionLevels', `must be rising whole character levels of at least 2, got ${JSON.stringify(steps)}`);
   const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
   if (!Array.isArray(table.unlimitedCardIds)) at('unlimitedCardIds', 'must be a list of card ids');
   else table.unlimitedCardIds.forEach((id, i) => { if (ids.size && !ids.has(id)) at(`unlimitedCardIds[${i}]`, `names no card: '${id}'`); });

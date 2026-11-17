@@ -1,5 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
-import { StatAllocationSection } from '../components/statAllocation.js';
+import { LevelUpPointsButton } from '../components/progressionCards.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { MountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
@@ -33,7 +33,8 @@ import { t as translate, tFull as translateFull, tTip as translateTip } from '..
 import { reasonWhenDisabled } from '../components/refusal.js';
 import { OpenConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
-import { cardUpgradeChanges } from '../models/CardUpgradeModel.js';
+import { cardUpgradeChanges, RankUpUpgradeModel } from '../models/CardUpgradeModel.js';
+import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { projectGameCard } from '../../model/gameProfile.js';
 import { resolveCard } from '../../model/registries.js';
 import { clearSelection } from '../components/cardSelection.js';
@@ -854,11 +855,28 @@ export function MountRewards(appRoot, {
         {
             return null;
         }
-        return StatAllocationSection(registries, run, {
-            settings,
-            onAllocateStat,
-            onChange: persistProgress,
-        });
+        // Earned attribute points open the level-up modal (owner, 2026-11-17), never an inline panel.
+        if (!onAllocateStat || !(run.level?.unspentPoints > 0))
+        {
+            return null;
+        }
+        const host = buildElement('div', { class: 'spoils-points reward-stat-points' });
+        const draw = () =>
+        {
+            const points = LevelUpPointsButton(registries, run, {
+                settings,
+                onAllocateStat,
+                id: 'reward-stat-points',
+                onChange: () =>
+                {
+                    persistProgress();
+                    draw();
+                },
+            });
+            host.replaceChildren(...(points ? [points] : []));
+        };
+        draw();
+        return host;
     }
 
     function bindMenuControls(continueButton, note)
@@ -1057,9 +1075,57 @@ export function MountRewards(appRoot, {
         }
         if (row.kind === SKILL_RANK_UP)
         {
-            return renderRankUpChooser(row);
+            return rankUpCandidates(registries, run, row.skillId).length
+                ? openRankUpPicker(row)
+                : renderRankUpChooser(row);
         }
         takeRewardRow(row);
+    }
+
+    // Playtest 2026-11-17 item 45a: a skill's rank-up is a card upgrade, so it uses the Blacksmith's card-upgrade
+    // picker (cardUpgradeModal.js): choose the card, its bonus options open under it, Rank up commits. Back closes the
+    // picker and leaves the row as it was, to take now or leave queued.
+    function openRankUpPicker(row)
+    {
+        if (states[row.key])
+        {
+            return;
+        }
+        let selection = null;
+        const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+        const readModel = () => RankUpUpgradeModel(registries, run, row.skillId, selection, { faceOf });
+        const opener = [...appRoot.querySelectorAll('.reward-kind')].find((node) => node.dataset.key === row.key) || null;
+        const picker = MountCardUpgradeModal(appRoot, readModel(), {
+            registries,
+            meta,
+            title: describeRewardRow(row).title,
+            backLabel: translate('common.back'),
+            confirmLabel: translate('rankUp.pick.confirm'),
+            returnFocusElement: opener,
+            onSelect: (instanceId) =>
+            {
+                selection = instanceId;
+                picker.update(readModel());
+            },
+            onBack: () => {},
+            onConfirm: (instanceId, plan) =>
+            {
+                const taking = {
+                    ...row,
+                    instanceId,
+                    ...(plan?.step ? { bonusStep: plan.step } : {}),
+                };
+                try
+                {
+                    return takeRewardRow(taking, row.key);
+                }
+                catch
+                {
+                    renderMenu(row.key);
+                    return false;
+                }
+            },
+        });
     }
 
     function bindSkipButtons()
