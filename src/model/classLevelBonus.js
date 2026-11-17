@@ -24,9 +24,13 @@ export function ClassBonusAttribute(classId) {
   return classLevelBonuses.attributeByClass[classId] || null;
 }
 
-/** True for a run whose character levels pay the class bonus: a configured profile with character levels and a class worn. */
+/** The run field value that marks a run born with the class bonus; a save without it (made before) gets none. */
+export const CLASS_LEVEL_BONUS_VERSION = 1;
+
+/** True for a run whose character levels pay the class bonus: born with it, a profile with character levels, and a class worn. */
 export function ClassBonusApplies(run) {
-  return !!(run && !run.classUnequipped && gameModule(run, 'progression')?.characterLevels && ClassBonusAttribute(run.class));
+  return !!(run && run.classLevelBonusVersion === CLASS_LEVEL_BONUS_VERSION && !run.classUnequipped
+    && gameModule(run, 'progression')?.characterLevels && ClassBonusAttribute(run.class));
 }
 
 /** ClassLevelAttributeBonus(run) → { [attributeId]: n }, {} when none applies. */

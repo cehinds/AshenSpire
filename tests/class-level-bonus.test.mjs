@@ -75,3 +75,34 @@ test('the Core Armoury floor is the deck editor minimum, which levels lower', ()
   climbTo(run, 6);
   assert.equal(deckMinimum(registries, run), deckRules.defaults.deckMinSize - 1);
 });
+
+// Review of #2815 (blocker): a save made before the class bonus existed must still load. Such a run carries no
+// classLevelBonusVersion; its pools were derived without the bonus, so the load door must not price one in.
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { createRng } from '../src/engine/rng.js';
+import { CLASS_LEVEL_BONUS_VERSION } from '../src/model/classLevelBonus.js';
+
+for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (const level of [3, 5]) {
+  test(`${classId} L${level}: a save on the old run shape (no class bonus field) loads, and pays no bonus`, () => {
+    const run = make(classId);
+    delete run.classLevelBonusVersion;
+    climbTo(run, level);
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, createRng(run.seed));
+    const loaded = saves.loadRun(registries);
+    assert.ok(loaded, saves.runStatus().reason);
+    assert.equal(loaded.classLevelBonusVersion, undefined);
+    assert.deepEqual(ClassLevelAttributeBonus(loaded), {});
+    assert.equal(loaded.maxHp, run.maxHp);
+  });
+  test(`${classId} L${level}: a run born with the class bonus saves and loads with it`, () => {
+    const run = make(classId);
+    assert.equal(run.classLevelBonusVersion, CLASS_LEVEL_BONUS_VERSION);
+    climbTo(run, level);
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, createRng(run.seed));
+    const loaded = saves.loadRun(registries);
+    assert.ok(loaded, saves.runStatus().reason);
+    assert.deepEqual(ClassLevelAttributeBonus(loaded), { [classLevelBonuses.attributeByClass[classId]]: ClassBonusCount(level) });
+  });
+}

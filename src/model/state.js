@@ -864,6 +864,9 @@ export const RUN_SHAPE = [
   { key: 'itemCategories', type: 'object', optional: true },
   { key: 'itemRanks', type: 'object', optional: true },
   { key: 'itemProps', type: 'object', optional: true },
+  // The odd-level class bonus (model/classLevelBonus.js) is paid only to a run born with it (1); a run saved
+  // before it existed has no field and keeps the pools its snapshot validated, so it loads unchanged.
+  { key: 'classLevelBonusVersion', type: 'number', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },

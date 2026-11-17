@@ -6,6 +6,7 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { PrAttributeView } from './fixCoreMechanics.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemFamily } from './itemPicks.js';
+import { CLASS_LEVEL_BONUS_VERSION } from './classLevelBonus.js';
 
 export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
@@ -89,6 +90,8 @@ export function initializeGameProfileRun(registries, run, { profileMeta = {} } =
   run.equipmentAttackSlotCount = 0;
   run.skills = {};
   run.coreTags = [];
+  // A run born from today pays the odd-level class bonus; an older save carries no field and gets none.
+  if (gameModule(run, 'progression')?.characterLevels) run.classLevelBonusVersion = CLASS_LEVEL_BONUS_VERSION;
 }
 
 // Synchronous internal service scope; low-level mutation doors cannot bypass rest.
