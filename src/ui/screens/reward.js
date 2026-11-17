@@ -1,5 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
-import { StatAllocationSection } from '../components/statAllocation.js';
+import { LevelUpPointsButton } from '../components/progressionCards.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { MountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
@@ -855,11 +855,28 @@ export function MountRewards(appRoot, {
         {
             return null;
         }
-        return StatAllocationSection(registries, run, {
-            settings,
-            onAllocateStat,
-            onChange: persistProgress,
-        });
+        // Earned attribute points open the level-up modal (owner, 2026-11-17), never an inline panel.
+        if (!onAllocateStat || !(run.level?.unspentPoints > 0))
+        {
+            return null;
+        }
+        const host = buildElement('div', { class: 'spoils-points reward-stat-points' });
+        const draw = () =>
+        {
+            const points = LevelUpPointsButton(registries, run, {
+                settings,
+                onAllocateStat,
+                id: 'reward-stat-points',
+                onChange: () =>
+                {
+                    persistProgress();
+                    draw();
+                },
+            });
+            host.replaceChildren(...(points ? [points] : []));
+        };
+        draw();
+        return host;
     }
 
     function bindMenuControls(continueButton, note)
