@@ -42,3 +42,32 @@ test('a legacy run keeps the settings minimum whatever its level', () => {
   legacy.level = { level: 12, xp: 0, unspentPoints: 0 };
   assert.equal(levelMinDeckDelta(legacy), 0);
 });
+
+test('an unlimited-kind item property lifts the Core copy limit, so a minted Basic can be committed', async () => {
+  const { openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { commitDeckEditDraft, unlimitedCardIds } = await import('../src/model/deckRules.js');
+  const { configuredDeckCopyLimit } = await import('../src/model/deckCopyLimit.js');
+  const run = make(1);
+  run.relics = [...(run.relics || []), 'goldenSprout'];
+  run.itemProps = { 'relic/goldenSprout': ['unlimitedBasics'] };
+  assert.ok(unlimitedCardIds(run).includes('core.strike'));
+  assert.equal(configuredDeckCopyLimit(run, 'core.strike'), Infinity);
+  const draft = structuredClone(run);
+  draft.gameProfile = run.gameProfile;
+  const session = openDeckEdit(registries, draft);
+  const before = draft.deck.filter(card => card.cardId === 'core.strike').length;
+  assert.equal(session.add('basic:core.strike').ok, true);
+  assert.equal(draft.deck.filter(card => card.cardId === 'core.strike').length, before + 1);
+  assert.doesNotThrow(() => commitDeckEditDraft(registries, run, { deck: draft.deck, sideboard: draft.sideboard, editMintCounter: draft.editMintCounter, collectedCardIds: draft.collectedCardIds }));
+  assert.equal(run.deck.filter(card => card.cardId === 'core.strike').length, before + 1);
+});
+
+test('a relic row may author item properties; they must name real rows', async () => {
+  const { AuthoredPropertyIds } = await import('../src/model/itemPicks.js');
+  assert.deepEqual(AuthoredPropertyIds('relic/goldenSprout'), []);
+  assert.deepEqual(AuthoredPropertyIds('armament/greatsword'), []);
+  const { validateContent } = await import('../src/model/validate.js');
+  const bundle = { ...contentBundle, relics: [...contentBundle.relics, { id: 'badRelic', name: 'Bad', rarity: 'common', textTemplate: 'x', properties: ['nope'] }] };
+  const problems = validateContent(bundle).errors.map(e => `${e.path}: ${e.msg}`).join('\n');
+  assert.match(problems, /relics\.badRelic\.properties\[0\]/);
+});

@@ -3,6 +3,7 @@ import { deckRules } from '../content/deckRules.js';
 import { gameContent } from './gameProfile.js';
 import { basicCardKind } from './basicCardRule.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds } from './collectedCards.js';
+import { ItemUnlimitedKinds } from './itemProperties.js';
 
 /** Display names share the stable saved class tags used by the copy rules. */
 export function activeAdeptTraining(run) {
@@ -46,6 +47,13 @@ export function collectedAdeptCardIds(run) {
   return ids.filter(id => known.has(id));
 }
 
+// A held relic or item property (Basic Training, Graduate, W25 step 6) lifts the limit on its card kind.
+function itemUnlimited(run, cardId) {
+  const kinds = ItemUnlimitedKinds(run);
+  if (!kinds.length) return false;
+  return kinds.includes(basicCardKind(run, gameContent(run, 'cards')?.find((card) => card.id === cardId)));
+}
+
 // The same copy rule serves acquisition and the deck editor.
 export function configuredDeckCopyLimit(run, cardId) {
   const profile = run?.gameProfile;
@@ -53,7 +61,7 @@ export function configuredDeckCopyLimit(run, cardId) {
   const row = profile.content.characters?.find(row => row.id === run.class) || { id: run.class, tags: [] };
   const owned = {};
   for (const card of [...(run.deck || []), ...(run.sideboard || [])]) owned[card.cardId] = (owned[card.cardId] || 0) + 1;
-  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run).includes(cardId) ? Infinity : owned[cardId] || 0;
+  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run).includes(cardId) || itemUnlimited(run, cardId) ? Infinity : owned[cardId] || 0;
   return configuredCopyLimit(cardId, row, profile.content, characterSettings(profile.modules), profile.modules.gear, owned);
 }
 
