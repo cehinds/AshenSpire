@@ -1,4 +1,3 @@
-// The chrome every modal wears: close control, header, footer order, dismissal.
 import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 import { esc as escapeHtml } from './tooltip.js';
@@ -25,18 +24,19 @@ export const MODAL_SIZES = Object.freeze([
     'xl',
 ]);
 
+const FALLBACK_DELAY_MS = 250;
+const SCROLL_SLACK_PX = 2;
+
 const DEFAULT_CLOSE_LABEL = 'Close';
 const DEFAULT_ROW_SIZE = 'medium';
 const DEFAULT_MODAL_SIZE = 'md';
 const DEFAULT_MODAL_ROLE = 'dialog';
 const DEFAULT_MODAL_KIND = 'base';
 const ROLE_ALERT_DIALOG = 'alertdialog';
-const FALLBACK_DELAY_MS = 250;
 const CONTROL_ROLE_EXIT = 'exit';
 const WIREFRAME_MODAL_WIDTH = 'wireframeModalWidth';
 const WIREFRAME_MODAL_FOOTER = 'wireframeModalFooter';
 const LONG_HEIGHT = 'long';
-const SCROLL_SLACK_PX = 2;
 
 const CLASS_TABS = 'modal-tabs';
 const CLASS_TAB = 'modal-tab';
@@ -57,6 +57,12 @@ const SELECTOR = Object.freeze({
     headClose: '.modal-close',
 });
 
+const PANEL_MUTATIONS_TO_WATCH = Object.freeze({
+    childList: true,
+    subtree: true,
+    characterData: true,
+});
+
 const TAB_NAVIGATION_KEYS = Object.freeze([
     'ArrowLeft',
     'ArrowRight',
@@ -64,15 +70,15 @@ const TAB_NAVIGATION_KEYS = Object.freeze([
     'End',
 ]);
 
-function withExtraClass(base, extraClass)
+function joinClassNames(baseClass, extraClass)
 {
     const suffix = extraClass
         ? ` ${extraClass}`
         : '';
-    return `${base}${suffix}`;
+    return `${baseClass}${suffix}`;
 }
 
-function mintTitleId()
+function createTitleId()
 {
     const randomSuffix = Math.random().toString(36).slice(2, 8);
     return `modal-title-${randomSuffix}`;
@@ -90,14 +96,14 @@ function hasAnimationFrames()
     return typeof requestAnimationFrame === 'function';
 }
 
-function currentDocument()
+function findCurrentDocument()
 {
     return typeof document === 'undefined'
         ? null
         : document;
 }
 
-function topModalPanel()
+function findTopModalPanel()
 {
     const modals = document.querySelectorAll(SELECTOR.topModals);
     return [...modals].at(-1);
@@ -111,119 +117,56 @@ function assertKnownSize(size, allowedSizes, subject)
     }
 }
 
-export function ModalCloseButton({
-    label = DEFAULT_CLOSE_LABEL,
-    onClick = null,
-    className = '',
-    id: elementId = '',
-} = {})
+function runAfterTwoFrames(callback)
 {
-    const button = document.createElement('button');
-    button.type = 'button';
+    let hasRun = false;
 
-    if (elementId)
+    const runOnce = () =>
     {
-        button.id = elementId;
-    }
+        if (hasRun)
+        {
+            return;
+        }
 
-    button.className = withExtraClass(
-        CLASS_CLOSE,
-        className,
-    );
-    button.dataset.controlRole = CONTROL_ROLE_EXIT;
-    // An automatic focus hint would consume Escape before the modal can close.
-    button.dataset.tip = 'off';
-    button.title = `${label} (Esc)`;
-    button.setAttribute('aria-label', label);
-    button.setAttribute('aria-keyshortcuts', 'Escape');
+        hasRun = true;
+        callback();
+    };
 
-    const face = document.createElement('span');
-    face.className = 'modal-close-face';
-    face.setAttribute('aria-hidden', 'true');
-    face.append(engravedIcon(MODAL_CLOSE_GLYPH) || 'X');
-    button.appendChild(face);
-
-    if (onClick)
-    {
-        button.addEventListener('click', onClick);
-    }
-
-    return button;
-}
-
-export function ModalCloseButtonHtml({
-    label = DEFAULT_CLOSE_LABEL,
-    className = '',
-    id: elementId = '',
-} = {})
-{
-    const idAttribute = elementId
-        ? ` id="${escapeHtml(elementId)}"`
-        : '';
-    const escapedClassName = className && escapeHtml(className);
-    const closeClass = withExtraClass(
-        CLASS_CLOSE,
-        escapedClassName,
-    );
-    const safeLabel = escapeHtml(label);
-
-    return [
-        `<button type="button"${idAttribute} class="${closeClass}"`,
-        ` data-control-role="${CONTROL_ROLE_EXIT}"`,
-        ` data-tip="off" title="${safeLabel} (Esc)" aria-label="${safeLabel}"`,
-        ' aria-keyshortcuts="Escape">',
-        '<span class="modal-close-face" aria-hidden="true">',
-        engravedIconHtml(MODAL_CLOSE_GLYPH),
-        '</span></button>',
-    ].join('');
+    requestAnimationFrame(() => requestAnimationFrame(runOnce));
+    setTimeout(runOnce, FALLBACK_DELAY_MS)?.unref?.();
 }
 
 function buildFootNote(note)
 {
-    const wrapper = createElementWithClass('span', 'modal-foot-note');
+    const noteWrapper = createElementWithClass('span', 'modal-foot-note');
     const text = document.createElement('span');
     text.textContent = note;
-    wrapper.appendChild(text);
-    return wrapper;
+    noteWrapper.appendChild(text);
+    return noteWrapper;
 }
 
-function markFooterPrimary(primary)
+function markFooterPrimary(primaryButton)
 {
-    // `className`, not `classList`: tests mount this in a minimal DOM.
-    const role = primary.dataset?.controlRole
-        ?? primary.getAttribute?.('data-control-role');
-    const hasPrimaryClass = ` ${primary.className} `.includes(' primary ');
+    const controlRole = primaryButton.dataset?.controlRole
+        ?? primaryButton.getAttribute?.('data-control-role');
+    const hasPrimaryClass = ` ${primaryButton.className} `.includes(' primary ');
 
-    if (role !== CONTROL_ROLE_EXIT && !hasPrimaryClass)
+    if (
+        controlRole !== CONTROL_ROLE_EXIT
+        && !hasPrimaryClass
+    )
     {
-        primary.className = `${primary.className} primary`.trim();
+        primaryButton.className = `${primaryButton.className} primary`.trim();
     }
 }
 
-export function ModalFooter({
-    note = '',
-    secondary = [],
-    primary = null,
-    className = '',
-    size = DEFAULT_ROW_SIZE,
-} = {})
+function buildFooterActions({
+    secondary,
+    primary,
+    size,
+    step,
+})
 {
-    assertKnownSize(size, BUTTON_ROW_SIZES, 'footer size');
-
-    const footerChoice = activeWireframeChoice(WIREFRAME_MODAL_FOOTER);
-    const step = resolveFooterSize(
-        size,
-        footerChoice,
-        BUTTON_ROW_SIZES,
-    );
-    const footerClass = withExtraClass('modal-foot', className);
-    const footer = createElementWithClass('footer', footerClass);
-
-    if (note)
-    {
-        footer.appendChild(buildFootNote(note));
-    }
-
     const actions = document.createElement('div');
     actions.className = 'modal-foot-actions modal-btnrow';
     actions.dataset.authoredSize = size;
@@ -232,7 +175,9 @@ export function ModalFooter({
     const visibleSecondary = secondary.filter(
         (button) => button && !button.hidden,
     );
-    const visiblePrimary = primary && !primary.hidden
+    const isPrimaryVisible = primary
+        && !primary.hidden;
+    const visiblePrimary = isPrimaryVisible
         ? primary
         : null;
     const primaryCount = visiblePrimary
@@ -266,8 +211,7 @@ export function ModalFooter({
         actions.appendChild(primary);
     }
 
-    footer.appendChild(actions);
-    return footer;
+    return actions;
 }
 
 function trapTabFocus(event, panel)
@@ -277,7 +221,7 @@ function trapTabFocus(event, panel)
         return false;
     }
 
-    if (topModalPanel() !== panel)
+    if (findTopModalPanel() !== panel)
     {
         return true;
     }
@@ -294,7 +238,10 @@ function trapTabFocus(event, panel)
         : lastControl;
     const focusIsAtEdge = activeElement === edgeControl;
 
-    if (focusIsOutside || focusIsAtEdge)
+    if (
+        focusIsOutside
+        || focusIsAtEdge
+    )
     {
         event.preventDefault();
 
@@ -312,140 +259,29 @@ function trapTabFocus(event, panel)
     return true;
 }
 
-export function BindModalDismiss({
-    veil,
-    panel,
-    close,
-    opener = document.activeElement,
-    escape = true,
-} = {})
+function hasOverflowingBody(panel)
 {
-    // Promote once per opening; shrinking back would oscillate.
-    const promoteLongPanel = () =>
-    {
-        if (!panel.isConnected || panel.dataset.height === LONG_HEIGHT)
-        {
-            return;
-        }
-
-        const bodies = [...panel.querySelectorAll(OVERFLOW_BODIES)];
-        const overflows = bodies.some(
-            (body) => body.scrollHeight > body.clientHeight + SCROLL_SLACK_PX,
-        );
-
-        if (overflows)
-        {
-            panel.dataset.height = LONG_HEIGHT;
-        }
-    };
-
-    const resizeObserver = typeof ResizeObserver === 'function'
-        ? new ResizeObserver(promoteLongPanel)
-        : null;
-    resizeObserver?.observe(panel);
-
-    const mutationObserver = typeof MutationObserver === 'function'
-        ? new MutationObserver(promoteLongPanel)
-        : null;
-    mutationObserver?.observe(panel, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-    });
-
-    const onKeydown = (event) =>
-    {
-        if (event.defaultPrevented)
-        {
-            return;
-        }
-
-        if (trapTabFocus(event, panel))
-        {
-            return;
-        }
-
-        if (!escape || event.key !== 'Escape' || event.repeat)
-        {
-            return;
-        }
-
-        if (topModalPanel() !== panel)
-        {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        close();
-    };
-
-    // A click closes only if the press began on the veil: touch trailing clicks must not.
-    let veilPressed = false;
-
-    const onPointerDown = (event) =>
-    {
-        veilPressed = event.target === veil;
-    };
-
-    const onClick = (event) =>
-    {
-        const pressedHere = veilPressed;
-        veilPressed = false;
-
-        if (event.target === veil && pressedHere)
-        {
-            close();
-        }
-    };
-
-    document.addEventListener('keydown', onKeydown, true);
-    veil.addEventListener('pointerdown', onPointerDown);
-    veil.addEventListener('click', onClick);
-
-    return function release({ restoreFocus = true } = {})
-    {
-        resizeObserver?.disconnect();
-        mutationObserver?.disconnect();
-        document.removeEventListener('keydown', onKeydown, true);
-        veil.removeEventListener('pointerdown', onPointerDown);
-        veil.removeEventListener('click', onClick);
-
-        const canRestoreFocus = restoreFocus
-            && opener?.isConnected
-            && typeof opener.focus === 'function';
-
-        if (canRestoreFocus)
-        {
-            opener.focus({ preventScroll: true });
-        }
-    };
+    const bodies = [...panel.querySelectorAll(OVERFLOW_BODIES)];
+    return bodies.some(
+        (body) => body.scrollHeight > body.clientHeight + SCROLL_SLACK_PX,
+    );
 }
 
-export function ButtonRow({
-    size = DEFAULT_ROW_SIZE,
-    buttons = [],
-    className = '',
-} = {})
+function createResizeObserver(onResize)
 {
-    assertKnownSize(size, BUTTON_ROW_SIZES, 'button row size');
-
-    const rowClass = withExtraClass(CLASS_BUTTON_ROW, className);
-    const buttonRow = createElementWithClass('div', rowClass);
-    buttonRow.dataset.size = size;
-
-    for (const button of buttons)
-    {
-        if (button)
-        {
-            buttonRow.appendChild(button);
-        }
-    }
-
-    return buttonRow;
+    return typeof ResizeObserver === 'function'
+        ? new ResizeObserver(onResize)
+        : null;
 }
 
-function nextTabIndex(pressedKey, currentIndex, tabCount)
+function createMutationObserver(onMutation)
+{
+    return typeof MutationObserver === 'function'
+        ? new MutationObserver(onMutation)
+        : null;
+}
+
+function findNextTabIndex(pressedKey, currentIndex, tabCount)
 {
     if (pressedKey === 'Home')
     {
@@ -463,85 +299,107 @@ function nextTabIndex(pressedKey, currentIndex, tabCount)
     return (currentIndex + direction + tabCount) % tabCount;
 }
 
+function buildTabButton(tab, tabId, isSelected)
+{
+    const tabButton = document.createElement('button');
+    tabButton.type = 'button';
+    tabButton.className = CLASS_TAB;
+    tabButton.setAttribute('role', 'tab');
+    tabButton.setAttribute('aria-selected', String(isSelected));
+    tabButton.tabIndex = isSelected
+        ? 0
+        : -1;
+    tabButton.dataset.modalTab = tabId;
+    tabButton.dataset.focusable = 'true';
+    tabButton.textContent = tab.label;
+    return tabButton;
+}
+
+function selectTabButton(tabStrip, chosenButton)
+{
+    for (const tabButton of tabStrip.querySelectorAll(SELECTOR.tab))
+    {
+        const isSelected = tabButton === chosenButton;
+        tabButton.setAttribute('aria-selected', String(isSelected));
+        tabButton.tabIndex = isSelected
+            ? 0
+            : -1;
+    }
+}
+
+function focusRebuiltTab(head, targetId)
+{
+    const searchRoot = head.isConnected
+        ? head
+        : document;
+    const candidates = [...searchRoot.querySelectorAll(`.${CLASS_TAB}`)];
+    const replacement = candidates.find(
+        (candidate) =>
+            candidate.dataset.modalTab === targetId
+            && candidate.isConnected,
+    );
+    replacement?.focus({ preventScroll: true });
+}
+
+function moveTabFocusByKey(event, tabStrip, head)
+{
+    if (!TAB_NAVIGATION_KEYS.includes(event.key))
+    {
+        return;
+    }
+
+    const tabButtons = [...tabStrip.querySelectorAll(SELECTOR.tab)];
+    const currentIndex = tabButtons.indexOf(document.activeElement);
+
+    if (currentIndex < 0)
+    {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const targetIndex = findNextTabIndex(
+        event.key,
+        currentIndex,
+        tabButtons.length,
+    );
+    const targetTab = tabButtons[targetIndex];
+    targetTab.focus();
+    targetTab.click();
+
+    focusRebuiltTab(head, targetTab.dataset.modalTab);
+}
+
 function buildTabStrip(tabList, onTab, head)
 {
     const tabStrip = createElementWithClass('div', CLASS_TABS);
     tabStrip.setAttribute('role', 'tablist');
 
-    const selectedTab = tabList.find((tabItem) => tabItem.selected)
+    const selectedTab = tabList.find((tab) => tab.selected)
         || tabList[0];
 
-    for (const tabItem of tabList)
+    for (const tab of tabList)
     {
-        const tabId = tabItem.id || tabItem.label;
-        const isSelected = tabItem === selectedTab;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = CLASS_TAB;
-        button.setAttribute('role', 'tab');
-        button.setAttribute('aria-selected', String(isSelected));
-        button.tabIndex = isSelected
-            ? 0
-            : -1;
-        button.dataset.modalTab = tabId;
-        button.dataset.focusable = 'true';
-        button.textContent = tabItem.label;
+        const tabId = tab.id || tab.label;
+        const tabButton = buildTabButton(
+            tab,
+            tabId,
+            tab === selectedTab,
+        );
 
-        button.addEventListener('click', () =>
+        tabButton.addEventListener('click', () =>
         {
-            for (const sibling of tabStrip.querySelectorAll(SELECTOR.tab))
-            {
-                const selected = sibling === button;
-                sibling.setAttribute('aria-selected', String(selected));
-                sibling.tabIndex = selected
-                    ? 0
-                    : -1;
-            }
-
+            selectTabButton(tabStrip, tabButton);
             onTab?.(tabId);
         });
 
-        tabStrip.appendChild(button);
+        tabStrip.appendChild(tabButton);
     }
 
     tabStrip.addEventListener('keydown', (event) =>
     {
-        if (!TAB_NAVIGATION_KEYS.includes(event.key))
-        {
-            return;
-        }
-
-        const tabButtons = [...tabStrip.querySelectorAll(SELECTOR.tab)];
-        const currentIndex = tabButtons.indexOf(document.activeElement);
-
-        if (currentIndex < 0)
-        {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const targetIndex = nextTabIndex(
-            event.key,
-            currentIndex,
-            tabButtons.length,
-        );
-        const targetTab = tabButtons[targetIndex];
-        targetTab.focus();
-        targetTab.click();
-
-        const searchRoot = head.isConnected
-            ? head
-            : document;
-        const targetId = targetTab.dataset.modalTab;
-        const candidates = [...searchRoot.querySelectorAll(`.${CLASS_TAB}`)];
-        const replacement = candidates.find(
-            (candidate) =>
-                candidate.dataset.modalTab === targetId
-                && candidate.isConnected,
-        );
-        replacement?.focus({ preventScroll: true });
+        moveTabFocusByKey(event, tabStrip, head);
     });
 
     return tabStrip;
@@ -589,6 +447,366 @@ function buildMenuButton({ menuLabel, onMenu })
     return menuButton;
 }
 
+function buildHeadActions({
+    extras,
+    shouldShowMenu,
+    menuLabel,
+    onMenu,
+    closeLabel,
+    onClose,
+})
+{
+    const headActions = createElementWithClass('div', 'modal-head-actions');
+
+    if (extras)
+    {
+        headActions.appendChild(extras);
+    }
+
+    if (shouldShowMenu)
+    {
+        headActions.appendChild(buildMenuButton({ menuLabel, onMenu }));
+    }
+
+    const close = ModalCloseButton({
+        label: closeLabel,
+        onClick: onClose,
+    });
+    close.dataset.size = 'square';
+    close.dataset.focusable = 'true';
+    headActions.appendChild(close);
+    return headActions;
+}
+
+function buildModalPanel({
+    className,
+    size,
+    kind,
+    role,
+    titleId,
+})
+{
+    const panel = document.createElement('section');
+    panel.className = joinClassNames('modal', className);
+    StampModalSize(panel, size);
+    ModalModelFor(kind).apply(panel);
+    panel.dataset.wireframe = role === ROLE_ALERT_DIALOG
+        ? 'W2'
+        : 'W1';
+    panel.setAttribute('role', role);
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', titleId);
+    panel.tabIndex = -1;
+    return panel;
+}
+
+function buildModalBody(body, bodyClassName)
+{
+    const bodyClass = joinClassNames('modal-body', bodyClassName);
+    const bodyElement = createElementWithClass('div', bodyClass);
+
+    if (typeof body === 'function')
+    {
+        body(bodyElement);
+    }
+    else if (body)
+    {
+        bodyElement.appendChild(body);
+    }
+
+    return bodyElement;
+}
+
+function buildModalFoot({
+    note,
+    secondary,
+    primary,
+    footSize,
+})
+{
+    const secondaryList = Array.isArray(secondary)
+        ? secondary
+        : [secondary];
+    const secondaryButtons = secondaryList.filter(Boolean);
+
+    if (
+        !note
+        && !secondaryButtons.length
+        && !primary
+    )
+    {
+        return null;
+    }
+
+    const foot = ModalFooter({
+        note,
+        secondary: secondaryButtons,
+        primary,
+        size: footSize,
+    });
+    foot.querySelector(SELECTOR.footActions)?.classList.add(CLASS_BUTTON_ROW);
+    return foot;
+}
+
+function detachThenLiftAfterFrames({
+    veil,
+    onClose,
+    releaseDismiss,
+    unregister,
+})
+{
+    veil.remove();
+    onClose?.();
+    runAfterTwoFrames(() =>
+    {
+        unregister?.unlock?.();
+        releaseDismiss?.();
+        unregister?.();
+    });
+}
+
+function liftThenDetach({
+    veil,
+    onClose,
+    releaseDismiss,
+    unregister,
+})
+{
+    unregister?.unlock?.();
+    releaseDismiss?.();
+    veil.remove();
+    onClose?.();
+    unregister?.();
+}
+
+export function ModalCloseButton({
+    label = DEFAULT_CLOSE_LABEL,
+    onClick = null,
+    className = '',
+    id: elementId = '',
+} = {})
+{
+    const button = document.createElement('button');
+    button.type = 'button';
+
+    if (elementId)
+    {
+        button.id = elementId;
+    }
+
+    button.className = joinClassNames(
+        CLASS_CLOSE,
+        className,
+    );
+    button.dataset.controlRole = CONTROL_ROLE_EXIT;
+    button.dataset.tip = 'off';
+    button.title = `${label} (Esc)`;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-keyshortcuts', 'Escape');
+
+    const face = document.createElement('span');
+    face.className = 'modal-close-face';
+    face.setAttribute('aria-hidden', 'true');
+    face.append(engravedIcon(MODAL_CLOSE_GLYPH) || 'X');
+    button.appendChild(face);
+
+    if (onClick)
+    {
+        button.addEventListener('click', onClick);
+    }
+
+    return button;
+}
+
+export function ModalCloseButtonHtml({
+    label = DEFAULT_CLOSE_LABEL,
+    className = '',
+    id: elementId = '',
+} = {})
+{
+    const idAttribute = elementId
+        ? ` id="${escapeHtml(elementId)}"`
+        : '';
+    const escapedClassName = className && escapeHtml(className);
+    const closeClass = joinClassNames(
+        CLASS_CLOSE,
+        escapedClassName,
+    );
+    const safeLabel = escapeHtml(label);
+
+    return [
+        `<button type="button"${idAttribute} class="${closeClass}"`,
+        ` data-control-role="${CONTROL_ROLE_EXIT}"`,
+        ` data-tip="off" title="${safeLabel} (Esc)" aria-label="${safeLabel}"`,
+        ' aria-keyshortcuts="Escape">',
+        '<span class="modal-close-face" aria-hidden="true">',
+        engravedIconHtml(MODAL_CLOSE_GLYPH),
+        '</span></button>',
+    ].join('');
+}
+
+export function ModalFooter({
+    note = '',
+    secondary = [],
+    primary = null,
+    className = '',
+    size = DEFAULT_ROW_SIZE,
+} = {})
+{
+    assertKnownSize(size, BUTTON_ROW_SIZES, 'footer size');
+
+    const footerChoice = activeWireframeChoice(WIREFRAME_MODAL_FOOTER);
+    const step = resolveFooterSize(
+        size,
+        footerChoice,
+        BUTTON_ROW_SIZES,
+    );
+    const footerClass = joinClassNames('modal-foot', className);
+    const footer = createElementWithClass('footer', footerClass);
+
+    if (note)
+    {
+        footer.appendChild(buildFootNote(note));
+    }
+
+    const actions = buildFooterActions({
+        secondary,
+        primary,
+        size,
+        step,
+    });
+    footer.appendChild(actions);
+    return footer;
+}
+
+export function BindModalDismiss({
+    veil,
+    panel,
+    close,
+    opener = document.activeElement,
+    escape = true,
+} = {})
+{
+    let pressBeganOnVeil = false;
+
+    function promoteLongPanel()
+    {
+        if (
+            !panel.isConnected
+            || panel.dataset.height === LONG_HEIGHT
+        )
+        {
+            return;
+        }
+
+        if (hasOverflowingBody(panel))
+        {
+            panel.dataset.height = LONG_HEIGHT;
+        }
+    }
+
+    function handleKeydown(event)
+    {
+        if (event.defaultPrevented)
+        {
+            return;
+        }
+
+        if (trapTabFocus(event, panel))
+        {
+            return;
+        }
+
+        if (
+            !escape
+            || event.key !== 'Escape'
+            || event.repeat
+        )
+        {
+            return;
+        }
+
+        if (findTopModalPanel() !== panel)
+        {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        close();
+    }
+
+    function rememberVeilPress(event)
+    {
+        pressBeganOnVeil = event.target === veil;
+    }
+
+    function closeOnVeilClick(event)
+    {
+        const pressStartedOnVeil = pressBeganOnVeil;
+        pressBeganOnVeil = false;
+
+        if (
+            event.target === veil
+            && pressStartedOnVeil
+        )
+        {
+            close();
+        }
+    }
+
+    const resizeObserver = createResizeObserver(promoteLongPanel);
+    resizeObserver?.observe(panel);
+
+    const mutationObserver = createMutationObserver(promoteLongPanel);
+    mutationObserver?.observe(panel, PANEL_MUTATIONS_TO_WATCH);
+
+    document.addEventListener('keydown', handleKeydown, true);
+    veil.addEventListener('pointerdown', rememberVeilPress);
+    veil.addEventListener('click', closeOnVeilClick);
+
+    return function release({ restoreFocus = true } = {})
+    {
+        resizeObserver?.disconnect();
+        mutationObserver?.disconnect();
+        document.removeEventListener('keydown', handleKeydown, true);
+        veil.removeEventListener('pointerdown', rememberVeilPress);
+        veil.removeEventListener('click', closeOnVeilClick);
+
+        const canRestoreFocus = restoreFocus
+            && opener?.isConnected
+            && typeof opener.focus === 'function';
+
+        if (canRestoreFocus)
+        {
+            opener.focus({ preventScroll: true });
+        }
+    };
+}
+
+export function ButtonRow({
+    size = DEFAULT_ROW_SIZE,
+    buttons = [],
+    className = '',
+} = {})
+{
+    assertKnownSize(size, BUTTON_ROW_SIZES, 'button row size');
+
+    const rowClass = joinClassNames(CLASS_BUTTON_ROW, className);
+    const buttonRow = createElementWithClass('div', rowClass);
+    buttonRow.dataset.size = size;
+
+    for (const button of buttons)
+    {
+        if (button)
+        {
+            buttonRow.appendChild(button);
+        }
+    }
+
+    return buttonRow;
+}
+
 export function ModalHead({
     eyebrow = '',
     title = '',
@@ -607,7 +825,10 @@ export function ModalHead({
         ? tabs.filter(Boolean)
         : [];
 
-    if (!tabList.length && !title)
+    if (
+        !tabList.length
+        && !title
+    )
     {
         throw new Error('modalHead requires a title, or tabs to stand in for one');
     }
@@ -623,31 +844,18 @@ export function ModalHead({
         head.appendChild(buildHeadIdentity({ eyebrow, title, titleId }));
     }
 
-    const actions = createElementWithClass('div', 'modal-head-actions');
-
-    if (extras)
-    {
-        actions.appendChild(extras);
-    }
-
-    // A tabbed door wants the menu, a question must not offer a way out; the flag overrides.
-    const wantsMenu = showMenuButton == null
+    const shouldShowMenu = showMenuButton == null
         ? tabList.length > 0
         : Boolean(showMenuButton);
-
-    if (wantsMenu)
-    {
-        actions.appendChild(buildMenuButton({ menuLabel, onMenu }));
-    }
-
-    const close = ModalCloseButton({
-        label: closeLabel,
-        onClick: onClose,
+    const headActions = buildHeadActions({
+        extras,
+        shouldShowMenu,
+        menuLabel,
+        onMenu,
+        closeLabel,
+        onClose,
     });
-    close.dataset.size = 'square';
-    close.dataset.focusable = 'true';
-    actions.appendChild(close);
-    head.appendChild(actions);
+    head.appendChild(headActions);
     return head;
 }
 
@@ -665,26 +873,7 @@ export function StampModalSize(panel, size)
     return panel;
 }
 
-function afterFrames(callback)
-{
-    let hasRun = false;
-
-    const runOnce = () =>
-    {
-        if (hasRun)
-        {
-            return;
-        }
-
-        hasRun = true;
-        callback();
-    };
-
-    requestAnimationFrame(() => requestAnimationFrame(runOnce));
-    setTimeout(runOnce, FALLBACK_DELAY_MS)?.unref?.();
-}
-
-export function RestampModalWireframes(targetDocument = currentDocument())
+export function RestampModalWireframes(targetDocument = findCurrentDocument())
 {
     if (!targetDocument)
     {
@@ -750,23 +939,19 @@ export function OpenModal({
     kind = DEFAULT_MODAL_KIND,
 } = {})
 {
-    const titleId = givenTitleId || mintTitleId();
+    const titleId = givenTitleId || createTitleId();
     const veil = createElementWithClass('div', 'modal-veil');
-
-    const panel = document.createElement('section');
-    panel.className = withExtraClass('modal', className);
-    StampModalSize(panel, size);
-    ModalModelFor(kind).apply(panel);
-    panel.dataset.wireframe = role === ROLE_ALERT_DIALOG
-        ? 'W2'
-        : 'W1';
-    panel.setAttribute('role', role);
-    panel.setAttribute('aria-modal', 'true');
-    panel.setAttribute('aria-labelledby', titleId);
-    panel.tabIndex = -1;
+    const panel = buildModalPanel({
+        className,
+        size,
+        kind,
+        role,
+        titleId,
+    });
 
     let release = null;
     let unregisterModal = null;
+    let pageLockArmed = false;
 
     const close = (closeOptions) =>
     {
@@ -777,86 +962,123 @@ export function OpenModal({
             return;
         }
 
-        const releaseDismiss = release;
-        const unregister = unregisterModal;
+        const closing = {
+            veil,
+            onClose,
+            releaseDismiss: release,
+            unregister: unregisterModal,
+        };
         release = null;
         unregisterModal = null;
 
-        const deferTheLift = deferLift
+        const shouldDeferLift = deferLift
             && closeOptions?.liftNow !== true
             && hasAnimationFrames();
 
-        if (deferTheLift)
+        if (shouldDeferLift)
         {
-            veil.remove();
-            onClose?.();
-            afterFrames(() =>
-            {
-                unregister?.unlock?.();
-                releaseDismiss?.();
-                unregister?.();
-            });
+            detachThenLiftAfterFrames(closing);
             return;
         }
 
-        // Lift the page lock before focus returns: an inert element cannot take focus.
-        unregister?.unlock?.();
-        releaseDismiss?.();
-        veil.remove();
-        onClose?.();
-        unregister?.();
+        liftThenDetach(closing);
     };
 
-    const titledCloseLabel = title
-        ? `${DEFAULT_CLOSE_LABEL} ${title}`
-        : DEFAULT_CLOSE_LABEL;
-    const head = ModalHead({
-        eyebrow,
-        title,
-        titleId,
-        tabs,
-        onTab,
-        extras: headExtras,
-        showMenuButton,
-        onMenu,
-        closeLabel: closeLabel || titledCloseLabel,
-        onClose: close,
-    });
-
-    if (!head.querySelector(`#${titleId}`))
+    function buildHead()
     {
-        head.querySelector(`.${CLASS_TABS}`)?.setAttribute('id', titleId);
+        const titledCloseLabel = title
+            ? `${DEFAULT_CLOSE_LABEL} ${title}`
+            : DEFAULT_CLOSE_LABEL;
+        const modalHead = ModalHead({
+            eyebrow,
+            title,
+            titleId,
+            tabs,
+            onTab,
+            extras: headExtras,
+            showMenuButton,
+            onMenu,
+            closeLabel: closeLabel || titledCloseLabel,
+            onClose: close,
+        });
+
+        if (!modalHead.querySelector(`#${titleId}`))
+        {
+            modalHead.querySelector(`.${CLASS_TABS}`)?.setAttribute('id', titleId);
+        }
+
+        return modalHead;
     }
 
-    const bodyClass = withExtraClass('modal-body', bodyClassName);
-    const bodyElement = createElementWithClass('div', bodyClass);
-
-    if (typeof body === 'function')
+    function focusFirstControl()
     {
-        body(bodyElement);
-    }
-    else if (body)
-    {
-        bodyElement.appendChild(body);
+        const requestedTarget = typeof initialFocus === 'function'
+            ? initialFocus()
+            : null;
+        const focusTarget = requestedTarget
+            || panel.querySelector(SELECTOR.footPrimary)
+            || panel.querySelector(SELECTOR.footExit)
+            || panel.querySelector(SELECTOR.focusable)
+            || panel.querySelector(SELECTOR.headClose);
+        focusTarget?.focus?.({ preventScroll: true });
     }
 
+    function armPageLock()
+    {
+        if (pageLockArmed)
+        {
+            return;
+        }
+
+        pageLockArmed = true;
+
+        if (veil.isConnected)
+        {
+            unregisterModal?.arm?.();
+        }
+    }
+
+    function scheduleInitialFocus(deferInert)
+    {
+        if (
+            deferFocus
+            && hasAnimationFrames()
+        )
+        {
+            requestAnimationFrame(() =>
+            {
+                if (veil.isConnected)
+                {
+                    focusFirstControl();
+                }
+
+                requestAnimationFrame(armPageLock);
+            });
+            setTimeout(armPageLock, FALLBACK_DELAY_MS)?.unref?.();
+            return;
+        }
+
+        focusFirstControl();
+
+        if (deferInert)
+        {
+            runAfterTwoFrames(armPageLock);
+        }
+    }
+
+    const head = buildHead();
+    const bodyElement = buildModalBody(body, bodyClassName);
     panel.append(head, bodyElement);
 
-    const secondaryList = Array.isArray(secondary)
-        ? secondary
-        : [secondary];
-    const secondaryButtons = secondaryList.filter(Boolean);
-    let foot = null;
+    const foot = buildModalFoot({
+        note,
+        secondary,
+        primary,
+        footSize,
+    });
 
-    if (note || secondaryButtons.length || primary)
+    if (foot)
     {
-        foot = ModalFooter({
-            note,
-            secondary: secondaryButtons,
-            primary,
-            size: footSize,
-        });
-        foot.querySelector(SELECTOR.footActions)?.classList.add(CLASS_BUTTON_ROW);
         panel.appendChild(foot);
     }
 
@@ -877,59 +1099,7 @@ export function OpenModal({
         escape: false,
     });
 
-    // A footer exit outranks the head's small close.
-    const focusFirst = () =>
-    {
-        const requested = typeof initialFocus === 'function'
-            ? initialFocus()
-            : null;
-        const target = requested
-            || panel.querySelector(SELECTOR.footPrimary)
-            || panel.querySelector(SELECTOR.footExit)
-            || panel.querySelector(SELECTOR.focusable)
-            || panel.querySelector(SELECTOR.headClose);
-        target?.focus?.({ preventScroll: true });
-    };
-
-    let pageLockArmed = false;
-
-    const armPageLock = () =>
-    {
-        if (pageLockArmed)
-        {
-            return;
-        }
-
-        pageLockArmed = true;
-
-        if (veil.isConnected)
-        {
-            unregisterModal?.arm?.();
-        }
-    };
-
-    if (deferFocus && hasAnimationFrames())
-    {
-        requestAnimationFrame(() =>
-        {
-            if (veil.isConnected)
-            {
-                focusFirst();
-            }
-
-            requestAnimationFrame(armPageLock);
-        });
-        setTimeout(armPageLock, FALLBACK_DELAY_MS)?.unref?.();
-    }
-    else
-    {
-        focusFirst();
-
-        if (deferInert)
-        {
-            afterFrames(armPageLock);
-        }
-    }
+    scheduleInitialFocus(deferInert);
 
     return Object.freeze({
         veil,

@@ -9,14 +9,22 @@ const UNIT_SUFFIXES = [
 
 const ROOT_KIND = 'base';
 
-function lineage(kind, table)
+function toKebabCase(propertyName)
 {
-    const chain = [];
+    return propertyName.replace(
+        /[A-Z]/g,
+        (letter) => `-${letter.toLowerCase()}`,
+    );
+}
+
+function findKindLineage(kind, table)
+{
+    const lineageChain = [];
     let kindName = kind;
 
     while (kindName !== undefined)
     {
-        if (chain.includes(kindName))
+        if (lineageChain.includes(kindName))
         {
             throw new Error(`modal kind "${kind}": extends cycle at "${kindName}"`);
         }
@@ -29,37 +37,29 @@ function lineage(kind, table)
             throw new Error(message);
         }
 
-        chain.push(kindName);
+        lineageChain.push(kindName);
         kindName = table[kindName].extends;
     }
 
-    if (chain[chain.length - 1] !== ROOT_KIND)
+    if (lineageChain[lineageChain.length - 1] !== ROOT_KIND)
     {
         throw new Error(`modal kind "${kind}": does not extend "${ROOT_KIND}"`);
     }
 
-    return chain;
+    return lineageChain;
 }
 
 export function ResolveModalConfig(kind, table = MODAL_KINDS)
 {
-    const merged = {};
+    const mergedConfig = {};
 
-    for (const kindName of lineage(kind, table).reverse())
+    for (const kindName of findKindLineage(kind, table).reverse())
     {
-        Object.assign(merged, table[kindName]);
+        Object.assign(mergedConfig, table[kindName]);
     }
 
-    delete merged.extends;
-    return merged;
-}
-
-function kebab(name)
-{
-    return name.replace(
-        /[A-Z]/g,
-        (letter) => `-${letter.toLowerCase()}`,
-    );
+    delete mergedConfig.extends;
+    return mergedConfig;
 }
 
 export class ModalModel
@@ -72,32 +72,35 @@ export class ModalModel
 
     cssProperties()
     {
-        const properties = {};
+        const customProperties = {};
 
-        for (const [key, value] of Object.entries(this.config))
+        for (const [configKey, configValue] of Object.entries(this.config))
         {
-            const unit = UNIT_SUFFIXES.find(([suffix]) => key.endsWith(suffix));
+            const unitSuffix = UNIT_SUFFIXES.find(([suffix]) => configKey.endsWith(suffix));
 
-            if (!unit || typeof value !== 'number')
+            if (
+                !unitSuffix
+                || typeof configValue !== 'number'
+            )
             {
                 continue;
             }
 
-            const [suffix, cssUnit] = unit;
-            const propertyName = kebab(key.slice(0, -suffix.length));
-            properties[`--modal-${propertyName}`] = `${value}${cssUnit}`;
+            const [suffix, cssUnit] = unitSuffix;
+            const propertyName = toKebabCase(configKey.slice(0, -suffix.length));
+            customProperties[`--modal-${propertyName}`] = `${configValue}${cssUnit}`;
         }
 
-        return properties;
+        return customProperties;
     }
 
     apply(panel)
     {
         panel.dataset.modalKind = this.kind;
 
-        for (const [name, value] of Object.entries(this.cssProperties()))
+        for (const [propertyName, propertyValue] of Object.entries(this.cssProperties()))
         {
-            panel.style?.setProperty?.(name, value);
+            panel.style?.setProperty?.(propertyName, propertyValue);
         }
 
         return panel;
@@ -133,10 +136,10 @@ const MODEL_CLASSES = {
 
 export function ModalModelFor(kind = ROOT_KIND, table = MODAL_KINDS)
 {
-    const owner = lineage(kind, table).find(
+    const ownerKind = findKindLineage(kind, table).find(
         (kindName) => Object.hasOwn(MODEL_CLASSES, kindName),
     );
-    const ModelClass = MODEL_CLASSES[owner];
-    const config = ResolveModalConfig(kind, table);
-    return new ModelClass(kind, config);
+    const ModelClass = MODEL_CLASSES[ownerKind];
+    const resolvedConfig = ResolveModalConfig(kind, table);
+    return new ModelClass(kind, resolvedConfig);
 }
