@@ -1,5 +1,7 @@
 import { focusElement } from '../input.js';
 import { popover, row } from '../kit/index.js';
+import { ArmLongPress } from '../pressable.js';
+import { uiConfig } from '../../config/generated/ui.js';
 
 let activeRadial = null;
 
@@ -32,9 +34,7 @@ export function mountArmamentRadial(anchor, {
   let currentMode = mode;
   let currentPlacement = placement;
   let open = false;
-  let holdTimer = null;
   let focusTimer = null;
-  let openedByHold = false;
   let items = [];
   let observer = null;
 
@@ -107,24 +107,16 @@ export function mountArmamentRadial(anchor, {
   anchor.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    if (openedByHold) {
-      openedByHold = false;
-      return;
-    }
     if (currentMode === 'fixed') onFullArmaments?.();
     else toggle();
   });
-  anchor.addEventListener('pointerdown', () => {
-    clearTimeout(holdTimer);
-    openedByHold = false;
-    holdTimer = setTimeout(() => {
-      openedByHold = openMenu();
-    }, 360);
+  ArmLongPress(anchor, {
+    holdMs: uiConfig.presentation.armamentRadial.behavior.holdMs,
+    isPrimaryOnly: false,
+    shouldCapturePointer: false,
+    shouldCancelOnLeave: true,
+    onHold: openMenu,
   });
-  const cancelHold = () => clearTimeout(holdTimer);
-  anchor.addEventListener('pointerup', cancelHold);
-  anchor.addEventListener('pointercancel', cancelHold);
-  anchor.addEventListener('pointerleave', cancelHold);
 
   const onDocumentPointer = (event) => {
     // Contextual action menus opened by a radial shortcut temporarily own

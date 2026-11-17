@@ -1,5 +1,6 @@
 import { esc, attachTooltip, showTooltipFor } from './tooltip.js';
 import { t } from '../strings.js';
+import { ActivateOnKey } from '../selection.js';
 
 const number = value => Number.isFinite(value) ? String(Number(value.toFixed(4))) : '?';
 
@@ -145,11 +146,6 @@ export function bindDamageReceipt(card, preview) {
     node.setAttribute('role', 'button');
     node.setAttribute('aria-label', `${node.textContent}. Inspect damage calculation`);
     attachTooltip(node, html);
-    const inspect = event => {
-      if (!['Enter', ' '].includes(event.key)) return;
-      event.stopPropagation(); event.preventDefault();
-      showTooltipFor(node, html(), { intent: 'above', align: 'center' });
-    };
-    node.addEventListener('keydown', inspect);
+    ActivateOnKey(node, () => showTooltipFor(node, html(), { intent: 'above', align: 'center' }), { shouldStopPropagation: true });
   }
 }

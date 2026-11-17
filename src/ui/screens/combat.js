@@ -143,6 +143,7 @@ import { mountCombatDebugButton } from '../components/combatDebugButton.js';
 import { modalOpen } from '../modalState.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
+import { ArmLongPress } from '../pressable.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
@@ -1264,26 +1265,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     if (configuredArt) {
-      let holdTimer = null, origin = null, inspected = false;
-      const cancelHold = () => { clearTimeout(holdTimer); holdTimer = null; };
       const inspectTarget = () => {
         const entity = getEntity(combat, box.dataset.eid);
         if (!entity) return;
         selectCombatant(box.dataset.eid);
         openCombatantDoor(combatantSubject(entity.kind === 'player' ? 'player' : 'enemy', entity), box);
       };
-      box.addEventListener('pointerdown', event => {
-        if (event.button !== 0) return;
-        cancelHold(); inspected = false; origin = { x: event.clientX, y: event.clientY };
-        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, uiConfig.presentation.combatInspection.behavior.holdMs);
+      ArmLongPress(box, {
+        holdMs: uiConfig.presentation.combatInspection.behavior.holdMs,
+        tolerancePx: uiConfig.presentation.combatInspection.behavior.movementTolerancePx,
+        shouldCapturePointer: false,
+        onHold: () => {
+          if (!box.isConnected) return false;
+          inspectTarget();
+          return true;
+        },
       });
-      box.addEventListener('pointermove', event => {
-        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > uiConfig.presentation.combatInspection.behavior.movementTolerancePx) cancelHold();
-      });
-      box.addEventListener('pointerup', cancelHold);
-      box.addEventListener('pointercancel', cancelHold);
       box.addEventListener('click', event => {
-        if (inspected) { inspected = false; event.preventDefault(); event.stopImmediatePropagation(); return; }
         if (!selected && selectedFlask == null && selectedCombatantId === box.dataset.eid
           && event.target.closest('.combatant-mini-hud, .meters') && !event.target.closest('button')) {
           event.preventDefault(); event.stopImmediatePropagation(); inspectTarget();

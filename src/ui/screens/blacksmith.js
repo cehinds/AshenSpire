@@ -21,6 +21,7 @@ import { sfx } from '../sfx.js';
 import { ModalHead, ModalFooter } from '../components/modalShell.js';
 import { button, statusText, el, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
+import { MarkSelected } from '../selection.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
@@ -377,7 +378,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       attrs: { class: 'shop-switch', role: 'tablist', 'aria-label': t('blacksmith.rail.aria') },
     });
     const railItems = [...switchNode.querySelectorAll('button')];
-    for (const item of railItems) item.addEventListener('click', () => { activeCategory = item.dataset.shopCategory; paint(); });
+    for (const item of railItems) {
+      item.removeAttribute('aria-pressed');
+      item.addEventListener('click', () => { activeCategory = item.dataset.shopCategory; paint(); });
+    }
     root.dataset.shopRail = 'top';
     railed.prepend(switchNode);
     root.classList.add('blacksmith-compact');
@@ -388,13 +392,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     frame.appendChild(footHost);
 
     function paint() {
-      for (const item of railItems) {
-        const on = item.dataset.shopCategory === activeCategory;
-        item.classList.toggle('on', on);
-        item.setAttribute('aria-pressed', on ? 'true' : 'false');
-        item.setAttribute('aria-selected', on ? 'true' : 'false');
-        if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-      }
+      MarkSelected(railItems, item => item.dataset.shopCategory === activeCategory, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
       for (const shelf of root.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
       if (activeCategory) {
         root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);

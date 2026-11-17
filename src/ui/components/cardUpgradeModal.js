@@ -13,6 +13,7 @@ import {
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t as translate } from '../strings.js';
 import { UI_COMPONENTS, markUiComponent } from './uiComponents.js';
+import { MarkSelected } from '../selection.js';
 
 const INSTANCE_ID_ATTRIBUTE = 'data-instance-id';
 const FOCUS_WITHOUT_SCROLL = Object.freeze({ preventScroll: true });
@@ -718,8 +719,14 @@ export function MountCardUpgradeModal(
         rowElement.dataset.upgradeState = readUpgradeState(row);
         rowElement.setAttribute('role', 'option');
         rowElement.setAttribute('aria-disabled', String(row.disabled));
-        rowElement.setAttribute('aria-selected', String(rowIsSelected));
-        rowElement.classList.toggle(CLASS.selected, rowIsSelected);
+        MarkSelected(
+            rowElement,
+            rowIsSelected,
+            {
+                className: CLASS.selected,
+                ariaAttribute: 'aria-selected',
+            },
+        );
         rowElement.setAttribute('aria-label', buildRowAriaLabel(row));
         const rowTone = rowIsSelected
             ? 'selected'

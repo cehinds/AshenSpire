@@ -24,6 +24,7 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // past its baseline when the spent-pile pair landed, which is exactly the
 // regression it exists to stop.
 import { t } from '../strings.js';
+import { MarkSelected } from '../selection.js';
 
 export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null } = {}) {
   let list = [...cards];
@@ -90,9 +91,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
     items.forEach((item, i) => {
       const tab = view.tabs[i];
       item.textContent = tab.label;
-      item.classList.toggle('on', tab.selected);
-      item.setAttribute('aria-selected', String(tab.selected));
-      if (tab.selected) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+      MarkSelected(item, tab.selected, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
     });
     pane.setAttribute('aria-labelledby', 'spent-tab-' + active);
     const faces = view.cards.map((inst) => {

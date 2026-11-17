@@ -52,6 +52,7 @@ import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
+import { MarkSelected } from '../selection.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -246,10 +247,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     inspectOrigin = source;
     if (open) { mobileView = 'inspect'; }
     panel.dataset.mobileView = mobileView;
-    for (const node of panel.querySelectorAll('.deck-editor-main')) {
-      const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
-      node.setAttribute('aria-pressed', String(on));
-    }
+    MarkSelected(
+      panel.querySelectorAll('.deck-editor-main'),
+      node => node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source,
+      { className: null },
+    );
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
