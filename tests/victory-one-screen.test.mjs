@@ -4,9 +4,10 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { rewardDom } from './helpers/dom.mjs';
+import { rewardDom, withModalDom } from './helpers/dom.mjs';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { VictorySpoils } from '../src/ui/components/victorySpoils.js';
+import { createRunState } from '../src/model/state.js';
 import { MountRewards } from '../src/ui/screens/reward.js';
 
 const p = resolveGameProfile('core'), reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
@@ -99,16 +100,25 @@ test('Skip then "Leave it" is two clicks', async () => {
   });
 });
 
-test('points to spend: the strip offers a compact control that opens the allocation UI and never blocks the choice', async () => {
-  await withDom(async () => {
-    const run = { class: 'reaver', deck: [], cinders: 0, level: { level: 2, xp: 0, unspentPoints: 1 }, attributes: {} };
+test('points to spend: the strip offers a compact control that opens the level-up modal and never blocks the choice', async () => {
+  withModalDom(() => {
+    const run = createRunState({ seed: 5, classId: 'reaver', registries: reg, runId: 'victory-points' });
+    run.level.unspentPoints = 1;
     const spent = [];
-    const strip = VictorySpoils(reg, run, receipt(), { onAllocateStat: id => { spent.push(id); run.level.unspentPoints -= 1; } });
+    let saves = 0;
+    const strip = VictorySpoils(reg, run, receipt(), { onPersist: () => { saves++; }, onAllocateStat: id => { spent.push(id); run.level.unspentPoints -= 1; } });
     const toggle = strip.querySelector('#spoils-points');
     assert.equal(toggle.textContent, '1 point to spend');
-    assert.equal(strip.querySelector('.reward-stat-allocation'), null, 'closed until asked');
+    assert.equal(document.querySelector('.cc-stat-modal'), null, 'closed until asked');
+    assert.equal(strip.querySelector('#spoils-points-done'), null, 'no inline panel and no Hide button');
     toggle.click();
-    assert.ok(strip.querySelector('.reward-stat-allocation'), 'the receipt allocation UI');
+    assert.ok(document.querySelector('.cc-stat-modal'), 'the level-up modal opens');
+    assert.equal(strip.querySelector('.reward-stat-allocation'), null, 'nothing is drawn inline');
+    document.querySelector('[data-stat-id="strength"][data-stat-action="increase"]').click();
+    document.querySelector('[data-stat-done]').click();
+    assert.deepEqual(spent, ['strength']);
+    assert.equal(saves, 1, 'the spend is saved at once');
+    assert.equal(strip.querySelector('#spoils-points'), null, 'the control leaves once the points are spent');
     const none = VictorySpoils(reg, { ...run, level: { unspentPoints: 0 } }, receipt(), { onAllocateStat() {} });
     assert.equal(none.querySelector('#spoils-points'), null);
   });

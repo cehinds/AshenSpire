@@ -544,7 +544,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
   const { run } = live();
   run.level.unspentPoints = 2;
   const strength = run.attributes.strength, hp = run.hp;
-  withKitDom(({ document }) => {
+  withModalDom(() => {
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
@@ -552,9 +552,13 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
       onAllocateStat: id => allocateAttributePoint(reg, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    const add = app.querySelector('.reward-stat-row .reward-stat-add');
-    assert.ok(add, 'the receipt offers the allocation section');
-    app.querySelectorAll('.reward-stat-row')[0].querySelector('.reward-stat-add').click();
+    assert.equal(app.querySelector('.reward-stat-allocation'), null, 'no inline allocation panel');
+    const open = app.querySelector('#reward-stat-points');
+    assert.ok(open, 'the receipt offers the level-up button');
+    open.click();
+    assert.ok(document.querySelector('.cc-stat-modal'), 'the level-up modal opens');
+    document.querySelector('[data-stat-id="strength"][data-stat-action="increase"]').click();
+    document.querySelector('[data-stat-done]').click();
     assert.equal(run.level.unspentPoints, 1);
     assert.equal(saves, 1);
     assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
@@ -568,7 +572,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     const app = document.createElement('main'); document.body.append(app);
     MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    assert.equal(app.querySelector('.reward-stat-allocation'), null);
+    assert.equal(app.querySelector('#reward-stat-points'), null);
   });
 });
 
