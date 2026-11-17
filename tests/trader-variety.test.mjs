@@ -32,8 +32,12 @@ test('every trader shows 3-6 dock options in all (rank-up shelf, Sell and Blacks
     const tabs = dockTabs(run, shopId, stock);
     assert.ok(tabs.length >= 3 && tabs.length <= 6, `seed ${100 + n} ${shopId}: ${tabs.length} options (${tabs.join(', ')})`);
     for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(tabs.includes(kind), `seed ${100 + n}: ${kind} is always stocked`);
-    const again = gameProfileShopStock(registries, structuredClone(run), createRng(run.seed), { shopId });
-    assert.deepEqual(dockTabs(run, shopId, again), tabs, 'seeded: a reload shows the same dock');
+    // A fresh run with the same seed rolls the node again from nothing (no saved offer to read back), so the
+    // dock is proved to come from the seed and the node, not from the cache.
+    const twin = newRun(100 + n);
+    assert.equal(twin.gameProfileRewardOffers?.[`shop:${shopId}`], undefined, 'the twin has no saved offer');
+    const again = gameProfileShopStock(registries, twin, createRng(twin.seed), { shopId });
+    assert.deepEqual(dockTabs(twin, shopId, again), tabs, 'seeded: the same run and node roll the same dock');
     sizes.add(tabs.length);
     if (tabs.includes('smith')) smiths += 1;
     if (tabs.includes('rankUps')) rankUps += 1;
