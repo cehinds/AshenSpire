@@ -22,7 +22,7 @@ import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
 import { ItemUnlimitedKinds } from './itemProperties.js';
-import { deckMinDelta } from './deckMinimumRules.js';
+import { deckMinDelta as deckMinDelta_, levelMinDeckDelta as levelMinDeckDelta_ } from './deckMinimumRules.js';
 import { basicCardKind } from './basicCardRule.js';
 
 const D = deckRules.defaults;
@@ -71,7 +71,9 @@ export function deckEditBounds(settings, minDelta = 0) {
   return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
 }
 
-export { levelMinDeckDelta, deckMinDelta } from './deckMinimumRules.js';
+/** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
+export const levelMinDeckDelta = levelMinDeckDelta_;
+export const deckMinDelta = deckMinDelta_;
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings, minDelta = 0) {
