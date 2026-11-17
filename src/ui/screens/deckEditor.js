@@ -573,8 +573,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       minus.addEventListener('click', () => { if (tile.removable) { focusKey = minus.dataset.focusKey; remove(tile.removeInstanceId); } });
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
-        dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
-      }, [main, el('div', { class: 'deck-editor-actions' }, [
+        dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false', inDeck: tile.inDeck > 0 ? 'true' : 'false' },
+      }, [tile.inDeck > 0 ? el('span', { class: 'in-deck-badge', text: t('cardUpgrade.row.inDeck') }) : null, main, el('div', { class: 'deck-editor-actions' }, [
         minus, (() => {
           const count = stepperCount(tile);
           return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });

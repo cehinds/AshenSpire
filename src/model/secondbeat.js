@@ -253,8 +253,8 @@ export const ACTIONS = Object.freeze({
   },
   shopSell: {
     of: 'selling a possession back to the merchant',
-    // COMMITS ON A TAP (owner, 2026-11-14): one tap sells; the row names the item and the cinders it returns.
-    tap: true,
+    // REVIEWED AGAIN (playtest 2026-11-17 item 37, superseding the 2026-11-14 one-tap sale): a sale asks for
+    // confirmation, naming the item and the cinders it returns, because the merchant never sells it back.
     lives: 'src/ui/screens/shop.js',
     surface: 'shop',
     // THE REMOVE'S MIRROR (E2 / #247): a relic or flask gone for good, one tap
