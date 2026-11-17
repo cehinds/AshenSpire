@@ -1,7 +1,7 @@
 // tests/ui-selection.test.mjs — the shared selected-state, Enter/Space and arrow-key helpers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ActivateOnKey, MarkSelected } from '../src/ui/selection.js';
+import { ActivateOnKey, MarkSelected, RovingList } from '../src/ui/selection.js';
 
 function fakeElement(name = '')
 {
@@ -92,4 +92,50 @@ test('ActivateOnKey without a handler clicks the element', () =>
     const event = (ActivateOnKey(node), node.dispatchKey(' '));
     assert.equal(node.clickCount, 1);
     assert.equal(event.isPropagationStopped, false);
+});
+
+test('RovingList wraps, steps a grid row, and ignores keys from outside the list', () =>
+{
+    const list = fakeList(6);
+    const moves = [];
+    RovingList(list, { columns: 3, onMove: (target) => moves.push(target.name) });
+    list.dispatchKey('ArrowRight', list.children[5]);
+    list.dispatchKey('ArrowLeft', list.children[0]);
+    list.dispatchKey('ArrowDown', list.children[1]);
+    list.dispatchKey('ArrowUp', list.children[1]);
+    const outside = list.dispatchKey('ArrowDown', fakeElement());
+    assert.deepEqual(moves, ['item-0', 'item-5', 'item-4', 'item-4']);
+    assert.equal(outside.isDefaultPrevented, false);
+});
+
+test('RovingList honours orientation, Home/End, startIndex and the roving tabindex', () =>
+{
+    const list = fakeList(3);
+    const moves = [];
+    const disarm = RovingList(list, {
+        orientation: () => 'vertical',
+        hasHomeEnd: true,
+        startIndex: 0,
+        isRovingTabIndex: true,
+        shouldStopPropagation: true,
+        onMove: (target) => moves.push(target.name),
+    });
+    assert.equal(list.dispatchKey('ArrowRight', list.children[0]).isDefaultPrevented, false);
+    const down = list.dispatchKey('ArrowDown', list);
+    assert.equal(down.isPropagationStopped, true);
+    list.dispatchKey('End', list.children[0]);
+    list.dispatchKey('Home', list.children[2]);
+    assert.deepEqual(moves, ['item-1', 'item-2', 'item-0']);
+    assert.deepEqual(list.children.map((node) => node.tabIndex), [0, -1, -1]);
+    disarm();
+    list.dispatchKey('ArrowDown', list.children[0]);
+    assert.equal(moves.length, 3);
+});
+
+test('RovingList focuses the target without scrolling the page by default', () =>
+{
+    const list = fakeList(2);
+    RovingList(list);
+    list.dispatchKey('ArrowDown', list.children[0]);
+    assert.equal(list.children[1].focusCount, 1);
 });

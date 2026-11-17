@@ -11,6 +11,7 @@
  *     Picker,
  *     PlayEffectLayers,
  *     RailItem,
+ *     RovingNavigator,
  *     SelectionMarker,
  * } from '../../../src/ui/contracts.js'
  */
@@ -23,7 +24,7 @@ import { ModalModel, ModalModelFor } from '../../../src/ui/models/ModalModel.js'
 import { armouryRailItems } from '../../../src/ui/models/ArmouryWorkspaceModel.js';
 import { creationRailItems } from '../../../src/ui/models/CreationWorkspaceModel.js';
 import { mountCardEffectLayers, playCardEffectLayers } from '../../../src/ui/cardEffectLayers.js';
-import { ActivateOnKey, MarkSelected } from '../../../src/ui/selection.js';
+import { ActivateOnKey, MarkSelected, RovingList } from '../../../src/ui/selection.js';
 import { mountCombatantEffectLayers } from '../../../src/ui/combatantEffectLayers.js';
 
 /** @type {FeedbackChannel[]} */
@@ -87,6 +88,9 @@ export const selectionMarker = MarkSelected;
 /** @type {KeyActivator} */
 export const keyActivator = ActivateOnKey;
 
+/** @type {RovingNavigator} */
+export const rovingNavigator = RovingList;
+
 /** @type {SelectionMarker} */
 // @ts-expect-error A selection marker takes its options as an object.
 export const markerWithTextOptions = (nodes, isSelected, /** @type {string} */ options) => void options;
@@ -94,3 +98,10 @@ export const markerWithTextOptions = (nodes, isSelected, /** @type {string} */ o
 /** @type {KeyActivator} */
 // @ts-expect-error A key activator returns its disarm.
 export const activatorWithoutDisarm = () => undefined;
+
+/** @type {RovingNavigator} */
+export const navigatorWithBadOrientation = (listElement) =>
+{
+    // @ts-expect-error Orientation is vertical, horizontal or both.
+    return RovingList(listElement, { orientation: 'diagonal' });
+};

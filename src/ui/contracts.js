@@ -215,6 +215,29 @@
  * @returns {Disarm}
  */
 
+/**
+ * @typedef {'vertical' | 'horizontal' | 'both'} RovingOrientation
+ */
+
+/**
+ * @typedef {object} RovingListOptions
+ * @property {() => HTMLElement[]} [items]
+ * @property {RovingOrientation | (() => RovingOrientation | null)} [orientation]
+ * @property {number} [columns]
+ * @property {boolean} [hasHomeEnd]
+ * @property {number | null} [startIndex]
+ * @property {boolean} [shouldStopPropagation]
+ * @property {boolean} [isRovingTabIndex]
+ * @property {(target: HTMLElement, event: KeyboardEvent) => void} [onMove]
+ */
+
+/**
+ * @callback RovingNavigator
+ * @param {HTMLElement} listElement
+ * @param {RovingListOptions} [options]
+ * @returns {Disarm}
+ */
+
 export const CONTRACT_NAMES = Object.freeze([
     'EffectLayers',
     'FeedbackChannel',
@@ -222,6 +245,7 @@ export const CONTRACT_NAMES = Object.freeze([
     'Modal',
     'Picker',
     'RailItem',
+    'RovingNavigator',
     'SelectionMarker',
 ]);
 
