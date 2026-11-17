@@ -21,7 +21,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, PlayConditionPhrase } from './playingCard.js';
+import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, CardHpLossWording, PlayConditionPhrase } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -37,8 +37,6 @@ const fail = () => { throw UNPHRASEABLE; };
 // Fragments flagged `tag` are the rules a card's tags add (Smash, Prone, Entry). Information keeps them in the line's `html`;
 // the line's `faceHtml` is the same line without them, and the face reads that (owner, 2026-10-31).
 const LINE_ORDER = ['cost', 'damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
-// The targets whose lost HP is the card owner's own payment (Pay or Offer N HP).
-const LOSE_HP_PAYERS = Object.freeze(['self', 'owner', 'player']);
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemy'];
@@ -295,9 +293,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
-      // Aimed at a foe, lost HP is a payoff, not a price: it goes straight to HP (applyLoseHp ignores Block, Ward and Barrier).
-      case 'loseHp': if (!LOSE_HP_PAYERS.includes(effect.target ?? 'self')) return frag('bonus', `${effect.target === 'allEnemies' ? 'All enemies lose' : 'Target loses'} ${num(n, base)} HP (ignores Block)`);
-        return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'loseHp': {
+        const loss = CardHpLossWording(effect, num(n, base));
+        return frag(!loss.hostile && index === 0 && !effect.if ? 'cost' : 'bonus', loss.text);
+      }
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'

@@ -61,6 +61,20 @@ import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
 
 const freeze = (value) => Object.freeze(value);
+const HOSTILE_HP_LOSS = Object.freeze({
+  enemy: 'Target loses', allEnemies: 'All enemies lose', randomEnemy: 'A random enemy loses',
+  otherEnemy: 'Another enemy loses', otherEnemies: 'Other enemies lose',
+});
+
+/** Shared wording and polarity for HP loss on a card face or in its summary. */
+export function CardHpLossWording(effect, amount) {
+  const hostile = HOSTILE_HP_LOSS[effect.target];
+  if (hostile) return { hostile: true, text: `${hostile} ${amount} HP (ignores Block)` };
+  const prefix = effect.target === 'allAllies' ? 'All allies lose'
+    : effect.target === 'ally' ? 'Ally loses' : effect.offering ? 'Offer' : 'Pay';
+  const suffix = effect.nonlethal ? ' (leave at least 1 HP)' : '';
+  return { hostile: false, text: `${prefix} ${amount} HP${suffix}` };
+}
 
 /** Actual damage labels; a spell's school never substitutes for its damage. */
 // A uiStrings row with its {tokens} filled in. The row is the only copy of the sentence.
@@ -251,10 +265,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
       case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
-      // Aimed at a foe, lost HP is a payoff, not a price (applyLoseHp ignores Block, Ward and Barrier).
-      case 'loseHp': text = ['self', 'owner', 'player'].includes(effect.target ?? 'self')
-        ? `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`
-        : `${effect.target === 'allEnemies' ? 'All enemies lose' : 'Target loses'} ${n} HP (ignores Block)`; break;
+      case 'loseHp': text = CardHpLossWording(effect, n).text; break;
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
