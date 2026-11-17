@@ -45,6 +45,16 @@ export function KeepIntentRowsInside(screen)
     {
         return;
     }
+    // The nudge is read only by the target-HUD row (combat-mini-hud.css): elsewhere a written nudge moves nothing, and
+    // reading the unmoved row back as moved would grow it every render. Without that HUD no row keeps a nudge.
+    if (screen.dataset?.targetHud !== 'true')
+    {
+        for (const intent of screen.querySelectorAll('.combatant.enemy .intent'))
+        {
+            /** @type {HTMLElement} */ (intent).style.removeProperty(NUDGE_VARIABLE);
+        }
+        return;
+    }
     const limits = screen.getBoundingClientRect();
     const space = { minimum: limits.left + EDGE_MARGIN_PX, maximum: limits.right - EDGE_MARGIN_PX };
     const writes = [];
