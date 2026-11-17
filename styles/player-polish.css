@@ -314,8 +314,8 @@ main > .shared-hud.workspace-hud :is(.hud-info-row,.hud-vitals-panel,.hud-contro
 :is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell) {
   transition:filter 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 }
-:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell):not(:disabled):not([aria-disabled='true']):hover { filter:brightness(1.18); box-shadow:inset 0 0 0 1px var(--gold); }
-:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem):not(:disabled):active { filter:brightness(.86); }
+:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell):not(:disabled):not([aria-disabled='true']):hover { filter:var(--btn-hover-filter); box-shadow:var(--btn-hover-ring); }
+:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem):not(:disabled):active { filter:var(--btn-active-filter); }
 body:not(.reduced-motion) .screen:not(.combat):not(.startup-gate) { animation:playerSceneReveal 280ms ease-out both; }
 @keyframes playerSceneReveal { from { opacity:0; } to { opacity:1; } }
 body.reduced-motion :is(.ember,.title-glow) { animation:none; }

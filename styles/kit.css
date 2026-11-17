@@ -30,6 +30,29 @@
   --r-pill: 999px;
 }
 
+/* ═══ BUTTON STATE LAYER — hover, press, disabled and focus, named once ═════ */
+/* Every control family reads these; a family sets only its own tweaks. The
+   focus ring is one token: base.css's house rule and every component wear it. */
+:root {
+  --btn-hover-filter: brightness(1.18);
+  --btn-active-filter: brightness(.86);
+  --btn-hover-lift: translateY(-8px) scale(1.06);
+  --btn-hover-lift-shadow: 0 10px 30px rgba(201, 162, 39, 0.25);
+  --btn-disabled-opacity: 0.55;
+  --focus-ring: 2px solid var(--gold);
+  --focus-ring-offset: 2px;
+}
+/* Colour states resolve on the control itself, because a selected control or
+   a themed subtree repaints --gold, --line and --line-soft locally. */
+button, .as-btn, .as-iconbtn, .as-option, .as-tab, .as-railitem, .as-statrow,
+.class-pick, .card-upgrade-option, .tm-entry, .cp-cell {
+  --btn-hover-border: var(--gold);
+  --btn-hover-border-quiet: var(--line-soft);
+  --btn-hover-ring: inset 0 0 0 1px var(--gold);
+  --btn-disabled-border: var(--line);
+  --btn-disabled-color: var(--muted);
+}
+
 /* ═══ TEXT ATOMS ════════════════════════════════════════════════════════════ */
 .as-eyebrow { display: block; font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
 .as-title-l { --track: 0.05em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); }
@@ -101,12 +124,12 @@ button, .as-btn {
   cursor: pointer;
   transition: background 120ms, border-color 120ms;
 }
-button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); }
-button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
+button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--btn-hover-border); }
+button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--btn-disabled-border); color: var(--btn-disabled-color); background: var(--panel); cursor: default; }
 button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
 button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
 button.primary:hover, .as-btn.primary:hover { background-color: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
-button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--line); color: var(--muted); }
+button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--btn-disabled-border); color: var(--btn-disabled-color); }
 button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
 button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
 /* A loss is the way forward on a danger door: primary weight, danger colour. */
@@ -2653,8 +2676,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
    :focus-visible and .gp-focus, from base.css's one house rule. Fourteen
    per-component rings (2px, 3px, gold, #f2d87e, #fff0bd, box-shadow halos,
    inset lines) used to say the same thing in different inks; a component
-   may still move its OFFSET (inside a card, on a tab) but never its ink. */
-:root { --focus-ring: 2px solid var(--gold); --focus-ring-offset: 2px; --door-ms: 150ms; }
+   may still move its OFFSET (inside a card, on a tab) but never its ink.
+   The token lives in the BUTTON STATE LAYER at the top of this file. */
+:root { --door-ms: 150ms; }
 
 /* ═══ METER — a resource read at a glance ══════════════════════════════════ */
 /* Label · value · track. The TRACK's length is data (the surface writes its
