@@ -187,7 +187,7 @@ export function CreateBusyLock()
 }
 
 /**
- * Runs `action` on each `eventName` from `button`, refusing a second press
+ * Runs `action` on each click of `button`, refusing a second press
  * while the first is still running.
  *
  * @param {HTMLElement & { disabled: boolean }} button
@@ -196,26 +196,24 @@ export function CreateBusyLock()
  * @param {ReturnType<typeof CreateBusyLock>} [options.lock]
  * @param {ReadonlyArray<{ disabled: boolean }>} [options.controls]
  * @param {() => void} [options.restore]
- * @param {string} [options.eventName]
  * @returns {Disarm}
  */
 export function GuardOnce(button, action, {
     lock = CreateBusyLock(),
     controls = [button],
     restore = undefined,
-    eventName = 'click',
 } = {})
 {
-    const onEvent = (event) =>
+    const onClick = (event) =>
         lock.Run(
             controls,
             () => action(event),
             restore,
         );
-    button.addEventListener(eventName, onEvent);
+    button.addEventListener('click', onClick);
 
     return function DisarmGuard()
     {
-        button.removeEventListener(eventName, onEvent);
+        button.removeEventListener('click', onClick);
     };
 }
