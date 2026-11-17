@@ -2490,6 +2490,11 @@ relic,,progression-whisperglass-die,classification.relic
 relic,,progression-purse-of-borrowed-shadows,classification.relic
 relic,,progression-ember-alms-bowl,classification.relic
 relic,,progression-ossuary-prayer-wheel,classification.relic
+relic,,basicTraining,classification.relic
+relic,,graduate,classification.relic
+relic,,threadbareSatchel,classification.relic
+relic,,asceticsCord,classification.relic
+relic,,pruningHook,classification.relic
 
 
 card,,strike,camp:physical

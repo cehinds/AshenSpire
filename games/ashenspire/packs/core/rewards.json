@@ -221,7 +221,12 @@
         "emberIdol",
         "forsakenWarflag",
         "wrathCoil",
-        "brimmingGourd"
+        "brimmingGourd",
+        "basicTraining",
+        "graduate",
+        "threadbareSatchel",
+        "asceticsCord",
+        "pruningHook"
       ],
       "pools": [
         "core2"

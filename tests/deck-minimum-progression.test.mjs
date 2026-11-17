@@ -71,3 +71,24 @@ test('a relic row may author item properties; they must name real rows', async (
   const problems = validateContent(bundle).errors.map(e => `${e.path}: ${e.msg}`).join('\n');
   assert.match(problems, /relics\.badRelic\.properties\[0\]/);
 });
+
+test('Basic Training, Graduate and the three min-slot relics do what their text says', async () => {
+  const { unlimitedCardIds } = await import('../src/model/deckRules.js');
+  const { ItemMinDeckDelta } = await import('../src/model/itemProperties.js');
+  const { gameContent } = await import('../src/model/gameProfile.js');
+  const holding = (...ids) => { const run = make(1); run.relics = [...ids]; return run; };
+  assert.ok(unlimitedCardIds(holding('basicTraining')).includes('core.strike'), 'Basic Training opens unlimited Basic martial cards');
+  assert.ok(!unlimitedCardIds(holding('basicTraining')).includes('core.cantrip'));
+  assert.ok(unlimitedCardIds(holding('graduate')).includes('core.cantrip'), 'Graduate opens unlimited cantrips');
+  assert.ok(!unlimitedCardIds(holding('graduate')).includes('core.strike'));
+  assert.equal(ItemMinDeckDelta(holding('threadbareSatchel')), 1);
+  assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
+  const run = holding('threadbareSatchel');
+  run.level.level = 12;
+  assert.equal(deckEditBounds({}, deckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3, 'levels and relics stack');
+  const pool = gameContent(make(1), 'rewards').eligibility?.relics?.allow || [];
+  for (const id of ['basicTraining', 'graduate', 'threadbareSatchel', 'asceticsCord', 'pruningHook']) {
+    assert.ok(registries.relics.has(id), `${id} is a relic`);
+    assert.ok(pool.includes(id), `${id} is in the Core relic pool`);
+  }
+});
