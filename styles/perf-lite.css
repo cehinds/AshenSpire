@@ -21,8 +21,11 @@
 /* 1. No filters, no backdrop filters, no blends. The prologue's art-directed
    scene filter and tint wash (--prologue-filter, .prologue-wash) are the one
    exception: they are the picture, drawn once, on a screen that holds nothing
-   else moving. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.sprite .facing[style*='drop-shadow']),
+   else moving. The painted combat backdrop's SVG blurs (.alternative-scene-fill
+   and the mask's .alternative-scene-edge, SVG filter attributes) are
+   the same: static art blurred once per fit. Without them the sharp scene ends in
+   a hard rectangle against its stretched fill. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']),
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
   filter: none !important;

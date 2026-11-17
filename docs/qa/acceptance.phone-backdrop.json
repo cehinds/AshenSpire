@@ -1,0 +1,145 @@
+{
+  "request": "on phones, painted (alternative) combat backdrops look broken: hard rectangular seams between the sharp scene and its surround, and the ground is blocky/muddy",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "pale-marches-1",
+      "url": "?shot=combat&shotSeed=4&shotScene=pale-marches-1",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Backdrop scene layers are drawn",
+          "selector": ".alternative-scene-main image",
+          "min": 2
+        },
+        {
+          "kind": "count",
+          "label": "No scene image uses a -mobile file",
+          "selector": "svg.alternative-scene image[href*='-mobile']",
+          "eq": 0
+        },
+        {
+          "kind": "style",
+          "label": "Fill blur filter is active (not none) even in Lite",
+          "selector": ".alternative-scene-fill",
+          "prop": "filter",
+          "equals": "url(\"#alternative-scene-fill-blur\")"
+        },
+        {
+          "kind": "style",
+          "label": "Edge feather filter is active (not none) even in Lite",
+          "selector": ".alternative-scene-edge",
+          "prop": "filter",
+          "equals": "url(\"#alternative-scene-edge-blur\")"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A -mobile scene image is used on the backdrop",
+          "selector": "svg.alternative-scene image[href*='-mobile']",
+          "min": 1
+        },
+        {
+          "kind": "style",
+          "label": "Fill blur is switched off",
+          "selector": ".alternative-scene-fill",
+          "prop": "filter",
+          "equals": "none"
+        }
+      ]
+    },
+    {
+      "name": "pale-marches-2",
+      "url": "?shot=combat&shotSeed=4&shotScene=pale-marches-2",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Backdrop scene layers are drawn",
+          "selector": ".alternative-scene-main image",
+          "min": 2
+        },
+        {
+          "kind": "count",
+          "label": "No scene image uses a -mobile file",
+          "selector": "svg.alternative-scene image[href*='-mobile']",
+          "eq": 0
+        },
+        {
+          "kind": "style",
+          "label": "Fill blur filter is active (not none) even in Lite",
+          "selector": ".alternative-scene-fill",
+          "prop": "filter",
+          "equals": "url(\"#alternative-scene-fill-blur\")"
+        },
+        {
+          "kind": "style",
+          "label": "Edge feather filter is active (not none) even in Lite",
+          "selector": ".alternative-scene-edge",
+          "prop": "filter",
+          "equals": "url(\"#alternative-scene-edge-blur\")"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A -mobile scene image is used on the backdrop",
+          "selector": "svg.alternative-scene image[href*='-mobile']",
+          "min": 1
+        },
+        {
+          "kind": "style",
+          "label": "Fill blur is switched off",
+          "selector": ".alternative-scene-fill",
+          "prop": "filter",
+          "equals": "none"
+        }
+      ]
+    }
+  ]
+}
