@@ -3,6 +3,7 @@
 // Rules 2-3: a Defend-stance target holding Block keeps at least 1 Poise against physical hits and Sweeps (and magic while it holds Ward stacks);
 // Smash still breaks it, and at 0 Block Poise breaks normally.
 // Rule 4: an enemy Counter move (the Gilded Knight's Parry) shows a Counter badge that decays normally and loses 1 on each use.
+// Rule 5: stance weaknesses. A Prepared target takes x1.25 from melee hits, an Idle one (no stance) x1.25 from every hit.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -15,6 +16,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -245,4 +247,58 @@ test('rule 4: the enemy Counter badge tooltip states what the badge does, not th
   assert.doesNotMatch(enemyBadge.help, /% of the hit per stack/);
   const playerBadge = combatHealthModel({ counterStacks: 1, counterDecay: 1 }).badges.find(row => row.kind === 'counter');
   assert.match(playerBadge.help, /% of the hit per stack/);
+});
+
+// ---- Rule 5: stance weaknesses ----
+const RANGED = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'piercing', range: 'ranged', targeting: 'single' } };
+const REACH = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'piercing', range: 'reach', targeting: 'single' } };
+/** The receipt of one `base` hit from the player on an enemy holding `stance` (null: none), with no Block or Poise in the way. */
+function weaknessReceipt(carrier, stance, { base = 40, rules = null } = {}) {
+  const { combat, enemy } = live({ rules });
+  Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 }, statuses: {} });
+  if (stance) enemy.combatStance = { maneuver: stance, camp: stance === 'casting' ? 'spell' : 'physical', range: 'melee' };
+  else delete enemy.combatStance;
+  return profileDamageReceipt(combat, combat.player, enemy, base, { ...structuredClone(carrier), skipRatingBonus: true });
+}
+const weaknessStage = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness');
+
+test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra from a ranged, reach or magic hit', () => {
+  const melee = weaknessReceipt(PHYSICAL, 'casting');
+  assert.equal(weaknessStage(melee)?.multiplier, 1.25, 'the receipt lists the Stance weakness stage');
+  assert.equal(weaknessStage(weaknessReceipt(RANGED, 'casting')), undefined);
+  const off = weaknessReceipt(PHYSICAL, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
+  assert.equal(melee.hpLoss, Math.floor(off.hpLoss * 1.25), 'shown = dealt: the hit is 1.25x the same hit without the rule');
+  for (const carrier of [RANGED, REACH, MAGIC]) {
+    const on = weaknessReceipt(carrier, 'casting');
+    const without = weaknessReceipt(carrier, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
+    assert.equal(on.hpLoss, without.hpLoss, `${carrier.combatProfile.range}/${carrier.combatProfile.camp}: no Prepared weakness`);
+  }
+});
+
+test('rule 5: an Idle target (no stance) takes x1.25 from every hit, melee, ranged and magic', () => {
+  for (const carrier of [PHYSICAL, RANGED, MAGIC]) {
+    const on = weaknessReceipt(carrier, null);
+    const without = weaknessReceipt(carrier, null, { rules: rules => { delete rules.stanceBenefits.neutral.damageTakenMultiplier; } });
+    assert.ok(without.hpLoss > 0);
+    assert.equal(on.hpLoss, Math.floor(without.hpLoss * 1.25), `${carrier.combatProfile.range}/${carrier.combatProfile.camp}`);
+  }
+});
+
+test('rule 5 edge: another stance takes no stance weakness', () => {
+  for (const stance of ['attack', 'defend', 'counter', 'smash']) {
+    const on = weaknessReceipt(PHYSICAL, stance);
+    const without = weaknessReceipt(PHYSICAL, stance, { rules: rules => { delete rules.stanceBenefits.neutral.damageTakenMultiplier; delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
+    assert.equal(on.hpLoss, without.hpLoss, stance);
+  }
+});
+
+test('rule 5 edge: a Counter return hit never takes the weakness', () => {
+  const on = weaknessReceipt({ ...PHYSICAL, counterReturnAttack: true }, null);
+  const without = weaknessReceipt({ ...PHYSICAL, counterReturnAttack: true }, null, { rules: rules => { delete rules.stanceBenefits.neutral.damageTakenMultiplier; } });
+  assert.equal(on.hpLoss, without.hpLoss);
+});
+
+test('rule 5: the shipped data turns the weaknesses on', () => {
+  assert.equal(shipped.stanceBenefits.prepared.meleeDamageTakenMultiplier, 1.25);
+  assert.equal(shipped.stanceBenefits.neutral.damageTakenMultiplier, 1.25);
 });

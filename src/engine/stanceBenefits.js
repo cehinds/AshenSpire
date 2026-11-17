@@ -11,6 +11,8 @@
 //   counter    +25% Block gained (BlockGainMultiplier); a saved fight with `hpReturnFraction` also returns that share of the HP lost (CounterReturnAmount); none ships since 2026-11-15
 //   sweep      an attack also hits every other enemy in range at 50%   SweepSplashTargets / SplashCarrier (the damage effect, actions.js)
 //   neutral    the player draws 1 extra card at its next turn start   NeutralExtraDraw (startPlayerTurn)
+// Stance weaknesses (owner 2026-11-17, theme B): a target in Prepared takes x1.25 from melee hits, one in Idle (no stance) x1.25 from every hit.
+//              StanceWeaknessMultiplier (profileDamageReceipt, an offense stage)
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceOf } from '../model/stanceRules.js';
@@ -42,6 +44,20 @@ export function AttackDamageMultiplier(ctx, source, carrier) {
   const rules = StanceBenefitRules(ctx);
   if (!rules || isReturn(carrier)) return 1;
   return count(rules[HeldStance(source, carrier)]?.damageMultiplier) || 1;
+}
+
+/**
+ * Stance weakness (owner 2026-11-17, theme B): the multiplier on a hit against a target holding `defendingStance`. Prepared takes
+ * `prepared.meleeDamageTakenMultiplier` from a melee hit; Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
+ * 1 for a return hit, another stance, or a fight saved without the key.
+ */
+export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, range) {
+  const rules = StanceBenefitRules(ctx);
+  if (!rules || isReturn(carrier)) return 1;
+  const stance = ALIASES[defendingStance] || defendingStance || 'neutral';
+  if (stance === 'prepared' && range === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
+  if (stance === 'neutral' || stance === 'idle') return count(rules.neutral?.damageTakenMultiplier) || 1;
+  return 1;
 }
 
 /** Counter +25%, Defend +50%: the multiplier on the Block a card or turn-start protection grants. */

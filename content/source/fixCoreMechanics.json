@@ -83,10 +83,12 @@
       "poiseFloorWardMagic": 1
     },
     "prepared": {
-      "damageMultiplier": 1.25
+      "damageMultiplier": 1.25,
+      "meleeDamageTakenMultiplier": 1.25
     },
     "neutral": {
-      "extraDrawNextTurn": 1
+      "extraDrawNextTurn": 1,
+      "damageTakenMultiplier": 1.25
     }
   },
   "spellCosts": {
