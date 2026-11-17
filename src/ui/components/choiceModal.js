@@ -48,6 +48,7 @@ class ChoiceModal
         this.model = ModalModelFor(options.kind);
         this.options = options;
         this.selectedIds = [...(options.initialSelection || [])];
+        this.hasPicked = this.selectedIds.length > 0;
         this.committedIds = null;
         this.list = null;
         this.shell = null;
@@ -95,7 +96,7 @@ class ChoiceModal
         }
 
         return this.model.isMultiSelect
-            ? this.selectedIds.length === this.selectionLimit
+            ? this.hasPicked && this.selectedIds.length === this.selectionLimit
             : this.selectedIds.length > 0;
     }
 
@@ -195,6 +196,8 @@ class ChoiceModal
 
     select(rowId, rowElement)
     {
+        this.hasPicked = true;
+
         if (this.model.isMultiSelect)
         {
             this.toggleSelection(rowId);
