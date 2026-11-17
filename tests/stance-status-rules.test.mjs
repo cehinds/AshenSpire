@@ -263,15 +263,31 @@ function weaknessReceipt(carrier, stance, { base = 40, rules = null } = {}) {
 const weaknessStage = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness');
 
 test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra from a ranged, reach or magic hit', () => {
-  const melee = weaknessReceipt(PHYSICAL, 'casting');
+  // A Sweep does not beat Prepared, so the weakness is the only stance term here (Attack and Smash: the next test).
+  const melee = weaknessReceipt(SWEEP, 'casting');
   assert.equal(weaknessStage(melee)?.multiplier, 1.25, 'the receipt lists the Stance weakness stage');
   assert.equal(weaknessStage(weaknessReceipt(RANGED, 'casting')), undefined);
-  const off = weaknessReceipt(PHYSICAL, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
+  const off = weaknessReceipt(SWEEP, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
   assert.equal(melee.hpLoss, Math.floor(off.hpLoss * 1.25), 'shown = dealt: the hit is 1.25x the same hit without the rule');
   for (const carrier of [RANGED, REACH, MAGIC]) {
     const on = weaknessReceipt(carrier, 'casting');
     const without = weaknessReceipt(carrier, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
     assert.equal(on.hpLoss, without.hpLoss, `${carrier.combatProfile.range}/${carrier.combatProfile.camp}: no Prepared weakness`);
+  }
+});
+
+test('decision 1: an advantage over Prepared and its melee weakness never stack; the hit takes the larger', () => {
+  const dropWeakness = rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; };
+  for (const carrier of [PHYSICAL, SMASH]) {
+    const name = carrier.combatProfile.maneuver;
+    const both = weaknessReceipt(carrier, 'casting'), advantageOnly = weaknessReceipt(carrier, 'casting', { rules: dropWeakness });
+    assert.equal(both.hpLoss, advantageOnly.hpLoss, `${name}: x1.25 in all, not x1.5625`);
+    const advantageStage = both.damageReceipt.hits[0].sources.find(row => row.id === 'stance-advantage' || row.id === 'smash-vs-defensive');
+    assert.equal(advantageStage, undefined, `${name}: the advantage adds nothing over an equal weakness`);
+    const bigger = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.5; } });
+    assert.ok(Math.abs(bigger.hpLoss - advantageOnly.hpLoss / 1.25 * 1.5) <= 1, `${name}: a larger weakness wins (x1.5): ${bigger.hpLoss}`);
+    const smaller = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.1; } });
+    assert.equal(smaller.hpLoss, advantageOnly.hpLoss, `${name}: a smaller weakness leaves the x1.25 advantage`);
   }
 });
 
@@ -309,30 +325,34 @@ test('rule 5 edge: an un-aimed hit (no target, a card face out of a fight) takes
   assert.equal(plain.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness'), undefined);
 });
 
-test('rule 5: the real core.strike and core.smash (no authored range: melee) take the Prepared weakness, played live', () => {
+test('rule 5: the real core.strike and core.smash (no authored range: melee) meet the Prepared weakness, and it never stacks with their advantage', () => {
+  // Strike (Attack) and Smash both beat Prepared (x1.25 advantage). Owner, 2026-11-17: the hit takes the larger of advantage and weakness, never both.
   for (const cardId of ['core.strike', 'core.smash']) {
-    const lost = rules => {
+    const fight = rules => {
       const { combat, enemy } = live({ rules });
       Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
       enemy.combatStance = { maneuver: 'casting', camp: 'spell', range: 'reach' };
+      combat.piles.hand.push({ instanceId: 'x', cardId });
+      const row = previewCard(combat, 'x', enemy.id).values.find(value => value.op === 'damage');
       const hp = enemy.hp;
-      play(combat, 'x', cardId);
-      return hp - enemy.hp;
+      dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id });
+      return { face: row.faceValue, quote: row.perTarget?.[enemy.id], lost: hp - enemy.hp };
     };
-    const on = lost(), off = lost(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
-    assert.ok(off > 0, `${cardId} lands`);
-    assert.ok(on > off, `${cardId}: a Prepared target takes more (${on} against ${off})`);
-    assert.ok(on >= Math.floor(off * 1.25) - 1 && on <= Math.ceil(off * 1.25) + 1, `${cardId}: about x1.25 (${on} against ${off})`);
+    const on = fight(), off = fight(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+    assert.ok(off.lost > 0, `${cardId} lands`);
+    assert.ok(on.face > off.face, `${cardId}: the face carries the melee weakness, so the card counts as melee (${on.face} against ${off.face})`);
+    assert.equal(on.lost, off.lost, `${cardId}: x1.25 in all, as with the advantage alone (not x1.5625)`);
+    assert.equal(on.quote, on.lost, `${cardId}: the preview quote is the HP lost`);
   }
 });
 
 /** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
 // The Starseer: the Reaver's starting Forsaken Medallion adds its own triggered Poise damage to the first attack, which is not this card's rider.
-function cleave({ block, poise }) {
-  const { combat, enemy } = live({ classId: 'starseer' });
+function cleave({ block, poise, classId = 'starseer', cardId = 'cleavingBlow' }) {
+  const { combat, enemy } = live({ classId });
   Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
   enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
-  combat.piles.hand.push({ instanceId: 'cleave', cardId: 'cleavingBlow' });
+  combat.piles.hand.push({ instanceId: 'cleave', cardId });
   const view = previewCard(combat, 'cleave', enemy.id);
   const rider = view.values.find(value => value.op === 'poiseDamage')?.perTargetPoise?.[enemy.id];
   const from = combat.eventLog.length;
@@ -380,4 +400,70 @@ test('rule 4 edge: the badge goes when the Counter is cleared, by a stagger or a
     assert.equal(enemy.combatCounter, undefined, `${clear}: the Counter is cleared`);
     assert.equal(enemy.counterStacks ?? 0, 0, `${clear}: no stale badge`);
   }
+});
+
+test('decision 2: relic Poise damage keeps the Defend floor too (the Reaver Forsaken Medallion on the first attack)', () => {
+  // The Medallion rides the first attack that lands: like a card rider it reads the Block held when that hit arrived, so a hit that spends the
+  // last Block (Cleaving Blow into 8 Block) still leaves 1 Poise after the rider and the Medallion's 4.
+  const r = cleave({ block: 8, poise: 8, classId: 'reaver' });
+  assert.equal(r.poise, 1, 'the hit, its rider and the Medallion 4 Poise leave 1 Poise');
+  assert.equal(r.broke, false);
+  const smash = cleave({ block: 5, poise: 4, classId: 'reaver', cardId: 'core.smash' });
+  assert.equal(smash.poise, 0, 'a Smash still empties it');
+});
+
+test('decision 2: carrier-less physical Poise damage keeps the floor; a Smash carrier does not', () => {
+  const { combat, enemy } = live();
+  Object.assign(enemy, { block: 3, persistentPoise: { value: 4, max: 5 }, statuses: {} });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  dealPoiseDamage(combat, enemy, 10, { cause: 'relic' });
+  assert.equal(enemy.persistentPoise.value, 1);
+  enemy.block = 0;
+  dealPoiseDamage(combat, enemy, 10, { cause: 'relic' });
+  assert.equal(enemy.persistentPoise.value, 0, 'at 0 Block it breaks');
+});
+
+test('item 4: an enemy whose intent cannot be read has an unknown stance in the preview, not Idle: the quote is what live deals', () => {
+  for (const hidden of [true, false]) {
+    const { combat, enemy } = live();
+    Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
+    enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+    if (hidden) {
+      assert.ok(combat.enemyKnowledge, 'the fight reads intents through enemy knowledge');
+      delete enemy.actorIntentRevealed; delete enemy.proposalIntentRevealedUntil;
+      enemy.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'hidden' } } };
+    }
+    combat.piles.hand.push({ instanceId: 'x', cardId: 'core.strike' });
+    const quote = previewCard(combat, 'x', enemy.id).values.find(value => value.op === 'damage').perTarget[enemy.id];
+    const hp = enemy.hp;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id });
+    assert.equal(quote, hp - enemy.hp, `${hidden ? 'hidden' : 'read'} intent: the quote equals the HP lost`);
+  }
+});
+
+test('item 5: under the whole-action contact policy each Poise row reads the Block of the hit before it, in the preview and live (3-hit base.multi-hit)', () => {
+  for (const [block, poise] of [[2, 6], [4, 6], [10, 9], [12, 9], [20, 6], [20, 9], [30, 6]]) {
+    const { combat, enemy } = live({ classId: 'starseer' });
+    Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
+    enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+    combat.piles.hand.push({ instanceId: 'm', cardId: 'base.multi-hit' });
+    const rows = previewCard(combat, 'm', enemy.id).values.map(value => value.perTargetPoise?.[enemy.id]).filter(Boolean);
+    const removed = rows.reduce((sum, row) => sum + row.removed, 0), breaks = rows.some(row => row.breaks);
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'm', targetId: enemy.id });
+    const label = `Block ${block}, Poise ${poise}`;
+    assert.equal(removed, poise - enemy.persistentPoise.value, `${label}: the preview removes the Poise live removes`);
+    assert.equal(breaks, enemy.persistentPoise.value === 0, `${label}: the preview says BREAK exactly when live empties it`);
+  }
+});
+
+test('review #2822: Ward damage drained into Poise (Ward off) follows its card, so a spell Ward Break still breaks, in the preview and live', () => {
+  const { combat, enemy } = live({ classId: 'starseer' });
+  Object.assign(enemy, { block: 5, persistentPoise: { value: 4, max: 20 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'w', cardId: 'base.break-ward' });
+  const row = previewCard(combat, 'w', enemy.id).values.find(value => value.op === 'wardDamage')?.perTargetPoise?.[enemy.id];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'w', targetId: enemy.id });
+  assert.ok(row, 'the preview quotes the Poise the Ward damage drains');
+  assert.equal(row.breaks, true, 'a spell is magic: no Defend floor without Ward stacks');
+  assert.equal(enemy.persistentPoise.value, 0, 'live agrees: Poise breaks');
 });
