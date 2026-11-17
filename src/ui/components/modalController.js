@@ -4,7 +4,7 @@ import {
     WatchLongPanel,
 } from './modalShell.js';
 
-const NO_SCROLL = Object.freeze({ preventScroll: true });
+export const NO_SCROLL = Object.freeze({ preventScroll: true });
 
 function isFocusableElement(candidate)
 {

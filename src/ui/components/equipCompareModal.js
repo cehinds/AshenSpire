@@ -12,7 +12,11 @@ import { deltaNode } from './smithPaneParts.js';
 import { t as translate } from '../strings.js';
 import { UI_COMPONENTS } from '../models/UiComponentId.js';
 import { ModalModelFor } from '../models/ModalModel.js';
-import { ModalController, ReadReturnFocus } from './modalController.js';
+import {
+    ModalController,
+    NO_SCROLL,
+    ReadReturnFocus,
+} from './modalController.js';
 
 const VERDICT_DIRECTION = Object.freeze({
     better: 'up',
@@ -26,7 +30,6 @@ const SIDE = Object.freeze({
 });
 const BACK_LABEL_KEY = 'common.back';
 const TITLE_ID = 'equip-compare-title';
-const NO_SCROLL = Object.freeze({ preventScroll: true });
 const MODAL_NAME = 'equip-compare';
 const CLICK_EVENT = 'click';
 const CURRENT_CAPTION_KEY = 'armoury.compare.current';
