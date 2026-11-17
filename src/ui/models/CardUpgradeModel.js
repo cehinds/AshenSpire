@@ -67,7 +67,7 @@ function effectPhrase(registries, def, effect) {
 }
 
 /** The extra effects of a card in player words, in the card's own order: "Draw 1, Add a copy". */
-export function effectWords(registries, def) {
+export function UpgradeEffectWords(registries, def) {
   const phrases = new Map();
   for (const effect of def?.effects || []) {
     const phrase = effectPhrase(registries, def, effect);
@@ -113,7 +113,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
   // Phrased as the card text phrases them ("Draw 1, Add a copy"), in the card's effect order (owner, 2026-11-17).
-  push(t('cardUpgrade.change.effects'), effectWords(registries, before), effectWords(registries, after));
+  push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
   const from = statusStacks(before), to = statusStacks(after);

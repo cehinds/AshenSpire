@@ -556,19 +556,19 @@ test('the picker lists deck cards first, then the library, and marks each deck c
 
 // Owner screenshot 2026-11-17: the EFFECTS row read "EFFECTS EFFECTS draw → addCard, draw" (the label twice, op names).
 test('the EFFECTS row reads like card text, in the card\'s order, with amounts summed', async () => {
-  const { effectWords } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { UpgradeEffectWords } = await import('../src/ui/models/CardUpgradeModel.js');
   const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
   const plain = registries.cards.get('core.strike');
-  const after = (step) => effectWords(registries, applyUpgradeSteps(plain, [step]));
-  assert.equal(effectWords(registries, plain), 'None');
+  const after = (step) => UpgradeEffectWords(registries, applyUpgradeSteps(plain, [step]));
+  assert.equal(UpgradeEffectWords(registries, plain), 'None');
   assert.equal(after({ k: 'fx', fx: 'copy' }), 'Add a copy');
   assert.equal(after({ k: 'fx', fx: 'cull' }), 'Exhaust 1, Draw 2');
   assert.equal(after({ k: 'fx', fx: 'shuffle' }), 'Shuffle discard into draw');
   const drawThenCopy = { id: 'x', effects: [{ op: 'draw', amount: 1 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
-  assert.equal(effectWords(registries, drawThenCopy), 'Draw 1, Add a copy');
+  assert.equal(UpgradeEffectWords(registries, drawThenCopy), 'Draw 1, Add a copy');
   const boosts = { id: 'x', effects: [{ op: 'changeAttribute', attribute: 'strength', amount: 2, thisTurn: true }, { op: 'damage', target: 'otherEnemy', amount: 3 }], runAttributeBonus: { dexterity: 1 } };
-  assert.equal(effectWords(registries, boosts), '+2 STR this turn, Hit another enemy, +1 DEX for the run');
-  for (const words of [effectWords(registries, drawThenCopy), effectWords(registries, boosts)]) {
+  assert.equal(UpgradeEffectWords(registries, boosts), '+2 STR this turn, Hit another enemy, +1 DEX for the run');
+  for (const words of [UpgradeEffectWords(registries, drawThenCopy), UpgradeEffectWords(registries, boosts)]) {
     assert.doesNotMatch(words, /addCard|changeAttribute|otherEnemy|shuffleDiscardIntoDraw/, 'no internal names');
   }
 });
