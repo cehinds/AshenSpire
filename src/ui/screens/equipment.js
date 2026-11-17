@@ -11,6 +11,7 @@ import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
+import { MarkSelected } from '../selection.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { MountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
@@ -624,6 +625,11 @@ export function mountEquipment(host, {
   let selectedInventoryKey = null;
   let notice = ''; // a status or refusal, shown as a toast on the next draw
   const toast = createToast();
+  // A refusal changes nothing but the toast, so it shows the toast and leaves the panel as it is.
+  const showNotice = (text) => {
+    const panel = wrap.querySelector('.armoury');
+    if (panel) toast.show(text, panel);
+  };
   // ONE HOME for the breakpoint question. `draw()` stamps it onto
   // `panel.dataset.responsive` and the pane observer below asks it again to tell
   // a real breakpoint crossing from a height-only resize; a second copy of the
@@ -632,6 +638,7 @@ export function mountEquipment(host, {
   let paneObserver = null;
   let paneFrame = 0;
   let inventoryDisclosure = null;
+  let inventoryBlockNode = null;
   let pickerSort = { column: 'status', direction: 'asc' };
   let pickerShowAll = false;
   let holdDisarms = [];
@@ -697,7 +704,7 @@ export function mountEquipment(host, {
   const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
   const leave = () => {
     const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
-    if (refusal) { notice = refusal; draw(); return; }
+    if (refusal) { showNotice(refusal); return; }
     close();
   };
   const close = () => {
@@ -912,7 +919,7 @@ export function mountEquipment(host, {
       const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
       const refusal = !seal.ok ? seal.reason : !transition.ok ? transition.reason : '';
-      if (refusal) { notice = refusal; draw(); return; }
+      if (refusal) { showNotice(refusal); return; }
       requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener, onBack });
     };
     if (open.length === 1) { proceed(open[0]); return; }
@@ -982,10 +989,10 @@ export function mountEquipment(host, {
     }
     const rule = positionActivationSeal(slot, position);
     if (!position.active) {
-      if (!rule.ok) { notice = rule.reason; draw(); return; }
+      if (!rule.ok) { showNotice(rule.reason); return; }
       if (onSwap) {
         const refused = onSwap(slot.id, position.index);
-        if (refused) { notice = refused; draw(); }
+        if (refused) showNotice(refused);
         return;
       }
       if (!cycleSet(registries, run.loadout, slot.id, position.index, {
@@ -1239,7 +1246,14 @@ export function mountEquipment(host, {
   // `run.sigils` order, with Attune / Unattune out of combat (the model pair in
   // model/sigils.js decides; a refusal is shown here as text). In combat the
   // rows show and no button is drawn. Absent while the run owns no legendary.
-  let sigilRefusal = '';
+  // A refused attunement changes nothing but the refusal line under the count.
+  function showSigilRefusal(section, reason) {
+    const line = prose(reason, { class: 'armoury-sigils-refusal' });
+    const childWith = (className) => [...section.children].find((child) => child.classList.contains(className));
+    const shown = childWith('armoury-sigils-refusal');
+    if (shown) shown.replaceWith(line);
+    else childWith('armoury-sigils-count').after(line);
+  }
   function sigilsPanel() {
     const owned = (run.sigils || []).filter((id) => registries.sigils.has(id) && registries.sigils.get(id).rarity === 'legendary');
     if (!owned.length) return null;
@@ -1249,8 +1263,6 @@ export function mountEquipment(host, {
       titleS(t('armoury.sigils.title')),
       statusText(t('armoury.sigils.count', { n: attuned.length, max: attuneMaxOf(registries) }), { class: 'armoury-sigils-count' }),
     );
-    if (sigilRefusal) section.append(prose(sigilRefusal, { class: 'armoury-sigils-refusal' }));
-    sigilRefusal = '';
     for (const id of owned) {
       const def = registries.sigils.get(id);
       const on = attuned.includes(id);
@@ -1266,7 +1278,7 @@ export function mountEquipment(host, {
         const act = button({ label, weight: on ? undefined : 'primary', className: 'armoury-sigil-act', attrs: { dataset: { focusable: 'true', sigilAct: on ? 'unattune' : 'attune' } } });
         act.addEventListener('click', () => {
           const result = on ? unattuneSigil(run, id) : attuneSigil(registries, run, id);
-          if (!result.ok) { sigilRefusal = result.reason; draw(); return; }
+          if (!result.ok) { showSigilRefusal(section, result.reason); return; }
           commit();
         });
         row.append(act);
@@ -1719,7 +1731,7 @@ export function mountEquipment(host, {
     // W1e footer: Back bottom-left (leaves, like the close and Escape); the
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
-    back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
+    back.addEventListener('click', () => { if (picking) returnToSlots(back); else leave(); });
     const rendered = renderArmouryPanel(panelModel, wrap, { back,
       tabs: [
         { id: 'character', label: t('progression.tab.character'), selected: view === 'grid' },
@@ -1829,7 +1841,8 @@ export function mountEquipment(host, {
       // collection and its detail pane are gone; items are chosen through the slot's picker (Choose item / Replace), which
       // is this same block opened for one slot, and through the reward / purchase Equip flow (beginInventoryEquip).
       if (picking || inventoryRows(registries, run, meta).some(usableRow)) {
-        inventory.append(inventoryBlock());
+        inventoryBlockNode = inventoryBlock();
+        inventory.append(inventoryBlockNode);
         if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
       }
       // SPEC §15.4: the Sigils panel stays below the slot rows.
@@ -1878,6 +1891,26 @@ export function mountEquipment(host, {
     if (notice) toast.show(notice, panel); else toast.attach(panel);
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', leave);
+  }
+
+  // Back while a position is picked deselects it and gives the Inventory its own list back; the rest of the panel stays.
+  // Leaving the Character page, or an Inventory that empties, is a real page change, so those still draw.
+  function returnToSlots(back) {
+    const staysOnArmoryPage = view === 'rack';
+    clearInventorySelection();
+    const pickerBlock = inventoryBlockNode;
+    const keepsInventory = inventoryRows(registries, run, meta).some(usableRow);
+    if (!staysOnArmoryPage || !pickerBlock?.isConnected || !keepsInventory) {
+      draw();
+      return;
+    }
+    wrap.querySelector('.armoury').classList.remove('picking');
+    back.textContent = t('common.back');
+    MarkSelected(wrap.querySelectorAll('[data-slot-position]'), false, { className: ['is-selected', 'is-inspected'], ariaAttribute: [] });
+    MarkSelected(wrap.querySelectorAll('.armament-row-select'), false, { className: [] });
+    setFooterPrimary(null);
+    inventoryBlockNode = inventoryBlock();
+    pickerBlock.replaceWith(inventoryBlockNode);
   }
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
