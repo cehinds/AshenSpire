@@ -3,6 +3,7 @@ import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtr
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { ScaleCardBaseDamage } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -102,8 +103,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const flatReturn = modern && carrier.counterReturnAttack;
   // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or
   // PR adds; a Counter return is already final damage and is not scaled again.
-  const authoredBase = base, baseMultiplier = !flatReturn && Number.isFinite(effects?.baseDamageMultiplier) ? effects.baseDamageMultiplier : 1;
-  if (baseMultiplier !== 1) base = Math.max(0, Math.ceil(base * baseMultiplier));
+  const authoredBase = base, baseMultiplier = carrier.counterReturnAttack ? 1 : effects?.baseDamageMultiplier;
+  base = ScaleCardBaseDamage(base, baseMultiplier);
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:authoredBase,stage:'offense',operation:'set'}];
   if (base !== authoredBase) sources.push({id:'base-damage-scale',label:'Base damage scale',amount:base-authoredBase,requested:authoredBase,effective:base,stage:'offense',operation:'multiply',multiplier:baseMultiplier});
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);

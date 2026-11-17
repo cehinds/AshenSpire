@@ -61,6 +61,57 @@ test('item 1: Core halves every card\'s base damage, rounded up, before AR or PR
   assert.ok(checked >= 4, `enough player hits were checked: ${checked}`);
 });
 
+test('item 1: player and enemy Counters scale their authored base once before the return', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch, previewCard, previewIntent } = await import('../src/engine/combat.js');
+  const { primeAccuracyRolls } = await import('./accuracyFixture.mjs');
+  const firstMoves = { wanderingSoldier: 'slash', gildedKnight: 'parry' };
+  const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(enemy =>
+    Object.hasOwn(firstMoves, enemy.id) ? { ...enemy, firstMove: firstMoves[enemy.id] } : enemy) };
+  const fightRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(bundle, profile)), profile);
+  const begin = (enemyId, registries = fightRegistries) => {
+    const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+    const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+    const [enemy] = combat.enemies;
+    enemy.actorIntentRevealed = true;
+    enemy.plannedMoves = [];
+    primeAccuracyRolls(combat, { count: 2 });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    return { combat, enemy };
+  };
+  const returnedDamage = (combat, sourceId, base) => {
+    const index = combat.eventLog.findIndex(event => event.type === 'combatCounterTriggered' && event.sourceId === sourceId);
+    const trigger = combat.eventLog[index];
+    assert.equal(trigger?.counterBase, base);
+    const hit = combat.eventLog.slice(index + 1).find(event => event.type === 'damageDealt' && event.sourceId === sourceId && event.targetId === trigger.targetId);
+    assert.equal(hit?.damageReceipt?.hits?.[0]?.incoming, trigger.amount);
+    return trigger.amount;
+  };
+
+  const playCounter = ({ combat, enemy }, base) => {
+    combat.piles.hand.push({ instanceId: 'scaled-counter', cardId: 'core.counter' });
+    const card = previewCard(combat, 'scaled-counter', enemy.id);
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'scaled-counter' });
+    assert.equal(combat.player.combatCounter.payload.hp, base);
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(returnedDamage(combat, 'player', base), card.counterReturn.hp);
+  };
+  playCounter(begin('wanderingSoldier'), 2);
+  const explicit = structuredClone(profile);
+  explicit.content.cards.find(card => card.id === 'core.counter').counterPayload = { hp: 5, hpRating: false };
+  delete explicit.hash;
+  explicit.hash = gameDigest(explicit);
+  const explicitRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(bundle, explicit)), explicit);
+  playCounter(begin('wanderingSoldier', explicitRegistries), 3);
+
+  const knight = begin('gildedKnight');
+  knight.combat.piles.hand.push({ instanceId: 'into-parry', cardId: 'core.strike' });
+  assert.equal(previewIntent(knight.combat, knight.enemy.id).counterDamage, 3, 'the enemy intent shows half of the 6 authored damage');
+  dispatch(knight.combat, { type: 'playCard', cardInstanceId: 'into-parry', targetId: knight.enemy.id });
+  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) > 3, 'the share of the incoming hit stays intact');
+});
+
 test('item 5: one more SP (Actions) or MP costs 3 attribute points; no other attribute feeds them', () => {
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
     const run = newRun(classId);

@@ -2666,7 +2666,7 @@ Ratings (AR, DR, PR, Poise, Ward) turn attributes and gear into damage, mitigati
 
 ### Card damage
 - Card damage = base + AR (physical) or PR (magical); in Core 2 under `damage.unified`, PR applies to spell-camp attacks, and spell damage is otherwise ordinary damage.
-- **Base damage halved** (owner, 2026-11-17): `effects.baseDamageMultiplier` scales every card's base damage, player's and enemy's, rounded up (5 → 3, 1 → 1), before AR or PR adds. Core sets 0.5; the module default is 1. A Counter return is already final damage and is not scaled again. The receipt shows the step as `base-damage-scale`; the face, the intent and the hit read the same receipt.
+- **Base damage halved** (owner, 2026-11-17): `effects.baseDamageMultiplier` scales every card's base damage, player's and enemy's, rounded up (5 → 3, 1 → 1), before AR or PR adds. Core sets 0.5; the module default is 1. A Counter scales its authored base when it arms. Its completed return includes the share of the incoming hit and lands without another scaling step. The receipt shows the ordinary hit's scale as `base-damage-scale`; the face, the intent and the hit read the same receipt.
 - Physical defensive-skill Block gets DR; magical Block and healing get PR. Magical power hooks keep their originating card, so their damage, Block and healing get PR.
 - Resource generation, buff duration, card draw and action costs get no PR.
 - Profile-level attribute scaling is off for these runs (no double bonus). Authored card-specific modifiers still apply.
