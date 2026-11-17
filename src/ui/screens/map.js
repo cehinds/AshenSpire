@@ -36,6 +36,7 @@ import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { mountRunPotions } from '../components/runPotions.js';
+import { unobserveIconTray } from '../components/iconTray.js';
 import { button, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
 import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
@@ -129,8 +130,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
-  // A redraw keeps the destination the player selected (#1474 review).
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, revisitId, selectedId: selection.selectedId, selectedPointerType: lastPickPointerType });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
@@ -173,8 +172,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
-  wireRunHud(app, {
-    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
+  const runHud = wireRunHud(app, {
+    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange,
+    onFlaskDrunk: () => paintPotions(),
   });
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -235,7 +235,24 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const trayRow = el('div', { class: 'map-tray-row' });
   trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
   const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
-  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { dropPendingSave(); onSave?.(); remount(); } });
+  // A potion used or dropped changes the HUD and this control, nothing else on
+  // the map: both update in place, and the board, the camera and the tray stay.
+  let potions = null;
+  const paintPotions = () => {
+    unobserveIconTray(potions?.minis);
+    potions = mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { dropPendingSave(); onSave?.(); redrawAfterPotion(); } });
+  };
+  // The Potions button is a new node, so focus goes back to it once the menu or
+  // list that held focus has closed, as it would for a keyboard player.
+  const redrawAfterPotion = () => {
+    runHud.update();
+    paintPotions();
+    queueMicrotask(() => {
+      const now = document.activeElement;
+      if (!now || now === document.body || !now.isConnected) potions.control.focus();
+    });
+  };
+  paintPotions();
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {

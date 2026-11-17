@@ -19,7 +19,7 @@
 // calls both; a room calls both; nothing here decides navigation — every row
 // calls a handler the caller already owns.
 import { attachTooltip, esc } from './tooltip.js';
-import { actionHint } from '../input.js';
+import { actionHint, focusElement } from '../input.js';
 import { MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from './quicknav.js';
 import { openConsoleLog } from '../debuglog.js';
@@ -27,6 +27,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { hudShellHtml } from './hudmeta.js';
+import { SyncHudCinders } from './hudmeta.js';
 import { RunHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from './hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -109,7 +110,12 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
  *   onLoad/onSave/onQuit/onQuitWithoutSave  the quick-nav's save rows
  *   quickControls    the fullscreen/music controls the quick-nav reads
  *   onSettingsChange the quick-settings binding (kept for the callers' shape)
- *   remount()        re-draws the host screen after a flask is drunk here
+ *   onFlaskDrunk()   runs after a flask drunk here, once the band has updated
+ *                    itself; only a screen whose own content reads HP passes one
+ *
+ * Returns { hud, armouryBtn, menuBtn, update }. `update()` writes the run as it
+ * stands now into the band already drawn (the HP bar, the cinders, the potion
+ * tray, the Armoury's new-item glow) without replacing the band.
  *
  * A part whose WGH0 layer is off (models/RunHudLayerModel.js) is not in the
  * band, so its wiring is skipped rather than assumed.
@@ -117,7 +123,7 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
 export function wireRunHud(app, {
   registries, run, meta,
   onArmoury = null, onMenu = null, onLoad = null, onSave = null, onQuit = null, onQuitWithoutSave = null,
-  quickControls = {}, onSettingsChange = null, remount = null,
+  quickControls = {}, onSettingsChange = null, onFlaskDrunk = null,
 }) {
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   const hud = app.querySelector('.shared-hud');
@@ -142,10 +148,12 @@ export function wireRunHud(app, {
   //   · the shared component writes the exact max/reference percentage; there
   //     is no screen-specific floor or post-layout correction.
   const resHost = hud.querySelector('.resbars-host');
-  if (resHost) {
+  const paintVitality = () => {
+    if (!resHost) return;
     const plan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
-    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));
-  }
+    resHost.replaceChildren(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));
+  };
+  paintVitality();
 
   // WGH6: the relics, through the one tile renderer combat uses too.
   mountRelicRail(hud.querySelector('.hud-relics'), registries, run.relics);
@@ -158,91 +166,108 @@ export function wireRunHud(app, {
   // icon tray, like the footer's Potions minis: a tap explains the flask, a
   // second tap (or Enter) opens its use/drop menu.
   const potionHost = hud.querySelector('.hud-potions');
-  const potionIcons = [];
-  const contents = potionHost
-    ? potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: run.flaskCharges, carried: run.flasks })
-    : { entries: [] };
-  for (const entry of contents.entries.filter((row) => row.category === 'charge')) {
-    const kind = entry.kind;
-    const def = chargeFlaskDefinition(registries, kind);
-    if (!def) continue;
-    const current = entry.count;
-    const icon = trayIcon({
-      art: flaskPresentation(def, { showName: false }), count: current, tone: def.tint || '', label: def.name, disabled: current <= 0,
-      // These actionable DIV pips join unified keyboard/controller navigation.
-      attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind, focusable: '' } },
-      tip: () => flaskTooltipHtml(def, { charges: current }),
-      activate: (node) => {
-        const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
-        const plan = flaskActionPlan({
-          context: 'run',
-          canUse,
-          useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
-          canDrop: false,
-          dropReason: 'Charge flasks stay with the run',
-        });
-        mountFlaskActionMenu(node, {
-          def, plan, charges: current, onCancel: () => {},
-          onAction: (actionId) => {
-            if (actionId !== 'use' || !canUse) return;
-            useRunChargeFlask({ run, registries, rng: null, kind });
-            onSave?.();
-            remount?.();
-          },
-        });
-      },
+  let potionIcons = [];
+  // A drink updates the band in place, then hands focus back to the same flask:
+  // the menu row that held it is gone, and a keyboard player keeps their place.
+  const drink = (kind) => {
+    useRunChargeFlask({ run, registries, rng: null, kind });
+    onSave?.();
+    update();
+    onFlaskDrunk?.();
+    queueMicrotask(() => {
+      if (document.activeElement && document.activeElement !== document.body && document.activeElement.isConnected) return;
+      const again = potionHost?.querySelector(`[data-flask-kind="${kind}"]`);
+      if (again) { again.focus(); focusElement(again); }
     });
-    markUiComponent(icon, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-    icon.querySelector('.stk')?.classList.add('flask-charge-count');
-    potionIcons.push(icon);
-  }
+  };
+  const potionTrayIcons = () => {
+    const icons = [];
+    const contents = potionHost
+      ? potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: run.flaskCharges, carried: run.flasks })
+      : { entries: [] };
+    for (const entry of contents.entries.filter((row) => row.category === 'charge')) {
+      const kind = entry.kind;
+      const def = chargeFlaskDefinition(registries, kind);
+      if (!def) continue;
+      const current = entry.count;
+      const icon = trayIcon({
+        art: flaskPresentation(def, { showName: false }), count: current, tone: def.tint || '', label: def.name, disabled: current <= 0,
+        // These actionable DIV pips join unified keyboard/controller navigation.
+        attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind, focusable: '' } },
+        tip: () => flaskTooltipHtml(def, { charges: current }),
+        activate: (node) => {
+          const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
+          const plan = flaskActionPlan({
+            context: 'run',
+            canUse,
+            useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
+            canDrop: false,
+            dropReason: 'Charge flasks stay with the run',
+          });
+          mountFlaskActionMenu(node, {
+            def, plan, charges: current, onCancel: () => {},
+            onAction: (actionId) => {
+              if (actionId !== 'use' || !canUse) return;
+              drink(kind);
+            },
+          });
+        },
+      });
+      markUiComponent(icon, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
+      icon.querySelector('.stk')?.classList.add('flask-charge-count');
+      icons.push(icon);
+    }
 
-  for (const entry of contents.entries.filter((row) => row.category === 'carried')) {
-    const def = registries.flasks.get(entry.flaskId);
-    let held = entry.count;
-    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
-    // unified-cursor exception in input.js. Keep utility flasks reachable by
-    // keyboard/gamepad Confirm as well as pointer click.
-    const icon = trayIcon({
-      art: flaskPresentation(def, { showName: false }), count: held, tone: def.tint || '', label: def.name,
-      attrs: { class: 'mh-flask flask-slot', dataset: { flaskId: entry.flaskId } },
-      tip: () => flaskTooltipHtml(def),
-      activate: (node) => {
-        const plan = flaskActionPlan({
-          context: 'run',
-          canUse: false,
-          useReason: 'Flasks can only be used in combat',
-          canDrop: true,
-        });
-        mountFlaskActionMenu(node, {
-          def,
-          plan,
-          onCancel: () => {},
-          onAction: (actionId) => {
-            if (actionId !== 'drop') return;
-            // Drop ONE of this kind: the first slot holding it, as the tile for
-            // that slot did when each carried flask had its own.
-            const at = run.flasks.findIndex((f) => f.flaskId === entry.flaskId);
-            if (at >= 0) run.flasks.splice(at, 1);
-            held = run.flasks.filter((f) => f.flaskId === entry.flaskId).length;
-            if (held > 0) node.querySelector('.stk').textContent = String(held);
-            else {
-              potionIcons.splice(potionIcons.indexOf(node), 1);
-              setIconTrayItems(potionHost, potionIcons);
-            }
-            hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
-          },
-        });
-      },
-    });
-    markUiComponent(icon, UI.potionControl);
-    potionIcons.push(icon);
-  }
-  if (potionHost) {
-    setIconTrayItems(potionHost, potionIcons);
-    observeIconTray(potionHost);
-  }
-  hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
+    for (const entry of contents.entries.filter((row) => row.category === 'carried')) {
+      const def = registries.flasks.get(entry.flaskId);
+      let held = entry.count;
+      // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
+      // unified-cursor exception in input.js. Keep utility flasks reachable by
+      // keyboard/gamepad Confirm as well as pointer click.
+      const icon = trayIcon({
+        art: flaskPresentation(def, { showName: false }), count: held, tone: def.tint || '', label: def.name,
+        attrs: { class: 'mh-flask flask-slot', dataset: { flaskId: entry.flaskId } },
+        tip: () => flaskTooltipHtml(def),
+        activate: (node) => {
+          const plan = flaskActionPlan({
+            context: 'run',
+            canUse: false,
+            useReason: 'Flasks can only be used in combat',
+            canDrop: true,
+          });
+          mountFlaskActionMenu(node, {
+            def,
+            plan,
+            onCancel: () => {},
+            onAction: (actionId) => {
+              if (actionId !== 'drop') return;
+              // Drop ONE of this kind: the first slot holding it, as the tile for
+              // that slot did when each carried flask had its own.
+              const at = run.flasks.findIndex((f) => f.flaskId === entry.flaskId);
+              if (at >= 0) run.flasks.splice(at, 1);
+              held = run.flasks.filter((f) => f.flaskId === entry.flaskId).length;
+              if (held > 0) node.querySelector('.stk').textContent = String(held);
+              else {
+                potionIcons.splice(potionIcons.indexOf(node), 1);
+                setIconTrayItems(potionHost, potionIcons);
+              }
+              hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
+            },
+          });
+        },
+      });
+      markUiComponent(icon, UI.potionControl);
+      icons.push(icon);
+    }
+    return icons;
+  };
+  const paintPotions = () => {
+    potionIcons = potionTrayIcons();
+    if (potionHost) setIconTrayItems(potionHost, potionIcons);
+    hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
+  };
+  paintPotions();
+  if (potionHost) observeIconTray(potionHost);
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
   // Only this button asks to reopen on the last tab (`remembered`, see armouryRoute).
@@ -286,16 +311,23 @@ export function wireRunHud(app, {
         : 'Everywhere you can go from here.')}`);
   }
 
-  return { hud, armouryBtn: armouryBtn && onArmoury ? armouryBtn : null, menuBtn };
+  function update() {
+    paintVitality();
+    paintPotions();
+    SyncHudCinders(hud, run.cinders);
+    if (armouryBtn && onArmoury) syncArmouryNew(armouryBtn, run);
+  }
+
+  return { hud, armouryBtn: armouryBtn && onArmoury ? armouryBtn : null, menuBtn, update };
 }
 
 /**
- * RefreshRunHud(app, { registries, run, meta, place, headerClass, layout, hud, remount }) — draw the band again from
+ * RefreshRunHud(app, { registries, run, meta, place, headerClass, layout, hud, onFlaskDrunk }) — draw the band again from
  * the run as it stands now and wire it, in place of the one `runHudHtml` drew inside `app`. A room whose choice moves
  * cinders or HP (an event, a dialogue) calls it after the commit so the header never shows the old amount.
  * Returns wireRunHud's handles, or null when the screen has no band.
  */
-export function RefreshRunHud(app, { registries, run, meta, place, headerClass = 'map-header', layout = '', hud = {}, remount = null }) {
+export function RefreshRunHud(app, { registries, run, meta, place, headerClass = 'map-header', layout = '', hud = {}, onFlaskDrunk = null }) {
   const old = app.querySelector('.shared-hud');
   if (!old) return null;
   const holder = document.createElement('div');
@@ -303,5 +335,5 @@ export function RefreshRunHud(app, { registries, run, meta, place, headerClass =
   const fresh = holder.firstElementChild;
   if (!fresh) return null;
   old.replaceWith(fresh);
-  return wireRunHud(app, { ...hud, registries, run, meta, remount });
+  return wireRunHud(app, { ...hud, registries, run, meta, onFlaskDrunk });
 }

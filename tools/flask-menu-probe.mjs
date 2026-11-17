@@ -17,8 +17,9 @@
 //                list now offers Drink, and a destination selected before
 //                the change is still selected with its tray open. Drinking calls the map's onChange: the
 //                run is SAVED (the slot's flask ledger drops by one, the stored
-//                setting is on) and the map REMOUNTS (a new Potions control,
-//                the mini's count one lower). After that remount the setting
+//                setting is on) and the Potions control is DRAWN AGAIN in place
+//                (a new Potions control, the mini's count one lower; the map
+//                itself stays). After that redraw the setting
 //                still holds — Drink is still offered — and a second Drink
 //                saves and empties the flask, whose Drink is then refused with
 //                the empty reason.
@@ -115,12 +116,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL persistence: the reopened tray names the destination as it did before the redraw/,
       },
       {
-        name: 'the map stops remounting after a Potions action',
+        name: 'the map stops redrawing its Potions control after a Potions action',
         file: 'src/ui/screens/map.js',
-        find: 'onChange: () => { dropPendingSave(); onSave?.(); remount(); }',
+        find: 'onChange: () => { dropPendingSave(); onSave?.(); redrawAfterPotion(); }',
         replace: 'onChange: () => { dropPendingSave(); onSave?.(); }',
         args: ['--only', 'persistence'],
-        expectRed: /FAIL persistence: the first Drink remounts the map/,
+        expectRed: /FAIL persistence: the first Drink redraws the Potions control/,
       },
       {
         name: 'the map hands its Potions control a stand-in run instead of the live one',
@@ -205,24 +206,24 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the run HUD drops the shared plan\'s Drop row',
         file: 'src/ui/components/runHud.js',
-        find: '          def, plan, charges: current, onCancel: () => {},',
-        replace: "          def, plan: { ...plan, actions: plan.actions.filter((a) => a.id !== 'drop') }, charges: current, onCancel: () => {},",
+        find: '            def, plan, charges: current, onCancel: () => {},',
+        replace: "            def, plan: { ...plan, actions: plan.actions.filter((a) => a.id !== 'drop') }, charges: current, onCancel: () => {},",
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: run HUD, setting off/,
       },
       {
         name: 'a run-HUD carried potion offers Use outside combat',
         file: 'src/ui/components/runHud.js',
-        find: "          canUse: false,\n          useReason: 'Flasks can only be used in combat',",
-        replace: "          canUse: true,\n          useReason: 'Flasks can only be used in combat',",
+        find: "            canUse: false,\n            useReason: 'Flasks can only be used in combat',",
+        replace: "            canUse: true,\n            useReason: 'Flasks can only be used in combat',",
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: run HUD carried icons, setting off/,
       },
       {
         name: 'the run HUD drops a carried potion\'s Drop row',
         file: 'src/ui/components/runHud.js',
-        find: '          def,\n          plan,\n          onCancel: () => {},',
-        replace: "          def,\n          plan: { ...plan, actions: plan.actions.filter((a) => a.id !== 'drop') },\n          onCancel: () => {},",
+        find: '            def,\n            plan,\n            onCancel: () => {},',
+        replace: "            def,\n            plan: { ...plan, actions: plan.actions.filter((a) => a.id !== 'drop') },\n            onCancel: () => {},",
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: run HUD carried icons, setting off/,
       },
@@ -505,7 +506,7 @@ async function persistenceProbe(cdp, base, check) {
       after && after['charge:hp']?.enabled === true, JSON.stringify(after?.['charge:hp']));
     const savedSetting = await ev(`window.__flasks().savedOutsideCombat`);
     check('persistence: the setting is saved to the profile', savedSetting === true, `saved ${savedSetting}`);
-    // First Drink: the run changes, is saved, and the map remounts.
+    // First Drink: the run changes, is saved, and the Potions control is drawn again (the map itself stays).
     const first = await ev(`(async () => {
       const before = window.__flasks();
       const old = document.querySelector('.run-potions-btn');
@@ -520,11 +521,11 @@ async function persistenceProbe(cdp, base, check) {
       first.clicked && first.after.charges.hp === want && first.after.savedCharges?.hp === want
         && first.after.savedCharges?.mana === first.before.charges.mana,
       JSON.stringify(first));
-    check('persistence: the first Drink remounts the map (a new Potions control, the mini shows the new count)',
+    check('persistence: the first Drink redraws the Potions control (a new Potions control, the mini shows the new count)',
       first.remounted && first.mini === want, JSON.stringify({ remounted: first.remounted, mini: first.mini, want }));
-    // After the remount the setting still holds, and a second Drink saves too.
+    // After the redraw the setting still holds, and a second Drink saves too.
     const again = await ev(`__fm.mapList()`);
-    check('persistence: after the remount the setting still holds (Drink still offered)',
+    check('persistence: after the redraw the setting still holds (Drink still offered)',
       again && again['charge:hp']?.enabled === (want > 0), JSON.stringify(again?.['charge:hp']));
     let left = want;
     for (let i = 0; i < want; i++) {
@@ -533,7 +534,7 @@ async function persistenceProbe(cdp, base, check) {
     }
     const empty = await ev(`__fm.mapList()`);
     const emptyReason = await ev(`__fmPlan.t('potions.run.empty')`);
-    check('persistence: drinking to empty is saved, and the remounted list then refuses Drink with the empty reason',
+    check('persistence: drinking to empty is saved, and the redrawn list then refuses Drink with the empty reason',
       left === 0 && empty && empty['charge:hp']?.enabled === false && empty['charge:hp'].text.includes(emptyReason),
       JSON.stringify({ left, row: empty?.['charge:hp'] }));
     await ev(`__fm.closeModal('run-potion-menu')`);

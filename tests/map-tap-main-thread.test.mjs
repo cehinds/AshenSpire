@@ -53,9 +53,9 @@ test('an explicit Save drops the queued camera save instead of flushing it (one 
   assert.match(map, /const saving = \(fn\) =>[^\n]*dropPendingSave\(\)/);
 });
 
-test('using a potion drops the queued camera save before saving and remounting', () => {
+test('using a potion drops the queued camera save before saving and redrawing the HUD and Potions', () => {
   const map = readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8');
   const potionMount = map.slice(map.indexOf('mountRunPotions('), map.indexOf('screen.append(tray)'));
-  assert.match(potionMount, /onChange: \(\) => \{ dropPendingSave\(\); onSave\?\.\(\); remount\(\); \}/);
+  assert.match(potionMount, /onChange: \(\) => \{ dropPendingSave\(\); onSave\?\.\(\); redrawAfterPotion\(\); \}/);
   assert.doesNotMatch(potionMount, /flushPendingSave\(\)/);
 });

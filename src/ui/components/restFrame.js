@@ -18,12 +18,15 @@ export function restPresentation(registries) {
   };
 }
 
-export function mountRestFrame(app, { registries, run, meta, hud, eyebrow = t('rest.eyebrow'), title, status, choices, consequences, foot, remount }) {
+// `onFlaskDrunk` runs after a flask drunk from the band (the band updates
+// itself); `onRunHud(handle)` receives the band's handle, whose `update()`
+// writes a changed run into it in place.
+export function mountRestFrame(app, { registries, run, meta, hud, eyebrow = t('rest.eyebrow'), title, status, choices, consequences, foot, remount = null, onFlaskDrunk = remount, onRunHud = null }) {
   app.innerHTML = `${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header workspace-hud' }) : ''}
     <div class="screen room-screen rest-screen" style="${restPresentation(registries).style}"></div>`;
   const screen = app.querySelector('.rest-screen');
   screen.appendChild(scenePainting('rest'));
   mountChoiceBody(screen, { className: 'rest-door', eyebrow, title, status, choices, consequences, foot });
-  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount });
+  if (hud) onRunHud?.(wireRunHud(app, { ...hud, registries, run, meta, onFlaskDrunk }));
   return screen;
 }
