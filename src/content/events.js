@@ -10,14 +10,7 @@ import { eventChoiceHistoryRequirements as choiceHistoryRequirements } from './g
 import { eventHistoryRequirements as historyRequirements } from './generated/eventHistoryRequirements.js';
 import { questChains as chains } from './generated/questChains.js';
 import { eventSpeakers as speakers } from './generated/eventSpeakers.js';
-
-function deepFreeze(value) {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const child of Object.values(value)) deepFreeze(child);
-  }
-  return value;
-}
+import { deepFreeze } from '../framework/compiler.js';
 
 export { events };
 
