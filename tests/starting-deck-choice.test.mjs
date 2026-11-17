@@ -59,3 +59,14 @@ test('run birth applies the creation choice and keeps it in beginChoices', () =>
   assert.equal(run.deck.filter((card) => card.cardId === 'core.strike').length, 5);
   assert.deepEqual(run.beginChoices.startingCards, startingCards);
 });
+
+// Review of #2815 (low): Run again with deck-size settings that now refuse the saved choice starts the run on
+// the class's own starting cards instead of failing.
+test('run birth falls back to the class starting cards when the settings refuse the saved choice', () => {
+  const startingCards = { 'core.strike': 2, 'core.smash': 1, 'core.counter': 1, 'core.defend': 3, 'core.sweep': 1 };
+  const { run } = CreatePreparedRun({ seed: 9, registries, gameProfile: core, profileMeta: meta, classId: 'reaver', startingCards: { ...startingCards, 'core.strike': 6 },
+    settings: { deckMaxUnlimited: false, deckMaxSize: 12 } });
+  const fresh = make('reaver');
+  assert.deepEqual(run.deck.map((card) => card.cardId), fresh.deck.map((card) => card.cardId));
+  assert.equal(run.beginChoices.startingCards, undefined, 'the refused choice is not carried into the next Run again');
+});
