@@ -132,7 +132,21 @@
     },
     "enemies": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "effectiveLevelByAct": {
+          "elite": [
+            2,
+            4,
+            6
+          ],
+          "boss": [
+            4,
+            6,
+            8
+          ]
+        },
+        "effectiveLevelHp": true
+      }
     },
     "formation": {
       "version": "1.0.0",

@@ -441,6 +441,16 @@ export function characterRule(row, settings) {
   }
   return rule;
 }
+// Owner, 2026-11-17 (enemies `effectiveLevelByAct`, Core): an elite or boss fights at its tier's level for the act
+// (Core: elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3; past the table the last entry holds). null when the
+// tier has no row, so a normal enemy keeps its own level. `row.tier` or its `tier.<id>` tag names the tier.
+export function enemyEffectiveLevel(row, settings, act) {
+  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const levels = settings?.effectiveLevelByAct?.[tier];
+  if (!Array.isArray(levels) || !levels.length) return null;
+  const index = Math.min(levels.length, Math.max(1, Number.isSafeInteger(act) ? act : 1)) - 1;
+  return levels[index];
+}
 export function enemyLevel(row, settings) {
   if (Number.isSafeInteger(row.level)) return Math.max(1, row.level);
   const profile = row.levelProfile || {};

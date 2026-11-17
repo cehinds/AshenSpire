@@ -1,5 +1,6 @@
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
-import { gameModule } from '../model/gameProfile.js';
+import { gameModule, gameContent } from '../model/gameProfile.js';
+import { characterSettings, enemyEffectiveLevel } from '../../engine/kernel/gameConfig.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 import { ItemPropertySummary } from '../model/itemProperties.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
@@ -41,6 +42,12 @@ import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
+    // A Core elite or boss fights at its tier's level for this act (enemies.effectiveLevelByAct, owner 2026-11-17).
+    const act = Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1;
+    const settings = run.gameProfile?.modules ? characterSettings(run.gameProfile.modules) : null;
+    const row = settings?.effectiveLevelByAct ? (gameContent(run, 'enemies') || []).find(entry => entry.id === enemyId) : null;
+    const effective = row ? enemyEffectiveLevel(row, settings, act) : null;
+    if (effective !== null) return effective;
     const profile = registries.enemies.get(enemyId)?.levelProfile;
     if (!profile) return 1;
     return resolveEnemyLevel(profile, {

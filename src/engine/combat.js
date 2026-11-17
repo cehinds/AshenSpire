@@ -361,14 +361,17 @@ export function createCombat({
     if (fixCoreEnabled(combat)) {
       combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
       combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
-      for (const enemy of combat.enemies) {
+      for (const [index, enemy] of combat.enemies.entries()) {
         const definition = registries.enemies.get(enemy.enemyId);
         enemy.attributes = { ...(definition.attributes || {}) };
         enemy.baseEvasionBonus = definition.baseEvasionBonus || definition.evasionBonus || 0;
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
-        Object.assign(enemy, gameProfileEnemyRatings(combat,enemy) || {});
+        const { effectiveMaxHp, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
+        Object.assign(enemy, ratings);
+        // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
+        if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
       }
     }
   }

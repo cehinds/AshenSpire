@@ -123,3 +123,31 @@ test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective S
     assert.equal(receipt.totals.pr, Math.max(attributes.intelligence, attributes.wisdom), `${classId} PR`);
   }
 });
+
+test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bosses 4/6/8); normal enemies are unchanged', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { characterSettings, enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
+  const settings = characterSettings(profile.modules);
+  const LEVELS = { elite: [2, 4, 6], boss: [4, 6, 8] };
+  for (const act of [1, 2, 3]) {
+    for (const row of profile.content.enemies) {
+      const run = newRun('reaver', 5);
+      run.actNumber = act;
+      const enemy = createRunCombat({ registries, run, rng: createRng(5), enemyIds: [row.id] }).enemies[0];
+      const def = registries.enemies.get(row.id);
+      if (!LEVELS[row.tier]) {
+        assert.ok(enemy.maxHp >= def.hp[0] && enemy.maxHp <= def.hp[1], `${row.id} keeps its authored HP`);
+        assert.equal(enemy.level === undefined || enemy.level <= 5, true, `${row.id} keeps its own level`);
+        continue;
+      }
+      const level = LEVELS[row.tier][act - 1];
+      assert.equal(enemy.level, level, `act ${act} ${row.tier} ${row.id} level`);
+      // The fight's own seeded spread (variance moves points, never the total).
+      const own = enemy.ownAttributes;
+      assert.equal(Object.values(own).reduce((a, b) => a + b, 0), 5 + level, `${row.id}: budget 5 + level`);
+      const pools = enemyPools({ ...row, level, resolvedAttributes: own }, settings, level, enemyItemBonuses(row, profile.content, profile.modules.gear));
+      assert.equal(enemy.maxHp, pools.hp, `act ${act} ${row.id}: HP is the level's HP row`);
+    }
+  }
+});
