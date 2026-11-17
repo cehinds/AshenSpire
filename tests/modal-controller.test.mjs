@@ -1,6 +1,6 @@
 // tests/modal-controller.test.mjs — the shell's lifecycle for a modal that
 // builds its own DOM (src/ui/components/modalController.js), and OpenModal's
-// onEscape / onBackdrop hooks.
+// onDismiss / onBackdrop hooks.
 //
 //   node --test tests/modal-controller.test.mjs
 import assert from 'node:assert/strict';
@@ -112,13 +112,13 @@ test('Close({ restoreFocus: false }) keeps focus where it is and skips onBack', 
     assert.equal(openModals().length, 0);
 }));
 
-test('OpenModal: onEscape and onBackdrop replace the default close', () => withModalDom((dom, win) =>
+test('OpenModal: onDismiss and onBackdrop replace the default close', () => withModalDom((dom, win) =>
 {
     resetModalState();
     const log = [];
     const shell = OpenModal({
         title: 'Hooks',
-        onEscape: () => log.push('escape'),
+        onDismiss: () => log.push('escape'),
         onBackdrop: () => log.push('backdrop'),
     });
 

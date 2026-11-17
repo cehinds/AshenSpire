@@ -939,7 +939,7 @@ export function OpenModal({
     primary = null,
     footSize = DEFAULT_ROW_SIZE,
     onClose = null,
-    onEscape = null,
+    onDismiss = null,
     onBackdrop = null,
     opener = document.activeElement,
     host = document.body,
@@ -1099,7 +1099,7 @@ export function OpenModal({
 
     const deferInert = deferLift && hasAnimationFrames();
     unregisterModal = registerModal(name || title || 'modal', panel, {
-        dismiss: () => (onEscape ?? close)(),
+        dismiss: () => (onDismiss ?? close)(),
         back: true,
         deferInert,
     });
