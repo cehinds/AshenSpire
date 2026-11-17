@@ -4915,7 +4915,7 @@
         "manaCost": 1,
         "type": "attack",
         "keywords": [],
-        "faceTemplate": ["Spend all Stamina.", "Deal {damage} damage.", "Hits 1 enemy per Stamina."],
+        "faceTemplate": ["Spend all Stamina.", "Deal {damage} damage.", "Hits one enemy per Stamina."],
         "effects": [
           {
             "op": "damage",
