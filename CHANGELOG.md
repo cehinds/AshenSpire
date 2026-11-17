@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-17
 
-- **Consistent selection and holds** ([#2810](https://github.com/cehinds/AshenSpire/pull/2810), `0.7.4.126`). Selected tabs, chips and rows, Enter/Space activation, arrow-key menus and long-presses now share one implementation each, so they behave the same everywhere. A combat or radial hold now cancels if the window loses focus or a second finger lands, like every other hold.
+- **Consistent selection and holds** ([#2810](https://github.com/cehinds/AshenSpire/pull/2810), `0.7.4.128`). Selected tabs, chips and rows, Enter/Space activation, arrow-key menus and long-presses now share one implementation each, so they behave the same everywhere. A combat or radial hold now cancels if the window loses focus or a second finger lands, like every other hold.
 - **Matching choice dialogs** ([#2807](https://github.com/cehinds/AshenSpire/pull/2807), `0.7.4.126`). The Blacksmith, rank-up, card, discard, reaction and armoury-slot choice dialogs now share one layout and behaviour: the same body, button widths and focus. The reaction and slot dialogs, which were the odd ones out, now match the rest.
 
 ## 2026-11-16
