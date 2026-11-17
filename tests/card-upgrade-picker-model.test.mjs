@@ -152,9 +152,7 @@ test('the picker omits capped cards and draws available cards with their upgrade
     assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview'), null, 'the list has no in-picker preview');
     assert.equal(modalOf(dom), null, 'selecting a card opens no confirmation by itself');
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    assert.match(modalOf(dom).querySelector('.confirmation-confirm').textContent, /Upgrade \(0\)/, 'the primary opens the confirmation that offers the upgrade');
-    CloseConfirmationModal();
+    assert.match(host.querySelector('.card-upgrade-confirm').textContent, /Upgrade \(0\)/, 'the primary names the upgrade it commits');
     door.close();
   });
 });
@@ -277,13 +275,9 @@ test('the picker is the reaction modal\'s design: option rows, the detail under 
     assert.ok(detail, 'the before -> after faces open under the selected row');
     assert.ok(detail.previousSibling === host.querySelector('.card-upgrade-row.selected') || detail.parentNode.children[detail.parentNode.children.indexOf(detail) - 1] === host.querySelector('.card-upgrade-row.selected'), 'directly under it');
     assert.ok(detail.querySelector('.upgrade-confirm-faces, .card-upgrade-faces'), 'both faces are in the detail');
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    assert.ok(modalOf(dom), 'the primary opens the permanent-change confirmation');
-    modalOf(dom).querySelector('.confirmation-cancel').click();
-    assert.equal(modalOf(dom), null, 'Back closes the confirmation with no change');
-    assert.ok(host.querySelector('.card-upgrade-modal'), 'and the list stays');
-    CloseConfirmationModal();
-    door.close();
+    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 }));
+    assert.equal(modalOf(dom), null, 'Confirm commits at once: no second confirmation (playtest 2026-11-17 item 36)');
+    assert.equal(host.querySelector('.card-upgrade-modal'), null, 'and the picker closes on the commit');
   });
 });
 
@@ -383,12 +377,11 @@ test('the card\'s modal is the shared body: cost, then the before and after face
     card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    const body = modalOf(dom).querySelector('.confirmation-details');
-    const kids = [...body.firstElementChild.children].map(n => n.className.split(' ')[0]);
+    // One click commits (playtest 2026-11-17 item 36), so the shared body is the detail under the selected row.
+    const body = host.querySelector('.card-upgrade-modal-details');
+    const kids = [...body.children].map(n => n.className.split(' ')[0]);
     assert.deepEqual([kids[0], kids[1], kids.at(-1)].filter(Boolean).slice(0, 2), ['confirmation-cost', 'card-upgrade-faces'], 'cost first, then the faces');
     assert.ok(kids.indexOf('card-upgrade-faces') < kids.indexOf('confirmation-change-list'), 'the stat rows are under the faces');
-    CloseConfirmationModal();
     door.close();
   });
 });
@@ -482,8 +475,7 @@ test('Confirm with a picked option hands the picked step to onConfirm, and a shr
     globalThis.setTimeout = () => 0; // committing arms the confirmation door's input shield; it must not outlive the fixture
     try {
       [...host.querySelectorAll('.card-upgrade-option')][1].click();
-      host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-      dom.document.querySelector('.confirmation-modal .confirmation-confirm').click();
+      host.querySelector('.card-upgrade-confirm').click(); // one click commits: no second confirmation
     } finally { globalThis.setTimeout = priorTimeout; }
     assert.ok(confirmed, 'onConfirm ran');
     assert.equal(confirmed.id, card.instanceId);
