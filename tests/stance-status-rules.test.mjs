@@ -2,6 +2,7 @@
 // Rule 1: Counter follows the normal decay rule. Its stacks lose 1 at the owner's turn start, and the armed Counter lasts while they do.
 // Rules 2-3: a Defend-stance target holding Block keeps at least 1 Poise against physical hits and Sweeps (and magic while it holds Ward stacks);
 // Smash still breaks it, and at 0 Block Poise breaks normally.
+// Rule 4: an enemy Counter move (the Gilded Knight's Parry) shows a Counter badge that decays normally and loses 1 on each use.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -12,6 +13,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
+import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -19,9 +21,9 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const SLASH = { kind: 'attack', moveId: 'slash', damage: 8, hits: 1,
   combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
 
-function live({ enemyId = 'wanderingSoldier', rules = null } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+function live({ enemyId = 'wanderingSoldier', rules = null, seed = 511 } = {}) {
+  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
   if (rules) rules(combat.fixCoreRules);
   const enemy = combat.enemies[0];
   delete combat.reactionRules.contactPolicy;
@@ -169,4 +171,68 @@ test('rules 2-3: a Poise rider riding a physical hit keeps the floor; one riding
 test('rules 2-3: the shipped data turns the floor on', () => {
   assert.equal(shipped.stanceBenefits.defend.poiseFloorWhileBlock, 1);
   assert.equal(shipped.stanceBenefits.defend.poiseFloorWardMagic, 1);
+});
+
+// ---- Rule 4: the enemy Counter badge ----
+// Seed 1 opens the Gilded Knight's fight on Parry (intent block, counterDamage 6): its Counter is armed for the player phase.
+const gilded = rules => live({ enemyId: 'gildedKnight', seed: 1, rules });
+const badgeEvents = (events, enemy) => events.filter(e => e.type === 'counterStacksChanged' && e.targetId === enemy.id).map(e => [e.amount, !!e.consumed, !!e.decay]);
+
+test('rule 4: the Gilded Knight Parry arms its Counter with a Counter badge of 1', () => {
+  const { enemy } = gilded();
+  assert.equal(enemy.intent?.moveId, 'parry');
+  assert.ok(enemy.combatCounter?.charges > 0);
+  assert.equal(enemy.counterStacks, 1);
+});
+
+test('rule 4: the badge drops by 1 when the Counter is used, and the return is unchanged by it', () => {
+  const { combat, enemy } = gilded();
+  const from = combat.eventLog.length;
+  play(combat, 'x', 'core.strike', {});
+  const events = combat.eventLog.slice(from);
+  const answer = events.find(e => e.type === 'combatCounterTriggered' && e.sourceId === enemy.id);
+  assert.ok(answer, 'the Parry answers the strike');
+  assert.deepEqual(badgeEvents(events, enemy), [[-1, true, false]]);
+  assert.equal(enemy.counterStacks ?? 0, 0);
+  // A fight saved without the key: its enemy never held a badge (the fight is made before the rules are edited, so drop the one granted).
+  const plain = gilded(rules => { delete rules.counter.enemyBadgeStacks; });
+  delete plain.enemy.counterStacks;
+  const before = plain.combat.eventLog.length;
+  play(plain.combat, 'x', 'core.strike', {});
+  const old = plain.combat.eventLog.slice(before).find(e => e.type === 'combatCounterTriggered' && e.sourceId === plain.enemy.id);
+  assert.equal(answer.amount, old.amount, 'the badge does not scale the enemy return');
+  assert.equal(answer.counterStacks, 0);
+});
+
+test('rule 4: an unused badge decays by 1 at the enemy turn start and its Counter ends with it', () => {
+  const { combat, enemy } = gilded();
+  const events = endTurn(combat);
+  assert.deepEqual(badgeEvents(events, enemy).slice(0, 1), [[-1, false, true]], 'the badge fades at the enemy turn start');
+  assert.notEqual(enemy.intent?.moveId, 'parry', 'Parry cannot repeat (maxConsecutive 1)');
+  assert.equal(enemy.counterStacks ?? 0, 0);
+  assert.equal(enemy.combatCounter, undefined);
+});
+
+test('rule 4 edge: a badge above 1 is not a second answer; a use takes 1 and spends the charge, the rest fades 1 per enemy turn start', () => {
+  const { combat, enemy } = gilded(rules => { rules.counter.enemyBadgeStacks = 3; });
+  enemy.counterStacks = 3;
+  play(combat, 'x', 'core.strike', {});
+  assert.equal(enemy.counterStacks, 2, 'a use takes 1');
+  assert.equal(enemy.combatCounter?.charges ?? 0, 0, 'the charge is spent: one answer per arming, as before');
+  const events = endTurn(combat);
+  assert.deepEqual(badgeEvents(events, enemy)[0], [-1, false, true]);
+  assert.equal(enemy.counterStacks, 1);
+  assert.equal(enemy.combatCounter, undefined, 'a spent Counter does not stay armed on the badge');
+});
+
+test('rule 4 edge: a fight saved without counter.enemyBadgeStacks grants no badge', () => {
+  const { combat, enemy } = gilded(rules => { delete rules.counter.enemyBadgeStacks; });
+  delete enemy.counterStacks;
+  primeEnemyCounter(combat, enemy, registries.enemies.get('gildedKnight').moves.parry, 'parry');
+  assert.ok(enemy.combatCounter?.charges > 0);
+  assert.equal(enemy.counterStacks ?? 0, 0);
+});
+
+test('rule 4: the shipped data turns the badge on', () => {
+  assert.equal(shipped.counter.enemyBadgeStacks, 1);
 });
