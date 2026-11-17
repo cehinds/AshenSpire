@@ -10,6 +10,7 @@
     "src/services/runPersistence.js",
     "src/ui/components/combatMount.js",
     "src/ui/components/combatPlayback.js",
+    "src/ui/contracts.js",
     "src/ui/models/CombatPlaybackModel.js",
     "src/ui/models/CombatTargetingModel.js",
     "src/ui/models/ComponentModel.js",
