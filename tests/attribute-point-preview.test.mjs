@@ -14,12 +14,14 @@ const build = (mutate = null) => {
   return { registries, run };
 };
 
+// Owner, 2026-11-17: one CON point is +5 HP (HP = 30 + 5 x (CON + level)); pools rank at delta / 10, so CON's largest
+// gain is its +1 Poise and the +5 HP follows it.
 test('Core 2 largest per-point gains read from the live formulas', () => {
   const { registries, run } = build();
   const text = (id) => largestAttributeGain(registries, run, id)?.text;
   assert.equal(text('strength'), '+1 AR');
   assert.equal(text('dexterity'), '+1 DR');
-  assert.equal(text('constitution'), '+10 HP');
+  assert.equal(text('constitution'), '+1 Poise');
   assert.equal(text('wisdom'), '+1 Perception');
   assert.equal(text('intelligence'), '+1 PR');
 });
@@ -27,9 +29,9 @@ test('Core 2 largest per-point gains read from the live formulas', () => {
 test('the full list names every non-zero gain and skips Ward while Core switches it off', () => {
   const { registries, run } = build();
   const con = attributePointGains(registries, run, 'constitution');
-  assert.ok(con.some(g => g.statId === 'hp' && g.delta === 10));
+  assert.ok(con.some(g => g.statId === 'hp' && g.delta === 5));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
-  assert.match(attributeGainSummary(con), /^\+10 HP, /);
+  assert.match(attributeGainSummary(con), /^\+1 Poise, \+5 HP/);
   assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
   assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
 });
@@ -62,9 +64,9 @@ test('the Victory receipt shows the largest gain on every attribute row, with al
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     const chips = [...app.querySelectorAll('.reward-stat-row .reward-stat-gain')];
     assert.equal(chips.length, 5);
-    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
-    const hp = chips.find(c => c.textContent === '+10 HP');
-    assert.match(hp.getAttribute('title'), /^\+10 HP, /);
+    assert.ok(chips.map(c => c.textContent).includes('+1 Poise'));
+    const con = chips.find(c => c.textContent === '+1 Poise');
+    assert.match(con.getAttribute('title'), /^\+1 Poise, \+5 HP/);
   });
 });
 
@@ -76,11 +78,11 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
     sheet.panel.querySelector('.progression-points').click();
     const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
     assert.ok(chips.length >= 5, 'one gain span per attribute row');
-    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
+    assert.ok(chips.map(c => c.textContent).includes('+1 Poise'));
     sheet.close();
   });
   const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
-  assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+10 HP');
+  assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+1 Poise');
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
 
@@ -96,7 +98,8 @@ test('a blight attribute bonus moves the threshold: the preview matches what all
   const before = stamina();
   allocateAttributePoint(registries, run, 'constitution');
   assert.equal(stamina() - before, predicted, 'preview equals the real allocation');
-  assert.equal(predicted, 0, 'the +1 CON bonus makes floor(0.5 x CON) cross no threshold at CON 1 -> 2');
+  // Owner, 2026-11-17: SP = 3 + floor(CON / 3). Unaided CON 1 -> 2 crosses nothing; the +1 CON bonus makes it 2 -> 3.
+  assert.equal(predicted, 1, 'the +1 CON bonus makes floor(CON / 3) cross a threshold at CON 2 -> 3');
 });
 
 test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {

@@ -202,7 +202,8 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const {previewCard,dispatch}=await import('../src/engine/combat.js');
  const {smithingPlan}=await import('../src/model/smithing.js');
- const run=fresh();visit(run,reg);
+ // Owner, 2026-11-17 (gear `statPoints`): a tier adds the greatsword's attribute points; its first is CON, its second STR (so AR +1).
+ const run=fresh();run.itemUpgradeLevels={'armament/greatsword':1};visit(run,reg);
  // Leave enough health to measure the full upgraded hit rather than overkill.
  const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;
  // The 11-card starter may not draw these in five cards; the test needs one of each, so put any missing one in hand.
@@ -222,12 +223,16 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
 
 test('configured Smith tiers follow the Core 2 tier steps per hand and honor JSON coefficients',async()=>{
  // Core 2 coefficients (real output): tierBonusSteps [1,1,2] give +1/+2/+4 at tiers 1/2/3, one wielded weapon per hand.
+ // Owner, 2026-11-17 (gear `statPoints`): each bonus step is statPoints.perRank (1) attribute points on the item, never AR.
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
- const run=fresh(),base=gameProfileRatingReceipt(reg,run).totals;
- for(const [level,bonus] of [[1,1],[2,2],[3,4]]){run.itemUpgradeLevels={'armament/greatsword':level};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,base.ar+bonus);}
- run.itemUpgradeLevels={};run.loadout.sets.leftHand[0]='dagger';const bare=gameProfileRatingReceipt(reg,run).totals;
- run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,bare.ar+4+2,'each hand adds its own tier bonus');
- const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{equipment:{upgradeBonuses:{weaponARPerTier:2,armorDRPerTier:3}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=gameProfileRatingReceipt(r,other).totals.ar;other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(gameProfileRatingReceipt(r,other).totals.ar,initial+2);
+ const points=(registries,subject)=>Object.values(gameProfileEffectiveAttributes(registries,subject)).reduce((a,b)=>a+b,0);
+ const run=fresh(),base=points(reg,run),baseAr=gameProfileRatingReceipt(reg,run).totals.ar;
+ for(const [level,bonus] of [[1,1],[2,2],[3,4]]){run.itemUpgradeLevels={'armament/greatsword':level};assert.equal(points(reg,run),base+bonus);}
+ assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,gameProfileEffectiveAttributes(reg,run).strength,'AR is the effective STR, with no tier AR');
+ assert.ok(gameProfileRatingReceipt(reg,run).totals.ar>baseAr,'the tiered greatsword STR raises AR');
+ run.itemUpgradeLevels={};run.loadout.sets.leftHand[0]='dagger';const bare=points(reg,run);
+ run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(points(reg,run),bare+4+2,'each hand adds its own tier bonus');
+ const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{gear:{statPoints:{perRank:2}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=points(r,other);other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(points(r,other),initial+2);
 });
 
 

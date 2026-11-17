@@ -39,21 +39,22 @@ const upgrade = (run, instanceId) => {
 test('Core Blacksmith: any deck card upgrades for cinders and no stones, even past the free allowance', () => {
   const run = smithRun(coreOut, 0);
   const card = strikes(run)[0];
+  // Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade + 25 per rank above 1 (Strike: rank 1).
   const first = upgrade(run, card.instanceId);
-  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1960]);
+  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1950]);
   // A rest site charges 1 stone for this second upgrade; the Blacksmith takes one stone off, so 0.
   const second = upgrade(run, card.instanceId);
-  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1920]);
+  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1865]);
   assert.equal(upgradeCount(card), 2);
   assert.deepEqual(card.upgradeSteps, [first.step, second.step]);
 });
 
 test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
-  const run = smithRun(coreOut, 3, 31, 200);
+  const run = smithRun(coreOut, 3, 31, 390);
   const [a, b] = strikes(run); // the Reaver starts with two Strikes now
   for (const card of [a, b, a, b, a]) upgrade(run, card.instanceId);
   assert.equal(run.smithingStones, 3, 'the stones are never touched');
-  assert.equal(run.cinders, 0, 'five upgrades at 40 cinders');
+  assert.equal(run.cinders, 0, 'five upgrades at 50, 50, 85, 85 and 120 cinders (50 + 35 per earlier upgrade)');
   assert.equal(upgradeCount(a), 3);
   const refused = upgradeArtPlan(coreOut, run, a.instanceId);
   assert.equal(refused.ok, false);

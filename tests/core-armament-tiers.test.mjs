@@ -26,10 +26,12 @@ test('the bonus steps are config: tiers 0..3 give 0/1/2/4', () => {
   assert.equal(upgradeTierBonus({ upgradeBonuses: {} }, 1), 1, 'no steps configured: one bonus per tier');
 });
 
-test('Core weapon: three upgrades at 1/2/3 stones, AR gain +1, +1, +2, and a fourth is refused', () => {
+// Owner, 2026-11-17 (gear `statPoints`): a tier's step is attribute points on the item (the greatsword's CON or STR), not AR.
+const ATTRIBUTE_LABELS = new Set(['STR', 'DEX', 'CON', 'WIS', 'INT']);
+test('Core weapon: three upgrades at 1/2/3 stones, attribute gain +1, +1, +2, and a fourth is refused', () => {
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' });
   run.smithingStones = 6;
-  const arGain = [];
+  const attributeGain = [];
   for (const [level, cost, gain] of [[0, 1, 1], [1, 2, 1], [2, 3, 2]]) {
     const candidate = candidateOf(reg, run, WEAPON);
     assert.equal(candidate.currentLevel, level);
@@ -39,11 +41,12 @@ test('Core weapon: three upgrades at 1/2/3 stones, AR gain +1, +1, +2, and a fou
     const receipt = smithOnce(run, WEAPON);
     assert.equal(receipt.spent, cost);
     assert.equal(run.smithingStones, stones - cost);
-    const ar = receipt.changes.find((row) => row.label === 'AR');
-    arGain.push(ar.after - ar.before);
-    assert.equal(gain, ar.after - ar.before, `tier ${level + 1} adds ${gain} AR`);
+    assert.equal(receipt.changes.find((row) => row.label === 'AR'), undefined, 'a tier adds no AR');
+    const added = receipt.changes.filter((row) => row.kind === 'stat' && ATTRIBUTE_LABELS.has(row.label)).reduce((sum, row) => sum + row.after - row.before, 0);
+    attributeGain.push(added);
+    assert.equal(gain, added, `tier ${level + 1} adds ${gain} attribute point(s)`);
   }
-  assert.deepEqual(arGain, [1, 1, 2]);
+  assert.deepEqual(attributeGain, [1, 1, 2]);
   assert.equal(run.itemUpgradeLevels[WEAPON], 3);
   assert.equal(candidateOf(reg, run, WEAPON), undefined, 'no fourth upgrade is offered');
   assert.throws(() => smithOnce(run, WEAPON), /not an eligible Smithing candidate/);
@@ -60,13 +63,14 @@ test('Core: not enough stones refuses the dearer tiers; relics keep their author
   assert.deepEqual(itemUpgradeTiers(reg, 'relic/ember', run).length <= 1, true);
 });
 
-test('Core armor budget follows the steps (3 baseline + 1/2/4 points)', () => {
+// Owner, 2026-11-17 (gear `statPoints`): the armour's points are its found attribute points plus one per rank (`statPoints.total`).
+test('Core armor attribute points follow the steps (found points + 1/2/4)', () => {
   const run = createRunState({ seed: 75, classId: 'reaver', registries: reg, runId: 'unique-run-3' });
   const gear = gameContent(run, 'gear').find((item) => item.kind === 'armor' && (!item.classes || item.classes.includes(run.class)));
   const id = gear.source?.id || gear.id;
   run.loadout.sets.armor = [id];
   const armorRef = `armor/${run.class}/${id}`;
-  const budget = (level) => { run.itemUpgradeLevels = { [armorRef]: level }; return gameProfileEquipmentReceipt(reg, run).sources.find((row) => row.sourceId === armorRef).resolved.budget; };
+  const budget = (level) => { run.itemUpgradeLevels = { [armorRef]: level }; return gameProfileEquipmentReceipt(reg, run).sources.find((row) => row.sourceId === armorRef).resolved.statPoints.total; };
   const base = budget(0);
   assert.deepEqual([1, 2, 3].map((level) => budget(level) - base), [1, 2, 4]);
 });

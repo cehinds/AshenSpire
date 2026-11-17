@@ -244,13 +244,25 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
   assert.equal(pileSurges(combat).length, 0);
 });
 
+// Owner, 2026-11-17: MP = base + floor(WIS / 3) and Draw reads INT, so the Bone Sceptre (INT +2) moves Draw but no pool.
+// The pool test swaps in the Blight Rod (WIS +2): the Reaver's WIS 1 -> 3 is one more maximum MP.
+const POOL_PIECE = 'blightRod';
+test('Core changeEquipment: the Bone Sceptre intelligence raises Draw by 2 and moves no pool', () => {
+  const { combat, run } = equipmentFight('reaver');
+  const p = combat.player;
+  const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
+  dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
+  assert.equal(p.drawPerTurn, before.draw + 2, 'the sceptre intelligence raises Draw');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'INT moves no HP, MP or SP');
+});
 for (const intent of ['changeEquipment', 'swapArmament']) {
-  test(`Core ${intent} preserves missing pools across repeated sceptre swaps and saves valid stats`, () => {
+  test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {
     const { registries, run, combat } = equipmentFight('reaver');
     registries.balance.equipment.swapCostKind = 'allowance';
     if (intent === 'swapArmament') {
-      combat.loadout.sets.rightHand[1] = 'boneSceptre';
-      combat.loadout.storage = combat.loadout.storage.filter(id => id !== 'boneSceptre');
+      combat.loadout.sets.rightHand[1] = POOL_PIECE;
+    } else {
+      combat.loadout.storage.push(POOL_PIECE);
     }
     const p = combat.player;
     const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
@@ -260,9 +272,9 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
       for (const sceptre of [true, false]) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
-          : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? 'boneSceptre' : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the sceptre intelligence raises the saved Mana formula');
-        assert.equal(p.drawPerTurn, before.draw + (sceptre ? 2 : 0), 'the sceptre intelligence raises Draw');
+          : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod wisdom raises the saved Mana formula');
+        assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
           assert.equal(p[field], Math.max(0, max - missing[field]), `${field} never refills a spent deficit`);

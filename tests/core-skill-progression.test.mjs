@@ -14,7 +14,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
-import { allocateAttributePoint } from '../src/model/levelup.js';
+import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
@@ -42,6 +42,9 @@ function live(classId = 'reaver') {
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A second, different group must not gain XP merely by being equipped.
   run.loadout.sets.leftHand[0] = 'roundShield';
+  // Owner, 2026-11-17 (gear `statPoints`): the Round Shield grants CON +1, so the pools re-derive (max HP 50 -> 55) as an
+  // equip would, and a save of this run then loads.
+  rederivePools(reg, run, 'test');
   const combat = createRunCombat({ registries: reg, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   return { run, combat };
 }
@@ -74,7 +77,8 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
-  assert.equal(hit.amount, 9, 'attribution does not scope or change the existing damage rating');
+  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8 incoming, x0.75 Poise protection = 6.
+  assert.equal(hit.amount, 6, 'attribution does not scope or change the existing damage rating');
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);
   recordSkillXp(combat, { type: 'combatEnd', victory: true });

@@ -73,7 +73,8 @@ test('earned Constitution selection previews its new maximum and exactly matches
   const model = gameProfileRestModel(registries, run, visit);
   const con = model.attributes.find(row => row.id === 'constitution');
   assert.equal(con.available, true);
-  assert.equal(con.preview.maxHp, run.maxHp + 10);
+  // Owner, 2026-11-17: HP = 30 + 5 x (CON + level), so one CON point is 5 maximum HP.
+  assert.equal(con.preview.maxHp, run.maxHp + 5);
   assert.equal(con.preview.hp, con.preview.maxHp);
   assert.deepEqual(run, before);
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'constitution' });
