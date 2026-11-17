@@ -723,7 +723,7 @@ test('the Assign points pool is its own dial, and typing it alone moves it', asy
     assert.equal(low.creationModes.find(row => row.id === 'assign').bonusPool, 3, `an Assign pool of ${pool} is refused`);
     const problem = startingStatPoolProblems(contentBundle, settings).find(row => row.keys.includes('gameConfig.startingStats.assign.bonusPool'));
     assert.ok(problem, 'and the refusal is said');
-    assert.match(problem.message, /is outside 2–\d+ and was refused\. 7 is the least a character can carry: the Starseer's .+ kit asks 3 Intelligence, and every other attribute needs at least 1\./);
+    assert.match(problem.message, /is outside 2 to \d+ and was refused\. 7 is the least a character can carry: the Starseer's .+ kit asks 3 Intelligence, and every other attribute needs at least 1\./);
   }
 });
 

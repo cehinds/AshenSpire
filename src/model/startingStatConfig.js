@@ -970,7 +970,7 @@ export function startingStatPoolProblems(bundle, settings = {}) {
           + (Number.isFinite(refusal.minimum) ? ` needs at least ${refusal.minimum}` : ' cannot be fitted')
           + ` to hold ${Object.entries(needs[refusal.classId] || {}).map(([id, entry]) => `${entry.minimum} ${attributeNames[id]}`).join(' and ') || 'its starting kit'}`
           + ` for its ${(Object.values(needs[refusal.classId] || {})[0] || {}).kit || 'starting kit'}.`
-        : `is outside ${refusal.bounds.min}–${refusal.bounds.max} and was refused.`
+        : `is outside ${refusal.bounds.min} to ${refusal.bounds.max} and was refused.`
           + (sizes ? floorSentence(source, refusal.kitBounds || refusal.bounds) : '');
       problems.push({
         keys: [refusal.key],

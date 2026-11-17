@@ -579,7 +579,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart. Your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -598,7 +598,7 @@ function reportAutosaveFailure(error, now = Date.now()) {
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save: browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
@@ -659,7 +659,7 @@ function newRun(config) {
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
-    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))}: ${why}`);
     console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
     return Promise.resolve({ ok: false, reason: why });
   }
@@ -693,7 +693,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
   const why = seedProblem(asked);
   if (why) {
     failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
-      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      ` · ${JSON.stringify(String(seedString))}: ${why}\n`
       + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
