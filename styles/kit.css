@@ -4868,10 +4868,6 @@ button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
-button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
-.as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background-color:var(--control-positive-fill);
-}
 /* COLOR-INTERACTION-CONTRACT §3 (models/ControlAppearance.js): exits stay
    brown/gold until highlighted by pointer, keyboard or pad, then turn red. */
 .as-btn[data-control-role='exit']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
