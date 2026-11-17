@@ -12,6 +12,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { evalPredicate } from '../src/engine/triggers.js';
 import { validatePredicate } from '../src/model/validate.js';
 import { actorRangeKey, rangePairKey } from '../src/model/combatEngagement.js';
+import { playConditionMet, playConditionReachable } from '../src/engine/cardBehavior.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -112,4 +113,16 @@ test('the predicate grammar admits the new fields and refuses bad ones', () => {
   assert.equal(problemsOf({ p: 'atRange', range: 'far' }).length, 1);
   assert.equal(problemsOf({ p: 'inStance', stance: 'nap' }).length, 1);
   assert.equal(problemsOf({ p: 'atRange', range: 'reach', stance: 'idle' }).length, 1);
+});
+
+test('playIf: a reach-only card is allowed at reach and refused at melee', () => {
+  const { combat, enemy } = live();
+  const def = { id: 'probe', name: 'Probe', playIf: { p: 'atRange', range: 'reach' } };
+  setBand(combat, enemy, 1);
+  assert.equal(playConditionMet(combat, def, enemy), true);
+  assert.equal(playConditionReachable(combat, def), true);
+  setBand(combat, enemy, 0);
+  assert.equal(playConditionMet(combat, def, enemy), false);
+  assert.equal(playConditionReachable(combat, def), false, 'no living enemy can be aimed to meet it');
+  assert.equal(playConditionMet(combat, { id: 'plain' }, enemy), true, 'a card without playIf is always allowed');
 });
