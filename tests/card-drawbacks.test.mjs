@@ -247,3 +247,13 @@ test('drawback-easing upgrade steps drop the drawback from the text and face, an
     assert.ok(changes.some((row) => row.label.toLowerCase().includes(label.toLowerCase())), `${cardId} after ${step.fx}: the picker names a change (${JSON.stringify(changes)})`);
   }
 });
+
+test("a lesson card's grade text names its drawback keyword (Quickstep's Exhaust shows in Core)", async () => {
+  const { playingCardDefinition } = await import('../src/model/playingCard.js');
+  const { profile } = await import('./helpers/fixcore-combat-rules.mjs');
+  for (const ref of [{ cardId: 'quickstep' }, { cardId: 'quickstep', abilityRank: 3 }]) {
+    const def = playingCardDefinition(registries, ref, { rules: { combatExpansionVersion: 2, gameProfile: profile } });
+    assert.match(def.textTemplate, /Exhaust\.$/, JSON.stringify(ref));
+  }
+  for (const grade of registries.cards.get('quickstep').gradeProfiles) assert.match(grade.textTemplate, /Exhaust\.$/, `rank ${grade.rank}`);
+});
