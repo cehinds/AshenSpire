@@ -1,5 +1,8 @@
 import { registerModal } from '../modalState.js';
-import { WatchLongPanel } from './modalShell.js';
+import {
+    BindVeilDismiss,
+    WatchLongPanel,
+} from './modalShell.js';
 
 const NO_SCROLL = Object.freeze({ preventScroll: true });
 
@@ -46,9 +49,7 @@ export class ModalController
         this.closed = false;
         this.unregisterModal = null;
         this.stopWatchingHeight = null;
-        this.pressBeganOnVeil = false;
-        this.rememberVeilPress = (event) => this.recordVeilPress(event);
-        this.backOutOnVeilClick = (event) => this.answerVeilClick(event);
+        this.unbindVeilDismiss = null;
     }
 
     Open()
@@ -57,8 +58,10 @@ export class ModalController
             dismiss: () => this.BackOut(),
             back: this.back,
         });
-        this.veil.addEventListener('pointerdown', this.rememberVeilPress);
-        this.veil.addEventListener('click', this.backOutOnVeilClick);
+        this.unbindVeilDismiss = BindVeilDismiss(
+            this.veil,
+            () => this.BackOut(),
+        );
 
         if (this.growsWhenLong)
         {
@@ -79,8 +82,7 @@ export class ModalController
         this.onClosing?.(closeOptions);
         this.unregisterModal?.unlock?.();
         this.stopWatchingHeight?.();
-        this.veil.removeEventListener('pointerdown', this.rememberVeilPress);
-        this.veil.removeEventListener('click', this.backOutOnVeilClick);
+        this.unbindVeilDismiss?.();
         this.veil.remove();
         this.restoreFocus(closeOptions);
         this.unregisterModal?.();
@@ -110,25 +112,6 @@ export class ModalController
         )
         {
             this.returnFocus.focus(NO_SCROLL);
-        }
-    }
-
-    recordVeilPress(event)
-    {
-        this.pressBeganOnVeil = event.target === this.veil;
-    }
-
-    answerVeilClick(event)
-    {
-        const pressStartedOnVeil = this.pressBeganOnVeil;
-        this.pressBeganOnVeil = false;
-
-        if (
-            event.target === this.veil
-            && pressStartedOnVeil
-        )
-        {
-            this.BackOut();
         }
     }
 }

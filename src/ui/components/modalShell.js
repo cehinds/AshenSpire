@@ -710,6 +710,39 @@ export function WatchLongPanel(panel)
     };
 }
 
+export function BindVeilDismiss(veil, onDismiss)
+{
+    let pressBeganOnVeil = false;
+
+    function rememberVeilPress(event)
+    {
+        pressBeganOnVeil = event.target === veil;
+    }
+
+    function dismissOnVeilClick(event)
+    {
+        const pressStartedOnVeil = pressBeganOnVeil;
+        pressBeganOnVeil = false;
+
+        if (
+            event.target === veil
+            && pressStartedOnVeil
+        )
+        {
+            onDismiss();
+        }
+    }
+
+    veil.addEventListener('pointerdown', rememberVeilPress);
+    veil.addEventListener('click', dismissOnVeilClick);
+
+    return function unbindVeilDismiss()
+    {
+        veil.removeEventListener('pointerdown', rememberVeilPress);
+        veil.removeEventListener('click', dismissOnVeilClick);
+    };
+}
+
 export function BindModalDismiss({
     veil,
     panel,
@@ -718,8 +751,6 @@ export function BindModalDismiss({
     escape = true,
 } = {})
 {
-    let pressBeganOnVeil = false;
-
     function handleKeydown(event)
     {
         if (event.defaultPrevented)
@@ -751,37 +782,16 @@ export function BindModalDismiss({
         close();
     }
 
-    function rememberVeilPress(event)
-    {
-        pressBeganOnVeil = event.target === veil;
-    }
-
-    function closeOnVeilClick(event)
-    {
-        const pressStartedOnVeil = pressBeganOnVeil;
-        pressBeganOnVeil = false;
-
-        if (
-            event.target === veil
-            && pressStartedOnVeil
-        )
-        {
-            close();
-        }
-    }
-
     const stopWatchingLongPanel = WatchLongPanel(panel);
 
     document.addEventListener('keydown', handleKeydown, true);
-    veil.addEventListener('pointerdown', rememberVeilPress);
-    veil.addEventListener('click', closeOnVeilClick);
+    const unbindVeilDismiss = BindVeilDismiss(veil, close);
 
     return function release({ restoreFocus = true } = {})
     {
         stopWatchingLongPanel();
         document.removeEventListener('keydown', handleKeydown, true);
-        veil.removeEventListener('pointerdown', rememberVeilPress);
-        veil.removeEventListener('click', closeOnVeilClick);
+        unbindVeilDismiss();
 
         const canRestoreFocus = restoreFocus
             && opener?.isConnected
