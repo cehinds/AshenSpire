@@ -32,6 +32,10 @@ export const deckRules = Object.freeze({
   sizeRange: Object.freeze({ min: 0, max: 200 }),
   // Where the editor may be opened from ('free' | 'restOnly').
   where: Object.freeze(['free', 'restOnly']),
+  // Owner, 2026-11-17: in Core the editor's minimum drops by 1 at each of
+  // these character levels. With the min-slot relics (1 each) a run lands
+  // near a minimum of 8 on average.
+  minimumReductionLevels: Object.freeze([6, 12]),
   // Plain card ids a run with no equipment may add without limit. An equipped
   // run's basics are its attack-slot and guard instances, matched by role.
   unlimitedCardIds: Object.freeze(['strike', 'defend']),

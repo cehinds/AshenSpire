@@ -14,7 +14,7 @@ import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCo
 // allocation for stampDeck to stamp — never a bare card outside the plan.
 
 import { deckRules } from '../content/deckRules.js';
-import { gameModule, gameContent } from './gameProfile.js';
+import { gameModule, gameContent, isCoreProfile } from './gameProfile.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { equippedPieces, isCurrentEquipmentGrant, isItemOwned, stampDeck } from './loadout.js';
 import { resolveCard } from './registries.js';
@@ -68,6 +68,22 @@ export function deckEditBounds(settings, minDelta = 0) {
   const bounds = readBounds(settings);
   // A deck-size item property (W25 step 6) lowers the minimum, never below 0.
   return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
+}
+
+/**
+ * levelMinDeckDelta(run) → how many cards a Core run's character level takes
+ * off the editor's minimum: 1 for each level in
+ * `deckRules.minimumReductionLevels` the run has reached. Other profiles: 0.
+ */
+export function levelMinDeckDelta(run) {
+  if (!isCoreProfile(run)) return 0;
+  const level = Number.isInteger(run?.level?.level) ? run.level.level : 1;
+  return deckRules.minimumReductionLevels.filter((at) => level >= at).length;
+}
+
+/** deckMinDelta(run) → everything that lowers this run's editor minimum: held items and relics, then level. */
+export function deckMinDelta(run) {
+  return ItemMinDeckDelta(run) + levelMinDeckDelta(run);
 }
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
@@ -374,7 +390,7 @@ export function cancelDeckEdit(run, snapshot) {
 
 /** Commit a validated editor draft without touching current combat piles. */
 export function commitDeckEditDraft(registries, run, edited, settings = {}) {
-  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, ItemMinDeckDelta(run));
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, deckMinDelta(run));
   if (refusal) throw new Error(refusal);
   if (hasCollectedCardPolicy(run) && edited.collectedCardIds !== undefined
     && (!Array.isArray(edited.collectedCardIds) || JSON.stringify([...edited.collectedCardIds].sort()) !== JSON.stringify(knownCollectedCardIds(run).sort()))) throw new Error('Deck editing cannot modify collection knowledge');
