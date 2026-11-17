@@ -10,7 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { InstanceRank, RankUpCandidates } from '../src/model/rankUpService.js';
-import { configuredTraderCategories } from '../src/model/gameProfileShopKind.js';
+import { ConfiguredTraderCategories } from '../src/model/gameProfileShopKind.js';
 import { gameContent } from '../src/model/gameProfile.js';
 import '../src/engine/runCombat.js';
 
@@ -99,7 +99,7 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   const real = stock.options.filter((option) => option.kind !== 'rankUps').length;
   assert.equal(stock.options.length, real + 1);
   // Traders vary (playtest 2026-11-17 item 42): a plain stock for THIS shop is its own shelves times the shelf size.
-  const shelves = (id) => configuredTraderCategories(run, id, gameContent(run, 'rewards').categories).length;
+  const shelves = (id) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories).length;
   assert.equal(plain.takeCount, 3 * shelves('1:plain'));
   const plainHere = 3 * shelves(shopId);
   assert.equal(stock.takeCount, plainHere + 1);

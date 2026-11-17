@@ -33,7 +33,7 @@ import { t as translate, tFull as translateFull, tTip as translateTip } from '..
 import { reasonWhenDisabled } from '../components/refusal.js';
 import { OpenConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
-import { cardUpgradeChanges, rankUpUpgradeModel } from '../models/CardUpgradeModel.js';
+import { cardUpgradeChanges, RankUpUpgradeModel } from '../models/CardUpgradeModel.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { projectGameCard } from '../../model/gameProfile.js';
 import { resolveCard } from '../../model/registries.js';
@@ -1076,7 +1076,7 @@ export function MountRewards(appRoot, {
         }
         let selection = null;
         const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
-        const readModel = () => rankUpUpgradeModel(registries, run, row.skillId, selection, { faceOf });
+        const readModel = () => RankUpUpgradeModel(registries, run, row.skillId, selection, { faceOf });
         const opener = [...appRoot.querySelectorAll('.reward-kind')].find((node) => node.dataset.key === row.key) || null;
         const picker = MountCardUpgradeModal(appRoot, readModel(), {
             registries,

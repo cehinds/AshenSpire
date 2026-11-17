@@ -27,7 +27,7 @@ import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
-import { receivedItems } from '../../model/receivedItems.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { assetUrl } from '../assetmap.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
 
@@ -173,7 +173,7 @@ export function mountEvent(app, opts) {
         // A card, armament or relic the choice handed over opens the shop's receive modal first (playtest 2026-11-17
         // item 41); then the what-changed receipt over the result (a pure flavour choice, an empty diff, opens nothing).
         const receipt = () => showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
-        const items = opts.onItemsReceived ? receivedItems(registries, before, run) : [];
+        const items = opts.onItemsReceived ? ReceivedItems(registries, before, run) : [];
         if (items.length) opts.onItemsReceived(items, receipt); else receipt();
       };
       // A choice commits on one tap (the eventChoice row in model/secondbeat.js

@@ -41,8 +41,8 @@ export function openShopArmamentChoice({ name, onEquip, onKeep, title = t('shop.
   return openChoice({ title, body: t('shop.buyChoice.armament.body', { name }), primaryLabel: t('armoury.picker.act.equip'), secondaryLabel: t('shop.buyChoice.keepInventory'), onPrimary: onEquip, onSecondary: onKeep });
 }
 
-/** openReceivedRelic({ name, onDone }) — the same receive modal for a relic: it is already worn, so one answer. */
-export function openReceivedRelic({ name, onDone }) {
+/** OpenReceivedRelic({ name, onDone }) — the same receive modal for a relic: it is already worn, so one answer. */
+export function OpenReceivedRelic({ name, onDone }) {
   const ok = button({ label: t('receive.relic.ok'), weight: 'primary', id: 'shop-buy-primary' });
   const shell = openModal({
     title: t('receive.relic.title'), size: 'sm', className: 'shop-buy-choice', bodyClassName: 'as-pane', closeLabel: t('receive.relic.ok'), primary: ok,
@@ -54,17 +54,17 @@ export function openReceivedRelic({ name, onDone }) {
 }
 
 /**
- * offerReceivedItems({ registries, run, items, settings, onPersist, onEquip, onDone }) — playtest 2026-11-17 item 41:
+ * OfferReceivedItems({ registries, run, items, settings, onPersist, onEquip, onDone }) — playtest 2026-11-17 item 41:
  * what an event handed over (model/receivedItems.js) opens the shop's receive modal, one item after another.
  * A card in the deck may go to the library (dismissing keeps it in the deck); a card in the library may join the deck;
  * an armament may be equipped (onEquip(id) leaves for the Armoury and ends the chain); a relic is announced.
  */
-export function offerReceivedItems({ registries, run, items, settings = {}, onPersist = () => {}, onEquip = null, onDone = () => {} }) {
+export function OfferReceivedItems({ registries, run, items, settings = {}, onPersist = () => {}, onEquip = null, onDone = () => {} }) {
   const queue = [...(items || [])];
   const next = () => {
     const item = queue.shift();
     if (!item) return onDone();
-    if (item.kind === 'relic') return openReceivedRelic({ name: item.name, onDone: next });
+    if (item.kind === 'relic') return OpenReceivedRelic({ name: item.name, onDone: next });
     if (item.kind === 'armament') {
       if (!onEquip) return next();
       let equipping = false;

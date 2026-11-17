@@ -10,7 +10,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameProfileShopStock } from '../src/model/gameProfileRewards.js';
-import { configuredTraderCategories, configuredTraderOffersSmith } from '../src/model/gameProfileShopKind.js';
+import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from '../src/model/gameProfileShopKind.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -23,15 +23,15 @@ test('every trader stocks 3-6 shelves including armaments, cards and relics, and
   for (let n = 0; n < 40; n += 1) {
     const run = newRun(100 + n);
     const shopId = `1:node${n}`;
-    const shelves = configuredTraderCategories(run, shopId, gameContent(run, 'rewards').categories);
+    const shelves = ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories);
     assert.ok(shelves.length >= 3 && shelves.length <= 6, `${shelves.length} shelves`);
     for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(shelves.includes(kind), `${kind} is always stocked`);
-    assert.deepEqual(configuredTraderCategories(run, shopId, gameContent(run, 'rewards').categories), shelves, 'seeded: same node, same shelves');
+    assert.deepEqual(ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories), shelves, 'seeded: same node, same shelves');
     counts.add(shelves.length);
     const stock = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
     const kinds = new Set(stock.options.map((option) => option.kind).filter((kind) => kind !== 'rankUps'));
     for (const kind of kinds) assert.ok(shelves.includes(kind), `${kind} is one of this trader's shelves`);
-    if (configuredTraderOffersSmith(run, shopId)) smiths += 1;
+    if (ConfiguredTraderOffersSmith(run, shopId)) smiths += 1;
   }
   assert.ok(counts.size > 1, 'traders differ in how many shelves they keep');
   assert.ok(smiths > 0 && smiths < 40, 'some traders, not all, keep a Blacksmith');

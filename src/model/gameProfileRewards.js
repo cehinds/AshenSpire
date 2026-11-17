@@ -1,6 +1,6 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
-import { configuredTraderCategories } from './gameProfileShopKind.js';
+import { ConfiguredTraderCategories } from './gameProfileShopKind.js';
 import { syncZones } from './state.js';
 import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
@@ -383,7 +383,7 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');
   const rules=gameContent(run,'shops');
   // Each trader stocks its own 3-6 shelves (playtest 2026-11-17 item 42; gameProfileShopKind.js).
-  const categories=configuredTraderCategories(run,shopId,gameContent(run,'rewards').categories);
+  const categories=ConfiguredTraderCategories(run,shopId,gameContent(run,'rewards').categories);
   const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
   const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
   const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];

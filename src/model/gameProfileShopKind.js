@@ -34,8 +34,8 @@ export function configuredShopKind(run, shopId) {
 // and the node, like the Blacksmith share above, so a reload and a revisit agree and no named RNG stream moves.
 const traderRules = (run) => gameContent(run, 'shops')?.trader || null;
 
-/** configuredTraderCategories(run, shopId, fallback) → the shelves this trader stocks, or `fallback` without a trader table. */
-export function configuredTraderCategories(run, shopId, fallback) {
+/** ConfiguredTraderCategories(run, shopId, fallback) → the shelves this trader stocks, or `fallback` without a trader table. */
+export function ConfiguredTraderCategories(run, shopId, fallback) {
   const rules = traderRules(run);
   if (!rules) return fallback;
   const always = (rules.always || []).filter((kind) => fallback.includes(kind));
@@ -53,8 +53,8 @@ export function configuredTraderCategories(run, shopId, fallback) {
   return fallback.filter((kind) => chosen.has(kind));
 }
 
-/** configuredTraderOffersSmith(run, shopId) → true when this merchant node also keeps a Blacksmith's workshop. */
-export function configuredTraderOffersSmith(run, shopId) {
+/** ConfiguredTraderOffersSmith(run, shopId) → true when this merchant node also keeps a Blacksmith's workshop. */
+export function ConfiguredTraderOffersSmith(run, shopId) {
   const chance = traderRules(run)?.smithChance;
   if (!Number.isInteger(chance) || chance <= 0) return false;
   return upgradeStepRng(run.seed, `trader-smith:${shopId}`, 0)() * 100 < Math.min(100, chance);

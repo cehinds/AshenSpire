@@ -33,7 +33,7 @@ import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
-import { openShopCardChoice, openShopArmamentChoice, offerReceivedItems } from './ui/components/shopBuyChoice.js';
+import { openShopCardChoice, openShopArmamentChoice, OfferReceivedItems } from './ui/components/shopBuyChoice.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -84,7 +84,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind, configuredTraderOffersSmith } from './model/gameProfileShopKind.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -2664,7 +2664,7 @@ function showShop() {
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-    onSmith: configuredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
+    onSmith: ConfiguredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       if (offer.options[index]?.kind === 'rankUps') {
@@ -2691,7 +2691,7 @@ function showEvent(eventId) {
     eventId,
     // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
     // Equipping an armament leaves for the Armoury, and its way back is this event's own way on.
-    onItemsReceived: (items, then) => offerReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+    onItemsReceived: (items, then) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
       onPersist: persist, onEquip: id => { persist(); showArmoury({ equipItemId: id }, leaveEvent); }, onDone: then }),
     onDone: () => leaveEvent(),
   });

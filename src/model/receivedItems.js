@@ -20,11 +20,11 @@ const armamentIds = (run) => {
 const nameOf = (row, id) => row?.name || id;
 
 /**
- * receivedItems(registries, before, run) → [{ kind: 'card', instanceId, cardId, name, zone } |
+ * ReceivedItems(registries, before, run) → [{ kind: 'card', instanceId, cardId, name, zone } |
  *   { kind: 'armament', id, name } | { kind: 'relic', id, name }].
  * `before` is snapshotRunForDiff(run) taken before the choice committed.
  */
-export function receivedItems(registries, before, run) {
+export function ReceivedItems(registries, before, run) {
   const items = [];
   const knownCards = new Set((before?.deck || []).map((card) => card.instanceId));
   for (const [zone, cards] of [['deck', run?.deck || []], ['sideboard', run?.sideboard || []]]) {

@@ -30,7 +30,7 @@ import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
-import { receivedItems } from '../../model/receivedItems.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -224,7 +224,7 @@ export function mountDialogue(app, options) {
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
       // An item the choice handed over opens the shop's receive modal first (playtest 2026-11-17 item 41).
       const showReceipt = () => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
-      const items = options.onItemsReceived ? receivedItems(registries, before, run) : [];
+      const items = options.onItemsReceived ? ReceivedItems(registries, before, run) : [];
       if (items.length) options.onItemsReceived(items, showReceipt); else showReceipt();
       return;
     }

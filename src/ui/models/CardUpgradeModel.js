@@ -156,13 +156,13 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
 }
 
 /**
- * rankUpUpgradeModel(registries, run, skillId, selectedInstanceId, { faceOf }) — a usage skill's rank-up (SPEC 13.4o)
+ * RankUpUpgradeModel(registries, run, skillId, selectedInstanceId, { faceOf }) — a usage skill's rank-up (SPEC 13.4o)
  * in the card-upgrade picker's shape (playtest 2026-11-17 item 45a: every card upgrade uses the Blacksmith's option
  * modal). Rows are the cards that can rise, deck first; a chosen card's options are its rank-up bonus picks
  * (rankUpBonus.js), or the plain rise when it has none. Free: `purse` is false, so the picker shows no price.
  * `faceOf(instance)` resolves an instance to the face the game draws (the reward screen's own resolver).
  */
-export function rankUpUpgradeModel(registries, run, skillId, selectedInstanceId = null, { faceOf } = {}) {
+export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId = null, { faceOf } = {}) {
   const rows = rankUpCandidates(registries, run, skillId).map((instance) => {
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
