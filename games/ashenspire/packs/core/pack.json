@@ -1,6 +1,12 @@
 {
   "id": "ashen.core-content",
   "version": "2.0.0",
+  "sharedCardIds": [
+    "steelResolve", "ironHide", "openingCut", "holdTheLine", "lungingThrust",
+    "hearthVigil", "zealousFervor", "sanctifiedGuard", "pyreBrand",
+    "innerOrbit", "starlitSkin", "unguardedBolt", "focusedStar", "rimeLance", "distantStar",
+    "keenEdge", "breakFocus", "dirtyStrike", "closeQuarters"
+  ],
   "content": {
     "characters": "characters.json",
     "cardPools": "cardPools.json",

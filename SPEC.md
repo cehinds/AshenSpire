@@ -1048,7 +1048,7 @@ Reaction prompts, the combat log and enemy-action presentation. Detailed contrac
 
 ### 4.8b Conditional payoff and self-buff cards (playtest 2026-11-17, theme G)
 
-Expanded combat only (`minCombatExpansionVersion: 2`): the Core reward roll offers them by class (`rollCardRewardIds`); they are not in the older rules' `cardPool`. Numbers are on the halved base-damage scale (theme A).
+Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward and shop pools offer them by class through the shared cards named in its content pack. The older rules' class pools omit them. Reach-only cards are available only when the run allows Reach. Numbers are on the halved base-damage scale (theme A).
 
 - **Self-buffs** grant statuses to the player only (never an ally). Each strong one carries a penalty its upgrade eases:
 

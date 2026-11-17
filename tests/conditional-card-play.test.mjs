@@ -5,7 +5,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
+import { claimGameProfileReward, gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -27,8 +28,11 @@ export const CONDITIONAL_CARDS = Object.freeze({
   starseer: ['unguardedBolt', 'focusedStar', 'rimeLance', 'distantStar'], rogue: ['breakFocus', 'dirtyStrike', 'closeQuarters'],
 });
 
+const newRun = (classId, seed) => createRunState({ registries, classId, seed,
+  profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+
 function live(classId, seed = 433, enemyIds = ['wanderingSoldier']) {
-  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const run = newRun(classId, seed);
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds });
   const enemy = combat.enemies[0];
   delete combat.reactionRules.contactPolicy;
@@ -59,13 +63,17 @@ const damageTaken = ({ enemy }) => -enemy.hp;
 const blockHeld = ({ player }) => player.block;
 const stance = maneuver => ({ maneuver, camp: maneuver === 'casting' ? 'spell' : 'physical', range: 'melee' });
 
-test('every new card is an expanded-combat card of its class, so the Core reward roll offers it; self-buffs target only the player', () => {
+test('Core stocks every new card for its class; older rules omit them and the buffs target only the player', () => {
   for (const [classId, ids] of Object.entries(SELF_BUFF_CARDS)) {
+    const run = newRun(classId, 433);
+    run.maxMana = Math.max(run.maxMana, 2);
+    const pool = gameProfileRewardPools(registries, run).combatCards;
     for (const id of [...ids, ...CONDITIONAL_CARDS[classId]]) {
       const def = registries.cards.get(id);
       assert.ok(def, `${id} is registered`);
       assert.equal(def.class, classId, `${id} belongs to ${classId}`);
-      assert.equal(def.minCombatExpansionVersion, 2, `${id} joins the Core (expanded combat) reward roll`);
+      assert.equal(def.minCombatExpansionVersion, 2);
+      assert.ok(pool.includes(id), `${id} is offered by Core to ${classId}`);
       assert.ok(!registries.classes.get(classId).cardPool.includes(id), `${id} stays out of the older rules' pool`);
     }
     for (const id of ids) {
@@ -73,6 +81,61 @@ test('every new card is an expanded-combat card of its class, so the Core reward
       const statusEffects = [...def.effects, ...(def.upgrade?.effects || [])].filter(effect => effect.op === 'applyStatus');
       assert.ok(statusEffects.length, `${id} buffs`);
       assert.ok(statusEffects.every(effect => effect.target === 'self'), `${id} buffs the player only`);
+    }
+  }
+});
+
+test('a real Core reward offers and grants a new class card', () => {
+  const run = newRun('reaver', 433);
+  const ids = [...SELF_BUFF_CARDS.reaver, ...CONDITIONAL_CARDS.reaver];
+  for (let seed = 0; seed < 40; seed++) {
+    const offerId = `level:${seed}`;
+    const offer = gameProfileRewardOffers(registries, run, createRng(seed), { offerId, source: 'level' });
+    const index = offer.options.findIndex(row => ids.includes(row.id));
+    if (index < 0) continue;
+    const claimed = claimGameProfileReward(registries, run, offerId, index);
+    assert.equal(claimed.id, offer.options[index].id);
+    assert.ok(run.sideboard.some(row => row.cardId === claimed.id));
+    return;
+  }
+  assert.fail('no Core level-up offer included a new Reaver card');
+});
+
+test('configured rewards keep conditional cards while removing unreachable range requirements', () => {
+  for (const [classId, reachOnly, other] of [['reaver', 'lungingThrust', 'openingCut'], ['starseer', 'distantStar', 'focusedStar']]) {
+    const run = newRun(classId, 433);
+    const pool = () => gameProfileRewardPools(registries, run).combatCards;
+    assert.ok(pool().includes(reachOnly));
+    run.rangePolicy = { ...run.rangePolicy, maxRange: 'melee' };
+    assert.ok(!pool().includes(reachOnly));
+    assert.ok(pool().includes(other));
+    run.rangePolicy = { ...run.rangePolicy, enabled: false, maxRange: 'reach' };
+    assert.ok(!pool().includes(reachOnly));
+    assert.ok(pool().includes(other));
+  }
+});
+
+test('shared cards keep their upgrades and respect disabled resource pools', () => {
+  const mpOff = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { resources: { include: ['sp'] } } });
+  const spOff = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { resources: { include: ['mp'] } } });
+  const orbit = { cardId: 'innerOrbit', upgraded: true };
+  assert.deepEqual(projectGameCard(profile, orbit).resourceCosts, { sp: 1, mp: 1 });
+  assert.deepEqual(projectGameCard(mpOff, orbit).resourceCosts, { sp: 1, mp: 0 });
+  const hide = { cardId: 'ironHide', upgraded: true };
+  assert.equal(projectGameCard(profile, hide).resourceCosts.sp, 0);
+  assert.equal(projectGameCard(spOff, hide).costGrowth.stamina, 0);
+});
+
+test('Core quotes and pays the authored self-buff price before and after its upgrade', () => {
+  for (const [cardId, prices] of [['steelResolve', [2, 1]], ['ironHide', [1, 0]]]) {
+    for (const [index, price] of prices.entries()) {
+      const { combat, player } = live('reaver');
+      combat.piles.hand.push({ instanceId: 'price', cardId, upgraded: index > 0 });
+      assert.equal(previewCard(combat, 'price').staminaCost, price, `${cardId} preview`);
+      const before = player.energy;
+      const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'price' });
+      assert.equal(out.events.find(event => event.type === 'cardPlayed').staminaSpent, price, `${cardId} receipt`);
+      assert.equal(before - player.energy, price, `${cardId} payment`);
     }
   }
 });

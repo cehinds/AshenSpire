@@ -7,6 +7,7 @@ import { holdForCli } from './lib/build-lock.mjs';
 import { catalogJSONExpression } from './catalog-json.mjs';
 import { compileBaseCards, BASE_CARD_OUTPUT } from './base-cards.mjs';
 import { resolveGameAuthor, canonicalGameJSON, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
+import { coreContentBundle } from '../src/content/index.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const GENERATED = 'src/content/generated/gameProfiles.js';
 const LOCK = 'games/ashenspire/game.lock.json';
@@ -48,6 +49,43 @@ export function collectMechanicsRuntimeArtifacts(root = ROOT) {
   return [...new Set(paths)].sort().map(path=>artifact(path,'ashen.mechanics-runtime','1.0.0',root));
 }
 
+function sharedCardVariant(card, sp, mp) {
+  const { upgrade, costGrowth } = card;
+  return {
+    cost: sp ? card.cost : 0,
+    staminaCost: sp ? card.staminaCost : 0,
+    manaCost: mp ? card.manaCost : 0,
+    ...(upgrade && { upgrade: { ...upgrade, ...(sp ? {} : { cost: 0, staminaCost: 0 }), ...(mp ? {} : { manaCost: 0 }) } }),
+    ...(costGrowth && { costGrowth: { ...costGrowth, ...(sp ? {} : { stamina: 0 }), ...(mp ? {} : { mana: 0 }) } }),
+  };
+}
+
+// Core pins only explicitly admitted shared definitions, with tags and damage exposure from the normal content build.
+function appendSharedCards(pack, content, packPath) {
+  if (pack.sharedCardIds === undefined) return;
+  if (!Array.isArray(pack.sharedCardIds) || !Array.isArray(content.cards) || !content.resourceVariants) {
+    throw new Error(`${packPath}: sharedCardIds requires cards and resourceVariants`);
+  }
+  const source = new Map(coreContentBundle.cards.map(card => [card.id, card]));
+  const used = new Set(content.cards.map(card => card.id));
+  for (const id of pack.sharedCardIds) {
+    if (used.has(id)) throw new Error(`${packPath}: duplicate shared card '${id}'`);
+    const def = source.get(id);
+    if (def?.minCombatExpansionVersion !== 2) throw new Error(`${packPath}: unknown expanded shared card '${id}'`);
+    const tags = coreContentBundle.tagging.filter(row => row.family === 'card' && row.objectId === id).map(row => row.tagId);
+    const card = { ...def, tags, staminaCost: def.staminaCost ?? def.cost, manaCost: def.manaCost ?? 0 };
+    if (def.upgrade?.cost !== undefined) card.upgrade = { ...def.upgrade, staminaCost: def.upgrade.staminaCost ?? def.upgrade.cost };
+    content.cards.push(card);
+    content.resourceVariants[id] = {
+      none: sharedCardVariant(card, false, false),
+      sp: sharedCardVariant(card, true, false),
+      mp: sharedCardVariant(card, false, true),
+      'sp,mp': sharedCardVariant(card, true, true),
+    };
+    used.add(id);
+  }
+}
+
 export function loadGameProfileCatalog() {
   compileBaseCards(); // validate authored effect/opcode/reference contracts before locking source packs
   const contracts = json('engine/contracts/game-profile.json'), foundation = json('engine/foundation/foundation.json');
@@ -85,6 +123,7 @@ export function loadGameProfileCatalog() {
       if(pack.id!==ref.id || pack.version!==ref.version) throw new Error(`${packPath}: exact pack identity/version mismatch`);
       const content={},artifacts=[artifact(packPath,pack.id,pack.version)];
       for(const [kind,file] of Object.entries(pack.content)) { const source=referenced(packPath,file);content[kind]=json(source);artifacts.push(artifact(source,pack.id,pack.version)); }
+      appendSharedCards(pack, content, packPath);
       catalog.packs[key]={manifest:pack,content,artifacts};
     }
   }

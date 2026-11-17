@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
-import { makeAuditCombat, settleAuditChoices } from '../tools/combat-audit/fixtures.mjs';
+import { makeAuditCombat, setAuditPredicate, settleAuditChoices } from '../tools/combat-audit/fixtures.mjs';
 import { assertImmediateContracts } from '../tools/combat-audit/cards.mjs';
 
 test('every admitted Core 2 card and authored upgrade previews and resolves through paid dispatch', async t => {
@@ -27,6 +27,8 @@ test('every admitted Core 2 card and authored upgrade previews and resolves thro
     const instance = combat.piles.hand[0], definition = resolveCard(registries, instance);
     const plan = api.cardTargetPlan(definition, combat.player.id, combat.enemies, [{ ...combat.player, connected: true }], { solo: true });
     const targetId = plan.legalIds[0];
+    const target = targetId === combat.player.id ? combat.player : combat.enemies.find(enemy => enemy.id === targetId);
+    if (definition.playIf) setAuditPredicate(combat, definition.playIf, true, target);
     const choice = api.cardChoicePlan(combat, instance.instanceId)?.options?.find(row => !row.active)?.id;
     const rngBefore = combat.rng.getCounters();
     assert.doesNotThrow(() => api.previewCard(combat, instance.instanceId, targetId), `${key}: preview`);
@@ -39,7 +41,7 @@ test('every admitted Core 2 card and authored upgrade previews and resolves thro
       continue;
     }
     const costs = api.cardPlayCosts(combat, instance.instanceId);
-    const executedDefinition = api.selectCardVariant(combat, definition, costs, targetId === combat.player.id ? combat.player : combat.enemies.find(enemy => enemy.id === targetId));
+    const executedDefinition = api.selectCardVariant(combat, definition, costs, target);
     const eventStart = combat.eventLog.length;
     assert.doesNotThrow(() => api.dispatch(combat, action), `${key}: play`);
     for (let i = 0; i < 10; i++) {
