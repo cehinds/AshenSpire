@@ -5886,6 +5886,8 @@ button[data-button-size] {
 .customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
 .customize .cc-primary-footer { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
 .customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin:0; padding:0; width:auto; background:none; border:0; align-items:center; flex:0 0 auto; }
+/* Playtest 2026-11-17 item 38: when the footer wraps on a phone, the step's Continue keeps to the right edge (the forward side). */
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { margin-inline-start:auto; justify-content:flex-end; }
 .customize .cc-primary-continue-row .cc-primary-continue { flex:0 0 auto; width:max-content; min-width:11rem; padding-inline:1.2rem; }
 .customize .cc-primary-footer .cc-resource-row { display:contents; }
 .cc-derived:has(> .cc-resource-row) { display:flex; flex-direction:column; align-items:stretch; gap:.35rem; }
