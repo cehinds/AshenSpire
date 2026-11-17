@@ -377,6 +377,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const discarding = new Set();
   function discardOut(el) {
     discarding.add(el);
+    // Last in the strip and out of handEls: the new hand's fan, keys and slots count only the cards that stay.
+    // Its own placement variables keep it where it was while it drops away.
+    handEl.appendChild(el);
     el.dataset.discarding = '';
     el.inert = true;
     el.setAttribute('aria-hidden', 'true');
@@ -577,8 +580,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // The overlap arm: record what this render made, then reconcile. Inert —
     // including the observer re-point — unless the layout word is 'overlap';
     // in 'paging' the loop above was the whole render, unchanged.
-    handEls = [...handEl.children];
+    handEls = [...handEl.children].filter((el) => !discarding.has(el));
     handFan = handEls.map((el) => el.style.transform);
+    // A turn-start refresh is a new hand, not a play: no slot of the old fan is held for it.
+    if (refresh) appliedHand = null;
     // Re-observing an unchanged card requests a fresh initial size delivery,
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();
