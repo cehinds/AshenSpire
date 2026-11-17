@@ -7,9 +7,9 @@ import { uiConfig } from '../src/config/generated/ui.js';
 const actor = (id, side, x, row, ratio = 1, over = {}) => ({ side, ratio, multiplier: .5, userScale: 1, visibleHeight: 190, visibleWidth: 120,
   slot: { id, side, x, row, ground: 600, fitGround: 600 }, ...over });
 const fit = (actors, extra = {}) => fitViewportSprites({ width: 1280, actors, viewportHeight: 720, ...extra });
-// SPEC: the player shares the enemies' body share. The playtest's larger player (item 33, playerBodyScale 1.6) waits on the
-// owner's SPEC ruling, so the pin is the SPEC value, not whatever the config holds.
-const PLAYER = 1;
+// SPEC (owner, 2026-11-17): the player's figure is 60% larger than the enemies' body share (playerBodyScale 1.6).
+// The pin is the SPEC value, not whatever the config holds.
+const PLAYER = 1.6;
 const sideScale = f => (f.id === 'p' ? PLAYER : 1);
 
 test('the tunable shares live in the formation config', () => {
@@ -34,8 +34,8 @@ test('every combatant is combatantScale x the base share; a large one is x the s
   const enemy = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'enemy' });
   const large = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1.75, side: 'enemy' });
   assert.ok(Math.abs(enemy - 800 * .22 * .5866) < 1e-9);
-  assert.equal(cfg.playerBodyScale, 1, 'SPEC: no player body scale until the owner approves item 33');
-  assert.ok(Math.abs(player / enemy - 1) < 1e-9, 'the player equals a normal enemy');
+  assert.equal(cfg.playerBodyScale, PLAYER, 'SPEC: the player is 60% larger');
+  assert.ok(Math.abs(player / enemy - PLAYER) < 1e-9, 'the player is 1.6x a normal enemy');
   // The mechanism a SPEC change would switch on: a playerBodyScale of 1.6 draws the player 60% larger.
   const larger = { ...uiConfig.presentation.combatFormationModel.sizing.viewportScale, playerBodyScale: 1.6 };
   assert.ok(Math.abs(targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'player' }, larger)
@@ -53,7 +53,7 @@ test('size ignores enemy count, the other side and ground depth', () => {
   assert.equal(five.lastResort, null);
 });
 
-test('a normal enemy equals the player; a large one is x1.15 of that', () => {
+test('the player is 1.6x a normal enemy; a large one is x1.15 of the normal enemy', () => {
   const sizes = fit([actor('p', 'player', 200, 0), actor('e', 'enemy', 900, 0), actor('big', 'enemy', 1100, 1, 1.75)]);
   assert.ok(Math.abs(sizes[0].visibleHeight / sizes[1].visibleHeight - PLAYER) < 1e-9);
   assert.ok(Math.abs(sizes[2].visibleHeight / sizes[1].visibleHeight - 1.15) < 1e-9);

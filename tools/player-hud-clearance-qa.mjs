@@ -7,6 +7,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
+import { uiConfig } from '../src/config/generated/ui.js';
+
+const HUD_GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const chromium = playwright.chromium || playwright.default.chromium;
 const out = resolve(process.env.HUD_QA_OUT || 'outputs/player-hud');
@@ -101,7 +104,7 @@ try {
       const frame = document.querySelector('.combatant.player'), rack = frame.querySelector('.target-hud-overhead-meters');
       return { selected:frame.classList.contains('context-selected'),
         artTop:frame.closest('.field').getBoundingClientRect().top + (Number(frame.dataset.groundY) - Number(frame.dataset.spriteVisibleHeight)) * (Number(document.documentElement.dataset.viewScale) || 1),
-        rackBottom:rack.getBoundingClientRect().bottom };
+        rackBottom:rack.getBoundingClientRect().bottom, rackTop:rack.getBoundingClientRect().top };
     });
     report.views.push({name,width,height,profile:fixture.profile,facts,geometry,errors});
     try {
@@ -143,14 +146,16 @@ try {
       for (const t of text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits the overhead HUD');
       assert.ok(geometry.rack.left >= 0 && geometry.rack.right <= width && geometry.rack.top >= 0 && geometry.rack.bottom <= height, name+': overhead HUD fits viewport');
-      // SPEC: the mini HUD sits above the visible artwork with a fixed 10 px bottom-to-art-top gap measured on the
-      // form factor's canvas (including selection growth): screen px divided by the canvas scale.
+      // SPEC (owner, 2026-11-17): the player's mini HUD is lowered playerMiniHudDropFraction of the way from its place
+      // above the art (a 10 canvas px bottom-to-art-top gap) toward the art top: its top stays above the art top, and
+      // the art top sits at least (10 + its height) x (1 - drop) canvas px below it (screen px over the canvas scale).
       assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
-      const canvasGap = (geometry.art.top - geometry.rack.bottom) / geometry.viewScale;
-      assert.ok(canvasGap >= 10 - 0.5, name+': overhead HUD bottom sits at least 10 canvas px above the art top (gap '+canvasGap.toFixed(2)+')');
+      const drop = HUD_GRID.playerMiniHudDropFraction ?? 0;
+      const topGap = (geometry.art.top - geometry.rack.top) / geometry.viewScale, rackHeight = (geometry.rack.bottom - geometry.rack.top) / geometry.viewScale;
+      assert.ok(topGap > 0 && topGap >= (10 + rackHeight) * (1 - drop) - 0.5, name+': overhead HUD top sits (10 + its height) x (1 - drop) canvas px above the art top (gap '+topGap.toFixed(2)+')');
       assert.ok(geometry.selected.selected, name+': the player can be selected');
-      const selectedGap = (geometry.selected.artTop - geometry.selected.rackBottom) / geometry.viewScale;
-      assert.ok(selectedGap >= 10 - 0.5, name+': selected, the overhead HUD bottom still sits at least 10 canvas px above the art top (gap '+selectedGap.toFixed(2)+')');
+      const selectedGap = (geometry.selected.artTop - geometry.selected.rackTop) / geometry.viewScale;
+      assert.ok(selectedGap > 0 && selectedGap >= (10 + rackHeight) * (1 - drop) - 0.5, name+': selected, the overhead HUD top still sits above the art top by the same rule (gap '+selectedGap.toFixed(2)+')');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
       assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');
