@@ -98,12 +98,16 @@ export const RELEASE_EVENT = 'gprelease';
  * A falsy return means the form declined — the dial is off, this state owes no
  * beat, the source is refused — and the activation then happens immediately,
  * byte for byte the pre-door behaviour.
+ *
+ * `capturePointer: false` leaves the pointer uncaptured, so a press on a child
+ * control still clicks that child.
  */
-export function armPress(el, begin) {
+export function armPress(el, begin, { capturePointer = true } = {}) {
   const onPointerDown = (ev) => {
     begin({ source: 'pointer', x: ev.clientX, y: ev.clientY, ev }, (h = {}) => trackGesture(ev, {
       onMove: h.onMove,
       onEnd: h.onEnd ? (e, info) => h.onEnd(e, { ...info, source: 'pointer' }) : undefined,
+      capturePointer,
     }));
   };
 
@@ -144,7 +148,7 @@ export function armPress(el, begin) {
   };
 }
 
-export function trackGesture(startEv, { onMove, onEnd } = {}) {
+export function trackGesture(startEv, { onMove, onEnd, capturePointer = true } = {}) {
   const id = startEv.pointerId;
   const el = startEv.currentTarget;
   // Capture is asked for so a pointer that leaves the control keeps reporting
@@ -157,7 +161,9 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
   // timer ran on unopposed, and a binding choice COMMITTED at full under a
   // pointer that had walked away. A gesture that cannot see its own end is a
   // hold nobody can abort.
-  try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
+  if (capturePointer) {
+    try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
+  }
   let done = false;
   const move = (ev) => {
     if (ev.pointerId !== id || done) return;
@@ -172,7 +178,9 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
     window.removeEventListener('blur', abort);
     window.removeEventListener('pointerdown', otherTouch, true);
     el.removeEventListener('lostpointercapture', cancel);
-    try { el.releasePointerCapture(id); } catch { /* already released */ }
+    if (capturePointer) {
+      try { el.releasePointerCapture(id); } catch { /* already released */ }
+    }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
