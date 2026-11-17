@@ -2057,7 +2057,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .modal.card-upgrade-detail-modal .modal-body p { font-size: var(--upgrade-text); }
 :root .modal.card-upgrade-detail-modal .confirmation-cost { font-size: var(--upgrade-text); }
 :root .modal.card-upgrade-detail-modal .card-upgrade-option-title { font-size: var(--upgrade-text); }
-:root .modal.card-upgrade-detail-modal .card-upgrade-option-changes { font-size: var(--upgrade-small); line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+:root .modal.card-upgrade-detail-modal .card-upgrade-option-changes { align-self: flex-start; box-sizing: border-box; margin: 0.4rem 0 0; padding: 0.3rem 0.5rem; font-size: var(--upgrade-small); line-height: 1.3; text-align: left; white-space: normal; overflow-wrap: anywhere; }
 :root .modal.card-upgrade-detail-modal .confirmation-change-list .as-statrow { align-items: baseline; gap: 0 0.8rem; padding: 0.35rem 0; }
 :root .modal.card-upgrade-detail-modal .confirmation-change-list .sr-name { flex: 0 0 auto; font-size: var(--upgrade-text); }
 :root .modal.card-upgrade-detail-modal .confirmation-change-list .sr-vals { flex: 1 1 auto; min-width: 0; margin-left: auto; text-align: right; }
