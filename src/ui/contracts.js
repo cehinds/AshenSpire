@@ -230,7 +230,6 @@
  * @property {boolean} [hasHomeEnd]
  * @property {number | null} [startIndex]
  * @property {boolean} [shouldStopPropagation]
- * @property {boolean} [isRovingTabIndex]
  * @property {(target: HTMLElement, event: KeyboardEvent) => void} [onMove]
  */
 

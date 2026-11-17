@@ -108,7 +108,7 @@ test('RovingList wraps, steps a grid row, and ignores keys from outside the list
     assert.equal(outside.isDefaultPrevented, false);
 });
 
-test('RovingList honours orientation, Home/End, startIndex and the roving tabindex', () =>
+test('RovingList honours orientation, Home/End and startIndex', () =>
 {
     const list = fakeList(3);
     const moves = [];
@@ -116,7 +116,6 @@ test('RovingList honours orientation, Home/End, startIndex and the roving tabind
         orientation: () => 'vertical',
         hasHomeEnd: true,
         startIndex: 0,
-        isRovingTabIndex: true,
         shouldStopPropagation: true,
         onMove: (target) => moves.push(target.name),
     });
@@ -126,7 +125,6 @@ test('RovingList honours orientation, Home/End, startIndex and the roving tabind
     list.dispatchKey('End', list.children[0]);
     list.dispatchKey('Home', list.children[2]);
     assert.deepEqual(moves, ['item-1', 'item-2', 'item-0']);
-    assert.deepEqual(list.children.map((node) => node.tabIndex), [0, -1, -1]);
     disarm();
     list.dispatchKey('ArrowDown', list.children[0]);
     assert.equal(moves.length, 3);

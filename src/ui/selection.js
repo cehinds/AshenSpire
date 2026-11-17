@@ -125,16 +125,6 @@ function focusNearest(target)
     target.scrollIntoView?.({ block: 'nearest' });
 }
 
-function roveTabIndex(items, target)
-{
-    for (const item of items)
-    {
-        item.tabIndex = item === target
-            ? 0
-            : -1;
-    }
-}
-
 /**
  * MarkSelected(nodes, isSelected, options) sets the selected class and the selected ARIA state
  * on each node. `isSelected` is a boolean or a predicate called with (node, index).
@@ -222,7 +212,7 @@ export function ActivateOnKey(
  * `orientation` is 'vertical', 'horizontal' or 'both' (or a function returning one); in 'both' a
  * grid of `columns` moves a whole row on ArrowUp/ArrowDown. A key from outside every item is
  * ignored unless `startIndex` names the item to move from. `onMove(target, event)` replaces the
- * default focus; `isRovingTabIndex` keeps only the focused item in the Tab order.
+ * default focus.
  * @type {RovingNavigator}
  */
 export function RovingList(
@@ -234,7 +224,6 @@ export function RovingList(
         hasHomeEnd = false,
         startIndex = null,
         shouldStopPropagation = false,
-        isRovingTabIndex = false,
         onMove = focusNearest,
     } = {},
 )
@@ -280,13 +269,6 @@ export function RovingList(
         if (shouldStopPropagation)
         {
             event.stopPropagation();
-        }
-        if (isRovingTabIndex)
-        {
-            roveTabIndex(
-                liveItems,
-                target,
-            );
         }
         onMove(
             target,
