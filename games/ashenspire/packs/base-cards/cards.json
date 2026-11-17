@@ -7838,10 +7838,10 @@
             "stamina": 0,
             "mana": 0
           },
-          "textTemplate": "Gain {block} Block. Keep it {base.retain-block} turn.",
+          "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn.",
           "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn."]
         },
-        "textTemplate": "Gain {block} Block. Keep it {base.retain-block} turn. Costs 1 more Stamina each play (up to +2).",
+        "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn. Costs 1 more Stamina each play (up to +2).",
         "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
@@ -7914,7 +7914,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain 6 Block. Retain Block for 1 turn."
+          "Gain 6 Block; keep it 1 turn. +1 Stamina each play."
         ],
         "sourceFaceLines": [
           "Retain ? Block"
@@ -7932,7 +7932,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Gain 6 Block. Retain Block for 1 turn.",
+        "chosenRules": "Gain 6 Block; keep it 1 turn. Costs 1 more Stamina each play (up to +2); the upgrade holds the cost.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
