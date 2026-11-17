@@ -2690,9 +2690,16 @@ function showEvent(eventId) {
     rng,
     eventId,
     // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
-    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on.
-    onItemsReceived: (items, then) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
-      onPersist: persist, onEquip: id => { persist(); showArmoury({ equipItemId: id }, leaveEvent); }, onDone: then }),
+    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on: the what-changed
+    // receipt shows first, then the screen's own cleanup runs (`release`) before the Armoury replaces it.
+    onItemsReceived: (items, { receipt, release }) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+      onPersist: persist,
+      onEquip: id => {
+        persist();
+        const toArmoury = () => { release(); showArmoury({ equipItemId: id }, leaveEvent); };
+        if (!receipt(toArmoury)) toArmoury();
+      },
+      onDone: () => receipt() }),
     onDone: () => leaveEvent(),
   });
   function leaveEvent() {

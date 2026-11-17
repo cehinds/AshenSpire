@@ -223,9 +223,11 @@ export function mountDialogue(app, options) {
       if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
       // An item the choice handed over opens the shop's receive modal first (playtest 2026-11-17 item 41).
-      const showReceipt = () => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
+      // `release` is the dialogue's own exit cleanup, for a host that leaves it (Equip opens the Armoury).
+      const showReceipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '', onClose });
+      const release = () => { teardown(); clearTimeout(entranceTimer); stage.release(); };
       const items = options.onItemsReceived ? ReceivedItems(registries, before, run) : [];
-      if (items.length) options.onItemsReceived(items, showReceipt); else showReceipt();
+      if (items.length) options.onItemsReceived(items, { receipt: showReceipt, release }); else showReceipt();
       return;
     }
     render();

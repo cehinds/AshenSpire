@@ -172,9 +172,10 @@ export function mountEvent(app, opts) {
         if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
         // A card, armament or relic the choice handed over opens the shop's receive modal first (playtest 2026-11-17
         // item 41); then the what-changed receipt over the result (a pure flavour choice, an empty diff, opens nothing).
-        const receipt = () => showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
+        // `receipt(onClose)` reports whether it opened; `release` is this screen's own cleanup before the host leaves it.
+        const receipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '', onClose });
         const items = opts.onItemsReceived ? ReceivedItems(registries, before, run) : [];
-        if (items.length) opts.onItemsReceived(items, receipt); else receipt();
+        if (items.length) opts.onItemsReceived(items, { receipt, release: () => {} }); else receipt();
       };
       // A choice commits on one tap (the eventChoice row in model/secondbeat.js
       // says `tap: true`; owner, 2026-11-14). Whether a choice binds is still a
