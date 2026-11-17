@@ -55,7 +55,7 @@ import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/c
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
-import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
+import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, enemyCastEffectPlan } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
@@ -525,6 +525,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (moved && stage?.enemy) {
         const pose = enemyActionPose(moved.kind, plan);
         plan = { ...plan, pose };
+      }
+      // A spell or a buff glows over the enemy that casts it, as the player's own spell and buff cards do.
+      if (moved && !returned) {
+        const castEffect = enemyCastEffectPlan({ enemyId: moved.enemyId, moveId: moved.moveId, intent: moved.kind,
+          profile: combatProfileFor({ ...definition, enemyId: moved.enemyId, moveId: moved.moveId }) });
+        if (castEffect) plan = { ...plan, spriteEffect: castEffect, effectEvents: beat.events };
       }
       actorEl.dataset.actionFamily = plan.family;
       actorEl.dataset.actionMotion = plan.motion;
