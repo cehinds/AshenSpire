@@ -11,6 +11,7 @@ import { OpenConfirmationModal } from './confirmationModal.js';
 import { OfferPicksLeft } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 import { ModalModelFor } from '../models/ModalModel.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
 const CARD_KINDS = Object.freeze([
     'combatCards',
@@ -65,20 +66,13 @@ function applyRadioRole(face, label, isDisabled, onPick)
         return;
     }
     face.tabIndex = 0;
-    face.addEventListener('keydown', (event) =>
-    {
-        const isPickKey = event.key === 'Enter'
-            || event.key === ' ';
-        if (
-            event.target !== face
-            || !isPickKey
-        )
+    ActivateOnKey(
+        face,
+        () => onPick(),
         {
-            return;
-        }
-        event.preventDefault();
-        onPick();
-    });
+            canActivate: (event) => event.target === face,
+        },
+    );
 }
 
 function findOptionDefinition(registries, activeRun, option)
@@ -465,14 +459,27 @@ export function MountGameProfileOffers(appRoot, {
         for (const [choiceIndex, { face, control }] of choices.entries())
         {
             const isChosen = choiceIndex === selectedIndex;
-            face.classList.toggle('reward-selected', isChosen);
-            face.classList.toggle(CHOSEN_CLASS, isChosen);
-            control.classList.toggle(CHOSEN_CLASS, isChosen);
-            control.setAttribute('aria-checked', String(isChosen));
-            if (isFaceRadio)
-            {
-                face.setAttribute('aria-checked', String(isChosen));
-            }
+            MarkSelected(
+                face,
+                isChosen,
+                {
+                    className: [
+                        'reward-selected',
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: isFaceRadio
+                        ? 'aria-checked'
+                        : null,
+                },
+            );
+            MarkSelected(
+                control,
+                isChosen,
+                {
+                    className: CHOSEN_CLASS,
+                    ariaAttribute: 'aria-checked',
+                },
+            );
         }
     }
 

@@ -177,28 +177,9 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
   fresh.addEventListener('click', () => {
     const cancel = button({ label: 'Not yet', className: 'cancel' });
     const go = button({ label: 'Start fresh', weight: 'primary', className: 'danger go' });
-    // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
-    // else: five focusables sat reachable behind the open dialog, Escape did
-    // nothing, and clicking the scrim did nothing. Nothing irreversible was
-    // reachable back there, so it was confusing rather than dangerous — but a
-    // dialog you can Tab out of is not a dialog.
-    const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
-    behind.forEach((node) => {
-      node.setAttribute('tabindex', '-1');
-      node.setAttribute('aria-hidden', 'true');
-    });
-    let door2 = null;
-    function onKey(e) {
-      if (e.key !== 'Tab' || !door2) return;
-      const stops = [...door2.panel.querySelectorAll('button:not([disabled])')];
-      if (!stops.length) return;
-      const first = stops[0];
-      const last = stops[stops.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey && (active === first || !door2.panel.contains(active))) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && (active === last || !door2.panel.contains(active))) { e.preventDefault(); first.focus(); }
-    }
-    door2 = openModal({
+    // A REAL focus trap (Sunna D9): the shell's page lock hides the notice
+    // behind the dialog and keeps Tab and focus inside it.
+    const door2 = openModal({
       size: 'sm',
       className: 'confirm-box',
       eyebrow: 'Profile',
@@ -210,19 +191,12 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
       footSize: 'medium',
       opener: fresh,
       onClose: () => {
-        behind.forEach((node) => {
-          node.removeAttribute('tabindex');
-          node.removeAttribute('aria-hidden');
-        });
-        document.removeEventListener('keydown', onKey, true);
         $('.fresh')?.focus(); // the cursor comes back to where it left
       },
     });
     door2.veil.classList.add('confirm-fresh');
-    document.addEventListener('keydown', onKey, true);
     cancel.addEventListener('click', door2.close);
     go.addEventListener('click', async () => {
-      document.removeEventListener('keydown', onKey, true);
       const res = await saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
       if (!res.ok) { say('The new profile could not be saved. Your existing copy is preserved.'); return; }
       onContinue();

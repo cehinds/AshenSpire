@@ -4,12 +4,16 @@
 /**
  * @import {
  *     FeedbackChannel,
+ *     KeyActivator,
  *     Modal,
  *     ModalPresentation,
  *     MountEffectLayers,
  *     Picker,
  *     PlayEffectLayers,
+ *     Pressable,
  *     RailItem,
+ *     RovingNavigator,
+ *     SelectionMarker,
  * } from '../../../src/ui/contracts.js'
  */
 import { sfx } from '../../../src/ui/sfx.js';
@@ -21,6 +25,8 @@ import { ModalModel, ModalModelFor } from '../../../src/ui/models/ModalModel.js'
 import { armouryRailItems } from '../../../src/ui/models/ArmouryWorkspaceModel.js';
 import { creationRailItems } from '../../../src/ui/models/CreationWorkspaceModel.js';
 import { mountCardEffectLayers, playCardEffectLayers } from '../../../src/ui/cardEffectLayers.js';
+import { ActivateOnKey, MarkSelected, RovingList } from '../../../src/ui/selection.js';
+import { ArmLongPress, GuardOnce } from '../../../src/ui/pressable.js';
 import { mountCombatantEffectLayers } from '../../../src/ui/combatantEffectLayers.js';
 
 /** @type {FeedbackChannel[]} */
@@ -77,3 +83,40 @@ export class PresentationWithNumericProperties
     cssProperties() { return { '--modal-gap': 4 }; }
     apply(/** @type {HTMLElement} */ panel) { return panel; }
 }
+
+/** @type {SelectionMarker} */
+export const selectionMarker = MarkSelected;
+
+/** @type {KeyActivator} */
+export const keyActivator = ActivateOnKey;
+
+/** @type {RovingNavigator} */
+export const rovingNavigator = RovingList;
+
+/** @type {SelectionMarker} */
+// @ts-expect-error A selection marker takes its options as an object.
+export const markerWithTextOptions = (nodes, isSelected, /** @type {string} */ options) => void options;
+
+/** @type {KeyActivator} */
+// @ts-expect-error A key activator returns its disarm.
+export const activatorWithoutDisarm = () => undefined;
+
+/** @type {RovingNavigator} */
+export const navigatorWithBadOrientation = (listElement) =>
+{
+    // @ts-expect-error Orientation is vertical, horizontal or both.
+    return RovingList(listElement, { orientation: 'diagonal' });
+};
+
+/** @type {Pressable} */
+export const pressable = {
+    armLongPress: ArmLongPress,
+    guardOnce: GuardOnce,
+};
+
+/** @type {Pressable} */
+export const pressableWithTextHold = {
+    ...pressable,
+    // @ts-expect-error A long press is timed in milliseconds.
+    armLongPress: (element, /** @type {{ holdMs: string }} */ options) => () => void [element, options],
+};

@@ -54,6 +54,12 @@ const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
 const maxTimerDelayMs = 2_147_483_647;
 const interactionConfigContracts = new Map([
+  ['ui/presentation/armamentRadial.json', {
+    keys: ['holdMs'],
+    validate(values, at, errors) {
+      if (Object.hasOwn(values, 'holdMs')) validateTimer(values.holdMs, 'holdMs', at, errors);
+    },
+  }],
   ['ui/presentation/combatInspection.json', {
     keys: ['holdMs', 'movementTolerancePx'],
     validate(values, at, errors) {

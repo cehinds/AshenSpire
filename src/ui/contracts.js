@@ -174,29 +174,85 @@
 
 /**
  * @typedef {object} LongPressOptions
- * @property {number} [ms]
- * @property {number} [tolerance]
- * @property {(event: Event) => void} onHold
+ * @property {number} holdMs
+ * @property {number} [tolerancePx]
+ * @property {(event: Event) => boolean | void} onHold
+ * @property {boolean} [isPrimaryOnly]
+ * @property {boolean} [shouldCapturePointer]
+ * @property {boolean} [shouldCancelOnLeave]
  */
 
 /**
  * @typedef {object} Pressable
  * @property {(element: HTMLElement, options: LongPressOptions) => Disarm} armLongPress
- * @property {(button: HTMLElement, action: () => unknown) => Disarm} guardOnce
- * @property {(element: HTMLElement, onActivate: (event: Event) => void) => Disarm} activateOnKey
+ * @property {(button: HTMLElement & { disabled: boolean }, action: (event: Event) => unknown) => Disarm} guardOnce
+ */
+
+/**
+ * @typedef {object} SelectionMarkOptions
+ * @property {string | ReadonlyArray<string> | null} [className]
+ * @property {string | ReadonlyArray<string> | null} [ariaAttribute]
+ * @property {string | null} [ariaCurrent]
+ */
+
+/**
+ * @callback SelectionMarker
+ * @param {Element | Iterable<Element>} nodes
+ * @param {boolean | ((node: Element, index: number) => unknown)} isSelected
+ * @param {SelectionMarkOptions} [options]
+ * @returns {void}
+ */
+
+/**
+ * @typedef {object} KeyActivationOptions
+ * @property {((event: KeyboardEvent) => boolean) | null} [canActivate]
+ * @property {boolean} [shouldStopPropagation]
+ */
+
+/**
+ * @callback KeyActivator
+ * @param {HTMLElement} element
+ * @param {((event: KeyboardEvent) => void) | null} [onActivate]
+ * @param {KeyActivationOptions} [options]
+ * @returns {Disarm}
+ */
+
+/**
+ * @typedef {'vertical' | 'horizontal' | 'both'} RovingOrientation
+ */
+
+/**
+ * @typedef {object} RovingListOptions
+ * @property {() => HTMLElement[]} [items]
+ * @property {RovingOrientation | (() => RovingOrientation | null)} [orientation]
+ * @property {number} [columns]
+ * @property {boolean} [hasHomeEnd]
+ * @property {number | null} [startIndex]
+ * @property {boolean} [shouldStopPropagation]
+ * @property {(target: HTMLElement, event: KeyboardEvent) => void} [onMove]
+ */
+
+/**
+ * @callback RovingNavigator
+ * @param {HTMLElement} listElement
+ * @param {RovingListOptions} [options]
+ * @returns {Disarm}
  */
 
 export const CONTRACT_NAMES = Object.freeze([
     'EffectLayers',
     'FeedbackChannel',
+    'KeyActivator',
     'Modal',
     'Picker',
+    'Pressable',
     'RailItem',
+    'RovingNavigator',
+    'SelectionMarker',
 ]);
 
 export const PLANNED_CONTRACT_NAMES = Object.freeze([
     'CardRenderer',
     'ChoiceModal',
-    'Pressable',
     'Screen',
 ]);

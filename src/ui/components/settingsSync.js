@@ -16,6 +16,7 @@ import {
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
 import { t } from '../strings.js';
+import { MarkSelected } from '../selection.js';
 
 const DIFF_PREVIEW = 12;
 
@@ -406,8 +407,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('auto', (btn) => {
       const next = read(SYNC_STORAGE.auto) !== '1';
       if (!write(SYNC_STORAGE.auto, next ? '1' : null)) { status(STORAGE_REFUSED); return; }
-      btn.classList.toggle('on', next);
-      btn.setAttribute('aria-checked', String(next));
+      MarkSelected(btn, next, { className: 'on', ariaAttribute: 'aria-checked' });
     });
     on('device', (btn) => {
       const next = !includeDeviceEnabled();
@@ -421,8 +421,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       pending = null;
       const box = mount.querySelector('[data-sync-preview]');
       if (box) { box.hidden = true; box.innerHTML = ''; }
-      btn.classList.toggle('on', next);
-      btn.setAttribute('aria-checked', String(next));
+      MarkSelected(btn, next, { className: 'on', ariaAttribute: 'aria-checked' });
     });
     on('list', () => { refreshProfiles(); });
     mount.querySelector('[data-sync-profile]')?.addEventListener('change', (event) => useProfile(event.currentTarget.value));

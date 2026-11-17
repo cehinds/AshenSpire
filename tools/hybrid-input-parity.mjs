@@ -197,12 +197,12 @@ if (args.includes('--selftest')) {
     }, {
       name: 'Home and End leave the unified cursor on the old flask row',
       file: 'src/ui/components/flask.js',
-      find: lines('src/ui/components/flask.js', "    else if (ev.key === 'Home') {", '      ev.preventDefault();',
-        '      const first = buttons[0];', '      first?.focus();', '      focusElement(first);',
-        "    } else if (ev.key === 'End') {", '      ev.preventDefault();', '      const last = buttons.at(-1);',
-        '      last?.focus();', '      focusElement(last);', '    }'),
-      replace: lines('src/ui/components/flask.js', "    else if (ev.key === 'Home') { ev.preventDefault(); buttons[0]?.focus(); }",
-        "    else if (ev.key === 'End') { ev.preventDefault(); buttons.at(-1)?.focus(); }"),
+      find: lines('src/ui/components/flask.js', '  RovingList(root, {', '    items: () => buttons,',
+        '    startIndex: 0,', '    hasHomeEnd: true,'),
+      replace: lines('src/ui/components/flask.js', "  root.addEventListener('keydown', (ev) => {",
+        "    if (ev.key === 'Home') { ev.preventDefault(); buttons[0]?.focus(); }",
+        "    else if (ev.key === 'End') { ev.preventDefault(); buttons.at(-1)?.focus(); }",
+        '  });', '  RovingList(root, {', '    items: () => buttons,', '    startIndex: 0,'),
       expectRed: /FAIL keyboard Home\/End keep DOM focus and the unified cursor aligned/,
     }, {
       name: 'targeted flask use no longer moves the cursor to a legal enemy',
