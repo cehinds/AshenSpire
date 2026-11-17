@@ -66,8 +66,8 @@ function effectPhrase(registries, def, effect) {
   return null;
 }
 
-/** The extra effects of a card in player words, in the card's own order: "Draw 1, Add a copy". */
-export function UpgradeEffectWords(registries, def) {
+/** A card's tracked effects, key -> { total, say }, in the card's own order; a run bonus is one more key. */
+function effectPhrases(registries, def) {
   const phrases = new Map();
   for (const effect of def?.effects || []) {
     const phrase = effectPhrase(registries, def, effect);
@@ -77,9 +77,36 @@ export function UpgradeEffectWords(registries, def) {
     const total = Number.isFinite(amount) && (!held || Number.isFinite(held.total)) ? (held?.total || 0) + amount : undefined;
     phrases.set(key, { total, say });
   }
-  const runBonus = Object.entries(def?.runAttributeBonus || {}).map(([stat, n]) => t('cardUpgrade.fx.run', { n, stat: attributeWord(stat) }));
-  const words = [...[...phrases.values()].map(({ total, say }) => say(total)), ...runBonus];
+  for (const [stat, n] of Object.entries(def?.runAttributeBonus || {})) {
+    phrases.set(`run:${stat}`, { total: n, say: (amount) => t('cardUpgrade.fx.run', { n: amount ?? '', stat: attributeWord(stat) }) });
+  }
+  return phrases;
+}
+
+/** The extra effects of a card in player words, in the card's own order: "Draws 1, Adds a copy". */
+export function UpgradeEffectWords(registries, def) {
+  const words = [...effectPhrases(registries, def).values()].map(({ total, say }) => say(total));
   return words.join(', ') || t('cardUpgrade.fx.none');
+}
+
+/**
+ * What an upgrade ADDS to a card's effects, in player words ("Hits another enemy"; a raised count reads as the
+ * extra: Draw 1 -> 2 is "Draws 1"). '' when the effects are unchanged; null when the upgrade also takes an effect
+ * away or lowers one, which only a before -> after can say.
+ */
+export function UpgradeEffectGain(registries, before, after) {
+  const had = effectPhrases(registries, before), has = effectPhrases(registries, after);
+  const gained = [];
+  for (const [key, was] of had) {
+    const now = has.get(key);
+    if (!now || (Number.isFinite(was.total) && Number.isFinite(now.total) && now.total < was.total)) return null;
+  }
+  for (const [key, now] of has) {
+    const was = had.get(key);
+    if (!was) gained.push(now.say(now.total));
+    else if (Number.isFinite(was.total) && Number.isFinite(now.total) && now.total > was.total) gained.push(now.say(now.total - was.total));
+  }
+  return gained.join(', ');
 }
 
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
@@ -112,8 +139,11 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
-  // Phrased as the card text phrases them ("Draw 1, Add a copy"), in the card's effect order (owner, 2026-11-17).
-  push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
+  // In player words, in the card's effect order (owner, 2026-11-17): what the upgrade adds reads "ALSO Hits another
+  // enemy" (flagged `adds`, no before); an upgrade that also removes or lowers one keeps EFFECTS before -> after.
+  const gained = UpgradeEffectGain(registries, before, after);
+  if (gained) out.push(freeze({ label: t('cardUpgrade.change.also'), before: '', after: gained, adds: true }));
+  else if (gained === null) push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
   const from = statusStacks(before), to = statusStacks(after);

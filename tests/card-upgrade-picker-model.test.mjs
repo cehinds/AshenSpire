@@ -561,16 +561,50 @@ test('the EFFECTS row reads like card text, in the card\'s order, with amounts s
   const plain = registries.cards.get('core.strike');
   const after = (step) => UpgradeEffectWords(registries, applyUpgradeSteps(plain, [step]));
   assert.equal(UpgradeEffectWords(registries, plain), 'None');
-  assert.equal(after({ k: 'fx', fx: 'copy' }), 'Add a copy');
-  assert.equal(after({ k: 'fx', fx: 'cull' }), 'Exhaust 1, Draw 2');
-  assert.equal(after({ k: 'fx', fx: 'shuffle' }), 'Shuffle discard into draw');
+  assert.equal(after({ k: 'fx', fx: 'copy' }), 'Adds a copy');
+  assert.equal(after({ k: 'fx', fx: 'cull' }), 'Exhausts 1, Draws 2');
+  assert.equal(after({ k: 'fx', fx: 'shuffle' }), 'Shuffles discard into draw');
   const drawThenCopy = { id: 'x', effects: [{ op: 'draw', amount: 1 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
-  assert.equal(UpgradeEffectWords(registries, drawThenCopy), 'Draw 1, Add a copy');
+  assert.equal(UpgradeEffectWords(registries, drawThenCopy), 'Draws 1, Adds a copy');
   const boosts = { id: 'x', effects: [{ op: 'changeAttribute', attribute: 'strength', amount: 2, thisTurn: true }, { op: 'damage', target: 'otherEnemy', amount: 3 }], runAttributeBonus: { dexterity: 1 } };
-  assert.equal(UpgradeEffectWords(registries, boosts), '+2 STR this turn, Hit another enemy, +1 DEX for the run');
+  assert.equal(UpgradeEffectWords(registries, boosts), '+2 STR this turn, Hits another enemy, +1 DEX for the run');
   for (const words of [UpgradeEffectWords(registries, drawThenCopy), UpgradeEffectWords(registries, boosts)]) {
     assert.doesNotMatch(words, /addCard|changeAttribute|otherEnemy|shuffleDiscardIntoDraw/, 'no internal names');
   }
+});
+
+// Owner screenshot 2026-11-17 (the option modal): "EFFECTS None → Hit another enemy" should read "Also hits another enemy".
+test('an upgrade that adds effects says only what it adds: ALSO, no "None →"', async () => {
+  const { UpgradeEffectGain, cardUpgradeChanges } = await import('../src/ui/models/CardUpgradeModel.js');
+  const plain = { id: 'x', effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
+  const other = { ...plain, effects: [...plain.effects, { op: 'damage', target: 'otherEnemy', amount: 3 }] };
+  assert.equal(UpgradeEffectGain(registries, plain, other), 'Hits another enemy');
+  const drawOne = { id: 'x', effects: [{ op: 'draw', amount: 1 }] };
+  const drawTwoCopy = { id: 'x', effects: [{ op: 'draw', amount: 2 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
+  assert.equal(UpgradeEffectGain(registries, drawOne, drawTwoCopy), 'Draws 1, Adds a copy', 'a raised count reads as the extra');
+  assert.equal(UpgradeEffectGain(registries, drawOne, drawOne), '', 'nothing added: nothing to say');
+  assert.equal(UpgradeEffectGain(registries, drawTwoCopy, drawOne), null, 'a loss needs a before and after');
+  const changes = cardUpgradeChanges(registries, plain, other);
+  const also = changes.find(change => change.adds);
+  assert.equal(also?.label, 'ALSO');
+  assert.equal(also.after, 'Hits another enemy');
+  assert.equal(changes.some(change => change.label === 'EFFECTS'), false, 'no EFFECTS row beside it');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    // The first option is given an added effect, so its line and the change row can be read.
+    const model = cardUpgradeModel(registries, run, strike(run).instanceId, { blacksmith: true });
+    const options = model.selected.options.map((option, index) => (index === 0 ? { ...option, changes } : option));
+    const door = MountCardUpgradeModal(host, { ...model, selected: { ...model.selected, options } }, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const lines = [...host.querySelectorAll('.card-upgrade-option')[0].querySelectorAll('.card-upgrade-option-changes li')].map(li => li.textContent);
+    assert.ok(lines.includes('Also hits another enemy'), `the option says what it adds: ${lines.join(' | ')}`);
+    for (const line of lines) assert.doesNotMatch(line, /EFFECTS|None →/, `"${line}" names no EFFECTS and no None`);
+    const row = host.querySelector('.confirmation-change-list .card-upgrade-gain .d-to');
+    assert.equal(row?.textContent, 'Hits another enemy', 'the change row shows the added words alone');
+    door.close();
+  });
 });
 
 test('each change row in the card\'s modal names its label once', async () => {

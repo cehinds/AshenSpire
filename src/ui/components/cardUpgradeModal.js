@@ -114,14 +114,42 @@ function isRowSelected(model, row)
     );
 }
 
+// An added effect has no before: it reads "Also hits another enemy" (owner, 2026-11-17).
+function describeAddedEffects(change)
+{
+    const effects = change.after.charAt(0).toLowerCase() + change.after.slice(1);
+    return translate('cardUpgrade.change.alsoLine', { effects });
+}
+
 function describeChangeForScreenReader(change)
 {
-    return `${change.label} ${change.before} to ${change.after}`;
+    return change.adds
+        ? describeAddedEffects(change)
+        : `${change.label} ${change.before} to ${change.after}`;
 }
 
 function describeChange(change)
 {
-    return `${change.label} ${change.before} → ${change.after}`;
+    return change.adds
+        ? describeAddedEffects(change)
+        : `${change.label} ${change.before} → ${change.after}`;
+}
+
+// The value side of a change row: the delta, or for added effects the words alone (no "None →").
+function buildChangeValue(change)
+{
+    if (!change.adds)
+    {
+        return deltaNode(change.before, change.after);
+    }
+    return buildElement(
+        'span',
+        {
+            class: 'sp-v as-delta card-upgrade-gain',
+            dataset: { dir: 'up' },
+        },
+        buildElement('strong', { class: 'd-to', text: change.after }),
+    );
 }
 
 function readConfirmLabel(selected)
@@ -248,7 +276,7 @@ function buildChangeRows(changes)
         values: buildElement(
             'span',
             { class: 'smith-fold-values' },
-            deltaNode(change.before, change.after),
+            buildChangeValue(change),
         ),
     }));
 }
