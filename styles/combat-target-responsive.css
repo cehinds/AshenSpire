@@ -273,8 +273,8 @@
 :root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }
 
 /* Owner 2026-11-17 ("it's hard for the player to know how much poise damage they are taking"): the Poise an attack costs sits inside the
-   attack's own action, small and gold (the Poise hammer of the HP-bar badge), so the row still holds five actions; BREAK floats above it and
-   takes no width. */
+   attack's own action, small and gold (the Poise hammer of the HP-bar badge), so the row still holds five actions. BREAKS YOU floats above it, takes
+   no width, and wears the player's colour: the gold BREAK of the target quote means the enemy's Poise breaks. */
 :root .combat .intent .intent-poise {
   position: relative;
   display: inline-flex;
@@ -297,12 +297,14 @@
   bottom: 100%;
   transform: translateY(calc(-1px / var(--ui-zoom, 1)));
   padding: 0 calc(2px / var(--ui-zoom, 1));
+  border: 1px solid var(--hud-player-panel-border);
   border-radius: calc(2px / var(--ui-zoom, 1));
-  background: var(--danger);
-  color: var(--parchment);
+  background: color-mix(in srgb, var(--hud-player-panel-border) 24%, transparent);
+  color: var(--hud-player-panel-border);
+  white-space: nowrap;
   font: 700 calc(8px / var(--ui-zoom, 1))/1.15 system-ui, sans-serif;
   letter-spacing: .04em;
   pointer-events: none;
 }
-:root .combat .intent .intent-poise[data-may-break='true'] .intent-poise-break { background: transparent; color: var(--danger); border: 1px solid currentColor; }
+:root .combat .intent .intent-poise[data-may-break='true'] .intent-poise-break { background: transparent; border-style: dashed; }
 .intent-poise-tip.is-break { color: var(--danger); }

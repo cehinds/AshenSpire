@@ -1833,7 +1833,7 @@ combat.intent.damageContact,,Hit {index}/{count} · next {amount} {basis},,
 combat.intent.poiseSummary,,"{damage} damage, {poise} Poise",,
 combat.intent.poiseBreaks,,(breaks your Poise),,
 combat.intent.poiseMayBreak,,(may break your Poise),,
-combat.intent.poiseBreak,,BREAK,,
+combat.intent.poiseBreak,,BREAKS YOU,,
 
 combat.receipt.hitLabel,,Hit,,
 combat.receipt.hitsLabel,,Hits,,

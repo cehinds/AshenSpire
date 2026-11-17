@@ -125,3 +125,19 @@ test('no Poise mark when the attack costs no Poise, or the intent is hidden', ()
   assert.equal(IntentPoiseRead(projectCombatIntent(combat, combat.enemies[0].id)), null);
   assert.equal(IntentPoiseRead({ hidden: true, projectedPoise: { max: 3, label: '3' } }), null);
 });
+
+import { withKitDom } from './helpers/dom.mjs';
+import { IntentPoiseMark } from '../src/ui/components/combatantOverhead.js';
+import { t } from '../src/ui/strings.js';
+
+test('the intent tag says whose Poise breaks: BREAKS YOU, never the target quote BREAK', () => {
+  withKitDom(() => {
+    const mark = IntentPoiseMark({ value: '8', breaks: true, mayBreak: true });
+    const tag = mark.querySelector('.intent-poise-break');
+    assert.equal(tag.textContent, 'BREAKS YOU');
+    assert.notEqual(tag.textContent, t('combat.callout.poiseBreak'), 'the target quote BREAK (the enemy breaking) reads differently');
+    assert.equal(mark.dataset.breaks, 'true');
+    assert.equal(IntentPoiseMark({ value: '2', breaks: false, mayBreak: true }).querySelector('.intent-poise-break').textContent, 'BREAKS YOU?');
+    assert.equal(IntentPoiseMark({ value: '2', breaks: false, mayBreak: false }).querySelector('.intent-poise-break'), null);
+  });
+});

@@ -225,7 +225,8 @@ export function intentParts(parts = [], { unknown = false } = {}) {
 
 /**
  * The Poise beside an attack's number (owner, 2026-11-17): the gold Poise hammer and the Poise the player loses, small, inside the attack's own
- * action so the row still holds five actions; a move that breaks the player's Poise adds a BREAK tag. The sentence is the intent's aria-label.
+ * action so the row still holds five actions; a move that breaks the player's Poise adds a BREAKS YOU tag (never the target quote's bare BREAK, which
+ * is the enemy's Poise). The sentence is the intent's aria-label.
  */
 export function IntentPoiseMark(poise) {
   const mark = document.createElement('span');
