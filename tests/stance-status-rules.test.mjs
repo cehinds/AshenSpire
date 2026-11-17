@@ -13,7 +13,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
-import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
+import { applyAttackDamage, dealPoiseDamage, drainFixCorePoise } from '../src/engine/actions.js';
+import { clearCombatCounter } from '../src/engine/combatMatchups.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -216,16 +217,15 @@ test('rule 4: an unused badge decays by 1 at the enemy turn start and its Counte
   assert.equal(enemy.combatCounter, undefined);
 });
 
-test('rule 4 edge: a badge above 1 is not a second answer; a use takes 1 and spends the charge, the rest fades 1 per enemy turn start', () => {
+test('rule 4 edge: a badge above 1 is not a second answer; a use takes 1 and spends the charge, and the rest goes when the spent Counter ends', () => {
   const { combat, enemy } = gilded(rules => { rules.counter.enemyBadgeStacks = 3; });
   enemy.counterStacks = 3;
   play(combat, 'x', 'core.strike', {});
   assert.equal(enemy.counterStacks, 2, 'a use takes 1');
   assert.equal(enemy.combatCounter?.charges ?? 0, 0, 'the charge is spent: one answer per arming, as before');
-  const events = endTurn(combat);
-  assert.deepEqual(badgeEvents(events, enemy)[0], [-1, false, true]);
-  assert.equal(enemy.counterStacks, 1);
+  endTurn(combat);
   assert.equal(enemy.combatCounter, undefined, 'a spent Counter does not stay armed on the badge');
+  assert.equal(enemy.counterStacks ?? 0, 0, 'and the badge goes with the Counter it counted');
 });
 
 test('rule 4 edge: a fight saved without counter.enemyBadgeStacks grants no badge', () => {
@@ -361,4 +361,23 @@ test('rules 2-3 edge: a rider on a hit that arrived at 0 Block breaks Poise norm
   assert.equal(r.poise, 0);
   assert.equal(r.broke, true);
   assert.equal(r.rider?.breaks, true);
+});
+
+test('rule 4 edge: showing the Counter intent again sets the badge, it does not stack', () => {
+  const { combat, enemy } = gilded();
+  const parry = registries.enemies.get('gildedKnight').moves.parry;
+  primeEnemyCounter(combat, enemy, parry, 'parry');
+  primeEnemyCounter(combat, enemy, parry, 'parry');
+  assert.equal(enemy.counterStacks, 1);
+});
+
+test('rule 4 edge: the badge goes when the Counter is cleared, by a stagger or a re-planned intent', () => {
+  for (const clear of ['stagger', 'replan']) {
+    const { combat, enemy } = gilded();
+    assert.equal(enemy.counterStacks, 1);
+    if (clear === 'stagger') drainFixCorePoise(combat, combat.player, enemy, 999);
+    else clearCombatCounter(enemy); // what a re-planned or re-shown intent does first (combat.js presentIntent / reshowIntent), with no fight context
+    assert.equal(enemy.combatCounter, undefined, `${clear}: the Counter is cleared`);
+    assert.equal(enemy.counterStacks ?? 0, 0, `${clear}: no stale badge`);
+  }
 });
