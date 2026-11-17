@@ -1577,6 +1577,11 @@ function searchResultsHtml(settings, query, changedOnly = false, profile = null,
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
+/** The rows of one open Advanced topic, as its panel holds them. */
+function advancedTopicRowsHtml(settings, groupId, topic) {
+  return topic.rows.map((row) => settingsRowHtml(settings, compactAdvancedRow(row, groupId, topic.id))).join('');
+}
+
 export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null, nextProfile = null) {
   nextProfile ||= readNewGameProfile(settings, profile || undefined);
   if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile, nextProfile);
@@ -1643,7 +1648,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
-          + sub.rows.map((row) => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join('')
+          + advancedTopicRowsHtml(settings, group.id, sub)
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
@@ -2026,14 +2031,43 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     }
     syncSubsectionHeadings();
   };
+  // A topic tab draws only its own panel and empties the one it leaves back to the lazy shell a
+  // repaint would leave; the tabs, the other sections and the rest of the pane stay.
+  const showTopicPanel = (section, topic) => {
+    const groupId = section.dataset.advancedPanel;
+    const topics = cachedSubgroups(categoryHandler('Advanced').rows, groupId, activeProfile());
+    const chosen = topics.find(candidate => candidate.id === topic) || topics[0];
+    section.querySelectorAll('.set-topic-panel').forEach(topicPanel => {
+      const isChosen = topicPanel.dataset.topicPanel === chosen?.id;
+      const isDrawn = !topicPanel.hasAttribute('data-lazy');
+      if (isChosen && !isDrawn) {
+        topicPanel.innerHTML = advancedTopicRowsHtml(settings, groupId, chosen);
+        topicPanel.removeAttribute('data-lazy');
+        topicPanel.hidden = false;
+        wireRows(topicPanel);
+      } else if (!isChosen && isDrawn) {
+        topicPanel.innerHTML = '';
+        topicPanel.setAttribute('data-lazy', '');
+        topicPanel.hidden = true;
+      }
+    });
+    syncTopicPicker();
+    reportAdvancedProblems();
+    filterAdvancedRows();
+    const pane = container.querySelector('.set-panel');
+    if (pane) {
+      pane.scrollTop = 0;
+      if (pane.parentElement) pane.parentElement.scrollTop = 0;
+    }
+  };
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
       settings[key] = topic;
       onChange({ [key]: topic });
       MarkSelected(section.querySelectorAll('[data-topic]'), tab => tab.dataset.topic === topic, { className: 'on', ariaAttribute: 'aria-selected' });
-      repaintPanel();
-      container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
+      showTopicPanel(section, topic);
+      section.querySelector(`[data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2052,16 +2086,54 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
   filterAdvancedRows();
 
-  container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
+  // EVERY ROW CONTROL IS WIRED HERE, UNDER `root`: the whole pane on a repaint, or one topic
+  // panel or one row when only that part was redrawn. Handlers still act on the whole container.
+  // ONE RESET REDRAWS THE ROWS IT CHANGED, NOT THE PANE. The pane's markup is drawn into an inert template
+  // before and after the reset; each row whose markup moved (the reset row, and any row that
+  // reads it) is swapped for its fresh copy and wired. Anything the two drawings do not line up
+  // on falls back to the repaint.
+  function paneRowMarkup() {
+    const drawing = document.createElement('template');
+    drawing.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile());
+    const markup = new Map();
+    for (const row of drawing.content.querySelectorAll('[data-row-key]')) {
+      markup.set(row.dataset.rowKey, [...(markup.get(row.dataset.rowKey) || []), row]);
+    }
+    return markup;
+  }
+  function updateChangedRows(before, resetKey) {
+    const after = paneRowMarkup();
+    const pane = container.querySelector('.set-panel');
+    const changed = [...after].filter(([rowKey, rows]) =>
+      rows.map(row => row.outerHTML).join('') !== (before.get(rowKey) || []).map(row => row.outerHTML).join(''));
+    const live = changed.map(([rowKey, rows]) => [rows, pane ? [...pane.querySelectorAll(`[data-row-key="${CSS.escape(rowKey)}"]`)] : []]);
+    const sameRows = after.size === before.size && [...before.keys()].every(rowKey => after.has(rowKey));
+    if (!sameRows || !after.has(resetKey) || live.some(([rows, liveRows]) => rows.length !== liveRows.length)) {
+      repaintPanel({ keepScroll: true });
+      return;
+    }
+    for (const [rows, liveRows] of live) {
+      liveRows.forEach((liveRow, index) => {
+        liveRow.replaceWith(rows[index]);
+        wireRows(rows[index]);
+      });
+    }
+    paintUndo();
+    reportAdvancedProblems();
+    filterAdvancedRows();
+  }
+
+  function wireRows(root) {
+  root.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
   });
-  container.querySelectorAll('[data-scene-edit]').forEach(btn => {
+  root.querySelectorAll('[data-scene-edit]').forEach(btn => {
     btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.sceneEdit }));
   });
-  container.querySelectorAll('[data-scene-place]').forEach(btn => {
+  root.querySelectorAll('[data-scene-place]').forEach(btn => {
     btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.scenePlace, tab: 'Traveller' }));
   });
-  container.querySelectorAll('.set-prologue-text').forEach(input => {
+  root.querySelectorAll('.set-prologue-text').forEach(input => {
     input.addEventListener('input', () => {
       settings[input.dataset.key] = input.value;
       onChange({[input.dataset.key]:input.value});
@@ -2069,7 +2141,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
   // `[data-key]`: only a control that names a setting saves one. The Defaults &
   // sync panel's token field and switch carry no key and are its own to wire.
-  container.querySelectorAll('.set-text[data-key]').forEach((input) => {
+  root.querySelectorAll('.set-text[data-key]').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
     const commit = () => {
@@ -2090,10 +2162,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(key)}"]`);
     if (wheel && wheel.value.toLowerCase() !== value.toLowerCase()) wheel.value = value;
   };
-  container.querySelectorAll('.set-color').forEach(input => {
+  root.querySelectorAll('.set-color').forEach(input => {
     input.addEventListener('input', () => commitColor(input.dataset.key, input.value));
   });
-  container.querySelectorAll('.set-swatch').forEach(chip => {
+  root.querySelectorAll('.set-swatch').forEach(chip => {
     chip.addEventListener('click', () => commitColor(chip.dataset.key, chip.dataset.color));
   });
   // ---- the opening's list editor and preset slots -------------------------
@@ -2122,7 +2194,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const config = prologueConfig(settings);
     return prologueStagedOrder(config).map(index => config.scenes[index].id);
   };
-  container.querySelectorAll('[data-scene-list]').forEach(list => {
+  root.querySelectorAll('[data-scene-list]').forEach(list => {
     list.querySelectorAll('[data-scene-move]').forEach(btn => btn.addEventListener('click', () => {
       const ids = stagedIds();
       const from = ids.indexOf(btn.dataset.sceneId);
@@ -2182,7 +2254,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       applyPrologue(prologueReorderChanges([...list.querySelectorAll('[data-scene]')].map(node => node.dataset.scene)));
     });
   });
-  container.querySelectorAll('[data-scene-add]').forEach(btn => btn.addEventListener('click', () => {
+  root.querySelectorAll('[data-scene-add]').forEach(btn => btn.addEventListener('click', () => {
     const slot = prologueFreeSlot(prologueConfig(settings));
     if (!slot) return;
     applyPrologue({
@@ -2190,13 +2262,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       ...prologueReorderChanges([...stagedIds().filter(id => id !== slot), slot]),
     }, `[data-scene-remove="${CSS.escape(slot)}"]`);
   }));
-  container.querySelectorAll('[data-preset-save]').forEach(btn => btn.addEventListener('click', () => {
+  root.querySelectorAll('[data-preset-save]').forEach(btn => btn.addEventListener('click', () => {
     try {
       applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetSave, 'data'])]: prologueSlotPayload(panelSettings || settings) });
       showSettingsNotice('Opening saved to this slot. It travels in your configuration file.');
     } catch (error) { showSettingsNotice(error.message); }
   }));
-  container.querySelectorAll('[data-preset-load]').forEach(btn => btn.addEventListener('click', () => {
+  root.querySelectorAll('[data-preset-load]').forEach(btn => btn.addEventListener('click', () => {
     try {
       // Loading REPLACES the opening: prologueSlotChanges names the keys to
       // take away as well as the ones to write.
@@ -2204,10 +2276,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       showSettingsNotice('Opening loaded from this slot. Every other setting is unchanged.');
     } catch (error) { showSettingsNotice(`That slot could not be loaded: ${error.message}`); }
   }));
-  container.querySelectorAll('[data-preset-clear]').forEach(btn => btn.addEventListener('click', () => {
+  root.querySelectorAll('[data-preset-clear]').forEach(btn => btn.addEventListener('click', () => {
     applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetClear, 'data'])]: undefined });
   }));
-  container.querySelectorAll('.set-wheel-toggle').forEach(toggle => {
+  root.querySelectorAll('.set-wheel-toggle').forEach(toggle => {
     toggle.addEventListener('click', () => {
       const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(toggle.dataset.wheelToggle)}"]`);
       if (!wheel) return;
@@ -2229,7 +2301,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // always an integer inside the row's own domain — and it WRITES BACK what it
   // resolved, so a clamp or a rejection is visible in the field instead of being
   // swallowed (Law 0 clause 5).
-  container.querySelectorAll('.num-wrap').forEach((wrap) => {
+  root.querySelectorAll('.num-wrap').forEach((wrap) => {
     const field = wrap.querySelector('.set-num');
     const key = field.dataset.key;
     const row = SETTINGS_ROWS.find((r) => r.key === key);
@@ -2270,9 +2342,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1, stepFor: (v) => buttonStep(row, v) });
   });
 
-  mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);
+  mountFlickPractice(root, settings, UI_DEFAULTS.touchFlick);
 
-  container.querySelectorAll('.range-wrap').forEach((wrap) => {
+  root.querySelectorAll('.range-wrap').forEach((wrap) => {
     const slider = wrap.querySelector('.set-range');
     const field = wrap.querySelector('.set-range-num');
     const key = slider.dataset.key;
@@ -2288,19 +2360,20 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 1 });
   });
 
-  container.querySelectorAll('[data-reset-key]').forEach((btn) => {
+  root.querySelectorAll('[data-reset-key]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const key = btn.dataset.resetKey;
       if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
       typedRefusals.delete(key);
+      const before = paneRowMarkup();
       await resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
       if (!lifecycleSentinel.isConnected) return;
-      repaintPanel({ keepScroll: true });
+      updateChangedRows(before, key);
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
     });
   });
 
-  container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
+  root.querySelectorAll('[data-developer-switch]').forEach((btn) => {
     btn.addEventListener('change', () => {
       const on = setDebugEnabled(btn.checked);
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
@@ -2308,11 +2381,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('[data-btn="downloadSaves"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="downloadSaves"]').forEach((btn) => {
     btn.addEventListener('click', () => onOffline?.());
   });
 
-  container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(settings), 'All settings reset');
       if (!lifecycleSentinel.isConnected) return;
@@ -2321,11 +2394,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     }, btn));
   });
 
-  container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
   });
 
-  container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -2353,7 +2426,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // every balance and interface override in it under a notice that said only
   // "Loaded 412 settings". The door that says scenes takes scenes, and says so
   // by name when handed something wider.
-  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) root.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
     const openingOnly = buttonKey === 'prologueSceneImport';
     const picker = document.createElement('input');
     picker.type = 'file';
@@ -2393,7 +2466,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
+  root.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -2441,7 +2514,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     deferredCardSizeNotice = null;
     showSettingsNotice(held.msg);
   }
-  container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
       const text = cardSizingExport(levels);
@@ -2645,15 +2718,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     anchorPressed(container, control, wasAt);
   };
 
-  container.querySelectorAll('.set-choice-select[data-key]').forEach(select => {
+  root.querySelectorAll('.set-choice-select[data-key]').forEach(select => {
     select.addEventListener('change', () => commitChoice(select, select.value));
   });
 
-  container.querySelectorAll('.choice').forEach(btn => {
+  root.querySelectorAll('.choice').forEach(btn => {
     btn.addEventListener('click', () => commitChoice(btn, btn.dataset.val));
   });
 
-  container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
+  root.querySelectorAll('.toggle[data-key]').forEach((btn) => {
     btn.addEventListener('change', async () => {
       if (btn.dataset.action) {
         // The browser flips the box first; fullscreen is the truth, so the box is set back from it.
@@ -2673,6 +2746,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       refreshConditionNotes(container, settings);
     });
   });
+  }
+  wireRows(container);
   reportAdvancedProblems();
   }; // ---- end wire() ---------------------------------------------------
 
