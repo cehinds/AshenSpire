@@ -1,0 +1,384 @@
+{
+  "request": "One button-state layer: consolidate button hover, disabled, active and focus styling into --btn-* custom properties defined once in styles/kit.css, merge identical twin rules and delete rules that are fully overridden, with zero visual change.",
+  "success": "Every scene renders pixel-identical to origin/dev at 1280x800 and 390x844; hovered and disabled buttons keep their computed opacity, transform, filter and border colour.",
+  "failure": "Any pixel difference in a scene, or a hovered/disabled button whose computed opacity, transform or border colour changes.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "title-normal",
+      "url": "?shot=title",
+      "ready": "#settings",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Title menu is on screen",
+          "selector": "#settings"
+        },
+        {
+          "kind": "style",
+          "label": "Title entry rests at full opacity",
+          "selector": "#settings",
+          "prop": "opacity",
+          "equals": "1"
+        },
+        {
+          "kind": "style",
+          "label": "Title entry rests unmoved",
+          "selector": "#settings",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "Title entry rests unfiltered",
+          "selector": "#settings",
+          "prop": "filter",
+          "equals": "none"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "settings-hover",
+      "url": "?shot=settings",
+      "ready": "button.as-btn.set-step",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": "button.as-btn.set-step",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Settings modal is on screen",
+          "selector": ".settings-modal"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered button border turns gold",
+          "selector": "button.as-btn.set-step:hover",
+          "prop": "border-color",
+          "equals": "rgb(201, 162, 39)"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered button wears the inset gold ring",
+          "selector": "button.as-btn.set-step:hover",
+          "prop": "box-shadow",
+          "equals": "rgb(201, 162, 39) 0px 0px 0px 1px inset"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered button keeps full opacity",
+          "selector": "button.as-btn.set-step:hover",
+          "prop": "opacity",
+          "equals": "1"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered button does not move",
+          "selector": "button.as-btn.set-step:hover",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reward-disabled-hover",
+      "url": "?shot=reward&shotReward=configured",
+      "ready": "#reward-card-confirm",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": "#reward-card-confirm",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Reward door is on screen",
+          "selector": ".modal.reward-door"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Confirm keeps the line border under the pointer",
+          "selector": "#reward-card-confirm:disabled",
+          "prop": "border-color",
+          "equals": "rgb(106, 91, 67)"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Confirm does not brighten",
+          "selector": "#reward-card-confirm:disabled",
+          "prop": "filter",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Confirm wears no ring",
+          "selector": "#reward-card-confirm:disabled",
+          "prop": "box-shadow",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Confirm opacity",
+          "selector": "#reward-card-confirm:disabled",
+          "prop": "opacity",
+          "equals": "1"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Confirm does not move",
+          "selector": "#reward-card-confirm:disabled",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled Inspect keeps the line border",
+          "selector": "#reward-inspect:disabled",
+          "prop": "border-color",
+          "equals": "rgb(106, 91, 67)"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reward-pick-hover",
+      "url": "?shot=reward&shotReward=configured",
+      "ready": ".reward-choice-button",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".reward-choice-button",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "style",
+          "label": "Hovered pick border turns the ready green",
+          "selector": ".reward-choice-button:hover",
+          "prop": "border-color",
+          "equals": "rgb(89, 189, 117)"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered pick does not move",
+          "selector": ".reward-choice-button:hover",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "Confirm turns ready once a pick is taken",
+          "selector": "#reward-card-confirm",
+          "prop": "border-color",
+          "equals": "rgb(111, 181, 128)"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reward-card-hover",
+      "url": "?shot=reward&shotReward=configured",
+      "ready": ".reward-choice-face",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".reward-choice-face",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "style",
+          "label": "Hovered reward card lifts 8px",
+          "selector": ".reward-row .card:hover",
+          "prop": "transform",
+          "equals": "matrix(1, 0, 0, 1, 0, -8)"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered reward card keeps full opacity",
+          "selector": ".reward-row .card:hover",
+          "prop": "opacity",
+          "equals": "1"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "combat-iconbtn-hover",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 2500,
+      "actions": [
+        {
+          "hold": {
+            "selector": "#combat-armoury",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "style",
+          "label": "Hovered Armoury icon button keeps full opacity",
+          "selector": "#combat-armoury:hover",
+          "prop": "opacity",
+          "equals": "1"
+        },
+        {
+          "kind": "style",
+          "label": "Hovered Armoury icon button does not move",
+          "selector": "#combat-armoury:hover",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "style",
+          "label": "End Turn rests unmoved",
+          "selector": "button.end-turn",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "shop-locked-hover",
+      "url": "?shot=shop",
+      "ready": ".class-pick.locked",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".class-pick.locked",
+            "ms": 50
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "style",
+          "label": "Locked offer dims to 0.55",
+          "selector": ".class-pick.locked",
+          "prop": "opacity",
+          "equals": "0.55"
+        },
+        {
+          "kind": "style",
+          "label": "Locked offer keeps its border under the pointer",
+          "selector": ".class-pick.locked:hover",
+          "prop": "border-color",
+          "equals": "rgb(133, 113, 79)"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled merchant action dims to 0.55",
+          "selector": ".merchant-offer-action:disabled",
+          "prop": "opacity",
+          "equals": "0.55"
+        },
+        {
+          "kind": "style",
+          "label": "Disabled merchant action does not move",
+          "selector": ".merchant-offer-action:disabled",
+          "prop": "transform",
+          "equals": "none"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    }
+  ]
+}

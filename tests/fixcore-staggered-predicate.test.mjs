@@ -90,6 +90,8 @@ test('Executioner: base branch before the break, Broken branch after a real Core
   for (const legacy of [false, true]) {
   const dmg = (stagger) => {
     const { combat, target } = live(2, { legacy });
+    // The unbroken target holds no stance (Idle, x1.25 under theme B, 2026-11-17) and the broken one holds Staggered; the comparison is the branch alone.
+    delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
     if (stagger) breakPoise(combat, target);
     combat.player.energy = 99; combat.piles.hand.push({ instanceId: 'exec', cardId: 'executioner' });
     primeAccuracyRolls(combat);

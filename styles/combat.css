@@ -2040,7 +2040,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .val.up { color: var(--green); font-weight: 700; }
 .card-option .val.down { color: var(--ember); font-weight: 700; }
 .card-option[aria-pressed='true'] { outline: var(--focus-ring); }
-.card-option:disabled { opacity: 0.55; }
+.card-option:disabled { opacity: var(--btn-disabled-opacity); }
 .card-option .co-effect-text, .card-option .co-effect-html { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .card-option .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
 .card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
@@ -2085,7 +2085,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
   box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
 }
-.option-row.as-railitem:disabled { opacity: 0.55; cursor: not-allowed; }
+.option-row.as-railitem:disabled { opacity: var(--btn-disabled-opacity); cursor: not-allowed; }
 /* Reaction choice legibility pass (owner, 2026-11-02: "the text on the modal is hard to read"). Scoped to
    `.reaction-choice` so the discard and card pickers sharing optionRowList keep their rows. The layout is
    unchanged; only the text and the surface behind it move:

@@ -340,7 +340,6 @@
    answer; the rows below are the ones still dealt as `.reward-row` — the
    reward door, the draft and the picks. */
   :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
-.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
 /* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
    (shop rows 397-403px, DEFECT, dated 2026-08-16). `#shop-cards` is a
@@ -1946,7 +1945,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-secondary { color: #ffd8d2; background: #792f2b; border-color: #b95e53; }
 .deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-primary:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
 .deck-editor-reading-desk .deck-editor-done:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
-.deck-editor-reading-desk .deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
+.deck-editor-reading-desk .deck-editor-done:disabled,
+.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"],
 .deck-editor-reading-desk .deck-editor-refusal { color: #ff9488; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"] { font-weight: 700; }
@@ -1959,7 +1959,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-rules > .ctext { flex: 1 0 100%; margin: .5rem 0; }
 .deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
 .deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
-.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }
 /* The live game UI zoom changes the available reading height. Preserve the
    main effect below the preview before spending remaining space on the face. */
 .deck-editor-reading-desk .deck-editor-selected-reason { display: none; }
@@ -2005,7 +2004,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .upgrade-desk .deck-editor-main.smith-candidate-card .card-upgrade-reason { color: var(--danger); }
 .upgrade-desk .deck-editor-main.smith-candidate-card.locked,
 .upgrade-desk .deck-editor-main.smith-candidate-card.is-needs-blacksmith { cursor: not-allowed; }
-.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: .55; }
+.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: var(--btn-disabled-opacity); }
 .upgrade-desk .deck-editor-tile.spent .deck-editor-name { color: inherit; }
 .upgrade-desk .deck-editor-foot { justify-content: flex-end; }
 .deck-editor.upgrade-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
