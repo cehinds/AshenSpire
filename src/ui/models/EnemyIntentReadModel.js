@@ -11,11 +11,11 @@ const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2'
 export function enemyIntentRead(combat, enemy, { preview = projectCombatIntent(combat, enemy.id), inspectedMoves = null, unknownDetail = 'Exact action unknown' } = {}) {
   const hidden = preview.hidden === true || preview.revealed === false;
   const shared = { hidden, knowledgeRead: preview.knowledgeRead, stance: preview.stance, profile: preview.profile, active: true };
-  if (hidden) return { ...shared, name: preview.label || '?', detail: unknownDetail };
+  if (hidden) return { ...shared, name: preview.label || '?', detail: unknownDetail, lines: [unknownDetail] };
   const moveId = preview.moveId;
   if (!moveId) {
     const name = words(preview.kind || 'Unknown');
-    return { ...shared, name, detail: name };
+    return { ...shared, name, detail: name, lines: [name] };
   }
   let row = inspectedMoves?.find(move => move.moveId === moveId);
   if (!row) {
@@ -40,7 +40,10 @@ export function enemyIntentRead(combat, enemy, { preview = projectCombatIntent(c
   // A move that only closes a range band reads as Approaching, not by the engine's move name (Advance).
   const effects = preview.actionEffects;
   if ((Array.isArray(effects) ? effects : []).some(effect => effect?.op === 'moveEngagement' && effect.bands < 0)) {
-    return { ...shared, name: t('combat.intent.advancing'), detail: lead ? `${lead} ${t('combat.intent.advancingDetail')}` : t('combat.intent.advancingDetail') };
+    return { ...shared, name: t('combat.intent.advancing'), detail: lead ? `${lead} ${t('combat.intent.advancingDetail')}` : t('combat.intent.advancingDetail'),
+      lines: [lead, t('combat.intent.advancingDetail')].filter(Boolean) };
   }
-  return { ...shared, name: row?.name || words(moveId), detail: lead ? `${lead} ${detail}` : detail };
+  // The tooltip reads one effect per line; the tag definitions stay in its glossary, not repeated in the body.
+  const lines = [lead, ...(row?.effectLines?.length ? row.effectLines : [detail])].filter(Boolean);
+  return { ...shared, name: row?.name || words(moveId), detail: lead ? `${lead} ${detail}` : detail, lines };
 }

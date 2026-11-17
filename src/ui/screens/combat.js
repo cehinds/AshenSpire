@@ -1277,9 +1277,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         shouldCapturePointer: false,
         onHold: () => {
           if (!box.isConnected) return false;
-          inspectTarget();
+          // A touch long-press may already have opened the reading through its context menu.
+          if (!modalOpen()) inspectTarget();
           return true;
         },
+      });
+      // A right-click, or the browser's own long-press menu on a phone, reads the fighter instead of
+      // showing the image menu (whose pointercancel used to end the hold before it fired). While a
+      // card or flask is armed the combat screen's own handler cancels the targeting instead.
+      box.addEventListener('contextmenu', event => {
+        if (selected || selectedFlask != null || selfArm) return;
+        event.preventDefault();
+        if (!modalOpen()) inspectTarget();
       });
       box.addEventListener('click', event => {
         if (!selected && selectedFlask == null && selectedCombatantId === box.dataset.eid
@@ -2342,7 +2351,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         || projectCombatIntent(combat, enemy.id);
       const intent = enemyIntentRead(combat, enemy, { preview: currentRead,
         unknownDetail: t('combat.targetHud.unknown') });
-      return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
+      const lines = intent.lines?.length ? intent.lines : [intent.detail];
+      return `<div class="tt-title">Intent: ${esc(intent.name)}</div><ul class="ti-list tt-intent-lines">${lines.map(line => `<li>${esc(line)}</li>`).join('')}</ul>`;
     }, registries, { onTarget: () => {
       if (inputBusy() || !getEntity(combat, enemy.id)?.alive || selfArm) {
         if (selected || selectedFlask != null) dlog('ignored', `intent tap ${enemy.id}`, busy ? 'busy' : selfArm ? 'self-armed card' : 'dead target');
