@@ -41,14 +41,14 @@ function configuredOfferText(registries, run, kind, def, ref) {
   return '';
 }
 
-export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
+export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith = null, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
   app.replaceChildren();
   if (hud) {
     const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
     app.append(...band.childNodes);
-    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud }) });
+    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith, meta, hud }) });
   }
   const root = el('div', { class: 'screen room-screen shop-workspace merchant-workspace', dataset: { wireframe: 'W1d', shopRail: 'dock' } });
   const paneHead = el('div', { class: 'as-pane-head shop-pane-head' });
@@ -82,6 +82,12 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const shelf = el('div', { class: 'card-shelf shop-shelf', dataset: { shopShelf: kind } }); shelves.set(kind, shelf); offersBox.append(shelf);
     const tab = railItem({ label: t(labels[kind]), member: kind, current: kind === active, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: kind }, 'aria-controls': 'shop-pane' } });
     tab.removeAttribute('role'); tab.addEventListener('click', () => showCategory(kind)); tabs.set(kind, tab); dock.append(tab);
+  }
+  // Some traders also keep a Blacksmith's workshop (playtest 2026-11-17 item 42): its dock item opens the Blacksmith,
+  // whose Leave comes back here.
+  if (onSmith) {
+    const smith = railItem({ label: t('shop.bar.smith'), member: 'smith', current: false, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: 'smith' } } });
+    smith.removeAttribute('role'); smith.addEventListener('click', onSmith); dock.append(smith);
   }
   const arm = beatArmer(meta, registries);
   for (const [index, option] of offer.options.entries()) {

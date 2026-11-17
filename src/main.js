@@ -84,7 +84,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { configuredShopKind, configuredTraderOffersSmith } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -2649,16 +2649,22 @@ function showShop() {
   run.gameProfileOpenShop = shopId;
   // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
   // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-  if (configuredShopKind(run, shopId) === 'blacksmith') {
+  // A trader that keeps a Blacksmith (playtest 2026-11-17 item 42) opens it from its dock; while it is open the visit
+  // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
+  const traderSmith = run.gameProfileTraderSmith === shopId;
+  if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
     persist(); audio.music('shop');
     return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
-      onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+      onLeave: traderSmith
+        ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
+        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
+    onSmith: configuredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       if (offer.options[index]?.kind === 'rankUps') {
@@ -2670,7 +2676,7 @@ function showShop() {
       offerShopCardDestination(receipt);
     },
     onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-    onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
