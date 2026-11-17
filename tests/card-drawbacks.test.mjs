@@ -89,3 +89,50 @@ test('cards that buff a team member are kept out of every Core reward and shop p
     assert.deepEqual(offered, [], classId);
   }
 });
+
+// Item 14: an unupgraded card that deals at least OVERTUNED times Strike's damage for each Stamina and Mana it costs pays a penalty.
+const OVERTUNED = 2.5;
+const PENALTIES = ['exhaust', 'ethereal', 'risingCost', 'selfDamage'];
+async function damagePerPoint(cardId, upgraded = false) {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const run = createRunState({ registries, classId: 'starseer', seed: 511, profileMeta: unlocked });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  for (const pile of Object.values(combat.piles)) pile.length = 0;
+  combat.piles.hand.push({ instanceId: 'x', cardId, upgraded });
+  for (let i = 0; i < 8; i += 1) combat.piles.draw.push({ instanceId: `f${i}`, cardId: 'core.defend', upgraded: false });
+  for (const enemy of combat.enemies) Object.assign(enemy, { hp: 5000, maxHp: 5000, block: 0 });
+  combat.player.stamina = combat.player.maxStamina = 20;
+  combat.player.mana = combat.player.maxMana = 20;
+  const enemy = combat.enemies[0];
+  const before = { hp: enemy.hp, stamina: combat.player.stamina, mana: combat.player.mana };
+  try { dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id }); } catch { return null; }
+  const paid = before.stamina - combat.player.stamina + before.mana - combat.player.mana;
+  return (before.hp - enemy.hp) / Math.max(1, paid);
+}
+
+test('every overtuned unupgraded damage card pays a penalty', async () => {
+  const strike = await damagePerPoint('core.strike');
+  assert.ok(strike > 0);
+  const overtuned = [];
+  for (const id of coreReachableCardIds()) {
+    const card = registries.cards.get(id);
+    if (!(card.effects || []).some((e) => e.op === 'damage')) continue;
+    const perPoint = await damagePerPoint(id);
+    if (perPoint == null || perPoint < OVERTUNED * strike) continue;
+    overtuned.push(id);
+    assert.ok(drawbacksOf(card).some((kind) => PENALTIES.includes(kind)), `${id} deals ${perPoint} per point (Strike ${strike}) with no penalty`);
+  }
+  // Damage numbers move with other balance passes; the rule is what is pinned, plus one card that must stay in it.
+  assert.ok(overtuned.includes('core.pyreLash'), JSON.stringify(overtuned));
+});
+
+test('the overtuned cards pay their penalty in HP, and their upgrade drops it', async () => {
+  const { upgradedDefinition } = await import('../src/model/cardUpgrade.js');
+  for (const id of ['core.pyreLash', 'core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.glacialSpike', 'core.radiantVerdict', 'core.meteor', 'colossusSmash']) {
+    const card = registries.cards.get(id);
+    assert.ok(drawbacksOf(card).includes('selfDamage'), id);
+    assert.ok(!drawbacksOf(upgradedDefinition(card)).includes('selfDamage'), `${id}+ keeps no self-damage`);
+  }
+});

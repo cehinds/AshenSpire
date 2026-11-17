@@ -1910,6 +1910,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 4
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 60
@@ -1927,8 +1932,9 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
       "effects": [
         {
           "op": "damage",
@@ -4214,6 +4220,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 21
@@ -4233,8 +4244,9 @@
       "school:fire",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
       "effects": [
         {
           "op": "damage",
@@ -4321,6 +4333,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 24
@@ -4340,8 +4357,9 @@
       "school:lightning",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock.",
+    "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock.",
       "effects": [
         {
           "op": "damage",
@@ -4428,6 +4446,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 17
@@ -4452,8 +4475,9 @@
       "school:frost",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
       "effects": [
         {
           "op": "damage",
@@ -4491,6 +4515,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 3
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 30
@@ -4515,8 +4544,9 @@
       "school:divine",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
       "effects": [
         {
           "op": "damage",
@@ -4554,6 +4584,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 24
@@ -4573,8 +4608,9 @@
       "school:decay",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
+    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
       "effects": [
         {
           "op": "damage",
@@ -4607,6 +4643,11 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 15
@@ -4625,9 +4666,11 @@
       "school:force",
       "cost.manaOnly"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
-    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Lose {loseHp} HP.",
+    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage.", "Lose {loseHp} HP."],
     "upgrade": {
+      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
       "effects": [
         {
           "op": "damage",
