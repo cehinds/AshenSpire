@@ -20,6 +20,7 @@ import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js'
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { controlGate, recoveryControls } from '../src/engine/combatStatusControl.js';
+import { PlayConditionMet, PlayConditionReachable } from '../src/engine/cardBehavior.js';
 
 /** Required choices and affordable recovery are actions, never deck cards. */
 export function botControlAction(combat) {
@@ -48,6 +49,8 @@ function isAffordable(registries, combat, refused, h) {
   if (refused.has(h.instanceId)) return false;
   const def = resolveCombatCard({ ...combat, registries }, h);
   if ((def.keywords || []).includes('unplayable')) return false;
+  // A card's play condition (playIf, SPEC §3.6): no living enemy could be aimed to meet it, so the engine would refuse it.
+  if (!PlayConditionReachable(combat, def)) return false;
   if (combat.combatExpansionVersion === 2 && (!controlGate(combat, p, def).allowed
     || p.ashenBlight?.milestones?.some(row => row.path === null))) return false;
   const cost = cardPlayCosts(combat, h.instanceId);
@@ -70,6 +73,12 @@ export function botCardTargetId(registries, combat, hand, enemyId) {
   const def = resolveCombatCard({ ...combat, registries: ownerRegistries, player: combat.player,
     combatExpansionVersion: combat.player?.combatExpansionVersion || combat.combatExpansionVersion }, hand);
   const plan = cardTargetPlan(def, ownerId, combat.enemies);
+  if (plan.mode === 'enemy' && def.playIf) {
+    // A play condition is read against the aimed enemy: keep the chosen one when it meets it, else aim at one that does.
+    const chosen = combat.enemies.find(enemy => enemy.id === enemyId);
+    if (chosen && PlayConditionMet(combat, def, chosen)) return enemyId;
+    return combat.enemies.find(enemy => enemy.alive && PlayConditionMet(combat, def, enemy))?.id ?? enemyId;
+  }
   if (plan.mode === 'enemy') return enemyId;
   return cardNeedsEnemyTargetNow(combat, hand.instanceId) ? enemyId : undefined;
 }
