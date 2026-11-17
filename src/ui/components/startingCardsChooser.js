@@ -3,6 +3,7 @@
 // Done. Presentation only: model/startingDeckChoice.js decides the pool and the refusal, and
 // the host keeps the chosen counts.
 import { el, button, openModal } from '../kit/index.js';
+import { focusElement } from '../input.js';
 import { t } from '../strings.js';
 import { StartingDeckChoiceRefusal, StartingDeckSize, StartingPoolIds } from '../../model/startingDeckChoice.js';
 
@@ -19,22 +20,7 @@ export function OpenStartingCardsChooser({ registries, run, counts, settings = {
   const done = button({ label: t('creation.startingCards.done'), weight: 'primary', attrs: { 'data-starting-cards-done': '' } });
   const cancel = button({ label: t('common.cancel'), attrs: { 'data-starting-cards-cancel': '' } });
   const nameOf = (id) => (registries.cards.has(id) ? registries.cards.get(id).name : id);
-  const draw = () => {
-    rows.replaceChildren(...pool.map((id) => {
-      const name = nameOf(id);
-      const less = button({ label: '−', className: 'starting-cards-step', disabled: chosen[id] < 1,
-        attrs: { 'aria-label': t('creation.startingCards.decrease', { card: name }), 'data-starting-card': id, 'data-step': 'decrease' } });
-      const more = button({ label: '+', className: 'starting-cards-step',
-        attrs: { 'aria-label': t('creation.startingCards.increase', { card: name }), 'data-starting-card': id, 'data-step': 'increase' } });
-      less.addEventListener('click', () => { if (chosen[id] > 0) { chosen[id] -= 1; draw(); } });
-      more.addEventListener('click', () => { chosen[id] += 1; draw(); });
-      return el('div', { class: 'starting-cards-row', dataset: { card: id } }, [
-        el('span', { class: 'starting-cards-name', text: name }),
-        less,
-        el('strong', { class: 'starting-cards-count', text: String(chosen[id]) }),
-        more,
-      ]);
-    }));
+  const updateStatus = () => {
     const count = StartingDeckSize(run, chosen);
     total.textContent = t('creation.startingCards.total', { count, plural: count === 1 ? '' : 's' });
     const reason = StartingDeckChoiceRefusal(run, chosen, settings);
@@ -42,6 +28,30 @@ export function OpenStartingCardsChooser({ registries, run, counts, settings = {
     refusal.hidden = !reason;
     done.disabled = !!reason;
   };
+  rows.append(...pool.map((id) => {
+    const name = nameOf(id);
+    const less = button({ label: '−', className: 'starting-cards-step', disabled: chosen[id] === 0,
+      attrs: { 'aria-label': t('creation.startingCards.decrease', { card: name }), 'data-starting-card': id, 'data-step': 'decrease' } });
+    const more = button({ label: '+', className: 'starting-cards-step',
+      attrs: { 'aria-label': t('creation.startingCards.increase', { card: name }), 'data-starting-card': id, 'data-step': 'increase' } });
+    const count = el('strong', { class: 'starting-cards-count', text: String(chosen[id]) });
+    const change = (delta) => {
+      chosen[id] += delta;
+      count.textContent = String(chosen[id]);
+      const empty = chosen[id] === 0;
+      if (empty && (document.activeElement === less || less.classList.contains('gp-focus'))) {
+        more.focus();
+        focusElement(more);
+      }
+      less.disabled = empty;
+      updateStatus();
+    };
+    less.addEventListener('click', () => change(-1));
+    more.addEventListener('click', () => change(1));
+    return el('div', { class: 'starting-cards-row', dataset: { card: id } }, [
+      el('span', { class: 'starting-cards-name', text: name }), less, count, more,
+    ]);
+  }));
   let shell = null;
   done.addEventListener('click', () => {
     if (StartingDeckChoiceRefusal(run, chosen, settings)) return;
@@ -49,7 +59,7 @@ export function OpenStartingCardsChooser({ registries, run, counts, settings = {
     onDone?.({ ...chosen });
   });
   cancel.addEventListener('click', () => shell.close());
-  draw();
+  updateStatus();
   shell = openModal({ size: 'md', title: t('creation.startingCards.title'), className: 'starting-cards-modal', opener, showMenuButton: false,
     body: el('div', { class: 'starting-cards' }, [el('p', { class: 'starting-cards-note', text: t('creation.startingCards.note') }), rows, total, refusal]),
     secondary: [cancel], primary: done });
