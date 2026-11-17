@@ -70,3 +70,11 @@ test("Star Seer's Ethereal starter keeps 10 Block and is offered Reaction, dropp
   assert.ok(!kept.keywords.includes('ethereal'));
   assert.ok((applyUpgradeSteps(ethereal, [{ k: 'fx', fx: 'reaction' }]).tags || []).includes('trait:reaction'));
 });
+
+test('Pebble Throw is a Reach attack', async () => {
+  const { combatCardRange } = await import('../src/model/combatCardProfile.js');
+  const pebble = registries.cards.get('core.pebbleThrow');
+  assert.ok((pebble.cardTags ?? pebble.tags).includes('range:reach'));
+  assert.equal(combatCardRange(pebble), 'reach');
+  assert.equal(combatCardRange(registries.cards.get('core.flick')), 'melee', 'Flick, its zero-cost sibling, stays Melee');
+});

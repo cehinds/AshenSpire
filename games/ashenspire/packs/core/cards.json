@@ -2842,9 +2842,10 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "range:reach"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage at Reach.",
     "upgrade": {
       "effects": [
         {
