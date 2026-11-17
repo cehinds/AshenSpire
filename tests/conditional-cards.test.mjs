@@ -133,3 +133,23 @@ test('a playIf range gate reads on the card face', async () => {
   assert.equal(PlayConditionPhrase({ p: 'inStance', of: 'target', stance: 'idle' }), 'Only while the target is Idle');
   assert.equal(PlayConditionPhrase(undefined), null);
 });
+
+test('a card preview that hides an unread enemy stance reads it as unknown, never as Idle (review of #2816)', async () => {
+  const { previewCard } = await import('../src/engine/combat.js');
+  const { knowledgeIntentProjection } = await import('../src/engine/enemyKnowledge.js');
+  const { combat, enemy } = live();
+  enemy.actorIntentRevealed = false;
+  enemy.knowledgeAction.reads.player.visibility = 'unknown';
+  assert.equal(knowledgeIntentProjection(combat, enemy)?.exact, false, 'the enemy intent is not read');
+  enemy.combatStance = stance('attack');
+  combat.piles.hand.unshift({ instanceId: 'oc', cardId: 'openingCut' });
+  const view = {};
+  previewCard(combat, 'oc', enemy.id, undefined, { knowledgeView: view });
+  const shown = view.visible.enemies.find(row => row.id === enemy.id);
+  assert.equal(shown.combatStance, undefined, 'the preview copy hides the stance');
+  const pctx = { owner: view.visible.player, source: view.visible.player, target: shown };
+  for (const wanted of ['idle', 'attack', 'prepared']) {
+    assert.equal(evalPredicate(view.visible, { p: 'inStance', of: 'target', stance: wanted }, pctx), false, `a hidden stance is not ${wanted}`);
+  }
+  assert.equal(evalPredicate(combat, { p: 'inStance', of: 'target', stance: 'attack' }, { owner: combat.player, source: combat.player, target: enemy }), true, 'the live fight still reads the real stance');
+});
