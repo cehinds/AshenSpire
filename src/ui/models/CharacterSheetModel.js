@@ -76,7 +76,7 @@ function poolValue(rules, statId, run, classDef, level, attributes = run.attribu
  * row per level 1..maxLevel: `{ level, stepXp, totalXp, state, grants }`.
  * Level 1 is where a run starts and grants nothing.
  */
-export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) {
+export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, settings = {}) {
   const o = { ...DEFAULT_LEVEL_OFFERS, ...(offers || {}) };
   const authoredMax = (balanceOf(registries).levelUp || {}).maxLevels;
   const maxLevel = Number.isInteger(authoredMax) && authoredMax > 0 ? authoredMax : 20;
@@ -114,7 +114,7 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
         }
       }
       if (core) {
-        if (deckRules.minimumReductionLevels.includes(level)) grants.push({ kind: 'deckMinimumDown', amount: CoreDeckMinimum({ ...run, level: { ...(run.level || {}), level } }) });
+        if (deckRules.minimumReductionLevels.includes(level)) grants.push({ kind: 'deckMinimumDown', amount: CoreDeckMinimum({ ...run, level: { ...(run.level || {}), level } }, settings) });
         grants.push({ kind: 'levelCard' });
         rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
         continue;
@@ -232,7 +232,7 @@ export function trackLadder(registries, run, track) {
  * ladder is not this character's); the own class first, then the authored
  * order.
  */
-export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS } = {}) {
+export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS, settings = {} } = {}) {
   registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
@@ -241,7 +241,7 @@ export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OF
     .sort((a, b) => (b.id === ownTrackId) - (a.id === ownTrackId))
     .map((t) => trackLadder(registries, run, t));
   return Object.freeze({
-    character: characterLadder(registries, run, offers),
+    character: characterLadder(registries, run, offers, settings),
     tracks: Object.freeze(tracks),
     ownTrackId,
   });

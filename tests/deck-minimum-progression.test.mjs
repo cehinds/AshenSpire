@@ -130,3 +130,19 @@ test('Graduate opens collected cantrips only', async () => {
   assert.ok(ids.includes('core.cantrip'), 'the starting cantrip');
   assert.ok(ids.every((id) => run.collectedCardIds.includes(id)));
 });
+
+// Review of #2815 (low): Core has ONE minimum. The Armoury floor and the character ladder read the player's
+// deck-size settings exactly as the deck editor does.
+test('the Armoury floor and the ladder follow the deck-size settings the editor follows', async () => {
+  const { deckMinimum, loadoutLeaveRefusal } = await import('../src/model/loadout.js');
+  const { characterLadder } = await import('../src/ui/models/CharacterSheetModel.js');
+  const run = make(6);
+  for (const settings of [{}, { deckMinSize: 14 }, { deckMinSize: 12, deckMinUnlimited: true }]) {
+    assert.equal(deckMinimum(registries, run, settings), deckEditBounds(settings, DeckMinDelta(run)).min, JSON.stringify(settings));
+  }
+  run.deck = run.deck.slice(0, 11);
+  assert.equal(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 10 } }), '');
+  assert.match(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 14 } }), /floor is 13/);
+  const row = characterLadder(registries, make(1), undefined, { deckMinSize: 14 }).rows.find((r) => r.level === 6);
+  assert.equal(row.grants.find((g) => g.kind === 'deckMinimumDown').amount, 13);
+});

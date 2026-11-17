@@ -21,7 +21,20 @@ export function DeckMinDelta(run) {
   return ItemMinDeckDelta(run) + LevelMinDeckDelta(run);
 }
 
-/** CoreDeckMinimum(run) → the default editor minimum less this run's reductions, never below 0. */
-export function CoreDeckMinimum(run) {
-  return Math.max(0, deckRules.defaults.deckMinSize - DeckMinDelta(run));
+/** SettingsDeckMinimum(settings) → the player's own minimum: 0 when unlimited, else `deckMinSize` (its default when unset or invalid). */
+export function SettingsDeckMinimum(settings = {}) {
+  const read = (key) => (settings && settings[key] !== undefined && settings[key] !== null ? settings[key] : deckRules.defaults[key]);
+  if (read('deckMinUnlimited')) return 0;
+  const size = read('deckMinSize');
+  return Number.isInteger(size) && size >= 0 ? size : deckRules.defaults.deckMinSize;
+}
+
+/** ReducedDeckMinimum(minimum, delta) → a minimum less its reductions, never below 0. The deck editor and the Armoury both ask it. */
+export function ReducedDeckMinimum(minimum, delta) {
+  return Math.max(0, minimum - delta);
+}
+
+/** CoreDeckMinimum(run, settings) → Core's one minimum: the player's setting less this run's reductions. */
+export function CoreDeckMinimum(run, settings = {}) {
+  return ReducedDeckMinimum(SettingsDeckMinimum(settings), DeckMinDelta(run));
 }

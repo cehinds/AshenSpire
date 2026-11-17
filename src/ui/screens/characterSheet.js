@@ -212,7 +212,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
   const render = () => {
     if (!bodyHost) return;
-    const sheet = characterSheetModel(registries, run, { offers });
+    const sheet = characterSheetModel(registries, run, { offers, settings });
     bodyHost.replaceChildren(state.tab !== 'character' ? skillsPane(registries, run, sheet, state) : characterPane(registries, run, sheet, state));
     bodyHost.dataset.tab = state.tab;
   };

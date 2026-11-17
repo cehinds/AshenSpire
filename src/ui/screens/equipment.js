@@ -696,7 +696,7 @@ export function mountEquipment(host, {
   // screen opened: a deck already under the floor on arrival may still leave.
   const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
   const leave = () => {
-    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
+    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith, settings: meta.settings || {} });
     if (refusal) { notice = refusal; draw(); return; }
     close();
   };

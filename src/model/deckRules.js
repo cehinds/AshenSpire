@@ -21,7 +21,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
-import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_ } from './deckMinimumRules.js';
+import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_, ReducedDeckMinimum } from './deckMinimumRules.js';
 
 const D = deckRules.defaults;
 
@@ -66,7 +66,7 @@ export function deckEditBounds(settings, minDelta = 0) {
   }
   const bounds = readBounds(settings);
   // A deck-size item property (W25 step 6) lowers the minimum, never below 0.
-  return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
+  return { ...bounds, min: ReducedDeckMinimum(bounds.min, minDelta), problem: '' };
 }
 
 /** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
