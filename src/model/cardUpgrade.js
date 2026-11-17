@@ -254,6 +254,24 @@ function applyStep(card, step) {
 }
 
 const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
+// A step that eases a drawback also drops the sentence and face line that named it, so the text follows the data (review of #2819).
+// Base cards draw their authored text and face lines (baseCardPresentation), so both are rewritten here, not only the derived face.
+const DRAWBACK_TEXT = Object.freeze({
+  unexhaust: /^Exhaust\.?$/i,
+  unethereal: /^Ethereal\.?$/i,
+  steady: /Stamina each play|per prior play/i,
+});
+function dropDrawbackText(out, card, fx) {
+  const pattern = DRAWBACK_TEXT[fx];
+  if (typeof card.textTemplate === 'string') {
+    const kept = card.textTemplate.split(/(?<=\.)\s+/).filter((sentence) => !pattern.test(sentence.trim()));
+    if (kept.length) out.textTemplate = kept.join(' ');
+  }
+  if (Array.isArray(card.faceTemplate)) {
+    const kept = card.faceTemplate.filter((line) => !pattern.test(line.trim()));
+    if (kept.length) out.faceTemplate = kept;
+  }
+}
 const reactionTag = 'trait:reaction';
 // One effect-menu step on a card (an `fx` step). New effects are appended, so the card's own effects keep their indices.
 function applyFx(card, step) {
@@ -273,10 +291,10 @@ function applyFx(card, step) {
     case 'copy': effects.push({ op: 'addCard', card: card.id, count: 1, pile: 'discard' }); break;
     case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
-    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
-    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag('lifecycle.ethereal'); break;
+    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); dropDrawbackText(out, card, step.fx); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag('lifecycle.ethereal'); dropDrawbackText(out, card, step.fx); break;
     // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
-    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; break;
+    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; dropDrawbackText(out, card, step.fx); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
     case 'boost':
       // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).

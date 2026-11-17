@@ -221,3 +221,29 @@ test('the simbot never offers a play whose HP cost would kill', async () => {
   assert.deepEqual(affordableCards(registries, await lowHpFight(2)).map((card) => card.cardId), []);
   assert.deepEqual(affordableCards(registries, await lowHpFight(10)).map((card) => card.cardId), ['core.pyreLash']);
 });
+
+// Review of #2819: a step that eases a drawback drops its words from the rules text, the face and the picker shows the change.
+test('drawback-easing upgrade steps drop the drawback from the text and face, and the picker names the change', async () => {
+  const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
+  const { cardPlainText } = await import('../src/ui/components/card.js');
+  const { cardUpgradeChanges } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { profile } = await import('./helpers/fixcore-combat-rules.mjs');
+  const rules = { combatExpansionVersion: 2, gameProfile: profile };
+  const face = (cardId, steps) => cardPlainText(registries, { cardId, instanceId: `t-${cardId}`, upgraded: !!steps, ...(steps ? { upgradeSteps: steps } : {}) }, { rules });
+  const cases = [
+    ['base.ethereal', { k: 'fx', fx: 'unethereal' }, /Ethereal/, 'keywords'],
+    ['base.retain-block', { k: 'fx', fx: 'steady' }, /Stamina each play/, 'COST'],
+    ['base.cost-per-use', { k: 'fx', fx: 'steady' }, /Stamina each play/, 'COST'],
+    ['core.backstep', { k: 'fx', fx: 'unexhaust' }, /Exhaust/, 'keywords'],
+  ];
+  for (const [cardId, step, drawback, label] of cases) {
+    const base = registries.cards.get(cardId);
+    const after = applyUpgradeSteps(base, [step]);
+    assert.match(face(cardId), drawback, `${cardId}: the drawback shows before the step`);
+    assert.doesNotMatch(face(cardId, [step]), drawback, `${cardId} after ${step.fx}: ${face(cardId, [step])}`);
+    assert.doesNotMatch(after.textTemplate || '', drawback, `${cardId} after ${step.fx}: rules text`);
+    for (const line of after.faceTemplate || []) assert.doesNotMatch(line, drawback, `${cardId} after ${step.fx}: face line`);
+    const changes = cardUpgradeChanges(registries, base, after);
+    assert.ok(changes.some((row) => row.label.toLowerCase().includes(label.toLowerCase())), `${cardId} after ${step.fx}: the picker names a change (${JSON.stringify(changes)})`);
+  }
+});
