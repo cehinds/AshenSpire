@@ -129,3 +129,31 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
     assert.equal(pendingRankUpRows(registries, run).length, 1);
   });
 });
+
+// Review on #2817: a rank-up with exactly one bonus option showed the bonus but committed the bare rise. With one
+// option the picker has no choice to make and commits the row's plan, so the plan must carry that option's step.
+test('a rank-up with one bonus option commits that bonus', async () => {
+  const { RankUpUpgradeModel } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { projectGameCard } = await import('../src/model/gameProfile.js');
+  const { resolveCard } = await import('../src/model/registries.js');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const run = newRun();
+  level(run, 'item:blade', 3);
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+  const model = RankUpUpgradeModel(registries, run, 'item:blade', strike.instanceId, { faceOf });
+  for (const row of model.rows) assert.deepEqual(row.plan.step, row.options[0].step, `${row.name}: the plan carries the first option's step`);
+  const [lone] = model.selected.options;
+  assert.ok(lone.step?.bonus, 'the first option is a bonus step');
+  const oneOption = { ...model, selected: { ...model.selected, options: [lone] } };
+  await withKitDom(async (dom) => {
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    let confirmed = null;
+    MountCardUpgradeModal(host, oneOption, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm: (id, plan) => { confirmed = { id, plan }; } });
+    assert.equal(host.querySelector('.card-upgrade-options'), null, 'one option is no choice: no option list');
+    host.querySelector('.card-upgrade-confirm').click();
+    assert.equal(confirmed?.id, strike.instanceId);
+    assert.deepEqual(confirmed.plan.step, lone.step, 'the lone bonus is what commits');
+  });
+});

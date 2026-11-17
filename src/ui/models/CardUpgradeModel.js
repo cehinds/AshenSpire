@@ -175,7 +175,8 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
     return freeze({
       instanceId: instance.instanceId, instanceIds: freeze([instance.instanceId]), copies: 1, inDeck, cardId: instance.cardId,
       name: before?.name || base?.name || instance.cardId, rarity: base?.rarity || 'common', rank,
-      plan: freeze({ before, after: raised }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
+      // A lone bonus is no choice, so the picker commits the plan itself: it carries that option's step and face.
+      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
       costLabel: t('cardUpgrade.free'), blockedReason: '', levelFrom: rank, levelTo: rank + 1,
       status: t('cardUpgrade.row.rankStatus', { from: rank, to: rank + 1 }),
       changes: options[0].changes, options: freeze(options), nextDiffers: false,
