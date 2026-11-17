@@ -1,5 +1,7 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
-import { combatIntentPresentation } from '../models/CombatIntentModel.js';
+import { combatIntentPresentation, IntentPoiseRead } from '../models/CombatIntentModel.js';
+import { tagSymbolSvg } from './cardTagSymbols.js';
+import { t } from '../strings.js';
 import { intentIcon, FluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -67,7 +69,8 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
   const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? `${symbol.icon}${symbol.value != null ? ` ${symbol.value}` : ''}` : 'unknown').join(', ')}.` : '';
-  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}`).join('. ')}${followLabel}`);
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}${part.poise ? `. ${part.poise.summary}` : ''}`).join('. ')}${followLabel}`);
+  if (badge.parts.some(part => part.poise?.breaks)) node.dataset.poiseBreak = 'true';
   {
     const stanceNode = document.createElement('span');
     stanceNode.className = 'intent-stance';
@@ -84,6 +87,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
         const value = document.createElement('span'); value.textContent = part.value; group.append(value);
         if (part.summary) { const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; group.append(scope); }
       }
+      if (part.poise) group.append(IntentPoiseMark(part.poise));
       values.append(group);
     }
     node.append(values);
@@ -97,7 +101,9 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     const tags = intent?.profile ? combatProfileTags(intent.profile, registries) : [];
     const counter = badge.stance === 'countering' && intent.counterDamage != null
       ? `<div>Base counter damage: ${esc(intent.counterDamage)} HP${intent.counterPoiseDamage > 0 ? `, ${esc(intent.counterPoiseDamage)} Poise` : ''}. The triggering attack and defenses determine the resolved damage.</div>` : '';
-    return `${body || ''}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
+    const poise = IntentPoiseRead(intent);
+    const poiseLine = poise ? `<div class="intent-poise-tip${poise.breaks ? ' is-break' : ''}">${esc(poise.summary)}</div>` : '';
+    return `${body || ''}${poiseLine}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
   };
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
   // A visible intent is also the owning enemy's target control. Resolve that
@@ -210,7 +216,29 @@ export function intentParts(parts = [], { unknown = false } = {}) {
         const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; stack.append(scope); group.append(stack);
       } else group.append(value);
     }
-    group.append(intentIcon(part.icon)); row.append(group);
+    group.append(intentIcon(part.icon));
+    if (part.poise && !unknown) group.append(IntentPoiseMark(part.poise));
+    row.append(group);
   }
   return row;
+}
+
+/**
+ * The Poise beside an attack's number (owner, 2026-11-17): the gold Poise hammer and the Poise the player loses, small, inside the attack's own
+ * action so the row still holds five actions; a move that breaks the player's Poise adds a BREAK tag. The sentence is the intent's aria-label.
+ */
+export function IntentPoiseMark(poise) {
+  const mark = document.createElement('span');
+  mark.className = 'intent-poise';
+  mark.dataset.breaks = String(!!poise.breaks);
+  if (poise.mayBreak && !poise.breaks) mark.dataset.mayBreak = 'true';
+  mark.setAttribute('aria-hidden', 'true');
+  const value = document.createElement('span'); value.className = 'intent-poise-value'; value.textContent = String(poise.value);
+  mark.append(value, tagSymbolSvg('effect:poise', 'intent-poise-icon'));
+  if (poise.breaks || poise.mayBreak) {
+    const flag = document.createElement('span'); flag.className = 'intent-poise-break';
+    flag.textContent = poise.breaks ? t('combat.intent.poiseBreak') : `${t('combat.intent.poiseBreak')}?`;
+    mark.append(flag);
+  }
+  return mark;
 }

@@ -271,3 +271,38 @@
 /* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
    and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
 :root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }
+
+/* Owner 2026-11-17 ("it's hard for the player to know how much poise damage they are taking"): the Poise an attack costs sits inside the
+   attack's own action, small and gold (the Poise hammer of the HP-bar badge), so the row still holds five actions; BREAK floats above it and
+   takes no width. */
+:root .combat .intent .intent-poise {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(1px / var(--ui-zoom, 1));
+  margin-left: calc(1px / var(--ui-zoom, 1));
+  color: var(--gold);
+  font: 700 calc(var(--intent-value-size, 16px) * .62)/1 Georgia, serif;
+  white-space: nowrap;
+}
+:root .combat .intent .intent-poise-icon {
+  width: calc(12px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  height: calc(12px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  flex: none;
+}
+:root .combat .intent .intent-poise[data-breaks='true'] { color: var(--danger); }
+:root .combat .intent .intent-poise-break {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -1px);
+  padding: 0 calc(2px / var(--ui-zoom, 1));
+  border-radius: calc(2px / var(--ui-zoom, 1));
+  background: var(--danger);
+  color: var(--parchment);
+  font: 700 calc(7px / var(--ui-zoom, 1))/1.2 system-ui, sans-serif;
+  letter-spacing: .04em;
+  pointer-events: none;
+}
+:root .combat .intent .intent-poise[data-may-break='true'] .intent-poise-break { background: transparent; color: var(--danger); border: 1px solid currentColor; }
+.intent-poise-tip.is-break { color: var(--danger); }
