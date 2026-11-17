@@ -3801,6 +3801,7 @@
             "amount": 10
           }
         ],
+        "upgradeMenu": ["fx:reaction", "fx:unethereal", "blk"],
         "textTemplate": "Gain {block} Block. Ethereal.",
         "icon": "shield",
         "flavor": "A brief shelter drawn from the Observatory's fading glass.\n\nThe outer windows once softened the heat that gathered beneath the great lens. Shards carried away after the Burning could still hold a pale screen for an instant. In an unwatched hand, they crumbled before the next breath.\n\nThe shelter lasts only while it is needed."
