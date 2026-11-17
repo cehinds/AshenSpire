@@ -43,7 +43,7 @@ export function combatIntentPresentation(intent = {}) {
   // reports that the enemy is preparing, rather than claiming an attack.
   // A staggered enemy's action was cancelled: it reads Staggered, with no number and no "?" (owner, 2026-11-14).
   if (intent.kind === 'staggered') return { visibility: 'partial', title: t('combat.intent.staggered'), stance: 'preparing',
-    parts: [{ icon: 'prepare', value: null }], damageClass: null };
+    parts: [{ icon: 'prepare', value: null, staggered: true }], damageClass: null };
   // A delayed move that does not land this turn: "Charging", the turns left, whatever it gains now as this turn's effect, and its number as the
   // later one, small and not tinted as incoming damage (owner, 2026-11-14). The turn it lands it is read as the attack it is.
   if (intent.charging) return chargingPresentation(intent);
@@ -78,9 +78,14 @@ export function combatIntentPresentation(intent = {}) {
  * `summary` is the plain sentence the tooltip and the aria-label read, e.g. "6 damage, 3 Poise (breaks your Poise)".
  */
 export function IntentPoiseRead(intent) {
-  const poise = intent?.projectedPoise;
-  if (!poise || intent.hidden || intent.revealed === false || intent.charging || !(poise.max > 0 || poise.mayBreak)) return null;
+  if (!intent || intent.hidden || intent.revealed === false || intent.charging) return null;
   const damage = intent.projectedDamage?.label ?? (intent.damage != null ? String(intent.totalDamage ?? intent.damage) : null);
+  return PoiseRead(intent.projectedPoise, damage);
+}
+
+/** The read of one Poise forecast ({ min, max, label, breaks, mayBreak }) beside an HP label; null when it costs no Poise and breaks nothing. */
+export function PoiseRead(poise, damage) {
+  if (!poise || !(poise.max > 0 || poise.mayBreak)) return null;
   const breakNote = poise.breaks ? t('combat.intent.poiseBreaks') : poise.mayBreak ? t('combat.intent.poiseMayBreak') : '';
   return { value: poise.label, breaks: !!poise.breaks, mayBreak: !!poise.mayBreak,
     summary: t('combat.intent.poiseSummary', { damage: damage ?? '?', poise: poise.label }) + (breakNote ? ` ${breakNote}` : '') };
@@ -133,12 +138,17 @@ export function intentDamageRead(intent) {
 // different stance, unread, or unpriced; a Charging head keeps its presentation. Returns copies of the symbols, never the originals.
 export function SameStanceNumbers(headPart, symbols = [], priceAt) {
   // A damaging spell is drawn with the cast icon at the head, but its stance row reads as an attack (iconForStance).
-  const icon = headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
-  let run = ['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null;
+  // A Broken enemy lost only its head (it reads Staggered): its plan still plays, so the run starts at the first follow-up when that one is priced
+  // (a legacy Staggered enemy skips its turn and prices nothing, so its run ends there).
+  const broken = headPart?.staggered && symbols[0]?.kind === 'action' && ['attack', 'smash'].includes(symbols[0].icon);
+  const icon = broken ? symbols[0].icon : headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
+  let run = broken || (['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null);
   return symbols.map((symbol, i) => {
     if (!run || symbol.kind !== 'action' || symbol.icon !== icon) { run = false; return { ...symbol }; }
     const price = priceAt(i);
     if (price?.label == null) { run = false; return { ...symbol }; }
-    return { ...symbol, value: String(price.label) };
+    // Owner, 2026-11-17: each follow-up carries the Poise it takes too, after the moves before it, and BREAKS YOU when it is the one that breaks.
+    const poise = PoiseRead(price.poise, String(price.label));
+    return { ...symbol, value: String(price.label), ...(poise ? { poise } : {}) };
   });
 }

@@ -1,4 +1,5 @@
 import { intentIcon } from './intentIcon.js';
+import { IntentPoiseMark } from './intentPoiseMark.js';
 
 // The remaining queued actions after an actor has acted (IntentFollowUpModel.js): "?" for each one the observer
 // did not read, the maneuver icon for each one they did. Only the symbols reach the DOM, never a move.
@@ -17,6 +18,8 @@ export function intentFollowUps(symbols = []) {
         item.append(value);
       }
       item.append(intentIcon(symbol.icon));
+      // ...and the Poise it takes, with BREAKS YOU when it is the move that breaks it (owner, 2026-11-17).
+      if (symbol.poise) item.append(IntentPoiseMark(symbol.poise));
     }
     else { item.dataset.unknown = 'true'; item.textContent = '?'; }
     row.append(item);

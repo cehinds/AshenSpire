@@ -1,7 +1,6 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation, IntentPoiseRead } from '../models/CombatIntentModel.js';
-import { tagSymbolSvg } from './cardTagSymbols.js';
-import { t } from '../strings.js';
+import { IntentPoiseMark } from './intentPoiseMark.js';
 import { intentIcon, FluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -68,7 +67,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   const followUps = Array.isArray(intent?.followUps) ? intent.followUps : [];
   if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
-  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? `${symbol.icon}${symbol.value != null ? ` ${symbol.value}` : ''}` : 'unknown').join(', ')}.` : '';
+  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? `${symbol.icon}${symbol.value != null ? ` ${symbol.value}` : ''}${symbol.poise ? ` (${symbol.poise.summary})` : ''}` : 'unknown').join(', ')}.` : '';
   node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}${part.poise ? `. ${part.poise.summary}` : ''}`).join('. ')}${followLabel}`);
   if (badge.parts.some(part => part.poise?.breaks)) node.dataset.poiseBreak = 'true';
   {
@@ -223,23 +222,4 @@ export function intentParts(parts = [], { unknown = false } = {}) {
   return row;
 }
 
-/**
- * The Poise beside an attack's number (owner, 2026-11-17): the gold Poise hammer and the Poise the player loses, small, inside the attack's own
- * action so the row still holds five actions; a move that breaks the player's Poise adds a BREAKS YOU tag (never the target quote's bare BREAK, which
- * is the enemy's Poise). The sentence is the intent's aria-label.
- */
-export function IntentPoiseMark(poise) {
-  const mark = document.createElement('span');
-  mark.className = 'intent-poise';
-  mark.dataset.breaks = String(!!poise.breaks);
-  if (poise.mayBreak && !poise.breaks) mark.dataset.mayBreak = 'true';
-  mark.setAttribute('aria-hidden', 'true');
-  const value = document.createElement('span'); value.className = 'intent-poise-value'; value.textContent = String(poise.value);
-  mark.append(value, tagSymbolSvg('effect:poise', 'intent-poise-icon'));
-  if (poise.breaks || poise.mayBreak) {
-    const flag = document.createElement('span'); flag.className = 'intent-poise-break';
-    flag.textContent = poise.breaks ? t('combat.intent.poiseBreak') : `${t('combat.intent.poiseBreak')}?`;
-    mark.append(flag);
-  }
-  return mark;
-}
+export { IntentPoiseMark };

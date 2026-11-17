@@ -179,7 +179,29 @@ test('review #2825: a planned follow-up carries its Poise and BREAKS YOU (slash,
   assert.equal(follow.breaks, true, 'the plan breaks the player on the follow-up');
 });
 
+test('review #2825: the follow-up symbols show the follow-up Poise (SameStanceNumbers)', async () => {
+  const { SameStanceNumbers } = await import('../src/ui/models/CombatIntentModel.js');
+  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash', 'slash'], { poise: 10 });
+  const head = combatIntentPresentation(projectCombatIntent(combat, enemy.id)).parts[0];
+  const symbols = SameStanceNumbers(head, [{ kind: 'action', icon: 'attack' }, { kind: 'action', icon: 'attack' }], i => ProjectPlannedFollowUpDamage(combat, enemy.id, i));
+  assert.ok(symbols[0].poise, 'the first follow-up shows Poise');
+  assert.equal(symbols[0].poise.breaks, true);
+  assert.match(symbols[0].poise.summary, /breaks your Poise/);
+});
 
+test('review #2825: a Broken enemy whose plan still plays shows its follow-up Poise', async () => {
+  const { SameStanceNumbers } = await import('../src/ui/models/CombatIntentModel.js');
+  const { drainFixCorePoise } = await import('../src/engine/actions.js');
+  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash'], { poise: 10 });
+  drainFixCorePoise(combat, combat.player, enemy, 999);
+  assert.ok(enemy.broken, 'the enemy is Broken (it loses its head, not its plan)');
+  const head = combatIntentPresentation(projectCombatIntent(combat, enemy.id)).parts[0];
+  const price = ProjectPlannedFollowUpDamage(combat, enemy.id, 0);
+  assert.ok(price?.poise, 'the planned move is priced with its Poise');
+  const [symbol] = SameStanceNumbers(head, [{ kind: 'action', icon: 'attack' }], i => ProjectPlannedFollowUpDamage(combat, enemy.id, i));
+  assert.equal(symbol.value, price.label);
+  assert.equal(symbol.poise?.value, price.poise.label);
+});
 
 test('review #2825: an unread attacker before this one makes the Poise a lower bound that may break', () => {
   const combat = fight([['wanderingSoldier', 'slash'], ['wanderingSoldier', 'slash']], { poise: 30 });
