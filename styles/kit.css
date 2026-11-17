@@ -1339,7 +1339,7 @@ input[type="range"] { min-height: var(--tap-floor); }
   background-position: left center, center;
   background-repeat: no-repeat;
 }
-.shop-book-buy.as-btn:hover:not(:disabled) { filter: brightness(1.18); }
+.shop-book-buy.as-btn:hover:not(:disabled) { filter: var(--btn-hover-filter); }
 .shop-book-buy.as-btn:disabled { opacity: 0.5; filter: grayscale(0.65); cursor: not-allowed; }
 .shop-book-price { color: var(--gold); font-size: 1.1rem; line-height: 1.4; font-variant-numeric: tabular-nums; text-transform: uppercase; overflow-wrap: anywhere; }
 .shop-book-details .shop-offer-avail { margin-top: 0.6rem; }
