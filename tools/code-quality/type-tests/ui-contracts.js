@@ -112,7 +112,6 @@ export const navigatorWithBadOrientation = (listElement) =>
 export const pressable = {
     armLongPress: ArmLongPress,
     guardOnce: GuardOnce,
-    activateOnKey: ActivateOnKey,
 };
 
 /** @type {Pressable} */

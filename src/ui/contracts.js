@@ -186,7 +186,6 @@
  * @typedef {object} Pressable
  * @property {(element: HTMLElement, options: LongPressOptions) => Disarm} armLongPress
  * @property {(button: HTMLElement & { disabled: boolean }, action: (event: Event) => unknown) => Disarm} guardOnce
- * @property {(element: HTMLElement, onActivate: (event: Event) => void) => Disarm} activateOnKey
  */
 
 /**
