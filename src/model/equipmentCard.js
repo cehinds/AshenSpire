@@ -34,8 +34,9 @@ export function equipmentCardModel(registries, piece) {
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
     const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
-    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule).
-    const tierAR = !armor && piece.kind !== 'shield' ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
+    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule), except under `statPoints`,
+    // where the tier is attribute points already in the receipt (owner, 2026-11-17).
+    const tierAR = !armor && piece.kind !== 'shield' && !configuredGear.statPoints ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
       id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
         : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));

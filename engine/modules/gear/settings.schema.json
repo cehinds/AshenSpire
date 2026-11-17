@@ -672,6 +672,33 @@
         "baseline"
       ],
       "additionalProperties": false
+    },
+    "statPoints": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          }
+        },
+        "perRank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "poiseMin": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        }
+      },
+      "required": [
+        "attributes"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

@@ -156,7 +156,8 @@ export function gameProfileRatingReceipt(registries, run) {
         else {
           const itemTier = tier(`armament/${id}`);
           weaponTier = Math.max(weaponTier,itemTier);
-          if (gameModule(run,'gear')?.armorBudget && itemTier) {
+          // Under the gear module's `statPoints` (Core, owner 2026-11-17) a tier adds attribute points to the item instead (gameProfileGear.js).
+          if (gameModule(run,'gear')?.armorBudget && !gameModule(run,'gear')?.statPoints && itemTier) {
             const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
             // A magic weapon's tier also raises its spells: the same bonus lands in PR (W25 upgrades, step 1).
             const pr = ItemFamily(run,`armament/${id}`) === 'magic' ? ar : 0; // a category change can make a staff martial, a sword magic

@@ -24,23 +24,16 @@
   "statOptions": {
     "martial": [
       {
-        "id": "ar",
-        "stat": "ar",
-        "n": 1,
-        "weight": 30,
-        "text": "+1 AR"
-      },
-      {
-        "id": "dr",
-        "stat": "dr",
-        "n": 1,
+        "id": "poise",
+        "stat": "poise",
+        "n": 3,
         "weight": 20,
-        "text": "+1 DR"
+        "text": "+3 Poise"
       },
       {
         "id": "attr",
         "n": 1,
-        "weight": 25,
+        "weight": 55,
         "byCategory": {
           "dagger": [
             "dexterity"
@@ -92,16 +85,9 @@
         "text": "+10% Poise damage"
       },
       {
-        "id": "magicDamage",
-        "stat": "pr",
-        "n": 1,
-        "weight": 30,
-        "text": "+1 magic damage (PR)"
-      },
-      {
         "id": "attr",
         "n": 1,
-        "weight": 25,
+        "weight": 55,
         "attrs": [
           "intelligence",
           "wisdom",
@@ -111,11 +97,13 @@
     ],
     "armor": [
       {
-        "id": "dr",
-        "stat": "dr",
+        "id": "attr",
         "n": 1,
         "weight": 40,
-        "text": "+1 DR"
+        "attrs": [
+          "constitution",
+          "dexterity"
+        ]
       },
       {
         "id": "ward",

@@ -86,3 +86,40 @@ test('item 2: the attribute part of AR, DR and PR reads one stat each (STR, DEX,
     assert.equal(at('pr', {}), 6, `${classId} PR row = INT (the WIS half is PrAttributeView)`);
   }
 });
+
+test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2) and a Poise value, never AR or DR', async () => {
+  const { resolveGearItem } = await import('../engine/kernel/gameConfig.js');
+  const settings = profile.modules.gear;
+  const totals = [];
+  for (const item of profile.content.gear) {
+    const resolved = resolveGearItem(item, settings);
+    const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + resolved.points[id], 0);
+    assert.equal(resolved.values.ar, 0, `${item.id} AR`);
+    assert.equal(resolved.values.dr, 0, `${item.id} DR`);
+    assert.ok(attributes >= 1 && attributes <= 3, `${item.id}: ${attributes} attribute points`);
+    assert.ok(resolved.values.poise > 0, `${item.id} has a Poise value`);
+    totals.push(attributes);
+    // A Smith tier adds an attribute point, still never AR or DR.
+    const tiered = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + 2 });
+    assert.equal(tiered.values.ar + tiered.values.dr, 0, `${item.id} tiered`);
+    assert.equal(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + tiered.points[id], 0), attributes + 2, `${item.id} +2 ranks`);
+  }
+  const average = totals.reduce((a, b) => a + b, 0) / totals.length;
+  assert.ok(average >= 1 && average <= 2, `average ${average}`);
+});
+
+test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective STR', async () => {
+  const { gameProfileRatingReceipt } = await import('../src/model/gameProfileRun.js');
+  for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
+    const run = newRun(classId);
+    for (const [slot, sets] of Object.entries(run.loadout.sets)) {
+      const id = sets[run.loadout.active?.[slot] || 0];
+      if (id) (run.itemUpgradeLevels ||= {})[slot === 'armor' ? `armor/${classId}/${id}` : `armament/${id}`] = 2;
+    }
+    const attributes = gameProfileEffectiveAttributes(registries, run);
+    const receipt = gameProfileRatingReceipt(registries, run);
+    assert.equal(receipt.totals.ar, attributes.strength, `${classId} AR`);
+    assert.equal(receipt.totals.dr, attributes.dexterity, `${classId} DR`);
+    assert.equal(receipt.totals.pr, Math.max(attributes.intelligence, attributes.wisdom), `${classId} PR`);
+  }
+});

@@ -231,8 +231,34 @@ export function armorBudgetFor(item, settings, rank = item.rank ?? 1) {
   const b = settings.armorBudget;
   return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus && Object.hasOwn(b.rarityBonus, item.rarity) ? b.rarityBonus[item.rarity] : 0);
 }
+// Owner, 2026-11-17 (`statPoints`, Core): armour and armaments grant attribute points and a Poise value, never AR or DR.
+// The item as found carries `attributes[rarity]` points (1 to 3), split by its bonus weights; each rank above its own
+// (a Smith tier) adds `perRank` more. Its Poise points are the Poise share of its ratings weights times its ratings
+// pool, rounded, and at least `poiseMin`. Tag costs are not charged; authored attribute and Poise points are kept.
+function resolveStatPointGear(item, settings, rank) {
+  const rule = settings.statPoints;
+  const authored = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  const authoredAttributes = GEAR_ATTRIBUTES.reduce((s, k) => s + authored[k], 0);
+  const found = Math.max(authoredAttributes, rule.attributes[item.rarity] ?? 0);
+  const total = found + Math.max(0, rank - (item.rank ?? 1)) * (rule.perRank ?? 0);
+  const onlyAttributes = weights => Object.fromEntries(Object.entries(weights).filter(([k, v]) => GEAR_ATTRIBUTES.includes(k) && v > 0));
+  let bonusWeights = onlyAttributes(gearWeights(item, settings, 'bonus'));
+  if (!Object.keys(bonusWeights).length) bonusWeights = onlyAttributes(settings.weights.global.bonus || {});
+  const chosen = Object.entries(bonusWeights).sort((a, b) => b[1] - a[1]).slice(0, settings.maxAttributes);
+  const fill = gearSplit(total - authoredAttributes, Object.fromEntries(chosen));
+  const ratingsWeights = gearWeights(item, settings, 'ratings');
+  const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
+  const ratingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
+  const poise = authored.poise || Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * (ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0)));
+  const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
+  const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
+  const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
+  const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
+  return { id: item.id, rank, budget: null, points, values, tags: [...(item.tags || [])], modifiers, tagCost: 0, statPoints: { found, total, poise }, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: 'statPoints' } };
+}
 export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) {
   if (!Number.isSafeInteger(rank) || rank < 1) throw new Error('Gear rank must be a positive integer');
+  if (settings.statPoints) return resolveStatPointGear(item, settings, rank);
   const armorBudget = item.kind === 'armor' && settings.armorBudget
     ? armorBudgetFor(item, settings, rank) : null;
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
