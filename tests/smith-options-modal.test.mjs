@@ -62,9 +62,11 @@ test('smith keep: rows toggle up to the limit, the quote gates the primary, conf
     rows[0].click();
     assert.equal(confirm.disabled, true, 'nothing kept: the primary is disabled');
     rows[1].click(); rows[2].click(); rows[0].click();
-    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['false', 'true', 'true'], 'the limit holds: the third pick over 2 is ignored');
+    // Playtest 2026-11-17 (item 26): a pick over the limit swaps out the earliest pick, so a choice is never locked in.
+    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'false', 'true'], 'the limit holds: the third pick swaps out the earliest');
     assert.equal(confirm.disabled, false);
     confirm.click();
-    assert.deepEqual(confirmed, [['p2', 'p3']]);
+    assert.equal(confirmed.length, 1);
+    assert.deepEqual([...confirmed[0]].sort(), ['p1', 'p3'], 'the two kept keys are the latest picks');
   } finally { restore(); }
 });

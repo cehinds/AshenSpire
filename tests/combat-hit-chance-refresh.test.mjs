@@ -140,7 +140,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
     renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
     syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
     combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,
-    scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'),
+    scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'), KeepIntentRowsInside() {},
   });
   c.battlefieldStage.refresh = () => f.calls.push('field-fit');
   const renderSource = ['renderCombatantStage', 'render'].map(name => {
