@@ -1,6 +1,3 @@
-// The Replace comparison: the equipped item on the left, the candidate on the right,
-// and the facts that move listed under them. It borrows the card-upgrade modal's
-// frame and faces. The host owns the equip.
 import {
     el as buildElement,
     modalHead,
@@ -31,52 +28,47 @@ const TITLE_ID = 'equip-compare-title';
 const NO_SCROLL = Object.freeze({ preventScroll: true });
 const ARIA_MODAL_SELECTOR = '[aria-modal="true"]';
 const CLICK_EVENT = 'click';
+const CURRENT_CAPTION_KEY = 'armoury.compare.current';
+const NEW_CAPTION_KEY = 'armoury.compare.new';
+const UNCHANGED_VERDICT = 'same';
 
-function focusableButtons(root)
+function isVisibleButton(candidateButton)
 {
-    const buttons = root.querySelectorAll('button:not([disabled])');
-    return [...buttons].filter((node) => !node.hidden && node.getClientRects().length);
+    return !candidateButton.hidden
+        && candidateButton.getClientRects().length;
 }
 
-/** One comparison row: the label, then `before → after` coloured by its verdict. */
-export function CompareRowNode(compareRow)
+function findFocusableButtons(root)
 {
-    const delta = deltaNode(String(compareRow.before), String(compareRow.after));
-    delta.dataset.dir = VERDICT_DIRECTION[compareRow.verdict] || 'flat';
-    return statRow({
-        flat: true,
-        nameNode: buildElement('b', { class: 'sr-name', text: compareRow.label }),
-        values: [delta],
-        className: `equip-compare-row is-${compareRow.verdict}`,
-        attrs: {
-            dataset: {
-                compareRow: compareRow.id,
-                verdict: compareRow.verdict,
-            },
+    const enabledButtons = root.querySelectorAll('button:not([disabled])');
+    return [...enabledButtons].filter(isVisibleButton);
+}
+
+function buildCompareFace(registries, side, sideEquipment)
+{
+    const captionKey = side === SIDE.current
+        ? CURRENT_CAPTION_KEY
+        : NEW_CAPTION_KEY;
+    const equipmentCard = renderEquipmentCard(
+        registries,
+        sideEquipment.item,
+        {
+            interactive: false,
+            inspection: false,
+            level: 'inspect',
+            surface: 'armoury',
         },
-    });
-}
-
-/** One item card with its name and a "current" / "new" caption. */
-function buildFace(registries, side, entry)
-{
-    const whichKey = side === SIDE.current ? 'armoury.compare.current' : 'armoury.compare.new';
-    const equipmentCard = renderEquipmentCard(registries, entry.item, {
-        interactive: false,
-        inspection: false,
-        level: 'inspect',
-        surface: 'armoury',
-    });
+    );
     const caption = buildElement(
         'figcaption',
         { class: 'equip-compare-caption' },
         [
-            buildElement('b', { text: entry.name }),
+            buildElement('b', { text: sideEquipment.name }),
             buildElement(
                 'span',
                 {
                     class: 'equip-compare-which',
-                    text: translate(whichKey),
+                    text: translate(captionKey),
                 },
             ),
         ],
@@ -94,40 +86,201 @@ function buildFace(registries, side, entry)
     );
 }
 
-/** Only the topmost modal answers the keyboard. */
 function isTopmostModal(modal)
 {
     return [...document.querySelectorAll(ARIA_MODAL_SELECTOR)].at(-1) === modal;
 }
 
-/** Keeps Tab inside the modal, wrapping at both ends. */
-function trapTab(event, modal)
+function trapTabFocus(event, modal)
 {
-    const buttons = focusableButtons(modal);
-    if (!buttons.length)
+    const focusableButtons = findFocusableButtons(modal);
+    if (!focusableButtons.length)
     {
         return;
     }
-    const firstButton = buttons[0];
-    const lastButton = buttons[buttons.length - 1];
-    if (event.shiftKey && document.activeElement === firstButton)
+
+    const firstButton = focusableButtons[0];
+    const lastButton = focusableButtons[focusableButtons.length - 1];
+    const activeElement = document.activeElement;
+    const wrapsBackward = event.shiftKey && activeElement === firstButton;
+    const wrapsForward = !event.shiftKey && activeElement === lastButton;
+
+    if (wrapsBackward)
     {
         event.preventDefault();
         lastButton.focus();
     }
-    else if (!event.shiftKey && document.activeElement === lastButton)
+    else if (wrapsForward)
     {
         event.preventDefault();
         firstButton.focus();
     }
-    else if (!modal.contains(document.activeElement))
+    else if (!modal.contains(activeElement))
     {
         event.preventDefault();
-        (event.shiftKey ? lastButton : firstButton).focus();
+        const entryButton = event.shiftKey
+            ? lastButton
+            : firstButton;
+        entryButton.focus();
     }
 }
 
-/** Mounts the Replace comparison into host and returns { close }. */
+function readReturnFocus(returnFocusElement)
+{
+    const activeElement = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    return returnFocusElement instanceof HTMLElement
+        ? returnFocusElement
+        : activeElement;
+}
+
+function buildVeil()
+{
+    const veil = document.createElement('div');
+    veil.className = 'modal-veil smith-modal-veil equip-compare-veil';
+    return veil;
+}
+
+function buildDialog()
+{
+    const modal = document.createElement('section');
+    modal.className = 'modal card-upgrade-modal equip-compare-modal';
+    stampModalSize(modal, 'lg');
+    ModalModelFor('compare').apply(modal);
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', TITLE_ID);
+    modal.tabIndex = -1;
+    modal.dataset.component = UI_COMPONENTS.armouryEquipCompareModal;
+    return modal;
+}
+
+function buildFacesRow(registries, current, next)
+{
+    const arrow = buildElement('span', {
+        class: 'equip-compare-arrow',
+        'aria-hidden': 'true',
+        text: '→',
+    });
+    return buildElement(
+        'div',
+        { class: 'card-upgrade-faces equip-compare-faces' },
+        [
+            buildCompareFace(registries, SIDE.current, current),
+            arrow,
+            buildCompareFace(registries, SIDE.next, next),
+        ],
+    );
+}
+
+function buildCompareRowsList(compareRows)
+{
+    const changedRows = compareRows.filter(
+        (compareRow) => compareRow.verdict !== UNCHANGED_VERDICT,
+    );
+    const unchangedRows = compareRows.filter(
+        (compareRow) => compareRow.verdict === UNCHANGED_VERDICT,
+    );
+    return buildElement(
+        'div',
+        {
+            class: 'equip-compare-rows',
+            dataset: { component: UI_COMPONENTS.armouryEquipCompareRows },
+        },
+        [
+            eyebrow(translate('armoury.compare.title')),
+            ...changedRows.map(CompareRowNode),
+            ...unchangedRows.map(CompareRowNode),
+        ],
+    );
+}
+
+function buildBackButton()
+{
+    return button({
+        label: translate(BACK_LABEL_KEY),
+        role: 'exit',
+        className: 'subtle equip-compare-back',
+    });
+}
+
+function buildEquipButton()
+{
+    return button({
+        label: translate('armoury.picker.act.equip'),
+        weight: 'primary',
+        className: 'equip-compare-equip',
+    });
+}
+
+function fillDialog(
+    modal,
+    {
+        registries,
+        title,
+        current,
+        next,
+        rows,
+    },
+)
+{
+    const headElement = modalHead({
+        title,
+        titleId: TITLE_ID,
+        closeLabel: translate(BACK_LABEL_KEY),
+    });
+    const bodyElement = buildElement(
+        'div',
+        { class: 'modal-body equip-compare-body' },
+        [
+            buildFacesRow(registries, current, next),
+            buildCompareRowsList(rows),
+        ],
+    );
+    const backButton = buildBackButton();
+    const equipButton = buildEquipButton();
+    const footer = modalFooter({
+        secondary: [backButton],
+        primary: equipButton,
+        className: 'equip-compare-foot',
+        size: 'medium',
+    });
+    modal.append(
+        headElement,
+        bodyElement,
+        footer,
+    );
+    return {
+        backButton,
+        equipButton,
+    };
+}
+
+export function CompareRowNode(compareRow)
+{
+    const deltaBadge = deltaNode(
+        String(compareRow.before),
+        String(compareRow.after),
+    );
+    deltaBadge.dataset.dir = VERDICT_DIRECTION[compareRow.verdict] || 'flat';
+    return statRow({
+        flat: true,
+        nameNode: buildElement('b', {
+            class: 'sr-name',
+            text: compareRow.label,
+        }),
+        values: [deltaBadge],
+        className: `equip-compare-row is-${compareRow.verdict}`,
+        attrs: {
+            dataset: {
+                compareRow: compareRow.id,
+                verdict: compareRow.verdict,
+            },
+        },
+    });
+}
+
 export function MountEquipCompareModal(
     host,
     {
@@ -142,87 +295,24 @@ export function MountEquipCompareModal(
     },
 )
 {
-    const returnFocus = returnFocusElement instanceof HTMLElement
-        ? returnFocusElement
-        : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-    const veil = document.createElement('div');
-    veil.className = 'modal-veil smith-modal-veil equip-compare-veil';
-    const modal = document.createElement('section');
-    modal.className = 'modal card-upgrade-modal equip-compare-modal';
-    stampModalSize(modal, 'lg');
-    ModalModelFor('compare').apply(modal);
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-labelledby', TITLE_ID);
-    modal.tabIndex = -1;
-    modal.dataset.component = UI_COMPONENTS.armouryEquipCompareModal;
-
-    const headElement = modalHead({
+    const returnFocus = readReturnFocus(returnFocusElement);
+    const veil = buildVeil();
+    const modal = buildDialog();
+    const {
+        backButton,
+        equipButton,
+    } = fillDialog(modal, {
+        registries,
         title,
-        titleId: TITLE_ID,
-        closeLabel: translate(BACK_LABEL_KEY),
+        current,
+        next,
+        rows,
     });
-    const arrowNode = buildElement('span', {
-        class: 'equip-compare-arrow',
-        'aria-hidden': 'true',
-        text: '→',
-    });
-    const facesRow = buildElement(
-        'div',
-        { class: 'card-upgrade-faces equip-compare-faces' },
-        [
-            buildFace(registries, SIDE.current, current),
-            arrowNode,
-            buildFace(registries, SIDE.next, next),
-        ],
-    );
-    const changedRows = rows.filter((compareRow) => compareRow.verdict !== 'same');
-    const unchangedRows = rows.filter((compareRow) => compareRow.verdict === 'same');
-    const rowsList = buildElement(
-        'div',
-        {
-            class: 'equip-compare-rows',
-            dataset: { component: UI_COMPONENTS.armouryEquipCompareRows },
-        },
-        [
-            eyebrow(translate('armoury.compare.title')),
-            ...changedRows.map(CompareRowNode),
-            ...unchangedRows.map(CompareRowNode),
-        ],
-    );
-    const bodyElement = buildElement(
-        'div',
-        { class: 'modal-body equip-compare-body' },
-        [
-            facesRow,
-            rowsList,
-        ],
-    );
-    const backButton = button({
-        label: translate(BACK_LABEL_KEY),
-        role: 'exit',
-        className: 'subtle equip-compare-back',
-    });
-    const equipButton = button({
-        label: translate('armoury.picker.act.equip'),
-        weight: 'primary',
-        className: 'equip-compare-equip',
-    });
-    const footer = modalFooter({
-        secondary: [backButton],
-        primary: equipButton,
-        className: 'equip-compare-foot',
-        size: 'medium',
-    });
-    modal.append(
-        headElement,
-        bodyElement,
-        footer,
-    );
     veil.appendChild(modal);
     host.appendChild(veil);
 
     let isClosed = false;
+
     function close({ restoreFocus = true } = {})
     {
         if (isClosed)
@@ -230,33 +320,48 @@ export function MountEquipCompareModal(
             return;
         }
         isClosed = true;
-        window.removeEventListener('keydown', onKeydown, true);
+        window.removeEventListener(
+            'keydown',
+            handleKeydown,
+            true,
+        );
         veil.remove();
-        if (restoreFocus && returnFocus?.isConnected)
+        if (
+            restoreFocus
+            && returnFocus?.isConnected
+        )
         {
             returnFocus.focus(NO_SCROLL);
         }
     }
-    const goBack = () =>
+
+    function goBack()
     {
         close();
         onBack?.();
-    };
-    const confirmEquip = () =>
+    }
+
+    function confirmEquip()
     {
         close({ restoreFocus: false });
         onEquip?.();
-    };
-    function onKeydown(event)
+    }
+
+    function handleKeydown(event)
     {
-        if (event.defaultPrevented || event.repeat)
+        if (
+            event.defaultPrevented
+            || event.repeat
+        )
         {
             return;
         }
+
         if (!isTopmostModal(modal))
         {
             return;
         }
+
         if (event.key === 'Escape')
         {
             event.preventDefault();
@@ -266,20 +371,30 @@ export function MountEquipCompareModal(
         }
         if (event.key === 'Tab')
         {
-            trapTab(event, modal);
+            trapTabFocus(event, modal);
         }
     }
-    veil.addEventListener(CLICK_EVENT, (event) =>
+
+    function bindListeners()
     {
-        if (event.target === veil)
+        veil.addEventListener(CLICK_EVENT, (event) =>
         {
-            goBack();
-        }
-    });
-    backButton.addEventListener(CLICK_EVENT, goBack);
-    equipButton.addEventListener(CLICK_EVENT, confirmEquip);
-    modal.querySelector('.modal-close')?.addEventListener(CLICK_EVENT, goBack);
-    window.addEventListener('keydown', onKeydown, true);
+            if (event.target === veil)
+            {
+                goBack();
+            }
+        });
+        backButton.addEventListener(CLICK_EVENT, goBack);
+        equipButton.addEventListener(CLICK_EVENT, confirmEquip);
+        modal.querySelector('.modal-close')?.addEventListener(CLICK_EVENT, goBack);
+        window.addEventListener(
+            'keydown',
+            handleKeydown,
+            true,
+        );
+    }
+
+    bindListeners();
     queueMicrotask(() => equipButton.focus(NO_SCROLL));
     return { close };
 }

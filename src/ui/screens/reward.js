@@ -1,6 +1,3 @@
-// The Core reward door: the victory receipt (XP bars, attribute points) and the rank-up chooser.
-// Row meaning and Continue rules live in model/rewardplan.js; this screen draws and forwards taps.
-
 import { uiIconText } from '../../content/uiIcons.js';
 import { StatAllocationSection } from '../components/statAllocation.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
@@ -41,15 +38,25 @@ import { resolveCard } from '../../model/registries.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { ownedCopies } from '../../model/deckRules.js';
 
+const DEFAULT_XP_SECONDS = 3;
+const MAX_XP_MILLISECONDS = 12000;
+
 const SKILL_RANK_UP = 'skillRankUp';
 const SMITHING_STONE = 'smithingStone';
-const KIND_GLYPHS = { smithingStone: 'smith', skillRankUp: 'progression' };
+const KIND_GLYPHS = {
+    smithingStone: 'smith',
+    skillRankUp: 'progression',
+};
 
 const STATE_PENDING = 'pending';
 const STATE_TAKEN = 'taken';
 const STATE_SKIPPED = 'skipped';
 const STATE_BLOCKED = 'blocked';
-const LOCKED_STATES = new Set([STATE_TAKEN, STATE_BLOCKED, STATE_SKIPPED]);
+const LOCKED_STATES = new Set([
+    STATE_TAKEN,
+    STATE_BLOCKED,
+    STATE_SKIPPED,
+]);
 const STATE_COPY_IDS = {
     taken: 'reward.state.taken',
     blocked: 'reward.state.blocked',
@@ -58,7 +65,18 @@ const STATE_COPY_IDS = {
 
 const CLAIM_LAYOUT_SELECTOR = '.reward-claim-layout';
 const MENU_SELECTOR = '.reward-menu';
-const CONTINUE_SELECTOR = '#reward-continue';
+const PROGRESS_PANEL_SELECTOR = '.reward-progress';
+const ANIMATED_BAR_SELECTOR = '.rp-layered-bar[data-animate="1"]';
+const UNDER_FILL_SELECTOR = '.rp-under';
+const OVER_FILL_SELECTOR = '.rp-over';
+const CONTINUE_ID = 'reward-continue';
+const CONTINUE_SELECTOR = `#${CONTINUE_ID}`;
+const CONFIRM_BUTTON_ID = 'reward-card-confirm';
+const INSPECT_BUTTON_ID = 'reward-inspect';
+const CHOSEN_CLASS = 'is-chosen';
+const SELECTED_CLASS = 'reward-selected';
+const CONTINUE_LABEL_ID = 'common.continue';
+const INSPECT_LABEL_ID = 'deckEditor.inspectAction';
 const HOLD_NOTE_ID = 'reward-hold-copy';
 const UNLOCKED_ROW_SELECTOR = '.reward-kind:not(.locked)';
 const CHOOSER_STRIP_SELECTOR = '.reward-row';
@@ -68,8 +86,6 @@ const SAVE_FAILED_ID = 'reward.card.saveFailed';
 const NONE_ID = 'reward.skillRankUp.none';
 const REDUCED_MOTION_CLASS = 'reduced-motion';
 
-const DEFAULT_XP_SECONDS = 3;
-const MAX_XP_MILLISECONDS = 12000;
 const MORE_LABEL = '+…';
 const ARROW = ' → ';
 const MINUS = '−';
@@ -84,23 +100,62 @@ const POWER_ROW_LABEL = 'Combat-power victory bonus';
 const BONUS_ROW_LABEL = 'Character XP bonus';
 const BATTLE_ROW_LABEL = 'Battle XP';
 
-const isProgressionReward = (row) => row.kind === SKILL_RANK_UP;
-const cardRank = (instance) => (
-    Number.isInteger(instance?.rank) && instance.rank > 1 ? instance.rank : 1
-);
-const isReducedMotion = () => document.body.classList.contains(REDUCED_MOTION_CLASS);
+function isProgressionReward(row)
+{
+    return row.kind === SKILL_RANK_UP;
+}
+
+function readCardRank(instance)
+{
+    const hasRank = Number.isInteger(instance?.rank)
+        && instance.rank > 1;
+    return hasRank
+        ? instance.rank
+        : 1;
+}
+
+function isReducedMotion()
+{
+    return document.body.classList.contains(REDUCED_MOTION_CLASS);
+}
+
+function pauseFor(milliseconds)
+{
+    return milliseconds > 0
+        ? new Promise((resolve) => setTimeout(resolve, milliseconds))
+        : Promise.resolve();
+}
+
+function readVictoryTitle(rewards)
+{
+    return rewards.title || translate(TITLE_VICTORY_ID);
+}
+
+function rewardNoteHtml(token)
+{
+    const text = escapeHtml(translate(`reward.note.${token}`));
+    return `<p class="reward-note" data-note="${escapeHtml(token)}">${text}</p>`;
+}
+
+function skipButtonHtml(row, title)
+{
+    const label = escapeHtml(translate('reward.skip'));
+    const aria = escapeHtml(translate('reward.skip.aria', { kind: title }));
+    return `<button class="subtle reward-skip" data-skip="${escapeHtml(row.key)}"`
+        + ` data-focusable="true" aria-label="${aria}">${label}</button>`;
+}
 
 function tooltipHtml(title, body = '')
 {
     return `<div class="tt-title">${escapeHtml(title)}</div>${escapeHtml(body)}`;
 }
 
-function levelText(level)
+function formatLevel(level)
 {
     return `Level ${level}`;
 }
 
-function setOrDelete(target, key, value)
+function setOrDeleteKey(target, key, value)
 {
     if (value === undefined)
     {
@@ -112,7 +167,7 @@ function setOrDelete(target, key, value)
     }
 }
 
-function replaceContents(target, source)
+function replaceObjectContents(target, source)
 {
     for (const key of Object.keys(target))
     {
@@ -121,7 +176,7 @@ function replaceContents(target, source)
     Object.assign(target, source);
 }
 
-function progressLabel(row)
+function readProgressLabel(row)
 {
     if (row.kind === 'character')
     {
@@ -129,12 +184,14 @@ function progressLabel(row)
     }
     if (row.kind === 'class')
     {
-        return translate('reward.progress.classTrack', { class: row.label });
+        return translate('reward.progress.classTrack', {
+            class: row.label,
+        });
     }
     return row.label;
 }
 
-function compactRowLabel(row)
+function readCompactRowLabel(row)
 {
     if (row.kind === 'power')
     {
@@ -142,9 +199,305 @@ function compactRowLabel(row)
     }
     if (row.kind === 'enemy')
     {
-        return `${row.name || translate('combat.log.role.enemy')} · ${levelText(row.level || 1)}`;
+        const enemyName = row.name || translate('combat.log.role.enemy');
+        return `${enemyName} · ${formatLevel(row.level || 1)}`;
     }
-    return row.kind === 'bonus' ? BONUS_ROW_LABEL : BATTLE_ROW_LABEL;
+    return row.kind === 'bonus'
+        ? BONUS_ROW_LABEL
+        : BATTLE_ROW_LABEL;
+}
+
+function readOfferCopyId(row)
+{
+    if (row.kind !== SKILL_RANK_UP)
+    {
+        return 'reward.take';
+    }
+    return row.choice
+        ? 'reward.card.choose'
+        : 'reward.card.take';
+}
+
+function setBarWidths(bar, width)
+{
+    bar.querySelector(UNDER_FILL_SELECTOR).style.width = width;
+    bar.querySelector(OVER_FILL_SELECTOR).style.width = width;
+}
+
+function hasBothFills(bar)
+{
+    return Boolean(bar.querySelector(UNDER_FILL_SELECTOR))
+        && Boolean(bar.querySelector(OVER_FILL_SELECTOR));
+}
+
+function startBarFill(bar, duration, targetWidth)
+{
+    const transition = `width ${duration}ms linear`;
+    bar.getBoundingClientRect();
+    bar.querySelector(UNDER_FILL_SELECTOR).style.transition = transition;
+    bar.querySelector(OVER_FILL_SELECTOR).style.transition = transition;
+    setBarWidths(bar, targetWidth);
+}
+
+function readBarDurations(bars, totalMilliseconds)
+{
+    return xpFillDurations(
+        bars.map((bar) => ({
+            from: Number(bar.dataset.old) / 100,
+            to: Number(bar.dataset.target) / 100,
+        })),
+        totalMilliseconds,
+    );
+}
+
+function readStartPercent(row, xpBefore)
+{
+    const startsOnThisLevel = xpBefore
+        && xpBefore.level === row.level
+        && row.xpToNext;
+    return startsOnThisLevel
+        ? Math.max(0, Math.min(100, xpBefore.xp / row.xpToNext * 100))
+        : 0;
+}
+
+function buildNextLevelLabel(row)
+{
+    let nextText = translate('reward.progress.next', { level: row.level + 1 });
+    if (row.capped)
+    {
+        nextText = translate('reward.progress.capped');
+    }
+    else if (row.kind === 'character')
+    {
+        nextText = formatLevel(row.level + 1);
+    }
+    return buildElement('span', {
+        class: 'rp-next',
+        text: nextText,
+    });
+}
+
+function buildProgressBar(row, label, fill)
+{
+    const under = buildElement('span', { class: 'rp-under' });
+    const over = buildElement('span', { class: 'rp-over' });
+    const shownPercent = fill.animate
+        ? fill.startPercent
+        : fill.targetPercent;
+    under.style.width = `${shownPercent}%`;
+    over.style.width = `${shownPercent}%`;
+    const xpTotal = row.xpToNext || row.xp;
+    const xpShown = Math.min(row.xp, xpTotal);
+    const isFullAtRest = !fill.animate
+        && row.fraction >= 1;
+    const readyClass = isFullAtRest
+        ? ' rp-bar-ready'
+        : '';
+    return buildElement(
+        'div',
+        {
+            class: `rp-bar rp-layered-bar${readyClass}`,
+            role: 'progressbar',
+            'aria-valuemin': '0',
+            'aria-valuemax': String(row.xpToNext || 0),
+            'aria-valuenow': String(xpShown),
+            'aria-label': `${label}: ${xpShown} / ${xpTotal} XP`,
+            dataset: {
+                animate: fill.animate ? '1' : '0',
+                target: String(fill.targetPercent),
+                old: String(fill.startPercent),
+                track: row.id,
+                kind: row.kind,
+            },
+        },
+        [
+            under,
+            over,
+            buildElement('span', {
+                class: 'rp-bar-text',
+                text: `${xpShown} / ${xpTotal}`,
+            }),
+        ],
+    );
+}
+
+function readLevelNowText(row)
+{
+    return row.kind === 'character'
+        ? formatLevel(row.level)
+        : translate('reward.progress.level', { level: row.level });
+}
+
+function buildGainedNode(row)
+{
+    return row.gained
+        ? buildElement('span', {
+            class: 'rp-gain',
+            text: translate('reward.progress.gained', { xp: row.gained }),
+        })
+        : null;
+}
+
+function buildDiscardedNode(row)
+{
+    return row.discarded
+        ? buildElement('span', {
+            class: 'rp-discarded',
+            title: translateFull('reward.progress.discarded', { xp: row.discarded }),
+            text: translate('reward.progress.discarded', { xp: row.discarded }),
+        })
+        : null;
+}
+
+function attachProgressTooltip(rowNode, row, label)
+{
+    attachTooltip(rowNode, () =>
+    {
+        const detail = row.capped
+            ? translateFull('reward.progress.capped')
+            : translateFull('reward.progress.xp', {
+                xp: Math.min(row.xp, row.xpToNext),
+                next: row.xpToNext,
+                level: row.level + 1,
+            });
+        return tooltipHtml(label, detail);
+    });
+}
+
+function buildRequiredChoice(claim)
+{
+    if (!claim.requiredChoice)
+    {
+        return null;
+    }
+    return buildElement(
+        'p',
+        {
+            class: 'reward-claim-required',
+            dataset: { required: claim.requiredChoice.kind },
+        },
+        [
+            buildElement('span', {
+                class: 'as-eyebrow',
+                text: translate('reward.claim.required'),
+            }),
+            buildElement('span', {
+                text: translate('reward.card.chooseOne', {
+                    count: claim.requiredChoice.count,
+                }),
+            }),
+        ],
+    );
+}
+
+function buildChooserBackButton()
+{
+    return button({
+        label: translate('common.skip'),
+        className: 'danger',
+        id: 'reward-back',
+        attrs: { 'data-back': '' },
+    });
+}
+
+function buildChooserConfirmButton()
+{
+    return button({
+        label: translate('reward.confirm'),
+        weight: 'primary',
+        id: CONFIRM_BUTTON_ID,
+        className: 'reward-confirm',
+        disabled: true,
+    });
+}
+
+function buildInspectButton()
+{
+    return button({
+        label: translate(INSPECT_LABEL_ID),
+        id: INSPECT_BUTTON_ID,
+        disabled: true,
+        attrs: { 'aria-label': translate(INSPECT_LABEL_ID) },
+    });
+}
+
+function buildConfirmStatusMessage()
+{
+    return buildElement('p', {
+        role: 'status',
+        class: 'reward-confirm-status',
+        hidden: true,
+    });
+}
+
+function buildRankBonusPanel()
+{
+    return buildElement('div', {
+        class: 'reward-rank-bonus',
+        role: 'radiogroup',
+        'aria-label': translate('reward.rankBonus.label'),
+        hidden: true,
+    });
+}
+
+function describeBonusChanges(changes)
+{
+    return changes
+        .map((change) => `${change.label} ${change.before}${ARROW}${change.after}`)
+        .join(', ');
+}
+
+function buildCompactReceiptView(presentation)
+{
+    const openButton = button({
+        label: translate(CONTINUE_LABEL_ID),
+        weight: 'primary',
+        id: 'reward-expand',
+        className: 'reward-compact-continue',
+        disabled: true,
+    });
+    const formula = buildElement('span', { class: 'reward-compact-formula' });
+    const moreButton = buildElement('button', {
+        class: 'reward-compact-more',
+        type: 'button',
+        text: MORE_LABEL,
+        'aria-label': translate('reward.xp.more.aria'),
+    });
+    moreButton.hidden = true;
+    const arithmetic = buildElement(
+        'span',
+        { class: 'reward-compact-arithmetic' },
+        [
+            formula,
+            moreButton,
+        ],
+    );
+    const totalValue = buildElement('strong', {
+        class: 'reward-compact-value',
+        text: translate('reward.xp.zero'),
+        'aria-live': 'polite',
+    });
+    const summary = buildElement('div', { class: 'reward-compact-summary' }, [
+        buildElement('span', {
+            class: 'reward-compact-heading',
+            text: translate('reward.xp.total'),
+        }),
+        arithmetic,
+        totalValue,
+    ]);
+    const rowList = buildElement('ol', {
+        class: 'reward-compact-list',
+        'aria-label': translate('reward.xp.list.aria'),
+    });
+    rowList.style.setProperty('--receipt-rows', String(presentation.visibleRows));
+    return {
+        openButton,
+        formula,
+        moreButton,
+        totalValue,
+        summary,
+        rowList,
+    };
 }
 
 export function MountRewards(appRoot, {
@@ -160,56 +513,36 @@ export function MountRewards(appRoot, {
     receiptOnly = false,
 })
 {
-    // The selection store is page-wide; a beat spent on an earlier screen must not carry over.
     clearSelection();
-    const plan = rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 0 });
-    const scopeProgress = (value) => (receiptOnly ? scopeXpProgress(value) : value);
-    let progress = null;
-    if (rewards.xpGains)
-    {
-        const gains = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity });
-        progress = scopeProgress(gains);
-    }
-    const canLoadMeta = Boolean(saves && saves.loadMeta);
-    const settings = (canLoadMeta && (saves.loadMeta().settings || {})) || {};
-    const meta = (canLoadMeta && saves.loadMeta()) || {};
-    // Each paint builds a new Continue control, so the previous one is disarmed first.
+    const plan = rewardPlan(rewards, {
+        flaskSlotsFree: 0,
+        armamentSlotsFree: 0,
+    });
+    const xpProgress = readXpProgress();
+    const canLoadMeta = Boolean(saves?.loadMeta);
+    const settings = readSavedSettings();
+    const meta = readSavedMeta();
     let disarmContinue = null;
-    let xpAnimationDone = !progress
+    let xpAnimationDone = !xpProgress
         || !rewards.xpBefore
-        || !orderedXpRows(progress).length
+        || !orderedXpRows(xpProgress).length
         || isReducedMotion();
     const animatedTracks = new Set();
     let receiptContinued = false;
+    const stonesPaid = smithingStonesPaid(rewards.smithingStoneReceipt);
+    const paidStoneStates = stonesPaid
+        ? { smithingStone: STATE_TAKEN }
+        : {};
     const states = {
         ...(checkpoint?.states || {}),
-        ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: STATE_TAKEN } : {}),
+        ...paidStoneStates,
     };
     const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
-    const pendingByKey = {};
-    const pendingBonusByKey = {};
-    // One door per screen: later views swap its contents so the fade-in does not replay.
-    let doorView = 0;
+    const pendingCardIdByKey = {};
+    const pendingBonusIndexByKey = {};
+    let doorOpenCount = 0;
     const doorOwner = {};
-
-    function persistProgress()
-    {
-        if (checkpoint)
-        {
-            checkpoint.states = { ...states };
-            if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined)
-            {
-                checkpoint.chosenRankUps = { ...chosenRankUps };
-            }
-        }
-        if (onPersist && onPersist() === false)
-        {
-            throw new Error('Reward save was refused.');
-        }
-    }
-
-    const applyByKind = {
-        // Stones are granted at combat resolution and start Taken, so reaching here is a bug.
+    const applyRewardByKind = {
         smithingStone()
         {
             return false;
@@ -231,26 +564,131 @@ export function MountRewards(appRoot, {
             return true;
         },
     };
+    const hasUnclaimedReward = () =>
+        plan.rows.some((row) =>
+            !states[row.key]
+            && !row.blockedBy
+        );
 
-    function ownedInstance(instanceId)
+    playVictoryAndOpenFirstScreen();
+
+    function readXpProgress()
+    {
+        if (!rewards.xpGains)
+        {
+            return null;
+        }
+        const gains = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity });
+        return receiptOnly
+            ? scopeXpProgress(gains)
+            : gains;
+    }
+
+    function readSavedSettings()
+    {
+        if (!canLoadMeta)
+        {
+            return {};
+        }
+        return saves.loadMeta().settings || {};
+    }
+
+    function readSavedMeta()
+    {
+        if (!canLoadMeta)
+        {
+            return {};
+        }
+        return saves.loadMeta() || {};
+    }
+
+    function playVictoryAndOpenFirstScreen()
+    {
+        sfx.play('victory');
+        if (receiptOnly)
+        {
+            renderMenu();
+        }
+        else if (checkpoint?.expanded)
+        {
+            expandVictory();
+        }
+        else if (
+            !checkpoint?.source
+            || !rewards.xpGains
+        )
+        {
+            renderMenu();
+        }
+        else
+        {
+            renderCompactVictory();
+        }
+    }
+
+    function openDoor(doorOptions)
+    {
+        doorOpenCount += 1;
+        return MountRewardDoor(appRoot, {
+            owner: doorOwner,
+            ...doorOptions,
+        });
+    }
+
+    function expandVictory()
+    {
+        if (checkpoint)
+        {
+            checkpoint.expanded = true;
+        }
+        persistProgress();
+        renderMenu();
+    }
+
+    function persistProgress()
+    {
+        if (checkpoint)
+        {
+            checkpoint.states = { ...states };
+            if (
+                Object.keys(chosenRankUps).length
+                || checkpoint.chosenRankUps !== undefined
+            )
+            {
+                checkpoint.chosenRankUps = { ...chosenRankUps };
+            }
+        }
+        if (
+            onPersist
+            && onPersist() === false
+        )
+        {
+            throw new Error('Reward save was refused.');
+        }
+    }
+
+    function findOwnedInstance(instanceId)
     {
         const owned = [...run.deck, ...(run.sideboard || [])];
-        return owned.find((instance) => instance && instance.instanceId === instanceId) || null;
+        return owned.find((instance) =>
+            instance
+            && instance.instanceId === instanceId
+        ) || null;
     }
 
-    function skillLabel(skillId)
+    function readSkillLabel(skillId)
     {
         const skill = skillTracks(registries).find((track) => track.id === skillId);
-        return (skill && skill.label) || skillId;
+        return skill?.label || skillId;
     }
 
-    function snapshotBeforeTake(row)
+    function snapshotBeforeTaking(row)
     {
         if (row.kind !== SKILL_RANK_UP)
         {
             return null;
         }
-        const raised = ownedInstance(row.instanceId);
+        const raised = findOwnedInstance(row.instanceId);
         return {
             skills: structuredClone(run.skills || {}),
             rankUp: raised
@@ -271,28 +709,33 @@ export function MountRewards(appRoot, {
         run.skills = snapshot.skills;
         if (snapshot.rankUp)
         {
-            const { instance, rank, steps, upgraded, chosen } = snapshot.rankUp;
-            setOrDelete(instance, 'rank', rank);
-            setOrDelete(instance, 'upgradeSteps', steps);
-            setOrDelete(instance, 'upgraded', upgraded);
-            replaceContents(chosenRankUps, chosen);
+            const {
+                instance,
+                rank,
+                steps,
+                upgraded,
+                chosen,
+            } = snapshot.rankUp;
+            setOrDeleteKey(instance, 'rank', rank);
+            setOrDeleteKey(instance, 'upgradeSteps', steps);
+            setOrDeleteKey(instance, 'upgraded', upgraded);
+            replaceObjectContents(chosenRankUps, chosen);
         }
         delete states[row.key];
         if (checkpoint)
         {
-            replaceContents(checkpoint, snapshot.checkpoint);
+            replaceObjectContents(checkpoint, snapshot.checkpoint);
         }
     }
 
-    function takeRow(row, focusKey)
+    function takeRewardRow(row, focusKey)
     {
         if (states[row.key])
         {
             return false;
         }
-        // Only a refused save puts a spent rank-up back.
-        const snapshot = snapshotBeforeTake(row);
-        if (!applyByKind[row.kind](row))
+        const snapshot = snapshotBeforeTaking(row);
+        if (!applyRewardByKind[row.kind](row))
         {
             return false;
         }
@@ -314,38 +757,97 @@ export function MountRewards(appRoot, {
         return true;
     }
 
-    function rowBody(row)
+    function renderMenu(focusKind = null)
     {
-        const state = states[row.key];
-        if (row.kind === SMITHING_STONE)
+        const notesHtml = rewardNotes(rewards).map(rewardNoteHtml).join('');
+        const rowsHtml = plan.rows.map(rewardRowHtml).join('');
+        const {
+            continueButton,
+            foot,
+            note,
+        } = buildMenuFoot();
+        const claim = rewardClaimStatus(plan, states);
+        const claimedStatus = buildClaimedStatus(claim);
+        const cindersLine = buildCindersLine();
+        openDoor({
+            eyebrow: translate(readMenuEyebrowId()),
+            title: readVictoryTitle(rewards),
+            status: claimedStatus,
+            body: buildClaimLayout(rowsHtml + notesHtml, claim, cindersLine),
+            foot,
+        });
+        appRoot.querySelector(MENU_SELECTOR).inert = !xpAnimationDone;
+
+        bindMenuControls(continueButton, note);
+
+        scheduleXpAnimation(appRoot.querySelector(CLAIM_LAYOUT_SELECTOR));
+        if (isEngaged())
         {
-            return smithingStoneRowCopy(row, translate);
+            setTimeout(() => focusRewardTarget(focusKind), 0);
         }
-        if (row.kind !== SKILL_RANK_UP)
-        {
-            return { title: row.kind, body: '' };
-        }
-        const label = escapeHtml(skillLabel(row.skillId));
-        const title = translate('reward.skillRankUp.title', { skill: label, level: row.level });
-        if (state === STATE_TAKEN)
-        {
-            const instance = ownedInstance(chosenRankUps[row.key]);
-            const definition = instance && registries.cards.get(instance.cardId);
-            const cardName = (definition && definition.name) || chosenRankUps[row.key] || '';
-            return {
-                title,
-                body: translate('reward.skillRankUp.raised', {
-                    name: escapeHtml(cardName),
-                    rank: cardRank(instance),
-                }),
-            };
-        }
-        const hasCandidates = rankUpCandidates(registries, run, row.skillId).length > 0;
-        const bodyId = hasCandidates ? 'reward.skillRankUp.body' : NONE_ID;
-        return { title, body: translate(bodyId, { skill: label }) };
     }
 
-    function statAllocationSection()
+    function readMenuEyebrowId()
+    {
+        return plan.rows.length > 0
+            ? 'reward.eyebrow.claim'
+            : 'reward.eyebrow.spoils';
+    }
+
+    function buildClaimedStatus(claim)
+    {
+        if (!(plan.rows.length > 0))
+        {
+            return null;
+        }
+        return buildElement('span', {
+            class: 'as-status modal-head-status',
+            text: translate('reward.status.claimed', {
+                claimed: claim.claimed,
+                total: claim.total,
+            }),
+        });
+    }
+
+    function buildCindersLine()
+    {
+        if (
+            !receiptOnly
+            || !rewards.cinders
+        )
+        {
+            return null;
+        }
+        return buildElement('p', {
+            class: 'spoils-line spoils-cinders',
+            text: translate('reward.spoils.cinders', {
+                gained: rewards.cinders.gained,
+                total: rewards.cinders.total,
+            }),
+        });
+    }
+
+    function buildClaimLayout(menuHtml, claim, cindersLine)
+    {
+        return buildElement(
+            'div',
+            {
+                class: 'reward-claim-layout',
+                'aria-busy': String(!xpAnimationDone),
+            },
+            [
+                buildElement('div', {
+                    class: 'class-row reward-menu',
+                    html: menuHtml,
+                }),
+                buildSideColumn(claim),
+                buildStatAllocationSection(),
+                cindersLine,
+            ],
+        );
+    }
+
+    function buildStatAllocationSection()
     {
         if (!receiptOnly)
         {
@@ -358,99 +860,24 @@ export function MountRewards(appRoot, {
         });
     }
 
-    function isCurrentLayout(host)
+    function bindMenuControls(continueButton, note)
     {
-        return host?.isConnected && appRoot.querySelector(CLAIM_LAYOUT_SELECTOR) === host;
+        bindRewardRows(appRoot);
+        bindSkipButtons();
+        attachTooltip(continueButton, () =>
+            tooltipHtml(
+                translate('reward.continue'),
+                LEAVE_TOOLTIP_COPY,
+            ));
+        armContinue(continueButton, note);
     }
 
-    function setBarWidths(bar, width)
-    {
-        bar.querySelector('.rp-under').style.width = width;
-        bar.querySelector('.rp-over').style.width = width;
-    }
-
-    async function playXpAnimation(host)
-    {
-        if (host.xpAnimationRunning)
-        {
-            return;
-        }
-        host.xpAnimationRunning = true;
-        // DOM order is Class, Character, then skills by their current level.
-        const bars = [...host.querySelectorAll('.rp-layered-bar[data-animate="1"]')];
-        const requested = Number(settings.victoryXpSeconds);
-        const seconds = Number.isFinite(requested) ? requested : DEFAULT_XP_SECONDS;
-        const totalMilliseconds = isReducedMotion()
-            ? 0
-            : Math.max(0, Math.min(MAX_XP_MILLISECONDS, seconds * 1000));
-        const durations = xpFillDurations(
-            bars.map((bar) => ({
-                from: Number(bar.dataset.old) / 100,
-                to: Number(bar.dataset.target) / 100,
-            })),
-            totalMilliseconds,
-        );
-        for (const [index, bar] of bars.entries())
-        {
-            const duration = durations[index];
-            const green = bar.querySelector('.rp-under');
-            const yellow = bar.querySelector('.rp-over');
-            if (!green || !yellow)
-            {
-                continue;
-            }
-            const target = `${bar.dataset.target}%`;
-            if (duration > 0)
-            {
-                bar.getBoundingClientRect();
-                green.style.transition = `width ${duration}ms linear`;
-                yellow.style.transition = `width ${duration}ms linear`;
-                setBarWidths(bar, target);
-                await new Promise((resolve) => setTimeout(resolve, duration));
-                if (!isCurrentLayout(host))
-                {
-                    return;
-                }
-            }
-            else
-            {
-                setBarWidths(bar, target);
-            }
-            animatedTracks.add(bar.dataset.track);
-            // Full bars turn blue now; they stay plain progress bars until the sequence settles.
-            if (Number(bar.dataset.target) >= 100)
-            {
-                bar.classList.add('rp-bar-ready');
-            }
-        }
-        if (!isCurrentLayout(host))
-        {
-            return;
-        }
-        host.xpAnimationRunning = false;
-        xpAnimationDone = true;
-        refreshProgressView();
-    }
-
-    function openDoor(options)
-    {
-        doorView += 1;
-        return MountRewardDoor(appRoot, { owner: doorOwner, ...options });
-    }
-
-    function focusRewardTarget(focusKind)
-    {
-        return (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
-            || focusFirst(UNLOCKED_ROW_SELECTOR)
-            || focusFirst(CONTINUE_SELECTOR);
-    }
-
-    function buildFoot()
+    function buildMenuFoot()
     {
         const continueButton = button({
             label: translate('reward.continue'),
             weight: 'primary',
-            id: 'reward-continue',
+            id: CONTINUE_ID,
             disabled: !xpAnimationDone,
             attrs: {
                 'aria-describedby': HOLD_NOTE_ID,
@@ -458,7 +885,7 @@ export function MountRewards(appRoot, {
             },
         });
         const foot = modalFooter({
-            note: holdNote(),
+            note: readHoldNote(),
             primary: continueButton,
             className: 'reward-foot',
             size: FOOT_SIZE,
@@ -466,166 +893,118 @@ export function MountRewards(appRoot, {
         const note = foot.querySelector('.modal-foot-note');
         note.id = HOLD_NOTE_ID;
         note.setAttribute('aria-live', 'polite');
-        return { continueButton, foot, note };
-    }
-
-    function bindSkipButtons()
-    {
-        for (const skipButton of appRoot.querySelectorAll('[data-skip]'))
-        {
-            attachTooltip(skipButton, () => tooltipHtml(
-                translateTip('reward.skip'),
-                translateFull('reward.skip'),
-            ));
-            skipButton.addEventListener('click', (event) =>
-            {
-                event.stopPropagation();
-                states[skipButton.dataset.skip] = STATE_SKIPPED;
-                persistProgress();
-                renderMenu(skipButton.dataset.skip);
-            });
-        }
-    }
-
-    function armContinue(continueButton, note)
-    {
-        // Continue only leaves: a rank-up is owed by the player, never auto-taken.
-        const finish = () =>
-        {
-            if (!xpAnimationDone)
-            {
-                return;
-            }
-            onDone();
-            disarmContinue?.();
-            disarmContinue = null;
-        };
-        const leave = () =>
-        {
-            if (!receiptOnly)
-            {
-                return finish();
-            }
-            if (receiptContinued || !xpAnimationDone)
-            {
-                return;
-            }
-            receiptContinued = true;
-            try
-            {
-                finish();
-            }
-            catch (error)
-            {
-                receiptContinued = false;
-                note.textContent = error.message;
-            }
-        };
-        disarmContinue?.();
-        disarmContinue = beatArmer(meta, registries)(continueButton, 'rewardContinue', {
-            onConfirm: () =>
-            {
-                if (!hasUnclaimedReward())
-                {
-                    return leave();
-                }
-                OpenConfirmationModal({
-                    title: translate('reward.leave.question'),
-                    message: translate('reward.leave.message'),
-                    confirmLabel: translate('reward.leave.confirm'),
-                    cancelLabel: translate('reward.leave.take'),
-                    returnFocusElement: continueButton,
-                    onConfirm: leave,
-                });
-            },
-        });
-    }
-
-    function renderMenu(focusKind = null)
-    {
-        const notesHtml = rewardNotes(rewards)
-            .map((token) => `<p class="reward-note" data-note="${escapeHtml(token)}">`
-                + `${escapeHtml(translate(`reward.note.${token}`))}</p>`)
-            .join('');
-        const rowsHtml = plan.rows.map(rowHtml).join('');
-        const { continueButton, foot, note } = buildFoot();
-        const claim = rewardClaimStatus(plan, states);
-        const hasRows = plan.rows.length > 0;
-        const claimedStatus = hasRows
-            ? buildElement('span', {
-                class: 'as-status modal-head-status',
-                text: translate('reward.status.claimed', {
-                    claimed: claim.claimed,
-                    total: claim.total,
-                }),
-            })
-            : null;
-        const cindersLine = receiptOnly && rewards.cinders
-            ? buildElement('p', {
-                class: 'spoils-line spoils-cinders',
-                text: translate('reward.spoils.cinders', {
-                    gained: rewards.cinders.gained,
-                    total: rewards.cinders.total,
-                }),
-            })
-            : null;
-        openDoor({
-            eyebrow: translate(hasRows ? 'reward.eyebrow.claim' : 'reward.eyebrow.spoils'),
-            title: rewards.title || translate(TITLE_VICTORY_ID),
-            status: claimedStatus,
-            body: buildElement(
-                'div',
-                { class: 'reward-claim-layout', 'aria-busy': String(!xpAnimationDone) },
-                [
-                    buildElement('div', {
-                        class: 'class-row reward-menu',
-                        html: rowsHtml + notesHtml,
-                    }),
-                    sideColumn(claim),
-                    statAllocationSection(),
-                    cindersLine,
-                ],
-            ),
+        return {
+            continueButton,
             foot,
-        });
-        appRoot.querySelector(MENU_SELECTOR).inert = !xpAnimationDone;
-
-        bindRows(appRoot);
-        bindSkipButtons();
-        attachTooltip(continueButton, () => tooltipHtml(
-            translate('reward.continue'),
-            LEAVE_TOOLTIP_COPY,
-        ));
-        armContinue(continueButton, note);
-
-        followUp(appRoot.querySelector(CLAIM_LAYOUT_SELECTOR));
-        if (isEngaged())
-        {
-            setTimeout(() => focusRewardTarget(focusKind), 0);
-        }
+            note,
+        };
     }
 
-    function rowHtml(row)
+    function readHoldNote()
     {
-        const state = states[row.key] || (row.blockedBy ? STATE_BLOCKED : STATE_PENDING);
-        const { title, body } = rowBody(row);
-        const isOffer = state === STATE_PENDING && isProgressionReward(row);
-        const lockedClass = LOCKED_STATES.has(state) ? ' locked' : '';
+        if (receiptOnly)
+        {
+            return RECEIPT_HOLD_COPY;
+        }
+        const pendingRows = plan.rows.filter((row) =>
+            !states[row.key]
+            && !row.blockedBy
+        );
+        if (pendingRows.some(isProgressionReward))
+        {
+            return UNFINISHED_HOLD_COPY;
+        }
+        const allResolved = plan.rows.every((row) =>
+            states[row.key] === STATE_TAKEN
+            || states[row.key] === STATE_SKIPPED
+        );
+        return translate(allResolved ? 'reward.hold.complete' : 'reward.hold.leavesRest');
+    }
+
+    function focusRewardTarget(focusKind)
+    {
+        const focusedKind = focusKind
+            && focusFirst(`.reward-kind[data-key="${focusKind}"]`);
+        return focusedKind
+            || focusFirst(UNLOCKED_ROW_SELECTOR)
+            || focusFirst(CONTINUE_SELECTOR);
+    }
+
+    function describeRewardRow(row)
+    {
+        if (row.kind === SMITHING_STONE)
+        {
+            return smithingStoneRowCopy(row, translate);
+        }
+        if (row.kind !== SKILL_RANK_UP)
+        {
+            return {
+                title: row.kind,
+                body: '',
+            };
+        }
+        const label = escapeHtml(readSkillLabel(row.skillId));
+        const title = translate('reward.skillRankUp.title', {
+            skill: label,
+            level: row.level,
+        });
+        if (states[row.key] === STATE_TAKEN)
+        {
+            return {
+                title,
+                body: describeRaisedCard(row),
+            };
+        }
+        const hasCandidates = rankUpCandidates(registries, run, row.skillId).length > 0;
+        const bodyId = hasCandidates
+            ? 'reward.skillRankUp.body'
+            : NONE_ID;
+        return {
+            title,
+            body: translate(bodyId, { skill: label }),
+        };
+    }
+
+    function describeRaisedCard(row)
+    {
+        const instance = findOwnedInstance(chosenRankUps[row.key]);
+        const definition = instance
+            && registries.cards.get(instance.cardId);
+        const cardName = definition?.name
+            || chosenRankUps[row.key]
+            || '';
+        return translate('reward.skillRankUp.raised', {
+            name: escapeHtml(cardName),
+            rank: readCardRank(instance),
+        });
+    }
+
+    function readRowState(row)
+    {
+        return states[row.key] || (row.blockedBy ? STATE_BLOCKED : STATE_PENDING);
+    }
+
+    function rewardRowHtml(row)
+    {
+        const rowState = readRowState(row);
+        const { title, body } = describeRewardRow(row);
+        const isOffer = rowState === STATE_PENDING
+            && isProgressionReward(row);
+        const lockedClass = LOCKED_STATES.has(rowState) ? ' locked' : '';
         const offerClass = isOffer ? ' reward-level-offer' : '';
-        const chipId = STATE_COPY_IDS[state];
-        const chip = chipId ? `<span class="chip">${escapeHtml(translate(chipId))}</span>` : '';
-        const skipLabel = escapeHtml(translate('reward.skip'));
-        const skipAria = escapeHtml(translate('reward.skip.aria', { kind: title }));
-        const skipHtml = state === STATE_BLOCKED
-            ? `<button class="subtle reward-skip" data-skip="${escapeHtml(row.key)}"`
-                + ` data-focusable="true" aria-label="${skipAria}">${skipLabel}</button>`
+        const chipId = STATE_COPY_IDS[rowState];
+        const chip = chipId
+            ? `<span class="chip">${escapeHtml(translate(chipId))}</span>`
+            : '';
+        const skipHtml = rowState === STATE_BLOCKED
+            ? skipButtonHtml(row, title)
             : '';
         const glyph = engravedIconHtml(KIND_GLYPHS[row.kind])
             || escapeHtml(uiIconText(KIND_GLYPHS[row.kind] || '?'));
         return `
       <div class="class-pick reward-kind${lockedClass}${offerClass}"
            data-kind="${escapeHtml(row.kind)}" data-key="${escapeHtml(row.key)}"
-           data-state="${escapeHtml(state)}"
+           data-state="${escapeHtml(rowState)}"
            data-blocked-by="${escapeHtml(row.blockedBy || '')}">
         <div class="glyph">${glyph}</div>
         <div class="cp-body">
@@ -637,76 +1016,302 @@ export function MountRewards(appRoot, {
       </div>`;
     }
 
-    function bindRows(root)
+    function bindRewardRows(root)
     {
         for (const rowElement of root.querySelectorAll('.reward-kind'))
         {
             const row = plan.rows.find((candidate) => candidate.key === rowElement.dataset.key);
-            const state = rowElement.dataset.state;
-            // The blocked row's tooltip switches on the model's token, never on a re-derivation.
-            attachTooltip(rowElement, () =>
-            {
-                if (state === STATE_BLOCKED)
-                {
-                    return tooltipHtml(
-                        translateTip('reward.blocked.slots'),
-                        translateFull('reward.blocked.slots'),
-                    );
-                }
-                if (state === STATE_TAKEN)
-                {
-                    return tooltipHtml(translateTip('reward.state.taken'));
-                }
-                let offerId = 'reward.take';
-                if (row.kind === SKILL_RANK_UP)
-                {
-                    offerId = row.choice ? 'reward.card.choose' : 'reward.card.take';
-                }
-                return tooltipHtml(translateTip(offerId), translateFull(offerId));
-            });
-            if (LOCKED_STATES.has(state))
+            const rowState = rowElement.dataset.state;
+            attachTooltip(rowElement, () => readRowTooltip(row, rowState));
+            if (LOCKED_STATES.has(rowState))
             {
                 continue;
             }
-            rowElement.addEventListener('click', () =>
+            rowElement.addEventListener('click', () => chooseRewardRow(row));
+        }
+    }
+
+    function readRowTooltip(row, rowState)
+    {
+        if (rowState === STATE_BLOCKED)
+        {
+            return tooltipHtml(
+                translateTip('reward.blocked.slots'),
+                translateFull('reward.blocked.slots'),
+            );
+        }
+        if (rowState === STATE_TAKEN)
+        {
+            return tooltipHtml(translateTip('reward.state.taken'));
+        }
+        const offerId = readOfferCopyId(row);
+        return tooltipHtml(translateTip(offerId), translateFull(offerId));
+    }
+
+    function chooseRewardRow(row)
+    {
+        if (!xpAnimationDone)
+        {
+            return;
+        }
+        if (row.kind === SKILL_RANK_UP)
+        {
+            return renderRankUpChooser(row);
+        }
+        takeRewardRow(row);
+    }
+
+    function bindSkipButtons()
+    {
+        for (const skipButton of appRoot.querySelectorAll('[data-skip]'))
+        {
+            attachTooltip(skipButton, () =>
+                tooltipHtml(
+                    translateTip('reward.skip'),
+                    translateFull('reward.skip'),
+                ));
+            skipButton.addEventListener('click', (event) =>
             {
-                if (!xpAnimationDone)
-                {
-                    return;
-                }
-                if (row.kind === SKILL_RANK_UP)
-                {
-                    return renderChooser(row);
-                }
-                takeRow(row);
+                event.stopPropagation();
+                skipBlockedRow(skipButton.dataset.skip);
             });
         }
     }
 
-    const hasUnclaimedReward = () =>
-        plan.rows.some((row) => !states[row.key] && !row.blockedBy);
-
-    function holdNote()
+    function skipBlockedRow(rowKey)
     {
-        if (receiptOnly)
-        {
-            return RECEIPT_HOLD_COPY;
-        }
-        const pendingRows = plan.rows.filter((row) => !states[row.key] && !row.blockedBy);
-        if (pendingRows.some(isProgressionReward))
-        {
-            return UNFINISHED_HOLD_COPY;
-        }
-        const allResolved = plan.rows.every(
-            (row) => states[row.key] === STATE_TAKEN || states[row.key] === STATE_SKIPPED,
-        );
-        return translate(allResolved ? 'reward.hold.complete' : 'reward.hold.leavesRest');
+        states[rowKey] = STATE_SKIPPED;
+        persistProgress();
+        renderMenu(rowKey);
     }
 
-    // The timer is bound to THIS layout, so a later render that replaces it strands the timer.
-    function followUp(host)
+    function armContinue(continueButton, note)
     {
-        if (!host || xpAnimationDone || !progress || !rewards.xpBefore)
+        function finishRewards()
+        {
+            if (!xpAnimationDone)
+            {
+                return;
+            }
+            onDone();
+            disarmContinue?.();
+            disarmContinue = null;
+        }
+
+        function leave()
+        {
+            if (!receiptOnly)
+            {
+                return finishRewards();
+            }
+            if (
+                receiptContinued
+                || !xpAnimationDone
+            )
+            {
+                return;
+            }
+            receiptContinued = true;
+            try
+            {
+                finishRewards();
+            }
+            catch (error)
+            {
+                receiptContinued = false;
+                note.textContent = error.message;
+            }
+        }
+
+        function confirmLeaving()
+        {
+            if (!hasUnclaimedReward())
+            {
+                return leave();
+            }
+            OpenConfirmationModal({
+                title: translate('reward.leave.question'),
+                message: translate('reward.leave.message'),
+                confirmLabel: translate('reward.leave.confirm'),
+                cancelLabel: translate('reward.leave.take'),
+                returnFocusElement: continueButton,
+                onConfirm: leave,
+            });
+        }
+
+        disarmContinue?.();
+        disarmContinue = beatArmer(meta, registries)(continueButton, 'rewardContinue', {
+            onConfirm: confirmLeaving,
+        });
+    }
+
+    function buildSideColumn(claim)
+    {
+        const progressionPanel = buildProgressPanel();
+        const showsClaimPanel = !progressionPanel
+            && plan.rows.length;
+        const claimPanel = showsClaimPanel
+            ? buildClaimStatusPanel(claim)
+            : null;
+        const panels = [progressionPanel, claimPanel].filter(Boolean);
+        return panels.length
+            ? buildElement('div', { class: 'reward-side' }, panels)
+            : null;
+    }
+
+    function buildClaimStatusPanel(claim)
+    {
+        const claimLines = claim.rows.map(buildClaimLine);
+        const requiredChoice = buildRequiredChoice(claim);
+        return buildElement(
+            'aside',
+            {
+                class: 'reward-claim-status',
+                'aria-label': translate('reward.claim.heading'),
+            },
+            [
+                buildElement('h3', {
+                    class: 'as-eyebrow',
+                    text: translate('reward.claim.heading'),
+                }),
+                buildElement('ul', { class: 'reward-claim-list' }, claimLines),
+                requiredChoice,
+            ],
+        );
+    }
+
+    function buildClaimLine(claimRow)
+    {
+        const stateId = claimRow.state === STATE_BLOCKED
+            ? 'reward.claim.blocked'
+            : `reward.state.${claimRow.state}`;
+        const planRow = plan.rows.find((row) => row.key === claimRow.key);
+        return buildElement(
+            'li',
+            {
+                class: 'reward-claim-row',
+                dataset: {
+                    kind: claimRow.kind,
+                    key: claimRow.key,
+                    state: claimRow.state,
+                },
+            },
+            [
+                buildElement('span', {
+                    class: 'reward-claim-name',
+                    text: describeRewardRow(planRow).title,
+                }),
+                buildElement('span', {
+                    class: 'reward-claim-state',
+                    text: translate(stateId),
+                }),
+            ],
+        );
+    }
+
+    function buildProgressPanel()
+    {
+        const hasNoProgress = !xpProgress
+            || (
+                !xpProgress.character
+                && !xpProgress.skills.length
+            );
+        if (hasNoProgress)
+        {
+            return null;
+        }
+        const progressRows = orderedXpRows(xpProgress)
+            .map((row) => buildProgressRow(row, readProgressLabel(row)));
+        return buildElement(
+            'section',
+            {
+                class: 'reward-progress',
+                'aria-label': translate('reward.progress.heading'),
+                'aria-busy': String(!xpAnimationDone),
+            },
+            [
+                buildElement('h3', {
+                    class: 'as-eyebrow',
+                    text: translate('reward.progress.heading'),
+                }),
+                buildElement('ul', { class: 'reward-progress-list' }, progressRows),
+            ],
+        );
+    }
+
+    function buildProgressRow(row, label)
+    {
+        const nextLevel = buildNextLevelLabel(row);
+        const targetPercent = row.fraction * 100;
+        const xpBefore = readXpBefore(row);
+        const startPercent = readStartPercent(row, xpBefore);
+        const animate = shouldAnimateBar(row, xpBefore);
+        const bar = buildProgressBar(row, label, {
+            animate,
+            startPercent,
+            targetPercent,
+        });
+        const levelNow = readLevelNowText(row);
+        const gainedNode = buildGainedNode(row);
+        const discardedNode = buildDiscardedNode(row);
+        const rowNode = buildElement(
+            'li',
+            {
+                class: 'reward-progress-row',
+                dataset: {
+                    kind: row.kind,
+                    track: row.id,
+                    gained: String(row.gained),
+                },
+            },
+            [
+                buildElement('span', {
+                    class: 'rp-name',
+                    text: label,
+                }),
+                buildElement('span', {
+                    class: 'rp-level',
+                    text: levelNow,
+                }),
+                bar,
+                nextLevel,
+                gainedNode,
+                discardedNode,
+            ],
+        );
+        attachProgressTooltip(rowNode, row, label);
+        return rowNode;
+    }
+
+    function readXpBefore(row)
+    {
+        return row.kind === 'character'
+            ? rewards.xpBefore?.character
+            : rewards.xpBefore?.tracks?.[row.id];
+    }
+
+    function shouldAnimateBar(row, xpBefore)
+    {
+        return !xpAnimationDone
+            && row.gained > 0
+            && !!xpBefore
+            && !animatedTracks.has(row.id);
+    }
+
+    function isCurrentLayout(host)
+    {
+        return host?.isConnected
+            && appRoot.querySelector(CLAIM_LAYOUT_SELECTOR) === host;
+    }
+
+    function scheduleXpAnimation(host)
+    {
+        if (
+            !host
+            || xpAnimationDone
+            || !xpProgress
+            || !rewards.xpBefore
+        )
         {
             return;
         }
@@ -719,18 +1324,84 @@ export function MountRewards(appRoot, {
         }, 0);
     }
 
+    function readXpFillMilliseconds()
+    {
+        const requested = Number(settings.victoryXpSeconds);
+        const seconds = Number.isFinite(requested) ? requested : DEFAULT_XP_SECONDS;
+        return isReducedMotion()
+            ? 0
+            : Math.max(0, Math.min(MAX_XP_MILLISECONDS, seconds * 1000));
+    }
+
+    async function playXpAnimation(host)
+    {
+        if (host.xpAnimationRunning)
+        {
+            return;
+        }
+        host.xpAnimationRunning = true;
+        const bars = [...host.querySelectorAll(ANIMATED_BAR_SELECTOR)];
+        const durations = readBarDurations(bars, readXpFillMilliseconds());
+        for (const [barIndex, bar] of bars.entries())
+        {
+            const duration = durations[barIndex];
+            if (!hasBothFills(bar))
+            {
+                continue;
+            }
+            const targetWidth = `${bar.dataset.target}%`;
+            if (duration > 0)
+            {
+                startBarFill(bar, duration, targetWidth);
+                await pauseFor(duration);
+                if (!isCurrentLayout(host))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                setBarWidths(bar, targetWidth);
+            }
+            markBarFilled(bar);
+        }
+        if (!isCurrentLayout(host))
+        {
+            return;
+        }
+        host.xpAnimationRunning = false;
+        xpAnimationDone = true;
+        refreshProgressView();
+    }
+
+    function markBarFilled(bar)
+    {
+        animatedTracks.add(bar.dataset.track);
+        if (Number(bar.dataset.target) >= 100)
+        {
+            bar.classList.add('rp-bar-ready');
+        }
+    }
+
     function refreshProgressView()
     {
         const layout = appRoot.querySelector(CLAIM_LAYOUT_SELECTOR);
-        const panel = layout?.querySelector('.reward-progress');
-        const next = panel ? progressPanel() : null;
-        if (!next)
+        const panel = layout?.querySelector(PROGRESS_PANEL_SELECTOR);
+        const nextPanel = panel ? buildProgressPanel() : null;
+        if (!nextPanel)
         {
             renderMenu();
             return;
         }
-        panel.after(next);
+        panel.after(nextPanel);
         panel.remove();
+        syncLayoutToXpAnimation(layout);
+        refocusWhenFocusLost();
+        scheduleXpAnimation(layout);
+    }
+
+    function syncLayoutToXpAnimation(layout)
+    {
         const menu = layout.querySelector(MENU_SELECTOR);
         if (menu)
         {
@@ -746,348 +1417,232 @@ export function MountRewards(appRoot, {
         const note = appRoot.querySelector(`#${HOLD_NOTE_ID}`);
         if (note)
         {
-            note.textContent = holdNote();
+            note.textContent = readHoldNote();
         }
+    }
+
+    function refocusWhenFocusLost()
+    {
         const focused = document.activeElement;
-        if (isEngaged() && (!focused || focused === document.body || !focused.isConnected))
+        const hasLostFocus = !focused
+            || focused === document.body
+            || !focused.isConnected;
+        if (
+            isEngaged()
+            && hasLostFocus
+        )
         {
             focusRewardTarget(null);
         }
-        followUp(layout);
     }
 
-    // One column so the XP ledger and the claim status read together; null when both are empty.
-    function sideColumn(claim)
-    {
-        const progression = progressPanel();
-        const claimPanel = !progression && plan.rows.length ? claimStatusPanel(claim) : null;
-        const children = [progression, claimPanel].filter(Boolean);
-        return children.length ? buildElement('div', { class: 'reward-side' }, children) : null;
-    }
-
-    function progressRow(row, label)
-    {
-        // Only a cap leaves a row without a next level, so `capped` alone decides this.
-        let nextText = translate('reward.progress.next', { level: row.level + 1 });
-        if (row.capped)
-        {
-            nextText = translate('reward.progress.capped');
-        }
-        else if (row.kind === 'character')
-        {
-            nextText = levelText(row.level + 1);
-        }
-        const nextLevel = buildElement('span', { class: 'rp-next', text: nextText });
-        const targetPercent = row.fraction * 100;
-        const before = row.kind === 'character'
-            ? rewards.xpBefore?.character
-            : rewards.xpBefore?.tracks?.[row.id];
-        const startPercent = before && before.level === row.level && row.xpToNext
-            ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100))
-            : 0;
-        const animate = !xpAnimationDone
-            && row.gained > 0
-            && !!before
-            && !animatedTracks.has(row.id);
-        const under = buildElement('span', { class: 'rp-under' });
-        const over = buildElement('span', { class: 'rp-over' });
-        under.style.width = `${animate ? startPercent : targetPercent}%`;
-        over.style.width = `${animate ? startPercent : targetPercent}%`;
-        const xpTotal = row.xpToNext || row.xp;
-        const xpShown = Math.min(row.xp, xpTotal);
-        const readyClass = !animate && row.fraction >= 1 ? ' rp-bar-ready' : '';
-        const bar = buildElement(
-            'div',
-            {
-                class: `rp-bar rp-layered-bar${readyClass}`,
-                role: 'progressbar',
-                'aria-valuemin': '0',
-                'aria-valuemax': String(row.xpToNext || 0),
-                'aria-valuenow': String(xpShown),
-                'aria-label': `${label}: ${xpShown} / ${xpTotal} XP`,
-                dataset: {
-                    animate: animate ? '1' : '0',
-                    target: String(targetPercent),
-                    old: String(startPercent),
-                    track: row.id,
-                    kind: row.kind,
-                },
-            },
-            [
-                under,
-                over,
-                buildElement('span', { class: 'rp-bar-text', text: `${xpShown} / ${xpTotal}` }),
-            ],
-        );
-        const levelNow = row.kind === 'character'
-            ? levelText(row.level)
-            : translate('reward.progress.level', { level: row.level });
-        const gainedNode = row.gained
-            ? buildElement('span', {
-                class: 'rp-gain',
-                text: translate('reward.progress.gained', { xp: row.gained }),
-            })
-            : null;
-        const discardedNode = row.discarded
-            ? buildElement('span', {
-                class: 'rp-discarded',
-                title: translateFull('reward.progress.discarded', { xp: row.discarded }),
-                text: translate('reward.progress.discarded', { xp: row.discarded }),
-            })
-            : null;
-        const node = buildElement(
-            'li',
-            {
-                class: 'reward-progress-row',
-                dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
-            },
-            [
-                buildElement('span', { class: 'rp-name', text: label }),
-                buildElement('span', { class: 'rp-level', text: levelNow }),
-                bar,
-                nextLevel,
-                gainedNode,
-                discardedNode,
-            ],
-        );
-        // The row carries the shape of the climb; the exact numbers are the tooltip.
-        attachTooltip(node, () =>
-        {
-            const detail = row.capped
-                ? translateFull('reward.progress.capped')
-                : translateFull('reward.progress.xp', {
-                    xp: Math.min(row.xp, row.xpToNext),
-                    next: row.xpToNext,
-                    level: row.level + 1,
-                });
-            return tooltipHtml(label, detail);
-        });
-        return node;
-    }
-
-    function progressPanel()
-    {
-        if (!progress || (!progress.character && !progress.skills.length))
-        {
-            return null;
-        }
-        const rows = orderedXpRows(progress).map((row) => progressRow(row, progressLabel(row)));
-        return buildElement(
-            'section',
-            {
-                class: 'reward-progress',
-                'aria-label': translate('reward.progress.heading'),
-                'aria-busy': String(!xpAnimationDone),
-            },
-            [
-                buildElement('h3', {
-                    class: 'as-eyebrow',
-                    text: translate('reward.progress.heading'),
-                }),
-                buildElement('ul', { class: 'reward-progress-list' }, rows),
-            ],
-        );
-    }
-
-    function claimStatusPanel(claim)
-    {
-        const lines = claim.rows.map((entry) =>
-        {
-            const stateId = entry.state === STATE_BLOCKED
-                ? 'reward.claim.blocked'
-                : `reward.state.${entry.state}`;
-            const entryRow = plan.rows.find((row) => row.key === entry.key);
-            return buildElement(
-                'li',
-                {
-                    class: 'reward-claim-row',
-                    dataset: { kind: entry.kind, key: entry.key, state: entry.state },
-                },
-                [
-                    buildElement('span', {
-                        class: 'reward-claim-name',
-                        text: rowBody(entryRow).title,
-                    }),
-                    buildElement('span', { class: 'reward-claim-state', text: translate(stateId) }),
-                ],
-            );
-        });
-        const required = claim.requiredChoice
-            ? buildElement(
-                'p',
-                {
-                    class: 'reward-claim-required',
-                    dataset: { required: claim.requiredChoice.kind },
-                },
-                [
-                    buildElement('span', {
-                        class: 'as-eyebrow',
-                        text: translate('reward.claim.required'),
-                    }),
-                    buildElement('span', {
-                        text: translate('reward.card.chooseOne', {
-                            count: claim.requiredChoice.count,
-                        }),
-                    }),
-                ],
-            )
-            : null;
-        return buildElement(
-            'aside',
-            { class: 'reward-claim-status', 'aria-label': translate('reward.claim.heading') },
-            [
-                buildElement('h3', {
-                    class: 'as-eyebrow',
-                    text: translate('reward.claim.heading'),
-                }),
-                buildElement('ul', { class: 'reward-claim-list' }, lines),
-                required,
-            ],
-        );
-    }
-
-    // A rank-up chooses among the run's own cards, each shown at the rank it would rise to.
-    function renderChooser(row)
+    function renderRankUpChooser(row)
     {
         const isTaken = () => states[row.key];
         const rankUpCards = rankUpCandidates(registries, run, row.skillId);
-        let selectedCardId = pendingByKey[row.key] || null;
+        let selectedCardId = pendingCardIdByKey[row.key] || null;
         let confirming = false;
         let reviewing = false;
         const inspectionFaces = new Map();
-        const backButton = button({
-            label: translate('common.skip'),
-            className: 'danger',
-            id: 'reward-back',
-            attrs: { 'data-back': '' },
-        });
-        const confirmButton = button({
-            label: translate('reward.confirm'),
-            weight: 'primary',
-            id: 'reward-card-confirm',
-            className: 'reward-confirm',
-            disabled: true,
-        });
-        const inspectButton = button({
-            label: translate('deckEditor.inspectAction'),
-            id: 'reward-inspect',
-            disabled: true,
-            attrs: { 'aria-label': translate('deckEditor.inspectAction') },
-        });
-        inspectButton.addEventListener('click', () =>
+        const backButton = buildChooserBackButton();
+        const confirmButton = buildChooserConfirmButton();
+        const inspectButton = buildInspectButton();
+        inspectButton.addEventListener('click', inspectSelectedCard);
+        openChooserDoor();
+        const strip = appRoot.querySelector(CHOOSER_STRIP_SELECTOR);
+        const message = buildConfirmStatusMessage();
+        strip.after(message);
+        const confirmReason = reasonWhenDisabled(confirmButton, readConfirmDisabledReason);
+        const bonusPanel = buildRankBonusPanel();
+        strip.after(bonusPanel);
+
+        fillCandidateStrip();
+        confirmButton.disabled = !selectedCardId
+            || needsBonus();
+        syncActionButtons();
+
+        confirmButton.addEventListener('click', pressConfirm);
+        backButton.addEventListener('click', pressBack);
+        focusChooserWhenEngaged();
+
+        function inspectSelectedCard()
         {
-            if (!confirming && !isTaken())
+            if (
+                !confirming
+                && !isTaken()
+            )
             {
                 openBoundCardInspection(inspectionFaces.get(selectedCardId), inspectButton);
             }
-        });
-        openDoor({
-            eyebrow: rowBody(row).title,
-            title: rewards.title || translate(TITLE_VICTORY_ID),
-            body: buildElement('div', {
-                class: 'reward-row',
-                role: 'radiogroup',
-                'aria-label': translate('reward.card.aria'),
-            }),
-            foot: modalFooter({
-                secondary: [backButton, inspectButton],
-                primary: confirmButton,
-                className: 'reward-foot reward-chooser-foot',
-                size: FOOT_SIZE,
-            }),
-        });
-        const strip = appRoot.querySelector(CHOOSER_STRIP_SELECTOR);
-        const message = buildElement('p', {
-            role: 'status',
-            class: 'reward-confirm-status',
-            hidden: true,
-        });
-        strip.after(message);
-        const bonusOptionsOf = (instanceId) => (
-            instanceId ? rankUpBonusOptions(registries, run, ownedInstance(instanceId)) : []
-        );
-        const needsBonus = () => !!selectedCardId
-            && bonusOptionsOf(selectedCardId).length > 0
-            && !(pendingBonusByKey[row.key] >= 0);
-        // A press in flight is a beat, not a reason, so it stays quiet.
-        const confirmReason = reasonWhenDisabled(confirmButton, () =>
+        }
+
+        function openChooserDoor()
+        {
+            openDoor({
+                eyebrow: describeRewardRow(row).title,
+                title: readVictoryTitle(rewards),
+                body: buildElement('div', {
+                    class: 'reward-row',
+                    role: 'radiogroup',
+                    'aria-label': translate('reward.card.aria'),
+                }),
+                foot: modalFooter({
+                    secondary: [backButton, inspectButton],
+                    primary: confirmButton,
+                    className: 'reward-foot reward-chooser-foot',
+                    size: FOOT_SIZE,
+                }),
+            });
+        }
+
+        function readConfirmDisabledReason()
         {
             if (!selectedCardId)
             {
                 return translate('reward.confirm.reason');
             }
             return needsBonus() ? translate('reward.rankBonus.reason') : null;
-        });
-        const bonusPanel = buildElement('div', {
-            class: 'reward-rank-bonus',
-            role: 'radiogroup',
-            'aria-label': translate('reward.rankBonus.label'),
-            hidden: true,
-        });
-        strip.after(bonusPanel);
-        const faceOf = (instance) => (
-            projectGameCard(run, instance) || resolveCard(registries, instance)
-        );
-        const syncActionButtons = () =>
+        }
+
+        function fillCandidateStrip()
+        {
+            for (const instance of rankUpCards)
+            {
+                strip.appendChild(buildRankUpFace(instance));
+            }
+            renderBonusPanel();
+            if (!rankUpCards.length)
+            {
+                strip.appendChild(buildElement('p', {
+                    class: 'reward-rank-none',
+                    text: translate(NONE_ID, { skill: readSkillLabel(row.skillId) }),
+                }));
+            }
+        }
+
+        function focusChooserWhenEngaged()
+        {
+            if (isEngaged())
+            {
+                setTimeout(
+                    () => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'),
+                    0,
+                );
+            }
+        }
+
+        function bonusOptionsOf(instanceId)
+        {
+            if (!instanceId)
+            {
+                return [];
+            }
+            return rankUpBonusOptions(registries, run, findOwnedInstance(instanceId));
+        }
+
+        function needsBonus()
+        {
+            return !!selectedCardId
+                && bonusOptionsOf(selectedCardId).length > 0
+                && !(pendingBonusIndexByKey[row.key] >= 0);
+        }
+
+        function faceOf(instance)
+        {
+            return projectGameCard(run, instance) || resolveCard(registries, instance);
+        }
+
+        function findStripFace(instanceId)
+        {
+            return [...strip.children].find((face) => face.dataset?.pickId === instanceId);
+        }
+
+        function syncActionButtons()
         {
             inspectButton.disabled = !inspectionFaces.has(selectedCardId);
             confirmReason();
-        };
+        }
 
         function renderBonusPanel()
         {
             bonusPanel.replaceChildren();
-            const options = bonusOptionsOf(selectedCardId);
-            bonusPanel.hidden = !options.length;
-            if (!options.length)
+            const bonusOptions = bonusOptionsOf(selectedCardId);
+            bonusPanel.hidden = !bonusOptions.length;
+            if (!bonusOptions.length)
             {
                 return;
             }
-            const instance = ownedInstance(selectedCardId);
-            const before = faceOf({ ...instance, rank: cardRank(instance) + 1 });
+            const instance = findOwnedInstance(selectedCardId);
+            const rankedFace = faceOf({
+                ...instance,
+                rank: readCardRank(instance) + 1,
+            });
             bonusPanel.appendChild(buildElement('p', {
                 class: 'reward-rank-bonus-title',
                 text: translate('reward.rankBonus.label'),
             }));
-            options.forEach((option, index) =>
+            bonusOptions.forEach((bonusOption, optionIndex) =>
             {
-                const changes = cardUpgradeChanges(registries, before, faceOf(option.after));
-                const summary = changes
-                    .map((change) => `${change.label} ${change.before}${ARROW}${change.after}`)
-                    .join(', ') || translate('reward.rankBonus.option', { n: index + 1 });
-                const chosen = pendingBonusByKey[row.key] === index;
-                const choice = button({
-                    label: summary,
-                    className: `class-pick reward-bonus-option${chosen ? ' is-chosen' : ''}`,
-                    attrs: {
-                        role: 'radio',
-                        'aria-checked': String(chosen),
-                        'aria-label': translate('cardUpgrade.option.aria', {
-                            n: index + 1,
-                            total: options.length,
-                            summary,
-                        }),
-                        dataset: { bonusIndex: String(index) },
-                    },
-                });
-                choice.addEventListener('click', () => selectBonus(index));
-                bonusPanel.appendChild(choice);
+                bonusPanel.appendChild(buildBonusChoice(
+                    bonusOption,
+                    optionIndex,
+                    bonusOptions.length,
+                    rankedFace,
+                ));
             });
         }
 
-        function selectBonus(index)
+        function buildBonusChoice(bonusOption, optionIndex, optionCount, rankedFace)
         {
-            if (reviewing || confirming || isTaken() || !(index >= 0))
+            const changes = cardUpgradeChanges(registries, rankedFace, faceOf(bonusOption.after));
+            const summary = describeBonusChanges(changes)
+                || translate('reward.rankBonus.option', {
+                    n: optionIndex + 1,
+                });
+            const isChosen = pendingBonusIndexByKey[row.key] === optionIndex;
+            const chosenClass = isChosen
+                ? ` ${CHOSEN_CLASS}`
+                : '';
+            const choice = button({
+                label: summary,
+                className: `class-pick reward-bonus-option${chosenClass}`,
+                attrs: {
+                    role: 'radio',
+                    'aria-checked': String(isChosen),
+                    'aria-label': translate('cardUpgrade.option.aria', {
+                        n: optionIndex + 1,
+                        total: optionCount,
+                        summary,
+                    }),
+                    dataset: {
+                        bonusIndex: String(optionIndex),
+                    },
+                },
+            });
+            choice.addEventListener('click', () => selectBonus(optionIndex));
+            return choice;
+        }
+
+        function selectBonus(optionIndex)
+        {
+            if (
+                reviewing
+                || confirming
+                || isTaken()
+                || !(optionIndex >= 0)
+            )
             {
                 return;
             }
-            pendingBonusByKey[row.key] = index;
-            const previousNode = [...strip.children]
-                .find((node) => node.dataset?.pickId === selectedCardId);
-            const instance = ownedInstance(selectedCardId);
-            if (previousNode && instance)
+            pendingBonusIndexByKey[row.key] = optionIndex;
+            const selectedFace = findStripFace(selectedCardId);
+            const instance = findOwnedInstance(selectedCardId);
+            if (
+                selectedFace
+                && instance
+            )
             {
-                previousNode.replaceWith(rankUpFace(instance));
+                selectedFace.replaceWith(buildRankUpFace(instance));
             }
             renderBonusPanel();
             confirmButton.disabled = false;
@@ -1096,118 +1651,145 @@ export function MountRewards(appRoot, {
 
         function markPicks(cardId)
         {
-            // Found by class, not attribute: the test DOM keeps dataset as a plain object.
-            for (const candidate of strip.querySelectorAll('.reward-pick'))
+            for (const pick of strip.querySelectorAll('.reward-pick'))
             {
-                const selected = candidate.dataset.pickId === cardId;
-                // A text button wears the green trim only, so one option reads as one lit card.
-                if (!candidate.classList.contains('reward-choice-button'))
+                const isSelected = pick.dataset.pickId === cardId;
+                if (!pick.classList.contains('reward-choice-button'))
                 {
-                    candidate.classList.toggle('reward-selected', selected);
+                    pick.classList.toggle(SELECTED_CLASS, isSelected);
                 }
-                candidate.classList.toggle('is-chosen', selected);
-                candidate.setAttribute('aria-checked', String(selected));
+                pick.classList.toggle(CHOSEN_CLASS, isSelected);
+                pick.setAttribute('aria-checked', String(isSelected));
             }
             for (const face of strip.querySelectorAll('.reward-choice-face'))
             {
-                const selected = face.dataset.pickId === cardId;
-                face.classList.toggle('reward-selected', selected);
-                face.classList.toggle('is-chosen', selected);
+                const isSelected = face.dataset.pickId === cardId;
+                face.classList.toggle(SELECTED_CLASS, isSelected);
+                face.classList.toggle(CHOSEN_CLASS, isSelected);
             }
         }
 
         function selectCard(cardId)
         {
-            if (reviewing || confirming || isTaken())
+            if (
+                reviewing
+                || confirming
+                || isTaken()
+            )
             {
                 return;
             }
-            const previous = selectedCardId;
-            if (previous !== cardId)
+            const previousCardId = selectedCardId;
+            if (previousCardId !== cardId)
             {
-                delete pendingBonusByKey[row.key];
+                delete pendingBonusIndexByKey[row.key];
             }
             selectedCardId = cardId;
-            pendingByKey[row.key] = cardId;
+            pendingCardIdByKey[row.key] = cardId;
             markPicks(cardId);
-            // The card just left goes back to plain rank-up; the new one waits for a bonus pick.
-            const left = previous && previous !== cardId
-                ? rankUpCards.find((instance) => instance.instanceId === previous)
-                : null;
-            const leftNode = left
-                ? [...strip.children].find((node) => node.dataset?.pickId === previous)
-                : null;
-            if (leftNode)
-            {
-                leftNode.replaceWith(rankUpFace(left));
-            }
+            restoreDeselectedFace(previousCardId, cardId);
             renderBonusPanel();
             confirmButton.disabled = needsBonus();
             syncActionButtons();
             message.hidden = true;
         }
 
-        function rankUpFace(instance)
+        function restoreDeselectedFace(previousCardId, cardId)
+        {
+            const hasLeftCard = previousCardId
+                && previousCardId !== cardId;
+            const leftCard = hasLeftCard
+                ? rankUpCards.find((instance) => instance.instanceId === previousCardId)
+                : null;
+            const leftFace = leftCard
+                ? findStripFace(previousCardId)
+                : null;
+            if (leftFace)
+            {
+                leftFace.replaceWith(buildRankUpFace(leftCard));
+            }
+        }
+
+        function readShownRankUp(instance, isSelected)
+        {
+            const bonusOption = isSelected
+                ? bonusOptionsOf(instance.instanceId)[pendingBonusIndexByKey[row.key]]
+                : null;
+            return bonusOption
+                ? bonusOption.after
+                : {
+                    ...instance,
+                    rank: readCardRank(instance) + 1,
+                };
+        }
+
+        function buildRankUpFace(instance)
         {
             const isSelected = instance.instanceId === selectedCardId;
-            const option = isSelected
-                ? bonusOptionsOf(instance.instanceId)[pendingBonusByKey[row.key]]
-                : null;
-            const shown = option ? option.after : { ...instance, rank: cardRank(instance) + 1 };
-            const face = renderCard(registries, shown, {
-                rules: run,
-                owned: ownedCopies(run, instance.cardId),
-                actionOwnsTouch: true,
-                surface: 'reward',
-                only: [],
-            });
+            const face = renderCard(
+                registries,
+                readShownRankUp(instance, isSelected),
+                {
+                    rules: run,
+                    owned: ownedCopies(run, instance.cardId),
+                    actionOwnsTouch: true,
+                    surface: 'reward',
+                    only: [],
+                },
+            );
             face.dataset.cardId = instance.cardId;
             face.dataset.pickId = instance.instanceId;
             inspectionFaces.set(instance.instanceId, face);
             face.classList.add('reward-pick');
             face.setAttribute('role', 'radio');
             face.setAttribute('aria-checked', String(isSelected));
-            face.classList.toggle('reward-selected', isSelected);
-            face.classList.toggle('is-chosen', isSelected);
+            face.classList.toggle(SELECTED_CLASS, isSelected);
+            face.classList.toggle(CHOSEN_CLASS, isSelected);
             face.addEventListener('click', () => selectCard(instance.instanceId));
             return face;
         }
 
-        for (const instance of rankUpCards)
+        function buildTakingRow()
         {
-            strip.appendChild(rankUpFace(instance));
+            const bonusStep = bonusOptionsOf(selectedCardId)[pendingBonusIndexByKey[row.key]]?.step;
+            return {
+                ...row,
+                ...(bonusStep ? { bonusStep } : {}),
+                instanceId: selectedCardId,
+            };
         }
-        renderBonusPanel();
-        if (!rankUpCards.length)
-        {
-            strip.appendChild(buildElement('p', {
-                class: 'reward-rank-none',
-                text: translate(NONE_ID, { skill: skillLabel(row.skillId) }),
-            }));
-        }
-        confirmButton.disabled = !selectedCardId || needsBonus();
-        syncActionButtons();
 
-        // Confirm stages a review only; Continue is the sole persistence door.
-        function commitSelection()
+        function lockChooserForCommit()
         {
-            if (!selectedCardId || confirming || isTaken())
-            {
-                return;
-            }
             confirming = true;
             inspectButton.disabled = true;
             strip.inert = true;
             confirmButton.disabled = true;
+        }
+
+        function unlockChooserAfterFailure()
+        {
+            message.hidden = false;
+            confirming = false;
+            inspectButton.disabled = !inspectionFaces.has(selectedCardId);
+            strip.inert = false;
+            confirmButton.disabled = false;
+        }
+
+        function commitSelection()
+        {
+            if (
+                !selectedCardId
+                || confirming
+                || isTaken()
+            )
+            {
+                return;
+            }
+            lockChooserForCommit();
             try
             {
-                const bonusStep = bonusOptionsOf(selectedCardId)[pendingBonusByKey[row.key]]?.step;
-                const taking = {
-                    ...row,
-                    ...(bonusStep ? { bonusStep } : {}),
-                    instanceId: selectedCardId,
-                };
-                if (takeRow(taking, row.key))
+                if (takeRewardRow(buildTakingRow(), row.key))
                 {
                     return;
                 }
@@ -1217,23 +1799,19 @@ export function MountRewards(appRoot, {
             {
                 message.textContent = translate(SAVE_FAILED_ID);
             }
-            message.hidden = false;
-            confirming = false;
-            inspectButton.disabled = !inspectionFaces.has(selectedCardId);
-            strip.inert = false;
-            confirmButton.disabled = false;
+            unlockChooserAfterFailure();
         }
 
         function enterReview()
         {
             reviewing = true;
-            confirmButton.textContent = translate('common.continue');
+            confirmButton.textContent = translate(CONTINUE_LABEL_ID);
             backButton.textContent = translate('common.back');
             strip.setAttribute('aria-label', translate('reward.confirm'));
             for (const option of strip.children)
             {
-                option.hidden = !option.matches('.reward-selected')
-                    && !option.querySelector('.reward-selected')
+                option.hidden = !option.matches(`.${SELECTED_CLASS}`)
+                    && !option.querySelector(`.${SELECTED_CLASS}`)
                     && option.dataset.pickId !== selectedCardId;
             }
             for (const control of strip.querySelectorAll('button.reward-pick'))
@@ -1246,9 +1824,13 @@ export function MountRewards(appRoot, {
             }
         }
 
-        confirmButton.addEventListener('click', () =>
+        function pressConfirm()
         {
-            if (!selectedCardId || confirming || isTaken())
+            if (
+                !selectedCardId
+                || confirming
+                || isTaken()
+            )
             {
                 return;
             }
@@ -1257,17 +1839,26 @@ export function MountRewards(appRoot, {
                 return commitSelection();
             }
             enterReview();
-        });
-        backButton.addEventListener('click', () =>
+        }
+
+        function pressBack()
         {
-            if (confirming || isTaken())
+            if (
+                confirming
+                || isTaken()
+            )
             {
                 return;
             }
             if (reviewing)
             {
-                return renderChooser(row);
+                return renderRankUpChooser(row);
             }
+            skipRankUp();
+        }
+
+        function skipRankUp()
+        {
             states[row.key] = STATE_SKIPPED;
             try
             {
@@ -1285,147 +1876,161 @@ export function MountRewards(appRoot, {
                 return;
             }
             renderMenu(row.key);
-        });
-        if (isEngaged())
-        {
-            setTimeout(
-                () => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'),
-                0,
-            );
         }
     }
 
-    function expandVictory()
+    function readCompactReceiptRows()
     {
-        if (checkpoint)
-        {
-            checkpoint.expanded = true;
-        }
-        persistProgress();
-        renderMenu();
-    }
-
-    // An older saved reward has no itemized receipt: show its paid total as one row.
-    function compactReceiptRows()
-    {
-        const total = Math.max(0, Math.floor(Number(rewards.xpGains?.level) || 0));
+        const paidLevel = Number(rewards.xpGains?.level) || 0;
+        const total = Math.max(0, Math.floor(paidLevel));
         const savedRows = rewards.xpReceipt?.rows;
         const isItemized = Array.isArray(savedRows)
             && savedRows.every((row) => Number.isSafeInteger(row.amount))
             && savedRows.reduce((sum, row) => sum + row.amount, 0) === total;
-        return isItemized ? savedRows : [{ kind: 'legacy', amount: total }];
+        return isItemized
+            ? savedRows
+            : [
+                {
+                    kind: 'legacy',
+                    amount: total,
+                },
+            ];
     }
 
     function renderCompactVictory()
     {
-        const rows = compactReceiptRows();
-        const options = victoryXpPresentation(settings, isReducedMotion());
-        const timing = victoryXpTiming(rows.length, options);
-        const openButton = button({
-            label: translate('common.continue'),
-            weight: 'primary',
-            id: 'reward-expand',
-            className: 'reward-compact-continue',
-            disabled: true,
-        });
-        const formula = buildElement('span', { class: 'reward-compact-formula' });
-        const moreButton = buildElement('button', {
-            class: 'reward-compact-more',
-            type: 'button',
-            text: MORE_LABEL,
-            'aria-label': translate('reward.xp.more.aria'),
-        });
-        moreButton.hidden = true;
-        const arithmetic = buildElement(
-            'span',
-            { class: 'reward-compact-arithmetic' },
-            [formula, moreButton],
-        );
-        const value = buildElement('strong', {
-            class: 'reward-compact-value',
-            text: translate('reward.xp.zero'),
-            'aria-live': 'polite',
-        });
-        const summary = buildElement('div', { class: 'reward-compact-summary' }, [
-            buildElement('span', {
-                class: 'reward-compact-heading',
-                text: translate('reward.xp.total'),
-            }),
-            arithmetic,
-            value,
-        ]);
-        const rowList = buildElement('ol', {
-            class: 'reward-compact-list',
-            'aria-label': translate('reward.xp.list.aria'),
-        });
-        rowList.style.setProperty('--receipt-rows', String(options.visibleRows));
-        const modal = openDoor({
-            eyebrow: '',
-            title: rewards.title || translate(TITLE_VICTORY_ID),
-            attrs: { dataset: { size: 'sm', victoryCompact: 'true' } },
-            body: buildElement('div', { class: 'reward-compact-xp' }, [summary, rowList]),
-            foot: modalFooter({
-                primary: openButton,
-                className: 'reward-foot',
-                size: FOOT_SIZE,
-            }),
-        });
-        const fullCalculation = () =>
-        {
-            const { full } = victoryXpFormula(rows, rows.length, options.formulaTerms);
-            return `<div class="tt-title">${FULL_CALCULATION_TITLE}</div>`
-                + `<div>${escapeHtml(full)}</div>`;
-        };
+        const receiptRows = readCompactReceiptRows();
+        const presentation = victoryXpPresentation(settings, isReducedMotion());
+        const timing = victoryXpTiming(receiptRows.length, presentation);
+        const {
+            openButton,
+            formula,
+            moreButton,
+            totalValue,
+            summary,
+            rowList,
+        } = buildCompactReceiptView(presentation);
+        const modal = openCompactDoor();
         const tooltipPlacement = {
             intent: 'above',
             align: 'end',
             clear: modal,
-            appearance: { maxWidthRem: 30, maxHeightRatio: 0.5 },
+            appearance: {
+                maxWidthRem: 30,
+                maxHeightRatio: 0.5,
+            },
         };
-        attachTooltip(moreButton, fullCalculation, tooltipPlacement);
-        moreButton.addEventListener('click', () =>
+        bindFullCalculation();
+        let isExpandReady = false;
+        let shownRowCount = 0;
+        const doorCountAtMount = doorOpenCount;
+
+        if (presentation.totalMs === 0)
         {
-            showTooltipFor(moreButton, fullCalculation(), tooltipPlacement);
-        });
-        let ready = false;
-        let shown = 0;
-        const viewAtMount = doorView;
-        const isActive = () => modal.isConnected
-            && doorView === viewAtMount
-            && appRoot.querySelector('.reward-door') === modal;
+            showAllRowsAtOnce();
+        }
+        else
+        {
+            playReceiptRows();
+        }
+        bindExpandControls();
+
+        function openCompactDoor()
+        {
+            return openDoor({
+                eyebrow: '',
+                title: readVictoryTitle(rewards),
+                attrs: {
+                    dataset: {
+                        size: 'sm',
+                        victoryCompact: 'true',
+                    },
+                },
+                body: buildElement('div', { class: 'reward-compact-xp' }, [summary, rowList]),
+                foot: modalFooter({
+                    primary: openButton,
+                    className: 'reward-foot',
+                    size: FOOT_SIZE,
+                }),
+            });
+        }
+
+        function readFullCalculation()
+        {
+            const { full } = victoryXpFormula(
+                receiptRows,
+                receiptRows.length,
+                presentation.formulaTerms,
+            );
+            return `<div class="tt-title">${FULL_CALCULATION_TITLE}</div>`
+                + `<div>${escapeHtml(full)}</div>`;
+        }
+
+        function bindFullCalculation()
+        {
+            attachTooltip(moreButton, readFullCalculation, tooltipPlacement);
+            moreButton.addEventListener('click', () =>
+            {
+                showTooltipFor(moreButton, readFullCalculation(), tooltipPlacement);
+            });
+        }
+
+        function isCompactDoorShown()
+        {
+            return modal.isConnected
+                && doorOpenCount === doorCountAtMount
+                && appRoot.querySelector('.reward-door') === modal;
+        }
 
         function updateFormula()
         {
-            const expression = victoryXpFormula(rows, shown, options.formulaTerms);
+            const expression = victoryXpFormula(
+                receiptRows,
+                shownRowCount,
+                presentation.formulaTerms,
+            );
             formula.textContent = expression.shown;
             moreButton.hidden = !expression.collapsed;
         }
 
-        function addRow(row)
+        function appendReceiptRow(receiptRow)
         {
             const amount = buildElement('strong', {
                 class: 'reward-compact-row-value',
                 text: '+0',
             });
-            const item = buildElement('li', { class: 'reward-compact-row' }, [
+            const rowItem = buildElement('li', { class: 'reward-compact-row' }, [
                 buildElement('span', {
                     class: 'reward-compact-row-label',
-                    text: compactRowLabel(row),
+                    text: readCompactRowLabel(receiptRow),
                 }),
                 amount,
             ]);
-            rowList.appendChild(item);
+            rowList.appendChild(rowItem);
             rowList.scrollTop = rowList.scrollHeight;
             return amount;
         }
 
-        function armExpand()
+        function appendRowCounter(receiptRow, runningTotal)
         {
-            if (!isActive())
+            const amount = appendReceiptRow(receiptRow);
+            return (rowAmount) =>
+            {
+                const sign = rowAmount < 0
+                    ? MINUS
+                    : '+';
+                amount.textContent = `${sign}${Math.abs(rowAmount)}`;
+                totalValue.textContent = `${runningTotal + rowAmount} XP`;
+            };
+        }
+
+        function armExpandButton()
+        {
+            if (!isCompactDoorShown())
             {
                 return;
             }
-            ready = true;
+            isExpandReady = true;
             openButton.disabled = false;
             openButton.classList.add('is-ready');
             if (settings.victorySummaryMode === 'auto')
@@ -1434,136 +2039,115 @@ export function MountRewards(appRoot, {
             }
         }
 
-        const pauseFor = (milliseconds) => (
-            milliseconds > 0
-                ? new Promise((resolve) => setTimeout(resolve, milliseconds))
-                : Promise.resolve()
-        );
-
-        const countUp = (from, to, milliseconds, renderValue) => new Promise((resolve) =>
+        function countUp(from, to, milliseconds, renderCount)
         {
-            if (milliseconds <= 0)
+            return new Promise((resolve) =>
             {
-                renderValue(to);
-                resolve();
-                return;
-            }
-            const start = performance.now();
-            const frame = (now) =>
-            {
-                if (!isActive())
+                if (milliseconds <= 0)
                 {
+                    renderCount(to);
                     resolve();
                     return;
                 }
-                const fraction = Math.min(1, (now - start) / milliseconds);
-                renderValue(from + Math.round((to - from) * fraction));
-                if (fraction >= 1)
+                const start = performance.now();
+                const paintFrame = (now) =>
                 {
-                    resolve();
-                }
-                else
-                {
-                    requestAnimationFrame(frame);
-                }
-            };
-            requestAnimationFrame(frame);
-        });
-
-        function showRow(row, running)
-        {
-            const amount = addRow(row);
-            return (next) =>
-            {
-                amount.textContent = `${next < 0 ? MINUS : '+'}${Math.abs(next)}`;
-                value.textContent = `${running + next} XP`;
-            };
+                    if (!isCompactDoorShown())
+                    {
+                        resolve();
+                        return;
+                    }
+                    const fraction = Math.min(1, (now - start) / milliseconds);
+                    renderCount(from + Math.round((to - from) * fraction));
+                    if (fraction >= 1)
+                    {
+                        resolve();
+                    }
+                    else
+                    {
+                        requestAnimationFrame(paintFrame);
+                    }
+                };
+                requestAnimationFrame(paintFrame);
+            });
         }
 
-        async function playRows()
+        async function playReceiptRows()
         {
-            let running = 0;
-            for (const [index, row] of rows.entries())
+            let runningTotal = 0;
+            for (const [rowIndex, receiptRow] of receiptRows.entries())
             {
-                if (!isActive())
+                if (!isCompactDoorShown())
                 {
                     return;
                 }
-                await countUp(0, row.amount, timing.tickMs, showRow(row, running));
-                if (!isActive())
+                await countUp(
+                    0,
+                    receiptRow.amount,
+                    timing.tickMs,
+                    appendRowCounter(receiptRow, runningTotal),
+                );
+                if (!isCompactDoorShown())
                 {
                     return;
                 }
-                running += row.amount;
-                shown = index + 1;
+                runningTotal += receiptRow.amount;
+                shownRowCount = rowIndex + 1;
                 updateFormula();
-                if (index < rows.length - 1)
+                if (rowIndex < receiptRows.length - 1)
                 {
                     await pauseFor(timing.pauseMs);
                 }
             }
-            await pauseFor(options.readyMs);
-            armExpand();
+            await pauseFor(presentation.readyMs);
+            armExpandButton();
         }
 
-        if (options.totalMs === 0)
+        function showAllRowsAtOnce()
         {
-            let running = 0;
-            for (const row of rows)
+            let runningTotal = 0;
+            for (const receiptRow of receiptRows)
             {
-                showRow(row, running)(row.amount);
-                running += row.amount;
-                shown += 1;
+                appendRowCounter(receiptRow, runningTotal)(receiptRow.amount);
+                runningTotal += receiptRow.amount;
+                shownRowCount += 1;
             }
             updateFormula();
-            if (options.readyMs === 0)
+            if (presentation.readyMs === 0)
             {
-                armExpand();
+                armExpandButton();
             }
             else
             {
-                setTimeout(armExpand, options.readyMs);
+                setTimeout(armExpandButton, presentation.readyMs);
             }
         }
-        else
+
+        function bindExpandControls()
         {
-            playRows();
-        }
-        openButton.addEventListener('click', () =>
-        {
-            if (ready)
+            openButton.addEventListener('click', () =>
             {
-                expandVictory();
-            }
-        });
-        if (settings.victorySummaryMode === 'anywhere')
-        {
-            appRoot.querySelector('.reward-veil')?.addEventListener('click', (event) =>
-            {
-                const onControl = event.target === openButton || event.target === moreButton;
-                if (ready && isActive() && !onControl)
+                if (isExpandReady)
                 {
                     expandVictory();
                 }
             });
+            if (settings.victorySummaryMode === 'anywhere')
+            {
+                appRoot.querySelector('.reward-veil')?.addEventListener('click', (event) =>
+                {
+                    const isOnControl = event.target === openButton
+                        || event.target === moreButton;
+                    if (
+                        isExpandReady
+                        && isCompactDoorShown()
+                        && !isOnControl
+                    )
+                    {
+                        expandVictory();
+                    }
+                });
+            }
         }
-    }
-
-    sfx.play('victory');
-    if (receiptOnly)
-    {
-        renderMenu();
-    }
-    else if (checkpoint?.expanded)
-    {
-        expandVictory();
-    }
-    else if (!checkpoint?.source || !rewards.xpGains)
-    {
-        renderMenu();
-    }
-    else
-    {
-        renderCompactVictory();
     }
 }

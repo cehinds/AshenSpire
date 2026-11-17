@@ -166,7 +166,7 @@ check('the close control is unconditional',
   /const close = ModalCloseButton\(/.test(shellSource) && !/if \([^)]*\)\s*\{?\s*const close = ModalCloseButton/.test(shellSource),
   'one way out, same corner, every door');
 check('the menu button follows the tab strip rather than defaulting either way',
-  shellSource.includes('showMenuButton == null ? tabList.length > 0'),
+  /showMenuButton == null\s*\?\s*tabList\.length > 0/.test(shellSource),
   'a door with tabs is a place and wants the quick menu; a door that asks a question does not');
 check('both header actions wear the square box',
   (shellSource.match(/dataset\.size = 'square'/g) || []).length >= 2);
@@ -202,7 +202,9 @@ check('every modal close paints a 25% smaller square inside its tap-safe target'
 // is as red as one that never wore the class.
 check('the footer actions row is a button row',
   /actions\.className = 'modal-foot-actions modal-btnrow'/.test(shellSource)
-    && /const step = resolveFooterSize\(size, activeWireframeChoice\('wireframeModalFooter'\), BUTTON_ROW_SIZES\)/.test(shellSource)
+    && /WIREFRAME_MODAL_FOOTER = 'wireframeModalFooter'/.test(shellSource)
+    && /const footerChoice = activeWireframeChoice\(WIREFRAME_MODAL_FOOTER\)/.test(shellSource)
+    && /const step = resolveFooterSize\(\s*size,\s*footerChoice,\s*BUTTON_ROW_SIZES,?\s*\)/.test(shellSource)
     && /actions\.dataset\.authoredSize = size/.test(shellSource)
     && /actions\.dataset\.size = step/.test(shellSource),
   'a foot that is not a .modal-btnrow gets no step, so its buttons hug their labels');
@@ -223,7 +225,7 @@ check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s
 // component appends in the house order, and no rule reorders or re-spans a foot
 // primary. tools/character-creation-check.mjs measures the rendered left edges.
 check('the footer appends every way back before the one way forward',
-  /for \(const button of visibleSecondary\) actions\.appendChild\(button\);[\s\S]{0,900}?actions\.appendChild\(primary\);/.test(shellSource),
+  /for \(const button of visibleSecondary\)\s*\{?\s*actions\.appendChild\(button\);\s*\}?[\s\S]{0,900}?actions\.appendChild\(primary\);/.test(shellSource),
   'the primary must be the last child, or the way on is not on the right');
 // Explicit auto/0 declarations restore document order; they do not reproduce
 // the old span/order regression. Inspect every declaration, not mere presence.
