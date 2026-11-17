@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { rewardDom } from './helpers/dom.mjs';
+import { uiConfig } from '../src/config/generated/ui.js';
+
+const HOLD_MS = uiConfig.presentation.combatInspection.behavior.holdMs;
 
 // Execute the production gesture handlers with a controlled clock. This fixture
 // makes no native hit-testing/capture claims; the paired browser test does that.
@@ -13,7 +16,7 @@ function fixture() {
   const dom = rewardDom(), timers = new Map(), plays = [], inspections = [];
   const document = Object.assign(dom.document, { addEventListener: (...args) => dom.document.body.addEventListener(...args) });
   let now = 0, serial = 0;
-  const scope = { document, window: dom.window, Event: dom.Event, gestures: { signal: undefined },
+  const scope = { document, window: dom.window, Event: dom.Event, gestures: { signal: undefined }, uiConfig,
     performance: { now: () => now }, hideTooltip() {}, canInspect: () => true, onActivate: id => plays.push(id), eligible: ['e1', 'e2'],
     entries: new Map(['e1', 'e2'].map(id => [id, { inspect: () => inspections.push(id) }])),
     setTimeout: (fn, ms) => { timers.set(++serial, { fn, at: now + ms }); return serial; },
@@ -40,7 +43,7 @@ function fixture() {
     now += ms;
     for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.fn(); }
   }
-  function hold(id = 'e1') { emit(id, 'pointerdown'); advance(500); emit(id, 'pointerup'); }
+  function hold(id = 'e1') { emit(id, 'pointerdown'); advance(HOLD_MS); emit(id, 'pointerup'); }
   function tap(id = 'e1', part = 'name') { emit(id, 'pointerdown', {}, part); emit(id, 'pointerup', {}, part); emit(id, 'click', {}, part); }
   return { emit, advance, hold, tap, plays, inspections, targets, scope };
 }
@@ -101,7 +104,7 @@ test('movement and cancellation still abandon inspection timers', () => {
 
 
 test('inspection owns its pointer release even after a very long hold', () => {
-  const f = fixture(); f.emit('e1', 'pointerdown'); f.advance(500); f.advance(5000);
+  const f = fixture(); f.emit('e1', 'pointerdown'); f.advance(HOLD_MS); f.advance(5000);
   f.emit('e1', 'pointerup'); f.emit('e1', 'click');
   assert.deepEqual(f.plays, []); assert.deepEqual(f.inspections, ['e1']);
   f.tap('e2'); assert.deepEqual(f.plays, ['e2']);
@@ -110,7 +113,7 @@ test('inspection owns its pointer release even after a very long hold', () => {
 test('a press begun while reading is gated cannot activate when the gate opens before release', () => {
   const f = fixture(); f.scope.canInspect = () => false;
   f.emit('e1', 'pointerdown'); f.scope.canInspect = () => true;
-  f.advance(500); f.emit('e1', 'pointerup'); f.emit('e1', 'click');
+  f.advance(HOLD_MS); f.emit('e1', 'pointerup'); f.emit('e1', 'click');
   assert.deepEqual(f.inspections, []); assert.deepEqual(f.plays, []);
   f.tap('e2'); assert.deepEqual(f.plays, ['e2']);
 });
