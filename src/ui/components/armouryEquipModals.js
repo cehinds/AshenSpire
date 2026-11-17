@@ -1,4 +1,3 @@
-// The Armoury's equip flow modals: slot choice, then equip confirm.
 import { openModal, button, el as buildElement } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { optionRowList, markOptionRows } from './optionRowList.js';
@@ -16,7 +15,7 @@ const CARD_OPTIONS = Object.freeze({
     surface: 'armoury',
 });
 
-function createBackButton()
+function buildBackButton()
 {
     return button({
         label: translate(BACK_LABEL_KEY),
@@ -44,69 +43,103 @@ function openBackableModal({
     return modal;
 }
 
+function buildSlotRowModels(slotOptions)
+{
+    return slotOptions.map((slotOption) =>
+    {
+        const showsHint = slotOption.disabled && slotOption.hint;
+        return {
+            id: slotOption.id,
+            name: slotOption.label,
+            text: showsHint
+                ? slotOption.hint
+                : slotOption.sub,
+            disabled: !!slotOption.disabled,
+            className: 'equip-slot-option',
+        };
+    });
+}
+
+function buildEquipButton()
+{
+    return button({
+        label: translate(EQUIP_LABEL_KEY),
+        weight: 'primary',
+        className: 'equip-confirm-equip',
+    });
+}
+
+function buildConfirmTitle(name, slotLabel)
+{
+    return translate('armoury.confirm.title', {
+        verb: translate(EQUIP_LABEL_KEY),
+        name,
+        slot: slotLabel,
+    });
+}
+
+function renderEquipCard(host, registries, item)
+{
+    const renderedCard = renderEquipmentCard(
+        registries,
+        item,
+        CARD_OPTIONS,
+    );
+    const cardWrap = buildElement(
+        'div',
+        { class: 'equip-confirm-card' },
+        [renderedCard.card],
+    );
+    host.append(cardWrap);
+}
+
 export function OpenSlotChoiceModal({ options, onChoose, opener })
 {
-    const backButton = createBackButton();
+    const backButton = buildBackButton();
     const chooseButton = button({
         label: translate('common.choose'),
         weight: 'primary',
         disabled: true,
     });
-    let optionList = null;
+    let slotList = null;
     let selectedSlotId = null;
 
-    const modal = openBackableModal({
-        backButton,
-        primaryButton: chooseButton,
-        opener,
-        title: translate('armoury.slot.title'),
-        className: 'option-choice equip-slot-choice',
-        initialFocus: () =>
-        {
-            const optionRows = optionList?.querySelectorAll(
-                `[${SLOT_OPTION_ATTRIBUTE}]`,
-            ) || [];
-            const firstEnabledRow = [...optionRows].find(
-                (optionRow) => !optionRow.disabled,
-            );
-            return firstEnabledRow || null;
-        },
-        body(host)
-        {
-            const slotRows = options.map((option) =>
+    function findFirstEnabledRow()
+    {
+        const slotRows = slotList?.querySelectorAll(
+            `[${SLOT_OPTION_ATTRIBUTE}]`,
+        ) || [];
+        const firstEnabledRow = [...slotRows].find(
+            (slotRow) => !slotRow.disabled,
+        );
+        return firstEnabledRow || null;
+    }
+
+    function selectSlot(slotId, slotRow)
+    {
+        selectedSlotId = slotId;
+        slotRow?.focus?.(NO_SCROLL);
+        markOptionRows(
+            slotList,
+            SLOT_OPTION_ATTRIBUTE,
+            [slotId],
+        );
+        chooseButton.disabled = false;
+    }
+
+    function renderSlotList(host)
+    {
+        slotList = optionRowList(
+            buildSlotRowModels(options),
             {
-                const showHint = option.disabled && option.hint;
-                return {
-                    id: option.id,
-                    name: option.label,
-                    text: showHint
-                        ? option.hint
-                        : option.sub,
-                    disabled: !!option.disabled,
-                    className: 'equip-slot-option',
-                };
-            });
-            optionList = optionRowList(
-                slotRows,
-                {
-                    idAttr: SLOT_OPTION_ATTRIBUTE,
-                    onSelect: (slotId, optionRow) =>
-                    {
-                        selectedSlotId = slotId;
-                        optionRow?.focus?.(NO_SCROLL);
-                        markOptionRows(
-                            optionList,
-                            SLOT_OPTION_ATTRIBUTE,
-                            [slotId],
-                        );
-                        chooseButton.disabled = false;
-                    },
-                },
-            );
-            host.append(optionList);
-        },
-    });
-    chooseButton.addEventListener(CLICK_EVENT, () =>
+                idAttr: SLOT_OPTION_ATTRIBUTE,
+                onSelect: selectSlot,
+            },
+        );
+        host.append(slotList);
+    }
+
+    function chooseSelectedSlot()
     {
         if (selectedSlotId == null)
         {
@@ -114,7 +147,18 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
         }
         modal.close();
         onChoose?.(selectedSlotId);
+    }
+
+    const modal = openBackableModal({
+        backButton,
+        primaryButton: chooseButton,
+        opener,
+        title: translate('armoury.slot.title'),
+        className: 'option-choice equip-slot-choice',
+        initialFocus: findFirstEnabledRow,
+        body: renderSlotList,
     });
+    chooseButton.addEventListener(CLICK_EVENT, chooseSelectedSlot);
     return modal;
 }
 
@@ -128,53 +172,36 @@ export function OpenEquipConfirmModal({
     opener,
 })
 {
-    const backButton = createBackButton();
-    const equipButton = button({
-        label: translate(EQUIP_LABEL_KEY),
-        weight: 'primary',
-        className: 'equip-confirm-equip',
-    });
-    // Every way out but Equip returns to the list it came from.
+    const backButton = buildBackButton();
+    const equipButton = buildEquipButton();
     let hasEquipped = false;
-    const modal = openBackableModal({
-        backButton,
-        primaryButton: equipButton,
-        opener,
-        onClose: () =>
+
+    function returnToListUnlessEquipped()
+    {
+        if (!hasEquipped)
         {
-            if (!hasEquipped)
-            {
-                queueMicrotask(() => onBack?.());
-            }
-        },
-        title: translate('armoury.confirm.title', {
-            verb: translate(EQUIP_LABEL_KEY),
-            name,
-            slot: slotLabel,
-        }),
-        className: 'equip-confirm-modal',
-        kind: 'compare',
-        initialFocus: () => equipButton,
-        body(host)
-        {
-            const renderedCard = renderEquipmentCard(
-                registries,
-                item,
-                CARD_OPTIONS,
-            );
-            const cardWrap = buildElement(
-                'div',
-                { class: 'equip-confirm-card' },
-                [renderedCard.card],
-            );
-            host.append(cardWrap);
-        },
-    });
-    equipButton.addEventListener(CLICK_EVENT, () =>
+            queueMicrotask(() => onBack?.());
+        }
+    }
+
+    function equipAndClose()
     {
         hasEquipped = true;
         modal.close();
         onEquip?.();
+    }
+
+    const modal = openBackableModal({
+        backButton,
+        primaryButton: equipButton,
+        opener,
+        onClose: returnToListUnlessEquipped,
+        title: buildConfirmTitle(name, slotLabel),
+        className: 'equip-confirm-modal',
+        kind: 'compare',
+        initialFocus: () => equipButton,
+        body: (host) => renderEquipCard(host, registries, item),
     });
+    equipButton.addEventListener(CLICK_EVENT, equipAndClose);
     return modal;
 }
