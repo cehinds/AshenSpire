@@ -22,6 +22,7 @@ import * as Engagement from './combatEngagement.js';
 
 const ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
 const count = value => Number.isFinite(value) ? value : 0;
+const PHYSICAL_POISE = Object.freeze({ combatProfile: Object.freeze({ camp: 'physical' }) });
 
 /** The `stanceBenefits` block this fight plays under, or null (not Core 2, or a fight created before the ruling). */
 export function StanceBenefitRules(ctx) {
@@ -58,9 +59,10 @@ export const HitRange = (profile = {}) => profile?.range || (profile?.maneuver =
  * `prepared.meleeDamageTakenMultiplier` from a melee hit (HitRange); Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
  * 1 for a return hit, another stance, or a fight saved without the key.
  */
-export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile) {
+export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile, target = null) {
   const rules = StanceBenefitRules(ctx);
-  if (!rules || isReturn(carrier)) return 1;
+  // A preview whose target's intent cannot be read hides its stance (combat.js previewCard): unknown is no weakness, never Idle.
+  if (!rules || isReturn(carrier) || target?.combatStanceUnknown) return 1;
   const stance = ALIASES[defendingStance] || defendingStance || 'neutral';
   if (stance === 'prepared' && HitRange(profile) === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
   if (stance === 'neutral' || stance === 'idle') return count(rules.neutral?.damageTakenMultiplier) || 1;
@@ -104,7 +106,9 @@ function magicHit(ctx, carrier) {
 export function DefendPoiseFloor(ctx, target, carrier, defendingStance, blockBefore = target?.block || 0) {
   const rules = StanceBenefitRules(ctx)?.defend;
   const floor = Math.max(0, Math.floor(count(rules?.poiseFloorWhileBlock)));
-  if (!floor || !carrier || isReturn(carrier) || (ALIASES[defendingStance] || defendingStance) !== 'defend' || !(blockBefore > 0)) return 0;
+  // Poise damage with no card of its own (a relic, a trigger) is physical: it keeps the floor too (owner decision, 2026-11-17).
+  carrier = carrier || PHYSICAL_POISE;
+  if (!floor || isReturn(carrier) || (ALIASES[defendingStance] || defendingStance) !== 'defend' || !(blockBefore > 0)) return 0;
   if (configuredStance(carrier) === 'smash' || carrier?.combatProfile?.maneuver === 'smash') return 0;
   if (magicHit(ctx, carrier) && !(count(rules.poiseFloorWardMagic) > 0 && (target?.statuses?.ward?.stacks || 0) > 0)) return 0;
   return floor;
