@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { readFileSync } from 'node:fs';
 
@@ -28,7 +28,7 @@ function mount() {
   const run = { class: 'reaver', deck: [], sideboard: [], cinders: 0, xp: 0, skills: {} };
   const ids = ['frostNova', 'scholarsInsight', 'guardCounter'];
   const offer = { id: 'victory-inspect', options: ids.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
-  mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards', onTake() {}, onContinue() {}, onAddToDeck() {} });
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards', onTake() {}, onContinue() {}, onAddToDeck() {} });
   return { app, faces: [...app.querySelectorAll('.reward-choice-face')], ids };
 }
 const modal = () => document.querySelector('.card-inspection-modal');

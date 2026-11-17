@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { flaskIdentityHtml } from '../src/ui/components/flask.js';
 import { classUnfold } from '../src/ui/components/creationCards.js';
 import { openCardChoiceModal } from '../src/ui/components/cardChoiceModal.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { uiIconId } from '../src/content/uiIcons.js';

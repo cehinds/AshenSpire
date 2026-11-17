@@ -3,7 +3,7 @@
 // Rows come from model/runChangeReceipt.js; this file only draws them. It reuses the Smith
 // dialog's stat rows and deltas, so a receipt reads like the picker that preceded it.
 import { el, button, statRow, prose, glyph } from '../kit/index.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { renderCard } from './card.js';
 import { deltaNode } from './smithPaneParts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -73,7 +73,7 @@ export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChan
     el('div', { class: 'confirmation-change-list what-changed-list' }, rows.map((row) => rowNode(registries, row))),
     cost ? el('div', { class: 'smith-cost-strip what-changed-cost' }, el('div', { class: 'smith-summary-cell' }, [glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }), el('b', { text: t('whatChanged.cost') }), ' ', cost])) : null,
   ]);
-  const handle = openModal({
+  const handle = OpenModal({
     name: 'what-changed', size: 'sm', className: 'what-changed-modal',
     eyebrow: eyebrowText, title, closeLabel: t('whatChanged.close'),
     body, primary: cont, onClose: () => { onClose?.(); refocusScreen(openedFrom); }, opener: returnFocusElement,

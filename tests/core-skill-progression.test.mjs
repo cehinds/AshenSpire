@@ -30,7 +30,7 @@ import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skil
 import { awardLevelXp, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { withModalDom } from './helpers/dom.mjs';
 import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
@@ -495,7 +495,7 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let continues = 0, refuse = true;
-    mountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
+    MountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
       onDone() {
         // Reentrant activation during a screen transition cannot acknowledge twice.
         app.querySelector('#reward-continue').click();
@@ -532,7 +532,7 @@ test('Core Victory receipt draws the Character bar alone and Continue still work
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let done = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
       rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'item:blade': 5, 'class:reaver': 9 } }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
     assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
@@ -549,7 +549,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let saves = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
       onAllocateStat: id => allocateAttributePoint(reg, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     const add = app.querySelector('.reward-stat-row .reward-stat-add');
@@ -566,7 +566,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     assert.equal(app.querySelector('.reward-stat-allocation'), null);
   });
@@ -602,10 +602,10 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const rollRuneReward = () => 0;
     const showFinishedRun = () => { throw Error('ordinary victory must not finish the run'); };
     const showMap = () => {}, advanceAct = () => {};
-    const mountRewards = (_app, model) => receipts.push(model);
+    const MountRewards = (_app, model) => receipts.push(model);
     const mountGameProfileLevelUp = () => { throw Error('small award must not cross levels'); };
     const deckDoors = () => ({});
-    const mountGameProfileOffers = (_app, model) => offers.push(model);
+    const MountGameProfileOffers = (_app, model) => offers.push(model);
     const transactReward = (_run, _offerId, change) => { change(); persist(); }, deckEditBounds = () => ({ max: 30 });
     ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}

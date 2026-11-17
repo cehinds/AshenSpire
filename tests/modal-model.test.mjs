@@ -1,0 +1,102 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { uiConfig } from '../src/config/generated/ui.js';
+import {
+    ResolveModalConfig,
+    ModalModelFor,
+    ModalModel,
+    ChoiceModalModel,
+    RewardModalModel,
+} from '../src/ui/models/ModalModel.js';
+
+const KINDS = uiConfig.components.modal.components;
+
+function fakePanel()
+{
+    const props = {};
+    return {
+        dataset: {},
+        props,
+        style: { setProperty: (name, value) => { props[name] = value; } },
+    };
+}
+
+test('every kind resolves and reaches base', () =>
+{
+    for (const kind of Object.keys(KINDS))
+    {
+        const config = ResolveModalConfig(kind);
+        assert.equal(config.extends, undefined, kind);
+        assert.equal(config.panelInsetRem, KINDS.base.panelInsetRem, kind);
+    }
+});
+
+test('merge order is base, then parent, then child', () =>
+{
+    const table = {
+        base: { aRem: 1, bRem: 1, cRem: 1 },
+        mid: { extends: 'base', bRem: 2, cRem: 2 },
+        leaf: { extends: 'mid', cRem: 3 },
+    };
+    assert.deepEqual(ResolveModalConfig('leaf', table), { aRem: 1, bRem: 2, cRem: 3 });
+});
+
+test('a child override does not leak to its siblings', () =>
+{
+    const table = {
+        base: { gapPx: 4 },
+        choice: { extends: 'base', showNameButton: true },
+        reward: { extends: 'choice', showNameButton: false, gapPx: 2 },
+        compare: { extends: 'choice' },
+    };
+    assert.equal(ModalModelFor('reward', table).showNameButton, false);
+    assert.equal(ModalModelFor('compare', table).showNameButton, true);
+    assert.equal(ResolveModalConfig('compare', table).gapPx, 4);
+});
+
+test('refuses an unknown kind, an unknown parent, a cycle and a root other than base', () =>
+{
+    assert.throws(() => ResolveModalConfig('nope'), /unknown modal kind "nope"/);
+    assert.throws(() => ResolveModalConfig('a', { base: {}, a: { extends: 'ghost' } }), /unknown parent "ghost"/);
+    assert.throws(() => ResolveModalConfig('a', { base: {}, a: { extends: 'b' }, b: { extends: 'a' } }), /cycle/);
+    assert.throws(() => ResolveModalConfig('a', { base: {}, a: {} }), /does not extend "base"/);
+});
+
+test('cssProperties carries the unit and drops it from the name', () =>
+{
+    const model = new ModalModel('x', { gridGapPx: 12, optionGapRem: 0.6, showNameButton: true, label: 'n' });
+    assert.deepEqual(model.cssProperties(), { '--modal-grid-gap': '12px', '--modal-option-gap': '0.6rem' });
+});
+
+test('defaults match the CSS literals they replace', () =>
+{
+    const reward = ModalModelFor('reward').cssProperties();
+    assert.equal(reward['--modal-panel-inset'], '1.4rem');
+    assert.equal(reward['--modal-panel-inset-phone'], '1rem');
+    assert.equal(reward['--modal-grid-gap'], '12px');
+    assert.equal(reward['--modal-grid-gap-phone'], '8px');
+    assert.equal(reward['--modal-option-gap'], '0.6rem');
+    assert.equal(reward['--modal-option-gap-phone'], '0.4rem');
+    assert.equal(reward['--modal-name-button-basis'], '3.5rem');
+});
+
+test('the class follows the nearest ancestor with one', () =>
+{
+    assert.ok(ModalModelFor('reward') instanceof RewardModalModel);
+    assert.ok(ModalModelFor('cardUpgrade') instanceof ChoiceModalModel);
+    assert.ok(!(ModalModelFor('cardUpgrade') instanceof RewardModalModel));
+    assert.ok(!(ModalModelFor('confirm') instanceof ChoiceModalModel));
+    assert.ok(ModalModelFor() instanceof ModalModel);
+});
+
+test('apply tags the panel and sets the properties', () =>
+{
+    const panel = fakePanel();
+    ModalModelFor('reward').apply(panel);
+    assert.equal(panel.dataset.modalKind, 'reward');
+    assert.equal(panel.dataset.nameButton, 'shown');
+    assert.equal(panel.props['--modal-grid-gap'], '12px');
+    const confirm = fakePanel();
+    ModalModelFor('confirm').apply(confirm);
+    assert.equal(confirm.dataset.nameButton, undefined);
+});

@@ -66,9 +66,9 @@ test('discard choice: rows toggle up to the count, the primary enables at exactl
 test('slot choice: rows, a locked position is a disabled row, Choose commits the selected id after closing', async () => {
   const { document, restore } = installDom();
   try {
-    const { openSlotChoiceModal } = await import('../src/ui/components/armouryEquipModals.js');
+    const { OpenSlotChoiceModal } = await import('../src/ui/components/armouryEquipModals.js');
     const chosen = [];
-    const shell = openSlotChoiceModal({ opener: null, onChoose: (id) => chosen.push(id),
+    const shell = OpenSlotChoiceModal({ opener: null, onChoose: (id) => chosen.push(id),
       options: [{ id: 'main:0', label: 'Main hand · 1', sub: 'Active · Empty' }, { id: 'main:1', label: 'Main hand · 2', sub: 'Reserve', disabled: true, hint: 'Unlocks at 3' }, { id: 'off:0', label: 'Off hand · 1', sub: 'Active · Empty' }] });
     const rows = shell.body.querySelectorAll('[data-slot-option]');
     assert.ok(rows.every((row) => row.classes.has('option-row')));

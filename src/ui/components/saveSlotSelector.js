@@ -14,7 +14,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { registerModal } from '../modalState.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
 import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
@@ -554,7 +554,7 @@ export function openSaveSlotSelector({
 export function openSaveStatusReview({ slot, className, facts, savedAt = null, error = null, onRetry, returnFocusElement = null }) {
   const review = saveStatusReview({ slot, className, facts, savedAt, error });
   const card = detailCard({ eyebrow: review.destination, name: String(className), line: String(facts), meta: review.lastSaved, attrs: { class: 'title-load-review-slot save-status-slot' } });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -576,7 +576,7 @@ export function openSaveStatusReview({ slot, className, facts, savedAt = null, e
  */
 export function openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement = null }) {
   const review = replaceSaveReview({ slot, existing, replacement });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -600,7 +600,7 @@ export function saveSlotCopyHtml({ slot, summary }) {
  * this says so. Nothing to confirm; the only way on is back to the climb.
  */
 export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: t('save.refused.title'),
     message: t('save.refused.message', { slot }),
     cancelLabel: t('save.refused.close'),
@@ -618,7 +618,7 @@ export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
  * no confirm, only the way out; Delete stays the slot's own confirmed act.
  */
 export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: t('save.newer.title'),
     message: t('save.newer.message', { slot }),
     cancelLabel: t('save.newer.close'),

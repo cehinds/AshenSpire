@@ -3,7 +3,7 @@ import { renderCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { imageHintAttrs } from '../imageHints.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement, matchAction, actionLabel } from '../input.js';
 import { el, popover, row as kitRow, keycap, titleS, subtitle, artWell, prose, button } from '../kit/index.js';
@@ -105,7 +105,7 @@ export function openFlaskInspectModal({ def, charges = null, use = null, opener 
     : null;
   if (act && !view.action.enabled) { act.disabled = true; act.title = view.action.reason; }
 
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'md',
     className: 'flask-inspect-modal',
     eyebrow: 'Flask',

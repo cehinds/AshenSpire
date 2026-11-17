@@ -126,7 +126,7 @@ export async function runConfirmationModalContract() {
 
   check(!sourceFiles.some((source) => /\b(?:window\.)?confirm\s*\(/.test(source)),
     'a native confirm call remains in the quit/load implementation');
-  check((mainSource.match(/\bopenConfirmationModal\s*\(/g) || []).length === 2,
+  check((mainSource.match(/\bOpenConfirmationModal\s*\(/g) || []).length === 2,
     'load and quit do not both use the shared confirmation surface');
   check(overlaySource.includes('if (topVeil() !== openVeil) return;'),
     'the underlying overlay can consume Escape before the confirmation');
@@ -147,7 +147,7 @@ export async function runConfirmationModalContract() {
   };
 
   try {
-    const { openConfirmationModal, closeConfirmationModal } = await import('../src/ui/components/confirmationModal.js');
+    const { OpenConfirmationModal, CloseConfirmationModal } = await import('../src/ui/components/confirmationModal.js');
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     trigger.focus();
@@ -155,7 +155,7 @@ export async function runConfirmationModalContract() {
     let cancelled = 0;
     let commitEvents = 0;
     window.addEventListener('ashenspire:confirmation-commit', () => { commitEvents += 1; });
-    const first = openConfirmationModal({
+    const first = OpenConfirmationModal({
       title: 'Quit without saving?',
       message: 'Unsaved changes will be lost.',
       confirmLabel: 'Quit without saving',
@@ -196,7 +196,7 @@ export async function runConfirmationModalContract() {
     check(!first.veil.isConnected && document.activeElement === trigger,
       'cancellation did not remove the dialog and restore its trigger');
 
-    const second = openConfirmationModal({
+    const second = OpenConfirmationModal({
       title: 'Load slot 1?',
       message: 'Replace unsaved progress.',
       confirmLabel: 'Load saved run',
@@ -218,7 +218,7 @@ export async function runConfirmationModalContract() {
 
     let settleStart;
     const pendingStart = new Promise(resolveStart => { settleStart = resolveStart; });
-    const asynchronous = openConfirmationModal({ title: 'Replace saved run?', inputShieldMs: 8,
+    const asynchronous = OpenConfirmationModal({ title: 'Replace saved run?', inputShieldMs: 8,
       onConfirm: () => pendingStart });
     asynchronous.confirmButton.dispatchEvent(fakeEvent('click'));
     await new Promise(resolveTick => setTimeout(resolveTick, 32));
@@ -231,7 +231,7 @@ export async function runConfirmationModalContract() {
     await new Promise(resolveTick => setTimeout(resolveTick, 32));
     check(!asynchronous.veil.isConnected, 'refused profile-backed confirmation retained its shield after settlement');
 
-    const third = openConfirmationModal({
+    const third = OpenConfirmationModal({
       title: 'Cancel from scrim',
       message: 'Nothing commits.',
       returnFocusElement: trigger,
@@ -250,12 +250,12 @@ export async function runConfirmationModalContract() {
     third.veil.dispatchEvent(fakeEvent('pointerdown', { target: third.veil }));
     third.veil.dispatchEvent(fakeEvent('click', { target: third.veil }));
     check(cancelled === 2 && confirmed === 1, 'backdrop cancellation committed or failed to cancel');
-    closeConfirmationModal();
+    CloseConfirmationModal();
 
     // A BLOCKED option (an unaffordable Smithing upgrade) hides the confirm
     // button: the Tab trap must wrap over the one visible control, Back, and
     // never park focus on the hidden button.
-    const blocked = openConfirmationModal({
+    const blocked = OpenConfirmationModal({
       title: 'Upgrade Straight Sword?',
       message: 'You need 3 Smithing Stones.',
       confirmLabel: 'Upgrade',
@@ -274,7 +274,7 @@ export async function runConfirmationModalContract() {
     window.dispatchEvent(blockedForward);
     check(blockedForward.defaultPrevented && document.activeElement === blocked.cancelButton,
       'forward Tab on a blocked confirmation leaves the visible Back control');
-    closeConfirmationModal();
+    CloseConfirmationModal();
   } catch (error) {
     failures.push(error.stack || error.message || String(error));
   } finally {

@@ -129,13 +129,13 @@ test('whenNoOverlay waits for a registered modal even when the DOM shows nothing
 });
 
 test('the shared shell restores focus and removes its veil before closed waiters redraw', async () => {
-  const { openModal } = await import('../src/ui/components/modalShell.js');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom) => {
     const opener = dom.document.createElement('button');
     dom.document.body.appendChild(opener);
     opener.focus();
-    const shell = openModal({ name: 'settings', title: 'Settings', opener });
+    const shell = OpenModal({ name: 'settings', title: 'Settings', opener });
     let atRedraw = null;
     onModalsClosed(() => {
       atRedraw = { active: dom.document.activeElement, veilConnected: shell.veil.isConnected };
@@ -166,7 +166,7 @@ test('the four shared shells register with the modal state and release it', () =
 });
 
 test('a confirmation is a modal from open until confirm or cancel', async () => {
-  const { openConfirmationModal } = await import('../src/ui/components/confirmationModal.js');
+  const { OpenConfirmationModal } = await import('../src/ui/components/confirmationModal.js');
   resetModalState();
   const hadHTMLElement = Object.prototype.hasOwnProperty.call(globalThis, 'HTMLElement');
   const savedHTMLElement = globalThis.HTMLElement;
@@ -182,7 +182,7 @@ test('a confirmation is a modal from open until confirm or cancel', async () => 
       let confirmed = 0;
       let cancelled = 0;
 
-      const confirm = openConfirmationModal({
+      const confirm = OpenConfirmationModal({
         title: 'Load slot 1?',
         message: 'Replace unsaved progress.',
         confirmLabel: 'Load saved run',
@@ -197,7 +197,7 @@ test('a confirmation is a modal from open until confirm or cancel', async () => 
       assert.equal(confirmed, 1, 'confirm committed');
       assert.equal(modalOpen(), false, 'after confirm: modal state says closed');
 
-      const cancel = openConfirmationModal({
+      const cancel = OpenConfirmationModal({
         title: 'Quit without saving?',
         message: 'Unsaved changes will be lost.',
         confirmLabel: 'Quit without saving',

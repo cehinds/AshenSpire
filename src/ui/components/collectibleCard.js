@@ -2,7 +2,7 @@ import { renderEquipmentCard, renderEquipmentInspection } from './equipmentCard.
 import { relicText } from './card.js';
 import { assetUrl } from '../assetmap.js';
 import { relicArtUrl } from '../assets.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 
 // The same poker canvas, populated with the collectible's authored effects.
@@ -48,7 +48,7 @@ export function renderCollectibleInspection(registries, item, kind, options = {}
 }
 
 export function openCollectibleInspection(registries, item, kind, opener) {
-  return openModal({ title: item.name, eyebrow: `${kind} information`, size: 'lg',
+  return OpenModal({ title: item.name, eyebrow: `${kind} information`, size: 'lg',
     className: 'card-inspection-modal', opener,
     body: renderCollectibleInspection(registries, item, kind, { interactive: false }) });
 }

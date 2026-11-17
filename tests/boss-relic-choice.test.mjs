@@ -15,7 +15,7 @@ import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
 import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/dom.mjs';
 
 const REG = createRegistries(contentBundle);
@@ -172,7 +172,7 @@ function mountBossReward(dom, { relicChoices, run, checkpoint = pendingRewardChe
   dom.document.documentElement ??= dom.document.body;
   const app = dom.document.createElement('main');
   dom.document.body.replaceChildren(app);
-  mountRewards(app, {
+  MountRewards(app, {
     registries: REG, run, onDone() {}, checkpoint,
     onPersist: () => true,
     saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }), saveMeta() {} },

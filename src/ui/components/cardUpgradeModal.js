@@ -1,228 +1,637 @@
-// The Core card-upgrade picker: one dialog for the rest site and the Blacksmith, in the defensive-reaction prompt's
-// design (owner, 2026-11-14): option rows (optionRowList), the selected row opens its before -> after faces and
-// change rows UNDER it, a Back exit and one primary Upgrade button that stays disabled until a card is selected.
-// The primary still opens the permanent-change confirmation (armOptionDecision). The component renders and
-// routes; the host owns the run mutation. Every fact is from CardUpgradeModel.js, whose plan is the one
-// commitCardUpgrade applies, so the before/after preview is exactly what the commit does.
-import { el, eyebrow, statRow, button } from '../kit/index.js';
-import { openModal } from './modalShell.js';
+// The Core card-upgrade picker, shared by the rest site and the Blacksmith.
+// It renders and routes; the host owns the run mutation. Facts come from CardUpgradeModel.js,
+// whose plan is the one commitCardUpgrade applies, so the preview matches the commit.
+import {
+    el as buildElement,
+    eyebrow,
+    statRow,
+    button,
+} from '../kit/index.js';
+import { OpenModal } from './modalShell.js';
 import { optionRowList } from './optionRowList.js';
 import { renderCard } from './card.js';
-import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
+import {
+    upgradeFacesNode,
+    upgradeConfirmNodes,
+} from './upgradeConfirm.js';
 import { changeSummary, economyNode } from './smithPaneParts.js';
-import { pushModalParent, dropModalParent, returnToModalParent, modalParentLabel } from '../modalReturn.js';
+import {
+    pushModalParent,
+    dropModalParent,
+    returnToModalParent,
+    modalParentLabel,
+} from '../modalReturn.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
-import { t } from '../strings.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { t as translate } from '../strings.js';
+import {
+    UI_COMPONENTS,
+    markUiComponent,
+} from './uiComponents.js';
 
+const INSTANCE_ID_ATTRIBUTE = 'data-instance-id';
+const FOCUS_OPTIONS = Object.freeze({ preventScroll: true });
+const ANY_ROW_SELECTOR = `[${INSTANCE_ID_ATTRIBUTE}]`;
+const ENABLED_ROW_SELECTOR = `[${INSTANCE_ID_ATTRIBUTE}]:not([disabled])`;
+const FACE_SIDES = Object.freeze([
+    'before',
+    'after',
+]);
+const CLASS = Object.freeze({
+    row: 'card-upgrade-row smith-candidate-card',
+    locked: 'locked',
+    selected: 'selected',
+    details: 'card-upgrade-modal-details',
+    option: 'card-upgrade-option',
+    cinders: 'card-upgrade-cinders',
+    stonesStatus: 'smith-header-stones',
+    list: 'card-upgrade-list',
+    options: 'card-upgrade-options',
+    optionList: 'card-upgrade-option-list',
+    optionBody: 'card-upgrade-option-body',
+    optionTitle: 'card-upgrade-option-title',
+    optionFace: 'card-upgrade-option-face',
+    optionChanges: 'card-upgrade-option-changes',
+    note: 'card-upgrade-note',
+    changeName: 'sr-name',
+});
+// How an arrow key moves the chosen option: forward or back, wrapping at the ends.
+const ARROW_STEP = Object.freeze({
+    ArrowRight: 1,
+    ArrowDown: 1,
+    ArrowLeft: -1,
+    ArrowUp: -1,
+});
 
-export function mountCardUpgradeModal(host, initialModel, {
-  registries, meta, title = t('cardUpgrade.title'), backLabel: backLabelOverride, decisionConsequence = '',
-  onSelect, onBack, onConfirm, returnFocusElement, focusInstanceId = null,
-  // The list's own return record ({ place: where Back leads, e.g. t('common.place.blacksmith'), reopen(focus): draw this list again), see modalReturn.js.
-  // With it, a confirmed upgrade lands back on a refreshed list, and the Back label names `place`.
-  parent = null,
-}) {
-  const parentRecord = parent ? pushModalParent(parent) : null;
-  const backLabel = backLabelOverride || modalParentLabel(parentRecord);
-  const returnFocus = returnFocusElement instanceof HTMLElement ? returnFocusElement : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+function classWhen(baseClass, condition, extraClass)
+{
+    return condition ? `${baseClass} ${extraClass}` : baseClass;
+}
 
-  let currentModel = initialModel;
-  // The option picked among several (blacksmith choice): the index into the selected row's `options`; it resets with the card.
-  let chosen = 0;
-  let chosenFor = null;
-  let closed = false;
-  let committing = false;
-  let disarmDecision = null;
-  let bodyHost = null;
-  let listHost = null;
-  let detailHost = null;
-  let list = null;
+function rowSelector(instanceId)
+{
+    return `[${INSTANCE_ID_ATTRIBUTE}="${instanceId}"]`;
+}
 
-  // The Upgrade button is the control the permanent-change review is armed on; it stays disabled until a card is selected.
-  const confirmBtn = button({ label: t('cardUpgrade.confirmIdle'), weight: 'primary', className: 'smith-confirm card-upgrade-confirm', disabled: true });
-  const backBtn = button({ label: backLabel, role: 'exit', className: 'smith-back' });
-  const shell = openModal({
-    title, eyebrow: '', size: 'md', className: 'option-choice smith-upgrade-modal card-upgrade-modal',
-    host, opener: returnFocus, closeLabel: backLabel, secondary: [backBtn], primary: confirmBtn,
-    bodyClassName: 'as-pane', deferFocus: true,
-    initialFocus: () => (focusInstanceId && list?.querySelector(`[data-instance-id="${focusInstanceId}"]`)) || list?.querySelector('[data-instance-id]:not([disabled])') || null,
-    body(bodyEl) { bodyHost = bodyEl; },
-    onClose: () => {
-      if (closed) return;
-      closed = true;
-      disarmDecision?.();
-      disarmDecision = null;
-      // Any way out but a confirmed upgrade (Back, the close, Escape, the veil) is a full exit: the parent is forgotten.
-      if (!committing) { if (parentRecord) dropModalParent(parentRecord); onBack(); }
-    },
-  });
-  backBtn.addEventListener('click', () => shell.close());
-  const modal = shell.panel;
-  markUiComponent(modal, UI.smithUpgradeModal, 'cards');
-  const purse = el('p', { class: 'smith-header-stones', role: 'status', 'aria-live': 'polite' });
-  bodyHost.append(purse);
-  listHost = el('div', { class: 'card-upgrade-list', role: 'listbox', 'aria-label': t('cardUpgrade.items') });
-  bodyHost.append(listHost);
+function hasChoice(selected)
+{
+    return selected.options?.length > 1;
+}
 
-  /** The row's chip line: the rank and upgrade price, whether it is in the deck. */
-  const rowOf = (row, model) => {
-    const upgrade = row.weaponBound ? '' : t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel });
-    return {
-      id: row.instanceId, name: row.name, className: `card-upgrade-row smith-candidate-card rarity-${row.rarity}${row.disabled ? ' locked' : ''}`,
-      costs: [upgrade, row.inDeck ? t('cardUpgrade.row.inDeck') : ''].filter(Boolean),
-      text: row.blockedReason || '', line: [], disabled: row.disabled,
-      chip: t('cardUpgrade.row.copies', { n: row.copies }),
-      artAsset: row.artAsset || null, artGlyph: row.artAsset ? null : row.artGlyph,
-      detail: model.selected && model.selected.instanceId === row.instanceId ? detailHost : null,
+function upgradeStateOf(row)
+{
+    if (row.disabled)
+    {
+        return 'blocked';
+    }
+    return row.cost === 0 ? 'free' : 'stone';
+}
+
+export function MountCardUpgradeModal(host, initialModel, {
+    registries,
+    meta,
+    title = translate('cardUpgrade.title'),
+    backLabel: backLabelOverride,
+    decisionConsequence = '',
+    onSelect,
+    onBack,
+    onConfirm,
+    returnFocusElement,
+    focusInstanceId = null,
+    // The list's return record (see modalReturn.js): a confirmed upgrade lands back on a refreshed list.
+    parent = null,
+})
+{
+    const parentRecord = parent ? pushModalParent(parent) : null;
+    const backLabel = backLabelOverride || modalParentLabel(parentRecord);
+    const isHtmlElement = (candidate) => candidate instanceof HTMLElement;
+    const activeElement = isHtmlElement(document.activeElement) ? document.activeElement : null;
+    const returnFocus = isHtmlElement(returnFocusElement) ? returnFocusElement : activeElement;
+
+    let currentModel = initialModel;
+    // Index into the selected row's `options`; resets with the card.
+    let chosenOptionIndex = 0;
+    let chosenForInstanceId = null;
+    let closed = false;
+    let committing = false;
+    let disarmDecision = null;
+    let bodyHost = null;
+    let listHost = null;
+    let detailHost = null;
+    let rowList = null;
+
+    // The permanent-change review is armed on this button; it stays disabled until a card is selected.
+    const confirmButton = button({
+        label: translate('cardUpgrade.confirmIdle'),
+        weight: 'primary',
+        className: 'smith-confirm card-upgrade-confirm',
+        disabled: true,
+    });
+    const backButton = button({
+        label: backLabel,
+        role: 'exit',
+        className: 'smith-back',
+    });
+    const initialFocusTarget = () => (
+        (focusInstanceId && rowList?.querySelector(rowSelector(focusInstanceId)))
+        || rowList?.querySelector(ENABLED_ROW_SELECTOR)
+        || null
+    );
+    const shell = OpenModal({
+        title,
+        eyebrow: '',
+        size: 'md',
+        className: 'option-choice smith-upgrade-modal card-upgrade-modal',
+        kind: 'cardUpgrade',
+        host,
+        opener: returnFocus,
+        closeLabel: backLabel,
+        secondary: [backButton],
+        primary: confirmButton,
+        bodyClassName: 'as-pane',
+        deferFocus: true,
+        initialFocus: initialFocusTarget,
+        body(bodyElement)
+        {
+            bodyHost = bodyElement;
+        },
+        onClose: () =>
+        {
+            if (closed)
+            {
+                return;
+            }
+            closed = true;
+            disarmDecision?.();
+            disarmDecision = null;
+            // Any exit but a confirmed upgrade forgets the parent.
+            if (!committing)
+            {
+                if (parentRecord)
+                {
+                    dropModalParent(parentRecord);
+                }
+                onBack();
+            }
+        },
+    });
+    backButton.addEventListener('click', () => shell.close());
+    markUiComponent(shell.panel, UI_COMPONENTS.smithUpgradeModal, 'cards');
+    const stonesStatus = buildElement('p', {
+        class: CLASS.stonesStatus,
+        role: 'status',
+        'aria-live': 'polite',
+    });
+    bodyHost.append(stonesStatus);
+    listHost = buildElement('div', {
+        class: CLASS.list,
+        role: 'listbox',
+        'aria-label': translate('cardUpgrade.items'),
+    });
+    bodyHost.append(listHost);
+
+    const isRowSelected = (model, row) => (
+        Boolean(model.selected) && model.selected.instanceId === row.instanceId
+    );
+
+    /** The row's chip line: the rank and upgrade price, whether it is in the deck. */
+    const candidateRowOf = (row, model) =>
+    {
+        const upgradeStatus = row.weaponBound
+            ? ''
+            : translate('cardUpgrade.row.status', {
+                from: row.levelFrom,
+                to: row.levelTo,
+                cost: row.costLabel,
+            });
+        const inDeckLabel = row.inDeck ? translate('cardUpgrade.row.inDeck') : '';
+        return {
+            id: row.instanceId,
+            name: row.name,
+            className: classWhen(`${CLASS.row} rarity-${row.rarity}`, row.disabled, CLASS.locked),
+            costs: [upgradeStatus, inDeckLabel].filter(Boolean),
+            text: row.blockedReason || '',
+            line: [],
+            disabled: row.disabled,
+            chip: translate('cardUpgrade.row.copies', { n: row.copies }),
+            artAsset: row.artAsset || null,
+            artGlyph: row.artAsset ? null : row.artGlyph,
+            detail: isRowSelected(model, row) ? detailHost : null,
+        };
     };
-  };
 
-  // The price a row asks: Smithing Stones (the rest site's), plus cinders when a quote names them (the Blacksmith's).
-  const priceNode = (model) => {
-    const { selected } = model;
-    if (!(selected.cinders > 0)) return economyNode({ cost: selected.cost, stones: model.stones });
-    return el('span', { class: 'card-upgrade-cinders' }, [
-      selected.cost > 0 ? economyNode({ cost: selected.cost, stones: model.stones }) : null,
-      el('b', { text: t('cardUpgrade.cinders', { n: selected.cinders }) }),
-    ].filter(Boolean));
-  };
-  const confirmText = (selected) => (selected.cinders > 0 ? t('cardUpgrade.confirmCinders', { n: selected.cinders }) : t('smith.upgrade.confirm', { cost: selected.cost }));
-  /** The plan's own before and after faces as small cards, side by side. */
-  const facesNode = (model) => upgradeFacesNode(Object.fromEntries(['before', 'after'].map((which) => [which,
-    renderCard(registries, { cardId: model.selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: model.faces[which] })])));
+    // Smithing Stones (the rest site), plus cinders when a quote names them (the Blacksmith).
+    const priceNode = (model) =>
+    {
+        const { selected } = model;
+        const stonesEconomyNode = () => economyNode({
+            cost: selected.cost,
+            stones: model.stones,
+        });
+        if (!(selected.cinders > 0))
+        {
+            return stonesEconomyNode();
+        }
+        const cindersNode = buildElement('b', {
+            text: translate('cardUpgrade.cinders', { n: selected.cinders }),
+        });
+        return buildElement(
+            'span',
+            {
+                class: CLASS.cinders,
+            },
+            [
+                selected.cost > 0 ? stonesEconomyNode() : null,
+                cindersNode,
+            ].filter(Boolean),
+        );
+    };
+    const confirmLabelFor = (selected) => (
+        selected.cinders > 0
+            ? translate('cardUpgrade.confirmCinders', { n: selected.cinders })
+            : translate('smith.upgrade.confirm', { cost: selected.cost })
+    );
+    /** The plan's own before and after faces as small cards, side by side. */
+    const faceCardOf = (model, faceSide) =>
+    {
+        const cardReference = { cardId: model.selected.cardId };
+        return renderCard(registries, cardReference, {
+            small: true,
+            tooltip: false,
+            inspectReadOnly: true,
+            definition: model.faces[faceSide],
+        });
+    };
+    const facesNode = (model) =>
+    {
+        const faceEntries = FACE_SIDES.map((faceSide) => [faceSide, faceCardOf(model, faceSide)]);
+        return upgradeFacesNode(Object.fromEntries(faceEntries));
+    };
 
-  /** The row's chosen option (the first when there is no choice). */
-  const optionOf = (model) => model.selected.options?.[chosen] || model.selected.options?.[0] || null;
-  /** The model as the pane shows it: the chosen option's after face and change rows. */
-  const viewOf = (model) => {
-    const option = model.selected && model.faces ? optionOf(model) : null;
-    if (!option || model.selected.options.length < 2) return model;
-    return { ...model, selected: { ...model.selected, changes: option.changes }, faces: { before: model.faces.before, after: option.after } };
-  };
-  /** Two or three after-faces side by side (stacked on a phone); the picked one is highlighted. */
-  const optionsNode = (model) => {
-    const { selected } = model;
-    if (!(selected.options?.length > 1)) return null;
-    const group = el('div', { class: 'card-upgrade-options', role: 'radiogroup', 'aria-label': t('cardUpgrade.options.label'), dataset: { cardUpgradeOptions: String(selected.options.length) } }, [
-      eyebrow(t('cardUpgrade.options.label')),
-      el('div', { class: 'card-upgrade-option-list' }, selected.options.map((option) => {
-        const on = option.index === chosen;
-        const summary = option.changes.map((change) => `${change.label} ${change.before} to ${change.after}`).join(', ');
-        const optionButton = el('button', {
-          type: 'button', class: `card-upgrade-option${on ? ' selected' : ''}`, role: 'radio', 'aria-checked': String(on), tabindex: on ? '0' : '-1',
-          'aria-label': t('cardUpgrade.option.aria', { n: option.index + 1, total: selected.options.length, summary }),
-          dataset: { cardUpgradeOption: String(option.index) },
-        }, el('span', { class: 'card-upgrade-option-body' }, [
-          el('b', { class: 'card-upgrade-option-title', text: t('cardUpgrade.option.n', { n: option.index + 1 }) }),
-          // The face is part of the option's radio button: a click or tap on it picks the option (not inspectReadOnly, which
-          // would swallow the click and open the reading), and actionOwnsTouch lets the first touch tap through.
-          el('div', { class: 'card-upgrade-option-face' }, renderCard(registries, { cardId: selected.cardId }, { small: true, tooltip: false, actionOwnsTouch: true, definition: option.after })),
-          el('ul', { class: 'card-upgrade-option-changes' }, option.changes.map((change) => el('li', { text: `${change.label} ${change.before} → ${change.after}` }))),
-        ]));
-        optionButton.addEventListener('click', () => pick(option.index));
+    /** The row's chosen option (the first when there is no choice). */
+    const chosenOptionOf = (model) => (
+        model.selected.options?.[chosenOptionIndex] || model.selected.options?.[0] || null
+    );
+    /** The model as the pane shows it: the chosen option's after face and change rows. */
+    const paneModelOf = (model) =>
+    {
+        const option = model.selected && model.faces ? chosenOptionOf(model) : null;
+        if (!option || !hasChoice(model.selected))
+        {
+            return model;
+        }
+        return {
+            ...model,
+            selected: {
+                ...model.selected,
+                changes: option.changes,
+            },
+            faces: {
+                before: model.faces.before,
+                after: option.after,
+            },
+        };
+    };
+    const changeAriaText = (change) => `${change.label} ${change.before} to ${change.after}`;
+    const changeVisibleText = (change) => `${change.label} ${change.before} → ${change.after}`;
+    const optionBodyNode = (option, selected) =>
+    {
+        const titleNode = buildElement('b', {
+            class: CLASS.optionTitle,
+            text: translate('cardUpgrade.option.n', { n: option.index + 1 }),
+        });
+        // Not inspectReadOnly (it would swallow the click); actionOwnsTouch lets the first touch tap through.
+        const faceCard = renderCard(registries, { cardId: selected.cardId }, {
+            small: true,
+            tooltip: false,
+            actionOwnsTouch: true,
+            definition: option.after,
+        });
+        const changeItems = option.changes.map((change) => buildElement('li', {
+            text: changeVisibleText(change),
+        }));
+        return buildElement(
+            'span',
+            {
+                class: CLASS.optionBody,
+            },
+            [
+                titleNode,
+                buildElement('div', { class: CLASS.optionFace }, faceCard),
+                buildElement('ul', { class: CLASS.optionChanges }, changeItems),
+            ],
+        );
+    };
+    const optionButtonNode = (option, selected) =>
+    {
+        const isChosen = option.index === chosenOptionIndex;
+        const optionButton = buildElement(
+            'button',
+            {
+                type: 'button',
+                class: classWhen(CLASS.option, isChosen, CLASS.selected),
+                role: 'radio',
+                'aria-checked': String(isChosen),
+                tabindex: isChosen ? '0' : '-1',
+                'aria-label': translate('cardUpgrade.option.aria', {
+                    n: option.index + 1,
+                    total: selected.options.length,
+                    summary: option.changes.map(changeAriaText).join(', '),
+                }),
+                dataset: {
+                    cardUpgradeOption: String(option.index),
+                },
+            },
+            optionBodyNode(option, selected),
+        );
+        optionButton.addEventListener('click', () => pickOption(option.index));
         return optionButton;
-      })),
-    ]);
-    group.addEventListener('keydown', (event) => {
-      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
-      if (!step) return;
-      event.preventDefault(); event.stopPropagation();
-      pick((chosen + step + selected.options.length) % selected.options.length);
-    });
-    return group;
-  };
-  function pick(index) {
-    chosen = index;
-    fillDetails();
-    detailHost?.querySelector(`[data-card-upgrade-option="${index}"]`)?.focus({ preventScroll: true });
-  }
-
-  /** The details (the shared body, upgradeConfirm.js): cost, both faces, then the change rows under them. */
-  const detailNodes = (raw) => { const model = viewOf(raw); const nodes = upgradeConfirmNodes({
-    cost: el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
-    faces: model.faces ? facesNode(model) : null,
-    rows: model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) })),
-  }); return model.selected.nextDiffers ? [el('p', { class: 'card-upgrade-note', text: t('cardUpgrade.row.nextDiffers') }), ...nodes] : nodes; };
-  const confirmationNode = (raw) => el('div', { class: 'card-upgrade-modal-details' }, detailNodes(raw));
-  // The live node under the selected row: with a choice among options it holds the options too, and they redraw in place.
-  function fillDetails() {
-    if (!detailHost) return;
-    detailHost.replaceChildren(...[optionsNode(currentModel), ...detailNodes(currentModel)].filter(Boolean));
-  }
-
-  function commitSelected() {
-    if (!currentModel.canConfirm) return;
-    const { selected } = currentModel;
-    const option = selected.options?.length > 1 ? selected.options[chosen] : null;
-    // With a choice, a pick that no longer names an option commits nothing.
-    if (selected.options?.length > 1 && !option) return;
-    committing = true;
-    shell.close();
-    // With a choice, the quote carries the picked step; the service re-plans the same list and checks it is on it.
-    // `false` from onConfirm (or a throw) is a refusal: the list stays closed so the refusal text is not covered.
-    let committed = false;
-    try { committed = onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan) !== false; }
-    finally { if (parentRecord) { if (committed) returnToModalParent(selected.instanceId); else dropModalParent(parentRecord); } }
-  }
-
-  function draw(model) {
-    const focusedId = list?.contains?.(document.activeElement) ? document.activeElement.getAttribute?.('data-instance-id') : null;
-    currentModel = model;
-    const { selected } = model;
-    if ((selected ? selected.instanceId : null) !== chosenFor) { chosenFor = selected ? selected.instanceId : null; chosen = 0; }
-    // The option list can shrink under a redraw (a changed quote); never leave `chosen` past its end.
-    if (selected?.options?.length) chosen = Math.min(Math.max(chosen, 0), selected.options.length - 1);
-    detailHost = selected ? el('div', { class: 'card-upgrade-modal-details' }) : null;
-    fillDetailsSafe(selected);
-    list = optionRowList(model.rows.map((row) => rowOf(row, model)), {
-      idAttr: 'data-instance-id', selectedId: selected ? selected.instanceId : null, columns: 1,
-      onSelect: (id) => { onSelect(id); },
-    });
-    for (const rowEl of list.querySelectorAll('[data-instance-id]')) {
-      const row = model.rows.find((candidate) => candidate.instanceId === rowEl.getAttribute('data-instance-id'));
-      if (!row) continue;
-      rowEl.dataset.cardId = row.cardId;
-      rowEl.dataset.upgradeState = row.disabled ? 'blocked' : row.cost === 0 ? 'free' : 'stone';
-      rowEl.setAttribute('role', 'option');
-      rowEl.setAttribute('aria-disabled', String(row.disabled));
-      rowEl.setAttribute('aria-selected', String(Boolean(selected) && selected.instanceId === row.instanceId));
-      rowEl.classList.toggle('selected', Boolean(selected) && selected.instanceId === row.instanceId);
-      const typeText = row.tags[0] || '';
-      rowEl.setAttribute('aria-label', [t(row.inDeck ? 'cardUpgrade.row.aria' : 'cardUpgrade.row.ariaSide', { name: row.name, type: typeText, n: row.copies, from: row.levelFrom, to: row.levelTo, cost: row.costLabel }), row.blockedReason].filter(Boolean).join(' '));
-      markUiComponent(rowEl, UI.smithCandidateCard, selected && selected.instanceId === row.instanceId ? 'selected' : 'available');
+    };
+    /** Two or three after-faces side by side (stacked on a phone); the picked one is highlighted. */
+    const optionsNode = (model) =>
+    {
+        const { selected } = model;
+        if (!hasChoice(selected))
+        {
+            return null;
+        }
+        const optionCount = selected.options.length;
+        const optionsGroup = buildElement(
+            'div',
+            {
+                class: CLASS.options,
+                role: 'radiogroup',
+                'aria-label': translate('cardUpgrade.options.label'),
+                dataset: {
+                    cardUpgradeOptions: String(optionCount),
+                },
+            },
+            [
+                eyebrow(translate('cardUpgrade.options.label')),
+                buildElement(
+                    'div',
+                    { class: CLASS.optionList },
+                    selected.options.map((option) => optionButtonNode(option, selected)),
+                ),
+            ],
+        );
+        optionsGroup.addEventListener('keydown', (event) =>
+        {
+            const arrowStep = ARROW_STEP[event.key];
+            if (!arrowStep)
+            {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            pickOption((chosenOptionIndex + arrowStep + optionCount) % optionCount);
+        });
+        return optionsGroup;
+    };
+    function pickOption(optionIndex)
+    {
+        chosenOptionIndex = optionIndex;
+        fillDetails();
+        const optionSelector = `[data-card-upgrade-option="${optionIndex}"]`;
+        detailHost?.querySelector(optionSelector)?.focus(FOCUS_OPTIONS);
     }
-    listHost.replaceChildren(list);
-    purse.textContent = t('cardUpgrade.stones', { n: model.stones });
-    disarmDecision?.();
-    disarmDecision = null;
-    confirmBtn.disabled = !selected;
-    if (selected) {
-      confirmBtn.textContent = confirmText(selected);
-      disarmDecision = armOptionDecision(confirmBtn, {
-        meta, registries, id: 'smithUpgrade',
-        title: t('smith.upgrade.title', { name: selected.name }),
-        message: t('cardUpgrade.decision.message', { from: selected.levelFrom, to: selected.levelTo, then: decisionConsequence }),
-        consequence: t('cardUpgrade.permanent'),
-        detailsNode: () => confirmationNode(currentModel),
-        confirmLabel: confirmText(selected),
-        cancelLabel: t('common.back'),
-        onCommit: commitSelected,
-        canCommit: () => Boolean(currentModel.canConfirm) && (!(selected.options?.length > 1) || Boolean(selected.options[chosen])),
-        blockedTitle: t('cardUpgrade.blocked', { name: selected.name }),
-        blockedMessage: model.blockedReasons.join(' ') || t('cardUpgrade.unavailable'),
-        blockedDetailsNode: () => confirmationNode(currentModel),
-        returnFocusElement: list.querySelector(`[data-instance-id="${selected.instanceId}"]`) || confirmBtn,
-      });
-    }
-    if (focusedId) (list.querySelector(`[data-instance-id="${focusedId}"]`) || list.querySelector('[data-instance-id]'))?.focus?.({ preventScroll: true });
-  }
-  function fillDetailsSafe(selected) { if (selected && currentModel.faces) fillDetails(); }
 
-  draw(initialModel);
-  queueMicrotask(() => {
-    const row = list?.querySelector(`[data-instance-id="${focusInstanceId}"]`);
-    if (row) row.dataset.quietFocus = 'true'; // refocused by the return, not by the player: no card tooltip over the list
-  });
-  return { update(model) { draw(model); }, close() { shell.close(); } };
+    /** The details (the shared body, upgradeConfirm.js): cost, both faces, then the change rows under them. */
+    const detailNodes = (rawModel) =>
+    {
+        const model = paneModelOf(rawModel);
+        const shortOnStones = model.selected.shortStones ?? model.selected.plan.code === 'stones';
+        const unaffordable = shortOnStones || !model.selected.ok;
+        const affordability = unaffordable ? 'unaffordable' : 'affordable';
+        const costNode = buildElement(
+            'div',
+            {
+                class: `confirmation-cost as-statrow flat ${affordability}`,
+            },
+            priceNode(model),
+        );
+        const changeRows = model.selected.changes.map((change) => statRow({
+            flat: true,
+            nameNode: buildElement('b', {
+                class: CLASS.changeName,
+                text: change.label,
+            }),
+            values: changeSummary({ values: [change] }),
+        }));
+        const nodes = upgradeConfirmNodes({
+            cost: costNode,
+            faces: model.faces ? facesNode(model) : null,
+            rows: changeRows,
+        });
+        if (model.selected.nextDiffers)
+        {
+            const noteNode = buildElement('p', {
+                class: CLASS.note,
+                text: translate('cardUpgrade.row.nextDiffers'),
+            });
+            return [noteNode, ...nodes];
+        }
+        return nodes;
+    };
+    const confirmationNode = (rawModel) => buildElement(
+        'div',
+        {
+            class: CLASS.details,
+        },
+        detailNodes(rawModel),
+    );
+    // The live node under the selected row; with options it holds them too, and they redraw in place.
+    function fillDetails()
+    {
+        if (!detailHost)
+        {
+            return;
+        }
+        const detailChildren = [optionsNode(currentModel), ...detailNodes(currentModel)];
+        detailHost.replaceChildren(...detailChildren.filter(Boolean));
+    }
+    function fillDetailsIfSelected(selected)
+    {
+        if (selected && currentModel.faces)
+        {
+            fillDetails();
+        }
+    }
+
+    function canCommitSelection(selected)
+    {
+        const optionIsPicked = Boolean(selected.options?.[chosenOptionIndex]);
+        const hasPickedOption = !hasChoice(selected) || optionIsPicked;
+        return Boolean(currentModel.canConfirm) && hasPickedOption;
+    }
+
+    function commitSelected()
+    {
+        if (!currentModel.canConfirm)
+        {
+            return;
+        }
+        const { selected } = currentModel;
+        const option = hasChoice(selected) ? selected.options[chosenOptionIndex] : null;
+        // With a choice, a pick that no longer names an option commits nothing.
+        if (hasChoice(selected) && !option)
+        {
+            return;
+        }
+        committing = true;
+        shell.close();
+        // With a choice, the quote carries the picked step; the service re-plans and checks it is on the list.
+        // `false` from onConfirm (or a throw) is a refusal: the list stays closed so the refusal text is visible.
+        let committed = false;
+        try
+        {
+            const plan = option
+                ? {
+                    ...selected.plan,
+                    step: option.step,
+                    after: option.after,
+                }
+                : selected.plan;
+            committed = onConfirm(selected.instanceId, plan) !== false;
+        }
+        finally
+        {
+            if (parentRecord)
+            {
+                if (committed)
+                {
+                    returnToModalParent(selected.instanceId);
+                }
+                else
+                {
+                    dropModalParent(parentRecord);
+                }
+            }
+        }
+    }
+
+    function draw(model)
+    {
+        const focusWasInList = rowList?.contains?.(document.activeElement);
+        const focusedInstanceId = focusWasInList
+            ? document.activeElement.getAttribute?.(INSTANCE_ID_ATTRIBUTE)
+            : null;
+        currentModel = model;
+        const { selected } = model;
+        const selectedInstanceId = selected ? selected.instanceId : null;
+        if (selectedInstanceId !== chosenForInstanceId)
+        {
+            chosenForInstanceId = selectedInstanceId;
+            chosenOptionIndex = 0;
+        }
+        // The option list can shrink under a redraw (a changed quote); keep the chosen index in range.
+        if (selected?.options?.length)
+        {
+            const lastOptionIndex = selected.options.length - 1;
+            chosenOptionIndex = Math.min(Math.max(chosenOptionIndex, 0), lastOptionIndex);
+        }
+        detailHost = selected ? buildElement('div', { class: CLASS.details }) : null;
+        fillDetailsIfSelected(selected);
+        rowList = optionRowList(model.rows.map((row) => candidateRowOf(row, model)), {
+            idAttr: INSTANCE_ID_ATTRIBUTE,
+            selectedId: selectedInstanceId,
+            columns: 1,
+            onSelect: (instanceId) =>
+            {
+                onSelect(instanceId);
+            },
+        });
+        for (const rowElement of rowList.querySelectorAll(ANY_ROW_SELECTOR))
+        {
+            const rowInstanceId = rowElement.getAttribute(INSTANCE_ID_ATTRIBUTE);
+            const row = model.rows.find((candidate) => candidate.instanceId === rowInstanceId);
+            if (!row)
+            {
+                continue;
+            }
+            const rowIsSelected = isRowSelected(model, row);
+            rowElement.dataset.cardId = row.cardId;
+            rowElement.dataset.upgradeState = upgradeStateOf(row);
+            rowElement.setAttribute('role', 'option');
+            rowElement.setAttribute('aria-disabled', String(row.disabled));
+            rowElement.setAttribute('aria-selected', String(rowIsSelected));
+            rowElement.classList.toggle(CLASS.selected, rowIsSelected);
+            const cardTypeLabel = row.tags[0] || '';
+            const ariaLabelKey = row.inDeck ? 'cardUpgrade.row.aria' : 'cardUpgrade.row.ariaSide';
+            const rowLabel = translate(ariaLabelKey, {
+                name: row.name,
+                type: cardTypeLabel,
+                n: row.copies,
+                from: row.levelFrom,
+                to: row.levelTo,
+                cost: row.costLabel,
+            });
+            const rowLabelParts = [rowLabel, row.blockedReason].filter(Boolean);
+            rowElement.setAttribute('aria-label', rowLabelParts.join(' '));
+            markUiComponent(
+                rowElement,
+                UI_COMPONENTS.smithCandidateCard,
+                rowIsSelected ? 'selected' : 'available',
+            );
+        }
+        listHost.replaceChildren(rowList);
+        stonesStatus.textContent = translate('cardUpgrade.stones', { n: model.stones });
+        disarmDecision?.();
+        disarmDecision = null;
+        confirmButton.disabled = !selected;
+        if (selected)
+        {
+            confirmButton.textContent = confirmLabelFor(selected);
+            const blockedMessageText = model.blockedReasons.join(' ')
+                || translate('cardUpgrade.unavailable');
+            const selectedRowElement = rowList.querySelector(rowSelector(selected.instanceId));
+            disarmDecision = armOptionDecision(confirmButton, {
+                meta,
+                registries,
+                id: 'smithUpgrade',
+                title: translate('smith.upgrade.title', { name: selected.name }),
+                message: translate('cardUpgrade.decision.message', {
+                    from: selected.levelFrom,
+                    to: selected.levelTo,
+                    then: decisionConsequence,
+                }),
+                consequence: translate('cardUpgrade.permanent'),
+                detailsNode: () => confirmationNode(currentModel),
+                confirmLabel: confirmLabelFor(selected),
+                cancelLabel: translate('common.back'),
+                onCommit: commitSelected,
+                canCommit: () => canCommitSelection(selected),
+                blockedTitle: translate('cardUpgrade.blocked', { name: selected.name }),
+                blockedMessage: blockedMessageText,
+                blockedDetailsNode: () => confirmationNode(currentModel),
+                returnFocusElement: selectedRowElement || confirmButton,
+            });
+        }
+        if (focusedInstanceId)
+        {
+            const refocusTarget = rowList.querySelector(rowSelector(focusedInstanceId))
+                || rowList.querySelector(ANY_ROW_SELECTOR);
+            refocusTarget?.focus?.(FOCUS_OPTIONS);
+        }
+    }
+
+    draw(initialModel);
+    queueMicrotask(() =>
+    {
+        const row = rowList?.querySelector(rowSelector(focusInstanceId));
+        if (row)
+        {
+            // Refocused by the return, not the player: no card tooltip over the list.
+            row.dataset.quietFocus = 'true';
+        }
+    });
+    return {
+        update(model)
+        {
+            draw(model);
+        },
+        close()
+        {
+            shell.close();
+        },
+    };
 }

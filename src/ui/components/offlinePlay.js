@@ -5,7 +5,7 @@ import { createZipFlow } from '../offlineZipFlow.js';
 import { t } from '../strings.js';
 import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { AbortWithin } from '../abortWithin.js';
 
 function saveFile(blob, name) {
@@ -262,7 +262,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       if (selected.size > offlinePlay.maxSaveBytes) throw new Error('Save file is too large.');
       const text = await selected.text(); const preview = transfer.Inspect(text);
       const count = preview.slots.filter(slot => slot.summary).length;
-      openConfirmationModal({ title: 'Replace this browser’s saves?',
+      OpenConfirmationModal({ title: 'Replace this browser’s saves?',
         message: `This backup contains ${count} saved run${count === 1 ? '' : 's'}${preview.hasProfile ? ' and a profile' : ' and no profile'}.`,
         consequence: `All ${preview.slots.length} slots and the profile will be replaced. A previous-save backup is kept first. The game returns to the title with the imported saves.`,
         confirmLabel: 'Import saves', onConfirm: async () => {

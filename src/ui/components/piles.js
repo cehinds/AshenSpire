@@ -15,7 +15,7 @@
 // a grid of card faces, display-shuffled where the pile is hidden.
 
 import { renderCard, cardDetailHtml } from './card.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { button, cardGrid, categoryNav, el, flavour, railed, railItem, statusText } from '../kit/index.js';
 import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
@@ -42,7 +42,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   // of the surface changed every time a card moved.
   const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
 
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'xl',
     className: 'pile-modal',
     eyebrow: t('piles.eyebrow'),
@@ -108,7 +108,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
   const choose = (id) => { if (!SPENT_PILES.includes(id)) return; active = id; selectedId = null; paint(); };
   const nav = categoryNav({ items, ariaLabel: t('piles.spent.nav'), choose });
   const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-  const shell = openModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
+  const shell = OpenModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
     showMenuButton: false, opener, bodyClassName: 'pile-body',
     body: (host) => host.append(railed(nav, pane)),
     primary: done, footSize: 'short',

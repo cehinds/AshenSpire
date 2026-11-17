@@ -30,7 +30,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { RenderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
@@ -536,7 +536,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         }
       } else {
         shrineScreen.inert = true;
-        allocation = renderStatAllocationCard(app, spec);
+        allocation = RenderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
         allocation.card.addEventListener('keydown', (event) => {
