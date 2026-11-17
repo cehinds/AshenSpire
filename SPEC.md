@@ -3323,7 +3323,7 @@ All combat values are floored whole numbers. The attacker's chain (Vulnerable, s
 - Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DR, stance and other bonuses.
 - Stance rating bonuses (+1 AR offensive stance, +3 DR defensive stance) apply to Block and damage alike; the card face and preview show the boosted value.
 - Matching stance multiplies effectiveness by 1.25.
-- **Smash vs a defensive stance** (Defend or Prepared, per the stances module's matchups): deals 1.25 × normal damage + floor(0.25 × the target's current Block, read before this hit's Block absorbs it). "Normal" is the Smash chain without the 1.25 offensive-advantage multiplier, which this ×1.25 replaces rather than stacks with; AR, matching stance and Vulnerable still apply. Block then absorbs the total as usual.
+- **Smash vs a defensive stance** (Defend or Prepared, per the stances module's matchups): deals 1.25 × normal damage + floor(0.25 × the target's current Block, read before this hit's Block absorbs it). "Normal" is the Smash chain without the 1.25 offensive-advantage multiplier, which this ×1.25 replaces rather than stacks with; AR, matching stance and Vulnerable still apply. Against Prepared it also never stacks with Prepared's melee stance weakness: the hit takes the larger of the two, so ×1.25 in all, not ×1.5625 (*Owner decisions of 2026-11-17*, Stance weaknesses). Block then absorbs the total as usual.
   - No 25% Poise absorption; the target's Poise loses floor(0.5 × the total), capped at the Poise held, with usual break/Staggered rules and one stagger per target per round.
   - Values: `smashVsDefensive` in `content/source/fixCoreMechanics.json`.
 
