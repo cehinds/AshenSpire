@@ -1,0 +1,470 @@
+{
+  "request": "Shared interaction helpers (MarkSelected, ActivateOnKey, RovingList, ArmLongPress) replace per-screen selected-state, Enter/Space, arrow-key, long-press and double-press code in settings, the Blacksmith, the flask menu, the reward screen and door, the customize/creation rails, bestiary, compendium, the deck editor, the combat combatant long-press (600 ms) and the armament radial hold (360 ms). No visual change is intended, except ARIA attributes.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "settings-section-tab",
+      "url": "?shot=settings",
+      "ready": ".set-tab",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".set-tab[data-member=\"General\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The clicked General tab is aria-selected=\"true\"",
+          "selector": ".set-tab[data-member=\"General\"][aria-selected=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one section tab is selected",
+          "selector": ".set-tab[aria-selected=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The other two section tabs are aria-selected=\"false\"",
+          "selector": ".set-tab[aria-selected=\"false\"]",
+          "eq": 2
+        },
+        {
+          "kind": "count",
+          "label": "The General tab carries the on class and aria-current",
+          "selector": ".set-tab.on[aria-current=\"true\"][data-member=\"General\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Advanced is still marked selected",
+          "selector": ".set-tab[data-member=\"Advanced\"][aria-selected=\"true\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "A deselected section tab still carries aria-current",
+          "selector": ".set-tab:not([data-member=\"General\"])[aria-current]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "A section tab carries aria-pressed",
+          "selector": ".set-tab[aria-pressed]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "settings-chip",
+      "url": "?shot=settings",
+      "ready": ".set-tab",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".set-tab[data-member=\"General\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".choice[data-key=\"quickNav\"][data-val=\"switcher\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The clicked Quick nav chip is on and aria-pressed=\"true\"",
+          "selector": ".choice.on[data-key=\"quickNav\"][data-val=\"switcher\"][aria-pressed=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one Quick nav chip is pressed",
+          "selector": ".choice[data-key=\"quickNav\"][aria-pressed=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The previous Quick nav chip is aria-pressed=\"false\"",
+          "selector": ".choice[data-key=\"quickNav\"][data-val=\"mirror\"][aria-pressed=\"false\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The previous Quick nav chip is still on",
+          "selector": ".choice.on[data-key=\"quickNav\"][data-val=\"mirror\"]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "blacksmith-tabs",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-armaments",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#shop-cat-armaments"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The clicked Armaments tab is aria-selected=\"true\"",
+          "selector": "#shop-cat-armaments[aria-selected=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one shop tab is selected",
+          "selector": ".shop-switch [role=\"tab\"][aria-selected=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The other four shop tabs are aria-selected=\"false\"",
+          "selector": ".shop-switch [role=\"tab\"][aria-selected=\"false\"]",
+          "eq": 4
+        },
+        {
+          "kind": "count",
+          "label": "The Armaments tab carries the on class and aria-current",
+          "selector": "#shop-cat-armaments.on[aria-current=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A shop tab still carries aria-pressed",
+          "selector": ".shop-switch button[aria-pressed]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "Upgrade is still marked selected",
+          "selector": "#shop-cat-upgrade[aria-selected=\"true\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "A deselected shop tab still carries aria-current",
+          "selector": ".shop-switch [role=\"tab\"][aria-selected=\"false\"][aria-current]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "reward-select",
+      "url": "?shot=reward&shotReward=configured",
+      "ready": "button.reward-pick",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.reward-pick[data-pick-id=\"2\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The chosen card face gets reward-selected and is-chosen",
+          "selector": ".reward-choice-face[data-pick-id=\"2\"].reward-selected.is-chosen",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The chosen pick button is is-chosen and aria-checked=\"true\"",
+          "selector": "button.reward-pick[data-pick-id=\"2\"].is-chosen[aria-checked=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one pick button is checked",
+          "selector": "button.reward-pick[aria-checked=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one card face is selected",
+          "selector": ".reward-choice-face.reward-selected",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The chosen pick button is still aria-checked=\"false\"",
+          "selector": "button.reward-pick[data-pick-id=\"2\"][aria-checked=\"false\"]",
+          "min": 1
+        },
+        {
+          "kind": "count",
+          "label": "An unchosen card face is marked chosen",
+          "selector": ".reward-choice-face:not([data-pick-id=\"2\"]).is-chosen",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "combat-long-press",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "hold": {
+            "selector": "article.combatant.enemy .enemy-pose-stage",
+            "ms": 700
+          }
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "A 700 ms hold on the enemy opens the combatant inspection",
+          "selector": ".modal.combatant-door"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one inspection opened (hold fired twice)",
+          "selector": ".modal.combatant-door",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "combat-short-click",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "article.combatant.enemy .enemy-pose-stage"
+        },
+        {
+          "wait": {
+            "ms": 1000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "A short click on the enemy does not open the inspection",
+          "selector": ".modal.combatant-door"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The combatant inspection opened on a short click",
+          "selector": ".modal.combatant-door",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "flask-menu-arrows",
+      "url": "?shot=map",
+      "ready": ".run-potions-btn",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "key": "Enter"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "key": "ArrowDown"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Enter on the Crimson Flask mini opens the flask action menu",
+          "selector": ".flask-action-menu"
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one flask action has focus",
+          "selector": ".flask-action-menu .flask-action:focus",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "ArrowDown moved focus from Use to Inspect",
+          "selector": ".flask-action-menu .flask-action:focus",
+          "matches": "^Inspect"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Focus stayed on Use after ArrowDown",
+          "selector": ".flask-action-menu .flask-action:focus",
+          "matches": "^Use"
+        }
+      ]
+    }
+  ]
+}
