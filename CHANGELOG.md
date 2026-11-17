@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-17
 
+- **Cards that read the fight** ([#2816](https://github.com/cehinds/AshenSpire/pull/2816), `0.7.4.132`). New cards pay off when the target is Idle or Prepared, when you hold Defense or Prepared, when the target is Burning, Weak or Frozen, or at the right range, and some can only be played at Reach. Seven new self-buff cards each carry a cost or drawback that upgrading eases, and every visual-identity tag now has its own effect layer in procedural card art.
 - **One set of button styles** ([#2812](https://github.com/cehinds/AshenSpire/pull/2812), `0.7.4.132`). Button hover, press, disabled and focus styles now come from one shared set of values, with duplicate and dead style rules removed. Nothing looks different.
 - **Dialogs that close the same way** ([#2809](https://github.com/cehinds/AshenSpire/pull/2809), `0.7.4.130`). The equipment compare, Smith upgrade and book dialogs now behave like every other dialog: the back button closes them, a drag that ends on the backdrop no longer closes them by accident, and the page behind is locked while they are open.
 - **Consistent selection and holds** ([#2810](https://github.com/cehinds/AshenSpire/pull/2810), `0.7.4.128`). Selected tabs, chips and rows, Enter/Space activation, arrow-key menus and long-presses now share one implementation each, so they behave the same everywhere. A combat or radial hold now cancels if the window loses focus or a second finger lands, like every other hold.
