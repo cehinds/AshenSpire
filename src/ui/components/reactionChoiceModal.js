@@ -2,6 +2,7 @@ import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { el } from '../kit/index.js';
 import { t } from '../strings.js';
 import { OpenChoiceModal } from './choiceModal.js';
+import { SummarizeOrNull } from './choiceRowSources.js';
 import { playingCardArt } from '../cardArtwork.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
@@ -225,25 +226,9 @@ function renderCommittedStack(host, stack)
     );
 }
 
-function summarizeReactionOption(option, summarize)
-{
-    let summary = null;
-
-    try
-    {
-        summary = summarize?.(option) ?? null;
-    }
-    catch
-    {
-        summary = null;
-    }
-
-    return summary;
-}
-
 function buildReactionEntry(option, summarize, registries)
 {
-    const summary = summarizeReactionOption(option, summarize);
+    const summary = SummarizeOrNull(option, summarize);
     const baseRow = summary || summarizeCardOption(
         null,
         null,

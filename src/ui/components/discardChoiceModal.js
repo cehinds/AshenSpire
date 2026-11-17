@@ -2,6 +2,7 @@ import { t as translate } from '../strings.js';
 import { el as buildElement } from '../kit/index.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { OpenChoiceModal } from './choiceModal.js';
+import { SummarizeOrNull } from './choiceRowSources.js';
 
 const DISCARD_KIND = 'discardChoice';
 const SINGULAR_NOUN = 'card';
@@ -9,18 +10,7 @@ const PLURAL_NOUN = 'cards';
 
 function summarizeDiscardCard(card, summarize)
 {
-    let summary = null;
-
-    try
-    {
-        summary = summarize?.(card) ?? null;
-    }
-    catch
-    {
-        summary = null;
-    }
-
-    return summary || summarizeCardOption(
+    return SummarizeOrNull(card, summarize) || summarizeCardOption(
         null,
         null,
         {
