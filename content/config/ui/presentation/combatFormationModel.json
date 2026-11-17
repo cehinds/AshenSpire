@@ -36,6 +36,7 @@
       },
       "statureCap": 1.15,
       "combatantScale": 0.5866,
+      "playerBodyScale": 1,
       "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
@@ -264,6 +265,7 @@
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5,
       "playerMiniHudSpriteGapPx": 10,
+      "playerMiniHudDropFraction": 0,
       "miniHud": {
         "designWidthPx": 140,
         "baseFontPx": 13,

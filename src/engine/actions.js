@@ -352,12 +352,13 @@ function fixCorePoiseBreak(ctx, source, target) {
  * Extra Poise damage a card or trigger carries (Smash pressure, a Poise rider) under FixCore: whole numbers,
  * never more than the pool holds; emptying it breaks Poise. Poise absorbed by a hit is spent in the hit itself.
  */
-export function drainFixCorePoise(ctx, source, target, amount, carrier = null) {
+export function drainFixCorePoise(ctx, source, target, amount, carrier = null, blockAtHit = 0) {
   const poise = target?.persistentPoise, n = Math.max(0, Math.floor(amount));
   if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
   // Owner, 2026-11-17 (theme B): the Poise rider of a physical hit cannot take a Defend-stance target holding Block below the floor either.
   // A drain with no known carrier keeps the earlier rule.
-  const keep = carrier ? Math.min(poise.value, DefendPoiseFloor(ctx, target, carrier, HeldStance(target))) : 0;
+  // The floor reads the Block held when the hit arrived (the rider follows the hit that may have spent it): SPEC, Owner decisions of 2026-11-17.
+  const keep = carrier ? Math.min(poise.value, DefendPoiseFloor(ctx, target, carrier, HeldStance(target), Math.max(target.block || 0, blockAtHit || 0))) : 0;
   const spent = Math.min(poise.value - keep, n);
   if (!(spent > 0)) return 0;
   poise.value -= spent;
@@ -914,7 +915,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
       const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
-    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}`, carrier });
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}`, carrier, blockAtHit: tactical?.blockBefore });
     // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
     // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
     else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
@@ -1323,10 +1324,11 @@ export function staggerPlayer(ctx, player) {
  * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
  * meter grows by balance.poise.growthMult either way.
  */
-export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null } = {}) {
-  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on.
+export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null, blockAtHit = 0 } = {}) {
+  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on,
+  // `blockAtHit` the Block the target held when that hit arrived (the hit may have spent it since).
   if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
-    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier);
+    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier, blockAtHit);
     return;
   }
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
@@ -2112,7 +2114,7 @@ export const OPCODE_HANDLERS = Object.freeze({
           : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card });
+        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, blockAtHit: row?.receipt?.blockBefore });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }

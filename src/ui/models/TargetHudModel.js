@@ -80,9 +80,12 @@ export function targetHudMatchup(action, intent, rules = {}) {
 
 // Body landmarks exclude raised weapons and transparent stage canvas. Both
 // readouts retain a fixed physical gap when a true pose changes its head.
-export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1 }) {
+// `drop` lowers the rack that fraction of the way from its place above the head toward the head itself (0 keeps it
+// wholly above; the player's 0.5 sets it halfway, playtest 2026-11-17).
+export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1, drop = 0 }) {
   const head = Number.isFinite(body.headY) ? body.headY : body.top;
-  return { miniTop: (head - frame.top - gap - groupHeight) / zoom,
-    selectedTop: (head - frame.top - gap - intentHeight) / zoom,
+  const lowered = (gap + groupHeight) * Math.min(1, Math.max(0, drop));
+  return { miniTop: (head - frame.top - gap - groupHeight + lowered) / zoom,
+    selectedTop: (head - frame.top - gap - intentHeight + lowered) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
 }
