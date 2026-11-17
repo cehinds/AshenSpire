@@ -1,4 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
+import { CreateStepArrivalGuard } from '../stepArrivalGuard.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
@@ -404,6 +405,7 @@ export function mountCustomize(app, {
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
+  const stepArrival = CreateStepArrivalGuard();
   const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
   if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
@@ -2033,6 +2035,7 @@ export function mountCustomize(app, {
     }));
     next.addEventListener('click', () => {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
+      stepArrival.arrived();
       advanceFrom(current);
     });
     refreshCreationNavigation();
@@ -2066,6 +2069,7 @@ export function mountCustomize(app, {
   back.addEventListener('click', () => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     if (plan.back === 'leave') return onBack();
+    stepArrival.arrived();
     activate(plan.previous);
     queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
   });
@@ -2075,6 +2079,8 @@ export function mountCustomize(app, {
   }
   let startPending = false;
   start.addEventListener('click', async () => {
+    // A press that just changed the step (Customise, Next, Back) is not also a Begin (item 38: Review was skipped).
+    if (!stepArrival.allows()) return;
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
     try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),
