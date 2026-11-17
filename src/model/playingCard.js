@@ -41,7 +41,7 @@ import { computeTokenBindings, cardTokenEffects } from './validate.js';
 
 /** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
 const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepared: 'in Prepared', defend: 'in Defense', defense: 'in Defense' });
-const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance[0].toUpperCase()}${stance.slice(1)}`;
+const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance}`;
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
