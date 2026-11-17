@@ -35,7 +35,7 @@ export const deckRules = Object.freeze({
   // Owner, 2026-11-17: in Core the editor's minimum drops by 1 at each of
   // these character levels. With the min-slot relics (1 each) a typical run
   // lands near 8; relics and levels together may take it lower.
-  minimumReductionLevels: Object.freeze([6, 12]),
+  minimumReductionLevels: Object.freeze([4, 8, 12]),
   // The hard safety floor (owner, 2026-11-17): levels and relics never take the
   // minimum below 1, so a deck is never empty. 1 is what the engine already
   // needs — sizeRange and deckMaxSize already require a deck to hold at least

@@ -66,13 +66,13 @@ test('the Core ladder shows the real grants: points, class bonus on odd levels, 
     const grant = ladder.rows.find((row) => row.level === level).grants.find((g) => g.kind === 'deckMinimumDown');
     assert.ok(grant, `level ${level} lowers the minimum`);
   }
-  assert.equal(ladder.rows.find((row) => row.level === 12).grants.find((g) => g.kind === 'deckMinimumDown').amount, deckRules.defaults.deckMinSize - 2);
+  assert.equal(ladder.rows.find((row) => row.level === 12).grants.find((g) => g.kind === 'deckMinimumDown').amount, deckRules.defaults.deckMinSize - 3);
 });
 
 test('the Core Armoury floor is the deck editor minimum, which levels lower', () => {
   const run = make('reaver');
   assert.equal(deckMinimum(registries, run), deckRules.defaults.deckMinSize);
-  climbTo(run, 6);
+  climbTo(run, 4);
   assert.equal(deckMinimum(registries, run), deckRules.defaults.deckMinSize - 1);
 });
 

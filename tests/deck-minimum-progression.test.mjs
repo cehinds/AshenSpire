@@ -19,21 +19,23 @@ const make = (level = 1) => {
 };
 
 test('the reduction levels are data and rise', () => {
-  assert.deepEqual([...deckRules.minimumReductionLevels], [6, 12]);
+  assert.deepEqual([...deckRules.minimumReductionLevels], [4, 8, 12]);
 });
 
 test('a Core run loses one minimum slot at each reduction level', () => {
   assert.equal(LevelMinDeckDelta(make(1)), 0);
-  assert.equal(LevelMinDeckDelta(make(5)), 0);
-  assert.equal(LevelMinDeckDelta(make(6)), 1);
-  assert.equal(LevelMinDeckDelta(make(12)), 2);
-  assert.equal(LevelMinDeckDelta(make(20)), 2);
+  assert.equal(LevelMinDeckDelta(make(3)), 0);
+  assert.equal(LevelMinDeckDelta(make(4)), 1);
+  assert.equal(LevelMinDeckDelta(make(7)), 1);
+  assert.equal(LevelMinDeckDelta(make(8)), 2);
+  assert.equal(LevelMinDeckDelta(make(12)), 3);
+  assert.equal(LevelMinDeckDelta(make(20)), 3);
   const run = make(12);
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 2);
+  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3);
 });
 
 test('the deck editor counter reads the lowered minimum', () => {
-  const model = deckEditorModel({ registries, run: make(6) });
+  const model = deckEditorModel({ registries, run: make(4) });
   assert.equal(model.counter.min, deckRules.defaults.deckMinSize - 1);
 });
 
@@ -88,7 +90,7 @@ test('Basic Training, Graduate and the three min-slot relics do what their text 
   assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
   const run = holding('threadbareSatchel');
   run.level.level = 12;
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3, 'levels and relics stack');
+  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 4, 'levels (3 at level 12) and relics stack');
   const pool = gameContent(make(1), 'rewards').eligibility?.relics?.allow || [];
   for (const id of ['basicTraining', 'graduate', 'threadbareSatchel', 'asceticsCord', 'pruningHook']) {
     assert.ok(registries.relics.has(id), `${id} is a relic`);
@@ -136,14 +138,14 @@ test('Graduate opens collected cantrips only', async () => {
 test('the Armoury floor and the ladder follow the deck-size settings the editor follows', async () => {
   const { deckMinimum, loadoutLeaveRefusal } = await import('../src/model/loadout.js');
   const { characterLadder } = await import('../src/ui/models/CharacterSheetModel.js');
-  const run = make(6);
+  const run = make(4);
   for (const settings of [{}, { deckMinSize: 14 }, { deckMinSize: 12, deckMinUnlimited: true }]) {
     assert.equal(deckMinimum(registries, run, settings), deckEditBounds(settings, DeckMinDelta(run)).min, JSON.stringify(settings));
   }
   run.deck = run.deck.slice(0, 11);
   assert.equal(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 10 } }), '');
   assert.match(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 14 } }), /floor is 13/);
-  const row = characterLadder(registries, make(1), undefined, { deckMinSize: 14 }).rows.find((r) => r.level === 6);
+  const row = characterLadder(registries, make(1), undefined, { deckMinSize: 14 }).rows.find((r) => r.level === 4);
   assert.equal(row.grants.find((g) => g.kind === 'deckMinimumDown').amount, 13);
 });
 
