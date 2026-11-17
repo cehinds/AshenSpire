@@ -10,20 +10,18 @@ const KEEP_RESULT_CLASS = 'smith-keep-result';
 const EMPTY_PROPERTY_LIST = '-';
 const PROPERTY_SEPARATOR = '; ';
 
-export function BuildSmithPriceLine(price)
+export function RenderSmithPriceLine(host, price)
 {
-    return buildElement('p', {
+    if (!price)
+    {
+        return;
+    }
+
+    const priceLine = buildElement('p', {
         class: PRICE_CLASS,
         text: price,
     });
-}
-
-function renderPriceLine(host, price)
-{
-    if (price)
-    {
-        host.append(BuildSmithPriceLine(price));
-    }
+    host.append(priceLine);
 }
 
 function buildOptionRows(options)
@@ -86,7 +84,7 @@ export function OpenSmithOptionsModal({
         eyebrow,
         title,
         opener,
-        renderBeforeList: (host) => renderPriceLine(host, price),
+        renderBeforeList: (host) => RenderSmithPriceLine(host, price),
         onClosed,
         onCommit: onChoose,
     });
@@ -108,7 +106,7 @@ export function OpenSmithKeepModal({
 
     function renderKeepIntro(host)
     {
-        renderPriceLine(host, price);
+        RenderSmithPriceLine(host, price);
 
         if (rows.length)
         {
