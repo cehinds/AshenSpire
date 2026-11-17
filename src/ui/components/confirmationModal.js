@@ -1,17 +1,7 @@
-// Shared themed confirmation surface for reversible, potentially destructive choices.
-// Nothing is committed until the primary button is pressed.
+// The shared themed confirmation dialog; nothing commits until the primary button.
 import { t as translate } from '../strings.js';
-import {
-    UI_COMPONENTS,
-    markUiComponent,
-} from './uiComponents.js';
-import {
-    modalHead,
-    modalFooter,
-    el as buildElement,
-    prose,
-    stampModalSize,
-} from '../kit/index.js';
+import { UI_COMPONENTS, markUiComponent } from './uiComponents.js';
+import { modalHead, modalFooter, el as buildElement, prose, stampModalSize } from '../kit/index.js';
 import { registerModal, topModal } from '../modalState.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 
@@ -83,7 +73,16 @@ function isFocusReturnTarget(element)
 
 function isLiveTabStop(control)
 {
-    return control.getAttribute('tabindex') !== '-1' && !control.disabled && !control.hidden;
+    return (
+        control.getAttribute('tabindex') !== '-1'
+        && !control.disabled
+        && !control.hidden
+    );
+}
+
+function focusControl(control)
+{
+    control.focus({ preventScroll: true });
 }
 
 function makeButton({ className, label })
@@ -127,7 +126,7 @@ function holdNavigationInputShield({ veil, durationMs })
     {
         event.preventDefault?.();
         event.stopImmediatePropagation?.();
-        // A real second click can carry detail 2 after the button is gone; release once it lands on the shield.
+        // A second click can land on the shield after the button is gone; release then.
         if (event.type === EVENT.click && Number(event.detail) > 1)
         {
             queueMicrotask(release);
@@ -144,7 +143,8 @@ function holdNavigationInputShield({ veil, durationMs })
 
     const armRelease = () =>
     {
-        timer = setTimeout(release, Math.max(0, Number(durationMs) || 0));
+        const delayMs = Math.max(0, Number(durationMs) || 0);
+        timer = setTimeout(release, delayMs);
     };
     const afterDestinationPaint = () =>
     {
@@ -157,7 +157,10 @@ function holdNavigationInputShield({ veil, durationMs })
             window.requestAnimationFrame(armRelease);
         });
     };
-    return Object.freeze({ release, afterDestinationPaint });
+    return Object.freeze({
+        release,
+        afterDestinationPaint,
+    });
 }
 
 export function CloseConfirmationModal({ restoreFocus = false } = {})
@@ -176,26 +179,32 @@ export function OpenConfirmationModal({
     detailsNode = null,
     tone = TONE_NORMAL,
     onConfirm,
-    onCancel = () => {},
+    onCancel = () =>
+    {},
     returnFocusElement = document.activeElement,
     component = UI_COMPONENTS.confirmationModal,
     inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
     confirmEnabled = true,
 } = {})
 {
-    // One active decision: reopening replaces the stale one without committing or cancelling it.
     CloseConfirmationModal();
 
     const isDanger = tone === TONE_DANGER;
     const veil = document.createElement('div');
     veil.className = CLASS.veil;
 
-    // The eyebrow is the caller's consequence tag or nothing, never a generic category word.
     const dialog = document.createElement('section');
-    dialog.className = classWhen(CLASS.dialog, isDanger, CLASS.danger);
+    dialog.className = classWhen(
+        CLASS.dialog,
+        isDanger,
+        CLASS.danger,
+    );
     stampModalSize(dialog, MODAL_SIZE);
     ModalModelFor('confirm').apply(dialog);
-    dialog.setAttribute('role', isDanger ? 'alertdialog' : 'dialog');
+    const dialogRole = isDanger
+        ? 'alertdialog'
+        : 'dialog';
+    dialog.setAttribute('role', dialogRole);
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-labelledby', ELEMENT_ID.dialogTitle);
     dialog.setAttribute('aria-describedby', ELEMENT_ID.copy);
@@ -212,7 +221,6 @@ export function OpenConfirmationModal({
     header.querySelector?.(SELECTOR.modalClose)?.classList.add(CLASS.close);
     header.querySelector?.(SELECTOR.modalEyebrow)?.classList.add(CLASS.eyebrowTag);
 
-    // Optional: the exact thing the answer acts on. Absent, it draws nothing.
     const targetLine = target
         ? buildElement(
             'p',
@@ -225,7 +233,8 @@ export function OpenConfirmationModal({
         : null;
     if (targetLine)
     {
-        dialog.setAttribute('aria-describedby', `${ELEMENT_ID.target} ${ELEMENT_ID.copy}`);
+        const describedBy = `${ELEMENT_ID.target} ${ELEMENT_ID.copy}`;
+        dialog.setAttribute('aria-describedby', describedBy);
     }
     const messageNode = prose(message || '', {
         id: ELEMENT_ID.copy,
@@ -235,27 +244,28 @@ export function OpenConfirmationModal({
     const detailsPanel = document.createElement('div');
     detailsPanel.className = CLASS.details;
     detailsPanel.hidden = !detailsHtml && !detailsNode;
-    // Callers build detailsHtml only from escaped, model-owned values.
     if (detailsHtml)
     {
         detailsPanel.innerHTML = detailsHtml;
     }
-    // A live node, for a choice made inside the modal (the card upgrade's options).
     if (detailsNode)
     {
         detailsPanel.append(detailsNode);
     }
 
-    const cancelButton = makeButton({ className: CLASS.cancel, label: cancelLabel });
+    const cancelButton = makeButton({
+        className: CLASS.cancel,
+        label: cancelLabel,
+    });
     markUiComponent(cancelButton, UI_COMPONENTS.confirmationCancel, 'neutral');
-    // Danger keeps the red; every other confirmation is emphasised as the way forward.
+
     const confirmButton = makeButton({
         className: classWhen(CLASS.confirm, isDanger, CLASS.confirmDanger),
         label: confirmLabel,
     });
     confirmButton.hidden = !confirmEnabled;
     markUiComponent(confirmButton, UI_COMPONENTS.confirmationAction, tone);
-    // House order: way out on the left, way forward on the right.
+
     const footer = modalFooter({
         secondary: [cancelButton],
         primary: confirmButton,
@@ -282,7 +292,10 @@ export function OpenConfirmationModal({
 
     const unregisterModal = registerModal('confirmation', dialog);
     let closed = false;
-    const close = ({ restoreFocus = true, retainInputShield = false } = {}) =>
+    const close = ({
+        restoreFocus = true,
+        retainInputShield = false,
+    } = {}) =>
     {
         if (closed)
         {
@@ -324,7 +337,6 @@ export function OpenConfirmationModal({
 
     function onKeydown(event)
     {
-        // A modal opened above this one owns Escape and Tab.
         const topOpenModal = topModal();
         if (topOpenModal && topOpenModal.element !== dialog)
         {
@@ -341,12 +353,13 @@ export function OpenConfirmationModal({
         {
             return;
         }
-        // The Tab trap wraps over visible controls only (the confirm button is hidden when blocked).
-        // Details tab stops are read now, in DOM order, because a live node re-renders on a pick.
+        const detailsControls = [...detailsPanel.querySelectorAll(SELECTOR.detailsTabStops)];
         const detailsTabStops = detailsNode
-            ? [...detailsPanel.querySelectorAll(SELECTOR.detailsTabStops)].filter(isLiveTabStop)
+            ? detailsControls.filter(isLiveTabStop)
             : [];
-        const confirmTabStops = confirmEnabled ? [confirmButton] : [];
+        const confirmTabStops = confirmEnabled
+            ? [confirmButton]
+            : [];
         const tabOrder = [
             ...detailsTabStops,
             cancelButton,
@@ -356,12 +369,12 @@ export function OpenConfirmationModal({
         if (event.shiftKey && focusedIndex <= 0)
         {
             event.preventDefault();
-            tabOrder[tabOrder.length - 1].focus({ preventScroll: true });
+            focusControl(tabOrder[tabOrder.length - 1]);
         }
         else if (!event.shiftKey && focusedIndex === tabOrder.length - 1)
         {
             event.preventDefault();
-            tabOrder[0].focus({ preventScroll: true });
+            focusControl(tabOrder[0]);
         }
     }
 
@@ -374,12 +387,13 @@ export function OpenConfirmationModal({
         }
         close({ restoreFocus: false, retainInputShield: true });
         const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
-        window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
+        const commitEvent = new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
             detail: {
                 component,
                 tone,
             },
-        }));
+        });
+        window.dispatchEvent(commitEvent);
         let awaitingDestination = false;
         try
         {
@@ -387,14 +401,13 @@ export function OpenConfirmationModal({
             if (destination && typeof destination.then === 'function')
             {
                 awaitingDestination = true;
-                // Keep the shield until the accepted operation settles (it may wait on a storage lock).
                 const { afterDestinationPaint } = shield;
                 Promise.resolve(destination).then(afterDestinationPaint, afterDestinationPaint);
             }
         }
         finally
         {
-            // Two paints let the new surface's hit-test tree settle before the shield timer starts.
+            // Two paints let the new surface's hit-test tree settle first.
             if (!awaitingDestination)
             {
                 shield.afterDestinationPaint();
@@ -402,14 +415,14 @@ export function OpenConfirmationModal({
         }
     });
 
-    // Scrim and answer clicks count only if the press began there: a touch's trailing click
-    // after the opening gesture would otherwise cancel or commit the review it just opened.
-    // Keyboard and synthetic activations carry detail 0 and pass untouched.
+    // Scrim and answer clicks count only if the press began there (a trailing touch click).
     // Duck-typed: the contract test runs in a minimal DOM with no `Element`.
     const answerButtonOf = (eventTarget) =>
     {
         const canQuery = typeof eventTarget?.closest === 'function';
-        return canQuery ? eventTarget.closest(SELECTOR.answers) : null;
+        return canQuery
+            ? eventTarget.closest(SELECTOR.answers)
+            : null;
     };
     let pressBeganOnScrim = false;
     let pressBeganOnAnswer = null;
@@ -437,15 +450,16 @@ export function OpenConfirmationModal({
         }
     }, true);
     window.addEventListener('keydown', onKeydown, true);
-    // Deferred so the confirmation, not the covered screen, owns final focus after a menu closes.
+    // Deferred so this modal, not the covered screen, owns final focus.
     setTimeout(() =>
     {
         if (closed)
         {
             return;
         }
-        // With options to choose from, focus starts on the picked one; otherwise on Back.
-        const picked = detailsNode ? detailsPanel.querySelector(SELECTOR.pickedOption) : null;
+        const picked = detailsNode
+            ? detailsPanel.querySelector(SELECTOR.pickedOption)
+            : null;
         (picked || cancelButton).focus({ preventScroll: true });
     }, 0);
 
