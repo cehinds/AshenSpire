@@ -11,6 +11,7 @@ import { validateCardRamp, validateCardContest, validateCardTemplates, validateR
 import { relicPropertyTagIndex } from './propertyRules.js';
 import { validateSigils } from './sigilRows.js';
 import { UPGRADE_OPTION_KINDS } from '../cardUpgradeSteps.js';
+import { ITEM_PROPERTIES } from '../../content/itemProperties.js';
 
 export function entityCrossProblems(b, err, ctx) {
   const { ids, vctx } = ctx;
@@ -48,6 +49,10 @@ export function entityCrossProblems(b, err, ctx) {
     const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
     if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
       err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
+    }
+    // A relic's authored item properties must name rows of content/source/itemProperties.json.
+    for (const [index, id] of (Array.isArray(relic.properties) ? relic.properties : []).entries()) {
+      if (!ITEM_PROPERTIES.some((row) => row.id === id)) err(`relics.${relic.id}.properties[${index}]`, `names no item property: '${id}'`);
     }
   }
 

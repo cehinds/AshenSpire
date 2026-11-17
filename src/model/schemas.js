@@ -961,6 +961,10 @@ export const SCHEMAS = Object.freeze({
     // move and are not expected to — they are upgraded per copy at the smith
     // (model/itemUpgrades.js), which a global rule row cannot express.
     triggers: opt(triggersNode),
+    // Item property ids (content/source/itemProperties.json) the relic always
+    // holds: deck rules such as a lower minimum or unlimited Basics
+    // (model/itemPicks.js ItemPropertyIds reads them for `relic/<id>`).
+    properties: opt(arr(str)),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
