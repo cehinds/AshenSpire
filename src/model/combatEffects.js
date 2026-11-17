@@ -50,3 +50,12 @@ export function combatEffectTargetIds(plan,events=[],ownerId=null){
  return [...new Set(events.filter(e=>e.type===plan.targetEvent&&e.targetId&&(!ownerId||(e.sourceId===ownerId&&e.targetId!==ownerId))&&(e.type==='damageDealt'?e.amount>0:e.stacks>0)).map(e=>e.targetId))];
 }
 
+// An enemy that casts a spell or a buff shows a cast effect over itself, as a player's spell or buff card does
+// (playtest 2026-11-17). A divine spell reads as the sacred aura; every other spell or buff as the focus motes.
+export const ENEMY_CAST_EFFECT_KINDS=Object.freeze({divine:'sacredAura',other:'focusMotes'});
+export function EnemyCastEffectPlan({enemyId='',moveId='',intent=null,profile=null}={}){
+ if(profile?.camp!=='spell'&&intent!=='buff')return null;
+ const kind=ENEMY_CAST_EFFECT_KINDS[profile?.school]||ENEMY_CAST_EFFECT_KINDS.other;
+ return {kind,cast:null,activation:'retained',sizeScale:1,projectile:false,ruleId:'enemy-cast',phase:'cast',targetEvent:'statusApplied',tags:[],
+  bindingContext:{provider:'ashenspire',kind:'enemyMove',objectId:`${enemyId}:${moveId}`,event:'actionResolved',tags:[]}};
+}
