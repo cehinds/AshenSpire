@@ -133,18 +133,34 @@ test('item 1: player and enemy Counters scale their authored base once before th
   assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) > 3, 'the share of the incoming hit stays intact');
 });
 
-test('item 5: one more SP (Actions) or MP costs 3 attribute points; no other attribute feeds them', () => {
+test('item 5 (owner, 2026-11-17): SP = 3 + floor((DEX - 1) / 3) and MP = 1 + floor((max(INT, WIS) - 1) / 3), at every level', () => {
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
     const run = newRun(classId);
     const rules = run.derivedStatRuleSnapshot.rules, classDef = registries.classes.get(classId);
     const ones = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
+    const relic = { stamina: 0, mana: 0 };
+    // A starting relic's flat Mana or SP adds on top (as relic HP does); read it at all-ones.
     const at = (id, attributes, level = 1) => deriveStat(rules, id, { attributes: { ...ones, ...attributes }, classDef, level }).value;
-    for (const [pool, attribute] of [['stamina', 'constitution'], ['mana', 'wisdom']]) {
-      const base = at(pool, { [attribute]: 0 });
-      for (const points of [1, 2, 3, 5, 6, 9, 10]) assert.equal(at(pool, { [attribute]: points }) - base, Math.floor(points / 3), `${classId} ${pool}: ${attribute} ${points}`);
-      for (const other of ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].filter(id => id !== attribute)) {
-        assert.equal(at(pool, { [other]: 12 }), at(pool, {}), `${classId} ${pool} ignores ${other}`);
+    relic.stamina = at('stamina', {}) - 3; relic.mana = at('mana', {}) - 1;
+    for (const level of [1, 5, 10]) {
+      for (const dex of [0, 1, 3, 4, 6, 7, 10]) assert.equal(at('stamina', { dexterity: dex }, level), 3 + Math.floor(Math.max(0, dex - 1) / 3) + relic.stamina, `${classId} SP at DEX ${dex}, level ${level}`);
+      for (const [int, wis] of [[1, 1], [4, 1], [1, 4], [3, 6], [7, 2], [10, 10]]) {
+        assert.equal(at('mana', { intelligence: int, wisdom: wis }, level), 1 + Math.floor((Math.max(int, wis) - 1) / 3) + relic.mana, `${classId} MP at INT ${int} WIS ${wis}, level ${level}`);
       }
+    }
+    for (const other of ['strength', 'constitution', 'wisdom', 'intelligence']) assert.equal(at('stamina', { [other]: 12 }), at('stamina', {}), `${classId} SP ignores ${other}`);
+    for (const other of ['strength', 'dexterity', 'constitution']) assert.equal(at('mana', { [other]: 12 }), at('mana', {}), `${classId} MP ignores ${other}`);
+    assert.ok(relic.stamina >= 0 && relic.mana >= 0, `${classId}: a starting relic never lowers SP or MP`);
+  }
+});
+
+test('item 5: every class can pay for each of its starter cards', () => {
+  for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
+    const run = newRun(classId);
+    for (const { cardId } of run.deck) {
+      const def = registries.cards.get(cardId);
+      assert.ok((def.manaCost || 0) <= run.maxMana, `${classId} ${cardId}: ${def.manaCost} MP of ${run.maxMana}`);
+      assert.ok((def.staminaCost || 0) <= run.maxStamina, `${classId} ${cardId}: ${def.staminaCost} SP of ${run.maxStamina}`);
     }
   }
 });

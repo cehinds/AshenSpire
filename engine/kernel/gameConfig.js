@@ -165,6 +165,18 @@ function verifyContent(content) {
       if (!['hp', 'mp', 'sp'].includes(pool) || !Number.isSafeInteger(value) || value < 1) fail(`$/content/stats/pointsPerIncrease/${pool}`, 'expected hp, mp or sp and a positive integer');
     }
   }
+  if (content.stats.attributeBaseline !== undefined) {
+    if (!record(content.stats.attributeBaseline)) fail('$/content/stats/attributeBaseline', 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats.attributeBaseline)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Number.isSafeInteger(value) || value < 0) fail(`$/content/stats/attributeBaseline/${pool}`, 'expected hp, mp or sp and a nonnegative integer');
+    }
+  }
+  if (content.stats.maxOf !== undefined) {
+    if (!record(content.stats.maxOf)) fail('$/content/stats/maxOf', 'expected pool map');
+    for (const [pool, ids] of Object.entries(content.stats.maxOf)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Array.isArray(ids) || ids.length < 2 || !ids.every(id => ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].includes(id))) fail(`$/content/stats/maxOf/${pool}`, 'expected hp, mp or sp and two or more attribute ids');
+    }
+  }
   if (content.stats.poolBasesByClass !== undefined) {
     if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
     for (const [classId, pools] of Object.entries(content.stats.poolBasesByClass)) {

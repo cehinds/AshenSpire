@@ -7,34 +7,43 @@
       "ar": 1
     },
     "dexterity": {
-      "dr": 1
+      "dr": 1,
+      "sp": 1
     },
     "constitution": {
-      "hp": 5,
-      "sp": 1
+      "hp": 5
     },
     "wisdom": {
       "mp": 1
     },
     "intelligence": {
-      "draw": 1
+      "draw": 1,
+      "mp": 1
     }
   },
   "poolBases": {
     "hp": 35,
-    "mana": 3
+    "mana": 1,
+    "stamina": 3
   },
   "levelGrowth": {
-    "hp": 5
+    "hp": 5,
+    "mana": 0,
+    "stamina": 0
   },
   "pointsPerIncrease": {
     "sp": 3,
     "mp": 3
   },
-  "secondaryPolicy": "primaryOnly",
-  "poolBasesByClass": {
-    "reaver": {
-      "mana": 1
-    }
-  }
+  "attributeBaseline": {
+    "sp": 1,
+    "mp": 1
+  },
+  "maxOf": {
+    "mp": [
+      "intelligence",
+      "wisdom"
+    ]
+  },
+  "secondaryPolicy": "primaryOnly"
 }
