@@ -133,15 +133,15 @@ if (args.includes('--selftest')) {
       {
         name: 'second activation no longer opens the load review',
         file: 'src/ui/components/saveSlotSelector.js',
-        find: '    loadReviewSlot = slot;\n    render();',
-        replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    render();',
+        find: '    loadReviewSlot = slot;\n    if (listIsValid() && listDoor.isConnected) {',
+        replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    if (false) {',
         expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
       },
       {
         name: 'Escape closes the whole load flow instead of returning to saves',
         file: 'src/ui/components/saveSlotSelector.js',
-        find: '      if (loadReviewSlot != null) {',
-        replace: '      if (loadReviewSlot != null) { close(); // startup-gate selftest plant',
+        find: '      if (loadReviewSlot != null) showList();',
+        replace: '      if (loadReviewSlot != null) close(); // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-REVIEW-ESCAPE/,
       },
       {
