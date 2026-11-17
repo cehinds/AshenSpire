@@ -47,12 +47,24 @@ export function collectedAdeptCardIds(run) {
   return ids.filter(id => known.has(id));
 }
 
-// A held relic or item property (Basic Training, Graduate, W25 step 6) lifts the limit on its card kind.
-function itemUnlimited(run, cardId) {
-  const kinds = ItemUnlimitedKinds(run);
-  if (!kinds.length) return false;
-  return kinds.includes(basicCardKind(run, gameContent(run, 'cards')?.find((card) => card.id === cardId)));
+/**
+ * ItemUnlimitedCardIds(run) → the card ids a held relic or item property (Basic Training: unranked
+ * martial; Graduate: cantrips; W25 step 6) lets deck editing add without limit. Only a definition the
+ * run has collected (Core, SPEC §14.1), of its own class or colorless, of a `deckRules.trainingRarities`
+ * rarity, and never an enemy card.
+ */
+export function ItemUnlimitedCardIds(run) {
+  const kinds = run ? ItemUnlimitedKinds(run) : [];
+  if (!kinds.length) return [];
+  const enemy = new Set((gameContent(run, 'enemyCards') || []).map((row) => row.id));
+  const collected = hasCollectedCardPolicy(run) ? new Set(knownCollectedCardIds(run)) : null;
+  return (gameContent(run, 'cards') || []).filter((card) => kinds.includes(basicCardKind(run, card))
+    && (!collected || collected.has(card.id))
+    && (!card.class || card.class === 'colorless' || card.class === run.class)
+    && deckRules.trainingRarities.includes(card.rarity || 'common')
+    && !enemy.has(card.id)).map((card) => card.id);
 }
+const itemUnlimited = (run, cardId) => ItemUnlimitedCardIds(run).includes(cardId);
 
 // The same copy rule serves acquisition and the deck editor.
 export function configuredDeckCopyLimit(run, cardId) {

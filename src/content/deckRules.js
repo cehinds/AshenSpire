@@ -39,6 +39,9 @@ export const deckRules = Object.freeze({
   // Owner, 2026-11-17: at Core creation the player chooses how many of each of
   // these unranked cards start in the deck (basic attack, smash, counter,
   // block, sweep). The class's other starting cards stay as authored.
+  // Basic Training and Graduate (relic item properties) open unlimited copies only of
+  // collected, own-class or colorless cards of these rarities (review of #2815).
+  trainingRarities: Object.freeze(['starter', 'common']),
   creationPool: Object.freeze(['core.strike', 'core.smash', 'core.counter', 'core.defend', 'core.sweep']),
   // Plain card ids a run with no equipment may add without limit. An equipped
   // run's basics are its attack-slot and guard instances, matched by role.

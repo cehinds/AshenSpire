@@ -79,7 +79,10 @@ test('Basic Training, Graduate and the three min-slot relics do what their text 
   const holding = (...ids) => { const run = make(1); run.relics = [...ids]; return run; };
   assert.ok(unlimitedCardIds(holding('basicTraining')).includes('core.strike'), 'Basic Training opens unlimited Basic martial cards');
   assert.ok(!unlimitedCardIds(holding('basicTraining')).includes('core.cantrip'));
-  assert.ok(unlimitedCardIds(holding('graduate')).includes('core.cantrip'), 'Graduate opens unlimited cantrips');
+  assert.ok(!unlimitedCardIds(holding('graduate')).includes('core.cantrip'), 'an uncollected cantrip stays closed');
+  const graduate = holding('graduate');
+  graduate.collectedCardIds = [...graduate.collectedCardIds, 'core.cantrip'];
+  assert.ok(unlimitedCardIds(graduate).includes('core.cantrip'), 'Graduate opens a collected cantrip');
   assert.ok(!unlimitedCardIds(holding('graduate')).includes('core.strike'));
   assert.equal(ItemMinDeckDelta(holding('threadbareSatchel')), 1);
   assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
@@ -91,4 +94,39 @@ test('Basic Training, Graduate and the three min-slot relics do what their text 
     assert.ok(registries.relics.has(id), `${id} is a relic`);
     assert.ok(pool.includes(id), `${id} is in the Core relic pool`);
   }
+});
+
+// Review of #2815 (high): Basic Training and Graduate open only collected, own-class or colorless cards of a
+// training rarity — never an uncollected rare, another class's card or an enemy move (SPEC §14.1).
+test('a Starseer with Basic Training cannot add Skullsplitter or an enemy move; collected basics only', async () => {
+  const { unlimitedCardIds, commitDeckEditDraft } = await import('../src/model/deckRules.js');
+  const { ItemUnlimitedCardIds, configuredDeckCopyLimit } = await import('../src/model/deckCopyLimit.js');
+  const { executeRunEffects } = await import('../src/engine/actions.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+  const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'bt-starseer', profileMeta: meta });
+  run.relics = [...(run.relics || []), 'basicTraining'];
+  const ids = ItemUnlimitedCardIds(run);
+  assert.ok(ids.length > 0 && ids.length < 20, `a short list, got ${ids.length}`);
+  for (const forbidden of ['core.skullsplitter', 'wanderingSoldier.slash', 'blightHound.bite']) {
+    assert.ok(!unlimitedCardIds(run).includes(forbidden), forbidden);
+    assert.notEqual(configuredDeckCopyLimit(run, forbidden), Infinity, forbidden);
+  }
+  assert.ok(ids.every((id) => run.collectedCardIds.includes(id)), 'only collected definitions');
+  // Even collected, another class's rare stays limited.
+  executeRunEffects({ run, registries, rng: createRng(1) }, [{ op: 'addCardToDeck', card: 'core.skullsplitter' }]);
+  assert.ok(!ItemUnlimitedCardIds(run).includes('core.skullsplitter'));
+  // A mint of an enemy move is refused at the commit door.
+  const edited = { deck: [...run.deck, { instanceId: 'edit:999', cardId: 'wanderingSoldier.slash', upgraded: false }], sideboard: run.sideboard, collectedCardIds: run.collectedCardIds };
+  assert.throws(() => commitDeckEditDraft(registries, run, edited), /invent|copy limit|equipment/);
+});
+
+test('Graduate opens collected cantrips only', async () => {
+  const { ItemUnlimitedCardIds } = await import('../src/model/deckCopyLimit.js');
+  const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+  const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'grad-starseer', profileMeta: meta });
+  run.relics = [...(run.relics || []), 'graduate'];
+  const ids = ItemUnlimitedCardIds(run);
+  assert.ok(ids.includes('core.cantrip'), 'the starting cantrip');
+  assert.ok(ids.every((id) => run.collectedCardIds.includes(id)));
 });

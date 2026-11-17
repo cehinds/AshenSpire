@@ -1,5 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_, ItemUnlimitedCardIds } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -21,9 +21,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
-import { ItemUnlimitedKinds } from './itemProperties.js';
 import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_ } from './deckMinimumRules.js';
-import { basicCardKind } from './basicCardRule.js';
 
 const D = deckRules.defaults;
 
@@ -116,11 +114,9 @@ export function basicCardIds(run) {
  */
 export function unlimitedCardIds(run) {
   const base = policyUnlimitedCardIds(run);
-  // An item property can also open one more kind of card: every Basic card or every cantrip (W25 step 6).
-  const kinds = run ? ItemUnlimitedKinds(run) : [];
-  if (!kinds.length) return base;
-  const extra = (gameContent(run, 'cards') || []).filter((card) => kinds.includes(basicCardKind(run, card))).map((card) => card.id);
-  return [...new Set([...base, ...extra])];
+  // A held relic or item property opens the collected own-class Basic cards or cantrips (ItemUnlimitedCardIds).
+  const extra = ItemUnlimitedCardIds(run);
+  return extra.length ? [...new Set([...base, ...extra])] : base;
 }
 function policyUnlimitedCardIds(run) {
   if (hasCollectedCardPolicy(run)) return basicCardIds(run);

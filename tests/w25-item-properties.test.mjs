@@ -148,6 +148,8 @@ test('stat properties reach the receipts: +5 max Poise and +1 attribute', () => 
 test('deck rules: minimum deck size drops by 2; unlimited Basics and cantrips open the editor', () => {
   const settings = { deckMinSize: 12, deckMaxSize: 40 };
   const run = newRun({ [RELIC]: ['smallerDeck', 'unlimitedCantrips'] });
+  // Unlimited copies open only a collected definition (review of #2815, SPEC §14.1).
+  if (Array.isArray(run.collectedCardIds)) run.collectedCardIds = [...new Set([...run.collectedCardIds, 'core.cantrip'])];
   assert.equal(deckEditBounds(settings).min, 12);
   assert.equal(deckEditBounds(settings, 2).min, 10);
   assert.match(deckEditRefusal(11, settings), /at least 12/);
