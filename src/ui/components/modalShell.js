@@ -72,6 +72,12 @@ function withExtraClass(base, extraClass)
     return `${base}${suffix}`;
 }
 
+function mintTitleId()
+{
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    return `modal-title-${randomSuffix}`;
+}
+
 function createElementWithClass(tagName, className)
 {
     const element = document.createElement(tagName);
@@ -744,8 +750,7 @@ export function OpenModal({
     kind = DEFAULT_MODAL_KIND,
 } = {})
 {
-    const mintedTitleId = `modal-title-${Math.random().toString(36).slice(2, 8)}`;
-    const titleId = givenTitleId || mintedTitleId;
+    const titleId = givenTitleId || mintTitleId();
     const veil = createElementWithClass('div', 'modal-veil');
 
     const panel = document.createElement('section');

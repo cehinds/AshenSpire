@@ -80,6 +80,12 @@ function isLiveTabStop(control)
     );
 }
 
+function liveDetailsTabStops(detailsPanel)
+{
+    const detailsControls = [...detailsPanel.querySelectorAll(SELECTOR.detailsTabStops)];
+    return detailsControls.filter(isLiveTabStop);
+}
+
 function focusControl(control)
 {
     control.focus({ preventScroll: true });
@@ -353,9 +359,8 @@ export function OpenConfirmationModal({
         {
             return;
         }
-        const detailsControls = [...detailsPanel.querySelectorAll(SELECTOR.detailsTabStops)];
         const detailsTabStops = detailsNode
-            ? detailsControls.filter(isLiveTabStop)
+            ? liveDetailsTabStops(detailsPanel)
             : [];
         const confirmTabStops = confirmEnabled
             ? [confirmButton]
