@@ -1,4 +1,5 @@
 import { projectGameCard } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
@@ -40,7 +41,7 @@ import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
-import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { combatProfileFor, isSpellCard, ScaleCardBaseDamage } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
@@ -316,6 +317,9 @@ export function combatCardSummary(def, preview = null, registries = null) {
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
+  // A Counter face with a run's rules states the base that the card will arm.
+  const counterMultiplier = rules?.gameProfile && combatProfileFor(def).maneuver === 'counter'
+    ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {
@@ -330,7 +334,8 @@ export function staticCardTokens(def, registries = null, rules = null) {
     const value = constant(raw);
     // Owner, 2026-11-15: Barrier stacks are printed as the Poise they give.
     const barrierScale = effect.op === 'gainBarrier' || (effect.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(registries) : 1;
-    if (typeof value === 'number') tokens[binding.token] = value * barrierScale;
+    const damageScale = effect.op === 'damage' && binding.field === 'amount' ? counterMultiplier : undefined;
+    if (typeof value === 'number') tokens[binding.token] = ScaleCardBaseDamage(value * barrierScale, damageScale);
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
       // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.
@@ -338,7 +343,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
         && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
         ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def, raw.per ?? 1) : undefined;
       const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
-      if (authored !== undefined) tokens[binding.token] = authored;
+      if (authored !== undefined) tokens[binding.token] = typeof authored === 'number' ? ScaleCardBaseDamage(authored, damageScale) : authored;
       // Weapon-scaled attacks have a static authored multiplier even though
       // their resolved damage depends on the equipped weapon. Keep that
       // multiplier visible on non-combat faces without guessing a damage
