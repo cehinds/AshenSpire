@@ -136,31 +136,58 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     }
   }
 
+  const BUY_SHELVES = {
+    armaments: {
+      planOf: (itemId) => coreArmamentPlan(registries, run, itemId),
+      isStocked: (plan) => Boolean(plan.def),
+      describe: (plan) => t('blacksmith.armament.tierOnly', { tier: plan.tier }),
+      visualOf: (itemId) => equipmentVisual(itemId),
+      decorate: (host, plan) => {
+        host.dataset.armamentTier = String(plan.tier);
+      },
+      purchase: (plan) => onArmamentPurchased(commitCoreArmament(registries, run, plan).id),
+    },
+    weaponArts: {
+      planOf: (itemId) => coreWeaponArtPlan(registries, run, itemId),
+      isStocked: (plan) => Boolean(plan.name),
+      describe: () => t('blacksmith.weaponArt.desc'),
+      visualOf: (itemId) => cardVisual(itemId),
+      decorate: () => {},
+      purchase: (plan) => {
+        const receipt = commitCoreWeaponArt(registries, run, plan);
+        onCardPurchased({ kind: 'weaponArts', id: receipt.id, instanceId: receipt.instanceId });
+      },
+    },
+  };
+
+  const renderBuyShelf = (shelfKind, shelf) => {
+    const buyShelf = BUY_SHELVES[shelfKind];
+    for (const item of stock[shelfKind] || []) {
+      const plan = buyShelf.planOf(item.id);
+      if (!buyShelf.isStocked(plan)) continue;
+      const host = tile(
+        GLYPH[shelfKind],
+        plan.name,
+        buyShelf.describe(plan),
+        '',
+        { visual: buyShelf.visualOf(item.id) },
+      );
+      buyShelf.decorate(host, plan);
+      actionButton(host, {
+        label: t('blacksmith.action.buy'),
+        kind: 'buy',
+        cost: plan.cost,
+        plan,
+        commit: () => buyShelf.purchase(plan),
+      });
+      shelf.append(host);
+    }
+  };
+
   // ---- each offering's shelf ------------------------------------------------
   const SHELVES = {
-    armaments(shelf) {
-      // The rack is tiered (each piece is sold at the tier it shows) and bought with the Core model's quote.
-      for (const item of stock.armaments || []) {
-        const plan = coreArmamentPlan(registries, run, item.id);
-        if (!plan.def) continue;
-        const host = tile(GLYPH.armaments, plan.name, t('blacksmith.armament.tierOnly', { tier: plan.tier }), '', { visual: equipmentVisual(item.id) });
-        host.dataset.armamentTier = String(plan.tier);
-        actionButton(host, { label: t('blacksmith.action.buy'), kind: 'buy', cost: plan.cost, plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan).id) });
-        shelf.append(host);
-      }
-    },
-    weaponArts(shelf) {
-      for (const item of stock.weaponArts || []) {
-        const plan = coreWeaponArtPlan(registries, run, item.id);
-        if (!plan.name) continue;
-        const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.desc'), '', { visual: cardVisual(item.id) });
-        actionButton(host, { label: t('blacksmith.action.buy'), kind: 'buy', cost: plan.cost, plan, commit: () => {
-          const receipt = commitCoreWeaponArt(registries, run, plan);
-          onCardPurchased({ kind: 'weaponArts', id: receipt.id, instanceId: receipt.instanceId });
-        } });
-        shelf.append(host);
-      }
-    },
+    armaments: (shelf) => renderBuyShelf('armaments', shelf),
+    weaponArts: (shelf) => renderBuyShelf('weaponArts', shelf),
     rankUp(shelf) {
       for (const card of rankUpCards(registries, run)) {
         const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
