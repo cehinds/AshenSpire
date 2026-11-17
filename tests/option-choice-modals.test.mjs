@@ -55,11 +55,11 @@ test('discard choice: rows toggle up to the count, the primary enables at exactl
     rows[2].click();
     assert.equal(commit.disabled, true, 'one of two is not enough');
     rows[0].click(); rows[1].click();
-    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'false', 'true'], 'a third pick over the count is ignored');
+    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'true', 'false'], 'a third pick over the count swaps out the earliest');
     assert.equal(commit.disabled, false);
-    assert.deepEqual(rows[2].querySelectorAll('.co-order').map((node) => node.textContent), ['1'], 'an ordered pick shows its position');
+    assert.deepEqual(rows[1].querySelectorAll('.co-order').map((node) => node.textContent), ['2'], 'an ordered pick shows its position');
     commit.click();
-    assert.deepEqual(answers, [['c3', 'c1']]);
+    assert.deepEqual(answers, [['c1', 'c2']]);
   } finally { restore(); }
 });
 
