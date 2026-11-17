@@ -5,7 +5,7 @@ import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { reducedMotionRequested } from './motion.js';
-import { displaySceneryTier } from './artTier.js';
+import { displaySceneryTier, SceneryFullArt } from './artTier.js';
 import { ART_SOURCE_EVENT } from './highResArt.js';
 import { isWideFormFactor } from './models/FormFactorModel.js';
 
@@ -19,7 +19,9 @@ const phoneArt = () => typeof document !== 'undefined' && document.documentEleme
 function sceneArtPath(art, narrow = phoneArt()) {
   const factor = globalThis.document?.documentElement?.dataset.formFactor;
   const desktop = !narrow && (!factor || isWideFormFactor(factor));
-  return art[desktop && displaySceneryTier() === 'high' ? 'path' : 'mobilePath'];
+  // Phones get the full 1080px scene by default: the 256px file is upscaled ~12x on a
+  // phone backdrop. Only an explicit Light choice or Save-Data keeps the small file.
+  return art[(desktop ? displaySceneryTier() === 'high' : SceneryFullArt()) ? 'path' : 'mobilePath'];
 }
 
 // Dedicated canonical appearances win over legacy painted-rig aliases. Shared
