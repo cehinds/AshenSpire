@@ -1751,5 +1751,182 @@
         }
       ]
     }
+  },
+  {
+    "id": "hearthVigil",
+    "name": "Hearth Vigil",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "manaCost": 2,
+    "type": "skill",
+    "flavor": "A night prayer kept beside a banked fire.\n\nNovices of the Furnace Chapel sat the vigil in turns, feeding the coals one stick at a time. A sleeper woke warm and whole by morning. The Chapel counted the wood, never the hours.\n\nThe last vigil-keeper still tends an empty hearth.",
+    "keywords": [],
+    "icon": "relic",
+    "textTemplate": "Gain {regen} Regen.",
+    "faceTemplate": [
+      "Gain {regen} Regen."
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 4
+      }
+    ],
+    "upgrade": {
+      "manaCost": 1
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "zealousFervor",
+    "name": "Zealous Fervor",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "type": "skill",
+    "flavor": "The heat that rises when the hymn is loudest.\n\nPilgrims on the cinder road sang until their throats bled, and fought best while the song lasted. Their captains learned to strike before the final verse. After it, the fervour cooled and the pilgrims only wept.\n\nNo one ever wrote down the final verse.",
+    "keywords": [
+      "ethereal"
+    ],
+    "icon": "audio",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "faceTemplate": [
+      "Gain {strength} Strength.",
+      "Gain {dexterity} Dexterity."
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "dexterity",
+        "stacks": 1
+      }
+    ],
+    "upgrade": {
+      "keywords": [],
+      "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity."
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "sanctifiedGuard",
+    "name": "Sanctified Guard",
+    "class": "herald",
+    "rarity": "common",
+    "cost": 1,
+    "manaCost": 1,
+    "type": "skill",
+    "flavor": "A blessing spoken over a raised shield.\n\nChaplains of the Saints walked the shield wall at dusk, touching each boss with ash and oil. The blessing only answered a guard already set. A soldier who stood ready felt the shield grow heavy and warm.\n\nThe careless felt nothing at all.",
+    "keywords": [],
+    "icon": "shield",
+    "textTemplate": "Gain {block} Block. If in Defense: gain {block.2} more.",
+    "faceTemplate": [
+      "Gain {block} Block.",
+      "Defense: +{block.2} Block."
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 4
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 4,
+        "if": {
+          "p": "inStance",
+          "of": "self",
+          "stance": "defend",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 6,
+          "if": {
+            "p": "inStance",
+            "of": "self",
+            "stance": "defend",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "pyreBrand",
+    "name": "Pyre Brand",
+    "class": "herald",
+    "rarity": "common",
+    "cost": 1,
+    "manaCost": 1,
+    "type": "attack",
+    "flavor": "A brand of holy fire pressed into a burning foe.\n\nThe Furnace Chapel taught that flame feeds on flame. Its inquisitors set a heretic alight, then touched the brand to the blaze, and the fire roared up twice as tall. They called it a mercy.\n\nThe heretics called it something else.",
+    "keywords": [],
+    "icon": "relic",
+    "textTemplate": "Deal {damage} damage. If the target is Burning: deal {damage.2} more.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Burning target: +{damage.2}."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4,
+        "if": {
+          "p": "hasStatus",
+          "of": "target",
+          "status": "burn",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5,
+          "if": {
+            "p": "hasStatus",
+            "of": "target",
+            "status": "burn",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
   }
 ]

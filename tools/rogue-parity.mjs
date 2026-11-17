@@ -43,14 +43,18 @@ const sharedRewardIds = (rogue?.cardPool || []).filter(id => !classRewardIds.inc
 check(!!rogue, 'Rogue class is registry-authored');
 // Every Rogue card is exactly one of: a reward-pool card, a class grant (the
 // starter signature, and the §13.4f ability card), or a special (combat-made)
-// card. The total is that partition, read off the class row, not a literal.
+// card, or an expanded-combat reward (minCombatExpansionVersion 2, which the
+// Core reward roll offers by class: src/engine/encounters.js). The total is that
+// partition, read off the class row and the cards, not a literal.
 const classGrants = [rogue?.startingSignatureCard, rogue?.abilityCard].filter(Boolean);
 const specialCards = rogueCards.filter((card) => card.rarity === 'special');
+const expandedRewards = rogueCards.filter((card) => card.minCombatExpansionVersion === 2
+  && !rogue?.cardPool?.includes(card.id) && !classGrants.includes(card.id) && card.rarity !== 'special');
 const unaccounted = rogueCards.filter((card) => !rogue?.cardPool?.includes(card.id)
-  && !classGrants.includes(card.id) && card.rarity !== 'special').map((card) => card.id);
-const expectedRogueCards = classRewardIds.length + classGrants.length + specialCards.length;
+  && !classGrants.includes(card.id) && card.rarity !== 'special' && !expandedRewards.includes(card)).map((card) => card.id);
+const expectedRogueCards = classRewardIds.length + classGrants.length + specialCards.length + expandedRewards.length;
 check(classGrants.length === 2 && unaccounted.length === 0 && rogueCards.length === expectedRogueCards,
-  `Rogue authors exactly ${expectedRogueCards} cards (reward pool + signature + ability + ${specialCards.length} special)`,
+  `Rogue authors exactly ${expectedRogueCards} cards (reward pool + signature + ability + ${specialCards.length} special + ${expandedRewards.length} expanded-combat rewards)`,
   `got ${rogueCards.length}; grants ${classGrants.join(', ')}; unaccounted ${unaccounted.join(', ')}`);
 check(rogue?.abilityCard === 'prepare' && rogueCards.some((card) => card.id === 'prepare' && card.rarity === 'starter'),
   'Prepare is the Rogue starter ability card (SPEC §13.4f)');
