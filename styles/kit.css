@@ -6825,3 +6825,14 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }
+
+/* Core creation's starting-card chooser (components/startingCardsChooser.js). */
+.starting-cards { display: grid; gap: .6rem; padding: .75rem 1rem; }
+.starting-cards-note, .starting-cards-total { margin: 0; }
+.starting-cards-total { font-weight: 600; font-variant-numeric: tabular-nums; }
+.starting-cards-refusal { margin: 0; color: var(--ember, var(--gold)); }
+.starting-cards-rows { display: grid; gap: .4rem; }
+.starting-cards-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 2.5rem auto; align-items: center; gap: .5rem; }
+.starting-cards-name { min-width: 0; overflow-wrap: anywhere; }
+.starting-cards-count { text-align: center; font-variant-numeric: tabular-nums; }
+.starting-cards-step { min-width: var(--tap-floor, 44px); min-height: var(--tap-floor, 44px); }
