@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-17
 
-- **Matching choice dialogs** ([#2807](https://github.com/cehinds/AshenSpire/pull/2807), `0.7.4.124`). The Blacksmith, rank-up, card, discard, reaction and armoury-slot choice dialogs now share one layout and behaviour: the same body, button widths and focus. The reaction and slot dialogs, which were the odd ones out, now match the rest.
+- **Matching choice dialogs** ([#2807](https://github.com/cehinds/AshenSpire/pull/2807), `0.7.4.126`). The Blacksmith, rank-up, card, discard, reaction and armoury-slot choice dialogs now share one layout and behaviour: the same body, button widths and focus. The reaction and slot dialogs, which were the odd ones out, now match the rest.
 
 ## 2026-11-16
 
