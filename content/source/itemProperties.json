@@ -116,6 +116,121 @@
     ],
     "relic": []
   },
+  "smithBeforeStatPoints": {
+    "cinders": [
+      25,
+      50,
+      85,
+      135
+    ],
+    "cinderStep": 60
+  },
+  "statOptionsBeforeStatPoints": {
+    "martial": [
+      {
+        "id": "ar",
+        "stat": "ar",
+        "n": 1,
+        "weight": 30,
+        "text": "+1 AR"
+      },
+      {
+        "id": "dr",
+        "stat": "dr",
+        "n": 1,
+        "weight": 20,
+        "text": "+1 DR"
+      },
+      {
+        "id": "attr",
+        "n": 1,
+        "weight": 25,
+        "byCategory": {
+          "dagger": [
+            "dexterity"
+          ],
+          "katana": [
+            "dexterity"
+          ],
+          "bow": [
+            "dexterity"
+          ],
+          "twinblade": [
+            "dexterity"
+          ],
+          "greatsword": [
+            "strength",
+            "constitution"
+          ],
+          "hammer": [
+            "strength",
+            "constitution"
+          ],
+          "sword": [
+            "strength",
+            "dexterity"
+          ],
+          "axe": [
+            "strength"
+          ],
+          "spear": [
+            "strength",
+            "dexterity"
+          ],
+          "polearm": [
+            "strength",
+            "constitution"
+          ]
+        },
+        "fallback": [
+          "strength"
+        ]
+      }
+    ],
+    "magic": [
+      {
+        "id": "poisePct",
+        "effect": "poiseDamagePct",
+        "n": 10,
+        "weight": 25,
+        "text": "+10% Poise damage"
+      },
+      {
+        "id": "magicDamage",
+        "stat": "pr",
+        "n": 1,
+        "weight": 30,
+        "text": "+1 magic damage (PR)"
+      },
+      {
+        "id": "attr",
+        "n": 1,
+        "weight": 25,
+        "attrs": [
+          "intelligence",
+          "wisdom",
+          "mp"
+        ]
+      }
+    ],
+    "armor": [
+      {
+        "id": "dr",
+        "stat": "dr",
+        "n": 1,
+        "weight": 40,
+        "text": "+1 DR"
+      },
+      {
+        "id": "ward",
+        "stat": "ward",
+        "n": 1,
+        "weight": 20,
+        "text": "+1 Ward"
+      }
+    ],
+    "relic": []
+  },
   "weaponCategories": {
     "martial": [
       "sword",

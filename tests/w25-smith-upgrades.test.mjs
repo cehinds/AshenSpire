@@ -31,7 +31,7 @@ function smithRun({ classId = 'reaver', stones = 40, cinders = 5000, seed = 31 }
 const GS = 'armament/greatsword';
 
 test('cost table: cinders 50, 85, 120, 155 then +35 (owner 2026-11-17); stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9', () => {
-  const rows = Array.from({ length: 10 }, (_, i) => SmithUpgradeCost(i + 1));
+  const rows = Array.from({ length: 10 }, (_, i) => SmithUpgradeCost(i + 1, 0, profile));
   assert.deepEqual(rows.map((r) => r.cinders), [50, 85, 120, 155, 190, 225, 260, 295, 330, 365]);
   assert.deepEqual(rows.map((r) => r.stones), [1, 1, 1, 2, 2, 2, 3, 3, 3, 4]);
 });
