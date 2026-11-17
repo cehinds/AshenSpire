@@ -21,9 +21,9 @@
 // Event screen uses).
 //
 // Only committed choices persist: this screen's beat is never saved, so a
-// reload reopens the exchange at its first beat. A run-HUD remount keeps the
-// beat and the answered state, so a flask drunk after answering can never
-// offer the responses a second time, and it does not replay the entrance.
+// reload reopens the exchange at its first beat. A flask drunk from the run
+// HUD updates the band in place and leaves the exchange alone, so it can never
+// offer the responses a second time or replay the entrance.
 import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { speakerPortraitAsset } from '../../content/speakerArt.js';
@@ -189,10 +189,7 @@ export function mountDialogue(app, options) {
   root.append(skybox, floor, sceneWindow, portraits, context, foot);
   app.appendChild(root);
   if (hudShown) {
-    wireRunHud(app, {
-      ...hud, registries, run, meta,
-      remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }),
-    });
+    wireRunHud(app, { ...hud, registries, run, meta });
   }
   const stage = wireDialogueStage(root, { layout, parent, scene: wireframeUi.scene });
 
@@ -219,7 +216,7 @@ export function mountDialogue(app, options) {
       state = dialogueStep(view(), state, { type: 'resolved', choiceId: receipt.choice.id, resultText: receipt.choice.resultText }).state;
       render();
       // The header shows the cinders and HP the choice just paid or took, on this same screen.
-      if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
+      if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
       showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
       return;
