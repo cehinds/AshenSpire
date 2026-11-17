@@ -422,3 +422,21 @@ test('decision 2: carrier-less physical Poise damage keeps the floor; a Smash ca
   dealPoiseDamage(combat, enemy, 10, { cause: 'relic' });
   assert.equal(enemy.persistentPoise.value, 0, 'at 0 Block it breaks');
 });
+
+test('item 4: an enemy whose intent cannot be read has an unknown stance in the preview, not Idle: the quote is what live deals', () => {
+  for (const hidden of [true, false]) {
+    const { combat, enemy } = live();
+    Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
+    enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+    if (hidden) {
+      assert.ok(combat.enemyKnowledge, 'the fight reads intents through enemy knowledge');
+      delete enemy.actorIntentRevealed; delete enemy.proposalIntentRevealedUntil;
+      enemy.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'hidden' } } };
+    }
+    combat.piles.hand.push({ instanceId: 'x', cardId: 'core.strike' });
+    const quote = previewCard(combat, 'x', enemy.id).values.find(value => value.op === 'damage').perTarget[enemy.id];
+    const hp = enemy.hp;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id });
+    assert.equal(quote, hp - enemy.hp, `${hidden ? 'hidden' : 'read'} intent: the quote equals the HP lost`);
+  }
+});

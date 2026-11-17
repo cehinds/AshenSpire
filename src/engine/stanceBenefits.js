@@ -59,9 +59,10 @@ export const HitRange = (profile = {}) => profile?.range || (profile?.maneuver =
  * `prepared.meleeDamageTakenMultiplier` from a melee hit (HitRange); Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
  * 1 for a return hit, another stance, or a fight saved without the key.
  */
-export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile) {
+export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile, target = null) {
   const rules = StanceBenefitRules(ctx);
-  if (!rules || isReturn(carrier)) return 1;
+  // A preview whose target's intent cannot be read hides its stance (combat.js previewCard): unknown is no weakness, never Idle.
+  if (!rules || isReturn(carrier) || target?.combatStanceUnknown) return 1;
   const stance = ALIASES[defendingStance] || defendingStance || 'neutral';
   if (stance === 'prepared' && HitRange(profile) === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
   if (stance === 'neutral' || stance === 'idle') return count(rules.neutral?.damageTakenMultiplier) || 1;
