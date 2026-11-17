@@ -57,6 +57,7 @@
  * @property {PickerSelectHandler | null} [onSelect]
  * @property {string | null} [selectedId]
  * @property {string} [idAttr]
+ * @property {number | null} [columns]
  */
 
 /**
@@ -70,7 +71,7 @@
  * @callback PickerMark
  * @param {HTMLElement} list
  * @param {string} idAttr
- * @param {string[]} selectedIds
+ * @param {ReadonlyArray<string | null>} selectedIds
  * @returns {void}
  */
 

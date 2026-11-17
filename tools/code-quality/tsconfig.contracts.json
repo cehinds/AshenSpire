@@ -8,6 +8,7 @@
     "../../src/ui/cueChannel.js",
     "../../src/ui/sfx.js",
     "../../src/ui/haptics.js",
-    "../../src/ui/models/ModalModel.js"
+    "../../src/ui/models/ModalModel.js",
+    "../../src/ui/components/optionRowList.js"
   ]
 }

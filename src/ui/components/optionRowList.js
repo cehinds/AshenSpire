@@ -1,3 +1,4 @@
+// @ts-check
 // src/ui/components/optionRowList.js — card choices as a vertical list of full-width rows.
 //
 // The row look of the card-upgrade picker (cardUpgradeModal.js): art well, name, a status line, a
@@ -49,6 +50,7 @@ function rowArt(row) {
  * (a summarizeCardOption result plus the art and chip the caller adds). `detail` is a node drawn directly UNDER its
  * row (the before -> after card faces of an upgrade): the row gets aria-expanded and the node a full-width cell.
  * `columns` forces the column count (1 keeps a long list a single column, so a detail sits under its own row).
+ * @type {import('../contracts.js').PickerRender}
  */
 export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr = 'data-option', columns: forcedColumns = null } = {}) {
   const items = rows.map(row => {
@@ -92,7 +94,10 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
   return list;
 }
 
-/** markOptionRows(list, idAttr, ids) -> sets aria-pressed on every row whose id is in `ids`. */
+/**
+ * markOptionRows(list, idAttr, ids) -> sets aria-pressed on every row whose id is in `ids`.
+ * @type {import('../contracts.js').PickerMark}
+ */
 export function markOptionRows(list, idAttr, ids) {
   for (const item of list.querySelectorAll(`[${idAttr}]`)) item.setAttribute('aria-pressed', String(ids.includes(item.getAttribute(idAttr))));
 }
