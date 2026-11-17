@@ -337,6 +337,9 @@ function verifyGearContent(content, settings) {
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
     const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
     if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
+    // Under `statPoints` (owner, 2026-11-17) the item's points are not drawn from a pool: it grants its rarity's attribute points and
+    // a Poise value, and any authored rating other than Poise (Wayfarer Plate's legacy DR) is ignored by the resolver.
+    if (settings.statPoints) continue;
     // A shield's rank adds perRank points to its merged pool (resolveGearItem); allow what it can spend.
     const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? ((item.rank ?? 1) - 1) * (settings.armorBudget.perRank ?? 0) : 0;
     const whole = armorBudget ?? shieldTierPoints + (settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max);
