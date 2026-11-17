@@ -174,3 +174,33 @@ test('Close Quarters pays off at Melee and not at Reach', () => {
   const [met, unmet] = bothSides('rogue', 'closeQuarters', ({ combat, enemy }, on) => setBand(combat, enemy, on ? 0 : 1), damageTaken);
   assert.ok(met > unmet, `${met} > ${unmet}`);
 });
+
+// Review of #2816 (round 3): an HP loss aimed at the target is the card's payoff, not a price the player pays, and it
+// goes straight to HP (applyLoseHp ignores Block, Ward and Barrier). Every text path says so: the card face lines
+// (hand, inspector), the plain summary (shop, deck editor) and the reward/option tile.
+test('a target HP-loss rider reads as the target losing HP that ignores Block, on every text path', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { combatCardSummary } = await import('../src/model/playingCard.js');
+  const { cardEffectHtml } = await import('../src/ui/models/CardOptionSummaryModel.js');
+  const plain = html => String(html ?? '').replace(/<[^>]+>/g, '');
+  for (const cardId of ['openingCut', 'breakFocus', 'unguardedBolt']) {
+    const def = registries.cards.get(cardId);
+    const summary = combatCardSummary(def, null, registries);
+    const paths = {
+      face: (cardFaceLines(def, null, registries) || []).map(line => plain(line.html)).join(' | '),
+      summary: plain(typeof summary === 'string' ? summary : Array.isArray(summary) ? summary.join(' ') : summary?.text),
+      tile: plain(cardEffectHtml(def, null, registries)),
+    };
+    for (const [path, text] of Object.entries(paths)) {
+      if (!text) continue;
+      assert.doesNotMatch(text, /\b(Pay|Offer) \d+ HP/, `${cardId} ${path}: not a cost the player pays (${text})`);
+      assert.match(text, /target loses \d+ HP \(ignores Block\)/i, `${cardId} ${path}: names the target's HP loss (${text})`);
+    }
+    assert.ok(paths.face || paths.summary || paths.tile, `${cardId}: some text path renders`);
+    assert.match(def.textTemplate, /loses \{loseHp\} HP, ignoring Block\./, `${cardId}: the rules text says it ignores Block`);
+  }
+  // A card that pays HP itself still reads as a payment.
+  const { cardFaceLines: lines } = await import('../src/model/cardFaceText.js');
+  const payer = { ...registries.cards.get('openingCut'), effects: [{ op: 'loseHp', target: 'self', amount: 2 }, { op: 'damage', target: 'enemy', amount: 3 }] };
+  assert.match((lines(payer, null, registries) || []).map(line => plain(line.html)).join(' | '), /Pay 2 HP/);
+});
