@@ -36,6 +36,9 @@ export const deckRules = Object.freeze({
   // these character levels. With the min-slot relics (1 each) a run lands
   // near a minimum of 8 on average.
   minimumReductionLevels: Object.freeze([6, 12]),
+  // Owner, 2026-11-17: levels and min-slot relics lower the minimum no further
+  // than this. A player's own lower minimum setting is kept as set.
+  minimumReductionFloor: 8,
   // Owner, 2026-11-17: at Core creation the player chooses how many of each of
   // these unranked cards start in the deck (basic attack, smash, counter,
   // block, sweep). The class's other starting cards stay as authored.

@@ -29,9 +29,13 @@ export function SettingsDeckMinimum(settings = {}) {
   return Number.isInteger(size) && size >= 0 ? size : deckRules.defaults.deckMinSize;
 }
 
-/** ReducedDeckMinimum(minimum, delta) → a minimum less its reductions, never below 0. The deck editor and the Armoury both ask it. */
+/**
+ * ReducedDeckMinimum(minimum, delta) → a minimum less its reductions, never below
+ * `deckRules.minimumReductionFloor` (8) — nor above the player's own setting when that is lower.
+ * The deck editor and the Armoury both ask it.
+ */
 export function ReducedDeckMinimum(minimum, delta) {
-  return Math.max(0, minimum - delta);
+  return Math.max(Math.min(minimum, deckRules.minimumReductionFloor), minimum - delta, 0);
 }
 
 /** CoreDeckMinimum(run, settings) → Core's one minimum: the player's setting less this run's reductions. */

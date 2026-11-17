@@ -48,6 +48,7 @@ export function deckRulesTableProblems(table, cards, err, nodes) {
     if (!Array.isArray(values) || values.some((value) => typeof value !== 'string' || !value)) at(`equipmentEligibility.${key}`, 'must be a list of tag ids');
     else values.forEach((value, index) => { if (nodeIds.size && !nodeIds.has(value)) at(`equipmentEligibility.${key}[${index}]`, `names no tag node: '${value}'`); });
   }
+  if (!Number.isInteger(table.minimumReductionFloor) || table.minimumReductionFloor < 0) at('minimumReductionFloor', `must be a whole number of at least 0, got ${JSON.stringify(table.minimumReductionFloor)}`);
   const steps = table.minimumReductionLevels;
   if (!Array.isArray(steps) || steps.some((level, i) => !Number.isInteger(level) || level < 2 || (i && level <= steps[i - 1]))) at('minimumReductionLevels', `must be rising whole character levels of at least 2, got ${JSON.stringify(steps)}`);
   const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
