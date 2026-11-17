@@ -88,8 +88,9 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
   } else return 0;
-  // Live poiseDamage carries its card (drainFixCorePoise), so a Defend-stance target holding Block keeps the Poise floor here too (theme B, 2026-11-17).
-  const keep = effect.op === 'poiseDamage' && card ? Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0))) : 0;
+  // Live poiseDamage and Ward-off wardDamage carry their card into drainFixCorePoise, so the card's Defend floor applies here too, and no card reads as physical
+  // (theme B, 2026-11-17).
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0)));
   const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount)));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
