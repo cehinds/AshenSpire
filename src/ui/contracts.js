@@ -187,13 +187,16 @@
  */
 
 export const CONTRACT_NAMES = Object.freeze([
-    'CardRenderer',
-    'ChoiceModal',
     'EffectLayers',
     'FeedbackChannel',
     'Modal',
     'Picker',
-    'Pressable',
     'RailItem',
+]);
+
+export const PLANNED_CONTRACT_NAMES = Object.freeze([
+    'CardRenderer',
+    'ChoiceModal',
+    'Pressable',
     'Screen',
 ]);

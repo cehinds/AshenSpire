@@ -41,6 +41,8 @@ name to `CONTRACT_NAMES`. Annotate the implementation with `@type`, `@returns` o
 add `// @ts-check` to that file and list it in `tsconfig.contracts.json`. Where a file has too many
 unrelated type errors, assign its export to the contract in `type-tests/ui-contracts.js` instead.
 Add an `@ts-expect-error` fixture there that proves a non-conforming implementation fails.
+A contract with no implementation checked yet goes in `PLANNED_CONTRACT_NAMES` instead; the check
+reports it as declared, not yet checked, and moves it to `CONTRACT_NAMES` once a check covers it.
 
 The separate tool self-tests require the isolated package;
 the game and its regular test lane do not depend on this package.

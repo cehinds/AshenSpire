@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { AuditNames, CreateProgram, IsAuthoredSource } from './naming.mjs';
 import { FormatSource } from './format.mjs';
-import { CONTRACT_NAMES } from '../../src/ui/contracts.js';
+import { CONTRACT_NAMES, PLANNED_CONTRACT_NAMES } from '../../src/ui/contracts.js';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const readJson = name => JSON.parse(readFileSync(new URL(name, import.meta.url), 'utf8'));
@@ -77,9 +77,25 @@ function contractProblems(files)
 {
     const path = 'src/ui/contracts.js';
     const source = readFileSync(files.get(path), 'utf8');
-    return CONTRACT_NAMES
-        .filter(name => !new RegExp(`@(typedef \\{[^}]+\\}|callback) ${name}\\b`).test(source))
-        .map(name => `${path}: CONTRACT_NAMES lists ${name}, which has no @typedef or @callback`);
+    const isDeclared = name => new RegExp(`@(typedef \\{[^}]+\\}|callback) ${name}\\b`).test(source);
+    const undeclared = (listName, names) => names
+        .filter(name => !isDeclared(name))
+        .map(name => `${path}: ${listName} lists ${name}, which has no @typedef or @callback`);
+    const listedTwice = PLANNED_CONTRACT_NAMES
+        .filter(name => CONTRACT_NAMES.includes(name))
+        .map(name => `${path}: ${name} is both checked and planned`);
+
+    return [
+        ...undeclared(
+            'CONTRACT_NAMES',
+            CONTRACT_NAMES,
+        ),
+        ...undeclared(
+            'PLANNED_CONTRACT_NAMES',
+            PLANNED_CONTRACT_NAMES,
+        ),
+        ...listedTwice,
+    ];
 }
 
 function syntaxProblems(program, files)
@@ -162,6 +178,12 @@ function main(mode)
     }
     console.log(
         `Checked names in ${files.size} authored files and ${policy.enrolled.length} enrolled owners`,
+    );
+    console.log(
+        `Contracts checked: ${CONTRACT_NAMES.join(', ')}`,
+    );
+    console.log(
+        `Contracts declared, not yet checked: ${PLANNED_CONTRACT_NAMES.join(', ')}`,
     );
 }
 
