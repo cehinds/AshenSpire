@@ -174,15 +174,20 @@
 
 /**
  * @typedef {object} LongPressOptions
- * @property {number} [ms]
- * @property {number} [tolerance]
- * @property {(event: Event) => void} onHold
+ * @property {number} holdMs
+ * @property {number} [tolerancePx]
+ * @property {(event: Event) => boolean | void} onHold
+ * @property {((event: Event) => void) | null} [onTap]
+ * @property {boolean} [isPointerOnly]
+ * @property {boolean} [isPrimaryOnly]
+ * @property {boolean} [capturePointer]
+ * @property {boolean} [shouldCancelOnLeave]
  */
 
 /**
  * @typedef {object} Pressable
  * @property {(element: HTMLElement, options: LongPressOptions) => Disarm} armLongPress
- * @property {(button: HTMLElement, action: () => unknown) => Disarm} guardOnce
+ * @property {(button: HTMLElement & { disabled: boolean }, action: (event: Event) => unknown) => Disarm} guardOnce
  * @property {(element: HTMLElement, onActivate: (event: Event) => void) => Disarm} activateOnKey
  */
 
@@ -244,6 +249,7 @@ export const CONTRACT_NAMES = Object.freeze([
     'KeyActivator',
     'Modal',
     'Picker',
+    'Pressable',
     'RailItem',
     'RovingNavigator',
     'SelectionMarker',
@@ -252,6 +258,5 @@ export const CONTRACT_NAMES = Object.freeze([
 export const PLANNED_CONTRACT_NAMES = Object.freeze([
     'CardRenderer',
     'ChoiceModal',
-    'Pressable',
     'Screen',
 ]);

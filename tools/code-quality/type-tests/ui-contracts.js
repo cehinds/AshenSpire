@@ -10,6 +10,7 @@
  *     MountEffectLayers,
  *     Picker,
  *     PlayEffectLayers,
+ *     Pressable,
  *     RailItem,
  *     RovingNavigator,
  *     SelectionMarker,
@@ -25,6 +26,7 @@ import { armouryRailItems } from '../../../src/ui/models/ArmouryWorkspaceModel.j
 import { creationRailItems } from '../../../src/ui/models/CreationWorkspaceModel.js';
 import { mountCardEffectLayers, playCardEffectLayers } from '../../../src/ui/cardEffectLayers.js';
 import { ActivateOnKey, MarkSelected, RovingList } from '../../../src/ui/selection.js';
+import { ArmLongPress, GuardOnce } from '../../../src/ui/pressable.js';
 import { mountCombatantEffectLayers } from '../../../src/ui/combatantEffectLayers.js';
 
 /** @type {FeedbackChannel[]} */
@@ -104,4 +106,18 @@ export const navigatorWithBadOrientation = (listElement) =>
 {
     // @ts-expect-error Orientation is vertical, horizontal or both.
     return RovingList(listElement, { orientation: 'diagonal' });
+};
+
+/** @type {Pressable} */
+export const pressable = {
+    armLongPress: ArmLongPress,
+    guardOnce: GuardOnce,
+    activateOnKey: ActivateOnKey,
+};
+
+/** @type {Pressable} */
+export const pressableWithTextHold = {
+    ...pressable,
+    // @ts-expect-error A long press is timed in milliseconds.
+    armLongPress: (element, /** @type {{ holdMs: string }} */ options) => () => void [element, options],
 };
