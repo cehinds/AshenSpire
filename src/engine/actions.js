@@ -389,6 +389,9 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && !carrier?.reflectedHit && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   if (carrier?.onLandedContact?.() === false) return 0; // lightning: Bedrock and the Shocked contest only on a landed hit (SPEC 4.7)
+  // The Block the target holds as this hit arrives, kept per hit on the action's receipt for the Poise riders that follow (the preview's
+  // previewBlockAtHit), whatever the contact policy: one receipt can carry every hit of a whole-action play.
+  if (carrier?.expansionContact?.receipt) carrier.expansionContact.receipt.blockBefore = Math.max(0, target.block || 0);
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
   // Automatic returns share the owner-cycle limit. A newly paid per-contact

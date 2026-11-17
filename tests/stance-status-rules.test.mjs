@@ -440,3 +440,18 @@ test('item 4: an enemy whose intent cannot be read has an unknown stance in the 
     assert.equal(quote, hp - enemy.hp, `${hidden ? 'hidden' : 'read'} intent: the quote equals the HP lost`);
   }
 });
+
+test('item 5: under the whole-action contact policy each Poise row reads the Block of the hit before it, in the preview and live (3-hit base.multi-hit)', () => {
+  for (const [block, poise] of [[2, 6], [4, 6], [10, 9], [12, 9], [20, 6], [20, 9], [30, 6]]) {
+    const { combat, enemy } = live({ classId: 'starseer' });
+    Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
+    enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+    combat.piles.hand.push({ instanceId: 'm', cardId: 'base.multi-hit' });
+    const rows = previewCard(combat, 'm', enemy.id).values.map(value => value.perTargetPoise?.[enemy.id]).filter(Boolean);
+    const removed = rows.reduce((sum, row) => sum + row.removed, 0), breaks = rows.some(row => row.breaks);
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'm', targetId: enemy.id });
+    const label = `Block ${block}, Poise ${poise}`;
+    assert.equal(removed, poise - enemy.persistentPoise.value, `${label}: the preview removes the Poise live removes`);
+    assert.equal(breaks, enemy.persistentPoise.value === 0, `${label}: the preview says BREAK exactly when live empties it`);
+  }
+});
