@@ -313,21 +313,11 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
       ev.stopPropagation();
       close({ cancelled: true, restoreFocus: true });
     }
-    else if (ev.key === 'Home') {
-      ev.preventDefault();
-      const first = buttons[0];
-      first?.focus();
-      focusElement(first);
-    } else if (ev.key === 'End') {
-      ev.preventDefault();
-      const last = buttons.at(-1);
-      last?.focus();
-      focusElement(last);
-    }
   });
   RovingList(root, {
     items: () => buttons,
     startIndex: 0,
+    hasHomeEnd: true,
     onMove: (next) => {
       next.focus();
       focusElement(next);
