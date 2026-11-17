@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "range",
   "label": "Ranged",
-  "description": "At ranged distance.",
+  "description": "Hits any enemy at its normal cost.",
   "attaches": [
     "card"
   ],
