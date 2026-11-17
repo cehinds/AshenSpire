@@ -1230,7 +1230,6 @@ input[type="range"] { min-height: var(--tap-floor); }
 .reward-menu { flex-direction: column; align-items: stretch; max-width: 60rem; }
 .reward-menu > .class-pick, .shrine-option-list > .class-pick { max-width: none; flex: 0 0 auto; }
 .reward-row { display: flex; flex-wrap: wrap; gap: 2.2rem; justify-content: center; }
-.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
 
 /* ═══ CARD SHELF — a row of resting cards, four across, whole ══════════════ */
@@ -1382,9 +1381,8 @@ input[type="range"] { min-height: var(--tap-floor); }
    makes it small, and a transform on top of that only opens a gap. Hover and
    focus keep their lift. */
 .card-shelf .card[data-small="true"]:not(:hover, :focus-visible, :focus-within) { transform: none; }
-/* The pick row's lift, kept: a shop shelf used to be a `.reward-row` and wore
-   it, and the signal should not depend on which class a shelf happens to have. */
-.card-shelf .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+/* One card lift for a pick row and a shop shelf alike. */
+.reward-row .card:hover, .card-shelf .card:hover { transform: var(--btn-hover-lift); box-shadow: var(--btn-hover-lift-shadow); }
 
 /* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
 /* The head names the event and its {Status}; the narrative (ArtWell + prose)

@@ -340,7 +340,6 @@
    answer; the rows below are the ones still dealt as `.reward-row` — the
    reward door, the draft and the picks. */
   :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
-.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
 /* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
    (shop rows 397-403px, DEFECT, dated 2026-08-16). `#shop-cards` is a
