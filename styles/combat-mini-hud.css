@@ -27,7 +27,7 @@
 /* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
    width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
-  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: -50% 0 !important; justify-content: center !important;
+  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: calc(-50% + var(--intent-nudge, 0px)) 0 !important; justify-content: center !important;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > .meters {
   width: 100% !important; min-width: 0 !important;
@@ -160,3 +160,10 @@
   flex: 1 1 100%; flex-wrap: wrap; height: auto; min-height: var(--mh-badge); row-gap: var(--mh-gap);
 }
 :root .combat[data-target-hud='true'] .combatant:not(.player) > .target-hud-overhead-meters .combat-health-badges > .statuses:not(:has(.status-icon)) { display: none !important; }
+
+/* Playtest 2026-11-17: the intent is one row with room for five actions. A wrapped second row grew upward out of the
+   fixed-height intent and its top was cut off on a phone, so the row never wraps; it tightens its gaps instead. */
+:root .combat .combatant .intent .intent-compact,
+:root .combat .combatant .intent .intent-actions,
+:root .combat .combatant .intent .intent-followups { flex-wrap: nowrap !important; max-width: none !important; }
+:root .combat .combatant .intent .intent-actions:has(> :nth-child(4)) { gap: calc(2px / var(--ui-zoom, 1)); }

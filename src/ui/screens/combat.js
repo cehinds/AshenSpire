@@ -144,6 +144,7 @@ import { modalOpen } from '../modalState.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { ArmLongPress } from '../pressable.js';
+import { KeepIntentRowsInside } from '../components/intentRowFit.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
@@ -1576,6 +1577,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     battlefieldStage.refresh();
     formationMovement?.refresh();
     applyTargetLayer();
+    KeepIntentRowsInside(combatEl);
     refreshAim(); // re-apply the target glow after the board rebuilds
     decorateRoundsScreen();
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
@@ -1610,6 +1612,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The movement grid's cells follow `busy`, which has just cleared: always refreshed (it writes only on change).
     formationMovement?.refresh();
     applyTargetLayer();
+    KeepIntentRowsInside(combatEl);
     refreshAim();
     decorateRoundsScreen();
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
