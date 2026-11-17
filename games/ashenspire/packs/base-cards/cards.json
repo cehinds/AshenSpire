@@ -4039,7 +4039,7 @@
             "amount": 12
           }
         ],
-        "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
+        "textTemplate": "Gain {block} Block. No ally loses {loseHp} HP.",
         "icon": "shield",
         "flavor": "A shared defense of the ring road's last escorts.\n\nAn escort sometimes closed ranks around the weakest traveler and bore the blows together. A harsher working drew the price from every companion before any enemy struck. The traveler it saved was left to remember each willing face.\n\nShelter can leave wounds on either side."
       },
@@ -4112,7 +4112,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "All allies lose 3 HP. Gain 12 Block."
+          "Gain 12 Block. No ally loses 3 HP."
         ],
         "sourceFaceLines": [
           "Drain allies: ?",
@@ -6654,8 +6654,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
-        "faceTemplate": ["Gain {block} Block.", "Guard allies for {base.guard-allies} turn."],
+        "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn. With no allies, only the Block applies.",
+        "faceTemplate": ["Gain {block} Block.", "No allies: no guard."],
         "icon": "shield",
         "flavor": "A sheltering oath of the Bastion's road wardens.\n\nThe Wardens walked between the wagons and the tree line, keeping their shields toward the unseen ground. An escort was judged by who arrived behind them, rather than by wounds received. The oath endured after the wagons stopped coming.\n\nAn empty road can still be guarded."
       },
@@ -6729,7 +6729,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain 8 Block and guard allies for 1 turn."
+          "Gain 8 Block and guard allies for 1 turn. With no allies, only the Block applies."
         ],
         "sourceFaceLines": [
           "Guard ? allies",
@@ -7125,8 +7125,8 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Give an ally {strength} Strength for this combat.",
-        "faceTemplate": ["Ally gains {strength} Strength."],
+        "textTemplate": "No ally gains {strength} Strength.",
+        "faceTemplate": ["No ally gains {strength} Strength."],
         "icon": "shield",
         "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
       },
@@ -7198,7 +7198,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Give an ally 2 Strength for this combat."
+          "No ally gains 2 Strength."
         ],
         "sourceFaceLines": [
           "Buff ally: ?"

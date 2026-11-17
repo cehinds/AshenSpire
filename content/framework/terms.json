@@ -18,7 +18,7 @@
     { "id": "term.targetAllAllies", "canonicalText": "All allies" },
     { "id": "term.tooltip.fire", "canonicalText": "Fire damage. Its magical protection and typed resistance remain separate from resource costs." },
     { "id": "term.tooltip.sacred", "canonicalText": "Sacred damage. Its magical protection and typed resistance remain separate from resource costs." },
-    { "id": "term.tooltip.targetAllAllies", "canonicalText": "Affects every living ally, including the acting character." },
+    { "id": "term.tooltip.targetAllAllies", "canonicalText": "Affects every living ally in a co-op fight. Ally cards are disabled until allies exist: in a solo fight it affects no one, not even you." },
     { "id": "term.arcane", "canonicalText": "Arcane" },
     { "id": "term.blade", "canonicalText": "Blade" },
     { "id": "term.blunt", "canonicalText": "Blunt" },
@@ -137,7 +137,7 @@
     { "id": "term.tooltip.targetAllEnemies", "canonicalText": "Affects every enemy." },
     { "id": "term.tooltip.targetRandomEnemy", "canonicalText": "Affects a random enemy." },
     { "id": "term.tooltip.targetOtherEnemy", "canonicalText": "Affects one enemy other than the target." },
-    { "id": "term.tooltip.targetAlly", "canonicalText": "Affects one ally." },
+    { "id": "term.tooltip.targetAlly", "canonicalText": "Affects one ally. In a solo fight it affects no one." },
 
     { "id": "term.desc.unarmedStrike", "canonicalText": "A last resort, still yours. Strikes with bare hands; scales with Strength and grants no attack-rating bonus." },
     { "id": "term.desc.evasiveGuard", "canonicalText": "Guard by not being there. Scales with Dexterity." },

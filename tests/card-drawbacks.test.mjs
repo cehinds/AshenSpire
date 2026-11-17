@@ -310,3 +310,12 @@ test('a ranked ability card is offered only drawback-removal steps, and drop-Exh
     assert.ok(!where('eased').includes('exhaust') && where('eased').length === 1, `${cardId}: the upgraded copy does not (${where('eased')})`);
   }
 });
+
+test('a disabled ally card says plainly what its ally part does with no allies, and so do the ally tooltips', async () => {
+  for (const id of ALLY_CARDS) assert.match(registries.cards.get(id).textTemplate, /with no allies|no ally/i, id);
+  const raw = JSON.parse((await import('node:fs')).readFileSync(new URL('../content/framework/terms.json', import.meta.url), 'utf8'));
+  const tip = (id) => raw.terms.find((row) => row.id === id)?.canonicalText || '';
+  assert.doesNotMatch(tip('term.tooltip.targetAllAllies'), /including the acting character/);
+  assert.match(tip('term.tooltip.targetAllAllies'), /solo fight it affects no one/);
+  assert.match(tip('term.tooltip.targetAlly'), /solo fight it affects no one/);
+});
