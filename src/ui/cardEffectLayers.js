@@ -2,25 +2,49 @@ import {CARD_EFFECT_LAYERS,LAYERED_CARD_EFFECTS,combatEffectOpacity} from '../co
 import {combatEffectFrames} from './assets.js';
 import {combatEffectOrientation} from './combatEffectDirection.js';
 import {reducedMotionRequested} from './motion.js';
-import { hintImage } from './imageHints.js';
-// Each frame re-resolves its tier as it is shown (Art quality may change mid-effect).
-import { currentArtUrl } from './highResArt.js';
+import { CreateEffectPlanes } from './effectPlanes.js';
+import { uiConfig } from '../config/generated/ui.js';
+
+const CARD_PLANE_LAYERS = uiConfig.presentation.combatEffectPlayback.layering.effectPlanes.card;
+
+const CARD_PLANE_LOOK = Object.freeze({
+ className: 'card-effect-layer',
+ behindZIndex: String(CARD_PLANE_LAYERS.behindZIndex),
+ frontZIndex: String(CARD_PLANE_LAYERS.frontZIndex),
+ styleOf: part => ({
+  width: part.scale * 100 + '%',
+  height: 'auto',
+  left: part.x * 100 + '%',
+  top: part.y * 100 + '%',
+ }),
+});
+
+function placeCardPlanes(nodes, settings) {
+ for (const { el, part } of nodes) {
+  el.style.opacity = String(Math.max(0, Math.min(1, settings.opacity)) * part.opacity);
+  el.style.transform = `translate(-50%,-50%) ${combatEffectOrientation(settings.direction)}`;
+  el.hidden = !settings[part.plane];
+ }
+}
 
 // The caller owns a stacking context with its card face at z=1. These are real
 // sibling planes: the rear image is occluded by the face, not painted over it.
 export function mountCardEffectLayers(host,kind,{opacity=combatEffectOpacity(kind),direction='right',frames=combatEffectFrames(kind)}={}){
  if(!host||!LAYERED_CARD_EFFECTS.includes(kind)||!frames.length)return null;
- const nodes=CARD_EFFECT_LAYERS.map(part=>{
-  const el=hintImage(document.createElement('img'));el.className='card-effect-layer';el.dataset.effect=kind;el.dataset.plane=part.plane;el.alt='';el.setAttribute('aria-hidden','true');
-  Object.assign(el.style,{position:'absolute',pointerEvents:'none',maxWidth:'none',width:part.scale*100+'%',height:'auto',aspectRatio:'1',objectFit:'contain',left:part.x*100+'%',top:part.y*100+'%',zIndex:part.plane==='behind'?'0':'2',maskImage:part.mask,webkitMaskImage:part.mask});
-  host.append(el);return {el,part};
+ return CreateEffectPlanes({
+  host,
+  kind,
+  frames,
+  planes: CARD_EFFECT_LAYERS,
+  planeLook: CARD_PLANE_LOOK,
+  settings: {
+   opacity,
+   direction,
+   behind: true,
+   front: true,
+  },
+  placePlanes: placeCardPlanes,
  });
- let stopped=false;
- const settings={opacity,direction,behind:true,front:true};
- const update=options=>{Object.assign(settings,options);for(const {el,part}of nodes){el.style.opacity=String(Math.max(0,Math.min(1,settings.opacity))*part.opacity);el.style.transform=`translate(-50%,-50%) ${combatEffectOrientation(settings.direction)}`;el.hidden=!settings[part.plane];}};
- const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));const src=currentArtUrl(frames[i]);for(const {el}of nodes){el.src=src;el.dataset.frame=String(i+1);}};
- update({});show(0);
- return {show,update,stop:()=>{stopped=true;for(const {el}of nodes)el.remove();}};
 }
 
 export function playCardEffectLayers(host,kind,{duration=220,...options}={}){

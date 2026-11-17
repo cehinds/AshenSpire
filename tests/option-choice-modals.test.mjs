@@ -63,6 +63,18 @@ test('discard choice: rows toggle up to the count, the primary enables at exactl
   } finally { restore(); }
 });
 
+test('discard choice: a count of 0 opens with the primary disabled until a row is tapped', async () => {
+  const { document, restore } = installDom();
+  try {
+    const { openDiscardChoiceModal } = await import('../src/ui/components/discardChoiceModal.js');
+    const shell = openDiscardChoiceModal({ count: 0, onChoose: () => {}, cards: [{ instanceId: 'c1', name: 'Strike' }] });
+    const [commit] = buttons(document, 'Discard 0');
+    assert.equal(commit.disabled, true, 'starts disabled, as before the shared choice modal');
+    shell.body.querySelectorAll('[data-discard-id]')[0].click();
+    assert.equal(commit.disabled, false, 'a tap with nothing to pick enables it');
+  } finally { restore(); }
+});
+
 test('slot choice: rows, a locked position is a disabled row, Choose commits the selected id after closing', async () => {
   const { document, restore } = installDom();
   try {

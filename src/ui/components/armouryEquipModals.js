@@ -1,11 +1,10 @@
 import { openModal, button, el as buildElement } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
-import { optionRowList, markOptionRows } from './optionRowList.js';
+import { OpenChoiceModal } from './choiceModal.js';
 import { t as translate } from '../strings.js';
 
 const CLICK_EVENT = 'click';
-const SLOT_OPTION_ATTRIBUTE = 'data-slot-option';
-const NO_SCROLL = Object.freeze({ preventScroll: true });
+const SLOT_CHOICE_KIND = 'slotChoice';
 const BACK_LABEL_KEY = 'common.back';
 const EQUIP_LABEL_KEY = 'armoury.picker.act.equip';
 const CARD_OPTIONS = Object.freeze({
@@ -55,7 +54,6 @@ function buildSlotRowModels(slotOptions)
                 ? slotOption.hint
                 : slotOption.sub,
             disabled: !!slotOption.disabled,
-            className: 'equip-slot-option',
         };
     });
 }
@@ -95,71 +93,13 @@ function renderEquipCard(host, registries, item)
 
 export function OpenSlotChoiceModal({ options, onChoose, opener })
 {
-    const backButton = buildBackButton();
-    const chooseButton = button({
-        label: translate('common.choose'),
-        weight: 'primary',
-        disabled: true,
-    });
-    let slotList = null;
-    let selectedSlotId = null;
-
-    function findFirstEnabledRow()
-    {
-        const slotRows = slotList?.querySelectorAll(
-            `[${SLOT_OPTION_ATTRIBUTE}]`,
-        ) || [];
-        const firstEnabledRow = [...slotRows].find(
-            (slotRow) => !slotRow.disabled,
-        );
-        return firstEnabledRow || null;
-    }
-
-    function selectSlot(slotId, slotRow)
-    {
-        selectedSlotId = slotId;
-        slotRow?.focus?.(NO_SCROLL);
-        markOptionRows(
-            slotList,
-            SLOT_OPTION_ATTRIBUTE,
-            [slotId],
-        );
-        chooseButton.disabled = false;
-    }
-
-    function renderSlotList(host)
-    {
-        slotList = optionRowList(
-            buildSlotRowModels(options),
-            {
-                idAttr: SLOT_OPTION_ATTRIBUTE,
-                onSelect: selectSlot,
-            },
-        );
-        host.append(slotList);
-    }
-
-    function chooseSelectedSlot()
-    {
-        if (selectedSlotId == null)
-        {
-            return;
-        }
-        modal.close();
-        onChoose?.(selectedSlotId);
-    }
-
-    const modal = openBackableModal({
-        backButton,
-        primaryButton: chooseButton,
-        opener,
+    return OpenChoiceModal({
+        kind: SLOT_CHOICE_KIND,
+        rows: buildSlotRowModels(options),
         title: translate('armoury.slot.title'),
-        className: 'option-choice equip-slot-choice',
-        initialFocus: findFirstEnabledRow,
-        body: renderSlotList,
+        opener,
+        onCommit: onChoose,
     });
-    chooseButton.addEventListener(CLICK_EVENT, chooseSelectedSlot);
-    return modal;
 }
 
 export function OpenEquipConfirmModal({

@@ -1,3 +1,4 @@
+// @ts-check
 // src/ui/sfx.js — sound hooks (SPEC §7.4)
 //
 // Every feedback moment calls sfx.play(id), and the sink is live: main.js
@@ -16,12 +17,7 @@
 // `recent` is a small ring buffer of the ids fired — it lets tests and QA verify
 // the wiring is live without shipping any audio.
 
-export const sfx = {
-  sink: null, // future audio layer plugs in here; null = silent (v1)
-  recent: [], // last fired hook ids (bounded), for verification
-  play(id) {
-    this.recent.push(id);
-    if (this.recent.length > 32) this.recent.shift();
-    if (this.sink) this.sink(id);
-  },
-};
+import { CreateCueChannel } from './cueChannel.js';
+
+/** @type {import('./contracts.js').FeedbackChannel} */
+export const sfx = CreateCueChannel();

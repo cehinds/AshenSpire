@@ -1,3 +1,4 @@
+// @ts-check
 // src/ui/haptics.js — vibration on card play, damage taken and turn start
 // (FINISH wave 13).
 //
@@ -9,16 +10,10 @@
 // silent (tests, tools). The `haptics` setting is read on every cue, so
 // turning it off in Settings stops the next buzz with no reload.
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS } from '../content/haptics.js';
+import { CreateCueChannel } from './cueChannel.js';
 
-export const haptic = {
-  sink: null,
-  recent: [], // last ids asked for (bounded), for verification
-  play(id) {
-    this.recent.push(id);
-    if (this.recent.length > 32) this.recent.shift();
-    if (this.sink) this.sink(id);
-  },
-};
+/** @type {import('./contracts.js').FeedbackChannel} */
+export const haptic = CreateCueChannel();
 
 /** hapticsEnabled(settings) → is the sparse `haptics` setting on? */
 export function hapticsEnabled(settings = {}) {
