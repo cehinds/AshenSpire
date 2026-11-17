@@ -15,6 +15,7 @@ import {
   PILE_POSITIONS,
 } from '../schemas.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from '../formulas.js';
+import { RANGES } from '../combatRanges.js';
 import { STANCE_CHOICE_SELECTORS } from '../cardChoices.js';
 import { describe, isPlainObject } from './shared.js';
 
@@ -207,7 +208,8 @@ const PREDICATE_FIELDS = {
   cardAbilityKindIs: ['kind'],
   cardTargetsAllEnemies: [],
   resourcePaid:['resource','amount'],
-  inStance: ['stance'],
+  inStance: ['stance', 'of', 'snapshot'],
+  atRange: ['range', 'of'],
   hasStatus: ['of', 'status', 'atLeast', 'snapshot'],
   hasBlock: ['of', 'snapshot'],
   hpBelowPct: ['of', 'pct', 'snapshot'],
@@ -260,9 +262,12 @@ export function validatePredicate(pred, path, vctx) {
       if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
       break;
     case 'inStance':
-      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared'].includes(pred.stance)) {
+      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','defense','counter','sweep','casting','prepared','staggered','idle'].includes(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
       }
+      break;
+    case 'atRange':
+      if (!RANGES.includes(pred.range)) err(`${path}.range`, `Unknown range '${pred.range}' (allowed: ${RANGES.join(', ')})`);
       break;
     case 'hasStatus':
     case 'eventStatusIs':

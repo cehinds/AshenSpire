@@ -255,6 +255,8 @@ export const PREDICATES = Object.freeze([
   'cardTargetsAllEnemies',
   'resourcePaid',
   'inStance',
+  // The engagement band between the owner and `of` (default the target): melee, reach or ranged.
+  'atRange',
   'hasStatus',
   'hasBlock',
   'hpBelowPct',

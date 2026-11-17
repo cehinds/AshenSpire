@@ -38,6 +38,10 @@ import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
+
+/** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
+const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepared: 'in Prepared', defend: 'in Defense', defense: 'in Defense' });
+const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance[0].toUpperCase()}${stance.slice(1)}`;
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
@@ -138,7 +142,8 @@ export function cardSummaryContext(def, preview = null, registries = null, rules
     if (pred.p === 'hasBlock') return `${pred.of === 'self' ? 'you' : 'the target'} ${pred.of === 'self' ? 'have' : 'has'} Block${pred.snapshot === 'beforePlay' ? ' before this card' : ''}`;
     if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
     if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
-    if (pred.p === 'inStance') return `you are in ${pred.stance}`;
+    if (pred.p === 'inStance') return `${['target', 'enemy'].includes(pred.of) ? 'the target is' : 'you are'} ${stanceWords(pred.stance)}`;
+    if (pred.p === 'atRange') return `the target is at ${title(pred.range)}`;
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
       const threshold = [pred.atLeast !== undefined ? `at least ${pred.atLeast}` : '', pred.atMost !== undefined ? `at most ${pred.atMost}` : ''].filter(Boolean).join(' and ');
