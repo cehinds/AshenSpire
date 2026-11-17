@@ -7,6 +7,10 @@ import { uiConfig } from '../src/config/generated/ui.js';
 const actor = (id, side, x, row, ratio = 1, over = {}) => ({ side, ratio, multiplier: .5, userScale: 1, visibleHeight: 190, visibleWidth: 120,
   slot: { id, side, x, row, ground: 600, fitGround: 600 }, ...over });
 const fit = (actors, extra = {}) => fitViewportSprites({ width: 1280, actors, viewportHeight: 720, ...extra });
+// SPEC: the player shares the enemies' body share. The playtest's larger player (item 33, playerBodyScale 1.6) waits on the
+// owner's SPEC ruling, so the pin is the SPEC value, not whatever the config holds.
+const PLAYER = 1;
+const sideScale = f => (f.id === 'p' ? PLAYER : 1);
 
 test('the tunable shares live in the formation config', () => {
   const share = uiConfig.presentation.combatFormationModel.sizing.viewportScale.bodyHeightFraction;
@@ -26,27 +30,32 @@ test('every combatant is combatantScale x the base share; a large one is x the s
   const cfg = uiConfig.presentation.combatFormationModel.sizing.viewportScale;
   assert.equal(cfg.combatantScale, .5866);
   assert.equal(cfg.enemyScale, undefined);
-  const player = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1 });
-  const enemy = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1 });
-  const large = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1.75 });
-  assert.ok(Math.abs(player - 800 * .22 * .5866) < 1e-9);
-  assert.equal(enemy, player);
-  assert.ok(Math.abs(large / player - 1.15) < 1e-9);
+  const player = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'player' });
+  const enemy = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'enemy' });
+  const large = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1.75, side: 'enemy' });
+  assert.ok(Math.abs(enemy - 800 * .22 * .5866) < 1e-9);
+  assert.equal(cfg.playerBodyScale, 1, 'SPEC: no player body scale until the owner approves item 33');
+  assert.ok(Math.abs(player / enemy - 1) < 1e-9, 'the player equals a normal enemy');
+  // The mechanism a SPEC change would switch on: a playerBodyScale of 1.6 draws the player 60% larger.
+  const larger = { ...uiConfig.presentation.combatFormationModel.sizing.viewportScale, playerBodyScale: 1.6 };
+  assert.ok(Math.abs(targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'player' }, larger)
+    / targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, side: 'enemy' }, larger) - 1.6) < 1e-9);
+  assert.ok(Math.abs(large / enemy - 1.15) < 1e-9);
 });
 
 test('size ignores enemy count, the other side and ground depth', () => {
   const player = actor('p', 'player', 200, 0);
   const one = fit([player, actor('e1', 'enemy', 900, 0)]);
   const five = fit([player, ...[0, 1, 2, 3, 4].map(i => actor('e' + i, 'enemy', 700 + i * 110, i % 2))]);
-  assert.ok(Math.abs(one.find(f => f.id === 'p').visibleHeight - 720 * .26 * .5866) < 1e-9);
-  assert.ok(Math.abs(five.find(f => f.id === 'p').visibleHeight - 720 * .26 * .5866) < 1e-9);
-  for (const f of five) assert.ok(Math.abs(f.visibleHeight - 720 * .26 * .5866) < 1e-9);
+  assert.ok(Math.abs(one.find(f => f.id === 'p').visibleHeight - 720 * .26 * .5866 * PLAYER) < 1e-9);
+  assert.ok(Math.abs(five.find(f => f.id === 'p').visibleHeight - 720 * .26 * .5866 * PLAYER) < 1e-9);
+  for (const f of five) assert.ok(Math.abs(f.visibleHeight - 720 * .26 * .5866 * sideScale(f)) < 1e-9);
   assert.equal(five.lastResort, null);
 });
 
 test('a normal enemy equals the player; a large one is x1.15 of that', () => {
   const sizes = fit([actor('p', 'player', 200, 0), actor('e', 'enemy', 900, 0), actor('big', 'enemy', 1100, 1, 1.75)]);
-  assert.ok(Math.abs(sizes[1].visibleHeight / sizes[0].visibleHeight - 1) < 1e-9);
+  assert.ok(Math.abs(sizes[0].visibleHeight / sizes[1].visibleHeight - PLAYER) < 1e-9);
   assert.ok(Math.abs(sizes[2].visibleHeight / sizes[1].visibleHeight - 1.15) < 1e-9);
 });
 
@@ -62,12 +71,12 @@ test('a crowded phone row scales every combatant by one common factor', () => {
   const actors = [actor('p', 'player', 60, 0), ...[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => actor('e' + i, 'enemy', 100 + i * 20, 0))];
   const sizes = fitViewportSprites({ width: 360, actors, viewportHeight: 780, portraitPhone: true });
   assert.ok(sizes.lastResort > 0 && sizes.lastResort < 1);
-  for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * .5866 * sizes.lastResort) < 1e-6, 'one common factor, player included');
+  for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * .5866 * sideScale(f) * sizes.lastResort) < 1e-6, 'one common factor, player included');
 });
 
 test('row, display and Settings scale multipliers never resize a figure', () => {
   const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1.5 }), actor('e', 'enemy', 900, 0, 1, { multiplier: .3, userScale: 2 })]);
-  assert.ok(Math.abs(sizes[0].visibleHeight - 720 * .26 * .5866) < 1e-9);
+  assert.ok(Math.abs(sizes[0].visibleHeight - 720 * .26 * .5866 * PLAYER) < 1e-9);
   assert.ok(Math.abs(sizes[1].visibleHeight - 720 * .26 * .5866) < 1e-9);
 });
 
@@ -95,7 +104,7 @@ test('the hand top is a floor: a lone player shrinks (common factor) rather than
   assert.ok(tight.lastResort > 0 && tight.lastResort < 1);
   const p = tight.find(f => f.id === 'p');
   assert.ok(p.visibleHeight + 40 + 6 <= 150 + 1e-6, 'feet (with headroom) end above the hand top');
-  assert.ok(Math.abs(tight.find(f => f.id === 'e').visibleHeight - p.visibleHeight) < 1e-9, 'everyone shrinks together');
+  assert.ok(Math.abs(tight.find(f => f.id === 'e').visibleHeight * PLAYER - p.visibleHeight) < 1e-9, 'everyone shrinks together');
 });
 
 test('a hidden or unmeasured hand (top 0 or below) never shrinks the figures', async () => {

@@ -86,8 +86,9 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
     if (move.maxConsecutive != null) meta.push(`At most ${move.maxConsecutive} consecutive selections`);
     if (tags.length) meta.push(`Tags: ${tags.map(words).join(', ')}`);
     if (combatTags.length) meta.push(combatTags.map(tag => tag.label).join(' · '));
+    const effectLines = [...pieces];
     pieces.push(...combatTags.filter(tag => tag.blurb).map(tag => `${tag.label}: ${tag.blurb}`));
     return { id: `${def.id}:${moveId}`, moveId, name: move.name || words(moveId), active, locked,
-      tags, combatTags, profile, intent: move.intent, detail: pieces.join(' · ') || words(move.intent), meta: meta.join(' · ') };
+      tags, combatTags, profile, intent: move.intent, detail: pieces.join(' · ') || words(move.intent), effectLines, meta: meta.join(' · ') };
   });
 }

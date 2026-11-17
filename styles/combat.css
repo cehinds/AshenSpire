@@ -1041,7 +1041,9 @@
 }
 
 /* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
-.hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
+/* Playtest 2026-11-17: the draw is quicker (240 ms before). */
+.hand { --hand-draw-ms: 160ms; --hand-discard-ms: 200ms; }
+.hand .card.card-drawn { animation: card-arrive var(--hand-draw-ms) ease-out; }
 @keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
 @keyframes card-arrive-lite { from { opacity: 0.35; } to { opacity: 1; } }
 :root[data-performance='lite'] .hand .card.card-drawn { animation-name: card-arrive-lite; }

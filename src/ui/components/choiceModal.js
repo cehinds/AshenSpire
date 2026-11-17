@@ -187,11 +187,24 @@ class ChoiceModal
         if (selectedIndex >= 0)
         {
             this.selectedIds.splice(selectedIndex, 1);
+            return;
         }
-        else if (this.selectedIds.length < this.selectionLimit)
+
+        if (this.selectionLimit <= 0)
         {
-            this.selectedIds.push(rowId);
+            return;
         }
+
+        if (this.selectedIds.length >= this.selectionLimit)
+        {
+            if (!this.model.swapsAtLimit)
+            {
+                return;
+            }
+            this.selectedIds.shift();
+        }
+
+        this.selectedIds.push(rowId);
     }
 
     select(rowId, rowElement)
