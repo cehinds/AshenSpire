@@ -3,7 +3,7 @@ import { OpenModal } from './modalShell.js';
 import { optionRowList } from './optionRowList.js';
 import { renderCard } from './card.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
-import { changeSummary, economyNode } from './smithPaneParts.js';
+import { deltaNode, economyNode } from './smithPaneParts.js';
 import {
     pushModalParent,
     dropModalParent,
@@ -209,7 +209,12 @@ function buildChangeRows(changes)
             class: CLASS.changeName,
             text: change.label,
         }),
-        values: changeSummary({ values: [change] }),
+        // The row's name already says the label, so the value is the delta alone (EFFECTS once, owner 2026-11-17).
+        values: buildElement(
+            'span',
+            { class: 'smith-fold-values' },
+            deltaNode(change.before, change.after),
+        ),
     }));
 }
 

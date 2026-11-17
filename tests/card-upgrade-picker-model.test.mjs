@@ -541,3 +541,42 @@ test('the picker lists deck cards first, then the library, and marks each deck c
     door.close();
   });
 });
+
+// Owner screenshot 2026-11-17: the EFFECTS row read "EFFECTS EFFECTS draw → addCard, draw" (the label twice, op names).
+test('the EFFECTS row reads like card text, in the card\'s order, with amounts summed', async () => {
+  const { effectWords } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
+  const plain = registries.cards.get('core.strike');
+  const after = (step) => effectWords(registries, applyUpgradeSteps(plain, [step]));
+  assert.equal(effectWords(registries, plain), 'None');
+  assert.equal(after({ k: 'fx', fx: 'copy' }), 'Add a copy');
+  assert.equal(after({ k: 'fx', fx: 'cull' }), 'Exhaust 1, Draw 2');
+  assert.equal(after({ k: 'fx', fx: 'shuffle' }), 'Shuffle discard into draw');
+  const drawThenCopy = { id: 'x', effects: [{ op: 'draw', amount: 1 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
+  assert.equal(effectWords(registries, drawThenCopy), 'Draw 1, Add a copy');
+  const boosts = { id: 'x', effects: [{ op: 'changeAttribute', attribute: 'strength', amount: 2, thisTurn: true }, { op: 'damage', target: 'otherEnemy', amount: 3 }], runAttributeBonus: { dexterity: 1 } };
+  assert.equal(effectWords(registries, boosts), '+2 STR this turn, Hit another enemy, +1 DEX for the run');
+  for (const words of [effectWords(registries, drawThenCopy), effectWords(registries, boosts)]) {
+    assert.doesNotMatch(words, /addCard|changeAttribute|otherEnemy|shuffleDiscardIntoDraw/, 'no internal names');
+  }
+});
+
+test('each change row in the card\'s modal names its label once', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const rows = [...host.querySelectorAll('.confirmation-change-list .as-statrow')];
+    assert.ok(rows.length >= 1, 'the upgrade lists its changes');
+    for (const row of rows) {
+      const label = row.querySelector('.sr-name').textContent;
+      assert.ok(label, 'the row names its change');
+      assert.equal(row.querySelector('.sr-vals .sp-k'), null, `${label}: the value carries no second label`);
+      assert.ok(row.querySelector('.sr-vals .as-delta'), `${label}: the value is the before -> after delta`);
+    }
+    door.close();
+  });
+});

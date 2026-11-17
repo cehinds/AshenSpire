@@ -33,6 +33,55 @@ const statusText = (registries, stacks) => (stacks.size
   ? [...stacks].map(([id, n]) => `${statusName(registries, id)} ${n}`).join(', ') : 'none');
 const cap = (word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : '');
 
+// The attributes the face abbreviates ("+2 STR this turn"); any other stat keeps its own name.
+const SHORT_ATTRIBUTES = freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
+const attributeWord = (id) => (SHORT_ATTRIBUTES.includes(id) ? t(`combat.attr.short.${id}`) : cap(id));
+// A count the face prints as a number; a formula amount reads without one ("Draw").
+const countWord = (key, amount) => t(key, { n: Number.isFinite(amount) ? amount : '' }).trim();
+const COUNTED_OPS = freeze({ draw: 'cardUpgrade.fx.draw', discard: 'cardUpgrade.fx.discard', exhaust: 'cardUpgrade.fx.exhaust', retain: 'cardUpgrade.fx.retain' });
+
+/**
+ * One effect's words, as [key, amount, phrase(total)]: effects that share a key are one phrase with their amounts
+ * summed ("Draw 2", not "Draw 1, Draw 1"). Null for an effect the EFFECTS row does not track.
+ */
+function effectPhrase(registries, def, effect) {
+  if (COUNTED_OPS[effect.op]) return [effect.op, effect.amount, (n) => countWord(COUNTED_OPS[effect.op], n)];
+  if (effect.op === 'addCard') {
+    const own = effect.card === def?.id;
+    const key = own ? 'copy' : 'card';
+    return [`addCard:${key}`, Number.isFinite(effect.count) ? effect.count : 1, (n) => (n === 1 ? t(`cardUpgrade.fx.${key}`) : t(own ? 'cardUpgrade.fx.copies' : 'cardUpgrade.fx.cards', { n }))];
+  }
+  if (effect.op === 'shuffleDiscardIntoDraw') return ['shuffle', 0, () => t('cardUpgrade.fx.shuffle')];
+  if (effect.op === 'applyStatus' && effect.thisTurn) {
+    return [`status:${effect.status}`, effect.stacks, (n) => t('cardUpgrade.fx.statusTurn', { n: n ?? '', stat: statusName(registries, effect.status) })];
+  }
+  if (effect.op === 'changeAttribute') {
+    const span = effect.thisTurn ? 'turn' : 'fight';
+    return [`${span}:${effect.attribute}`, effect.amount, (n) => t(`cardUpgrade.fx.${span}`, { n: n ?? '', stat: attributeWord(effect.attribute) })];
+  }
+  if (effect.op === 'damage' && (effect.target === 'randomEnemy' || effect.target === 'otherEnemy')) {
+    const key = effect.target === 'randomEnemy' ? 'randomTarget' : 'otherTarget';
+    return [key, 0, () => t(`cardUpgrade.fx.${key}`)];
+  }
+  return null;
+}
+
+/** The extra effects of a card in player words, in the card's own order: "Draw 1, Add a copy". */
+export function effectWords(registries, def) {
+  const phrases = new Map();
+  for (const effect of def?.effects || []) {
+    const phrase = effectPhrase(registries, def, effect);
+    if (!phrase) continue;
+    const [key, amount, say] = phrase;
+    const held = phrases.get(key);
+    const total = Number.isFinite(amount) && (!held || Number.isFinite(held.total)) ? (held?.total || 0) + amount : undefined;
+    phrases.set(key, { total, say });
+  }
+  const runBonus = Object.entries(def?.runAttributeBonus || {}).map(([stat, n]) => t('cardUpgrade.fx.run', { n, stat: attributeWord(stat) }));
+  const words = [...[...phrases.values()].map(({ total, say }) => say(total)), ...runBonus];
+  return words.join(', ') || t('cardUpgrade.fx.none');
+}
+
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
 export function cardUpgradeChanges(registries, before, after, playsEver = 0, maxRange = undefined) {
   if (!before || !after) return [];
@@ -62,10 +111,9 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
-  // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target, and the keywords / traits.
-  const extras = (def) => [...new Set((def?.effects || []).flatMap((e) => (e.op === 'draw' || e.op === 'discard' || e.op === 'exhaust' || e.op === 'addCard' || e.op === 'shuffleDiscardIntoDraw' || e.op === 'retain'
-    ? [e.op] : e.op === 'applyStatus' && e.thisTurn ? [`${e.status} this turn`] : e.op === 'changeAttribute' ? [`${e.attribute} ${e.thisTurn ? 'this turn' : 'for the fight'}`] : e.op === 'damage' && (e.target === 'randomEnemy' || e.target === 'otherEnemy') ? ['extra target'] : []))), ...Object.entries(def?.runAttributeBonus || {}).map(([stat, n]) => `+${n} ${stat} for the run`)].sort().join(', ') || 'none';
-  push(t('cardUpgrade.change.effects'), extras(before), extras(after));
+  // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
+  // Phrased as the card text phrases them ("Draw 1, Add a copy"), in the card's effect order (owner, 2026-11-17).
+  push(t('cardUpgrade.change.effects'), effectWords(registries, before), effectWords(registries, after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
   const from = statusStacks(before), to = statusStacks(after);
