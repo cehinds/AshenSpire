@@ -159,7 +159,8 @@
     "playableOnly": true,
     "excludeCardIds": [
       "core.guidingWhisper",
-      "base.evade"
+      "base.evade",
+      "base.buff-ally"
     ],
     "weapons": {
       "groups": [

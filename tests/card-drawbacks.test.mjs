@@ -78,3 +78,14 @@ test('Pebble Throw is a Reach attack', async () => {
   assert.equal(combatCardRange(pebble), 'reach');
   assert.equal(combatCardRange(registries.cards.get('core.flick')), 'melee', 'Flick, its zero-cost sibling, stays Melee');
 });
+
+test('cards that buff a team member are kept out of every Core reward and shop pool, but stay defined', () => {
+  const buffsAlly = (card) => (card.effects || []).some((e) => e.op === 'applyStatus' && ['ally', 'allAllies'].includes(e.target));
+  assert.ok(registries.cards.has('base.buff-ally'), 'Ally Empowerment stays defined for saved decks');
+  for (const classId of CLASSES) {
+    const run = createRunState({ registries, classId, seed: 1, profileMeta: unlocked });
+    run.maxMana = 20;
+    const offered = gameProfileRewardPools(registries, run).combatCards.filter((id) => buffsAlly(registries.cards.get(id)));
+    assert.deepEqual(offered, [], classId);
+  }
+});
