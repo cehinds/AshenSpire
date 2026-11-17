@@ -901,11 +901,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
-    // The stage, THEN the sync. `syncCardSelection` dresses what is already
-    // drawn; the 1-9 target keycap is not a class it can toggle — `renderEnemies`
-    // BUILDS it, gated on `targeting`, so only a repaint can take it away.
-    // (`selectedFlask` is deliberately untouched above, and a raised flask keeps
-    // `targeting` true, so the repaint is what decides — not this call site.)
+    // Refresh the stage, then let the target layer update the existing keycaps.
+    // A raised flask remains armed, so its legal enemies keep their keycaps.
     renderCombatantStage();
     syncCardSelection();
   });
@@ -937,6 +934,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const alive = !!getEntity(combat, id)?.alive;
       const legal = armed && plan.legalIds.includes(id);
       frame.classList.toggle('targetable', legal && frame.classList.contains('enemy'));
+      const key = frame.querySelector('.enemy-key');
+      const showKey = legal && !dragInstanceId;
+      if (key && key.hidden === showKey) key.hidden = !showKey;
       // Same-value writes are skipped: a repeated inert/aria write still dirties the frame's subtree.
       const inert = !alive || (armed && !legal);
       if (frame.inert !== inert) frame.inert = inert;
@@ -2417,7 +2417,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const classNames = () => [dv(enemy).alive ? '' : 'dead', dv(enemy).broken ? 'broken' : '', eligible ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
-        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, eligible, settings]),
+        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, settings]),
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
@@ -2435,7 +2435,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (enemy.alive && idx >= 0 && idx < 9) {
             // The target number is a Keycap, the same atom every other key wears.
             const key = keycap(String(idx + 1), { class: 'enemy-key' });
-            key.hidden = !eligible;
+            key.hidden = true;
             leading.push(key);
           }
           return leading;
@@ -4170,13 +4170,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selfArm = null;
       selectedFlask = null;
-      // THE STAGE HAS TO BE REPAINTED, NOT JUST RE-DRESSED. `syncCardSelection`
-      // toggles classes on nodes that already exist; the 1-9 target keycap is
-      // not a class. `renderEnemies` APPENDS it to `.combatant-leading` while
-      // `targeting` holds, and its renderKey names `targeting`, so the badge
-      // only leaves on a repaint. Without this, opening the Armoury put the aim
-      // down and left every enemy still wearing its number — while those same
-      // number keys had gone back to selecting cards in hand.
+      // Update the combatant stage and its targeting presentation before opening the Armoury.
       renderCombatantStage();
       syncCardSelection();
     }

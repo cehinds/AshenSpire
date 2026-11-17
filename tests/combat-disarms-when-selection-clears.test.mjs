@@ -166,28 +166,20 @@ ok(/if \(hostile\) \{ selected = inst\.instanceId;/.test(combat),
 ok(/if \(pv\.needsTarget \|\| dragTargetMode === 'all'\) \{ selected = inst\.instanceId;/.test(combat),
   'the drag/flick select still arms `selected` directly');
 
-// ---- the stage is REPAINTED, not merely re-dressed --------------------------
-// `syncCardSelection` toggles classes on nodes that already exist. The 1-9
-// target keycap is not a class: `renderEnemies` APPENDS it to
-// `.combatant-leading` while `targeting` holds, and its renderKey names
-// `targeting`, so nothing short of a repaint takes it off again. A disarm that
-// only re-dressed left every enemy wearing its number while those same number
-// keys had gone back to selecting cards in hand.
+// The stage is refreshed before the target layer reflects cleared input.
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(beforeDelegation),
   'opening the Armoury repaints the combatant stage BEFORE it re-dresses');
-// The store watcher has the same gap and the same fix. It clears `selected` and
-// `selfArm` only, so a raised flask still holds `targeting` — which is exactly
-// why the repaint decides rather than the call site.
+// The store watcher clears the card selection. The shared layer reads any
+// remaining flask selection.
 const watchBody = combat.match(/onSelectionChange\(\(lit\) => \{[\s\S]*?\n  \}\);/);
 ok(!!watchBody, 'the selection watcher can still be read');
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(watchBody[0]),
   'the store watcher repaints the combatant stage before it re-dresses');
-// And the keycap really is written by the renderer, which is the fact both assertions above depend on. Owner
-// (2026-11-06): the key is built with the frame and only `hidden` follows `targeting`, so arming adds no HUD node.
-ok(/key\.hidden = !targeting;/.test(combat),
-  'the target keycap is shown only under `targeting` by renderEnemies (hidden otherwise, never added or removed)');
+// The renderer builds hidden keycaps with the frame. The target layer shows the existing keys for legal targets.
+ok(/key\.hidden = true;/.test(combat) && /key\.hidden = !showKey;/.test(combat),
+  'the target layer shows existing keycaps only for legal targets');
 ok(!/enemy-key/.test(combat.match(/function syncCardSelection\(\)[\s\S]*?\n  \}/)[0]),
-  'syncCardSelection still does not touch the keycap, so only a repaint can');
+  'the selection sync delegates keycap visibility to the target layer');
 
 // And the store really does stay silent on an empty clear — the exact reason a
 // watcher alone could not carry this.
