@@ -1,5 +1,7 @@
+// @ts-check
 const RECENT_CUE_LIMIT = 32;
 
+/** @returns {import('./contracts.js').FeedbackChannel} */
 export function CreateCueChannel()
 {
     return {

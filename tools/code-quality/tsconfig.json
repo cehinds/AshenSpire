@@ -13,6 +13,9 @@
   "files": [
     "../../src/engine/saveTransfer.js",
     "../../src/engine/savedRunContext.js",
+    "../../src/ui/contracts.js",
+    "../../src/ui/cueChannel.js",
+    "../../src/ui/sfx.js",
     "type-tests/save-boundaries.js"
   ]
 }

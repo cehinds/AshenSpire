@@ -1,3 +1,4 @@
+// @ts-check
 // src/ui/sfx.js — sound hooks (SPEC §7.4)
 //
 // Every feedback moment calls sfx.play(id), and the sink is live: main.js
@@ -18,4 +19,5 @@
 
 import { CreateCueChannel } from './cueChannel.js';
 
+/** @type {import('./contracts.js').FeedbackChannel} */
 export const sfx = CreateCueChannel();

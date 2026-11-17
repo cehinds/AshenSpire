@@ -11,6 +11,7 @@
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS } from '../content/haptics.js';
 import { CreateCueChannel } from './cueChannel.js';
 
+/** @type {import('./contracts.js').FeedbackChannel} */
 export const haptic = CreateCueChannel();
 
 /** hapticsEnabled(settings) → is the sparse `haptics` setting on? */
