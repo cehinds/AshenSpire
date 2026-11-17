@@ -17,7 +17,7 @@ import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
-import { selectCardVariant, playConditionMet } from './cardBehavior.js';
+import { selectCardVariant, PlayConditionMet } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
@@ -1801,10 +1801,10 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
   } else if (needsEnemyTarget(def) || chargedEnemyTarget) {
     // An unaimed card with a play condition takes the first living enemy that meets it.
-    target = combat.enemies.find((e) => e.alive && playConditionMet(combat, def, e)) || combat.enemies.find((e) => e.alive) || null;
+    target = combat.enemies.find((e) => e.alive && PlayConditionMet(combat, def, e)) || combat.enemies.find((e) => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');
   }
-  if (!playConditionMet(combat, def, target)) throw F.playRefusal(`'${def.name}' cannot be played now`, 'unplayable');
+  if (!PlayConditionMet(combat, def, target)) throw F.playRefusal(`'${def.name}' cannot be played now`, 'unplayable');
 
   // WHAT THE CARD IS comes from its kind tag (model/tree.js cardKind), never
   // from `def.type` — every reader downstream (the attack counter, the

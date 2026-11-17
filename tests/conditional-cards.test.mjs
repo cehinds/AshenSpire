@@ -12,7 +12,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { evalPredicate } from '../src/engine/triggers.js';
 import { validatePredicate } from '../src/model/validate.js';
 import { actorRangeKey, rangePairKey } from '../src/model/combatEngagement.js';
-import { playConditionMet, playConditionReachable } from '../src/engine/cardBehavior.js';
+import { PlayConditionMet, PlayConditionReachable } from '../src/engine/cardBehavior.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -119,17 +119,17 @@ test('playIf: a reach-only card is allowed at reach and refused at melee', () =>
   const { combat, enemy } = live();
   const def = { id: 'probe', name: 'Probe', playIf: { p: 'atRange', range: 'reach' } };
   setBand(combat, enemy, 1);
-  assert.equal(playConditionMet(combat, def, enemy), true);
-  assert.equal(playConditionReachable(combat, def), true);
+  assert.equal(PlayConditionMet(combat, def, enemy), true);
+  assert.equal(PlayConditionReachable(combat, def), true);
   setBand(combat, enemy, 0);
-  assert.equal(playConditionMet(combat, def, enemy), false);
-  assert.equal(playConditionReachable(combat, def), false, 'no living enemy can be aimed to meet it');
-  assert.equal(playConditionMet(combat, { id: 'plain' }, enemy), true, 'a card without playIf is always allowed');
+  assert.equal(PlayConditionMet(combat, def, enemy), false);
+  assert.equal(PlayConditionReachable(combat, def), false, 'no living enemy can be aimed to meet it');
+  assert.equal(PlayConditionMet(combat, { id: 'plain' }, enemy), true, 'a card without playIf is always allowed');
 });
 
 test('a playIf range gate reads on the card face', async () => {
-  const { playConditionPhrase } = await import('../src/model/playingCard.js');
-  assert.equal(playConditionPhrase({ p: 'atRange', range: 'reach' }), 'Only at Reach');
-  assert.equal(playConditionPhrase({ p: 'inStance', of: 'target', stance: 'idle' }), 'Only while the target is Idle');
-  assert.equal(playConditionPhrase(undefined), null);
+  const { PlayConditionPhrase } = await import('../src/model/playingCard.js');
+  assert.equal(PlayConditionPhrase({ p: 'atRange', range: 'reach' }), 'Only at Reach');
+  assert.equal(PlayConditionPhrase({ p: 'inStance', of: 'target', stance: 'idle' }), 'Only while the target is Idle');
+  assert.equal(PlayConditionPhrase(undefined), null);
 });

@@ -44,7 +44,7 @@ const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepa
 const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance}`;
 
 /** A card's `playIf` as a short face line ("Only at Reach"), or null when the face has no words for it. */
-export function playConditionPhrase(pred) {
+export function PlayConditionPhrase(pred) {
   if (pred?.p === 'atRange') return `Only at ${pred.range[0].toUpperCase()}${pred.range.slice(1)}`;
   if (pred?.p === 'inStance') return `Only ${['target', 'enemy'].includes(pred.of) ? 'while the target is' : 'while'} ${stanceWords(pred.stance)}`;
   return null;
@@ -311,7 +311,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
   if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
-  if (playConditionPhrase(def.playIf)) parts.unshift(playConditionPhrase(def.playIf));
+  if (PlayConditionPhrase(def.playIf)) parts.unshift(PlayConditionPhrase(def.playIf));
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
   return parts.length ? `${parts.join('. ')}.` : null;
 }

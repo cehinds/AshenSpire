@@ -185,7 +185,7 @@ import { openHandDiscard } from '../components/handDiscard.js';
 import { evalPredicate } from '../../engine/triggers.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
-import { playConditionReachable } from '../../engine/cardBehavior.js';
+import { PlayConditionReachable } from '../../engine/cardBehavior.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
@@ -2709,7 +2709,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
     if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
-    if (!playConditionReachable(combat, def)) return 'Its play condition is not met.';
+    if (!PlayConditionReachable(combat, def)) return 'Its play condition is not met.';
     return '';
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }

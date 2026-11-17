@@ -19,14 +19,14 @@ export function projectCardBehavior(ctx, instance, def) {
   return result;
 }
 /** Whether a card's `playIf` holds with `target` aimed. A card without one is always allowed. */
-export function playConditionMet(ctx, def, target=null, source=ctx.player) {
+export function PlayConditionMet(ctx, def, target=null, source=ctx.player) {
   return !def?.playIf || Triggers.evalPredicate(ctx,def.playIf,{source,owner:source,target,card:def});
 }
 /** Whether some living enemy could be aimed so that the card's `playIf` holds (the hand's playable check). */
-export function playConditionReachable(ctx, def, source=ctx.player) {
+export function PlayConditionReachable(ctx, def, source=ctx.player) {
   if (!def?.playIf) return true;
   const living=(ctx.enemies || []).filter(enemy=>enemy.alive);
-  return living.length ? living.some(enemy=>playConditionMet(ctx,def,enemy,source)) : playConditionMet(ctx,def,null,source);
+  return living.length ? living.some(enemy=>PlayConditionMet(ctx,def,enemy,source)) : PlayConditionMet(ctx,def,null,source);
 }
 export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;
