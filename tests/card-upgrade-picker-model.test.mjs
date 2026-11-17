@@ -522,3 +522,22 @@ test('narrow option row: the face column fits its card and the changes list wrap
   assert.match(face, /padding:\s*1rem 0 0 1rem/, 'room for the cost medallion that hangs outside the card corner');
   assert.match(block.match(/\.card-upgrade-option-changes \{([^}]*)\}/)?.[1] || '', /flex:\s*1 1 7rem/);
 });
+
+test('the picker lists deck cards first, then the library, and marks each deck card (playtest 2026-11-17 item 45b)', async () => {
+  const run = newRun(); run.smithingStones = 3;
+  run.sideboard.push({ instanceId: 'lib:defend', cardId: 'core.defend' });
+  const rows = cardUpgradeModel(registries, run).rows;
+  const flags = rows.map((row) => row.inDeck);
+  assert.ok(flags.includes(false), 'a library card is listed');
+  assert.ok(flags.slice(flags.indexOf(false)).every((flag) => !flag), 'no deck card after the first library card');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const shown = [...host.querySelectorAll('.card-upgrade-row')];
+    assert.ok(shown.filter((row) => row.dataset.inDeck === 'true').every((row) => row.querySelector('.in-deck-badge')), 'every deck row wears the marker');
+    assert.equal(host.querySelector('.card-upgrade-row[data-instance-id="lib:defend"] .in-deck-badge'), null, 'a library row does not');
+    door.close();
+  });
+});

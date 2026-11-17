@@ -6844,3 +6844,7 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }
+/* Playtest 2026-11-17 item 45b: upgrade pickers and the deck editor list deck cards first, each wearing this marker. */
+.in-deck-badge { display:inline-block; flex:0 0 auto; margin-inline-start:.4rem; padding:.05rem .45rem; border:1px solid var(--gold); border-radius:var(--r-1); background:var(--panel); color:var(--gold); font-size:max(.75rem, calc(11px / var(--ui-zoom, 1))); font-weight:600; letter-spacing:.06em; line-height:1.4; text-transform:uppercase; white-space:nowrap; }
+.deck-editor-tile { position:relative; }
+.deck-editor-tile > .in-deck-badge { position:absolute; top:4px; left:4px; z-index:2; margin:0; pointer-events:none; }

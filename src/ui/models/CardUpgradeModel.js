@@ -141,7 +141,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (let i = 0; i < rows.length; i += 1) rows[i] = freeze({ ...rows[i], instanceIds: freeze(rows[i].instanceIds) });
   // Stable sorting keeps deck order within each group. An existing selection
   // can keep its preview after a purse/service change, with Confirm disabled.
-  rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
+  // Deck cards come first, then the library (playtest 2026-11-17 item 45b); within each, an available row before a blocked one.
+  rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck) || Number(a.disabled) - Number(b.disabled));
   const selected = rows.find((row) => row.instanceIds.includes(selectedInstanceId)) || null;
   const affordable = !!selected && selected.ok;
   return freeze({

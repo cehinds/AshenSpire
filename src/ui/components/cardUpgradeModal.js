@@ -362,9 +362,6 @@ export function MountCardUpgradeModal(
                 to: row.levelTo,
                 cost: row.costLabel,
             });
-        const inDeckLabel = row.inDeck
-            ? translate('cardUpgrade.row.inDeck')
-            : '';
         const rowClassName = appendClassWhen(
             `${CLASS.row} rarity-${row.rarity}`,
             row.disabled,
@@ -372,7 +369,6 @@ export function MountCardUpgradeModal(
         );
         const costs = [
             upgradeStatus,
-            inDeckLabel,
         ].filter(Boolean);
         return {
             id: row.instanceId,
@@ -713,6 +709,15 @@ export function MountCardUpgradeModal(
         }
         const rowIsSelected = isRowSelected(model, row);
         rowElement.dataset.cardId = row.cardId;
+        rowElement.dataset.inDeck = String(Boolean(row.inDeck));
+        if (row.inDeck)
+        {
+            const marker = buildElement('span', {
+                class: 'in-deck-badge',
+                text: translate('cardUpgrade.row.inDeck'),
+            });
+            rowElement.querySelector('.option-row-name, .co-name')?.after(marker);
+        }
         rowElement.dataset.upgradeState = readUpgradeState(row);
         rowElement.setAttribute('role', 'option');
         rowElement.setAttribute('aria-disabled', String(row.disabled));
