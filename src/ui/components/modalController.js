@@ -31,7 +31,7 @@ export class ModalController
         returnFocus = null,
         onBack = null,
         onClosing = null,
-        back = false,
+        back = true,
         growsWhenLong = false,
     })
     {
