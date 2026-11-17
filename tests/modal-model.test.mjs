@@ -7,6 +7,7 @@ import {
     ModalModel,
     ChoiceModalModel,
     RewardModalModel,
+    OptionChoiceModalModel,
 } from '../src/ui/models/ModalModel.js';
 
 const KINDS = uiConfig.components.modal.components;
@@ -99,4 +100,42 @@ test('apply tags the panel and sets the properties', () =>
     const confirm = fakePanel();
     ModalModelFor('confirm').apply(confirm);
     assert.equal(confirm.dataset.nameButton, undefined);
+});
+
+test('option choice kinds resolve their dialog settings and refuse bad config', () =>
+{
+    for (const kind of Object.keys(KINDS))
+    {
+        const model = ModalModelFor(kind);
+
+        if (model instanceof OptionChoiceModalModel)
+        {
+            assert.match(model.idAttribute, /^data-/, kind);
+            assert.equal(typeof model.isMultiSelect, 'boolean', kind);
+        }
+    }
+
+    const table = {
+        base: {},
+        choice: { extends: 'base' },
+        optionChoice: {
+            extends: 'choice',
+            size: 'md',
+            footSize: 'short',
+            className: 'option-choice',
+            selection: 'single',
+            idAttribute: 'data-pick',
+            commitLabelKey: 'common.choose',
+            cancelLabelKey: 'common.cancel',
+            hasCancelButton: true,
+        },
+        typo: { extends: 'optionChoice', idAtribute: 'data-x' },
+        badMode: { extends: 'optionChoice', selection: 'some' },
+        badColumns: { extends: 'optionChoice', columns: 0 },
+    };
+    assert.equal(ModalModelFor('optionChoice', table).idAttribute, 'data-pick');
+    assert.equal(ModalModelFor('optionChoice', table).closeLabelKey, 'common.cancel');
+    assert.throws(() => ModalModelFor('typo', table), /unknown key "idAtribute"/);
+    assert.throws(() => ModalModelFor('badMode', table), /"selection" must be one of/);
+    assert.throws(() => ModalModelFor('badColumns', table), /"columns" must be a positive whole number/);
 });

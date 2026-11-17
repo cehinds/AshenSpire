@@ -8,6 +8,7 @@ import { CanvasBox } from '../viewViewport.js';
 import { reducedMotionRequested } from '../motion.js';
 import { refreshIconTray } from './iconTray.js';
 import { setVar, setStyle, setData, setAttr, markBuilt, morph } from '../domWrite.js';
+import { uiConfig } from '../../config/generated/ui.js';
 
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
 const contains = (r, x, y, pad = 0) => x >= r.left - pad && x <= r.left + r.width + pad && y >= r.top - pad && y <= r.top + r.height + pad;
@@ -137,7 +138,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     shell.addEventListener('pointerdown', event => {
       cancelHold(); if (!event.isPrimary || event.button !== 0 || readGesture?.blocked) return;
       held = { id, opener: shell, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      holdTimer = setTimeout(() => { if (!shell.isConnected || readGesture?.blocked || !canInspect()) return; inspectionPointer = { id: event.pointerId, released: false }; lastTap = null; inspect(id, shell); }, 500);
+      holdTimer = setTimeout(() => { if (!shell.isConnected || readGesture?.blocked || !canInspect()) return; inspectionPointer = { id: event.pointerId, released: false }; lastTap = null; inspect(id, shell); }, uiConfig.presentation.combatInspection.behavior.holdMs);
     });
     shell.addEventListener('click', event => {
       event.stopPropagation();
@@ -146,7 +147,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     });
   }
   const listen = (target, type, handler, capture = false) => target.addEventListener(type, handler, { signal: gestures.signal, capture });
-  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; pressMoved = true; } });
+  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > uiConfig.presentation.combatInspection.behavior.movementTolerancePx) { cancelHold(); lastTap = null; pressMoved = true; } });
   listen(document, 'pointerup', event => {
     if (inspectionPointer?.id === event.pointerId) inspectionPointer.released = true;
   }, true);

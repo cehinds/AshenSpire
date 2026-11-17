@@ -98,6 +98,14 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
 });
+const CHOICE_BY_INSPECTION = Object.freeze({
+  shouldFocusChoice: true,
+  shouldAdvanceSection: false,
+});
+const CHOICE_BY_BUTTON = Object.freeze({
+  shouldFocusChoice: false,
+  shouldAdvanceSection: true,
+});
 
 function creationDerivedLabel(entry) {
   return CREATION_DERIVED_LABELS[entry.id] || entry.faceLabel;
@@ -1281,6 +1289,26 @@ export function mountCustomize(app, {
         }
         showDetails(piece);
       };
+      const STARTING_CHOICE_WRITERS = {
+        relic: (piece) => { state.startingRelicId = piece.id; },
+        armour: (piece) => { state.startingArmourId = piece.id; },
+        hand: (piece) => { state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id); },
+      };
+      const writeStartingChoice = (piece) => {
+        const writeChoice = STARTING_CHOICE_WRITERS[section.kind];
+        if (writeChoice) writeChoice(piece);
+        else state.startingSlotChoices[section.id] = piece.id;
+      };
+      const selectStartingPiece = (piece, { shouldFocusChoice, shouldAdvanceSection }) => {
+        writeStartingChoice(piece);
+        for (const refresh of refreshers) refresh();
+        if (shouldFocusChoice) focusChoice(piece);
+        renderEquipmentSummary();
+        renderCharacterPreview();
+        refreshFaces();
+        updateStartRefusal();
+        if (shouldAdvanceSection) advanceEquipment(section.id);
+      };
       for (const piece of section.choices) {
         // THE VIEW SELECTS A LEVEL; it does not own a field set. Grid is a
         // wall of candidates to tell apart, so it asks for `glance`; list is
@@ -1291,14 +1319,7 @@ export function mountCustomize(app, {
         const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: 'glance' });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
-        face.addEventListener('cardinspectionselect', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          focusChoice(piece); renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        });
+        face.addEventListener('cardinspectionselect', () => selectStartingPiece(piece, CHOICE_BY_INSPECTION));
         face.addEventListener('keydown', event => {
           if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
             event.preventDefault(); face.dispatchEvent(new CustomEvent('cardinspectionselect'));
@@ -1308,14 +1329,7 @@ export function mountCustomize(app, {
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
         else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id || 'empty-hand'; }
         else chipButton.dataset.startingSlotItemId = piece.id;
-        chipButton.querySelector('.equipment-choose').addEventListener('click', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
-        });
+        chipButton.querySelector('.equipment-choose').addEventListener('click', () => selectStartingPiece(piece, CHOICE_BY_BUTTON));
         box.appendChild(chipButton);
       }
       const refresh = () => {
