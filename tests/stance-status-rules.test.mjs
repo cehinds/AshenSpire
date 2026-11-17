@@ -14,6 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
+import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -235,4 +236,13 @@ test('rule 4 edge: a fight saved without counter.enemyBadgeStacks grants no badg
 
 test('rule 4: the shipped data turns the badge on', () => {
   assert.equal(shipped.counter.enemyBadgeStacks, 1);
+});
+
+test('rule 4: the enemy Counter badge tooltip states what the badge does, not the player stack return', () => {
+  const enemyBadge = combatHealthModel({ counterStacks: 1, counterDecay: 1, enemyCounter: true }).badges.find(row => row.kind === 'counter');
+  assert.equal(enemyBadge.value, 1);
+  assert.match(enemyBadge.help, /answers your next covered hit/);
+  assert.doesNotMatch(enemyBadge.help, /% of the hit per stack/);
+  const playerBadge = combatHealthModel({ counterStacks: 1, counterDecay: 1 }).badges.find(row => row.kind === 'counter');
+  assert.match(playerBadge.help, /% of the hit per stack/);
 });
