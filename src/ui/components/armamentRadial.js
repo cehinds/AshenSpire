@@ -112,7 +112,6 @@ export function mountArmamentRadial(anchor, {
   });
   ArmLongPress(anchor, {
     holdMs: uiConfig.presentation.armamentRadial.behavior.holdMs,
-    isPointerOnly: true,
     isPrimaryOnly: false,
     shouldCapturePointer: false,
     shouldCancelOnLeave: true,

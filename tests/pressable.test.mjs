@@ -166,7 +166,7 @@ test('ArmLongPress swallows only the click after a hold that returned true', (t)
     assert.equal(click(declined.element).isDefaultPrevented, false, 'a declined hold keeps its click');
 });
 
-test('ArmLongPress honours the primary-button, pointer-only, capture and leave options', (t) =>
+test('ArmLongPress honours the primary-button, capture and leave options, and declines key presses', (t) =>
 {
     const primary = armed(t);
     press(primary.element, { button: 2 });
@@ -182,29 +182,11 @@ test('ArmLongPress honours the primary-button, pointer-only, capture and leave o
     assert.deepEqual(anyButton.holds, [], 'leaving the element cancels when asked');
     fakeWindow.fire('pointerup', { pointerId: 1 });
 
-    const pointerOnly = armed(t, { isPointerOnly: true });
-    const keyPress = pointerOnly.element.fire('gppress', {
+    const keyPress = primary.element.fire('gppress', {
         detail: { source: 'key' },
         preventDefault() { this.isDefaultPrevented = true; },
     });
     assert.notEqual(keyPress.isDefaultPrevented, true, 'a key press is declined, so it activates at once');
-});
-
-test('ArmLongPress serves a key press as a hold when not pointer-only', (t) =>
-{
-    const { element, holds } = armed(t);
-    const keyPress = element.fire('gppress', {
-        detail: { source: 'key' },
-        preventDefault() { this.isDefaultPrevented = true; },
-    });
-    assert.equal(keyPress.isDefaultPrevented, true, 'the activation waits for the release');
-    t.mock.timers.tick(450);
-    const release = element.fire('gprelease', {
-        detail: {},
-        preventDefault() { this.isDefaultPrevented = true; },
-    });
-    assert.deepEqual(holds, ['hold']);
-    assert.equal(release.isDefaultPrevented, true, 'a completed hold consumes the activation');
 });
 
 test('ArmLongPress disarm removes every listener it added', (t) =>

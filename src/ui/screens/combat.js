@@ -1274,7 +1274,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       ArmLongPress(box, {
         holdMs: uiConfig.presentation.combatInspection.behavior.holdMs,
         tolerancePx: uiConfig.presentation.combatInspection.behavior.movementTolerancePx,
-        isPointerOnly: true,
         shouldCapturePointer: false,
         onHold: () => {
           if (!box.isConnected) return false;

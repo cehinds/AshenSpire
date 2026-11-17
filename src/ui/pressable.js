@@ -4,11 +4,11 @@ import { armPress } from './gesture.js';
 
 const PRIMARY_BUTTON = 0;
 
-function isAcceptedPress(origin, { isPointerOnly, isPrimaryOnly })
+function isAcceptedPress(origin, isPrimaryOnly)
 {
     if (origin.source !== 'pointer')
     {
-        return !isPointerOnly;
+        return false;
     }
     return !isPrimaryOnly || origin.ev.button === PRIMARY_BUTTON;
 }
@@ -43,7 +43,8 @@ function disableControls(controls)
 }
 
 /**
- * Starts `onHold` once a press has stayed within `tolerancePx` for `holdMs`.
+ * Starts `onHold` once a pointer press has stayed within `tolerancePx` for `holdMs`.
+ * Key and pad presses are declined, so they activate at once.
  * A hold that returns true swallows the click its release produces.
  *
  * @param {HTMLElement} element
@@ -54,7 +55,6 @@ export function ArmLongPress(element, {
     holdMs,
     tolerancePx,
     onHold,
-    isPointerOnly = false,
     isPrimaryOnly = true,
     shouldCapturePointer = true,
     shouldCancelOnLeave = false,
@@ -91,7 +91,7 @@ export function ArmLongPress(element, {
 
     const beginPress = (origin, track) =>
     {
-        if (!isAcceptedPress(origin, { isPointerOnly, isPrimaryOnly }))
+        if (!isAcceptedPress(origin, isPrimaryOnly))
         {
             return false;
         }
@@ -102,7 +102,7 @@ export function ArmLongPress(element, {
             () => fireHold(origin.ev),
             holdMs,
         );
-        if (shouldCancelOnLeave && origin.source === 'pointer')
+        if (shouldCancelOnLeave)
         {
             element.addEventListener('pointerleave', onLeave);
         }
