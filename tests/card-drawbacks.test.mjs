@@ -257,3 +257,28 @@ test("a lesson card's grade text names its drawback keyword (Quickstep's Exhaust
   }
   for (const grade of registries.cards.get('quickstep').gradeProfiles) assert.match(grade.textTemplate, /Exhaust\.$/, `rank ${grade.rank}`);
 });
+
+// Review of #2819 (item 12): each reachable Evade card's upgrade eases its drawback.
+test("each reachable Evade card's upgrade eases its drawback", async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { cardPlayCosts } = await import('../src/engine/combat.js');
+  const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
+  const cost = (cardId, upgraded) => {
+    const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocked });
+    const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    combat.piles.hand.push({ instanceId: 'e', cardId, upgraded });
+    combat.player.stamina = combat.player.maxStamina = 20;
+    return cardPlayCosts(combat, 'e').stamina;
+  };
+  assert.equal(cost('core.evade', true), cost('core.evade', false) - 1, 'Evade+ costs 1 Stamina less');
+  assert.equal(cost('core.closingDodge', true), cost('core.closingDodge', false) - 1, 'Closing Dodge+ costs 1 Stamina less');
+  const { upgradedDefinition } = await import('../src/model/cardUpgrade.js');
+  assert.ok(!upgradedDefinition(registries.cards.get('core.backstep')).keywords.includes('exhaust'), 'Backstep+ no longer Exhausts');
+  // Quickstep is a ranked ability card: an authored upgrade never applies to it (projectGameCard), so its upgrade path is the
+  // rolled menu, which offers removing Exhaust on every roll it can.
+  const quickstep = registries.cards.get('quickstep');
+  const offered = new Set();
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) for (const step of nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `q${seed}`, cardId: 'quickstep', upgraded: false }, quickstep, registries, 40, { noAuthored: true })) if (step.k === 'fx') offered.add(step.fx);
+  assert.ok(offered.has('unexhaust'), 'Quickstep may roll the drop-Exhaust upgrade');
+});

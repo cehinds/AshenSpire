@@ -302,7 +302,11 @@
       "stance": "evade"
     },
     "textTemplate": "Gain {evade} Evade.",
-    "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
+    "flavor": "Core adapter fixture. Evade is available in rewards, never starter.",
+    "upgrade": {
+      "cost": 2,
+      "staminaCost": 2
+    }
   },
   {
     "id": "core.cantrip",
@@ -482,7 +486,11 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade.\nClose one band."
+    "textTemplate": "Gain {evade} Evade.\nClose one band.",
+    "upgrade": {
+      "cost": 3,
+      "staminaCost": 3
+    }
   },
   {
     "id": "core.backstep",
@@ -538,6 +546,8 @@
     },
     "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared. Exhaust.",
     "upgrade": {
+      "keywords": [],
+      "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
       "effects": [
         {
           "op": "applyStatus",
