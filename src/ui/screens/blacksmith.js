@@ -49,6 +49,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
   let layout = null;
+  // What render() drew, kept so a purchase can update it in place (update below).
+  let page = null;
 
   function refuse(host, error) {
     // The refusal reads inside the row's details column, as the merchant's own unaffordable reason does.
@@ -57,7 +59,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     (row.querySelector('.merchant-offer-details') || row).append(statusText(error.message, { class: 'shop-offer-avail bs-refusal', role: 'status' }));
   }
 
-  // One action: commit, sound, persist, redraw — or show the refusal in place.
+  // One action: commit, sound, persist, update — or show the refusal in place.
   function act(tile, commit) {
     const before = snapshotRunForDiff(run);
     try { commit(); }
@@ -67,8 +69,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     }
     sfx.play('shrine');
     onChanged();
-    render();
-    // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
+    update();
+    // The what-changed receipt (SPEC §14.4): after the update, so the page lock covers the new screen. Refusals
     // above keep the inline .bs-refusal and open nothing.
     showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
     return true;
@@ -324,9 +326,43 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
 
+  const offeredCategories = () => shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
+  // Core has no refining, so its purse never names refined stones.
+  const purseLine = () => {
+    const stonesHeld = run.smithingStones || 0;
+    return t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
+  };
+  // Each shelf's rows, drawn from the plans as the run stands now. A service
+  // with nothing to act on now says why, and stays on the rail.
+  function fillShelves(root, categories) {
+    for (const key of categories) {
+      const shelf = root.querySelector(`#blacksmith-${key}`);
+      shelf.replaceChildren();
+      SHELVES[key](shelf);
+      for (const host of shelf.querySelectorAll(':scope > .shop-offer')) finishRow(host);
+      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key)) {
+        shelf.prepend(statusText(serviceIdleReason(key, run), { class: 'shop-offer-avail bs-idle', role: 'status' }));
+      }
+    }
+  }
+
+  // ShopRow.update and Purse.SetValue: a purchase or a service moved the purse
+  // and the stock. The purse, the shelves' rows, the pane's {Status} and the HUD
+  // take the run as it stands now; the frame, the switch and the shelves stay.
+  // Only a change in which offerings show (a shelf withheld or returned) draws
+  // the page again.
+  function update() {
+    const categories = offeredCategories();
+    if (!page || categories.join() !== page.categories.join()) { render(); return; }
+    page.purse.textContent = purseLine();
+    fillShelves(page.root, categories);
+    page.paint();
+    page.runHud?.update();
+  }
+
   function render() {
     if (layout) layout.release();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
+    const categories = offeredCategories();
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
@@ -344,28 +380,15 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
           </div>
         </div>
       </div>`;
-    if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
+    const runHud = hud ? wireRunHud(app, { ...hud, registries, run, meta }) : null;
     const root = app.querySelector('.shop-workspace');
     root.prepend(servicePortrait('smith'));
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
     const paneHead = root.querySelector('.shop-pane-head');
-    const stonesHeld = run.smithingStones || 0;
-    // Core has no refining, so its purse never names refined stones.
-    const purse = t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
-    frame.prepend(ModalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: statusText(purse, { class: 'modal-head-status' }) }));
-
-    const idle = {};
-    for (const key of categories) {
-      const shelf = root.querySelector(`#blacksmith-${key}`);
-      SHELVES[key](shelf);
-      for (const host of shelf.querySelectorAll(':scope > .shop-offer')) finishRow(host);
-      // A service with nothing to act on now says why, and stays on the rail.
-      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key)) {
-        idle[key] = serviceIdleReason(key, run);
-        shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
-      }
-    }
+    const purse = statusText(purseLine(), { class: 'modal-head-status' });
+    frame.prepend(ModalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: purse }));
+    fillShelves(root, categories);
     const statusOf = (key) => {
       const n = readyCount(key);
       return n ? t('blacksmith.status.ready', { count: n }) : t('blacksmith.status.idle');
@@ -401,6 +424,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     }
     paint();
     layout = wireShopLayout(root);
+    page = { root, categories, purse, paint, runHud };
   }
 
   render();

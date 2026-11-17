@@ -51,3 +51,58 @@ test('RunHud update writes HP and cinders into the band it drew, keeping the ban
   });
 });
 
+
+// ---- The Blacksmith: a purchase updates the purse, the shelves and the status in place --------------------------
+const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
+const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
+
+function smithRun() {
+  const run = createRunState({ seed: 31, classId: 'reaver', registries: coreOut, runId: 'bs-partial' });
+  run.smithingStones = 3;
+  run.cinders = 5000;
+  run.seenEvents = [];
+  run.shopStock = buildBlacksmithStock(coreOut, createRng(31), run);
+  return run;
+}
+const mountSmith = (dom, run) => {
+  const app = dom.document.createElement('main');
+  dom.document.body.append(app);
+  mountBlacksmith(app, { registries: coreOut, run, meta: { settings: {} }, onChanged() {}, onLeave() {}, hud: {} });
+  return app;
+};
+
+test('a Blacksmith purchase updates the purse and the rows in place, and matches a fresh render', () => {
+  withKitDom((dom) => {
+    const run = smithRun();
+    const app = mountSmith(dom, run);
+    const root = app.querySelector('.shop-workspace');
+    const frame = app.querySelector('.shop-frame');
+    const band = app.querySelector('.shared-hud');
+    const purse = app.querySelector('.modal-head-status');
+    const shelf = app.querySelector('#blacksmith-armaments');
+    const switchNode = app.querySelector('.shop-switch');
+    const purseBefore = purse.textContent;
+    const rowsBefore = [...shelf.querySelectorAll('.shop-offer')];
+    const buy = [...shelf.querySelectorAll('button')].find((b) => b.textContent === 'Buy');
+    assert.ok(buy, 'a buy button is drawn');
+    const cinders = run.cinders;
+    buy.click();
+    assert.ok(run.cinders < cinders, 'the purchase committed');
+    assert.equal(app.querySelector('.shop-workspace'), root, 'the workspace is the same node');
+    assert.equal(app.querySelector('.shop-frame'), frame, 'the frame is the same node');
+    assert.equal(app.querySelector('.shared-hud'), band, 'the HUD band is the same node');
+    assert.equal(app.querySelector('.shop-switch'), switchNode, 'the category switch is the same node');
+    assert.equal(app.querySelector('#blacksmith-armaments'), shelf, 'the shelf is the same node');
+    assert.equal(app.querySelector('.modal-head-status'), purse, 'the purse is the same node');
+    assert.notEqual(purse.textContent, purseBefore, 'the purse shows the new amount');
+    assert.match(purse.textContent, new RegExp(String(run.cinders)));
+    assert.match(cindersShown(app), new RegExp(`^${run.cinders}`), 'the HUD cinders follow the purchase');
+    assert.ok([...shelf.querySelectorAll('.shop-offer')].every((row) => !rowsBefore.includes(row)), 'the rows were drawn from the new plans');
+
+    const fresh = mountSmith(dom, run);
+    assert.equal(app.querySelector('.shop-workspace').outerHTML, fresh.querySelector('.shop-workspace').outerHTML,
+      'the updated workspace is what a fresh render of the same run draws (classes, aria, order)');
+  });
+});
+
