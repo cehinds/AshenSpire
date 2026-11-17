@@ -1,0 +1,103 @@
+{
+  "request": "Survey wave 6: drinking a flask from the HUD no longer remounts the whole screen; the HUD updates itself (HP, potion count). A Blacksmith purchase updates the purse, the rows and the stock list in place instead of rewriting the workspace. Shrine use and level-up update the one option and the HUD. The observable result is identical, and focus stays on the flask control.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "map-drink-flask",
+      "url": "?shot=map",
+      "ready": ".run-potions-btn",
+      "settleMs": 2000,
+      "actions": [
+        { "click": "#map-back" },
+        { "wait": { "ms": 900 } },
+        { "click": ".run-potions-btn" },
+        { "wait": { "ms": 600 } },
+        { "click": ".run-potion-menu [data-potion-key=\"charge:hp\"] .run-potion-act" },
+        { "wait": { "ms": 800 } }
+      ],
+      "success": [
+        { "kind": "text", "label": "The Crimson mini shows one charge fewer (2 -> 1)", "selector": ".map-potions .potion-mini[data-potion-key=\"charge:hp\"] .stk", "matches": "^1$" },
+        { "kind": "text", "label": "The HUD HP reads current/max after the drink", "selector": ".shared-hud .resbars .m-value", "matches": "^\\d+/\\d+$" },
+        { "kind": "count", "label": "Focus is back on the Potions button (it used to fall to the page)", "selector": ".run-potions-btn:focus", "eq": 1 },
+        { "kind": "count", "label": "One map screen and one HUD band", "selector": ".mapscreen .shared-hud", "eq": 1 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The Potions list is still open after Drink", "selector": ".run-potion-menu" },
+        { "kind": "count", "label": "A second HUD band", "selector": ".shared-hud", "min": 2 }
+      ]
+    },
+    {
+      "name": "blacksmith-buy",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-armaments",
+      "settleMs": 2000,
+      "actions": [
+        { "click": "#shop-cat-armaments" },
+        { "wait": { "ms": 600 } },
+        { "click": "#blacksmith-armaments .merchant-offer-action[data-shop-action=\"buy\"]" },
+        { "wait": { "ms": 1000 } }
+      ],
+      "success": [
+        { "kind": "text", "label": "The purse shows the price paid (2000 -> 1897 cinders)", "selector": ".blacksmith-workspace .modal-head-status", "includes": "1897 cinders" },
+        { "kind": "text", "label": "The HUD cinders follow the purchase", "selector": ".shared-hud [data-ui-component=\"cinders-counter\"]", "includes": "1897" },
+        { "kind": "visible", "label": "The what-changed receipt opens over the updated screen", "selector": ".what-changed-modal" },
+        { "kind": "count", "label": "The Armaments tab stays selected", "selector": "#shop-cat-armaments[aria-selected=\"true\"]", "eq": 1 },
+        { "kind": "count", "label": "One Blacksmith workspace and one HUD band", "selector": ".shared-hud", "eq": 1 },
+        { "kind": "consoleErrors", "label": "No console errors (shrine.ogg 404 is known on dev)", "max": 0, "ignore": ["navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "The purse still shows 2000 cinders", "selector": ".blacksmith-workspace .modal-head-status", "includes": "2000 cinders" },
+        { "kind": "count", "label": "Two Blacksmith workspaces", "selector": ".blacksmith-workspace", "min": 2 }
+      ]
+    },
+    {
+      "name": "shop-hud",
+      "url": "?shot=shop",
+      "ready": ".merchant-workspace",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The merchant draws its HUD band", "selector": ".shared-hud" },
+        { "kind": "text", "label": "The HUD HP reads current/max", "selector": ".shared-hud .resbars .m-value", "matches": "^\\d+/\\d+$" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "A second HUD band", "selector": ".shared-hud", "min": 2 }
+      ]
+    },
+    {
+      "name": "rest-hud",
+      "url": "?shot=rest&shotRestState=wounded",
+      "ready": ".rest-door",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The Shrine draws its HUD band", "selector": ".shared-hud" },
+        { "kind": "visible", "label": "The Shrine options are drawn", "selector": ".rest-choices" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "A second HUD band", "selector": ".shared-hud", "min": 2 }
+      ]
+    },
+    {
+      "name": "event-hud",
+      "url": "?shot=event",
+      "ready": ".shared-hud",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The event draws its HUD band", "selector": ".shared-hud" },
+        { "kind": "text", "label": "The HUD HP reads current/max", "selector": ".shared-hud .resbars .m-value", "matches": "^\\d+/\\d+$" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "A second HUD band", "selector": ".shared-hud", "min": 2 }
+      ]
+    }
+  ]
+}
