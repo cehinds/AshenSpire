@@ -116,12 +116,12 @@ function live({ benefits = true, enemies = ['wanderingSoldier'], poise = 0, bloc
 const strike = (combat, from, to, amount, carrier) => { primeAccuracyRolls(combat); applyAttackDamage(combat, from, to, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('Attack +20% and Prepared +25%: shown (preview) equals dealt, for a player and for an enemy; the old rules deal the printed number', () => {
-  for (const [maneuver, camp, expected] of [['attack', 'physical', 12], ['prepared', 'spell', 12], ['smash', 'physical', 10], ['sweep', 'physical', 10]]) {
+  for (const [maneuver, camp, expected] of [['attack', 'physical', 6], ['prepared', 'spell', 6], ['smash', 'physical', 5], ['sweep', 'physical', 5]]) {
     const carrier = carrierOf(maneuver === 'prepared' ? 'casting' : maneuver, camp);
     const { combat, target } = live();
     const shown = previewDamageHits(combat, combat.player, target, 10, [], carrier, 1).hitDamages[0];
     const dealt = strike(combat, combat.player, target, 10, carrier);
-    // 10 x 1.25 = 12.5 floors to 12; every row here lands on 12 or the printed 10.
+    // The Core base-damage scale halves the printed 10 to 5 (rounded up); 5 x 1.25 = 6.25 floors to 6; every row here lands on 6 or the scaled 5.
     assert.equal(500 - target.hp, expected, `${maneuver} deals ${expected}`);
     assert.equal(shown, 500 - target.hp, `${maneuver}: the quote is the HP lost`);
     assert.ok(dealt);
@@ -129,12 +129,12 @@ test('Attack +20% and Prepared +25%: shown (preview) equals dealt, for a player 
   { // an enemy in Attack stance hits the player for +20%
     const { combat, target } = live();
     const hit = strike(combat, target, combat.player, 10, carrierOf('attack'));
-    assert.equal(500 - combat.player.hp, 12); assert.ok(hit);
+    assert.equal(500 - combat.player.hp, 6); assert.ok(hit); // 10 halved to 5, x1.25 floors to 6
   }
   { // the old rules (a fight created before the ruling): the printed number
     const { combat, target } = live({ benefits: false });
     strike(combat, combat.player, target, 10, carrierOf('attack'));
-    assert.equal(500 - target.hp, 10);
+    assert.equal(500 - target.hp, 5); // the printed 10, halved by the Core base-damage scale
   }
 });
 
@@ -298,6 +298,6 @@ test('a fight saved before the ruling keeps today\'s stance rules after a save a
     Object.assign(target, { hp: 500, block: 0, persistentPoise: { value: 0, max: 20 } });
     delete target.weaknesses; // a loaded fight re-reads its enemies' weaknesses (SPEC 5.3); this test is about stance rules
     strike(loaded, loaded.player, target, 10, carrierOf('attack'));
-    assert.equal(500 - target.hp, benefits ? 12 : 10);
+    assert.equal(500 - target.hp, benefits ? 6 : 5); // the printed 10 halved to 5 by the Core base-damage scale; x1.25 floors to 6
   }
 });

@@ -19,9 +19,11 @@ import { withKitDom } from './helpers/dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-// Fund the authored three-contact Slash before the planner selects its head.
+// Fund the authored three-contact Slash before the planner selects its head. The Core 0.5 base-damage scale is off: this file pins
+// the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  effects: { baseDamageMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the

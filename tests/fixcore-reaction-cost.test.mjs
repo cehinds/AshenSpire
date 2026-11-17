@@ -9,7 +9,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { live, registries, baseRegistries } from './helpers/fixcore-combat-rules.mjs';
 
 // Each contact owns one attacker roll only in a fight that still rolls (saved before the 2026-11-14 ruling).
-test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
+test('enemy 5 × 3 deals three hits of 3 (5 halved by the Core base-damage scale, rounded up), with 9 total HP loss', () => {
   const ctx = live({ legacy: true }), enemy = ctx.enemies[0];
   // The contact fixture needs the three SP its repeated-hit move now costs.
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });
@@ -24,9 +24,9 @@ test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const hits = ctx.eventLog.slice(start).filter(row => row.type === 'attackHit' && row.sourceId === enemy.id && row.targetId === ctx.player.id);
   assert.deepEqual(hits.map(row => row.d20), [20, 20, 20]);
   assert.equal(ctx.rng.getCounters().combatAvoidance - accuracyStart, 3, 'each contact owns one attacker roll');
-  assert.deepEqual(damage.map(row => row.amount), [5, 5, 5]);
-  assert.deepEqual(damage.map(row => row.hpLoss), [5, 5, 5]);
-  assert.equal(ctx.player.hp, 85);
+  assert.deepEqual(damage.map(row => row.amount), [3, 3, 3]);
+  assert.deepEqual(damage.map(row => row.hpLoss), [3, 3, 3]);
+  assert.equal(ctx.player.hp, 91);
 });
 
 test('matching stance cannot reduce a multi-hit hound lunge below two SP', () => {
