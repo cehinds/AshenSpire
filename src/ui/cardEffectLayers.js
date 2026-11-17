@@ -3,11 +3,14 @@ import {combatEffectFrames} from './assets.js';
 import {combatEffectOrientation} from './combatEffectDirection.js';
 import {reducedMotionRequested} from './motion.js';
 import { CreateEffectPlanes } from './effectPlanes.js';
+import { uiConfig } from '../config/generated/ui.js';
+
+const CARD_PLANE_LAYERS = uiConfig.presentation.combatEffectPlayback.layering.effectPlanes.card;
 
 const CARD_PLANE_LOOK = Object.freeze({
  className: 'card-effect-layer',
- behindZIndex: '0',
- frontZIndex: '2',
+ behindZIndex: String(CARD_PLANE_LAYERS.behindZIndex),
+ frontZIndex: String(CARD_PLANE_LAYERS.frontZIndex),
  styleOf: part => ({
   width: part.scale * 100 + '%',
   height: 'auto',

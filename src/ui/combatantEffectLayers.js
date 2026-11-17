@@ -9,13 +9,14 @@ import {uiConfig} from '../config/generated/ui.js';
 // content/config/ui/presentation/combatEffectPlayback.json.
 const PLAY=uiConfig.presentation.combatEffectPlayback;
 const CANVAS=PLAY.sizing.poseCanvas, PCT=PLAY.sizing.percent;
+const COMBATANT_PLANE_LAYERS = PLAY.layering.effectPlanes.combatant;
 const visiblePose=stage=>stage.querySelector('.studio-pose-frame')?.dataset.pose||stage.dataset.pose;
 
 const COMBATANT_PLANE_LOOK = Object.freeze({
  className: 'combatant-effect-layer',
  imageHintOptions: { swapped: true },
- behindZIndex: '-1',
- frontZIndex: '2',
+ behindZIndex: String(COMBATANT_PLANE_LAYERS.behindZIndex),
+ frontZIndex: String(COMBATANT_PLANE_LAYERS.frontZIndex),
  styleOf: () => ({ maxHeight: 'none' }),
 });
 
