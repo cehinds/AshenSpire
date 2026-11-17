@@ -95,6 +95,10 @@ export function armCombatCounter(ctx, entity, carrier, options = {}) {
 export function clearCombatCounter(entity, ctx = null) {
   if (!entity) return;
   delete entity.combatCounter;
+  // An enemy's Counter badge (theme B, 2026-11-17) goes with its Counter (stagger, a re-planned or re-shown intent): only the badge gives an enemy stacks.
+  if (entity.kind === 'enemy' && entity.counterStacks > 0) {
+    if (ctx) SpendCounterStacks(ctx, entity, entity.counterStacks); else delete entity.counterStacks;
+  }
   // A triggered reply has spent its charge, but may still be waiting behind
   // the root action's remaining effects. Interruption cancels only that reply.
   for (const action of ctx?.queue || []) {
@@ -425,12 +429,13 @@ export function ExpireCombatCounterAtTurnStart(ctx, entity) {
 const EnemyCounterBadgeRule = (ctx, entity) => entity?.kind === 'enemy' && EnemyCounterBadgeStacks(ctx) > 0;
 
 /**
- * An enemy Counter move shows a Counter badge (theme B, owner 2026-11-17): arming it grants enemyBadgeStacks Counter stacks, which fade by
+ * An enemy Counter move shows a Counter badge (theme B, owner 2026-11-17): arming it sets enemyBadgeStacks Counter stacks, which fade by
  * decayPerTurn at the enemy's turn start (startTacticalTurn) and lose 1 each time the Counter is used (SpendEnemyCounterBadge). The badge
- * never scales the enemy's return (CounterReturnStacks). A fight saved without the key shows no badge.
+ * never scales the enemy's return (CounterReturnStacks) and goes when the Counter is cleared (clearCombatCounter). A fight saved without the key shows no badge.
  */
 export function GrantEnemyCounterBadge(ctx, enemy) {
-  if (EnemyCounterBadgeRule(ctx, enemy) && enemy.combatCounter?.charges > 0) gainCounterStacks(ctx, enemy, EnemyCounterBadgeStacks(ctx));
+  // Set, never added: showing the same Counter intent again (a re-shown or re-primed move) leaves the badge at enemyBadgeStacks.
+  if (EnemyCounterBadgeRule(ctx, enemy) && enemy.combatCounter?.charges > 0) gainCounterStacks(ctx, enemy, Math.max(0, EnemyCounterBadgeStacks(ctx) - counterStackCount(enemy)));
 }
 
 /** One use of an enemy's charged Counter takes 1 from its Counter badge. */
@@ -582,6 +587,8 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
       counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
       counterDisabledAtStart: Boolean(control.counterDisabled), avoidance: { chance: 0 },
       hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
+      // The Block the target held when the action arrived: its Poise riders keep the Defend floor of that Block (theme B, 2026-11-17).
+      blockBefore: number(target?.block),
       avoided: false, connected: true, completed: false };
   }
   const counterAttack = Hit.attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
