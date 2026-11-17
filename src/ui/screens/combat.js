@@ -156,7 +156,8 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
-import { weaknessChips } from '../components/weaknessChips.js';
+import { stanceWeaknessChip, weaknessChips } from '../components/weaknessChips.js';
+import { StanceWeaknessFor } from '../../model/stanceWeakness.js';
 import { discoveredWeaknesses, recordWeaknessDiscoveries, PreviewWithUnknownWeaknessesMarked } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
@@ -2412,7 +2413,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
-        chips: JSON.stringify(knownWeaknesses(enemy)),
+        chips: JSON.stringify([knownWeaknesses(enemy), enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance) : null]),
       };
       const build = {
         classNames,
@@ -2468,7 +2469,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
         statuses: () => statusRow(enemy, {}, statusIn),
-        chips: () => weaknessChips(knownWeaknesses(enemy)),
+        chips: () => [stanceWeaknessChip(enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance) : null), ...weaknessChips(knownWeaknesses(enemy))].filter(Boolean),
       };
       const slots = record ? null : {
         role: 'enemy',
