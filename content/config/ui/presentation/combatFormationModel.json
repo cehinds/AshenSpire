@@ -218,9 +218,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.5,
+          "top": 0.4,
           "rowHeight": 0.052,
-          "teamGapRows": 5.48
+          "teamGapRows": 7.5
         },
         "tablet": {
           "left": 0.06,
