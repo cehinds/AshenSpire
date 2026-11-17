@@ -64,7 +64,9 @@ export function equipmentKind(item) {
 export function relicEffectModes(relic, registries = null) {
   const passives = relic?.passives || {};
   const passive = (passives.modifiers || []).length > 0
-    || Object.entries(passives).some(([key, value]) => key !== 'modifiers' && value != null && value !== false && value !== 0);
+    || Object.entries(passives).some(([key, value]) => key !== 'modifiers' && value != null && value !== false && value !== 0)
+    // Authored item properties (a deck rule such as Basic Training's) are always on: passive.
+    || (Array.isArray(relic?.properties) && relic.properties.length > 0);
   const triggered = relicTriggers(relic, registries).length > 0;
   return Object.freeze([...(passive ? ['passive'] : []), ...(triggered ? ['triggered'] : [])]);
 }
