@@ -308,3 +308,20 @@ test('rule 5 edge: an un-aimed hit (no target, a card face out of a fight) takes
   const plain = profileDamageReceipt(combat, combat.player, null, 40, { ...structuredClone(PHYSICAL), skipRatingBonus: true });
   assert.equal(plain.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness'), undefined);
 });
+
+test('rule 5: the real core.strike and core.smash (no authored range: melee) take the Prepared weakness, played live', () => {
+  for (const cardId of ['core.strike', 'core.smash']) {
+    const lost = rules => {
+      const { combat, enemy } = live({ rules });
+      Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
+      enemy.combatStance = { maneuver: 'casting', camp: 'spell', range: 'reach' };
+      const hp = enemy.hp;
+      play(combat, 'x', cardId);
+      return hp - enemy.hp;
+    };
+    const on = lost(), off = lost(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+    assert.ok(off > 0, `${cardId} lands`);
+    assert.ok(on > off, `${cardId}: a Prepared target takes more (${on} against ${off})`);
+    assert.ok(on >= Math.floor(off * 1.25) - 1 && on <= Math.ceil(off * 1.25) + 1, `${cardId}: about x1.25 (${on} against ${off})`);
+  }
+});

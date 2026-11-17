@@ -47,15 +47,22 @@ export function AttackDamageMultiplier(ctx, source, carrier) {
 }
 
 /**
+ * The range a hit is delivered at: its authored range, else the engine's default for a card or move that names none (expandedEnemyMove,
+ * combatCardTactics.js; applyExpandedDamage reads a missing range as melee too): a Ranged maneuver or a spell reaches, everything else is melee.
+ * So core.strike and core.smash, which name no range, are melee.
+ */
+export const HitRange = (profile = {}) => profile?.range || (profile?.maneuver === 'ranged' || profile?.camp === 'spell' ? 'reach' : 'melee');
+
+/**
  * Stance weakness (owner 2026-11-17, theme B): the multiplier on a hit against a target holding `defendingStance`. Prepared takes
- * `prepared.meleeDamageTakenMultiplier` from a melee hit; Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
+ * `prepared.meleeDamageTakenMultiplier` from a melee hit (HitRange); Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
  * 1 for a return hit, another stance, or a fight saved without the key.
  */
-export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, range) {
+export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile) {
   const rules = StanceBenefitRules(ctx);
   if (!rules || isReturn(carrier)) return 1;
   const stance = ALIASES[defendingStance] || defendingStance || 'neutral';
-  if (stance === 'prepared' && range === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
+  if (stance === 'prepared' && HitRange(profile) === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
   if (stance === 'neutral' || stance === 'idle') return count(rules.neutral?.damageTakenMultiplier) || 1;
   return 1;
 }
