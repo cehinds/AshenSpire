@@ -2626,7 +2626,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           availability: { play: playAvailability(inst.instanceId) },
           commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
+      // The turn-start refresh is drawn once: the last hand leaves, then the new one arrives.
+      turnRefresh: disp?.turnRefresh || null,
     });
+    if (disp?.turnRefresh) disp.turnRefresh = null;
     syncHandPager(handList);
     handRenderKey = key;
     handPaintedIds = handIds;
