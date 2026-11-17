@@ -98,8 +98,14 @@ function playChecked(combat, card, targetId, tally, label) {
     // A Counter's return can stagger the player in the middle of a multi-hit card, which changes the later hits (no matching-stance bonus,
     // Vulnerable): the hits from that point are another action's business, and the ones before it must match the face.
     const cut = events.findIndex(event => event.type === 'playerStaggered');
+    // Likewise a weakness stagger (enemyStaggered, cause 'weakness') lands after the hit that found the weakness: the face does not price
+    // weakness effects, so that target's later hits (Staggered, Vulnerable) are compared no further. Seen once the halved base damage
+    // (owner, 2026-11-17) moved which Poise a multi-hit spell breaks (starseer seed 154, Star Shower).
+    const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
+      if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
+      if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);
     }
     // An Evade stack cancels a hit outright (an attackMissed event, no damage event): the face priced those leading hits at 0.
@@ -128,7 +134,7 @@ function playChecked(combat, card, targetId, tally, label) {
       assert.ok(explains(0, 0), `${label}: ${card.cardId} -> ${id} HP lost per hit [${got}] equals the face [${priced}]`);
       const sure = list.filter(row => !row.conditional).reduce((n, row) => n + row.hits.length, 0);
       // A fight the target's own Counter reply ended (the player fell mid-card) cuts the remaining hits off like a death does.
-      if (enemyAlive(combat, id) && cut < 0 && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
+      if (enemyAlive(combat, id) && cut < 0 && !weaknessStaggered.has(id) && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
       tally.hits += got.length;
     }
     void enemiesBefore;
