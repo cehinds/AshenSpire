@@ -177,9 +177,9 @@ test('ArmLongPress honours the primary-button, pointer-only, capture and leave o
     assert.deepEqual(primary.holds, [], 'a secondary button is not a press by default');
     assert.deepEqual(primary.element.captured, []);
 
-    const anyButton = armed(t, { isPrimaryOnly: false, capturePointer: false, shouldCancelOnLeave: true });
+    const anyButton = armed(t, { isPrimaryOnly: false, shouldCapturePointer: false, shouldCancelOnLeave: true });
     press(anyButton.element, { button: 2 });
-    assert.deepEqual(anyButton.element.captured, [], 'capturePointer: false leaves the pointer uncaptured');
+    assert.deepEqual(anyButton.element.captured, [], 'shouldCapturePointer: false leaves the pointer uncaptured');
     anyButton.element.fire('pointerleave');
     t.mock.timers.tick(450);
     assert.deepEqual(anyButton.holds, [], 'leaving the element cancels when asked');

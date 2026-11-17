@@ -114,7 +114,7 @@ export function mountArmamentRadial(anchor, {
     holdMs: uiConfig.presentation.armamentRadial.behavior.holdMs,
     isPointerOnly: true,
     isPrimaryOnly: false,
-    capturePointer: false,
+    shouldCapturePointer: false,
     shouldCancelOnLeave: true,
     onHold: openMenu,
   });

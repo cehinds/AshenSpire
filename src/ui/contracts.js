@@ -180,7 +180,7 @@
  * @property {((event: Event) => void) | null} [onTap]
  * @property {boolean} [isPointerOnly]
  * @property {boolean} [isPrimaryOnly]
- * @property {boolean} [capturePointer]
+ * @property {boolean} [shouldCapturePointer]
  * @property {boolean} [shouldCancelOnLeave]
  */
 

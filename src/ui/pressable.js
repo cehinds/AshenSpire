@@ -57,7 +57,7 @@ export function ArmLongPress(element, {
     onTap = null,
     isPointerOnly = false,
     isPrimaryOnly = true,
-    capturePointer = true,
+    shouldCapturePointer = true,
     shouldCancelOnLeave = false,
 })
 {
@@ -139,7 +139,7 @@ export function ArmLongPress(element, {
     const disarmPress = armPress(
         element,
         beginPress,
-        { capturePointer },
+        { capturePointer: shouldCapturePointer },
     );
     element.addEventListener('click', onClick, true);
 
