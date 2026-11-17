@@ -230,8 +230,10 @@ const ENGINE_REFUSALS = [
   /^No \w+ flask charges$/,
   /^No flask in slot .*$/,
 ];
+// A structured door refusal (combatRules.js playRefusal: a playIf gate, a range route, a cost) is set aside too,
+// as tools/coresim.mjs already does; it is thrown before anything resolves.
 function setAsideOrCrash(e) {
-  if (!ENGINE_REFUSALS.some((re) => re.test(String(e && e.message)))) throw e;
+  if (!(e && e.playRefusal) && !ENGINE_REFUSALS.some((re) => re.test(String(e && e.message)))) throw e;
 }
 
 // ---- the deep tally (read-only over a finished fight's eventLog) ------------
