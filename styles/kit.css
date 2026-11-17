@@ -130,6 +130,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
 button.primary:hover, .as-btn.primary:hover { background-color: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
 button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--btn-disabled-border); color: var(--btn-disabled-color); }
+button.primary:hover, button.primary:disabled { background-image: none; }
 button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
 button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
 /* A loss is the way forward on a danger door: primary weight, danger colour. */
