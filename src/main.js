@@ -33,7 +33,7 @@ import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
-import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shopBuyChoice.js';
+import { openShopCardChoice, openShopArmamentChoice, offerReceivedItems } from './ui/components/shopBuyChoice.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -2683,17 +2683,22 @@ function showEvent(eventId) {
     meta: saves.loadMeta(),
     rng,
     eventId,
-    onDone: () => {
-      if (run.combatEntered) {
-        // A startCombat effect stored the encounter id (string form).
-        const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
-        run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
-      }
-      persist();
-      showMap();
-    },
+    // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
+    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on.
+    onItemsReceived: (items, then) => offerReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+      onPersist: persist, onEquip: id => { persist(); showArmoury({ equipItemId: id }, leaveEvent); }, onDone: then }),
+    onDone: () => leaveEvent(),
   });
+  function leaveEvent() {
+    if (run.combatEntered) {
+      // A startCombat effect stored the encounter id (string form).
+      const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
+      run.combatEntered = null;
+      return enterCombat(run.mapNodeId, encounterId);
+    }
+    persist();
+    showMap();
+  }
 }
 
 // Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded
