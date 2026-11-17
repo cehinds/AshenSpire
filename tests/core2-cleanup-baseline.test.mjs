@@ -16,7 +16,6 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-17 (dev merge into #2816 after #2815: Core's conditional cards together with theme D): only profile.hash and the snapshot, stored and loaded hashes moved.
 // The conditional cards in Core's pack change only current profile, snapshot and save hashes. Events, RNG, continuations and the historical profile are unchanged.
 // Recaptured 2026-11-17 after the trader inventory changes landed: only the profile, snapshot and save hashes changed.
 // Recaptured 2026-11-17 a third time (theme D's runs carry classLevelBonusVersion, so a new run's save moves: only the stored and loaded hashes changed).
