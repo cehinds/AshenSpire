@@ -11,7 +11,7 @@
     },
     "constitution": {
       "hp": 5,
-      "sp": 0.5
+      "sp": 1
     },
     "wisdom": {
       "mp": 1
@@ -21,15 +21,20 @@
     }
   },
   "poolBases": {
-    "hp": 35
+    "hp": 35,
+    "mana": 2
   },
   "levelGrowth": {
     "hp": 5
   },
-  "secondaryPolicy": "legacyAdapter",
+  "pointsPerIncrease": {
+    "sp": 3,
+    "mp": 3
+  },
+  "secondaryPolicy": "primaryOnly",
   "poolBasesByClass": {
     "reaver": {
-      "mana": 0
+      "mana": 1
     }
   }
 }

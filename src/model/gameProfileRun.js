@@ -7,7 +7,8 @@ import { PrAttributeView } from './fixCoreMechanics.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemFamily } from './itemPicks.js';
 
-export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
+const STAT_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+export const isConfiguredRun =(subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
 
 export function gameProfileClassAvailable(subject, meta = {}, classId) {
@@ -63,6 +64,16 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
   for (const [id, base] of Object.entries(stats.poolBasesByClass?.[classId] || {})) rows[id] = {
     ...(rows[id] || {}), base,
   };
+  // Owner, 2026-11-17: under `secondaryPolicy: "primaryOnly"` a row levelGains names reads only the attributes it lists
+  // (AR from STR, DR from DEX, Stamina from CON, Mana from WIS); every other attribute weight of that row is zeroed.
+  if (stats.secondaryPolicy === 'primaryOnly') {
+    for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
+  }
+  // How many attribute points one +1 of a pool costs (owner, 2026-11-17: 3 for SP and for MP).
+  for (const [name, points] of Object.entries(stats.pointsPerIncrease || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), pointsPerIncrease: points };
+  }
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
     byClass: {},

@@ -158,6 +158,13 @@ function verifyContent(content) {
       if (!['hp', 'mana', 'stamina'].includes(pool) || !Number.isFinite(value) || value < 0) fail(`$/content/stats/${key}/${pool}`, 'expected known pool and nonnegative finite number');
     }
   }
+  // Owner, 2026-11-17: `pointsPerIncrease` sets how many attribute points one +1 of a pool costs (Core: 3 for SP and MP).
+  if (content.stats.pointsPerIncrease !== undefined) {
+    if (!record(content.stats.pointsPerIncrease)) fail('$/content/stats/pointsPerIncrease', 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats.pointsPerIncrease)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Number.isSafeInteger(value) || value < 1) fail(`$/content/stats/pointsPerIncrease/${pool}`, 'expected hp, mp or sp and a positive integer');
+    }
+  }
   if (content.stats.poolBasesByClass !== undefined) {
     if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
     for (const [classId, pools] of Object.entries(content.stats.poolBasesByClass)) {

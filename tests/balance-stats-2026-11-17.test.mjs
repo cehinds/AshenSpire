@@ -59,3 +59,30 @@ test('item 1: Core halves every card\'s base damage, rounded up, before AR or PR
   }
   assert.ok(checked >= 4, `enough player hits were checked: ${checked}`);
 });
+
+test('item 5: one more SP (Actions) or MP costs 3 attribute points; no other attribute feeds them', () => {
+  for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
+    const run = newRun(classId);
+    const rules = run.derivedStatRuleSnapshot.rules, classDef = registries.classes.get(classId);
+    const ones = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
+    const at = (id, attributes, level = 1) => deriveStat(rules, id, { attributes: { ...ones, ...attributes }, classDef, level }).value;
+    for (const [pool, attribute] of [['stamina', 'constitution'], ['mana', 'wisdom']]) {
+      const base = at(pool, { [attribute]: 0 });
+      for (const points of [1, 2, 3, 5, 6, 9, 10]) assert.equal(at(pool, { [attribute]: points }) - base, Math.floor(points / 3), `${classId} ${pool}: ${attribute} ${points}`);
+      for (const other of ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].filter(id => id !== attribute)) {
+        assert.equal(at(pool, { [other]: 12 }), at(pool, {}), `${classId} ${pool} ignores ${other}`);
+      }
+    }
+  }
+});
+
+test('item 2: the attribute part of AR, DR and PR reads one stat each (STR, DEX, max(INT, WIS))', () => {
+  for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
+    const run = newRun(classId);
+    const rules = run.derivedStatRuleSnapshot.rules, classDef = registries.classes.get(classId);
+    const at = (id, attributes) => deriveStat(rules, id, { attributes: { strength: 2, dexterity: 3, constitution: 4, wisdom: 5, intelligence: 6, ...attributes }, classDef, level: 4 }).value;
+    assert.equal(at('ar', {}), 2, `${classId} AR = STR`);
+    assert.equal(at('dr', {}), 3, `${classId} DR = DEX`);
+    assert.equal(at('pr', {}), 6, `${classId} PR row = INT (the WIS half is PrAttributeView)`);
+  }
+});

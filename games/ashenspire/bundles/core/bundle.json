@@ -18,7 +18,9 @@
     },
     "stats": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "secondaryPolicy": "primaryOnly"
+      }
     },
     "defenses": {
       "version": "1.0.0",
