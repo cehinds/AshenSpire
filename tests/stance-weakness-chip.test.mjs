@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { StanceWeaknessFor } from '../src/model/stanceWeakness.js';
-import { stanceWeaknessChip } from '../src/ui/components/weaknessChips.js';
+import { StanceWeaknessChip } from '../src/ui/components/weaknessChips.js';
 import { withKitDom } from './helpers/dom.mjs';
 
 test('Prepared (and its casting id) is weak to melee; Idle to all damage', () => {
@@ -22,12 +22,12 @@ test('other stances, a broken stance and no stance row show no stance weakness',
 
 test('the chip names the weakness and wears its mark', () => {
   withKitDom(() => {
-    const prepared = stanceWeaknessChip({ stance: 'prepared', to: 'melee' });
+    const prepared = StanceWeaknessChip({ stance: 'prepared', to: 'melee' });
     assert.equal(prepared.dataset.stance, 'prepared');
     assert.match(prepared.getAttribute('aria-label'), /Prepared: melee hits deal more damage/);
     assert.ok(prepared.querySelector('svg'));
-    const idle = stanceWeaknessChip({ stance: 'neutral', to: 'all' });
+    const idle = StanceWeaknessChip({ stance: 'neutral', to: 'all' });
     assert.match(idle.getAttribute('aria-label'), /Idle \(no stance\): every hit deals more damage/);
-    assert.equal(stanceWeaknessChip(null), null);
+    assert.equal(StanceWeaknessChip(null), null);
   });
 });

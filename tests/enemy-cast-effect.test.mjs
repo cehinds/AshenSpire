@@ -2,11 +2,11 @@
 // buff cards do. A plain physical attack or block shows none.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { enemyCastEffectPlan, ENEMY_CAST_EFFECT_KINDS } from '../src/model/combatEffects.js';
+import { EnemyCastEffectPlan, ENEMY_CAST_EFFECT_KINDS } from '../src/model/combatEffects.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { combatEffectFrames } from '../src/ui/assets.js';
 
-const planFor = (enemyId, moveId, intent) => enemyCastEffectPlan({ enemyId, moveId, intent, profile: combatProfileFor({ enemyId, moveId }) });
+const planFor = (enemyId, moveId, intent) => EnemyCastEffectPlan({ enemyId, moveId, intent, profile: combatProfileFor({ enemyId, moveId }) });
 
 test('a spell, a divine spell and a physical buff each glow over the caster', () => {
   assert.equal(planFor('briarHermit', 'briarCast', 'attack')?.kind, 'focusMotes');

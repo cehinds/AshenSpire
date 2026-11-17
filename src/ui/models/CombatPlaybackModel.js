@@ -196,7 +196,8 @@ export function RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard)
 // The turn-start refresh (playtest 2026-11-17): the receipts that return the last hand. The returned cards leave the
 // shown hand here, so the screen discards them visibly before the new hand is drawn; a retained card stays.
 const TURN_RETURN_SHUFFLES = new Set(['configuredRoundRefresh', 'handRefresh']);
-const isTurnReturn = (event) => (event.type === 'deckShuffled' && TURN_RETURN_SHUFFLES.has(event.reason))
+const isTurnReturn = (event) =>
+    (event.type === 'deckShuffled' && TURN_RETURN_SHUFFLES.has(event.reason))
     || (event.type === 'cardDiscarded' && event.reason === 'turnEnd');
 
 /** The cards drawn after `index` until the next player turn starts: the new hand. */
@@ -232,7 +233,9 @@ export function ApplyTurnReturn(disp, event, { combat, playbackEvents })
         return;
     }
     const held = new Set(combat.piles.hand.map((card) => card.instanceId));
-    disp.hand = disp.hand.filter((card) => held.has(card.instanceId) && !drawnIds.has(card.instanceId));
+    disp.hand = disp.hand.filter((card) =>
+        held.has(card.instanceId) && !drawnIds.has(card.instanceId)
+    );
 }
 
 /** Applies a paced beat and reports whether the screen should release the held hand. */

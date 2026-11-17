@@ -38,7 +38,7 @@ export function weaknessChips(weaknesses, { limit = 2 } = {}) {
 const STANCE_WEAKNESS_ICON = Object.freeze({ melee: 'effect:attack', all: 'effect:cracked' });
 
 /** The chip for a StanceWeaknessFor() read, or null. */
-export function stanceWeaknessChip(weakness) {
+export function StanceWeaknessChip(weakness) {
   if (!weakness) return null;
   const key = `combat.stanceWeakness.${weakness.stance}`;
   const label = t(key), text = tFull(key);

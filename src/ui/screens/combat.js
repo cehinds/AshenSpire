@@ -55,7 +55,7 @@ import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/c
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
-import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, enemyCastEffectPlan } from '../../model/combatEffects.js';
+import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEffectPlan } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
@@ -156,7 +156,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
-import { stanceWeaknessChip, weaknessChips } from '../components/weaknessChips.js';
+import { StanceWeaknessChip, weaknessChips } from '../components/weaknessChips.js';
 import { StanceWeaknessFor } from '../../model/stanceWeakness.js';
 import { discoveredWeaknesses, recordWeaknessDiscoveries, PreviewWithUnknownWeaknessesMarked } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
@@ -529,7 +529,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       // A spell or a buff glows over the enemy that casts it, as the player's own spell and buff cards do.
       if (moved && !returned) {
-        const castEffect = enemyCastEffectPlan({ enemyId: moved.enemyId, moveId: moved.moveId, intent: moved.kind,
+        const castEffect = EnemyCastEffectPlan({ enemyId: moved.enemyId, moveId: moved.moveId, intent: moved.kind,
           profile: combatProfileFor({ ...definition, enemyId: moved.enemyId, moveId: moved.moveId }) });
         if (castEffect) plan = { ...plan, spriteEffect: castEffect, effectEvents: beat.events };
       }
@@ -2469,7 +2469,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
         statuses: () => statusRow(enemy, {}, statusIn),
-        chips: () => [stanceWeaknessChip(enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance) : null), ...weaknessChips(knownWeaknesses(enemy))].filter(Boolean),
+        chips: () => [StanceWeaknessChip(enemy.alive ? StanceWeaknessFor(dv(enemy).combatStance) : null), ...weaknessChips(knownWeaknesses(enemy))].filter(Boolean),
       };
       const slots = record ? null : {
         role: 'enemy',
