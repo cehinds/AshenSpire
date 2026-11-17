@@ -1,12 +1,12 @@
 // The spoils strip of the one victory screen: what a won fight paid, drawn above the card choice.
 // Presentation only. Every number comes from the saved victory receipt (cinders, stones, XP gains),
 // so a reload shows the same strip and nothing is paid or recomputed here.
-import { el, button } from '../kit/index.js';
+import { el } from '../kit/index.js';
 import { t } from '../strings.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { orderedXpRows, scopeXpProgress } from '../../model/rewardXpPresentation.js';
 import { smithingStoneRowCopy, smithingStonesPaid } from '../../model/rewardplan.js';
-import { StatAllocationSection } from './statAllocation.js';
+import { LevelUpPointsButton } from './progressionCards.js';
 
 function xpRow(row) {
   const shown = Math.min(row.xp, row.xpToNext || row.xp);
@@ -33,7 +33,7 @@ function xpRow(row) {
 /**
  * VictorySpoils(registries, run, receipt, { settings, onAllocateStat, onPersist }) → the strip element.
  * Lines, in order: Cinders +n (total), the Smithing Stone when one dropped, the Character XP bar, and a compact
- * "n points to spend" control that opens the receipt's allocation UI when the run holds unspent points.
+ * "n points to spend" control that opens the level-up modal when the run holds unspent points.
  */
 export function VictorySpoils(registries, run, receipt, { settings = {}, onAllocateStat = null, onPersist = null } = {}) {
   const lines = [];
@@ -52,23 +52,12 @@ export function VictorySpoils(registries, run, receipt, { settings = {}, onAlloc
       el('ul', { class: 'reward-progress-list' }, rows.map(xpRow)),
     ]) : null,
   ]);
-  // The attribute points: a compact control, never a gate. Ignoring it banks the points (the Armoury spends them later).
+  // The attribute points: a compact control, never a gate. It opens the level-up modal (owner, 2026-11-17);
+  // ignoring it banks the points (the Armoury spends them later).
   const spender = el('div', { class: 'spoils-points' });
   const draw = () => {
-    const count = run.level?.unspentPoints || 0;
-    if (!onAllocateStat || count < 1) { spender.replaceChildren(); return; }
-    const toggle = button({ label: t('reward.spoils.points', { count, plural: count === 1 ? '' : 's' }), id: 'spoils-points', className: 'spoils-points-button' });
-    toggle.setAttribute('aria-expanded', 'false');
-    toggle.addEventListener('click', () => {
-      if (spender.querySelector('.reward-stat-allocation')) { draw(); return; }
-      const section = StatAllocationSection(registries, run, { settings, onAllocateStat, onChange: () => { onPersist?.(); } });
-      if (!section) return draw();
-      const done = button({ label: t('reward.spoils.pointsDone'), id: 'spoils-points-done', className: 'spoils-points-done' });
-      done.addEventListener('click', draw);
-      toggle.setAttribute('aria-expanded', 'true');
-      spender.replaceChildren(toggle, section, done);
-    });
-    spender.replaceChildren(toggle);
+    const points = LevelUpPointsButton(registries, run, { settings, onAllocateStat, onChange: () => { onPersist?.(); draw(); } });
+    spender.replaceChildren(...(points ? [points] : []));
   };
   draw();
   strip.append(spender);

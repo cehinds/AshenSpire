@@ -1750,12 +1750,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-level-rewards { margin-bottom: .6rem; }
 .reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
 .reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
-.reward-door .reward-stat-allocation { grid-column: 1 / -1; display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
-.reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
-.reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
-.reward-door .reward-stat-add { min-width: 2.5rem; }
-.reward-stat-name { min-width: 0; overflow-wrap: anywhere; }
-.reward-stat-gain, .se-gain { margin-left: .5em; color: var(--muted); font-size: max(12px, .8rem); font-weight: 500; font-family: var(--font-body, inherit); letter-spacing: 0; white-space: nowrap; }
+.se-gain { margin-left: .5em; color: var(--muted); font-size: max(12px, .8rem); font-weight: 500; font-family: var(--font-body, inherit); letter-spacing: 0; white-space: nowrap; }
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
@@ -1775,7 +1770,7 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 .reward-door .victory-spoils .reward-progress { width: 100%; }
 .reward-door .spoils-line { margin: 0; color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; text-align: center; }
 .reward-door .spoils-points { display: grid; gap: .5rem; width: 100%; justify-items: center; }
-.reward-door .spoils-points .reward-stat-allocation { border-top: 0; padding-top: 0; }
+.reward-door .reward-stat-points { grid-column: 1 / -1; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
@@ -6845,7 +6840,19 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
 .armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }
+
 /* Playtest 2026-11-17 item 45b: upgrade pickers and the deck editor list deck cards first, each wearing this marker. */
 .in-deck-badge { display:inline-block; flex:0 0 auto; align-self:flex-start; width:max-content; max-width:max-content; margin-inline-start:.4rem; padding:.05rem .45rem; border:1px solid var(--gold); border-radius:var(--r-1); background:var(--panel); color:var(--gold); font-size:max(.75rem, calc(11px / var(--ui-zoom, 1))); font-weight:600; letter-spacing:.06em; line-height:1.4; text-transform:uppercase; white-space:nowrap; }
 .deck-editor-tile { position:relative; }
 .deck-editor-tile > .in-deck-badge { position:absolute; top:4px; left:4px; z-index:2; margin:0; pointer-events:none; }
+
+/* Core creation's starting-card chooser (components/startingCardsChooser.js). */
+.starting-cards { display: grid; gap: .6rem; padding: .75rem 1rem; }
+.starting-cards-note, .starting-cards-total { margin: 0; }
+.starting-cards-total { font-weight: 600; font-variant-numeric: tabular-nums; }
+.starting-cards-refusal { margin: 0; color: var(--ember, var(--gold)); }
+.starting-cards-rows { display: grid; gap: .4rem; }
+.starting-cards-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 2.5rem auto; align-items: center; gap: .5rem; }
+.starting-cards-name { min-width: 0; overflow-wrap: anywhere; }
+.starting-cards-count { text-align: center; font-variant-numeric: tabular-nums; }
+.starting-cards-step { min-width: var(--tap-floor, 44px); min-height: var(--tap-floor, 44px); }

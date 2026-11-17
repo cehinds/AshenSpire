@@ -98,7 +98,8 @@ test('a legacy rewards fixture (old weights, no eliteRelic, no playableOnly) kee
 });
 
 test('every allowed relic id exists in the relic registry (no build-time check exists for relic ids)', () => {
-  assert.equal(allow.length, 28);
+  // 28, plus the five deck relics of playtest theme D (2026-11-17).
+  assert.equal(allow.length, 33);
   for (const id of allow) assert.ok(reg.relics.all().some(row => row.id === id), id);
 });
 
