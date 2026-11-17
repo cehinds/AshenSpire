@@ -359,8 +359,8 @@
       "name": "Attacker's Stance",
       "text": "+2 AR while in Attack stance",
       "weights": {
-        "martial": 7,
-        "magic": 1,
+        "martial": 0,
+        "magic": 0,
         "armor": 0,
         "relic": 1
       },
@@ -377,8 +377,8 @@
       "name": "Smasher's Stance",
       "text": "+2 AR while in Smash stance",
       "weights": {
-        "martial": 6,
-        "magic": 1,
+        "martial": 0,
+        "magic": 0,
         "armor": 0,
         "relic": 1
       },
@@ -396,7 +396,7 @@
       "text": "+2 magic damage while in Casting stance",
       "weights": {
         "martial": 0,
-        "magic": 8,
+        "magic": 0,
         "armor": 0,
         "relic": 1
       },
@@ -413,9 +413,9 @@
       "name": "Defender's Stance",
       "text": "+2 DR while in Defend stance",
       "weights": {
-        "martial": 3,
-        "magic": 2,
-        "armor": 8,
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
         "relic": 1
       },
       "fx": {
@@ -827,7 +827,7 @@
     }
   ],
   "$note": {
-    "properties": "The property pool (W25 step 6). weights: how likely each is per item family; 0 never rolls on that family. fx: what it does in a fight or in deck editing (model/itemProperties.js summarises, the engine reads); stats: stat points it adds (the gear receipt)."
+    "properties": "The property pool (W25 step 6). weights: how likely each is per item family; 0 never rolls on that family. fx: what it does in a fight or in deck editing (model/itemProperties.js summarises, the engine reads); stats: stat points it adds (the gear receipt). Owner 2026-11-17 (#2820 review): the stance-rating properties (+2 AR / DR / magic damage in a stance) roll on relics only; armour and armaments grant no AR, DR or PR."
   },
   "categoryChange": {
     "stones": 1,
