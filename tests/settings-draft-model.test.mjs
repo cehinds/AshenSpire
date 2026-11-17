@@ -400,6 +400,6 @@ test('typed numeric settings use real row defaults, fraction precision, and refu
     const above = speed.max + 1;
     const clamped = CommitNumberRow({}, speed, String(above));
     assert.equal(clamped.value, speed.max);
-    assert.ok(clamped.refusal.includes(`${above}`) && clamped.refusal.includes(`${speed.min}–${speed.max}`));
+    assert.ok(clamped.refusal.includes(`${above}`) && clamped.refusal.includes(`${speed.min} to ${speed.max}`));
     assert.ok(clamped.refusal.includes(`The value in use is ${speed.max}`));
 });
