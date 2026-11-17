@@ -61,6 +61,27 @@ test('item 1: Core halves every card\'s base damage, rounded up, before AR or PR
   assert.ok(checked >= 4, `enough player hits were checked: ${checked}`);
 });
 
+test('item 1: static rank-up faces show base damage for the supplied run profile', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { playingCardDefinition } = await import('../src/model/playingCard.js');
+  const run = newRun('reaver');
+  const ranked = playingCardDefinition(registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
+  const strike = registries.cards.get('core.strike');
+  const previous = structuredClone(run.gameProfile);
+  delete previous.modules.effects.baseDamageMultiplier;
+  delete previous.hash;
+  previous.hash = gameDigest(previous);
+  const beforeBalance = { ...run, gameProfile: previous };
+  const damageLine = (def, rules, preview) => cardFaceLines(def, preview, registries, rules)
+    .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
+
+  assert.equal(damageLine(strike, run), '3 damage');
+  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes the authored 7 before rounding the scaled base up');
+  assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
+  assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
+  assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
+});
+
 test('item 1: player and enemy Counters scale their authored base once before the return', async () => {
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');

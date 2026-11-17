@@ -178,7 +178,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   assert.ok(cards.length >= 62, 'every Core card is checked');
   for (const card of cards) for (const upgraded of [false, true]) {
     const def = playingCardDefinition(coreReg, { cardId: card.id, upgraded }, { rules: coreRules });
-    const tokens = staticCardTokens(def);
+    const tokens = staticCardTokens(def, coreReg, coreRules);
     const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
     const lines = cardFaceLines(def, null, coreReg, coreRules, { stanceEntry: false });
     const projection = cardFaceProjection(def, { lines, authoredHtml, registries: coreReg, effects: def.effects });
@@ -192,10 +192,10 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   }
   // Whirlwind's three area figures (damage, Poise, Bleed) are three short clauses; the long readings stay in Information.
   const whirl = playingCardDefinition(coreReg, { cardId: 'core.whirlwind' }, { rules: coreRules });
-  const tokens = staticCardTokens(whirl);
+  const tokens = staticCardTokens(whirl, coreReg, coreRules);
   const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
     authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
-  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all', 'Bleed 1 to all']);
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['4 damage to all', '3 Poise to all', 'Bleed 1 to all']);
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
   // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").

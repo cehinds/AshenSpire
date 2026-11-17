@@ -306,9 +306,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
 
 /**
  * The numbers a card's own template substitutes, before any live preview.
- * The body is the renderer's `staticTokens` verbatim — it reads the definition
- * through the shared token binder and nothing else, which is what makes it a
- * projection rather than a step of drawing.
+ * The shared token binder reads the definition. A supplied run profile
+ * supplies the applicable base-damage scale.
  *
  * `card.js` keeps exporting `staticTokens` as a re-export of this, because
  * five files import that name and a rename would be churn that proves nothing.
@@ -317,9 +316,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
-  // A Counter face with a run's rules states the base that the card will arm.
-  const counterMultiplier = rules?.gameProfile && combatProfileFor(def).maneuver === 'counter'
-    ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
+  const baseDamageMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {
@@ -334,7 +331,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
     const value = constant(raw);
     // Owner, 2026-11-15: Barrier stacks are printed as the Poise they give.
     const barrierScale = effect.op === 'gainBarrier' || (effect.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(registries) : 1;
-    const damageScale = effect.op === 'damage' && binding.field === 'amount' ? counterMultiplier : undefined;
+    const damageScale = effect.op === 'damage' && binding.field === 'amount' ? baseDamageMultiplier : undefined;
     if (typeof value === 'number') tokens[binding.token] = ScaleCardBaseDamage(value * barrierScale, damageScale);
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
