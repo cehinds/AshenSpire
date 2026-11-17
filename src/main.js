@@ -33,7 +33,7 @@ import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
-import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shopBuyChoice.js';
+import { openShopCardChoice, openShopArmamentChoice, OfferReceivedItems } from './ui/components/shopBuyChoice.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -84,7 +84,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -2649,16 +2649,22 @@ function showShop() {
   run.gameProfileOpenShop = shopId;
   // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
   // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-  if (configuredShopKind(run, shopId) === 'blacksmith') {
+  // A trader that keeps a Blacksmith (playtest 2026-11-17 item 42) opens it from its dock; while it is open the visit
+  // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
+  const traderSmith = run.gameProfileTraderSmith === shopId;
+  if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
     persist(); audio.music('shop');
     return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
-      onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+      onLeave: traderSmith
+        ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
+        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
+    onSmith: ConfiguredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       if (offer.options[index]?.kind === 'rankUps') {
@@ -2670,7 +2676,7 @@ function showShop() {
       offerShopCardDestination(receipt);
     },
     onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-    onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
@@ -2683,17 +2689,29 @@ function showEvent(eventId) {
     meta: saves.loadMeta(),
     rng,
     eventId,
-    onDone: () => {
-      if (run.combatEntered) {
-        // A startCombat effect stored the encounter id (string form).
-        const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
-        run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
-      }
-      persist();
-      showMap();
-    },
+    // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
+    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on: the what-changed
+    // receipt shows first, then the screen's own cleanup runs (`release`) before the Armoury replaces it.
+    onItemsReceived: (items, { receipt, release }) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+      onPersist: persist,
+      onEquip: id => {
+        persist();
+        const toArmoury = () => { release(); showArmoury({ equipItemId: id }, leaveEvent); };
+        if (!receipt(toArmoury)) toArmoury();
+      },
+      onDone: () => receipt() }),
+    onDone: () => leaveEvent(),
   });
+  function leaveEvent() {
+    if (run.combatEntered) {
+      // A startCombat effect stored the encounter id (string form).
+      const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
+      run.combatEntered = null;
+      return enterCombat(run.mapNodeId, encounterId);
+    }
+    persist();
+    showMap();
+  }
 }
 
 // Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded

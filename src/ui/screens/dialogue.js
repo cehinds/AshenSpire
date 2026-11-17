@@ -30,6 +30,7 @@ import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -221,7 +222,12 @@ export function mountDialogue(app, options) {
       // The header shows the cinders and HP the choice just paid or took, on this same screen.
       if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
-      showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
+      // An item the choice handed over opens the shop's receive modal first (playtest 2026-11-17 item 41).
+      // `release` is the dialogue's own exit cleanup, for a host that leaves it (Equip opens the Armoury).
+      const showReceipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '', onClose });
+      const release = () => { teardown(); clearTimeout(entranceTimer); stage.release(); };
+      const items = options.onItemsReceived ? ReceivedItems(registries, before, run) : [];
+      if (items.length) options.onItemsReceived(items, { receipt: showReceipt, release }); else showReceipt();
       return;
     }
     render();
