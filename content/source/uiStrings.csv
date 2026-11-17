@@ -1507,7 +1507,7 @@ creation.startingCards.button,,Starting cards,Choose how many of each basic card
 creation.startingCards.title,,Starting cards,,
 creation.startingCards.note,,"Choose how many of each basic card you start with. Your class cards stay in the deck.",,
 creation.startingCards.total,,Deck: {count} card{plural},,
-creation.startingCards.done,,Done,,
+creation.startingCards.done,,Use these cards,,
 creation.startingCards.increase,,Add a {card},,
 creation.startingCards.decrease,,Remove a {card},,
 creation.continueTo,,Continue to {category},,
