@@ -592,3 +592,21 @@ test('each change row in the card\'s modal names its label once', async () => {
     door.close();
   });
 });
+
+// Owner screenshot 2026-11-17 (390px): "0 → 1 upgrade · No charge" was one chip and "In deck" was cut to "In de".
+test('a row\'s step and price are separate chips that may wrap, so a phone row is never cut', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const chips = [...host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).querySelectorAll('.co-chip')].map(chip => chip.textContent);
+    assert.deepEqual(chips, ['0 → 1 upgrade', 'No charge']);
+    door.close();
+  });
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const chipRule = css.match(/\.card-upgrade-modal \.option-row \.co-chip \{([^}]*)\}/)?.[1] || '';
+  assert.match(chipRule, /white-space:\s*normal/, 'a chip wraps rather than overflowing its row');
+  assert.match(css, /\.card-upgrade-modal \.option-row \.co-costs \{[^}]*flex-wrap:\s*wrap/, 'the chips wrap onto a second line');
+});

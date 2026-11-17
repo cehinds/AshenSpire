@@ -400,23 +400,36 @@ export function MountCardUpgradeModal(
         }
     }
 
-    function buildCandidateRow(row, model)
+    // The upgrade and its price are two chips (owner, 2026-11-17), so on a phone the price wraps under the step
+    // instead of one long chip being cut off. A rank-up names its own step and is free, so it has one chip.
+    function readRowChips(row)
     {
-        const upgradeStatus = row.weaponBound
-            ? ''
-            : row.status || translate('cardUpgrade.row.status', {
-                from: row.levelFrom,
-                to: row.levelTo,
-                cost: row.costLabel,
-            });
+        if (row.weaponBound)
+        {
+            return [];
+        }
+        if (row.status)
+        {
+            return [row.status];
+        }
+        const upgradeStatus = translate('cardUpgrade.row.status', {
+            from: row.levelFrom,
+            to: row.levelTo,
+        });
+        return [
+            upgradeStatus,
+            row.costLabel,
+        ].filter(Boolean);
+    }
+
+    function buildCandidateRow(row)
+    {
         const rowClassName = appendClassWhen(
             `${CLASS.row} rarity-${row.rarity}`,
             row.disabled,
             CLASS.locked,
         );
-        const costs = [
-            upgradeStatus,
-        ].filter(Boolean);
+        const costs = readRowChips(row);
         return {
             id: row.instanceId,
             name: row.name,
@@ -792,7 +805,7 @@ export function MountCardUpgradeModal(
 
     function renderCandidateList(model, selectedInstanceId)
     {
-        const candidateRows = model.rows.map((row) => buildCandidateRow(row, model));
+        const candidateRows = model.rows.map((row) => buildCandidateRow(row));
         candidateList = optionRowList(candidateRows, {
             idAttr: INSTANCE_ID_ATTRIBUTE,
             selectedId: selectedInstanceId,
