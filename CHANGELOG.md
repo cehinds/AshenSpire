@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-17
+
+- **Matching choice dialogs** ([#2807](https://github.com/cehinds/AshenSpire/pull/2807), `0.7.4.126`). The Blacksmith, rank-up, card, discard, reaction and armoury-slot choice dialogs now share one layout and behaviour: the same body, button widths and focus. The reaction and slot dialogs, which were the odd ones out, now match the rest.
+
 ## 2026-11-16
 
 - **Steadier inspect hold and shared UI plumbing** ([#2806](https://github.com/cehinds/AshenSpire/pull/2806), `0.7.4.124`). Holding a target to inspect it now uses the same timing as holding a card in hand, instead of a separate hard-coded delay. Behind the scenes, sound and haptics, effect layers and the side rails share one implementation each.
