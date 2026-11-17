@@ -26,6 +26,8 @@ test('the gate the review asks (the preview run + the settings) is off with deck
 
 test('the review shows Edit deck only through that gate', () => {
   const src = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(!armouryOpensDeckEditor\(previewRun\(\), meta\.settings \|\| \{\}\)\) return null;/);
-  assert.match(src, /\}\)\.filter\(Boolean\)\);/);
+  // Since 2026-11-17 the Starting cards door sits beside it; Edit deck still asks the same gate.
+  assert.match(src, /const preview = previewRun\(\);/);
+  assert.match(src, /if \(armouryOpensDeckEditor\(preview, meta\.settings \|\| \{\}\)\) \{/);
+  assert.match(src, /\}\)\.flat\(\)\.filter\(Boolean\)\);/);
 });
