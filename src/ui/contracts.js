@@ -186,12 +186,28 @@
  * @property {(element: HTMLElement, onActivate: (event: Event) => void) => Disarm} activateOnKey
  */
 
+/**
+ * @typedef {object} SelectionMarkOptions
+ * @property {string | ReadonlyArray<string> | null} [className]
+ * @property {string | ReadonlyArray<string> | null} [ariaAttribute]
+ * @property {string | null} [ariaCurrent]
+ */
+
+/**
+ * @callback SelectionMarker
+ * @param {Element | Iterable<Element>} nodes
+ * @param {boolean | ((node: Element, index: number) => unknown)} isSelected
+ * @param {SelectionMarkOptions} [options]
+ * @returns {void}
+ */
+
 export const CONTRACT_NAMES = Object.freeze([
     'EffectLayers',
     'FeedbackChannel',
     'Modal',
     'Picker',
     'RailItem',
+    'SelectionMarker',
 ]);
 
 export const PLANNED_CONTRACT_NAMES = Object.freeze([

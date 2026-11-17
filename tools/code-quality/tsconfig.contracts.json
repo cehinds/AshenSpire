@@ -10,6 +10,7 @@
     "../../src/ui/haptics.js",
     "../../src/ui/models/ModalModel.js",
     "../../src/ui/components/optionRowList.js",
+    "../../src/ui/selection.js",
     "type-tests/ui-contracts.js"
   ]
 }
