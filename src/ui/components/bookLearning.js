@@ -1,6 +1,7 @@
 import { skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
 import { el, button } from '../kit/index.js';
-import { ModalHead, ModalFooter, BindModalDismiss } from './modalShell.js';
+import { ModalHead, ModalFooter } from './modalShell.js';
+import { ModalController, ReadReturnFocus } from './modalController.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
 import { renderBookArt } from './bookArt.js';
@@ -10,15 +11,26 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 let activeClose = null;
 
+function buildBookDoor({ name, titleId, component }) {
+  const veil = el('div', { class: 'modal-veil book-learning-veil' });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId, tabindex: '-1', dataset: { component } });
+  let controller = null;
+  const close = () => controller?.Close();
+  const forget = () => { if (activeClose === close) activeClose = null; };
+  activeClose = close;
+  function show() {
+    veil.appendChild(panel);
+    document.body.appendChild(veil);
+    controller = new ModalController({ name, veil, panel, returnFocus: ReadReturnFocus(), onClosing: forget, growsWhenLong: true }).Open();
+  }
+  return { panel, close, show };
+}
+
 export function openBookLearning({ registries, run, id, inCombat = false, settings = {}, onLearn = () => {} }) {
   activeClose?.();
   let plan = skillBookReadPlan(registries, run, id, { inCombat });
   let choice = plan.def?.learnClass ? plan.lessons[0] : null;
-  let release = null;
-  const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: UI.bookLearning } });
-  const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
-  activeClose = close;
+  const { panel, close, show } = buildBookDoor({ name: 'book-learning', titleId: 'book-learning-title', component: UI.bookLearning });
   const head = ModalHead({ title: t('book.read.title', { name: plan.def?.name || id }), titleId: 'book-learning-title', onClose: close });
   const trackSelect = el('select', { id: 'book-learning-track', 'aria-label': t('book.read.track') });
   for (const track of plan.tracks) trackSelect.appendChild(el('option', { value: track.id, text: track.label }));
@@ -85,19 +97,14 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
     el('div', { class: 'book-lesson-columns' }, [choices, detail]), error,
   ]);
   panel.append(head, body, ModalFooter({ secondary: [cancel], primary: confirm }));
-  veil.appendChild(panel); document.body.appendChild(veil);
-  release = BindModalDismiss({ veil, panel, close });
+  show();
   draw(); showDetail(); search.focus();
   return close;
 }
 
 function showClassBookReceipt({ registries, def, receipt }) {
   activeClose?.();
-  const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: UI.bookReceipt } });
-  let release;
-  const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
-  activeClose = close;
+  const { panel, close, show } = buildBookDoor({ name: 'book-receipt', titleId: 'book-receipt-title', component: UI.bookReceipt });
   const body = el('div', { class: 'modal-body book-learning-body' }, [
     renderBookArt(def, { className: 'book-reading-art' }),
     el('p', { text: t('book.read.xpAwarded', { xp: receipt.gained }) }),
@@ -111,6 +118,6 @@ function showClassBookReceipt({ registries, def, receipt }) {
   if (!receipt.bonuses.card) body.append(el('p', { text: t('book.read.noBonus') }));
   const done = button({ label: t('book.read.done') }); done.addEventListener('click', close);
   panel.append(ModalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, ModalFooter({ primary: done }));
-  veil.append(panel); document.body.append(veil);
-  release = BindModalDismiss({ veil, panel, close }); done.focus();
+  show();
+  done.focus();
 }

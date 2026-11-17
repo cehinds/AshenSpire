@@ -287,25 +287,6 @@ export function openProfileArchive({ saves, onRestored = null } = {}) {
   back.addEventListener('click', door.close);
   door.head.querySelector('.modal-close').setAttribute('data-profile-close', '');
   renderProfileSection(door.body, { saves, onRestored });
-  // The focus cursor cannot leave the door (the same trap the notice keeps).
-  const focusStops = () => [...door.panel.querySelectorAll(
-    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )].filter((element) => element.getClientRects().length > 0);
-  door.veil.addEventListener('keydown', (event) => {
-    if (event.key !== 'Tab') return;
-    const stops = focusStops();
-    if (!stops.length) return;
-    const first = stops[0];
-    const last = stops[stops.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || !door.panel.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && (active === last || !door.panel.contains(active))) {
-      event.preventDefault();
-      first.focus();
-    }
-  });
   // Opens on Close, with the pad's cursor on the same control.
   land(door.head.querySelector('.modal-close'));
   return door.veil;
