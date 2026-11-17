@@ -1,4 +1,5 @@
 import { RANGES } from './combatRanges.js';
+import { SplitAfter } from './splitAfter.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
@@ -267,7 +268,8 @@ const DRAWBACK_TEXT = Object.freeze({
 function dropDrawbackText(out, card, fx) {
   const pattern = DRAWBACK_TEXT[fx];
   if (typeof card.textTemplate === 'string') {
-    const kept = card.textTemplate.split(/(?<=\.)\s+/).filter((sentence) => !pattern.test(sentence.trim()));
+    const sentences = SplitAfter(card.textTemplate, /\.\s+/);
+    const kept = sentences.filter((sentence) => !pattern.test(sentence.trim()));
     if (kept.length) out.textTemplate = kept.join(' ');
   }
   if (Array.isArray(card.faceTemplate)) {
