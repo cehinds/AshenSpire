@@ -95,7 +95,7 @@ test('apply tags the panel and sets the properties', () =>
     const panel = fakePanel();
     ModalModelFor('reward').apply(panel);
     assert.equal(panel.dataset.modalKind, 'reward');
-    assert.equal(panel.dataset.nameButton, 'shown');
+    assert.equal(panel.dataset.nameButton, 'hidden', 'the reward door has no name button (playtest 2026-11-17 item 43)');
     assert.equal(panel.props['--modal-grid-gap'], '12px');
     const confirm = fakePanel();
     ModalModelFor('confirm').apply(confirm);

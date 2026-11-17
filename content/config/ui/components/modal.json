@@ -25,7 +25,8 @@
       "showNameButton": true
     },
     "reward": {
-      "extends": "choice"
+      "extends": "choice",
+      "showNameButton": false
     },
     "cardUpgrade": {
       "extends": "choice"
