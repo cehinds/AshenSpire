@@ -18,8 +18,9 @@ export function intentFollowUps(symbols = []) {
         item.append(value);
       }
       item.append(intentIcon(symbol.icon));
-      // ...and the Poise it takes, with BREAKS YOU when it is the move that breaks it (owner, 2026-11-17).
-      if (symbol.poise) item.append(IntentPoiseMark(symbol.poise));
+      // ...and BREAKS YOU when it is the move that breaks the player's Poise (owner, 2026-11-17); its Poise number is in the aria-label and tooltip.
+      const poise = symbol.poise && IntentPoiseMark(symbol.poise, { tagOnly: true });
+      if (poise) item.append(poise);
     }
     else { item.dataset.unknown = 'true'; item.textContent = '?'; }
     row.append(item);

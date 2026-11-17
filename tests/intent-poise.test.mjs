@@ -213,3 +213,18 @@ test('review #2825: an unread attacker before this one makes the Poise a lower b
   assert.equal(poise.mayBreak, true, 'conservative: it may break');
   assert.match(poise.label, /\+$/, 'labelled as at least');
 });
+
+test('review #2825: a follow-up draws only its BREAKS YOU tag, which takes no width; a follow-up that breaks nothing draws no Poise', async () => {
+  const { intentFollowUps } = await import('../src/ui/components/intentFollowUps.js');
+  withKitDom(() => {
+    const row = intentFollowUps([
+      { kind: 'action', icon: 'attack', value: '18', poise: { value: '7', breaks: false, mayBreak: false, summary: '18 damage, 7 Poise' } },
+      { kind: 'action', icon: 'attack', value: '19', poise: { value: '3', breaks: true, mayBreak: true, summary: '19 damage, 3 Poise (breaks your Poise)' } },
+    ]);
+    const [calm, breaking] = row.querySelectorAll('.intent-followup');
+    assert.equal(calm.querySelector('.intent-poise'), null, 'no Poise number on a follow-up: its row has no room');
+    const tag = breaking.querySelector('.intent-poise[data-tag-only="true"] .intent-poise-break');
+    assert.equal(tag?.textContent, 'BREAKS YOU');
+    assert.equal(breaking.querySelector('.intent-poise-value'), null);
+  });
+});

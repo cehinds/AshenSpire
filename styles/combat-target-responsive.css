@@ -279,15 +279,14 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: calc(1px / var(--ui-zoom, 1));
-  margin-left: calc(1px / var(--ui-zoom, 1));
+  gap: 0;
   color: var(--gold);
-  font: 700 calc(var(--intent-value-size, 16px) * .72)/1 Georgia, serif;
+  font: 700 calc(var(--intent-value-size, 16px) * .66)/1 Georgia, serif;
   white-space: nowrap;
 }
 :root .combat .intent .intent-poise-icon {
-  width: calc(15px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
-  height: calc(15px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  width: calc(13px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
+  height: calc(13px * var(--intent-content-scale, 1) / var(--ui-zoom, 1));
   flex: none;
 }
 :root .combat .intent .intent-poise[data-breaks='true'] { color: var(--danger); }
@@ -308,3 +307,4 @@
 }
 :root .combat .intent .intent-poise[data-may-break='true'] .intent-poise-break { background: transparent; border-style: dashed; }
 .intent-poise-tip.is-break { color: var(--danger); }
+:root .combat .intent .intent-poise[data-tag-only='true'] { width: 0; margin: 0; }
