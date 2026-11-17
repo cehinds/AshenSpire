@@ -55,7 +55,8 @@ test('Core winning defense mitigates exactly once before configured Block/Poise,
 
 // Owner, 2026-11-14 (Wave 2.5): the enemy's Attack stance deals +20% (8 -> 9 a hit), so the shipped Core quotes and loses 17 HP (baseline 23). A fight created
 // before the stance benefits keeps the older 14 (baseline 20): `legacy` builds it without the `stanceBenefits` rules.
-for (const [mode, legacy, expected, baseline] of [['core', false, 17, 23], ['core', true, 14, 20]]) test(`${mode}${legacy ? ' (fight before stance benefits)' : ''} actual grouped damage matches green HP projection without double mitigation`, () => {
+// Theme B (owner, 2026-11-17): the no-stance baseline is Idle, which takes x1.25 from every hit, so the shipped baseline is 32; the Counter-stance quote is unchanged.
+for (const [mode, legacy, expected, baseline] of [['core', false, 17, 32], ['core', true, 14, 20]]) test(`${mode}${legacy ? ' (fight before stance benefits)' : ''} actual grouped damage matches green HP projection without double mitigation`, () => {
   const { gameProfile } = context(mode);
   const original = resolveGameProfile(mode);
   const registries = mode === 'core' ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, original)), original) : createRegistries(contentBundle);

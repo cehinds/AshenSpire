@@ -58,6 +58,8 @@ function liveCore(enemyId = 'wanderingSoldier') {
   const target = combat.enemies[0];
   Object.assign(target, { block: 0, barrier: 0, persistentWard: null, persistentPoise: { value: 0, max: 20 }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;
+  // The target holds no stance (Idle); these cases pin type weaknesses alone, so the Idle stance weakness (theme B, 2026-11-17) is left out.
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return { combat, target };
 }
 function hit(carrier, { enemyId, weaknesses, statuses, amount = 10 } = {}) {
