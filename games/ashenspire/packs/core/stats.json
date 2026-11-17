@@ -22,7 +22,7 @@
   },
   "poolBases": {
     "hp": 35,
-    "mana": 2
+    "mana": 3
   },
   "levelGrowth": {
     "hp": 5
