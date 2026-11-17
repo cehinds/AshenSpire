@@ -46,3 +46,18 @@ test('every trader shows 3-6 dock options in all (rank-up shelf, Sell and Blacks
   assert.ok(smiths > 0 && smiths < 400, 'some traders, not all, keep a Blacksmith');
   assert.ok(rankUps > 0, 'the rank-up shelf is among the probed docks');
 });
+
+test('a stock saved before traders varied is held to the 3-6 options rule (Sell counted)', async () => {
+  const { ConfiguredTraderDock } = await import('../src/model/gameProfileShopKind.js');
+  const run = newRun(7);
+  const every = ['weapons', 'relics', 'combatCards', 'weaponArts', 'potions', 'armor', 'rankUps'];
+  for (const smith of [false, true]) {
+    const dock = ConfiguredTraderDock(run, every, { smith });
+    const options = dock.kinds.length + 1 + (dock.smith ? 1 : 0);
+    assert.ok(options >= 3 && options <= 6, `${options} options`);
+    for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(dock.kinds.includes(kind), `${kind} stays`);
+    assert.equal(dock.smith, false, 'a full old dock has no room for the Blacksmith');
+  }
+  const fresh = ConfiguredTraderDock(run, ['weapons', 'relics', 'combatCards'], { smith: true });
+  assert.deepEqual(fresh, { kinds: ['weapons', 'relics', 'combatCards'], smith: true }, 'a dock that fits comes back whole');
+});
