@@ -51,12 +51,15 @@ export function collectMechanicsRuntimeArtifacts(root = ROOT) {
 
 function sharedCardVariant(card, sp, mp) {
   const { upgrade, costGrowth } = card;
+  const upgradeSp = !sp && upgrade?.staminaCost > 0;
+  const upgradeMp = !mp && upgrade?.manaCost > 0;
+  const growthSp = !sp && costGrowth?.stamina;
+  const growthMp = !mp && costGrowth?.mana;
   return {
-    cost: sp ? card.cost : 0,
-    staminaCost: sp ? card.staminaCost : 0,
-    manaCost: mp ? card.manaCost : 0,
-    ...(upgrade && { upgrade: { ...upgrade, ...(sp ? {} : { cost: 0, staminaCost: 0 }), ...(mp ? {} : { manaCost: 0 }) } }),
-    ...(costGrowth && { costGrowth: { ...costGrowth, ...(sp ? {} : { stamina: 0 }), ...(mp ? {} : { mana: 0 }) } }),
+    ...(!sp && card.staminaCost > 0 && { cost: 0, staminaCost: 0 }),
+    ...(!mp && card.manaCost > 0 && { manaCost: 0 }),
+    ...((upgradeSp || upgradeMp) && { upgrade: { ...upgrade, ...(upgradeSp && { cost: 0, staminaCost: 0 }), ...(upgradeMp && { manaCost: 0 }) } }),
+    ...((growthSp || growthMp) && { costGrowth: { ...costGrowth, ...(growthSp && { stamina: 0 }), ...(growthMp && { mana: 0 }) } }),
   };
 }
 
@@ -73,15 +76,15 @@ function appendSharedCards(pack, content, packPath) {
     const def = source.get(id);
     if (def?.minCombatExpansionVersion !== 2) throw new Error(`${packPath}: unknown expanded shared card '${id}'`);
     const tags = coreContentBundle.tagging.filter(row => row.family === 'card' && row.objectId === id).map(row => row.tagId);
-    const card = { ...def, tags, staminaCost: def.staminaCost ?? def.cost, manaCost: def.manaCost ?? 0 };
+    const card = { ...def, tags, costRule: 'fixed', staminaCost: def.staminaCost ?? def.cost, manaCost: def.manaCost ?? 0 };
     if (def.upgrade?.cost !== undefined) card.upgrade = { ...def.upgrade, staminaCost: def.upgrade.staminaCost ?? def.upgrade.cost };
     content.cards.push(card);
-    content.resourceVariants[id] = {
+    const variants = {
       none: sharedCardVariant(card, false, false),
       sp: sharedCardVariant(card, true, false),
       mp: sharedCardVariant(card, false, true),
-      'sp,mp': sharedCardVariant(card, true, true),
     };
+    content.resourceVariants[id] = Object.fromEntries(Object.entries(variants).filter(([, override]) => Object.keys(override).length));
     used.add(id);
   }
 }
