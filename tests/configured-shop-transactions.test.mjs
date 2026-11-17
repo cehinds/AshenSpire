@@ -19,6 +19,15 @@ function fixture(seed = 71) {
   const stock = gameProfileShopStock(registries, run, rng, { shopId: 'market' });
   return { run, rng, stock };
 }
+// Traders vary (playtest 2026-11-17 item 42): a trader stocks armaments, cards and relics always, and only some of the
+// other shelves. A test that buys from one shelf takes the first seed from 71 whose trader stocks it.
+function fixtureStocking(kind) {
+  for (let seed = 71; seed < 571; seed += 1) {
+    const f = fixture(seed);
+    if (f.stock.options.some(option => option.kind === kind)) return f;
+  }
+  throw new Error(`no trader in 500 seeds stocks ${kind}`);
+}
 const bytes = value => JSON.stringify(value);
 const purchase = (fixture, index, quote = null) => purchaseGameProfileShopOffer(registries, fixture.run, 'market', index, fixture.rng, quote);
 
@@ -61,7 +70,7 @@ test('repeated card purchases from one slot create unique owned instances and st
 });
 
 test('exhausted weapon-art pool never substitutes another category or the purchased art', () => {
-  const f = fixture(), index = f.stock.options.findIndex(option => option.kind === 'weaponArts');
+  const f = fixtureStocking('weaponArts'), index = f.stock.options.findIndex(option => option.kind === 'weaponArts');
   const receipt = purchase(f, index);
   assert.equal(receipt.replacement, null);
   assert(f.run.gameProfileRewardOffers['shop:market'].taken.includes(index));
@@ -113,7 +122,7 @@ test('saved flat-price stock buys at its saved price and restocks at the current
 
 test('sales cover configured weapons, armor, relics, utility potions and spare cards without legacy stock', () => {
   for (const kind of ['weapons', 'armor', 'relics', 'potions', 'combatCards', 'weaponArts']) {
-    const f = fixture(), index = f.stock.options.findIndex(option => option.kind === kind);
+    const f = fixtureStocking(kind), index = f.stock.options.findIndex(option => option.kind === kind);
     const bought = purchase(f, index);
     const identity = kind === 'armor' ? `${f.run.class}:${bought.id}` : kind === 'potions' ? f.run.flasks.length - 1
       : ['combatCards', 'weaponArts'].includes(kind) ? f.run.sideboard.at(-1).instanceId : bought.id;
@@ -152,7 +161,7 @@ test('sales refuse equipped gear, active or bound cards, refillable flasks and c
 });
 
 test('sales retain armor upgrade and mount records, retire class grants, and preserve unrelated legacy stock', () => {
-  const f = fixture(), index = f.stock.options.findIndex(option => option.kind === 'armor');
+  const f = fixtureStocking('armor'), index = f.stock.options.findIndex(option => option.kind === 'armor');
   const bought = purchase(f, index), def = registries.equipment.armour.find(row => row.id === bought.id && row.classId === f.run.class);
   const ref = pieceItemRef(def);
   assert.equal(ref, `armor/${f.run.class}/${bought.id}`);

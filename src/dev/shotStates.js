@@ -383,6 +383,8 @@ export function createShotStates(ctx) {
       // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
+      // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
+      if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal' });
     } else if (name === 'combat' || name === 'fx') {
