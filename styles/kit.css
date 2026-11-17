@@ -255,7 +255,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-toggle .knob, .as-switch-track .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
 .as-toggle.on, .as-toggle[aria-checked="true"], .as-switch-input:checked + .as-switch-track { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
 .as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob, .as-switch-input:checked + .as-switch-track .knob { left: calc(100% - 2.3rem); background: var(--gold); }
-.as-toggle:disabled, .as-switch-input:disabled + .as-switch-track { opacity: 0.55; cursor: default; }
+.as-toggle:disabled, .as-switch-input:disabled + .as-switch-track { opacity: var(--btn-disabled-opacity); cursor: default; }
 /* The switch is a real checkbox (role="switch"): the input covers the label so it takes every tap, Space toggles it
    from the keyboard, and the track beside it draws the state and the focus ring. */
 .as-switch { position: relative; display: inline-flex; flex: 0 0 auto; cursor: pointer; }
@@ -389,7 +389,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-option .om { margin: 0; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
 .as-option > .r-trail { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
 .as-option.noarrow > .r-trail { margin-right: 0; }
-.as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
+.as-option[aria-disabled="true"], .as-option:disabled { opacity: var(--btn-disabled-opacity); cursor: default; }
 .as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
 .as-option.noarrow { padding-right: 1.5rem; }
 /* `.class-pick` (§ SCREENS) re-declares the padding at 1.5rem all round, and
@@ -1180,7 +1180,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .class-pick:hover { border-color: var(--btn-hover-border-quiet); }
 .class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
-.class-pick.locked { opacity: 0.55; cursor: default; }
+.class-pick.locked { opacity: var(--btn-disabled-opacity); cursor: default; }
 /* `quiet`: still a choice, but not the one to reach for — Rest at full
    health and mana still ends the visit, so it stays pressable and reads muted. */
 .class-pick.quiet { opacity: 0.7; }
@@ -1396,7 +1396,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .event-narrative > .as-prose { margin: 0; }
 .event-door .as-options { text-align: left; }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
-.event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
+.event-door .as-option.ev-choice[disabled] { opacity: var(--btn-disabled-opacity); cursor: default; }
 .event-door .as-option .on { white-space: normal; }
 /* The label's own ellipsis rule outranked the line above, so a choice's
    consequence — "gain 90 cinders; take 6 damage" — was cut to "gain 90
@@ -1562,7 +1562,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .inventory-information > .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .inventory-card-action-label { pointer-events: none; align-self: flex-start; }
 .ep-equip { align-self: flex-start; }
-.ep-equip.locked { opacity: 0.55; cursor: not-allowed; }
+.ep-equip.locked { opacity: var(--btn-disabled-opacity); cursor: not-allowed; }
 .armoury[data-responsive="phone"] .inventory-detail { grid-template-columns: minmax(0, 1fr); }
 .armoury[data-responsive="phone"] .inventory-detail > .inventory-model { justify-self: center; }
 /* THE COMPARISON — a fold of StatRows and deltas inside the reveal. */

@@ -2005,7 +2005,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .upgrade-desk .deck-editor-main.smith-candidate-card .card-upgrade-reason { color: var(--danger); }
 .upgrade-desk .deck-editor-main.smith-candidate-card.locked,
 .upgrade-desk .deck-editor-main.smith-candidate-card.is-needs-blacksmith { cursor: not-allowed; }
-.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: .55; }
+.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: var(--btn-disabled-opacity); }
 .upgrade-desk .deck-editor-tile.spent .deck-editor-name { color: inherit; }
 .upgrade-desk .deck-editor-foot { justify-content: flex-end; }
 .deck-editor.upgrade-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
