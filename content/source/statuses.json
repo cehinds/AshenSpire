@@ -131,7 +131,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed. Then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed — then the build-up resets to zero."
   },
   {
     "id": "insanity",
@@ -163,7 +163,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger. Then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger — then the build-up resets to zero."
   },
   {
     "id": "bleedResist",
@@ -178,7 +178,7 @@
       "status": "bleed",
       "percent": 50
     },
-    "tooltip": "Just burst, so hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst — hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostResist",
@@ -193,7 +193,7 @@
       "status": "frost",
       "percent": 50
     },
-    "tooltip": "Just burst, so hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst — hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "insanityResist",
@@ -208,7 +208,7 @@
       "status": "insanity",
       "percent": 50
     },
-    "tooltip": "Just burst, so hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst — hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostExposed",

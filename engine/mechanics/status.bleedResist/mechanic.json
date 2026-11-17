@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Clotted",
-  "description": "Just burst, so hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+  "description": "Just burst - hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
   "attaches": [
     "status"
   ],

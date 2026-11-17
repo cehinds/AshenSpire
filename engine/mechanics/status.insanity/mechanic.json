@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Insanity",
-  "description": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger. Then the build-up resets to zero.",
+  "description": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger - then the build-up resets to zero.",
   "attaches": [
     "status"
   ],

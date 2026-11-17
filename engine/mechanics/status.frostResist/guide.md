@@ -1,5 +1,5 @@
 # Weathered (`status.frostResist`)
-Just burst, so hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.
+Just burst - hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.
 - Carried by: statuses on any entity.
 - Lives in: `src/content/statuses.js`.
 - Defined in: `content/source/statuses.json`.

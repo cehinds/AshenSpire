@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Frost",
-  "description": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed. Then the build-up resets to zero.",
+  "description": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed - then the build-up resets to zero.",
   "attaches": [
     "status"
   ],
