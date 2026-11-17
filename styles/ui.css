@@ -1945,7 +1945,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-secondary { color: #ffd8d2; background: #792f2b; border-color: #b95e53; }
 .deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-primary:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
 .deck-editor-reading-desk .deck-editor-done:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
-.deck-editor-reading-desk .deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
+.deck-editor-reading-desk .deck-editor-done:disabled,
+.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"],
 .deck-editor-reading-desk .deck-editor-refusal { color: #ff9488; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"] { font-weight: 700; }
@@ -1958,7 +1959,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-rules > .ctext { flex: 1 0 100%; margin: .5rem 0; }
 .deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
 .deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
-.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }
 /* The live game UI zoom changes the available reading height. Preserve the
    main effect below the preview before spending remaining space on the face. */
 .deck-editor-reading-desk .deck-editor-selected-reason { display: none; }
