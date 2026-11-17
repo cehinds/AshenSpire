@@ -1,4 +1,5 @@
 import { t } from '../strings.js';
+import { ActivateOnKey } from '../selection.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { restServicesAll, restServiceUsed, RestChoiceMode } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
@@ -55,10 +56,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     choices.firstChild.append(markUiComponent(deck, UI.shrineOptionCard, 'deck'));
     const open = () => invoke(() => deckEditor.onOpen());
     deck.addEventListener('click', open);
-    deck.addEventListener('keydown', event => {
-      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
-      event.preventDefault(); open();
-    });
+    ActivateOnKey(deck, open, { canActivate: event => !event.defaultPrevented });
   }
 
   // The recovery ledger is projected from the final transaction, including
@@ -174,9 +172,6 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       });
     });
     option.addEventListener('click', open);
-    option.addEventListener('keydown', event => {
-      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
-      event.preventDefault(); open();
-    });
+    ActivateOnKey(option, open, { canActivate: event => !event.defaultPrevented });
   }
 }

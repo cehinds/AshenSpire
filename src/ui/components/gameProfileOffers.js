@@ -11,7 +11,7 @@ import { OpenConfirmationModal } from './confirmationModal.js';
 import { OfferPicksLeft } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 import { ModalModelFor } from '../models/ModalModel.js';
-import { MarkSelected } from '../selection.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
 const CARD_KINDS = Object.freeze([
     'combatCards',
@@ -66,20 +66,13 @@ function applyRadioRole(face, label, isDisabled, onPick)
         return;
     }
     face.tabIndex = 0;
-    face.addEventListener('keydown', (event) =>
-    {
-        const isPickKey = event.key === 'Enter'
-            || event.key === ' ';
-        if (
-            event.target !== face
-            || !isPickKey
-        )
+    ActivateOnKey(
+        face,
+        () => onPick(),
         {
-            return;
-        }
-        event.preventDefault();
-        onPick();
-    });
+            canActivate: (event) => event.target === face,
+        },
+    );
 }
 
 function findOptionDefinition(registries, activeRun, option)

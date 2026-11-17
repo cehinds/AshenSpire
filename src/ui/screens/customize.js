@@ -80,7 +80,7 @@ import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { IsPopoverOpen } from '../popoverPolyfill.js';
 import { ColorMix } from '../colorMixCompat.js';
-import { MarkSelected } from '../selection.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -1321,10 +1321,8 @@ export function mountCustomize(app, {
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
         face.addEventListener('cardinspectionselect', () => selectStartingPiece(piece, CHOICE_BY_INSPECTION));
-        face.addEventListener('keydown', event => {
-          if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
-            event.preventDefault(); face.dispatchEvent(new CustomEvent('cardinspectionselect'));
-          }
+        ActivateOnKey(face, () => face.dispatchEvent(new CustomEvent('cardinspectionselect')), {
+          canActivate: event => event.target.classList.contains('equipment-poker-card'),
         });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
