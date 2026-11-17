@@ -38,7 +38,7 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   // Two damage types of one hit read as one clause ("2 Blunt + 1 Force ×3"): the hit count and area qualify both.
   .replace(/^(?:Deal )?((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+), ((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+) damage/, '$1 $2 + $3 $4')
   .replace(/^Remove all (\w+(?:, all \w+)+)/, (match, list) => 'Remove ' + list.replace(/all /g, ''))
-  .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
+  .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks: +$1 per stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
 // What a summary must never lose from the full text, by kind: a cost or downside, a discard, something consumed, a cap or

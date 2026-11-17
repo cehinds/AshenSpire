@@ -6304,7 +6304,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
+        "textTemplate": "Prepare {base.auto-counter} automatic Counter.",
         "faceTemplate": ["Prepare an automatic Counter."],
         "icon": "shield",
         "flavor": "A waiting answer of the Bastion's shield masters.\n\nPupils stood behind a raised board while the instructor struck it without a count. They were forbidden to pursue the staff and taught instead to answer its contact. Years later, some could begin the reply before knowing they had been attacked.\n\nThe lesson waited in the arm."
@@ -6419,7 +6419,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
+        "textTemplate": "Prepare {base.auto-sweep} automatic Sweep.",
         "faceTemplate": ["Prepare an automatic Sweep."],
         "icon": "shield",
         "flavor": "A prepared circle of the ring road's caravan guards.\n\nAn escort surrounded by thieves could not watch every approach. Guards planted their feet and learned to turn at the first touch of a blade. The motion cleared space for the travelers, even when its bearer never saw the attacker.\n\nThe road was measured by the weapon's return."
