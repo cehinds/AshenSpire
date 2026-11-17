@@ -679,16 +679,8 @@ export function ModalFooter({
     return footer;
 }
 
-export function BindModalDismiss({
-    veil,
-    panel,
-    close,
-    opener = document.activeElement,
-    escape = true,
-} = {})
+export function WatchLongPanel(panel)
 {
-    let pressBeganOnVeil = false;
-
     function promoteLongPanel()
     {
         if (
@@ -704,6 +696,29 @@ export function BindModalDismiss({
             panel.dataset.height = LONG_HEIGHT;
         }
     }
+
+    const resizeObserver = createResizeObserver(promoteLongPanel);
+    resizeObserver?.observe(panel);
+
+    const mutationObserver = createMutationObserver(promoteLongPanel);
+    mutationObserver?.observe(panel, PANEL_MUTATIONS_TO_WATCH);
+
+    return function stopWatchingLongPanel()
+    {
+        resizeObserver?.disconnect();
+        mutationObserver?.disconnect();
+    };
+}
+
+export function BindModalDismiss({
+    veil,
+    panel,
+    close,
+    opener = document.activeElement,
+    escape = true,
+} = {})
+{
+    let pressBeganOnVeil = false;
 
     function handleKeydown(event)
     {
@@ -755,11 +770,7 @@ export function BindModalDismiss({
         }
     }
 
-    const resizeObserver = createResizeObserver(promoteLongPanel);
-    resizeObserver?.observe(panel);
-
-    const mutationObserver = createMutationObserver(promoteLongPanel);
-    mutationObserver?.observe(panel, PANEL_MUTATIONS_TO_WATCH);
+    const stopWatchingLongPanel = WatchLongPanel(panel);
 
     document.addEventListener('keydown', handleKeydown, true);
     veil.addEventListener('pointerdown', rememberVeilPress);
@@ -767,8 +778,7 @@ export function BindModalDismiss({
 
     return function release({ restoreFocus = true } = {})
     {
-        resizeObserver?.disconnect();
-        mutationObserver?.disconnect();
+        stopWatchingLongPanel();
         document.removeEventListener('keydown', handleKeydown, true);
         veil.removeEventListener('pointerdown', rememberVeilPress);
         veil.removeEventListener('click', closeOnVeilClick);
@@ -929,6 +939,8 @@ export function OpenModal({
     primary = null,
     footSize = DEFAULT_ROW_SIZE,
     onClose = null,
+    onEscape = null,
+    onBackdrop = null,
     opener = document.activeElement,
     host = document.body,
     role = DEFAULT_MODAL_ROLE,
@@ -1087,14 +1099,14 @@ export function OpenModal({
 
     const deferInert = deferLift && hasAnimationFrames();
     unregisterModal = registerModal(name || title || 'modal', panel, {
-        dismiss: () => close(),
+        dismiss: () => (onEscape ?? close)(),
         back: true,
         deferInert,
     });
     release = BindModalDismiss({
         veil,
         panel,
-        close,
+        close: () => (onBackdrop ?? close)(),
         opener,
         escape: false,
     });
