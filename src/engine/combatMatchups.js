@@ -1,8 +1,8 @@
 import * as Engagement from './combatEngagement.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, CounterArmedWhileStacks } from '../model/fixCoreMechanics.js';
 import { CounterStackRule, counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { decayCounterStacks, SpendCounterStacks } from './guardStacks.js';
+import { decayCounterStacks, SpendCounterStacks, counterStackCount } from './guardStacks.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -406,13 +406,28 @@ export function setCombatStance(ctx, entity, carrier) {
   return entity.combatStance;
 }
 
+/**
+ * The owner's turn start ends an armed Counter, except (owner 2026-11-17, theme B: "Counter follows the normal decay rule") under
+ * `counter.armedWhileStacks`, where a Counter whose owner still holds Counter stacks stays armed: the stacks fade by decayPerTurn at each
+ * turn start and a covered hit spends them, and the Counter ends with the last one.
+ */
+export function expireCombatCounterAtTurnStart(ctx, entity) {
+  if (!entity) return;
+  const counter = entity.combatCounter;
+  if (counter?.charges > 0 && combatExpansionEnabled(ctx) && CounterArmedWhileStacks(ctx) && counterStackCount(entity) > 0) {
+    counter.expiresOnOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
+    return;
+  }
+  clearCombatCounter(entity, ctx);
+}
+
 /** The turn owner calls this once; grants are returned for normal DSL gain. */
 export function startTacticalTurn(ctx, entity) {
   if (!combatExpansionEnabled(ctx) || !entity) return { block: 0, barrier: 0 };
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
-  clearCombatCounter(entity, ctx);
-  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start, after the charge clears (owner 2026-10-31).
+  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start (owner 2026-10-31); the Counter then lasts only while stacks remain.
   if (entity.kind === 'player' && fixCoreEnabled(ctx)) decayCounterStacks(ctx, entity);
+  expireCombatCounterAtTurnStart(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null

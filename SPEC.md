@@ -67,6 +67,10 @@ Owner decision of 2026-11-15 on Counter ("counter is very broken, some times dea
 - **Counter stance returns nothing of its own.** The stance keeps +25% Block gained; the separate "a hit taken returns 25%" (`stanceBenefits.counter.hpReturnFraction`) is removed from the shipped data.
 - **Upgrade step "+1 Counter"** (`fx:counter`): offered only on a card that already grants Counter stacks, while its whole grant stays within 3.
 
+Owner decisions of 2026-11-17 (playtest theme B, status and stance rules). Each is keyed in `content/source/fixCoreMechanics.json`; a fight saved without its key keeps the earlier rule.
+
+- **Counter follows the normal decay rule** (`counter.armedWhileStacks: true`). Counter stacks lose `decayPerTurn` (1) at the start of the owner's next turn, and an armed Counter whose owner still holds stacks stays armed through that turn start; it ends with its last stack (spent by covered hits or faded). Before, the charge expired at the next turn start and the stacks left over answered nothing. Playing a card of another stance still replaces the Counter, as before.
+
 Owner decisions of 2026-11-15 (front and back rows, "advancing and retreating"). Every rule is keyed on the `bands` block of `content/source/fixCoreMechanics.json` (`bands.rows: true`, `advancedTurnEnds`, `retreatTag`, `retreatCardId`, `formationBlock`); a fight made without it plays as before. The rules are written under *Range* above:
 
 - **Rows and the Advance.** Front shields back: a melee card at a back enemy costs +1 Stamina and Advances you; reach cards and spells are unaffected; shown = paid. A melee Counter against a back-row attacker costs +1 extra. A back-row melee enemy first steps forward ("Approaching") unless you are Advanced at the coming enemy phase; its intent is planned against that state and re-planned the moment it changes, and the move shown is the move done. An empty front row sends the back row forward at the next enemy phase start, which undoes a push of the only front enemy.
@@ -886,7 +890,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - Counter targeting excludes only those deferred effects: immediate hostile support still requires an eligible foe.
 - Guard / Ward: a Counter without printed Block grants 4 base Guard; every Counter grants 2 base magical Ward (existing Block/rating rules apply). A card with no printed HP damage has default reply base 6 (configurable). A new Counter replaces the previous reaction; charges never stack.
 - Lifetime:
-  - Player Counter survives the ensuing enemy phase and expires at the player's next turn start.
+  - Player Counter survives the ensuing enemy phase and expires at the player's next turn start; under `counter.armedWhileStacks` it stays armed while its owner holds Counter stacks (*Owner decisions of 2026-11-17*).
   - Enemy Counter becomes active and grants its Guard/Ward once when its visible next stance is selected (protecting it through the player phase); executing that move does not grant it again; it expires at that enemy's next turn start.
   - Stagger immediately clears that entity's armed Counter (including a stance already prepared before the player phase); it cannot retaliate while interrupted. Death also prevents retaliation. Turn-skip and delayed-move cancellation rules remain authoritative.
 - Trigger: the first eligible **positive** incoming attack consumes the single reaction and the hit is multiplied by 0.5.

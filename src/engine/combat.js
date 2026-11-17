@@ -37,7 +37,7 @@ import { expandedEquipmentProjection, expandedEnemyProjection } from './combatEx
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
 import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
-import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
+import { clearCombatCounter, expireCombatCounterAtTurnStart, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
 import { NeutralExtraDraw, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
@@ -539,7 +539,7 @@ function startPlayerTurn(combat) {
   // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
   // retainBlock-style modifier keeps them.
   clearMeterGuards(p);
-  clearCombatCounter(p);
+  expireCombatCounterAtTurnStart(combat, p);
   if (combat.combatExpansionVersion === 2) {
     const protection = startTacticalTurn(combat, p);
     if (protection.block) A.gainBlock(combat, p, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
@@ -670,7 +670,7 @@ function enemyTurnStart(combat) {
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
     clearMeterGuards(e);
-    clearCombatCounter(e);
+    expireCombatCounterAtTurnStart(combat, e);
     if (combat.combatExpansionVersion === 2) {
       const protection = startTacticalTurn(combat, e);
       if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });

@@ -39,6 +39,7 @@
     "stacksPerCard": 1,
     "stacksUpgradeBonus": 1,
     "stacksMax": 3,
+    "armedWhileStacks": true,
     "stacksByCard": {
       "core.counter": 1, "guardCounter": 1, "quickstep": 1, "riposte": 2, "rondelParry": 1, "wardingStar": 1, "nockAndWait": 1,
       "lowGuardRiposte": 2, "spikedReprisal": 2, "progression-crimson-reprisal": 2, "progression-rime-mirror": 2,
