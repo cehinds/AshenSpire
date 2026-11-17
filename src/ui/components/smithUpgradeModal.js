@@ -26,7 +26,7 @@ import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
 import { resolveUpgradedItem } from '../../model/itemUpgrades.js';
 import { requirementAtLevel } from '../../model/smithing.js';
-import { ModalController, ReadReturnFocus } from './modalController.js';
+import { ReadReturnFocus } from './modalController.js';
 
 /** The item's art as an ArtWell: its painted asset, or its glyph (a relic). */
 const itemArt = (item, { small = false } = {}) => {
@@ -67,8 +67,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
   const desk = mountUpgradeDesk(host, {
     title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'),
     backLabel: parentRecord ? modalParentLabel(parentRecord) : initialModel.properties.backLabel, kind: 'item',
+    name: 'smith-upgrade', returnFocus, onBack, onClosing: releaseParentAndDecision,
   });
-  const { veil, panel: modal, purse, backBtn, confirmBtn } = desk;
+  const { panel: modal, purse, confirmBtn, controller } = desk;
   modal.classList.add('smith-upgrade-modal');
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
 
@@ -219,7 +220,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
   const rows = smithCandidateRows(initialModel);
   const cards = initialModel.properties.candidates.map((item, index) => candidateCard(item, rows[index]));
   desk.setRows(cards.map((card) => card.wrapper));
-  const back = backBtn;
   const confirm = confirmBtn;
 
   function draw(model) {
@@ -267,17 +267,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     disarmDecision = null;
   }
 
-  const controller = new ModalController({
-    name: 'smith-upgrade', veil, panel: modal, returnFocus, onBack, onClosing: releaseParentAndDecision,
-  }).Open();
   const close = (closeOptions) => controller.Close(closeOptions);
-  const backOut = () => controller.BackOut();
-
-  back.addEventListener('click', backOut);
-
-  // The shell's close box is the same way out as Back.
-
-  desk.closeBtn.addEventListener('click', backOut);
   draw(initialModel);
   queueMicrotask(() => {
     const row = cards.find((card) => card.dataset.itemRef === focusItemRef);
