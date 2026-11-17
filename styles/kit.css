@@ -234,14 +234,14 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
   text-align: left; white-space: nowrap;
   cursor: pointer;
 }
-.as-railitem:hover { border-color: var(--line-soft); color: var(--parchment); }
+.as-railitem:hover { border-color: var(--btn-hover-border-quiet); color: var(--parchment); }
 .as-railitem[aria-current="true"], .as-railitem[aria-selected="true"], .as-railitem.on { border-color: var(--gold); color: var(--gold); background: rgba(var(--accent-rgb), 0.08); }
 
 /* Segmented — 2–3 mutually exclusive values, one visible at a glance. */
 .as-seg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; }
 .as-seg button { min-height: calc(var(--tap-floor) - 2px); padding: 0.6rem 1.2rem; background: transparent; border: 0; border-radius: 0; color: var(--ink-dim); font: 500 1.23rem/1 var(--font-body); cursor: pointer; }
 .as-seg button + button { border-left: 1px solid var(--line-soft); }
-.as-seg button:hover, .as-seg button:focus-visible { background: rgba(var(--accent-rgb), 0.06); color: var(--parchment); border-color: var(--line-soft); box-shadow: none; }
+.as-seg button:hover, .as-seg button:focus-visible { background: rgba(var(--accent-rgb), 0.06); color: var(--parchment); border-color: var(--btn-hover-border-quiet); box-shadow: none; }
 .as-seg button[aria-pressed="true"], .as-seg button.on { background: rgba(var(--accent-rgb), 0.14); color: var(--gold); }
 .as-seg button:disabled { color: var(--muted); background: transparent; }
 
@@ -370,7 +370,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
   font: inherit;
   cursor: pointer;
 }
-.as-option:hover { border-color: var(--line-soft); background: var(--panel); }
+.as-option:hover { border-color: var(--btn-hover-border-quiet); background: var(--panel); }
 .as-option::after { content: '›'; position: absolute; top: 50%; right: 1.28rem; transform: translateY(-50%); color: var(--muted); font-size: 1.72rem; line-height: 1; }
 .as-option:hover::after, .as-option[aria-checked="true"]::after, .as-option[aria-pressed="true"]::after { color: var(--gold); }
 /* Selection changes colour, never footprint: 1px border in both states, halo by shadow. */
@@ -411,7 +411,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-statrow .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); white-space: nowrap; }
 .as-statrow .sr-vals { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.2rem 1.2rem; text-align: right; }
 .as-statrow.drill { cursor: pointer; }
-.as-statrow.drill:hover { border-color: var(--line-soft); }
+.as-statrow.drill:hover { border-color: var(--btn-hover-border-quiet); }
 .as-statrow.drill::after { content: '›'; align-self: center; color: var(--muted); font-size: 1.65rem; line-height: 1; }
 .as-statpair { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; }
 .as-statpair .sp-k { font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
@@ -1178,7 +1178,7 @@ input[type="range"] { min-height: var(--tap-floor); }
   color: inherit; text-align: left; cursor: pointer;
   transition: border-color 150ms, box-shadow 150ms;
 }
-.class-pick:hover { border-color: var(--line-soft); }
+.class-pick:hover { border-color: var(--btn-hover-border-quiet); }
 .class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
 .class-pick.locked { opacity: 0.55; cursor: default; }
 /* `quiet`: still a choice, but not the one to reach for — Rest at full
@@ -2305,7 +2305,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   color: var(--parchment); font-family: var(--font-body); text-align: center; cursor: pointer;
 }
 .card-upgrade-option-body { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; min-width: 0; }
-.card-upgrade-option:hover { border-color: var(--line-soft); }
+.card-upgrade-option:hover { border-color: var(--btn-hover-border-quiet); }
 .card-upgrade-option.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .card-upgrade-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .card-upgrade-option-title { font-family: var(--font-display); color: var(--gold); }
