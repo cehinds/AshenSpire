@@ -33,12 +33,14 @@ export const deckRules = Object.freeze({
   // Where the editor may be opened from ('free' | 'restOnly').
   where: Object.freeze(['free', 'restOnly']),
   // Owner, 2026-11-17: in Core the editor's minimum drops by 1 at each of
-  // these character levels. With the min-slot relics (1 each) a run lands
-  // near a minimum of 8 on average.
+  // these character levels. With the min-slot relics (1 each) a typical run
+  // lands near 8; relics and levels together may take it lower.
   minimumReductionLevels: Object.freeze([6, 12]),
-  // Owner, 2026-11-17: levels and min-slot relics lower the minimum no further
-  // than this. A player's own lower minimum setting is kept as set.
-  minimumReductionFloor: 8,
+  // The hard safety floor (owner, 2026-11-17): levels and relics never take the
+  // minimum below 1, so a deck is never empty. 1 is what the engine already
+  // needs — sizeRange and deckMaxSize already require a deck to hold at least
+  // one card. A player's own lower minimum setting (0, or unlimited) is kept.
+  minimumReductionSafetyFloor: 1,
   // Owner, 2026-11-17: at Core creation the player chooses how many of each of
   // these unranked cards start in the deck (basic attack, smash, counter,
   // block, sweep). The class's other starting cards stay as authored.

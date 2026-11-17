@@ -88,7 +88,7 @@ test('Basic Training, Graduate and the three min-slot relics do what their text 
   assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
   const run = holding('threadbareSatchel');
   run.level.level = 12;
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, Math.max(deckRules.minimumReductionFloor, deckRules.defaults.deckMinSize - 3), 'levels and relics stack, down to the floor');
+  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3, 'levels and relics stack');
   const pool = gameContent(make(1), 'rewards').eligibility?.relics?.allow || [];
   for (const id of ['basicTraining', 'graduate', 'threadbareSatchel', 'asceticsCord', 'pruningHook']) {
     assert.ok(registries.relics.has(id), `${id} is a relic`);
@@ -147,15 +147,17 @@ test('the Armoury floor and the ladder follow the deck-size settings the editor 
   assert.equal(row.grants.find((g) => g.kind === 'deckMinimumDown').amount, 13);
 });
 
-// Owner, 2026-11-17 (review of #2815): relics and levels together reach a minimum of 8 and no lower.
-test('all three min-slot relics at level 12 stop at the floor of 8; a lower player setting is kept', async () => {
+// Owner, 2026-11-17 (decision on #2815): relics and levels may take the minimum below 8; only the hard safety
+// floor of 1 holds, so a deck is never empty. A player's own lower setting is kept as set.
+test('relics and levels may go below 8; the safety floor of 1 keeps a deck from ever being empty', async () => {
   const { deckMinimum } = await import('../src/model/loadout.js');
   const run = make(12);
   run.relics = ['threadbareSatchel', 'asceticsCord', 'pruningHook'];
-  assert.equal(DeckMinDelta(run), 5);
-  assert.equal(deckRules.minimumReductionFloor, 8);
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, 8);
-  assert.equal(deckMinimum(registries, run), 8);
-  assert.equal(deckEditBounds({ deckMinSize: 6 }, DeckMinDelta(run)).min, 6, 'the player chose 6; nothing raises it');
-  assert.equal(deckEditBounds({ deckMinUnlimited: true }, DeckMinDelta(run)).min, 0);
+  const delta = DeckMinDelta(run);
+  assert.equal(deckRules.minimumReductionSafetyFloor, 1);
+  assert.equal(deckEditBounds({}, delta).min, deckRules.defaults.deckMinSize - delta, 'below 8 is allowed');
+  assert.ok(deckEditBounds({}, delta).min < 8);
+  assert.equal(deckMinimum(registries, run), deckRules.defaults.deckMinSize - delta);
+  assert.equal(deckEditBounds({ deckMinSize: 3 }, delta).min, 1, 'reductions stop at the safety floor');
+  assert.equal(deckEditBounds({ deckMinUnlimited: true }, delta).min, 0, 'the player chose no minimum; nothing raises it');
 });
