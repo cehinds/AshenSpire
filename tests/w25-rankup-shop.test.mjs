@@ -99,9 +99,10 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   const real = stock.options.filter((option) => option.kind !== 'rankUps').length;
   assert.equal(stock.options.length, real + 1);
   // Traders vary (playtest 2026-11-17 item 42): a plain stock for THIS shop is its own shelves times the shelf size.
-  const shelves = (id) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories).length;
-  assert.equal(plain.takeCount, 3 * shelves('1:plain'));
-  const plainHere = 3 * shelves(shopId);
+  // The rank-up shelf is one of the trader's dock options, so a shop that stocks it makes room among its shelves.
+  const shelves = (id, rankUpShelf) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories, { rankUpShelf }).length;
+  assert.equal(plain.takeCount, 3 * shelves('1:plain', false));
+  const plainHere = 3 * shelves(shopId, true);
   assert.equal(stock.takeCount, plainHere + 1);
   assert.ok(stock.takeCount >= real + 1, 'every real item and the shelf can all be bought');
   assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plainHere + 1);

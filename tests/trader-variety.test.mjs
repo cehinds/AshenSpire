@@ -17,24 +17,28 @@ const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ash
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(configuredContentBundle(contentBundle, {}), profile)), profile);
 const newRun = (seed) => createRunState({ seed, classId: 'reaver', registries, runId: 'trader-variety' });
 
-test('every trader offers 3-6 options (Sell and a Blacksmith counted) including armaments, cards and relics, and the count varies', () => {
-  const counts = new Set();
-  let smiths = 0;
-  for (let n = 0; n < 40; n += 1) {
+// The dock a trader shows (screens/shop.js): one tab per kind its stock holds (the rank-up shelf included), then Sell,
+// then the Blacksmith when it keeps one. Built from real stock, so a shelf added after the roll is counted too.
+const dockTabs = (run, shopId, stock) => [...new Set(stock.options.map((option) => option.kind)), 'sell', ...(ConfiguredTraderOffersSmith(run, shopId) ? ['smith'] : [])];
+
+test('every trader shows 3-6 dock options in all (rank-up shelf, Sell and Blacksmith counted), always armaments, cards and relics', () => {
+  const sizes = new Set();
+  let smiths = 0, rankUps = 0;
+  // Seeds 135 (1:node35) and 162 (1:node62) are the review's repros of a seventh tab (#2817, round 2).
+  for (let n = 0; n < 400; n += 1) {
     const run = newRun(100 + n);
     const shopId = `1:node${n}`;
-    const shelves = ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories);
-    // Sell, and a Blacksmith when the trader keeps one, count inside the 3-6 options (review on #2817).
-    const options = shelves.length + 1 + (ConfiguredTraderOffersSmith(run, shopId) ? 1 : 0);
-    assert.ok(options >= 3 && options <= 6, `${options} options`);
-    for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(shelves.includes(kind), `${kind} is always stocked`);
-    assert.deepEqual(ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories), shelves, 'seeded: same node, same shelves');
-    counts.add(shelves.length);
     const stock = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
-    const kinds = new Set(stock.options.map((option) => option.kind).filter((kind) => kind !== 'rankUps'));
-    for (const kind of kinds) assert.ok(shelves.includes(kind), `${kind} is one of this trader's shelves`);
-    if (ConfiguredTraderOffersSmith(run, shopId)) smiths += 1;
+    const tabs = dockTabs(run, shopId, stock);
+    assert.ok(tabs.length >= 3 && tabs.length <= 6, `seed ${100 + n} ${shopId}: ${tabs.length} options (${tabs.join(', ')})`);
+    for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(tabs.includes(kind), `seed ${100 + n}: ${kind} is always stocked`);
+    const again = gameProfileShopStock(registries, structuredClone(run), createRng(run.seed), { shopId });
+    assert.deepEqual(dockTabs(run, shopId, again), tabs, 'seeded: a reload shows the same dock');
+    sizes.add(tabs.length);
+    if (tabs.includes('smith')) smiths += 1;
+    if (tabs.includes('rankUps')) rankUps += 1;
   }
-  assert.ok(counts.size > 1, 'traders differ in how many shelves they keep');
-  assert.ok(smiths > 0 && smiths < 40, 'some traders, not all, keep a Blacksmith');
+  assert.ok(sizes.size > 1, 'traders differ in how many options they show');
+  assert.ok(smiths > 0 && smiths < 400, 'some traders, not all, keep a Blacksmith');
+  assert.ok(rankUps > 0, 'the rank-up shelf is among the probed docks');
 });

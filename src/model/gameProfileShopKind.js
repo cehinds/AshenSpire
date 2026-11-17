@@ -29,20 +29,24 @@ export function configuredShopKind(run, shopId) {
 }
 
 // TRADERS VARY (playtest 2026-11-17 item 42): a trader offers 3 to 6 options in all (`shops.trader.minCategories` /
-// `maxCategories` count every dock option: its buying shelves, Sell, and a Blacksmith when it keeps one). Every trader
+// `maxCategories` count every dock option: its buying shelves, Sell, the rank-up shelf when it stocks one, and a
+// Blacksmith when it keeps one). Every trader
 // sells armaments, cards and relics and buys (Sell); the rest of its shelves are drawn from `shops.trader.optional`,
 // and some traders also keep a Blacksmith's workshop (`shops.trader.smithChance` percent). Both are seeded from the run seed
 // and the node, like the Blacksmith share above, so a reload and a revisit agree and no named RNG stream moves.
 const traderRules = (run) => gameContent(run, 'shops')?.trader || null;
 
-/** ConfiguredTraderCategories(run, shopId, fallback) → the shelves this trader stocks, or `fallback` without a trader table. */
-export function ConfiguredTraderCategories(run, shopId, fallback) {
+/**
+ * ConfiguredTraderCategories(run, shopId, fallback, { rankUpShelf }) → the buying shelves this trader stocks, or
+ * `fallback` without a trader table. `rankUpShelf` says the stock also carries the rank-up shelf (its own dock tab).
+ */
+export function ConfiguredTraderCategories(run, shopId, fallback, { rankUpShelf = false } = {}) {
   const rules = traderRules(run);
   if (!rules) return fallback;
   const always = (rules.always || []).filter((kind) => fallback.includes(kind));
   const optional = (rules.optional || []).filter((kind) => fallback.includes(kind) && !always.includes(kind));
-  // Sell, and the Blacksmith when this trader keeps one, take places inside the option count.
-  const fixedOptions = 1 + (ConfiguredTraderOffersSmith(run, shopId) ? 1 : 0);
+  // Sell, the rank-up shelf and the Blacksmith (when this trader has them) take places inside the option count.
+  const fixedOptions = 1 + (rankUpShelf ? 1 : 0) + (ConfiguredTraderOffersSmith(run, shopId) ? 1 : 0);
   const min = Math.max(always.length, (Number.isInteger(rules.minCategories) ? rules.minCategories : always.length) - fixedOptions);
   const max = Math.min(always.length + optional.length, Math.max(min, (Number.isInteger(rules.maxCategories) ? rules.maxCategories : min + fixedOptions) - fixedOptions));
   const roll = upgradeStepRng(run.seed, `trader-shelves:${shopId}`, 0);
