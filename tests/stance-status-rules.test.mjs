@@ -1,5 +1,7 @@
 // Theme B of the 2026-11-17 playtest (owner): status and stance rules.
 // Rule 1: Counter follows the normal decay rule. Its stacks lose 1 at the owner's turn start, and the armed Counter lasts while they do.
+// Rules 2-3: a Defend-stance target holding Block keeps at least 1 Poise against physical hits and Sweeps (and magic while it holds Ward stacks);
+// Smash still breaks it, and at 0 Block Poise breaks normally.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -9,6 +11,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -79,4 +82,91 @@ test('rule 1: a fight saved without counter.armedWhileStacks keeps the old expir
 test('rule 1: the shipped data turns the rule on', () => {
   assert.equal(shipped.counter.armedWhileStacks, true);
   assert.equal(shipped.counter.decayPerTurn, 1);
+});
+
+// ---- Rules 2-3: the Defend Poise floor ----
+const PHYSICAL = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
+const SWEEP = { combatProfile: { camp: 'physical', maneuver: 'sweep', damageType: 'slashing', range: 'melee', targeting: 'single' } };
+const SMASH = { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'blunt', range: 'melee', targeting: 'single' } };
+const MAGIC = { combatProfile: { camp: 'spell', maneuver: 'attack', damageType: 'fire', range: 'reach', targeting: 'single', magicShare: 1 } };
+
+/** One hit of `base` from the player on an enemy in `stance` holding `block` Block, 3 Poise (Defend's -25% Poise taken spares none of 3) and `ward` Ward stacks. */
+function defendHit(carrier, { block = 2, ward = 0, stance = 'defend', base = 200, rules = null } = {}) {
+  const { combat, enemy } = live({ rules });
+  Object.assign(enemy, { block, persistentPoise: { value: 3, max: 5 }, statuses: ward ? { ward: { stacks: ward } } : {} });
+  enemy.combatStance = { maneuver: stance, camp: 'physical', range: 'melee' };
+  const from = combat.eventLog.length, hp = enemy.hp;
+  applyAttackDamage(combat, combat.player, enemy, base, [], { ...structuredClone(carrier), skipRatingBonus: true });
+  const events = combat.eventLog.slice(from);
+  return { combat, enemy, poise: enemy.persistentPoise.value, broke: events.some(e => e.type === 'poiseBroken' && e.targetId === enemy.id), hpLost: hp - enemy.hp };
+}
+
+test('rule 2: in Defend with Block above 0 a physical hit or a Sweep leaves at least 1 Poise, and costs the same HP', () => {
+  for (const [name, carrier] of [['physical', PHYSICAL], ['sweep', SWEEP]]) {
+    const held = defendHit(carrier);
+    assert.equal(held.poise, 1, `${name}: poise = max(poise - poiseDamage, 1)`);
+    assert.equal(held.broke, false, `${name}: Poise does not break`);
+    const before = defendHit(carrier, { rules: rules => { delete rules.stanceBenefits.defend.poiseFloorWhileBlock; } });
+    assert.equal(before.poise, 0, `${name}: the same hit broke Poise before the rule`);
+    assert.equal(held.hpLost, before.hpLost, `${name}: the floor spares Poise only, never HP`);
+  }
+});
+
+test('rule 2 edge: at exactly 0 Block a physical hit breaks Poise normally', () => {
+  const r = defendHit(PHYSICAL, { block: 0 });
+  assert.equal(r.poise, 0);
+  assert.equal(r.broke, true);
+});
+
+test('rule 2: a Smash still breaks Poise while Block remains, with or without Ward stacks', () => {
+  for (const ward of [0, 2]) {
+    const r = defendHit(SMASH, { block: 2, ward });
+    assert.equal(r.poise, 0, `ward ${ward}`);
+    assert.equal(r.broke, true, `ward ${ward}`);
+  }
+});
+
+test('rule 2: magic still breaks Poise in Defend with Block when no Ward stacks are held', () => {
+  const r = defendHit(MAGIC, { block: 2 });
+  assert.equal(r.poise, 0);
+  assert.equal(r.broke, true);
+});
+
+test('rule 2: another stance with Block gets no floor', () => {
+  const r = defendHit(PHYSICAL, { stance: 'attack' });
+  assert.equal(r.poise, 0);
+  assert.equal(r.broke, true);
+});
+
+test('rule 3: in Defend with Block and Ward stacks a magic hit cannot break Poise either', () => {
+  const r = defendHit(MAGIC, { block: 2, ward: 1 });
+  assert.equal(r.poise, 1);
+  assert.equal(r.broke, false);
+  const physical = defendHit(PHYSICAL, { block: 2, ward: 1 });
+  assert.equal(physical.poise, 1, 'physical keeps the floor with Ward too');
+  const before = defendHit(MAGIC, { block: 2, ward: 1, rules: rules => { delete rules.stanceBenefits.defend.poiseFloorWardMagic; } });
+  assert.equal(before.poise, 0, 'without poiseFloorWardMagic magic breaks it');
+});
+
+test('rule 3 edge: Ward stacks with 0 Block give no floor, to magic or to a physical hit', () => {
+  for (const carrier of [MAGIC, PHYSICAL]) {
+    const r = defendHit(carrier, { block: 0, ward: 1 });
+    assert.equal(r.poise, 0);
+    assert.equal(r.broke, true);
+  }
+});
+
+test('rules 2-3: a Poise rider riding a physical hit keeps the floor; one riding a Smash does not', () => {
+  const { combat, enemy } = live();
+  Object.assign(enemy, { block: 3, persistentPoise: { value: 4, max: 5 }, statuses: {} });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  dealPoiseDamage(combat, enemy, 10, { source: combat.player, carrier: PHYSICAL });
+  assert.equal(enemy.persistentPoise.value, 1);
+  dealPoiseDamage(combat, enemy, 10, { source: combat.player, carrier: SMASH });
+  assert.equal(enemy.persistentPoise.value, 0);
+});
+
+test('rules 2-3: the shipped data turns the floor on', () => {
+  assert.equal(shipped.stanceBenefits.defend.poiseFloorWhileBlock, 1);
+  assert.equal(shipped.stanceBenefits.defend.poiseFloorWardMagic, 1);
 });

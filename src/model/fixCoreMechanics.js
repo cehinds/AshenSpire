@@ -141,9 +141,10 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 // Owner, 2026-11-14 (Wave 2.5): each stance has a natural benefit, in data. A missing block (a fight saved before this ruling) means no benefits.
 // Fields per stance: attack/prepared damageMultiplier; smash poiseDamageBonus; sweep splashFraction; counter blockMultiplier + hpReturnFraction;
-// defend blockMultiplier + poiseDamageTakenMultiplier; neutral extraDrawNextTurn. Logic: src/engine/stanceBenefits.js.
+// defend blockMultiplier + poiseDamageTakenMultiplier + poiseFloorWhileBlock (the Poise a Defend-stance target holding Block keeps against a
+// physical hit or Sweep) + poiseFloorWardMagic (1: also against magic while it holds Ward stacks; owner 2026-11-17); neutral extraDrawNextTurn. Logic: src/engine/stanceBenefits.js.
 const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
-  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier'], neutral: ['extraDrawNextTurn'] });
+  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier', 'poiseFloorWhileBlock', 'poiseFloorWardMagic'], neutral: ['extraDrawNextTurn'] });
 function validateStanceBenefits(rows) {
   if (rows === undefined) return;
   if (typeof rows !== 'object' || rows === null || rows.version !== 1) throw new Error('FixCore stanceBenefits requires version 1');

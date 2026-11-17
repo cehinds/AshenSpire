@@ -17,7 +17,7 @@ import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
-import { AttackDamageMultiplier, PoiseLossAdjust } from './stanceBenefits.js';
+import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor } from './stanceBenefits.js';
 import { FluxMultiplier } from './elementFlux.js';
 import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
 
@@ -81,13 +81,14 @@ function reflectApplies(target, source, carrier, profile) {
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
   // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
+  // Owner, 2026-11-17 (theme B): a Defend-stance target holding Block keeps at least 1 Poise against what the hit costs it (ApplyDefendPoiseFloor).
   const view = ElementProtectionView(ctx, source, target, carrier);
-  if (!view) return ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise);
+  if (!view) return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise));
   const real = target.persistentPoise.value;
   target.persistentPoise.value = view.value;
   let receipt;
   try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
-  return ElementReceiptFinish(ctx, carrier, receipt, view, { value: real });
+  return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real }));
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const effects = configuredModule(ctx, 'effects');
