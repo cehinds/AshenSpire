@@ -45,7 +45,7 @@ export function blacksmithPrices(subject) {
  * Cinders for one Blacksmith card upgrade (owner, 2026-11-17): `cardUpgrade` (about 50) plus `cardUpgradePerUpgrade` for each
  * upgrade the card already has and `cardUpgradePerRank` for each rank above 1.
  */
-export function cardUpgradePrice(subject, { upgrades = 0, rank = 1 } = {}) {
+export function CardUpgradePrice(subject, { upgrades = 0, rank = 1 } = {}) {
   const prices = blacksmithPrices(subject);
   return prices.cardUpgrade + prices.cardUpgradePerUpgrade * Math.max(0, upgrades) + prices.cardUpgradePerRank * Math.max(0, rank - 1);
 }

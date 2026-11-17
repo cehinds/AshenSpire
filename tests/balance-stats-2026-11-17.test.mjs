@@ -154,7 +154,7 @@ test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bos
 
 test('item 7: an upgrade costs about 50 cinders at the least and rises with rank and with the earlier upgrades', async () => {
   const { SmithUpgradeCost } = await import('../src/model/smithUpgrade.js');
-  const { cardUpgradePrice } = await import('../src/model/blacksmithConfig.js');
+  const { CardUpgradePrice } = await import('../src/model/blacksmithConfig.js');
   const run = newRun('reaver');
   // Item upgrades (the Blacksmith's picks): upgrade n of an item raised `rank` times.
   assert.equal(SmithUpgradeCost(1).cinders, 50);
@@ -163,8 +163,8 @@ test('item 7: an upgrade costs about 50 cinders at the least and rises with rank
     assert.ok(SmithUpgradeCost(n, 1).cinders > SmithUpgradeCost(n, 0).cinders, `a ranked item's upgrade ${n} costs more`);
   }
   // Card upgrades at a Blacksmith: by the card's earlier upgrades and its rank.
-  assert.equal(cardUpgradePrice(run), 50);
-  assert.ok(cardUpgradePrice(run, { upgrades: 1 }) > cardUpgradePrice(run));
-  assert.ok(cardUpgradePrice(run, { rank: 2 }) > cardUpgradePrice(run));
-  assert.ok(cardUpgradePrice(run, { upgrades: 2, rank: 3 }) > cardUpgradePrice(run, { upgrades: 2, rank: 2 }));
+  assert.equal(CardUpgradePrice(run), 50);
+  assert.ok(CardUpgradePrice(run, { upgrades: 1 }) > CardUpgradePrice(run));
+  assert.ok(CardUpgradePrice(run, { rank: 2 }) > CardUpgradePrice(run));
+  assert.ok(CardUpgradePrice(run, { upgrades: 2, rank: 3 }) > CardUpgradePrice(run, { upgrades: 2, rank: 2 }));
 });
