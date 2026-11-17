@@ -193,6 +193,51 @@ export function RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard)
     disp.handPreviews = next;
 }
 
+// The turn-start refresh (playtest 2026-11-17): the receipts that return the last hand. The returned cards leave the
+// shown hand here, so the screen discards them visibly before the new hand is drawn; a retained card stays.
+const TURN_RETURN_SHUFFLES = new Set(['configuredRoundRefresh', 'handRefresh']);
+const isTurnReturn = (event) =>
+    (event.type === 'deckShuffled' && TURN_RETURN_SHUFFLES.has(event.reason))
+    || (event.type === 'cardDiscarded' && event.reason === 'turnEnd');
+
+/** The cards drawn after `index` until the next player turn starts: the new hand. */
+function turnDrawIds(playbackEvents, index)
+{
+    const drawn = new Set();
+    for (const event of (playbackEvents || []).slice(index + 1))
+    {
+        if (event.type === 'playerTurnStart')
+        {
+            break;
+        }
+        if (event.type === 'cardDrawn')
+        {
+            drawn.add(event.cardInstanceId);
+        }
+    }
+    return drawn;
+}
+
+/**
+ * Marks the shown hand for a turn-start refresh. A shuffle that returns the hand to the draw pile emits no
+ * per-card receipt, so every shown card the new turn did not keep leaves now: a kept card is still in the hand
+ * and is not drawn again this turn.
+ */
+export function ApplyTurnReturn(disp, event, { combat, playbackEvents })
+{
+    const at = playbackEvents?.indexOf(event) ?? -1;
+    const drawnIds = turnDrawIds(playbackEvents, at);
+    disp.turnRefresh = { drawnIds: new Set([...(disp.turnRefresh?.drawnIds || []), ...drawnIds]) };
+    if (event.type !== 'deckShuffled')
+    {
+        return;
+    }
+    const held = new Set(combat.piles.hand.map((card) => card.instanceId));
+    disp.hand = disp.hand.filter((card) =>
+        held.has(card.instanceId) && !drawnIds.has(card.instanceId)
+    );
+}
+
 /** Applies a paced beat and reports whether the screen should release the held hand. */
 export function ApplyCombatBeat(disp, events, {
     combat,
@@ -232,6 +277,10 @@ export function ApplyCombatBeat(disp, events, {
             disp.intentClears ||= new Map(),
             at >= 0 ? playbackEvents.slice(at + 1) : null,
         );
+        if (isTurnReturn(e))
+        {
+            ApplyTurnReturn(disp, e, { combat, playbackEvents });
+        }
         if (applyCombatDisplayReceipt(disp.ents, e))
         {
             continue;

@@ -393,7 +393,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           groupHeight: Math.max(miniHudGroupHeight(config) * fit, rackHeight), intentHeight,
           // SPEC: the player's rack keeps a fixed 10 px gap above the art, measured on the form factor's
           // canvas (it scales with the canvas, like every authored px here); enemies keep the configured gap.
-          gap: (frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx) * fit, zoom }) });
+          gap: (frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx) * fit, zoom,
+          drop: frame.classList?.contains('player') ? config.playerMiniHudDropFraction ?? 0 : 0 }) });
         centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
