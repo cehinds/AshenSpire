@@ -26,7 +26,7 @@ import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js
 import { perspectiveCellContains, overheadGroupHeightPx } from '../models/AlternativeFormationModel.js';
 import { hudGeometry, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
-import { targetBodyHudPlacement, miniHudScale } from '../models/TargetHudModel.js';
+import { targetBodyHudPlacement, miniHudScale, PlayerHudBeside } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { effectsOff, coarsePointer } from '../performance.js';
 import { shouldRelayout, viewportKey, isPhoneViewport, formationKey as formationKeyOf } from '../../model/relayoutGate.js';
@@ -372,6 +372,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const commitBadges = readHitBadges();
     const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const racked = [], plain = [];
+    let fieldBox = null;
     for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) continue;
@@ -395,6 +396,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           // canvas (it scales with the canvas, like every authored px here); enemies keep the configured gap.
           gap: (frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx) * fit, zoom,
           drop: frame.classList?.contains('player') ? config.playerMiniHudDropFraction ?? 0 : 0 }) });
+        // Owner, 2026-11-17: the player's HUD stands beside the figure, at a readable size, not over its head.
+        const beside = frame.classList?.contains('player') && config.playerHud?.placement === 'beside';
+        // An authored body box is exact vertically but spans its whole canvas horizontally: the drawn art gives the right edge.
+        if (beside) racked.at(-1).beside = PlayerHudBeside({ body: { ...body, right: currentSpriteArtBounds(sprite, scheduleArt).right }, frame: frameBox, fieldRight: (fieldBox ||= field.getBoundingClientRect()).right,
+          gap: config.playerHud.gapPx * fit, topFraction: config.playerHud.topFraction, maxWidth: config.playerHud.maxWidthPx * fit,
+          minWidth: config.playerHud.minWidthPx * fit, margin: config.playerHud.edgeMarginPx * fit, zoom });
         centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
@@ -404,9 +411,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     centerTargetOverheads.placedKey = racked.length && racked.every(({ body }) => body.settled !== false) && !plain.length ? key : null;
-    for (const { frame, body, placement } of racked) {
+    for (const { frame, body, placement, beside } of racked) {
+      if (frame.dataset.hudBeside !== String(!!beside)) frame.dataset.hudBeside = String(!!beside);
+      if (beside) for (const [name, value] of [['--combat-player-hud-left', `${beside.left}px`], ['--combat-player-hud-width', `${beside.width}px`]]) {
+        if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);
+      }
       for (const [name, value] of [
-        ['--combat-mini-hud-top', `${placement.miniTop}px`],
+        ['--combat-mini-hud-top', `${beside ? beside.top : placement.miniTop}px`],
         ['--combat-selected-intent-top', `${placement.selectedTop}px`],
         ['--combat-selected-intent-center', `${placement.center}px`],
       ]) if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);

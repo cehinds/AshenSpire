@@ -86,7 +86,8 @@ try {
       const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
       // The combat canvas's fit scale (1 without one): the gap is measured in canvas px.
       const viewScale = Number(document.documentElement.dataset.viewScale) || 1;
-      return { viewScale, panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+      const cardsTop = Math.min(...[...document.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().top));
+      return { viewScale, cardsTop, panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
         hpTrack:box(hpTrack), poiseTrack:box(poiseTrack), badgeRow:box(badgeRow),
         resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
@@ -146,16 +147,17 @@ try {
       for (const t of text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits the overhead HUD');
       assert.ok(geometry.rack.left >= 0 && geometry.rack.right <= width && geometry.rack.top >= 0 && geometry.rack.bottom <= height, name+': overhead HUD fits viewport');
-      // SPEC (owner, 2026-11-17): the player's mini HUD is lowered playerMiniHudDropFraction of the way from its place
-      // above the art (a 10 canvas px bottom-to-art-top gap) toward the art top: its top stays above the art top, and
-      // the art top sits at least (10 + its height) x (1 - drop) canvas px below it (screen px over the canvas scale).
+      // SPEC (owner, 2026-11-17): the player's HUD stands beside the figure: right of the art's middle, its top no higher
+      // than the art top, its bottom above the resting cards, at least minWidthPx canvas px wide, and so it stays when the
+      // player is selected.
       assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
-      const drop = HUD_GRID.playerMiniHudDropFraction ?? 0;
-      const topGap = (geometry.art.top - geometry.rack.top) / geometry.viewScale, rackHeight = (geometry.rack.bottom - geometry.rack.top) / geometry.viewScale;
-      assert.ok(topGap > 0 && topGap >= (10 + rackHeight) * (1 - drop) - 0.5, name+': overhead HUD top sits (10 + its height) x (1 - drop) canvas px above the art top (gap '+topGap.toFixed(2)+')');
+      const artMiddle = geometry.art.spriteBox ? (geometry.art.spriteBox.left + geometry.art.spriteBox.right) / 2 : -Infinity;
+      assert.ok(geometry.rack.left >= artMiddle, name+': the HUD stands right of the figure (left '+geometry.rack.left.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
+      assert.ok(geometry.rack.top >= geometry.art.top - 0.5, name+': the HUD top is no higher than the art top');
+      assert.ok(Number.isFinite(geometry.cardsTop) && geometry.rack.bottom <= geometry.cardsTop + 0.5, name+': the HUD ends above the resting cards');
+      assert.ok(geometry.rack.width / geometry.viewScale >= HUD_GRID.playerHud.minWidthPx - 0.5, name+': the HUD is at least its minimum width');
       assert.ok(geometry.selected.selected, name+': the player can be selected');
-      const selectedGap = (geometry.selected.artTop - geometry.selected.rackTop) / geometry.viewScale;
-      assert.ok(selectedGap > 0 && selectedGap >= (10 + rackHeight) * (1 - drop) - 0.5, name+': selected, the overhead HUD top still sits above the art top by the same rule (gap '+selectedGap.toFixed(2)+')');
+      assert.ok(geometry.selected.rackTop >= geometry.selected.artTop - 0.5, name+': selected, the HUD top is still no higher than the art top');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
       assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');

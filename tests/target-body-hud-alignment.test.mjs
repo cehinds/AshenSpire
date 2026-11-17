@@ -160,3 +160,19 @@ test('a drop fraction lowers the rack that share of the way toward the head', as
   const drop = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction;
   assert.equal(drop, .5, 'SPEC: the player HUD is lowered halfway from its 10 px gap above the art toward the art top');
 });
+
+// SPEC (owner, 2026-11-17): the player's HUD stands beside the figure, right of its drawn art, at a readable width.
+test('the player HUD beside the figure takes the room to the field edge, within its bounds', async () => {
+  const { PlayerHudBeside } = await import('../src/ui/models/TargetHudModel.js');
+  const { uiConfig: config } = await import('../src/config/generated/ui.js');
+  const hud = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerHud;
+  assert.equal(hud.placement, 'beside');
+  const body = { top: 300, headY: 300, bottom: 500, left: 0, right: 170 }, frame = { top: 100, left: 40 };
+  const phone = PlayerHudBeside({ body, frame, fieldRight: 390, gap: 10, topFraction: 0.15, maxWidth: 320, minWidth: 150, margin: 8 });
+  assert.equal(phone.left, 140, 'gap right of the art, in the frame\'s local px');
+  assert.equal(phone.top, 230, 'topFraction of the body below the head');
+  assert.equal(phone.width, 390 - 8 - 180, 'the room to the field edge');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 1280, maxWidth: 320 }).width, 320, 'capped at maxWidth');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 250, minWidth: 150 }).width, 150, 'never under minWidth');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 390, zoom: 2 }).left, 70, 'local px take the zoom');
+});

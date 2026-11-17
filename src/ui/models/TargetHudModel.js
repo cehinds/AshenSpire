@@ -82,6 +82,21 @@ export function targetHudMatchup(action, intent, rules = {}) {
 // readouts retain a fixed physical gap when a true pose changes its head.
 // `drop` lowers the rack that fraction of the way from its place above the head toward the head itself (0 keeps it
 // wholly above; the player's 0.5 sets it halfway, playtest 2026-11-17).
+// The player's HUD beside the figure (owner, 2026-11-17): it stands `gap` right of the body, its top `topFraction` of the
+// body's height below the head, and takes the room to the field's right edge (less `margin`) up to `maxWidth`, never under
+// `minWidth`. All inputs are screen px except the authored ones, which the caller scales; the result is the frame's local px.
+export function PlayerHudBeside({ body, frame, fieldRight, gap = 10, topFraction = 0.15, maxWidth = 320, minWidth = 140, margin = 8, zoom = 1 })
+{
+  const head = Number.isFinite(body.headY) ? body.headY : body.top;
+  const height = Math.max(0, body.bottom - head);
+  const room = fieldRight - margin - (body.right + gap);
+  return {
+    left: (body.right + gap - frame.left) / zoom,
+    top: (head + height * topFraction - frame.top) / zoom,
+    width: Math.max(minWidth, Math.min(maxWidth, room)) / zoom,
+  };
+}
+
 export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1, drop = 0 }) {
   const head = Number.isFinite(body.headY) ? body.headY : body.top;
   const lowered = (gap + groupHeight) * Math.min(1, Math.max(0, drop));

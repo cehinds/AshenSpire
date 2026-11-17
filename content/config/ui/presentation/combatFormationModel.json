@@ -271,6 +271,14 @@
       "miniHudSpriteGapPx": 5,
       "playerMiniHudSpriteGapPx": 10,
       "playerMiniHudDropFraction": 0.5,
+      "playerHud": {
+        "placement": "beside",
+        "gapPx": 10,
+        "topFraction": 0.15,
+        "maxWidthPx": 320,
+        "minWidthPx": 150,
+        "edgeMarginPx": 8
+      },
       "miniHud": {
         "designWidthPx": 140,
         "baseFontPx": 13,
