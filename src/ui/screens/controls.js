@@ -34,7 +34,7 @@ export function renderControls(container, { settings, onChange }) {
   const pane = el('div', { class: 'as-pane controls-pane' }, [
     eyebrow('Controls'),
     titleM('Bindings', { tag: 'h3' }),
-    el('p', { class: 'as-subtitle', html: 'Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>; activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.' }),
+    el('p', { class: 'as-subtitle', html: 'Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>; activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1</b> to <b>9</b> select cards and targets.' }),
     el('p', { class: 'as-subtitle' }, [
       padConnected
         ? el('span', { class: 'pad-live', text: '● pad connected' })

@@ -20,7 +20,7 @@ export function mountFlickPractice(container, settings, rules) {
       onEnd(up, { cancelled }) {
         zone.dataset.ready = 'false';
         const verdict = flickVerdict(start, touchPoint(up), points, settings, rules);
-        result.textContent = cancelled ? 'Cancelled. Try again.' : verdict.qualifies ? 'Flick accepted — no card spent.'
+        result.textContent = cancelled ? 'Cancelled. Try again.' : verdict.qualifies ? 'Flick accepted. No card spent.'
           : !flickPreferences(settings, rules).enabled ? 'Card flick to play is off.'
           : verdict.distanceMet ? 'Distance reached. Release with a quicker upward motion.' : 'Too short or sideways. Try upward again.';
       },

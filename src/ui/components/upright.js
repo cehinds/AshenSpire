@@ -205,7 +205,7 @@ let gate = null;
 // third line of text, and the word `window` on something that is not one. If
 // the pointer query is ever wrong about someone, they still read a true
 // sentence here — which is exactly why it must not name the fix.
-const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
+const SAFE = 'Your run is safe. Nothing is lost, and it comes right back.';
 // ONE LINE NAMING THE WAY OUT, ADDED FOR HIS AMENDMENT, AND IT IS A POINTER AND
 // NOT A CONTROL. He wrote *"I hate that it tells me to rerotate to verticle"* —
 // and the reason he had to ASK is that this screen never said a setting existed.

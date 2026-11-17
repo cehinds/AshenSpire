@@ -40,7 +40,7 @@ export function mountHistory(app, { meta, onBack }) {
     const fights = r.fightsWon != null ? ` · ${r.fightsWon} fight${r.fightsWon === 1 ? '' : 's'}` : '';
     const trail = [
       pill({ label: r.victory ? 'Rune restored' : 'Perished', on: !!r.victory }),
-      r.custom ? tagChip({ label: `Custom${r.ascension ? ` A${r.ascension}` : ''}`, attrs: { 'aria-label': 'Custom Climb — excluded from win rate' } }) : null,
+      r.custom ? tagChip({ label: `Custom${r.ascension ? ` A${r.ascension}` : ''}`, attrs: { 'aria-label': 'Custom Climb (excluded from win rate)' } }) : null,
       r.seed ? statusText(r.seed, { class: 'hx-seed' }) : null,
     ];
     return row({
