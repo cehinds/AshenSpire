@@ -101,3 +101,27 @@ test('several enemies in one turn: each later intent is priced after the earlier
     expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash'], ['fellWarden', 'twinDaggers'], ['wanderingSoldier', 'slash']], { poise })), `three attackers, Poise ${poise}`);
   }
 });
+
+import { combatIntentPresentation, IntentPoiseRead } from '../src/ui/models/CombatIntentModel.js';
+
+test('the intent presentation puts the Poise beside the attack number, with a plain sentence and BREAK', () => {
+  const combat = fight([['wanderingSoldier', 'slash']], { poise: 3 });
+  const intent = projectCombatIntent(combat, combat.enemies[0].id);
+  const shown = combatIntentPresentation(intent);
+  const head = shown.parts[0];
+  assert.equal(head.icon, 'attack');
+  assert.equal(head.poise.value, intent.projectedPoise.label);
+  assert.equal(head.poise.breaks, true);
+  assert.equal(IntentPoiseRead(intent).summary, `${intent.projectedDamage.label} damage, ${intent.projectedPoise.label} Poise (breaks your Poise)`);
+  const calm = fight([['wanderingSoldier', 'slash']], { poise: 30 });
+  const read = IntentPoiseRead(projectCombatIntent(calm, calm.enemies[0].id));
+  assert.equal(read.breaks, false);
+  assert.doesNotMatch(read.summary, /break/, 'no break note when Poise holds');
+  assert.doesNotMatch(read.summary, /—/, 'no em dashes');
+});
+
+test('no Poise mark when the attack costs no Poise, or the intent is hidden', () => {
+  const combat = fight([['wanderingSoldier', 'slash']], { block: 60 });
+  assert.equal(IntentPoiseRead(projectCombatIntent(combat, combat.enemies[0].id)), null);
+  assert.equal(IntentPoiseRead({ hidden: true, projectedPoise: { max: 3, label: '3' } }), null);
+});

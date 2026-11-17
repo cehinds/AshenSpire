@@ -63,10 +63,27 @@ export function combatIntentPresentation(intent = {}) {
     : family === 'attacking' ? [part('attack', damage)]
     : [part(family === 'buffing' ? 'buff' : 'cast', family === 'buffing' ? null : damage)];
   if (damageRead) for (const part of parts) if (part.value === damage) part.summary = damageRead.summary;
+  // Owner, 2026-11-17 ("it's hard for the player to know how much poise damage they are taking"): the attack's number carries the Poise the
+  // player loses beside it, and whether that breaks the player's Poise (projectedPoise, the same forecast as the HP number).
+  const poise = IntentPoiseRead(intent);
+  if (poise) { const head = parts.find(part => part.value === damage && damage != null); if (head) head.poise = poise; }
   // A movement move (an Advance or a Retreat) reads as what it does, not as a generic buff.
   const movement = family === 'buffing' ? (intent.actionEffects || []).find(effect => effect?.op === 'moveEngagement') : null;
   const title = movement ? t(movement.bands > 0 ? 'combat.intent.retreating' : 'combat.intent.advancing') : capitalize(family);
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
+}
+
+/**
+ * The Poise an attacking intent costs the player: { value, breaks, mayBreak, summary } or null (no forecast, or it costs no Poise and breaks nothing).
+ * `summary` is the plain sentence the tooltip and the aria-label read, e.g. "6 damage, 3 Poise (breaks your Poise)".
+ */
+export function IntentPoiseRead(intent) {
+  const poise = intent?.projectedPoise;
+  if (!poise || intent.hidden || intent.revealed === false || intent.charging || !(poise.max > 0 || poise.mayBreak)) return null;
+  const damage = intent.projectedDamage?.label ?? (intent.damage != null ? String(intent.totalDamage ?? intent.damage) : null);
+  const breakNote = poise.breaks ? t('combat.intent.poiseBreaks') : poise.mayBreak ? t('combat.intent.poiseMayBreak') : '';
+  return { value: poise.label, breaks: !!poise.breaks, mayBreak: !!poise.mayBreak,
+    summary: t('combat.intent.poiseSummary', { damage: damage ?? '?', poise: poise.label }) + (breakNote ? ` ${breakNote}` : '') };
 }
 
 export const ChargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
