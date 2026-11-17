@@ -413,6 +413,11 @@ export function createShotStates(ctx) {
       // does not (it enters aim mode, which is already a second beat), so the
       // pose carries one of each and the check sees both cells of the row.
       run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
+      // `?shotDeck=<cardId,...>` — FIGHT WITH THESE CARDS. Card-face QA (docs/qa/SANDBOX-QA.md) needs a named card in
+      // the real hand at 390x844 and 1280x800; the seeded deck rarely draws it. Memory-only, like every lever here;
+      // unknown ids are skipped and an empty list keeps the seeded deck.
+      const shotDeck = (shotParams.get('shotDeck') || '').split(',').filter((id) => ctx.getRegistries().cards.has(id));
+      if (shotDeck.length) run.deck = createDeck(shotDeck, createIdGen('shot'));
       const g = run.mapGraph;
       // A seeded start can resolve to an event. This fixture promises combat,
       // so select an actual fight and enter through the production fight door.
