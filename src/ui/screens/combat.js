@@ -2009,7 +2009,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
-        counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, ...(FixCoreCounterStacks(combat) ? { counterDecay: FixCoreCounterStacks(combat).decayPerTurn } : {}), reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
+        counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, ...(FixCoreCounterStacks(combat) ? { counterDecay: FixCoreCounterStacks(combat).decayPerTurn } : {}), enemyCounter: entity.kind === 'enemy', reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
