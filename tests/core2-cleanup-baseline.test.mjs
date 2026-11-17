@@ -17,6 +17,9 @@ const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
 // The conditional cards in Core's pack change only current profile, snapshot and save hashes. Events, RNG, continuations and the historical profile are unchanged.
+// Recaptured 2026-11-17 after the trader inventory changes landed: only the profile, snapshot and save hashes changed.
+// Recaptured 2026-11-17 a third time (theme D's runs carry classLevelBonusVersion, so a new run's save moves: only the stored and loaded hashes changed).
+// Recaptured 2026-11-17 again (playtest theme D added five relics to Core's reward allow list, which moved the profile hash and so only the snapshot, stored and loaded hashes; every events, rng and continuation hash is unchanged)
 // Recaptured 2026-11-17 (theme B status and stance rules: Counter decay keeps it armed, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses): the
 // three current-profile scenarios change their events and continuations by design; the historical scenario changes only its snapshot, stored and loaded hashes (its events,
 // rng and continuation are identical, so a save from before keeps its rules).
