@@ -6,50 +6,50 @@
 import { deckRules } from '../content/deckRules.js';
 import { gameContent, isCoreProfile } from './gameProfile.js';
 import { deckEditRefusal } from './deckRules.js';
-import { deckMinDelta } from './deckMinimumRules.js';
+import { DeckMinDelta } from './deckMinimumRules.js';
 import { recordCollectedCards } from './collectedCards.js';
 
 const loose = (card) => !!card && !card.grantedBy && !card.equipmentRole;
 
 /** The pool card ids this run may choose from (Core only; ids its cards define), in pool order. */
-export function startingPoolIds(run) {
+export function StartingPoolIds(run) {
   if (!isCoreProfile(run)) return [];
   const known = new Set((gameContent(run, 'cards') || []).map((card) => card.id));
   return deckRules.creationPool.filter((id) => known.has(id));
 }
 
-/** startingPoolCounts(run) → { cardId: copies } of each pool card loose in the run's deck now. */
-export function startingPoolCounts(run) {
-  const pool = startingPoolIds(run);
+/** StartingPoolCounts(run) → { cardId: copies } of each pool card loose in the run's deck now. */
+export function StartingPoolCounts(run) {
+  const pool = StartingPoolIds(run);
   return Object.fromEntries(pool.map((id) => [id, (run.deck || []).filter((card) => loose(card) && card.cardId === id).length]));
 }
 
 /** The deck size the choice would leave: the deck without its loose pool cards, plus the chosen copies. */
-export function startingDeckSize(run, counts) {
-  const pool = new Set(startingPoolIds(run));
+export function StartingDeckSize(run, counts) {
+  const pool = new Set(StartingPoolIds(run));
   const kept = (run.deck || []).filter((card) => !(loose(card) && pool.has(card.cardId))).length;
   return kept + Object.values(counts || {}).reduce((sum, n) => sum + n, 0);
 }
 
-/** startingDeckChoiceRefusal(run, counts, settings) → '' when the choice may start a run, else one sentence. */
-export function startingDeckChoiceRefusal(run, counts, settings = {}) {
-  const pool = startingPoolIds(run);
+/** StartingDeckChoiceRefusal(run, counts, settings) → '' when the choice may start a run, else one sentence. */
+export function StartingDeckChoiceRefusal(run, counts, settings = {}) {
+  const pool = StartingPoolIds(run);
   for (const [id, n] of Object.entries(counts || {})) {
     if (!pool.includes(id)) return `${id} is not a starting card choice.`;
     if (!Number.isInteger(n) || n < 0) return `Starting copies must be a whole number of at least 0 (got ${JSON.stringify(n)}).`;
   }
-  return deckEditRefusal(startingDeckSize(run, counts), settings, deckMinDelta(run));
+  return deckEditRefusal(StartingDeckSize(run, counts), settings, DeckMinDelta(run));
 }
 
 /**
- * applyStartingDeckChoice(run, counts, settings) → the run, its deck rebuilt:
+ * ApplyStartingDeckChoice(run, counts, settings) → the run, its deck rebuilt:
  * the chosen pool cards first (pool order), then every other starting card in
  * its authored order. Throws the refusal sentence when the choice is refused.
  */
-export function applyStartingDeckChoice(run, counts, settings = {}) {
-  const refusal = startingDeckChoiceRefusal(run, counts, settings);
+export function ApplyStartingDeckChoice(run, counts, settings = {}) {
+  const refusal = StartingDeckChoiceRefusal(run, counts, settings);
   if (refusal) throw new Error(refusal);
-  const pool = startingPoolIds(run);
+  const pool = StartingPoolIds(run);
   const rest = (run.deck || []).filter((card) => !(loose(card) && pool.includes(card.cardId)));
   const used = new Set([...(run.deck || []), ...(run.sideboard || [])].map((card) => card.instanceId));
   let next = 1;

@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { deckRules } from '../src/content/deckRules.js';
-import { deckEditBounds, deckMinDelta, levelMinDeckDelta } from '../src/model/deckRules.js';
+import { deckEditBounds, DeckMinDelta, LevelMinDeckDelta } from '../src/model/deckRules.js';
 import { deckEditorModel } from '../src/ui/models/DeckEditorModel.js';
 
 const core = resolveGameProfile('core');
@@ -23,13 +23,13 @@ test('the reduction levels are data and rise', () => {
 });
 
 test('a Core run loses one minimum slot at each reduction level', () => {
-  assert.equal(levelMinDeckDelta(make(1)), 0);
-  assert.equal(levelMinDeckDelta(make(5)), 0);
-  assert.equal(levelMinDeckDelta(make(6)), 1);
-  assert.equal(levelMinDeckDelta(make(12)), 2);
-  assert.equal(levelMinDeckDelta(make(20)), 2);
+  assert.equal(LevelMinDeckDelta(make(1)), 0);
+  assert.equal(LevelMinDeckDelta(make(5)), 0);
+  assert.equal(LevelMinDeckDelta(make(6)), 1);
+  assert.equal(LevelMinDeckDelta(make(12)), 2);
+  assert.equal(LevelMinDeckDelta(make(20)), 2);
   const run = make(12);
-  assert.equal(deckEditBounds({}, deckMinDelta(run)).min, deckRules.defaults.deckMinSize - 2);
+  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 2);
 });
 
 test('the deck editor counter reads the lowered minimum', () => {
@@ -40,7 +40,7 @@ test('the deck editor counter reads the lowered minimum', () => {
 test('a legacy run keeps the settings minimum whatever its level', () => {
   const legacy = createRunState({ seed: 11, classId: 'reaver', registries: createRegistries(contentBundle) });
   legacy.level = { level: 12, xp: 0, unspentPoints: 0 };
-  assert.equal(levelMinDeckDelta(legacy), 0);
+  assert.equal(LevelMinDeckDelta(legacy), 0);
 });
 
 test('an unlimited-kind item property lifts the Core copy limit, so a minted Basic can be committed', async () => {
@@ -85,7 +85,7 @@ test('Basic Training, Graduate and the three min-slot relics do what their text 
   assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
   const run = holding('threadbareSatchel');
   run.level.level = 12;
-  assert.equal(deckEditBounds({}, deckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3, 'levels and relics stack');
+  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3, 'levels and relics stack');
   const pool = gameContent(make(1), 'rewards').eligibility?.relics?.allow || [];
   for (const id of ['basicTraining', 'graduate', 'threadbareSatchel', 'asceticsCord', 'pruningHook']) {
     assert.ok(registries.relics.has(id), `${id} is a relic`);

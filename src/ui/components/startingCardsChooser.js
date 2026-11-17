@@ -4,14 +4,14 @@
 // the host keeps the chosen counts.
 import { el, button, openModal } from '../kit/index.js';
 import { t } from '../strings.js';
-import { startingDeckChoiceRefusal, startingDeckSize, startingPoolIds } from '../../model/startingDeckChoice.js';
+import { StartingDeckChoiceRefusal, StartingDeckSize, StartingPoolIds } from '../../model/startingDeckChoice.js';
 
 /**
  * OpenStartingCardsChooser({ registries, run, counts, settings, opener, onDone }) → the modal.
  * `run` is the preview run whose deck the counts replace; `onDone(counts)` receives the choice.
  */
 export function OpenStartingCardsChooser({ registries, run, counts, settings = {}, opener = null, onDone }) {
-  const pool = startingPoolIds(run);
+  const pool = StartingPoolIds(run);
   const chosen = Object.fromEntries(pool.map((id) => [id, counts?.[id] || 0]));
   const rows = el('div', { class: 'starting-cards-rows' });
   const total = el('p', { class: 'starting-cards-total', aria: { live: 'polite' } });
@@ -35,16 +35,16 @@ export function OpenStartingCardsChooser({ registries, run, counts, settings = {
         more,
       ]);
     }));
-    const count = startingDeckSize(run, chosen);
+    const count = StartingDeckSize(run, chosen);
     total.textContent = t('creation.startingCards.total', { count, plural: count === 1 ? '' : 's' });
-    const reason = startingDeckChoiceRefusal(run, chosen, settings);
+    const reason = StartingDeckChoiceRefusal(run, chosen, settings);
     refusal.textContent = reason;
     refusal.hidden = !reason;
     done.disabled = !!reason;
   };
   let shell = null;
   done.addEventListener('click', () => {
-    if (startingDeckChoiceRefusal(run, chosen, settings)) return;
+    if (StartingDeckChoiceRefusal(run, chosen, settings)) return;
     shell.close();
     onDone?.({ ...chosen });
   });

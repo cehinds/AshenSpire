@@ -27,9 +27,9 @@ import { deriveStat } from '../../model/derivedStats.js';
 import { deckMinimum } from '../../model/loadout.js';
 import { orderedAttributes } from '../../model/attributes.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { classBonusApplies, classBonusAttribute, classBonusCount, isClassBonusLevel } from '../../model/classLevelBonus.js';
+import { ClassBonusApplies, ClassBonusAttribute, ClassBonusCount, IsClassBonusLevel } from '../../model/classLevelBonus.js';
 import { classLevelBonuses } from '../../content/classLevelBonuses.js';
-import { coreDeckMinimum } from '../../model/deckMinimumRules.js';
+import { CoreDeckMinimum } from '../../model/deckMinimumRules.js';
 import { deckRules } from '../../content/deckRules.js';
 
 /** The derived pools a character level can move, in the order the sheet lists them. */
@@ -92,10 +92,10 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
   // minimum dropping, and the level's card choice. No feat or class-tree pick is offered there.
   const core = !!(run && gameModule(run, 'progression')?.characterLevels);
   const corePoints = core ? (gameModule(run, 'progression').attributePointsPerLevel || 0) : 0;
-  const bonusAttribute = core && classBonusApplies(run) ? classBonusAttribute(run.class) : null;
+  const bonusAttribute = core && ClassBonusApplies(run) ? ClassBonusAttribute(run.class) : null;
   const bonusLabel = bonusAttribute ? (orderedAttributes(registries).find((a) => a.id === bonusAttribute)?.label || bonusAttribute) : '';
   const attributesAt = (level) => (bonusAttribute && run.attributes
-    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + classBonusCount(level) * classLevelBonuses.amount }
+    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + ClassBonusCount(level) * classLevelBonuses.amount }
     : run && run.attributes);
   const rows = [];
   let total = 0;
@@ -105,7 +105,7 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
     const grants = [];
     if (level > 1) {
       if (core ? corePoints > 0 : o.statPoints) grants.push({ kind: 'points', amount: core ? corePoints : points });
-      if (bonusAttribute && isClassBonusLevel(level)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: classLevelBonuses.amount });
+      if (bonusAttribute && IsClassBonusLevel(level)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: classLevelBonuses.amount });
       if (rules) {
         for (const stat of LEVEL_STATS) {
           const before = poolValue(rules, stat, run, classDef, level - 1, attributesAt(level - 1));
@@ -114,7 +114,7 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
         }
       }
       if (core) {
-        if (deckRules.minimumReductionLevels.includes(level)) grants.push({ kind: 'deckMinimumDown', amount: coreDeckMinimum({ ...run, level: { ...(run.level || {}), level } }) });
+        if (deckRules.minimumReductionLevels.includes(level)) grants.push({ kind: 'deckMinimumDown', amount: CoreDeckMinimum({ ...run, level: { ...(run.level || {}), level } }) });
         grants.push({ kind: 'levelCard' });
         rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
         continue;

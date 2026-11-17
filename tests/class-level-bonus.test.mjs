@@ -8,7 +8,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
-import { ClassLevelAttributeBonus, classBonusCount, isClassBonusLevel } from '../src/model/classLevelBonus.js';
+import { ClassLevelAttributeBonus, ClassBonusCount, IsClassBonusLevel } from '../src/model/classLevelBonus.js';
 import { classLevelBonuses } from '../src/content/classLevelBonuses.js';
 import { characterLadder } from '../src/ui/models/CharacterSheetModel.js';
 import { deckMinimum } from '../src/model/loadout.js';
@@ -25,8 +25,8 @@ const climbTo = (run, level) => {
 };
 
 test('odd levels from 3 carry the class bonus', () => {
-  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(isClassBonusLevel), [false, false, true, false, true, false, true]);
-  assert.deepEqual([1, 2, 3, 5, 9].map(classBonusCount), [0, 0, 1, 2, 4]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(IsClassBonusLevel), [false, false, true, false, true, false, true]);
+  assert.deepEqual([1, 2, 3, 5, 9].map(ClassBonusCount), [0, 0, 1, 2, 4]);
 });
 
 for (const [classId, attribute] of Object.entries(classLevelBonuses.attributeByClass)) {
@@ -58,7 +58,7 @@ test('the Core ladder shows the real grants: points, class bonus on odd levels, 
   assert.ok(kinds(3).includes('classBonus'));
   assert.equal(ladder.rows.find((row) => row.level === 3).grants.find((g) => g.kind === 'classBonus').attribute, 'Strength');
   for (const row of ladder.rows.filter((r) => r.level > 1)) {
-    assert.equal(row.grants.some((g) => g.kind === 'classBonus'), isClassBonusLevel(row.level), `level ${row.level}`);
+    assert.equal(row.grants.some((g) => g.kind === 'classBonus'), IsClassBonusLevel(row.level), `level ${row.level}`);
     assert.ok(row.grants.some((g) => g.kind === 'levelCard'), `level ${row.level} offers its card`);
     assert.ok(!row.grants.some((g) => ['featChoice', 'featOrNodeChoice', 'classNodeChoice', 'deckMinimum'].includes(g.kind)), `level ${row.level} promises no feat or rising floor`);
   }

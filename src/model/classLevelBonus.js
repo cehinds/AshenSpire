@@ -7,31 +7,31 @@ import { classLevelBonuses } from '../content/classLevelBonuses.js';
 import { gameModule } from './gameProfile.js';
 
 /** True when the level's odd-level class bonus applies at this character level. */
-export function isClassBonusLevel(level) {
+export function IsClassBonusLevel(level) {
   return Number.isInteger(level) && level >= classLevelBonuses.fromLevel && level % 2 === 1;
 }
 
 /** How many class bonuses a character at `level` has earned. */
-export function classBonusCount(level) {
+export function ClassBonusCount(level) {
   if (!Number.isInteger(level) || level < classLevelBonuses.fromLevel) return 0;
   let count = 0;
-  for (let at = classLevelBonuses.fromLevel; at <= level; at += 1) if (isClassBonusLevel(at)) count += 1;
+  for (let at = classLevelBonuses.fromLevel; at <= level; at += 1) if (IsClassBonusLevel(at)) count += 1;
   return count;
 }
 
 /** The attribute a class's bonus raises, or null for a class with none. */
-export function classBonusAttribute(classId) {
+export function ClassBonusAttribute(classId) {
   return classLevelBonuses.attributeByClass[classId] || null;
 }
 
 /** True for a run whose character levels pay the class bonus: a configured profile with character levels and a class worn. */
-export function classBonusApplies(run) {
-  return !!(run && !run.classUnequipped && gameModule(run, 'progression')?.characterLevels && classBonusAttribute(run.class));
+export function ClassBonusApplies(run) {
+  return !!(run && !run.classUnequipped && gameModule(run, 'progression')?.characterLevels && ClassBonusAttribute(run.class));
 }
 
 /** ClassLevelAttributeBonus(run) → { [attributeId]: n }, {} when none applies. */
 export function ClassLevelAttributeBonus(run) {
-  if (!classBonusApplies(run)) return {};
-  const count = classBonusCount(Number.isInteger(run.level?.level) ? run.level.level : 1);
-  return count ? { [classBonusAttribute(run.class)]: count * classLevelBonuses.amount } : {};
+  if (!ClassBonusApplies(run)) return {};
+  const count = ClassBonusCount(Number.isInteger(run.level?.level) ? run.level.level : 1);
+  return count ? { [ClassBonusAttribute(run.class)]: count * classLevelBonuses.amount } : {};
 }

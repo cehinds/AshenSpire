@@ -2,7 +2,7 @@
 // A part of src/model/loadout.js (split from one file; behaviour unchanged).
 
 import { gameContent, isCoreProfile } from '../gameProfile.js';
-import { coreDeckMinimum } from '../deckMinimumRules.js';
+import { CoreDeckMinimum } from '../deckMinimumRules.js';
 import { slotHand, fitsSlot } from './hands.js';
 import { equipmentRequirementReceipt } from './requirements.js';
 import { ownership } from './ownership.js';
@@ -78,7 +78,7 @@ export function trimExtraSets(registries, loadout) {
  */
 export function deckMinimum(registries, run) {
   // Core (owner, 2026-11-17): one minimum, the deck editor's, which levels and relics lower.
-  if (isCoreProfile(run)) return coreDeckMinimum(run);
+  if (isCoreProfile(run)) return CoreDeckMinimum(run);
   const cfg = (((registries || {}).balance || {}).deck) || {};
   // The character level is the ledger's (plan phase 6, `run.level.level`;
   // a fresh run is level 1); `characterLevel` is the field the floor read

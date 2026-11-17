@@ -22,7 +22,7 @@ import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
 import { ItemUnlimitedKinds } from './itemProperties.js';
-import { deckMinDelta as deckMinDelta_, levelMinDeckDelta as levelMinDeckDelta_ } from './deckMinimumRules.js';
+import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_ } from './deckMinimumRules.js';
 import { basicCardKind } from './basicCardRule.js';
 
 const D = deckRules.defaults;
@@ -72,8 +72,8 @@ export function deckEditBounds(settings, minDelta = 0) {
 }
 
 /** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
-export const levelMinDeckDelta = levelMinDeckDelta_;
-export const deckMinDelta = deckMinDelta_;
+export const LevelMinDeckDelta = LevelMinDeckDelta_;
+export const DeckMinDelta = DeckMinDelta_;
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings, minDelta = 0) {
@@ -379,7 +379,7 @@ export function cancelDeckEdit(run, snapshot) {
 
 /** Commit a validated editor draft without touching current combat piles. */
 export function commitDeckEditDraft(registries, run, edited, settings = {}) {
-  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, deckMinDelta(run));
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, DeckMinDelta(run));
   if (refusal) throw new Error(refusal);
   if (hasCollectedCardPolicy(run) && edited.collectedCardIds !== undefined
     && (!Array.isArray(edited.collectedCardIds) || JSON.stringify([...edited.collectedCardIds].sort()) !== JSON.stringify(knownCollectedCardIds(run).sort()))) throw new Error('Deck editing cannot modify collection knowledge');

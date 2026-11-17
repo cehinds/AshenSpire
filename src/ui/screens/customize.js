@@ -77,7 +77,7 @@ import { mountDeckEditor } from './deckEditor.js';
 import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
-import { applyStartingDeckChoice, startingPoolCounts, startingPoolIds } from '../../model/startingDeckChoice.js';
+import { ApplyStartingDeckChoice, StartingPoolCounts, StartingPoolIds } from '../../model/startingDeckChoice.js';
 import { OpenStartingCardsChooser } from '../components/startingCardsChooser.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { IsPopoverOpen } from '../popoverPolyfill.js';
@@ -618,7 +618,7 @@ export function mountCustomize(app, {
       const base = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
       // A deck edited from the review step rides on top of the class's starting deck (owner, 2026-11-06).
       if (deckEdit?.classId === state.classId) cancelDeckEdit(base, deckEdit.snapshot);
-      if (startingCards?.classId === state.classId) applyStartingDeckChoice(base, startingCards.counts, meta.settings || {});
+      if (startingCards?.classId === state.classId) ApplyStartingDeckChoice(base, startingCards.counts, meta.settings || {});
       return base;
     }
     // Validate the live allocation independently of weapon requirements.
@@ -1874,7 +1874,7 @@ export function mountCustomize(app, {
 
   function openStartingCards() {
     const draft = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
-    const counts = startingCards?.classId === state.classId ? startingCards.counts : startingPoolCounts(draft);
+    const counts = startingCards?.classId === state.classId ? startingCards.counts : StartingPoolCounts(draft);
     OpenStartingCardsChooser({ registries, run: draft, counts, settings: meta.settings || {},
       opener: $('#cz-review-edit [data-creation-edit="startingCards"]'),
       onDone: (chosen) => {
@@ -1971,7 +1971,7 @@ export function mountCustomize(app, {
           // Core's starting-card chooser (owner, 2026-11-17) sits beside it whenever the profile has a pool.
           const preview = previewRun();
           const doors = [];
-          if (startingPoolIds(preview).length) {
+          if (StartingPoolIds(preview).length) {
             const choose = button({ label: t('creation.startingCards.button'), weight: 'secondary' });
             choose.dataset.creationEdit = 'startingCards';
             choose.addEventListener('click', openStartingCards);
