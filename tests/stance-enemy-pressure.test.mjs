@@ -205,7 +205,7 @@ for (const fallbackPoise of [3, 7]) for (const points of [21, 30]) {
   test(`mounted Bestiary shows current configured ${fallbackPoise} Poise at knowledge ${points}`, () => withKitDom(({ document }) => {
     const configured = { ...registries, balance: { ...registries.balance, stanceRules: { fallbackPoise } } };
     const app = document.createElement('main'); document.body.append(app);
-    const dispose = mountBestiary(app, { registries: configured, onBack() {}, initialEnemyId: 'gildedKnight',
+    const { dispose } = mountBestiary(app, { registries: configured, onBack() {}, initialEnemyId: 'gildedKnight',
       meta: { enemyKnowledge: { enemies: { gildedKnight: knowledgeRecord(points), fellWarden: knowledgeRecord(points) } } } });
     assert.match(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'),
       new RegExp(`${fallbackPoise} base counter Poise damage(?: ·|$)`));
@@ -220,14 +220,14 @@ for (const fallbackPoise of [3, 7]) for (const points of [21, 30]) {
 test('mounted Bestiary preserves unknown-effect privacy and explicit legacy rules', () => withKitDom(({ document }) => {
   const app = document.createElement('main'); document.body.append(app);
   const meta = points => ({ enemyKnowledge: { enemies: { gildedKnight: knowledgeRecord(points) } } });
-  let dispose = mountBestiary(app, { registries, meta: meta(12), onBack() {} });
+  let { dispose } = mountBestiary(app, { registries, meta: meta(12), onBack() {} });
   assert.doesNotMatch(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /base counter Poise damage/);
   dispose();
-  dispose = mountBestiary(app, { registries, meta: meta(30), onBack() {}, combatExpansionVersion: 1,
-    stanceRules: { fallbackPoise: 7 } });
+  ({ dispose } = mountBestiary(app, { registries, meta: meta(30), onBack() {}, combatExpansionVersion: 1,
+    stanceRules: { fallbackPoise: 7 } }));
   assert.doesNotMatch(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /base counter Poise damage/);
   dispose();
-  dispose = mountBestiary(app, { registries, meta: meta(30), onBack() {}, stanceRules: { fallbackPoise: 7 } });
+  ({ dispose } = mountBestiary(app, { registries, meta: meta(30), onBack() {}, stanceRules: { fallbackPoise: 7 } }));
   assert.match(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /7 base counter Poise damage(?: ·|$)/);
   dispose();
 }));
