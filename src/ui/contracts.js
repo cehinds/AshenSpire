@@ -154,7 +154,7 @@
 /**
  * @typedef {object} RailItem
  * @property {string} id
- * @property {string} label
+ * @property {string} [label]
  * @property {boolean} selected
  * @property {string} [value]
  */
