@@ -26,10 +26,7 @@ import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
 import { resolveUpgradedItem } from '../../model/itemUpgrades.js';
 import { requirementAtLevel } from '../../model/smithing.js';
-
-const visibleFocusable = (root) => [...root.querySelectorAll(
-  'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-)].filter((element) => !element.hidden && element.getClientRects().length);
+import { ModalController, ReadReturnFocus } from './modalController.js';
 
 /** The item's art as an ArtWell: its painted asset, or its glyph (a relic). */
 const itemArt = (item, { small = false } = {}) => {
@@ -66,9 +63,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   focusItemRef = null,
 }) {
   const parentRecord = parent ? pushModalParent(parent) : null;
-  const returnFocus = returnFocusElement instanceof HTMLElement
-    ? returnFocusElement
-    : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const returnFocus = ReadReturnFocus(returnFocusElement);
   const desk = mountUpgradeDesk(host, {
     title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'),
     backLabel: parentRecord ? modalParentLabel(parentRecord) : initialModel.properties.backLabel, kind: 'item',
@@ -78,7 +73,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
 
   let currentModel = initialModel;
-  let closed = false;
   let disarmDecision = null;
   let review = null;
 
@@ -267,55 +261,23 @@ export function mountSmithUpgradeModal(host, initialModel, {
     }
   }
 
-  function close({ restoreFocus = true, keepParent = false } = {}) {
-    if (closed) return;
-    closed = true;
+  function releaseParentAndDecision({ keepParent = false } = {}) {
     if (parentRecord && !keepParent) dropModalParent(parentRecord);
     disarmDecision?.();
     disarmDecision = null;
-    window.removeEventListener('keydown', onKeydown, true);
-    veil.remove();
-    if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
   }
 
-  function backOut() {
-    close();
-    onBack();
-  }
+  const controller = new ModalController({
+    name: 'smith-upgrade', veil, panel: modal, returnFocus, onBack, onClosing: releaseParentAndDecision,
+  }).Open();
+  const close = (closeOptions) => controller.Close(closeOptions);
+  const backOut = () => controller.BackOut();
 
-  function onKeydown(event) {
-    if (event.defaultPrevented || event.repeat) return;
-    if ([...document.querySelectorAll('[aria-modal="true"]')].at(-1) !== modal) return;
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      backOut();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const focusable = visibleFocusable(modal);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    } else if (!modal.contains(document.activeElement)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
-  }
-
-  veil.addEventListener('click', (event) => { if (event.target === veil) backOut(); });
   back.addEventListener('click', backOut);
 
   // The shell's close box is the same way out as Back.
 
   desk.closeBtn.addEventListener('click', backOut);
-  window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => {
     const row = cards.find((card) => card.dataset.itemRef === focusItemRef);
