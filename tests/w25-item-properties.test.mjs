@@ -111,7 +111,8 @@ test('resist halves and immune negates damage of one type; other types are untou
   };
   const plain = hit(newRun(), 'fire');
   assert.ok(plain > 0);
-  assert.equal(hit(newRun({ [armor]: ['resistFire'] }), 'fire'), Math.floor(plain / 2));
+  // `raw` is the unfloored chain, so resist is exactly half (the stance-less player is Idle and takes x1.25, theme B 2026-11-17, so `plain` need not be whole).
+  assert.equal(hit(newRun({ [armor]: ['resistFire'] }), 'fire'), plain / 2);
   assert.equal(hit(newRun({ [armor]: ['immuneFire'] }), 'fire'), 0);
   assert.equal(hit(newRun({ [armor]: ['immuneFire'] }), 'frost'), hit(newRun(), 'frost'));
 });
