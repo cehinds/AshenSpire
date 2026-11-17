@@ -247,7 +247,7 @@ test('the preview shows the card\'s main lines only: no Entry bonus line, no rec
   assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
 });
 
-test('the picker is the reaction modal\'s design: option rows, the detail under the selected row, Back and one primary', async () => {
+test('the picker is the reaction modal\'s design: option rows, a chosen card opens its own modal, Back and one primary', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
   const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
@@ -264,20 +264,32 @@ test('the picker is the reaction modal\'s design: option rows, the detail under 
     const upgrade = host.querySelector('.card-upgrade-confirm');
     assert.ok(upgrade, 'one primary Upgrade button');
     assert.equal(upgrade.disabled, true, 'disabled until a card is selected');
-    assert.equal(host.querySelector('.option-row-detail'), null, 'nothing chosen: no detail');
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'nothing chosen: no card modal');
+    assert.equal(host.querySelector('.option-row-detail'), null, 'and nothing opens inline');
     assert.equal(modalOf(dom), null, 'nothing chosen: no confirmation');
+    // Click 1: choosing a card opens its own modal (owner, 2026-11-17), not a detail under the row.
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).click();
-    assert.equal(modalOf(dom), null, 'a tapped card only selects it');
+    assert.equal(modalOf(dom), null, 'a tapped card opens no second confirmation');
     assert.equal(host.querySelectorAll('.card-upgrade-row.selected').length, 1, 'exactly one row is outlined');
     assert.equal(host.querySelector('.card-upgrade-row.selected').getAttribute('aria-selected'), 'true');
     assert.equal(host.querySelector('.card-upgrade-confirm').disabled, false, 'the primary enables');
-    const detail = host.querySelector('.option-row-detail');
-    assert.ok(detail, 'the before -> after faces open under the selected row');
-    assert.ok(detail.previousSibling === host.querySelector('.card-upgrade-row.selected') || detail.parentNode.children[detail.parentNode.children.indexOf(detail) - 1] === host.querySelector('.card-upgrade-row.selected'), 'directly under it');
-    assert.ok(detail.querySelector('.upgrade-confirm-faces, .card-upgrade-faces'), 'both faces are in the detail');
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 }));
+    assert.equal(host.querySelector('.option-row-detail'), null, 'nothing expands inline');
+    const card = host.querySelector('.card-upgrade-detail-modal');
+    assert.ok(card, 'the chosen card\'s modal opens');
+    assert.ok(card.querySelector('.upgrade-confirm-faces, .card-upgrade-faces'), 'with the before and after faces');
+    assert.ok(card.querySelector('.card-upgrade-inspect'), 'and an (i) that reads the whole card');
+    const commit = card.querySelector('.card-upgrade-detail-confirm');
+    assert.equal(commit.disabled, false, 'its Upgrade is live');
+    // Back returns to the list with the choice kept; choosing again reopens the modal.
+    card.querySelector('.card-upgrade-detail-back').click();
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'Back closes the card\'s modal');
+    assert.ok(host.querySelector('.card-upgrade-modal'), 'and leaves the picker open');
+    host.querySelector('.card-upgrade-row.selected').click();
+    // Click 2: the modal's Upgrade commits at once.
+    host.querySelector('.card-upgrade-detail-confirm').dispatchEvent(new dom.Event('click', { detail: 0 }));
     assert.equal(modalOf(dom), null, 'Confirm commits at once: no second confirmation (playtest 2026-11-17 item 36)');
-    assert.equal(host.querySelector('.card-upgrade-modal'), null, 'and the picker closes on the commit');
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'the card\'s modal closes on the commit');
+    assert.equal(host.querySelector('.card-upgrade-modal'), null, 'and so does the picker');
   });
 });
 
