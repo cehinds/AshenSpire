@@ -29,7 +29,6 @@ import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
 import { ReceivedItems } from '../../model/receivedItems.js';
 import { assetUrl } from '../assetmap.js';
-import { reasonWhenDisabled } from '../components/refusal.js';
 
 export function mountEvent(app, opts) {
   // `opts`, not `options`: the kit's `options()` list helper is imported above,
@@ -189,15 +188,20 @@ export function mountEvent(app, opts) {
     box.appendChild(btn);
   });
   setChoiceStatus(door, status(eventResponseStatus(responses)));
-  // Continue is in the foot from the start and allowed only once a response
-  // is taken; until then it is disabled, never a way out.
+  // Continue appears only once a response is taken (owner, 2026-11-17: no always-visible disabled Continue and no
+  // "Choose a response first." hint); until then the foot is empty and the responses are the only way on.
   cont.addEventListener('click', () => { if (!cont.disabled) onDone(); });
-  // Until then the reason stands under it as text (FINISH §6), not only a grey button.
-  const contReason = reasonWhenDisabled(cont, () => t('event.continue.reason'));
-  contReason();
+  setContinueShown(false);
 
   // Smart default (keyboard/gamepad): land on the first available choice.
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+
+  // The foot (and Continue in it) is taken out of the layout until a response is taken.
+  function setContinueShown(shown) {
+    const foot = cont.closest('.modal-foot');
+    if (foot) foot.hidden = !shown;
+    cont.hidden = !shown;
+  }
 
   function showResult(text) {
     // Every armed bar is torn down before the box is emptied. `box.innerHTML =
@@ -212,7 +216,7 @@ export function mountEvent(app, opts) {
     setChoiceStatus(door, status(eventResponseStatus(responses, { resolved: true })));
     cont.textContent = run.combatEntered ? t('event.continue.combat') : t('event.continue');
     cont.disabled = false;
-    contReason();
+    setContinueShown(true);
     if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }
