@@ -96,6 +96,24 @@ test('effect-plane z-index config refuses missing, unknown, and misordered layer
   assert.deepEqual(compileEntries(realEntries()).errors, []);
 });
 
+test('knowledge-door config refuses unknown keys, bad values, broken extends and missing fields', () => {
+  const file = 'ui/screens/knowledgeDoor.json';
+  const cases = [
+    [planted(file, (d) => { d.components.bestiary.colour = 'red'; }), 'components.bestiary.colour is unknown'],
+    [planted(file, (d) => { d.components.bestiary.titleKey = 'Bestiary'; }), 'components.bestiary.titleKey must be a dotted uiStrings id'],
+    [planted(file, (d) => { d.components.bestiary.compactListShare = 0; }), 'components.bestiary.compactListShare must be a positive number'],
+    [planted(file, (d) => { d.components.bestiary.detailLive = 'loud'; }), 'components.bestiary.detailLive must be one of polite, off'],
+    [planted(file, (d) => { d.components.bestiary.extends = 'missing'; }), 'components.bestiary: unknown parent "missing"'],
+    [planted(file, (d) => { d.components.base.extends = 'bestiary'; }), 'components.base extends nothing'],
+    [planted(file, (d) => { delete d.components.compendium.backId; }), 'components.compendium.backId is required'],
+    [planted(file, (d) => { d.sizing = {}; }), 'section "sizing" is unknown'],
+  ];
+  for (const [entries, message] of cases) {
+    assert.ok(compileEntries(entries).errors.some((error) => error.includes(message)), message);
+  }
+  assert.deepEqual(compileEntries(realEntries()).errors, []);
+});
+
 test('interaction config refuses missing, unknown, and out-of-range tunables', () => {
   const cases = [
     [planted('ui/presentation/combatInspection.json', (d) => { delete d.behavior.holdMs; }), 'behavior.holdMs is required'],
@@ -124,7 +142,7 @@ test('uiConfig mirrors the folders, holds only resolved values, and is deep-froz
   for (const name of ['card', 'selection', 'inspect', 'identity', 'possession', 'buttons', 'tooltip', 'hud', 'categoryNav', 'workspace', 'choiceBody', 'inspector']) {
     assert.ok(uiConfig.components[name], `components.${name}`);
   }
-  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'prologue', 'shop', 'smith']);
+  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'knowledgeDoor', 'prologue', 'shop', 'smith']);
   assertDeepFrozen(uiConfig, 'uiConfig');
   assert.doesNotMatch(JSON.stringify(uiConfig), /"\$|numerator|"vars"/, 'no variable, fraction or vars block survives compilation');
 });
