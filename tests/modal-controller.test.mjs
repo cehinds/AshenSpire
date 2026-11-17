@@ -74,6 +74,20 @@ test('a backdrop press that began on the veil backs out; one that began inside d
     assert.equal(veil.isConnected, false);
 }));
 
+test('BackOut runs onBack once; a second BackOut does nothing', () => withModalDom((dom) =>
+{
+    resetModalState();
+    const { veil, panel } = buildDoor(dom.document);
+    let backs = 0;
+    const controller = new ModalController({ name: 'door', veil, panel, onBack: () => { backs += 1; } }).Open();
+
+    controller.BackOut();
+    controller.BackOut();
+
+    assert.equal(backs, 1);
+    assert.equal(controller.IsClosed(), true);
+}));
+
 test('Close({ restoreFocus: false }) keeps focus where it is and skips onBack', () => withModalDom((dom) =>
 {
     resetModalState();

@@ -88,6 +88,11 @@ export class ModalController
 
     BackOut()
     {
+        if (this.closed)
+        {
+            return;
+        }
+
         this.Close();
         this.onBack?.();
     }
