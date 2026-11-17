@@ -798,6 +798,20 @@
       }
     },
     {
+      "id": "deckSlot1",
+      "name": "One Slot Lighter",
+      "text": "Your deck may be 1 card smaller",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "minDeckDelta": 1
+      }
+    },
+    {
       "id": "unlimitedBasics",
       "name": "Basic Mastery",
       "text": "Add any number of Basic cards in deck editing",
