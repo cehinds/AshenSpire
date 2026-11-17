@@ -2,6 +2,7 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemStatBonus } from './itemPicks.js';
+import { ClassLevelAttributeBonus } from './classLevelBonus.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','ar','dr','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
@@ -38,5 +39,7 @@ export function gameProfileEffectiveAttributes(registries, run, attributes = run
   const gear = gameProfileEquipmentReceipt(registries,run);
   // Run-long INT / WIS upgrades on the cards in the deck (W25-L), read here so the sheet, the ratings and a fight all price the same attributes.
   const deck = DeckAttributeBonuses(run.deck);
-  return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)+(deck[id] || 0)]));
+  // The class bonus of every odd character level (model/classLevelBonus.js).
+  const level = ClassLevelAttributeBonus(run);
+  return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)+(deck[id] || 0)+(level[id] || 0)]));
 }

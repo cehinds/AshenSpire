@@ -14,14 +14,15 @@ import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCo
 // allocation for stampDeck to stamp — never a bare card outside the plan.
 
 import { deckRules } from '../content/deckRules.js';
-import { gameModule, gameContent, isCoreProfile } from './gameProfile.js';
+import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { equippedPieces, isCurrentEquipmentGrant, isItemOwned, stampDeck } from './loadout.js';
 import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
-import { ItemUnlimitedKinds, ItemMinDeckDelta } from './itemProperties.js';
+import { ItemUnlimitedKinds } from './itemProperties.js';
+import { deckMinDelta } from './deckMinimumRules.js';
 import { basicCardKind } from './basicCardRule.js';
 
 const D = deckRules.defaults;
@@ -70,21 +71,7 @@ export function deckEditBounds(settings, minDelta = 0) {
   return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
 }
 
-/**
- * levelMinDeckDelta(run) → how many cards a Core run's character level takes
- * off the editor's minimum: 1 for each level in
- * `deckRules.minimumReductionLevels` the run has reached. Other profiles: 0.
- */
-export function levelMinDeckDelta(run) {
-  if (!isCoreProfile(run)) return 0;
-  const level = Number.isInteger(run?.level?.level) ? run.level.level : 1;
-  return deckRules.minimumReductionLevels.filter((at) => level >= at).length;
-}
-
-/** deckMinDelta(run) → everything that lowers this run's editor minimum: held items and relics, then level. */
-export function deckMinDelta(run) {
-  return ItemMinDeckDelta(run) + levelMinDeckDelta(run);
-}
+export { levelMinDeckDelta, deckMinDelta } from './deckMinimumRules.js';
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings, minDelta = 0) {

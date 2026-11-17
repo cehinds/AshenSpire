@@ -21,6 +21,8 @@ export function grantText(grant) {
     case 'points': return t('characterSheet.grant.points', { n: grant.amount });
     case 'stat': return t(`characterSheet.grant.stat.${grant.stat}`, { n: grant.amount });
     case 'deckMinimum': return t('characterSheet.grant.deckMinimum', { n: grant.amount });
+    case 'deckMinimumDown': return t('characterSheet.grant.deckMinimumDown', { n: grant.amount });
+    case 'classBonus': return t('characterSheet.grant.classBonus', { attribute: grant.attribute, n: grant.amount });
     case 'featChoice': return t('characterSheet.grant.featChoice');
     case 'classNodeChoice': return t('characterSheet.grant.classNodeChoice');
     case 'featOrNodeChoice': return t('characterSheet.grant.featOrNodeChoice');
