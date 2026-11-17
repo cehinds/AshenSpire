@@ -7,7 +7,7 @@ import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuv
 // Read predicates at invocation so the shipped CommonJS loader keeps the cycle live.
 import * as Triggers from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
-import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
+import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade, GrantEnemyCounterBadge } from './combatMatchups.js';
 import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
 import { combatRules } from '../content/combatRules.js';
 import { canonicalDamageType, isPhysicalDamageType, techniqueNeedsWeaponType } from '../model/combatRatings.js';
@@ -337,6 +337,7 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
     armCombatCounter(ctx, enemy, carrier, { damage: damage === undefined ? 0 : enemyMoveDamage(enemy, { ...move, damage }),
       poiseDamage, wardDamage: move.counterWardDamage || 0,
       ...(payload ? { payload: { ...payload, poise: poiseDamage } } : {}) });
+    GrantEnemyCounterBadge(ctx, enemy);
     if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;

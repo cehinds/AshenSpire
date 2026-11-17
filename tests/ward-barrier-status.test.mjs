@@ -20,6 +20,8 @@ function liveCore() {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   delete combat.player.combatStance;
+  // The targets here hold no stance (Idle); this suite isolates the Poise/Block order from the Idle stance weakness (theme B, 2026-11-17).
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return combat;
 }
 // `legacy`: a fight saved before the 2026-11-15 ruling, whose rules carry no `ward.routing` (the Poise-first Ward routing).

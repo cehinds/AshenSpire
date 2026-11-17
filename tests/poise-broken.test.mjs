@@ -165,6 +165,9 @@ test('after Broken ends the full bar must be broken again for a second break', (
 
 test('the player Broken: next turn starts 1 Stamina short, hits x1.5 through that round, then Poise refills', () => {
   const plain = fight(); plain.player.persistentPoise.value = 0; primeAccuracyRolls(plain);
+  // The plain player holds no stance, so it is Idle and takes the Idle stance weakness (theme B, 2026-11-17); a Broken player holds the
+  // Staggered stance and does not. The baseline leaves the weakness out so the comparison is Broken against nothing.
+  delete plain.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
   // Bases 20 and 16 halve to 10 and 8 (Core base-damage scale).
   const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 20, [], carrier);
   const bare = hpPlain - plain.player.hp;

@@ -308,8 +308,10 @@ test('a target with Block, a target with Poise, and both', () => {
   for (const [label, state] of [['Block', { block: 5 }], ['Poise', { persistentPoise: { value: 10, max: 20 } }], ['Block and Poise', { block: 5, persistentPoise: { value: 10, max: 20 } }]]) {
     const { combat, card } = fixture();
     Object.assign(combat.enemies[0], state);
+    const open = fixture().combat; // the same hit on the same target with no Block or Poise
+    const undefended = faceOf(open, open.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
-    assert.ok(shown[0] < 12, `${label}: the face already is the HP after defences (${shown})`);
+    assert.ok(shown[0] < undefended, `${label}: the face already is the HP after defences (${shown} against ${undefended})`);
     assert.ok(check(combat, card, 'e1', label).hits >= 1);
   }
 });
@@ -319,6 +321,8 @@ test('a target in a defensive stance', () => {
     const { combat, card } = fixture({ hand });
     combat.enemies[0].combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
     const open = fixture({ hand }).combat; // the same hit with no stance, for comparison
+    // An Idle target takes the stance weakness (theme B, 2026-11-17); the comparison is with a target that has none, so it is left out here.
+    delete open.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
     const baseline = faceOf(open, open.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1')[0];
     if (hand !== 'core.strike') assert.notEqual(shown, baseline, `${hand}: the Defend stance moves the face (${shown} against ${baseline})`);

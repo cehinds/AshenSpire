@@ -212,6 +212,8 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   const prime = () => {
     const { combat, enemy } = live();
     combat.player.reflectStacks = 1;
+    // Enough HP that no hit is a killing blow: the stance-less player is Idle and takes x1.25 (theme B, 2026-11-17), so three hits outgrow a level-1 pool.
+    Object.assign(combat.player, { hp: 500, maxHp: 500 });
     enemy.persistentPoise = { value: 1, max: 5 };
     enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
     return { combat, enemy };
