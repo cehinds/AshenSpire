@@ -293,7 +293,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
-      case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : ''}`);
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'

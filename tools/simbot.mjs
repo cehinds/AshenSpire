@@ -20,6 +20,7 @@ import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js'
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { controlGate, recoveryControls } from '../src/engine/combatStatusControl.js';
+import { NonlethalHpRefusal } from '../src/model/cardHpCost.js';
 
 /** Required choices and affordable recovery are actions, never deck cards. */
 export function botControlAction(combat) {
@@ -48,6 +49,8 @@ function isAffordable(registries, combat, refused, h) {
   if (refused.has(h.instanceId)) return false;
   const def = resolveCombatCard({ ...combat, registries }, h);
   if ((def.keywords || []).includes('unplayable')) return false;
+  // A nonlethal HP cost the player cannot pay (it would kill) is refused by the engine; the bot never offers it.
+  if (NonlethalHpRefusal(def, p)) return false;
   if (combat.combatExpansionVersion === 2 && (!controlGate(combat, p, def).allowed
     || p.ashenBlight?.milestones?.some(row => row.path === null))) return false;
   const cost = cardPlayCosts(combat, h.instanceId);

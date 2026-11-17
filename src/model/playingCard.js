@@ -239,7 +239,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
       case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
-      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
+      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : ''}`; break;
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;

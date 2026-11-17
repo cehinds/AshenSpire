@@ -1912,7 +1912,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 4
+        "amount": 4,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4222,7 +4223,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 2
+        "amount": 2,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4335,7 +4337,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 2
+        "amount": 2,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4448,7 +4451,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 2
+        "amount": 2,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4517,7 +4521,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 3
+        "amount": 3,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4586,7 +4591,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 2
+        "amount": 2,
+        "nonlethal": true
       },
       {
         "op": "damage",
@@ -4645,7 +4651,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 2
+        "amount": 2,
+        "nonlethal": true
       },
       {
         "op": "damage",

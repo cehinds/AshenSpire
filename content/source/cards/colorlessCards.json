@@ -541,7 +541,8 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 3
+        "amount": 3,
+        "nonlethal": true
       },
       {
         "op": "damage",
