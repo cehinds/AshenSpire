@@ -56,7 +56,8 @@ export function CreatePreparedRun({
     // Core creation's starting-card choice (owner, 2026-11-17): the pool cards and their copies.
     // A choice the current deck-size settings refuse (Run again after the settings changed) is dropped:
     // the run starts on the class's own starting cards rather than failing to start.
-    const appliedStartingCards = startingCards && isConfiguredRun(run) && !StartingDeckChoiceRefusal(run, startingCards, settings || {})
+    const appliedStartingCards = startingCards && isConfiguredRun(run)
+            && !StartingDeckChoiceRefusal(run, startingCards, settings || {})
         ? startingCards
         : null;
     if (appliedStartingCards)
