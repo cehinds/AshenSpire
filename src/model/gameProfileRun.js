@@ -67,11 +67,19 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
     byClass: {},
   };
-  return { ...options, explicitOverride: {
-    ...(options.explicitOverride || {}), rules: {
-      ...(options.explicitOverride?.rules || {}), ...rows,
-    },
-  } };
+  // Every class's pool base and per-level growth (owner, 2026-11-17: HP = 30 + 5 x (CON + level) is base 35, CON 5 and 5 per level
+  // after the first). A run layer, not the explicit override, so a relic's flat bonus still adds to the base.
+  const pools = {};
+  for (const [id, base] of Object.entries(stats.poolBases || {})) pools[id] = { ...(pools[id] || {}), base };
+  for (const [id, perLevel] of Object.entries(stats.levelGrowth || {})) pools[id] = { ...(pools[id] || {}), perLevel };
+  const runModifiers = Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : [];
+  return { ...options,
+    ...(Object.keys(pools).length ? { runModifiers: [...runModifiers, { rules: pools }] } : {}),
+    explicitOverride: {
+      ...(options.explicitOverride || {}), rules: {
+        ...(options.explicitOverride?.rules || {}), ...rows,
+      },
+    } };
 }
 
 export function initializeGameProfileRun(registries, run, { profileMeta = {} } = {}) {

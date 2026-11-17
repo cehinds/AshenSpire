@@ -10,7 +10,7 @@
       "dr": 1
     },
     "constitution": {
-      "hp": 10,
+      "hp": 5,
       "sp": 0.5
     },
     "wisdom": {
@@ -19,6 +19,12 @@
     "intelligence": {
       "draw": 1
     }
+  },
+  "poolBases": {
+    "hp": 35
+  },
+  "levelGrowth": {
+    "hp": 5
   },
   "secondaryPolicy": "legacyAdapter",
   "poolBasesByClass": {

@@ -149,6 +149,15 @@ function verifyContent(content) {
     for (const key of ['cost','staminaCost','manaCost']) if (!(key === 'cost' && row[key] === 'X') && (!Number.isSafeInteger(row[key]) || row[key] < 0)) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
     for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
   }
+  // Owner, 2026-11-17: Core HP = 30 + 5 x (CON + level). `poolBases` sets a pool's base for every class (poolBasesByClass still wins
+  // for its class); `levelGrowth` sets a pool's growth per level after the first.
+  for (const key of ['poolBases', 'levelGrowth']) {
+    if (content.stats[key] === undefined) continue;
+    if (!record(content.stats[key])) fail(`$/content/stats/${key}`, 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats[key])) {
+      if (!['hp', 'mana', 'stamina'].includes(pool) || !Number.isFinite(value) || value < 0) fail(`$/content/stats/${key}/${pool}`, 'expected known pool and nonnegative finite number');
+    }
+  }
   if (content.stats.poolBasesByClass !== undefined) {
     if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
     for (const [classId, pools] of Object.entries(content.stats.poolBasesByClass)) {

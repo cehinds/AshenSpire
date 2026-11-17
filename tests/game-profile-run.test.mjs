@@ -73,7 +73,7 @@ test('rest requires real current rest, commits once and fully recovers after ear
  visit(run);run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  run.level.unspentPoints=1;const before=run.maxHp;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- assert.equal(run.maxHp,before+10);assert.equal(run.hp,run.maxHp);assert.equal(run.mana,run.maxMana);assert.equal(run.stamina,run.maxStamina);
+ assert.equal(run.maxHp,before+5);assert.equal(run.hp,run.maxHp);assert.equal(run.mana,run.maxMana);assert.equal(run.stamina,run.maxStamina);
  assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.equal(run.flaskCharges.manaCurrent,run.flaskCharges.mana);
  const after=JSON.stringify(run);assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'}),/spent/);assert.equal(JSON.stringify(run),after);
 });

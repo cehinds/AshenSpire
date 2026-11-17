@@ -265,7 +265,7 @@ Ops (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `mi
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Stock pools incl. starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. Max HP clamps to ≥ 1. |
+| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Core 2 runs override this row (below). Max HP clamps to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Wisdom leads. |
 | Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget (HUD: Actions); the DEX term adds its first Action at DEX 4. |
 | Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Alias of `stamina` (`src/model/turnStamina.js`); combat reads Stamina. |
@@ -277,6 +277,8 @@ Ops (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `mi
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
 | Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
 | Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: rating with ratings on, vessel with them off; armour and relics add. |
+
+**Core 2 player HP** (owner, 2026-11-17): **HP = 30 + 5 × (CON + level)**, CON being the effective Constitution (gear points included). The Core pack's `stats.json` authors it as `poolBases.hp` 35, `levelGains.constitution.hp` 5 and `levelGrowth.hp` 5 (applied per level after the first): 40 at level 1 with CON 1, 60 at level 5, 85 at level 10. `poolBases` and `levelGrowth` reach the run as a run layer, so a relic's flat HP still adds (stock Reaver 50, Starseer 54, Rogue and Herald 40 at level 1). Enemy HP keeps its own `characters` module formula.
 
 Basic-profile base values (data): guard profiles (`unarmedGuard` = 1, `ratingId` `dr`); attack profiles (`unarmedAttack` = 3, `ratingId` `ar`); magic profiles (`content/source/basicCardProfiles.csv`).
 
@@ -3380,7 +3382,7 @@ Shipped Core 2 rolls no Perception for intents and shows no hit chance (`percept
   - `recovery.hp` is `"full"` or a fraction in (0, 1]. A profile whose `services` lacks `rest` keeps the earlier rule, so a run saved under it does too: the rest heals on arrival and offers Smith, Level Up and Upgrade Card, none exclusive.
 - **Level Up** is not a Core 2 rest service (it was until 2026-11-14): earned attribute points are spent as the next bullet says. Where an older profile lists it, it spends an already-earned level, not the rest visit; the rest grants no level.
 - **Attribute points** are spent on the Core Victory receipt and the Armory character sheet through `allocateAttributePoint` (`src/model/levelup.js`), which neither heals nor uses up a rest visit; every other `applyLevelUp` caller stays rest-only, and the Level Up rest service stays.
-  - Each attribute row shows its largest per-point gain (e.g. `+10 HP`), every gain in its tooltip, from `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
+  - Each attribute row shows its largest per-point gain (e.g. `+5 HP`), every gain in its tooltip, from `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
 - **Victory receipt** (one screen with the card choice since 2026-11-14: *Plannable and quick turns*) shows only the Character bar (class-named); class-mastery and weapon/skill tracks are still paid and banked, notices acknowledged silently. Character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; older snapshot: 1).
 - **Deck editing happens only at a rest site** (owner brief, 2026-11-14; `cards.editorWhere: "rest"`): the Rest screen carries a free **Edit deck** door that is not a service and does not spend the visit's pick. The Armory, character creation, the reward screen and combat open no deck editor. Acquiring a card is not editing: a card won at a reward door or bought in a shop may still go straight into the deck ("Add to deck") or into the collection, as before; the Armory's Deck tab shows the deck read-only. Equipment editing still happens at will outside combat, disabled in it. A profile with `editorWhere: "noncombat"` keeps the earlier rule (the deck is edited from the Armory at will). The Armory control outline is blue while it holds a new item, else black.
 - **No unlimited copies** (owner brief, 2026-11-14; `deck-training.unlimited: []`): a card's copies are the copies the run owns, and the editor mints nothing. A profile that still lists the `basicTraining` and `graduate` rules keeps §14.1's Adept copies.
