@@ -136,3 +136,12 @@ test('the overtuned cards pay their penalty in HP, and their upgrade drops it', 
     assert.ok(!drawbacksOf(upgradedDefinition(card)).includes('selfDamage'), `${id}+ keeps no self-damage`);
   }
 });
+
+test('the Core content with these card changes validates (faces, upgrade faces and tokens)', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { validateContent } = await import('../src/model/validate.js');
+  const { resolveGameProfile, applyGameProfileToContent } = await import('../src/model/gameProfile.js');
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const cards = (errors) => errors.filter((row) => row.path.startsWith('cards.'));
+  assert.deepEqual(cards(validateContent(applyGameProfileToContent(contentBundle, core)).errors), []);
+});

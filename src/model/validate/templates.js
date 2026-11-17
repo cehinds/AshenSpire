@@ -34,7 +34,8 @@ function checkWardOffTemplate(card, path, err) {
 // without the "every number is stated" rule (the face is a summary; Information carries the rest).
 function checkFaceTemplate(card, path, err) {
   const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
-  if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects({ effects: card.upgrade.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  // An upgrade may carry its own face (playtest 2026-11-17: an upgrade that drops a penalty drops its face line too).
+  if (card.upgrade?.effects || card.upgrade?.faceTemplate) sets.push([card.upgrade?.faceTemplate ? `${path}.upgrade.faceTemplate` : `${path}.faceTemplate`, card.upgrade?.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: card.upgrade?.effects ?? card.effects, onTurnEndInHand: card.onTurnEndInHand })]);
   for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
   for (const [at, lines, effects] of sets) {
     if (lines === undefined) continue;
