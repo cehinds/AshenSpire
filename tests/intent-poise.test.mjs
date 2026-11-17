@@ -11,7 +11,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { previewEnemyAction } from '../src/engine/enemyActionPreview.js';
-import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { projectCombatIntent, ProjectPlannedFollowUpDamage } from '../src/ui/models/CombatIntentProjectionModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -140,4 +140,54 @@ test('the intent tag says whose Poise breaks: BREAKS YOU, never the target quote
     assert.equal(IntentPoiseMark({ value: '2', breaks: false, mayBreak: true }).querySelector('.intent-poise-break').textContent, 'BREAKS YOU?');
     assert.equal(IntentPoiseMark({ value: '2', breaks: false, mayBreak: false }).querySelector('.intent-poise-break'), null);
   });
+});
+
+/** Planned moves (owner 2026-11-14 multi-action): the head and each planned follow-up, each move's Poise taken live, in play order. */
+function planFight(head, planned, opts) {
+  const combat = fight([head], opts);
+  const enemy = combat.enemies[0];
+  Object.assign(enemy, { plannedMoves: planned.map(moveId => ({ moveId })), planDue: true });
+  return { combat, enemy };
+}
+function playMoves(combat) {
+  const moves = [], door = combat._emitEvent;
+  let before = null;
+  combat._emitEvent = function (ctx, type, payload) {
+    if (type === 'enemyMoveStarted' && !payload?.reaction) before = ctx.player.persistentPoise.value;
+    const out = door.apply(this, arguments);
+    if (type === 'enemyMoveEnded' && before !== null) {
+      const after = ctx.player.persistentPoise.value;
+      moves.push({ moveId: payload.moveId, lost: before - after, broke: before > 0 && after === 0 });
+      before = null;
+    }
+    return out;
+  };
+  dispatch(combat, { type: 'endTurn' });
+  combat._emitEvent = door;
+  return moves;
+}
+
+test('review #2825: a planned follow-up carries its Poise and BREAKS YOU (slash, then a planned slash, 10 Poise)', () => {
+  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash'], { poise: 10 });
+  const head = projectCombatIntent(combat, enemy.id).projectedPoise;
+  const follow = ProjectPlannedFollowUpDamage(combat, enemy.id, 0)?.poise;
+  const live = playMoves(combat);
+  assert.equal(live.length, 2, 'both moves play this turn');
+  assert.ok(follow, 'the follow-up has a Poise forecast');
+  assert.deepEqual([head.max, head.breaks], [live[0].lost, live[0].broke], 'the head: its own Poise, no break');
+  assert.deepEqual([follow.max, follow.breaks], [live[1].lost, live[1].broke], 'the follow-up: what is left, and the break it causes');
+  assert.equal(follow.breaks, true, 'the plan breaks the player on the follow-up');
+});
+
+
+
+test('review #2825: an unread attacker before this one makes the Poise a lower bound that may break', () => {
+  const combat = fight([['wanderingSoldier', 'slash'], ['wanderingSoldier', 'slash']], { poise: 30 });
+  const [first, second] = combat.enemies;
+  delete first.actorIntentRevealed; delete first.intentRevealed;
+  first.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'hidden' } } };
+  const poise = projectCombatIntent(combat, second.id).projectedPoise;
+  assert.equal(poise.lowerBound, true);
+  assert.equal(poise.mayBreak, true, 'conservative: it may break');
+  assert.match(poise.label, /\+$/, 'labelled as at least');
 });

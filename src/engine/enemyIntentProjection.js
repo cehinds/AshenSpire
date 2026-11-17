@@ -113,7 +113,8 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
     const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
     if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
-    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
+    // An earlier attacker the player cannot read is not priced; its hits may still come first, so a later forecast is a lower bound (unreadBefore).
+    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
     decayAtTurnStart(ctx, other);
     if (!broken) {
       const head = advance(other, intent.moveId, intent.damage, intent.hits);
@@ -148,7 +149,16 @@ function PoiseBounds(ctx, source, move, carrier, prepared, connected, start) {
   });
   const lost = ends.map(end => Math.max(0, start - end));
   const broken = ends.map(end => start > 0 && end === 0);
-  return { min: Math.min(...lost), max: Math.max(...lost), breaks: broken.every(Boolean), mayBreak: broken.some(Boolean) };
+  // An unread attacker before this one may already have spent Poise: the number is at least this much, and it may break (conservative).
+  const lowerBound = !!prepared.unreadBefore && start > 0 && !broken.every(Boolean);
+  return { min: Math.min(...lost), max: Math.max(...lost), breaks: broken.every(Boolean), mayBreak: broken.some(Boolean) || lowerBound,
+    ...(lowerBound ? { lowerBound: true } : {}) };
+}
+
+/** The Poise forecast with its label: "7", "5–7", or "7+" when an unread attacker before it makes it a lower bound. */
+function PoiseLabelled(poise) {
+  const label = poise.min === poise.max ? String(poise.max) : `${poise.min}–${poise.max}`;
+  return { ...poise, label: poise.lowerBound ? `${poise.max}+` : label };
 }
 
 function damageBounds(combat, enemy, move, base, hits, neutral, action = null, own = null) {
@@ -248,7 +258,7 @@ export function projectEnemyIntentDamage(combat, enemy, intent, { action = null,
   const stanceReduced = actual.expected < baseline.expected - 1e-9;
   const displayedReduction = stanceReduced && actual.min <= baseline.min && actual.max < baseline.max;
   const { poise, ...hp } = actual;
-  return { ...intent, ...(poise ? { projectedPoise: { ...poise, label: poise.min === poise.max ? String(poise.max) : `${poise.min}–${poise.max}` } } : {}),
+  return { ...intent, ...(poise ? { projectedPoise: PoiseLabelled(poise) } : {}),
     projectedDamage: { basis: 'hp', ...hp,
     label: actual.min === actual.max ? String(actual.max) : `${actual.min}–${actual.max}`,
     tone: displayedReduction ? 'green' : 'red', stanceReduced, displayedReduction, uncertain: actual.min !== actual.max,
@@ -302,6 +312,8 @@ export function ProjectPlannedMoveDamage(combat, enemy, index) {
   if (!Number.isFinite(base) || hits > 100) return null;
   try {
     const bounds = damageBounds(combat, enemy, move, base, hits, false, null, { moves, moveId: planned[index].moveId });
-    return bounds && { min: bounds.min, max: bounds.max, label: bounds.min === bounds.max ? String(bounds.max) : `${bounds.min}–${bounds.max}` };
+    // The follow-up carries its Poise too (owner, 2026-11-17): what it takes after the head and the follow-ups before it, and whether it breaks.
+    return bounds && { min: bounds.min, max: bounds.max, label: bounds.min === bounds.max ? String(bounds.max) : `${bounds.min}–${bounds.max}`,
+      ...(bounds.poise ? { poise: PoiseLabelled(bounds.poise) } : {}) };
   } catch { return null; }
 }
