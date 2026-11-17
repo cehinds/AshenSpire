@@ -21,8 +21,7 @@ const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c']
 const settle = combat => { while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const plain = { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 };
 
-// The strike is 3 (6 halved by Core's base-damage scale) + AR 1 (STR only; the dagger grants DEX, not AR) + 1 adjustment = 5.
-test('Rogue dagger strike (5) against Block 50 loses floor(0.2 x 5) = 1 HP', () => {
+test('Rogue dagger strike (7) against Block 50 loses floor(0.2 x 7) = 1 HP', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
@@ -32,10 +31,10 @@ test('Rogue dagger strike (5) against Block 50 loses floor(0.2 x 5) = 1 HP', () 
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.equal(hit.amount, 5, 'fixture: the dagger strike deals 5');
+  assert.equal(hit.amount, 7, 'fixture: the dagger strike deals 7');
   assert.equal(500 - enemy.hp, 1);
-  assert.equal(hit.blocked, 4);
-  assert.equal(enemy.block, 45, 'Block is spent as the same hit without pierce would spend it (5)');
+  assert.equal(hit.blocked, 6);
+  assert.equal(enemy.block, 43, 'Block is spent as the same hit without pierce would spend it (7)');
 });
 
 // An enemy whose Slash is a piercing action of `damage` x `hits`.

@@ -27,6 +27,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
+import { withGameProfileService } from '../src/model/gameProfileRun.js';
+import { applyLevelUp } from '../src/model/levelup.js';
 import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
@@ -42,6 +44,14 @@ const start = (classId, seed = 511) => createRunState({ registries: reg, classId
 const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');
 const owns = { has: () => true };
 const equip = (run, id) => assert.ok(equipPiece(reg, run.loadout, 'rightHand', 0, id, owns, { inCombat: false, attributes: run.attributes }));
+
+function spendEarnedPoints(registries, run, attribute, count) {
+  run.level.level += count;
+  run.level.unspentPoints += count;
+  withGameProfileService(run, 'levelUp', () => {
+    for (let point = 0; point < count; point++) applyLevelUp(registries, run, attribute);
+  });
+}
 
 test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Mana."', async () => {
   const def = reg.cards.get('core.manaSurge');
@@ -120,22 +130,25 @@ test('an older Core save without the card gets it on the next reconcile', () => 
   assert.equal(JSON.parse(JSON.stringify(run)).deck.length, run.deck.length, 'JSON round trip keeps it');
 });
 
-// Owner, 2026-11-15 (W25-F, batch 4): every spell costs 1 more MP and a non-cantrip 1 more SP. Mana Surge is a cantrip (`rank.cantrip`), so it stays at 1 SP; the sceptre's Focus takes the extra MP back, so the Mana nets +2.
-test('playing Mana Surge in a Core fight costs 1 SP (a cantrip pays no SP surcharge) and nets 2 Mana with the sceptre Focus', () => {
-  const run = start('herald');
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
-  assert.ok(card, 'Mana Surge reaches the fight piles');
-  combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
-  combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
-  if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
-  combat.player.mana = 0;
-  combat.player.stamina = Math.max(combat.player.stamina, 3);
-  const sp = combat.player.stamina;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
-  assert.equal(combat.player.mana, 2, 'gains 2 Mana');
-});
+// As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
+for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
+  test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
+    const run = start('herald');
+    if (intelligencePoints) spendEarnedPoints(reg, run, 'intelligence', intelligencePoints);
+    const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.player.maxMana, maxMana);
+    const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
+    assert.ok(card, 'Mana Surge reaches the fight piles');
+    combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
+    combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
+    if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
+    combat.player.mana = 0;
+    const sp = combat.player.stamina;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+    assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
+    assert.equal(combat.player.mana, maxMana, 'restores as much of the 2 Mana as the pool can hold');
+  });
+}
 
 test('a mid-fight swap to a sceptre lends the card to the pile, and away again', async () => {
   const { reconcileGrantedCardsInCombat } = await import('../src/model/loadout.js');
@@ -184,11 +197,12 @@ test('an unprofiled run with a Bone Sceptre grants no Core card', () => {
 
 // The shipped setting locks combat equipment; exercise the supported intent
 // with that setting enabled, as older/configured saves can do.
-function equipmentFight(classId) {
+function equipmentFight(classId, wisdomPoints = 0) {
   const registries = { ...reg, balance: structuredClone(reg.balance) };
   registries.balance.equipment.allowChangesInCombat = true;
   registries.balance.equipment.swapEndsTurn = false;
   const run = createRunState({ registries, classId, seed: 511, profileMeta: meta });
+  if (wisdomPoints) spendEarnedPoints(registries, run, 'wisdom', wisdomPoints);
   if (classId === 'reaver') run.loadout.storage.push('boneSceptre');
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   combat.player.stamina = 99;
@@ -244,8 +258,8 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
   assert.equal(pileSurges(combat).length, 0);
 });
 
-// Owner, 2026-11-17: MP = base + floor(WIS / 3) and Draw reads INT, so the Bone Sceptre (INT +2) moves Draw but no pool.
-// The pool test swaps in the Blight Rod (WIS +2): the Reaver's WIS 1 -> 3 is one more maximum MP.
+// Mana's first increase is at max(INT, WIS) 4. Bone Sceptre takes the fresh Reaver to INT 3 and raises Draw.
+// The pool test starts at WIS 3 so the Blight Rod's +1 WIS crosses the Mana threshold.
 const POOL_PIECE = 'blightRod';
 test('Core changeEquipment: the Bone Sceptre intelligence raises Draw by 2 and moves no pool', () => {
   const { combat, run } = equipmentFight('reaver');
@@ -253,11 +267,11 @@ test('Core changeEquipment: the Bone Sceptre intelligence raises Draw by 2 and m
   const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
   dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
   assert.equal(p.drawPerTurn, before.draw + 2, 'the sceptre intelligence raises Draw');
-  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'INT moves no HP, MP or SP');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'INT 3 is below the first Mana threshold');
 });
 for (const intent of ['changeEquipment', 'swapArmament']) {
   test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {
-    const { registries, run, combat } = equipmentFight('reaver');
+    const { registries, run, combat } = equipmentFight('reaver', 2);
     registries.balance.equipment.swapCostKind = 'allowance';
     if (intent === 'swapArmament') {
       combat.loadout.sets.rightHand[1] = POOL_PIECE;

@@ -25,13 +25,15 @@ function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
     delete enemy.combatStance; delete enemy.combatCounter;
   });
   combat.player.energy = 9; combat.player.mana = 9;
+  // Keep the attack rating fixed while these cases vary the target's defenses.
+  if (classId === 'reaver') combat.player.ratings = { ...combat.player.ratings, ar: 4 };
   const card = combat.piles.hand[0];
   card.cardId = cardId; card.upgraded = false;
   return { combat, id: card.instanceId };
 }
 const damageRow = (combat, id, target) => previewCard(combat, id, target).values.find(v => v.op === 'damage');
 const rawRow = (combat, id) => previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage');
-// The reaver's Strike faces 8: base 6 halved by the Core base-damage scale to 3, + AR 4, + 1 AR adjustment. Poise 10 cuts 25%: 6.
+// The fixture's Strike faces 8: base 6 halved to 3, plus AR 4 and the +1 AR adjustment. Poise 10 cuts 25% to 6.
 
 test('Strike: the face is the same against 0 and 20 Block, with and without Poise', () => {
   const faces = [{}, { block: 20 }, { poise: 10 }, { block: 20, poise: 10 }].map(spec => {
