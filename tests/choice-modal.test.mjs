@@ -177,3 +177,13 @@ test('choice modal: a multi-select kind toggles up to the limit and commits the 
         restore();
     }
 });
+
+// Review on #2814: the swap at the limit is the hand discard's alone (item 26); every other multi-select kind, the
+// Smith keep among them, still ignores a pick past its limit.
+test('choice modal: only the discard kind swaps at the limit', async () =>
+{
+    const { ModalModelFor } = await import('../src/ui/models/ModalModel.js');
+    assert.equal(ModalModelFor('discardChoice').swapsAtLimit, true);
+    assert.equal(ModalModelFor('smithKeep').swapsAtLimit, false);
+    assert.equal(ModalModelFor('cardChoice').swapsAtLimit, false);
+});

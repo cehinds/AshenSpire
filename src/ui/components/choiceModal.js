@@ -197,6 +197,10 @@ class ChoiceModal
 
         if (this.selectedIds.length >= this.selectionLimit)
         {
+            if (!this.model.swapsAtLimit)
+            {
+                return;
+            }
             this.selectedIds.shift();
         }
 
