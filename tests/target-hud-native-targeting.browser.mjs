@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { dirname, basename, resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { serve } from '../tools/serve.mjs';
+import { uiConfig } from '../src/config/generated/ui.js';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const file = process.env.TARGET_GAME_FILE && resolve(process.env.TARGET_GAME_FILE);
 const server = await serve({ root: file ? dirname(file) : process.cwd(), port: 0, open: false, quiet: true });
@@ -12,6 +13,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME || '/
 const results = [];
 const captures = process.env.TARGET_QA_OUT;
 if (captures) mkdirSync(captures, { recursive: true });
+const HOLD_MS = uiConfig.presentation.combatInspection.behavior.holdMs;
 const settings = { oneTapPlay: false, holdConfirm: 'off', animSpeed: 'instant', combatSpeed: 8, seenTutorial: true };
 const count = page => page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length);
 async function selectStrike(page) {
@@ -54,14 +56,14 @@ try {
     const page = await browser.newPage({ viewport: { width, height }, isMobile: true, hasTouch: true });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.addInitScript(() => {
+    await page.addInitScript(holdMs => {
       // Observe the authored hold callback without changing its behavior. The
       // <700ms assertion guards against restoring the former global cooldown;
       // suppression itself now belongs to the originating pointer.
       window.__targetHoldProbe = { fired: null, activations: [] };
       const timeout = window.setTimeout;
       window.setTimeout = function (callback, delay, ...args) {
-        if (typeof callback === 'function' && Number(delay) === 500 && callback.toString().includes('inspectionPointer')) {
+        if (typeof callback === 'function' && Number(delay) === holdMs && callback.toString().includes('inspectionPointer')) {
           const original = callback;
           callback = function (...params) { window.__targetHoldProbe.fired = performance.now(); return original.apply(this, params); };
         }
@@ -72,7 +74,7 @@ try {
         if (target) window.__targetHoldProbe.activations.push({ type, id: target.dataset.eid,
           time: performance.now(), trusted: event.isTrusted, key: event.key });
       }, true);
-    });
+    }, HOLD_MS);
     const url = new URL(file ? basename(file) : 'index.html', server.url);
     url.search = new URLSearchParams({ shot: 'combat', gameProfile: 'core', shotSeed: '3', shotEnemyCount: '3', shotHand: '5', shotSettings: JSON.stringify(settings) });
     await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });

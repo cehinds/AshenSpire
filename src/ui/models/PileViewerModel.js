@@ -2,6 +2,7 @@
 // workspace: a rail picks the pile, and the pane shows that pile's cards
 // beside the reading of the selected one. Viewing never moves or merges cards.
 import { t } from '../strings.js';
+import { BuildRailItems } from './railItems.js';
 
 export const SPENT_PILES = Object.freeze(['discard', 'exhaust']);
 const LABELS = Object.freeze({ discard: t('combat.discard'), exhaust: t('combat.exhaust') });
@@ -9,8 +10,9 @@ const LABELS = Object.freeze({ discard: t('combat.discard'), exhaust: t('combat.
 export function spentPileView(piles = {}, active = 'discard', selectedId = null) {
   if (!SPENT_PILES.includes(active)) throw new Error(`Unknown pile '${active}'`);
   const count = (id) => (piles[id] || []).length;
-  const tabs = SPENT_PILES.map((id) => Object.freeze({
-    id, count: count(id), label: `${LABELS[id]} (${count(id)})`, selected: id === active,
+  const tabs = BuildRailItems(SPENT_PILES, active, (id) => ({
+    count: count(id),
+    label: `${LABELS[id]} (${count(id)})`,
   }));
   const cards = Object.freeze([...(piles[active] || [])]);
   // The reading follows the selection; before one, it shows the pile's first
