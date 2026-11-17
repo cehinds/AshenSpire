@@ -13,6 +13,18 @@
     "castSizeFraction": 0.7,
     "impactSizeFraction": 0.55
   },
+  "layering": {
+    "effectPlanes": {
+      "card": {
+        "behindZIndex": 0,
+        "frontZIndex": 2
+      },
+      "combatant": {
+        "behindZIndex": -1,
+        "frontZIndex": 2
+      }
+    }
+  },
   "motion": {
     "defaultDurationMs": "$effectMs",
     "layerDurationMs": "$effectMs",

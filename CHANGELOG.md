@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-16
 
+- **Steadier inspect hold and shared UI plumbing** ([#2806](https://github.com/cehinds/AshenSpire/pull/2806), `0.7.4.122`). Holding a target to inspect it now uses the same timing as holding a card in hand, instead of a separate hard-coded delay. Behind the scenes, sound and haptics, effect layers and the side rails share one implementation each.
 - **Tidier modal and reward-screen code** ([#2804](https://github.com/cehinds/AshenSpire/pull/2804), `0.7.4.122`). A second clean-up of the dialog and reward-screen code: far fewer comments and one idea per line. Nothing looks or plays differently.
 - **Cleaner modal and reward-screen code** ([#2802](https://github.com/cehinds/AshenSpire/pull/2802), `0.7.4.120`). The reward door and the game's dialogs share one set of layout settings, and their code is easier to read. Nothing looks or plays differently.
 - **Phone backdrops** ([#2799](https://github.com/cehinds/AshenSpire/pull/2799), `0.7.4.117`). Painted combat backdrops on phones use full-resolution scene art and keep their soft edge blend in Lite mode.

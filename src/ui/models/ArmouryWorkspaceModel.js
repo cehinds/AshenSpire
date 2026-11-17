@@ -11,13 +11,12 @@
 // requirement and role rows (equipmentSurfaceReceipt). It invents no item,
 // stat or comparison and mutates nothing it is handed.
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { BuildRailItems } from './railItems.js';
 
 /** The rail: one entry per declared view, in authored order; exactly one selected. */
 export function armouryRailItems({ views = [], activeView = '', labels = {} } = {}) {
   if (!views.includes(activeView)) throw new Error(`Unknown Armoury view '${activeView}'`);
-  return Object.freeze(views.map((id) => Object.freeze({
-    id, label: labels[id] || id, selected: id === activeView,
-  })));
+  return BuildRailItems(views, activeView, (id) => ({ label: labels[id] || id }));
 }
 
 /**

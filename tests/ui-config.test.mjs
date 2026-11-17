@@ -80,6 +80,21 @@ test('the complete authored tree requires every direct-consumer interaction conf
     'partial pure compiler fixtures remain usable without complete-tree enforcement');
 });
 
+test('effect-plane z-index config refuses missing, unknown, and misordered layers', () => {
+  const file = 'ui/presentation/combatEffectPlayback.json';
+  const cases = [
+    [planted(file, (d) => { delete d.layering.effectPlanes.card; }), 'layering.effectPlanes.card is required'],
+    [planted(file, (d) => { d.layering.effectPlanes.relic = {}; }), 'layering.effectPlanes.relic is unknown'],
+    [planted(file, (d) => { d.layering.effectPlanes.card.extra = 1; }), 'layering.effectPlanes.card.extra is unknown'],
+    [planted(file, (d) => { d.layering.effectPlanes.combatant.frontZIndex = '2'; }), 'combatant.frontZIndex must be an integer z-index'],
+    [planted(file, (d) => { d.layering.effectPlanes.card.behindZIndex = 3; }), 'card.behindZIndex must be below frontZIndex'],
+  ];
+  for (const [entries, message] of cases) {
+    assert.ok(compileEntries(entries).errors.some((error) => error.includes(message)), message);
+  }
+  assert.deepEqual(compileEntries(realEntries()).errors, []);
+});
+
 test('interaction config refuses missing, unknown, and out-of-range tunables', () => {
   const cases = [
     [planted('ui/presentation/combatInspection.json', (d) => { delete d.behavior.holdMs; }), 'behavior.holdMs is required'],

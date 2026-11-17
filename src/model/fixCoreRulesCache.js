@@ -17,17 +17,10 @@
 // file is part of the mechanics runtime hash (tools/game-config.mjs), and a
 // cache must not move the save-compatibility pin.
 import { fixCoreRules as computeFixCoreRules, fixCoreAttachments } from './fixCoreMechanics.js';
+import { deepFreeze } from '../framework/compiler.js';
 
 const CACHE_MAX = 512;
 const cache = new Map();
-
-function deepFreeze(value) {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const inner of Object.values(value)) deepFreeze(inner);
-  }
-  return value;
-}
 
 // The uncached answer aliases the raw rules for every field that is not a rule
 // family (range, protectionParameters, ...). Stored as is, an entry would keep
