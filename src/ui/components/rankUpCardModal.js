@@ -1,8 +1,8 @@
 import { t as translate } from '../strings.js';
-import { playingCardArt } from '../cardArtwork.js';
 import { UpgradeSlots } from '../../model/cardUpgradeLimits.js';
 import { InstanceRank, RankUpCandidates } from '../../model/rankUpService.js';
 import { OpenChoiceModal } from './choiceModal.js';
+import { PlayingCardArtworkOrNull } from './choiceRowSources.js';
 import { RenderSmithPriceLine } from './smithOptionsModal.js';
 
 const RANK_UP_KIND = 'rankUpCard';
@@ -11,21 +11,12 @@ const FALLBACK_ART_GLYPH = 'attack';
 
 function findCardArtPath(card, definition, registries)
 {
-    try
-    {
-        const cardArt = playingCardArt(
-            { cardId: card.cardId },
-            {
-                definition,
-                registries,
-            },
-        );
-        return cardArt?.path || null;
-    }
-    catch
-    {
-        return null;
-    }
+    const cardArt = PlayingCardArtworkOrNull(
+        card.cardId,
+        definition,
+        registries,
+    );
+    return cardArt?.path || null;
 }
 
 function buildRankUpRow(card, registries, run)

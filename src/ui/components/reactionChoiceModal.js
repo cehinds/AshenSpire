@@ -2,8 +2,7 @@ import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { el } from '../kit/index.js';
 import { t } from '../strings.js';
 import { OpenChoiceModal } from './choiceModal.js';
-import { SummarizeOrNull } from './choiceRowSources.js';
-import { playingCardArt } from '../cardArtwork.js';
+import { SummarizeOrNull, PlayingCardArtworkOrNull } from './choiceRowSources.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 const REACTION_KIND = 'reactionChoice';
@@ -120,21 +119,11 @@ export function reactionOptionArtwork(option, registries = null)
         return null;
     }
 
-    try
-    {
-        const artwork = playingCardArt(
-            { cardId: option.cardId },
-            {
-                definition: registries?.cards?.get?.(option.cardId),
-                registries,
-            },
-        );
-        return artwork || null;
-    }
-    catch
-    {
-        return null;
-    }
+    return PlayingCardArtworkOrNull(
+        option.cardId,
+        registries?.cards?.get?.(option.cardId),
+        registries,
+    );
 }
 
 export const reactionOptionArt = (option, registries = null) =>
