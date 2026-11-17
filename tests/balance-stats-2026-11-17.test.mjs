@@ -290,3 +290,19 @@ test('review of #2820: a Blacksmith card upgrade is priced by upgradeCount (an a
   assert.equal(upgradeArtPlan(registries, run, card.instanceId).cost, CardUpgradePrice(run, { upgrades: 1, rank: 1 }));
   assert.ok(CardUpgradePrice(run, { upgrades: 1, rank: 1 }) > CardUpgradePrice(run));
 });
+
+test('review of #2820: a return computed from damage already dealt is not halved again', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
+  const run = newRun('reaver');
+  const combat = createRunCombat({ registries, run, rng: createRng(5), enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  const base = carrier => profileDamageReceipt(combat, enemy, combat.player, 10, { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, skipRatingBonus: true, ...carrier })
+    .damageReceipt.hits[0].sources;
+  const scaled = rows => rows.find(row => row.id === 'base-damage-scale');
+  assert.equal(scaled(base({}))?.effective, 5, 'an ordinary card hit is halved');
+  // base.reflect's return (proposalAfterHitRules: 50% of the HP damage dealt) travels as proposalReactive; a Reflect or Counter return as
+  // reflectedHit / counterReturnAttack. Each is already final damage: 20 dealt, 10 returned, 10 in the receipt.
+  for (const flag of ['proposalReactive', 'reflectedHit', 'counterReturnAttack']) assert.equal(scaled(base({ [flag]: true })), undefined, `${flag} keeps its amount`);
+});

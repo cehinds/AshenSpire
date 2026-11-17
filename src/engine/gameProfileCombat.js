@@ -102,8 +102,9 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const modern = fixCoreEnabled(ctx);
   const flatReturn = modern && carrier.counterReturnAttack;
   // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or
-  // PR adds; a Counter return is already final damage and is not scaled again.
-  const authoredBase = base, baseMultiplier = carrier.counterReturnAttack ? 1 : effects?.baseDamageMultiplier;
+  // PR adds. A return computed from damage already dealt (a Counter return, a reflected hit, a proposal's reactive return such as
+  // base.reflect's 50%) is final damage and is not scaled again (#2820 review).
+  const authoredBase = base, baseMultiplier = carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : effects?.baseDamageMultiplier;
   base = ScaleCardBaseDamage(base, baseMultiplier);
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:authoredBase,stage:'offense',operation:'set'}];
   if (base !== authoredBase) sources.push({id:'base-damage-scale',label:'Base damage scale',amount:base-authoredBase,requested:authoredBase,effective:base,stage:'offense',operation:'multiply',multiplier:baseMultiplier});
