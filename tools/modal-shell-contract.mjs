@@ -12,7 +12,7 @@
 //            height are DOM facts, and this tool never opens a DOM. Both fake
 //            DOMs in this repo (tests/confirmation-modal.test.mjs,
 //            tools/flask-menu-cancel.mjs) lack querySelector/querySelectorAll/
-//            classList, which openModal uses, so neither can drive it and a
+//            classList, which OpenModal uses, so neither can drive it and a
 //            third copy is not the answer. That gap is named here rather than
 //            papered over with a source check dressed up as a behaviour check;
 //            closing it wants a real page (tools/browser.mjs) and is owed.
@@ -62,14 +62,14 @@ const chromeBlock = (selector) => {
 
 // ---- 1. one opener, and the ladder is closed ------------------------------
 const shell = await import('../src/ui/components/modalShell.js');
-check('the shell exports one door-opener', typeof shell.openModal === 'function');
-check('the shell exports its head as a piece too', typeof shell.modalHead === 'function');
+check('the shell exports one door-opener', typeof shell.OpenModal === 'function');
+check('the shell exports its head as a piece too', typeof shell.ModalHead === 'function');
 check('the ladder has exactly four steps',
   shell.BUTTON_ROW_SIZES.length === 4 && shell.BUTTON_ROW_SIZES.join(',') === 'short,medium,long,fill',
   shell.BUTTON_ROW_SIZES.join(','));
-// buttonRow validates BEFORE it touches a document, so this runs without one.
+// ButtonRow validates BEFORE it touches a document, so this runs without one.
 let ladderRejected = false;
-try { shell.buttonRow({ size: 'enormous' }); } catch { ladderRejected = true; }
+try { shell.ButtonRow({ size: 'enormous' }); } catch { ladderRejected = true; }
 check('a width the ladder does not have is rejected', ladderRejected);
 
 // ---- 1b. the width ladder ------------------------------------------------
@@ -92,8 +92,8 @@ for (const rel of ADOPTERS) {
   check(`${rel} opens through the shell`, source.includes("from './modalShell.js'"));
   check(`${rel} builds no veil of its own`, !/className\s*=\s*['"`]modal-veil/.test(source),
     'a hand-built .modal-veil is a second chrome');
-  check(`${rel} binds no dismissal of its own`, !source.includes('bindModalDismiss('),
-    'openModal already owns Escape (through the modal manager), veil-click and focus return');
+  check(`${rel} binds no dismissal of its own`, !/\b[bB]indModalDismiss\(/.test(source),
+    'OpenModal already owns Escape (through the modal manager), veil-click and focus return');
 }
 
 // The regression that motivated piles.js: it had NO way out but the veil.
@@ -163,7 +163,7 @@ check('no step is a flex basis any more', !/flex:\s*0\s+1\s+\d+rem/.test(ladderB
 // ---- 4b. the head's actions are a property of the door, not a caller's memo
 const shellSource = read('src/ui/components/modalShell.js');
 check('the close control is unconditional',
-  /const close = modalCloseButton\(/.test(shellSource) && !/if \([^)]*\)\s*\{?\s*const close = modalCloseButton/.test(shellSource),
+  /const close = ModalCloseButton\(/.test(shellSource) && !/if \([^)]*\)\s*\{?\s*const close = ModalCloseButton/.test(shellSource),
   'one way out, same corner, every door');
 check('the menu button follows the tab strip rather than defaulting either way',
   shellSource.includes('showMenuButton == null ? tabList.length > 0'),
@@ -206,11 +206,11 @@ check('the footer actions row is a button row',
     && /actions\.dataset\.authoredSize = size/.test(shellSource)
     && /actions\.dataset\.size = step/.test(shellSource),
   'a foot that is not a .modal-btnrow gets no step, so its buttons hug their labels');
-check('openModal hands its footSize to the footer', /modalFooter\(\{[^}]*size: footSize/.test(shellSource));
+check('OpenModal hands its footSize to the footer', /ModalFooter\(\{[^}]*size: footSize/.test(shellSource));
 check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s*stretch/.test(css) && !/\.modal-foot-actions\s*\{[^}]*align-items:\s*center/.test(css),
   'the foot is a button row; a centred row lets a two-line secondary sit taller than its primary');
 // THE WAY ON IS ON THE RIGHT, THE WAY BACK ON THE LEFT (owner, 2026-09-11).
-// `modalFooter()` appends every secondary and THEN the primary, so document
+// `ModalFooter()` appends every secondary and THEN the primary, so document
 // order already says it; what can undo it is a stylesheet, and one did. A
 // `grid-column:1 / -1; order:1` on the primary — meant to give it a full-width
 // row — instead took the explicit span while the auto-placed secondary spilled
@@ -240,7 +240,7 @@ check('the foot note is whole or absent, never a stub',
 check('type shrinks before a label truncates', /\.modal-btnrow\s*>\s*button\s*\{[^}]*container-type:\s*inline-size/.test(css) && /font-size:\s*clamp\([^)]*cqi/.test(css),
   'the ladder is padding -> box -> type -> truncate; without a type rung a long label goes straight to …');
 check('the in-run menu\'s ☰ and foot wear the shared box and ladder',
-  /menuButton\.id = 'ov-quicknav'/.test(read('src/ui/components/menuComponents.js')) && /modalFooter\(\{[^}]*className: 'overlay-footer'/.test(read('src/ui/components/menuComponents.js')),
+  /menuButton\.id = 'ov-quicknav'/.test(read('src/ui/components/menuComponents.js')) && /\b[mM]odalFooter\(\{[^}]*className: 'overlay-footer'/.test(read('src/ui/components/menuComponents.js')),
   'the quick menu was the screenshot the directive came from');
 check('the title door\'s close wears the shared box',
   /close\.classList\.add\('title-modal-close'\)/.test(read('src/ui/components/saveSlotSelector.js')));

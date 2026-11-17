@@ -447,7 +447,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 }
 /* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
 .as-modal, .modal {
-  --modal-inset: 1.4rem;
+  --modal-inset: var(--modal-panel-inset, 1.4rem);
   container-type: inline-size;
   display: flex; flex-direction: column;
   width: 100%; max-height: 90%;
@@ -477,7 +477,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 /* ModalHead = (Eyebrow + Title·S | Tab×n) + IconButton×n. Identity left,
    actions right, hairline under; the actions row sits at the TOP. */
 .modal-head, .as-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--modal-head-gap, 1.2rem);
   flex: 0 0 auto;
   padding: var(--modal-inset);
   border-bottom: 1px solid var(--line);
@@ -490,7 +490,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 
 /* ModalFoot = FootNote + ButtonRow. */
 .modal-foot, .as-foot {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--modal-foot-gap, 1.2rem);
   flex: 0 0 auto;
   padding: var(--modal-inset);
   border-top: 1px solid var(--line);
@@ -636,7 +636,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 /* ═══ PAGE-LEVEL ═══════════════════════════════════════════════════════════ */
 /* A phone: the inset stays one number, the note goes, every row fills. */
 @container game-viewport (max-width: 640px) {
-  .as-modal, .modal { --modal-inset: 1rem; }
+  .as-modal, .modal { --modal-inset: var(--modal-panel-inset-phone, 1rem); }
   .modal-foot, .as-foot { align-items: stretch; }
   .modal-foot-note, .as-foot-note { display: none; }
   .modal-foot-actions, .as-foot-actions { width: 100%; }
@@ -1765,34 +1765,36 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 /* The column count follows the offer (--choice-count, set from JS): one to four
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
-.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: var(--modal-grid-gap, 12px); align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
 /* Owner (2026-11-02): desktop cards are 20% larger (--card-w-glance 152 to 182.4). The grid column was capped at 16rem
    (160px) and the door at its 57rem rung, which held the card at 158px at 1280x720; both now follow the card width.
    A phone keeps its two-column rule below (the narrow layout never reaches here). */
-:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px)); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px))); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
 
 /* The door's width follows the offered count, which only the grid carries (as an inline custom property, unreadable from here): without these the door stayed at its 3-card width and five cards shrank to 106 px. */
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 4']) { --modal-rung-width: max(57rem, calc(4 * var(--card-w-glance, 182.4px) + 3 * 12px + 2 * var(--modal-inset) + 20px)); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--card-w-glance, 182.4px) + 4 * 12px + 2 * var(--modal-inset) + 20px)); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--card-w-glance, 182.4px) + 5 * 12px + 2 * var(--modal-inset) + 20px)); }
-.reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 4']) { --modal-rung-width: max(57rem, calc(4 * var(--card-w-glance, 182.4px) + 3 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--card-w-glance, 182.4px) + 4 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--card-w-glance, 182.4px) + 5 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+.reward-door .reward-choice-option { display: flex; flex-direction: column; gap: var(--modal-option-gap, .6rem); min-width: 0; width: 100%; }
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
    their common height, including when phone choices wrap onto a second row. */
 .reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 182.4px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
 .reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
-.reward-door .reward-choice-option > .reward-pick { flex: 1 0 3.5rem; height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 0 var(--modal-name-button-basis, 3.5rem); height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: var(--modal-name-button-pad-block, .7rem) var(--modal-name-button-pad-inline, .8rem); gap: .3rem; }
+/* modal.json `showNameButton: false`: the face is the radio; the button stays in the DOM for the door's code. */
+.modal[data-name-button='hidden'] .reward-choice-option > button.reward-pick { display: none; }
 .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
 .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
 @container game-viewport (max-width: 520px) {
   /* Equal tracks keep all offered faces and buttons comparable on phones.
      Text wraps in the shared button row rather than shrinking the hit area. */
-  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
-  .reward-door .reward-choice-option { gap: .4rem; }
+  .reward-door .reward-row.reward-choice-grid { gap: var(--modal-grid-gap-phone, 8px); grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
+  .reward-door .reward-choice-option { gap: var(--modal-option-gap-phone, .4rem); }
   /* An odd last choice (3 or 5 offered) centres under the pair above it instead of hugging the left column. */
-  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
-  .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
+  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; width: calc(50% - var(--modal-grid-gap-phone, 8px) / 2); justify-self: center; }
+  .reward-door .reward-choice-option > .reward-pick { padding: var(--modal-name-button-pad-block-phone, .45rem) var(--modal-name-button-pad-inline-phone, .4rem); }
   .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
   .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
@@ -4800,7 +4802,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 
 /* Leave space inside scrollports for the above-card control, including wrapped rows. */
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
-  padding-top: 64px; row-gap: 64px;
+  padding-top: var(--modal-grid-pad-top, 64px); row-gap: var(--modal-grid-row-gap, 64px);
 }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
    These three variables are the only placement knobs a theme or future card

@@ -45,7 +45,7 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
 
 import { withKitDom } from './helpers/dom.mjs';
 import { withModalDom } from './helpers/dom.mjs';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
@@ -57,7 +57,7 @@ test('the Victory receipt shows the largest gain on every attribute row, with al
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries, run, receiptOnly: true, onDone() {}, onPersist() {},
+    MountRewards(app, { registries, run, receiptOnly: true, onDone() {}, onPersist() {},
       onAllocateStat: id => allocateAttributePoint(registries, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     const chips = [...app.querySelectorAll('.reward-stat-row .reward-stat-gain')];

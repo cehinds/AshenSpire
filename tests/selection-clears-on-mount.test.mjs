@@ -51,7 +51,8 @@ for (const screen of SCREENS) {
     ok(cleared === 1, `${screen} clears the selection unconditionally before screen setup`);
     continue;
   }
-  const mount = source.match(/export function mount\w+[^\n]*\n([\s\S]{0,400})/);
+  // The body after the (possibly multi-line) parameter list, brace on either line.
+  const mount = source.match(/export function [Mm]ount\w+\s*\([\s\S]*?\)\s*\{([\s\S]{0,400})/);
   ok(!!mount, `${screen}.js has a mount whose opening lines can be read`);
   ok(/clearSelection\(\);/.test(mount[1]),
     `${screen}.js clears the selection in the opening lines of its mount, not deeper in`);

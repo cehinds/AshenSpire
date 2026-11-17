@@ -1,6 +1,6 @@
 {
   "id": "reward",
-  "description": "Reward after combat. Mounted by src/ui/screens/reward.js (mountRewards).",
+  "description": "Reward after combat. Mounted by src/ui/screens/reward.js (MountRewards).",
   "route": "reward",
   "viewModel": {
     "props": {

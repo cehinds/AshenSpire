@@ -73,7 +73,7 @@ test('a pending rank-up offer and its pick are checked on load', () => {
 });
 
 test('the reward door raises the chosen card and spends the rank-up', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { MountRewards } = await import('../src/ui/screens/reward.js');
   const { rewardDom } = await import('./helpers/dom.mjs');
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
@@ -82,7 +82,7 @@ test('the reward door raises the chosen card and spends the rank-up', async () =
     const app = document.createElement('main'); document.body.append(app);
     const run = bladeRun(2);
     let persisted = 0;
-    mountRewards(app, { registries, run, onDone() {}, onPersist: () => { persisted += 1; },
+    MountRewards(app, { registries, run, onDone() {}, onPersist: () => { persisted += 1; },
       saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
       rewards: { xpGains: { level: 0, tracks: {} }, skillRankUps: [{ skillId: BLADE, level: 2, claimOrdinal: 0 }] },
     });

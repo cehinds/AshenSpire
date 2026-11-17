@@ -254,7 +254,7 @@ if (args.includes('--selftest')) {
         // FOR THIS DOOR rather than in modalShell.js — a mutation there would
         // take Escape off all four modals at once, which is a wider defect than
         // the one A8 is asserting about.
-        // Settings opens through the shell now (openModal binds dismissal for
+        // Settings opens through the shell now (OpenModal binds dismissal for
         // every door, and Escape closes the TOPMOST aria-modal element), so the
         // plant parks a bare aria-modal element above this one door: Settings
         // is no longer topmost, and Escape leaves it up over the title. Still

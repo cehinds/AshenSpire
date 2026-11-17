@@ -14,7 +14,7 @@ import { awardLevelXp, xpToNext as levelXpToNext } from '../src/model/levelup.js
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
 import { orderedXpRows, xpFillDurations } from '../src/model/rewardXpPresentation.js';
 import { rewardDom } from './helpers/dom.mjs';
@@ -164,7 +164,7 @@ test('the door draws the panel beside the claim status, gains and all', () => {
     const app = document.createElement('main');
     document.body.append(app);
     const run = climber();
-    mountRewards(app, {
+    MountRewards(app, {
       registries, run, onDone() {},
       rewards: { cinders: 59, xpGains: { level: 25, tracks: { 'item:blade': 8 } } },
     });
@@ -193,7 +193,7 @@ test('a door with no fight behind it draws no progression at all', () => {
     document.body.append(app);
     // A treasure room's offer, and an offer saved before the receipt existed:
     // both carry no xpGains, and the ledgers below are not this door's news.
-    mountRewards(app, { registries, run: climber(), onDone() {}, rewards: { relicId: 'forsakenMedallion' } });
+    MountRewards(app, { registries, run: climber(), onDone() {}, rewards: { relicId: 'forsakenMedallion' } });
     assert.equal(app.querySelector('.reward-progress'), null);
     assert.ok(app.querySelector('.reward-claim-status'), 'the spoils themselves are untouched');
   } finally {
@@ -215,7 +215,7 @@ test('a saved combat reward opens compactly, then Continue reveals the full summ
       ] },
     } };
     const saves = { loadMeta: () => ({ settings: { victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0 } }) };
-    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
+    MountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
     assert.ok(app.querySelector('.reward-compact-xp'));
     assert.equal(app.querySelector('.reward-compact-formula').textContent, '14 + 6');
     assert.equal(app.querySelector('.reward-compact-value').textContent, '20 XP');
@@ -240,7 +240,7 @@ test('the click-anywhere Victory preference expands the same summary', () => {
     const run = climber();
     const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 10, tracks: {} } } };
     const saves = { loadMeta: () => ({ settings: { victorySummaryMode: 'anywhere', victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0 } }) };
-    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
+    MountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
     app.querySelector('.reward-veil').click();
     assert.equal(checkpoint.expanded, true);
     assert.ok(app.querySelector('.reward-progress'));
@@ -269,7 +269,7 @@ test('Continue stays closed until the configured post-receipt pause ends', async
     document.body.append(app);
     const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 10, tracks: {} } } };
     const saves = { loadMeta: () => ({ settings: { victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0.01 } }) };
-    mountRewards(app, { registries, run: climber(), checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
+    MountRewards(app, { registries, run: climber(), checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
     const open = app.querySelector('#reward-expand');
     assert.equal(open.disabled, true);
     open.click();
@@ -291,7 +291,7 @@ test('a door with no progression and no offer draws no side column at all', () =
   try {
     const app = document.createElement('main');
     document.body.append(app);
-    mountRewards(app, {
+    MountRewards(app, {
       registries, onDone() {},
       run: { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } },
       rewards: {},

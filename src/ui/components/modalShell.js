@@ -1,41 +1,10 @@
+// src/ui/components/modalShell.js
+// The chrome every modal wears: close control, header, footer order, dismissal.
+// It owns the chrome only; each modal's body stays its own.
 import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
-// src/ui/components/modalShell.js — THE CHROME EVERY MODAL WEARS.
-//
-// Measured 2026-09-02 by driving all four doors in a headless browser at
-// 1440x900 and 390x844. FOUR modals, FOUR chromes, no two agreeing on the two
-// things a player actually needs from a modal — how do I read it, and how do I
-// get out:
-//
-//   Settings (title)   left title, NO close control at all, one `Done` footer
-//   Settings (in-run)  tab strip left, boxed menu and close right, a two-button
-//                      footer whose "Save and Quit" is painted DANGER RED
-//   Armoury            gold uppercase title, segmented tabs right, a BARE close
-//                      glyph with no button chrome, no footer
-//   Load Game          centred display title with an ornament rule, a ROUND
-//                      `×` (U+00D7, a different character), BACK / CONTINUE
-//
-// A player who learns "the way out is the boxed close on the right" learns it four
-// times. And each of the four had grown its own Escape handler, its own
-// veil-click test and its own focus restore — four chances for three of them to
-// be subtly wrong, which is exactly what an audit finds and a player meets.
-//
-// WHAT THIS FILE OWNS, AND WHAT IT DELIBERATELY DOES NOT.
-//   OWNS   the close control (one glyph, one label, one hit box), the footer's
-//          ORDER and EMPHASIS, and dismissal (Escape, veil click, focus return).
-//   DOES NOT OWN the body. Settings scrolls a category pane, the Armoury runs a
-//          three-pane splitter, Load Game lists slots. A shell that also claimed
-//          the body would have to be right about all three, and would be the
-//          kind of "shared component" that is really four components in a
-//          trench coat. The chrome is the part that is genuinely one thing.
-//
-// THE FOOTER ORDER IS A RULE, NOT A SUGGESTION: the way OUT is left, the way
-// FORWARD is right, and the forward one wears `.primary` (base.css). Load Game
-// had BACK and CONTINUE the same weight and asked a border colour to carry the
-// difference; the in-run footer spent DANGER RED on an act that saves. Red is
-// for loss. `tone: 'danger'` is available and is meant to be rare.
-
-import { esc } from './tooltip.js';
-import { t } from '../strings.js';
+import { ModalModelFor } from '../models/ModalModel.js';
+import { esc as escapeHtml } from './tooltip.js';
+import { t as translate } from '../strings.js';
 import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
@@ -45,617 +14,790 @@ import { focusableControls } from '../modalManager.js';
 /** The shared close icon uses its named asset, with a plain-text fallback. */
 export const MODAL_CLOSE_GLYPH = 'close';
 
-/**
- * The close control. One markup, one accessible name, one hit box — the tap
- * floor on both axes, because it is the control a player reaches for fastest.
- */
-export function modalCloseButton({ label = 'Close', onClick = null, className = '', id = '' } = {}) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  if (id) button.id = id;
-  button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
-  button.dataset.controlRole = 'exit';
-  // An automatic focus hint would consume Escape before the modal can close.
-  button.dataset.tip = 'off';
-  button.title = `${label} (Esc)`;
-  button.setAttribute('aria-label', label);
-  button.setAttribute('aria-keyshortcuts', 'Escape');
-  const face = document.createElement('span');
-  face.className = 'modal-close-face';
-  face.setAttribute('aria-hidden', 'true');
-  face.append(engravedIcon(MODAL_CLOSE_GLYPH) || 'X');
-  button.appendChild(face);
-  if (onClick) button.addEventListener('click', onClick);
-  return button;
+/** Button widths come off a four-step ladder; the widest label in a row picks the step. */
+export const BUTTON_ROW_SIZES = Object.freeze([
+    'short',
+    'medium',
+    'long',
+    'fill',
+]);
+
+/** The four modal widths; a body picks the smallest that holds it. */
+export const MODAL_SIZES = Object.freeze([
+    'sm',
+    'md',
+    'lg',
+    'xl',
+]);
+
+const DEFAULT_CLOSE_LABEL = 'Close';
+const DEFAULT_ROW_SIZE = 'medium';
+const DEFAULT_MODAL_SIZE = 'md';
+const DEFAULT_MODAL_ROLE = 'dialog';
+const DEFAULT_MODAL_KIND = 'base';
+const ROLE_ALERT_DIALOG = 'alertdialog';
+const FALLBACK_DELAY_MS = 250;
+const CONTROL_ROLE_EXIT = 'exit';
+const WIREFRAME_MODAL_WIDTH = 'wireframeModalWidth';
+
+const CLASS_TABS = 'modal-tabs';
+const CLASS_TAB = 'modal-tab';
+const CLASS_BUTTON_ROW = 'modal-btnrow';
+
+const SELECTOR = Object.freeze({
+    topModals: '[aria-modal="true"]',
+    tab: '[role="tab"]',
+    footActions: '.modal-foot-actions',
+    authoredFootRows: '.modal-foot-actions[data-authored-size]',
+    authoredPanels: '.modal[data-authored-size]',
+    footPrimary: '.modal-foot-actions .primary',
+    footExit: `.modal-foot-actions [data-control-role="${CONTROL_ROLE_EXIT}"]`,
+    focusable: '[data-focusable="true"]',
+    headClose: '.modal-close',
+});
+
+const TAB_NAVIGATION_KEYS = Object.freeze([
+    'ArrowLeft',
+    'ArrowRight',
+    'Home',
+    'End',
+]);
+
+/** `base`, plus the caller's extra class when there is one. */
+function withExtraClass(base, extraClass)
+{
+    return `${base}${extraClass ? ` ${extraClass}` : ''}`;
 }
 
-/**
- * modalCloseButtonHtml() — the same control for a host that builds its chrome
- * as a string. Kept beside the element form on purpose: two shapes of ONE
- * answer is the point of this file, and a caller that had to hand-write the
- * markup would be a fifth chrome by the end of the week.
- */
-export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
-  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
-    + ` data-tip="off" title="${esc(label)} (Esc)" aria-label="${esc(label)}" aria-keyshortcuts="Escape"><span class="modal-close-face" aria-hidden="true">${engravedIconHtml(MODAL_CLOSE_GLYPH)}</span></button>`;
+/** A new element that wears `className` before anything else is set on it. */
+function createElementWithClass(tagName, className)
+{
+    const element = document.createElement(tagName);
+    element.className = className;
+    return element;
 }
 
-/**
- * modalFooter({ note, secondary, primary }) → a <footer> in the house order.
- *
- * `note` is the quiet sentence some footers carry ("Progress saves to the
- * active slot."). `secondary` is any number of ways back; `primary` is the one
- * way forward and is the only button that gets the emphasis. Passing two
- * primaries is not prevented here — nothing in a stylesheet can count buttons —
- * but it is visible in one line of a caller's diff, which is the whole gain.
- */
-export function modalFooter({ note = '', secondary = [], primary = null, className = '', size = 'medium' } = {}) {
-  if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown footer size '${size}'`);
-  // THE CALLER'S STEP IS THE AUTHORED ONE, and the player's answer (Settings →
-  // Advanced → Wireframes → Modals) moves it. `auto` is the caller's own word,
-  // so a footer with no choice in force is byte-identical to the one before
-  // this line existed. The authored step is kept on the row so the same answer
-  // can be re-applied to an OPEN door without knowing what it asked for.
-  const step = resolveFooterSize(size, activeWireframeChoice('wireframeModalFooter'), BUTTON_ROW_SIZES);
-  const footer = document.createElement('footer');
-  footer.className = `modal-foot${className ? ` ${className}` : ''}`;
-  if (note) {
-    // The text sits in an inner span so the note can be whole or absent (ui.css
-    // .modal-foot-note's container query), never a one-letter stub.
-    const span = document.createElement('span');
-    span.className = 'modal-foot-note';
+function hasAnimationFrames()
+{
+    return typeof requestAnimationFrame === 'function';
+}
+
+function currentDocument()
+{
+    return typeof document === 'undefined' ? null : document;
+}
+
+function topModalPanel()
+{
+    return [...document.querySelectorAll(SELECTOR.topModals)].at(-1);
+}
+
+function assertKnownSize(size, allowedSizes, subject)
+{
+    if (!allowedSizes.includes(size))
+    {
+        throw new Error(`Unknown ${subject} '${size}'`);
+    }
+}
+
+/** The close control: one markup, one accessible name, one tap-floor hit box. */
+export function ModalCloseButton({
+    label = DEFAULT_CLOSE_LABEL,
+    onClick = null,
+    className = '',
+    id: elementId = '',
+} = {})
+{
+    const button = document.createElement('button');
+    button.type = 'button';
+    if (elementId)
+    {
+        button.id = elementId;
+    }
+    button.className = withExtraClass('subtle modal-close', className);
+    button.dataset.controlRole = CONTROL_ROLE_EXIT;
+    // An automatic focus hint would consume Escape before the modal can close.
+    button.dataset.tip = 'off';
+    button.title = `${label} (Esc)`;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-keyshortcuts', 'Escape');
+    const face = document.createElement('span');
+    face.className = 'modal-close-face';
+    face.setAttribute('aria-hidden', 'true');
+    face.append(engravedIcon(MODAL_CLOSE_GLYPH) || 'X');
+    button.appendChild(face);
+    if (onClick)
+    {
+        button.addEventListener('click', onClick);
+    }
+    return button;
+}
+
+/** The same close control as an HTML string, for hosts that build chrome as markup. */
+export function ModalCloseButtonHtml({
+    label = DEFAULT_CLOSE_LABEL,
+    className = '',
+    id: elementId = '',
+} = {})
+{
+    const idAttribute = elementId ? ` id="${escapeHtml(elementId)}"` : '';
+    const closeClass = withExtraClass('subtle modal-close', className && escapeHtml(className));
+    const safeLabel = escapeHtml(label);
+    return [
+        `<button type="button"${idAttribute} class="${closeClass}"`,
+        ` data-control-role="${CONTROL_ROLE_EXIT}"`,
+        ` data-tip="off" title="${safeLabel} (Esc)" aria-label="${safeLabel}"`,
+        ' aria-keyshortcuts="Escape">',
+        '<span class="modal-close-face" aria-hidden="true">',
+        engravedIconHtml(MODAL_CLOSE_GLYPH),
+        '</span></button>',
+    ].join('');
+}
+
+/** The footer note; its text sits in an inner span so the note is whole or absent (ui.css). */
+function buildFootNote(note)
+{
+    const wrapper = createElementWithClass('span', 'modal-foot-note');
     const text = document.createElement('span');
     text.textContent = note;
-    span.appendChild(text);
-    footer.appendChild(span);
-  }
-  // THE FOOT IS A BUTTON ROW. Constantine, 2026-09-03: "make primary and
-  // secondary buttons at the bottom uniform in size". They were not: the foot
-  // carried a data-size the ladder never read, because the ladder's rules
-  // are written for `.modal-btnrow` and this row was only `.modal-foot-actions`
-  // — so each button hugged its own label. Wearing both classes puts every
-  // foot on the same ladder as every other row: one step for all its buttons,
-  // and `stretch` (ui.css) gives them one height.
-  const actions = document.createElement('div');
-  actions.className = 'modal-foot-actions modal-btnrow';
-  actions.dataset.authoredSize = size;
-  actions.dataset.size = step;
-  const visibleSecondary = secondary.filter(button => button && !button.hidden);
-  const visiblePrimary = primary && !primary.hidden ? primary : null;
-  actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
-  // WCB0: footer siblings take equal shares of the foot after gaps, and a sole
-  // action fills it (ButtonSizeModel). Each button is `full` of its share at
-  // the standard height; the label never picks the width.
-  const plan = planButtonGroup({ kind: 'footer', count: Number(actions.dataset.actionCount) });
-  actions.dataset.buttonGroup = plan.kind;
-  actions.dataset.buttonLayout = plan.layout;
-  for (const button of [...visibleSecondary, visiblePrimary]) if (button?.dataset) button.dataset.buttonSize = plan.size;
-  for (const button of visibleSecondary) actions.appendChild(button);
-  if (visiblePrimary) {
-    // `className` and not `classList` — this component is mounted by tests that
-    // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
-    // shared piece of chrome must not need more of the platform than the
-    // surfaces that share it.
-    // An exit keeps its role in the primary slot: a sole Back/Close spans the
-    // foot but is never painted as the green way forward (ControlAppearance).
+    wrapper.appendChild(text);
+    return wrapper;
+}
+
+/** The primary button gets the primary class unless it is an exit, which keeps its role. */
+function markFooterPrimary(primary)
+{
+    // `className`, not `classList`: tests mount this in a minimal DOM.
     const role = primary.dataset?.controlRole ?? primary.getAttribute?.('data-control-role');
-    if (role !== 'exit' && !` ${primary.className} `.includes(' primary ')) {
-      primary.className = `${primary.className} primary`.trim();
+    if (role !== CONTROL_ROLE_EXIT && !` ${primary.className} `.includes(' primary '))
+    {
+        primary.className = `${primary.className} primary`.trim();
     }
-    actions.appendChild(primary);
-  }
-  footer.appendChild(actions);
-  return footer;
 }
 
 /**
- * bindModalDismiss({ veil, panel, close }) → release()
- *
- * Escape, a click on the veil itself, and focus return, once. Two details that
- * were NOT the same in all four copies and are the reason this is shared:
- *
- *   TOPMOST WINS. Escape closes the modal that is on top, not every modal that
- *   is listening. The test is the LAST `[aria-modal="true"]` in the document —
- *   the same answer veil.js gives for input ownership, asked the cheap way.
- *   A copy that skipped it closed the Armoury underneath a confirmation.
- *
- *   THE CLICK MUST BE ON THE VEIL, not merely inside it. `e.target === veil`
- *   and not `!panel.contains(e.target)`: the second form closes the modal when
- *   a drag that began on a slider ends outside the panel, which is a real way
- *   to lose a settings change mid-gesture.
- *
- * `escape: false` leaves Escape to the modal manager (modalManager.js): the
- * shell's own openModal registers with a `dismiss` and the manager closes the
- * top entry once. The other callers (classMastery, bookLearning, deckEditor)
- * register no `dismiss`, so they keep the Escape handling here until they move.
+ * A <footer> in the house order: secondary buttons left, the one primary right.
+ * Passing two primaries is not prevented here.
  */
-export function bindModalDismiss({ veil, panel, close, opener = document.activeElement, escape = true } = {}) {
-  // Promote overflowing dialogs once per opening; shrinking back would oscillate
-  // when content or scrollbars change the available width.
-  const promote = () => {
-    if (!panel.isConnected || panel.dataset.height === 'long') return;
-    const bodies = panel.querySelectorAll('.modal-body, .as-body, .as-pane');
-    if ([...bodies].some(body => body.scrollHeight > body.clientHeight + 2)) {
-      panel.dataset.height = 'long';
+export function ModalFooter({
+    note = '',
+    secondary = [],
+    primary = null,
+    className = '',
+    size = DEFAULT_ROW_SIZE,
+} = {})
+{
+    assertKnownSize(size, BUTTON_ROW_SIZES, 'footer size');
+    // The caller's size is the authored step; the player's Wireframes choice moves it.
+    // The authored step stays on the row so an open modal can be re-resolved.
+    const step = resolveFooterSize(size, activeWireframeChoice('wireframeModalFooter'), BUTTON_ROW_SIZES);
+    const footer = createElementWithClass('footer', withExtraClass('modal-foot', className));
+    if (note)
+    {
+        footer.appendChild(buildFootNote(note));
     }
-  };
-  const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(promote) : null;
-  resize?.observe(panel);
-  const mutations = typeof MutationObserver === 'function' ? new MutationObserver(promote) : null;
-  mutations?.observe(panel, { childList: true, subtree: true, characterData: true });
-  const onKeydown = (event) => {
-    if (event.defaultPrevented) return;
-    if (event.key === 'Tab') {
-      const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
-      if (top !== panel) return;
-      const controls = focusableControls(panel);
-      const first = controls[0], last = controls.at(-1);
-      const active = document.activeElement;
-      if (!first || !panel.contains(active) || active === panel
-          || (event.shiftKey ? active === first : active === last)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first)?.focus();
-        if (!first) panel.focus();
-      }
-      return;
-    }
-    if (!escape || event.key !== 'Escape' || event.repeat) return;
-    const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
-    if (top !== panel) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    close();
-  };
-  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
-  // hold dial off, a control opens a door on pointerup, and the browser then
-  // dispatches that same touch's trailing click at the point of release —
-  // which is now the scrim (the finger never moved; the veil did). Cancelling
-  // on it closed the door in the gesture that opened it. The confirmation
-  // modal measured this first (tools/holdconfirm.mjs, the title's dial-off
-  // leg); every shell door now carries the same guard.
-  let scrimPressed = false;
-  const onPointerDown = (event) => { scrimPressed = event.target === veil; };
-  const onClick = (event) => {
-    const pressedHere = scrimPressed;
-    scrimPressed = false;
-    if (event.target === veil && pressedHere) close();
-  };
-  document.addEventListener('keydown', onKeydown, true);
-  veil.addEventListener('pointerdown', onPointerDown);
-  veil.addEventListener('click', onClick);
-  return function release({ restoreFocus = true } = {}) {
-    resize?.disconnect();
-    mutations?.disconnect();
-    document.removeEventListener('keydown', onKeydown, true);
-    veil.removeEventListener('pointerdown', onPointerDown);
-    veil.removeEventListener('click', onClick);
-    if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function') {
-      opener.focus({ preventScroll: true });
-    }
-  };
-}
-
-/**
- * BUTTON WIDTHS COME OFF A LADDER, NOT OFF THE LABELS.
- *
- * Measured 2026-09-03 across the doors: a footer of three buttons produced
- * three widths and, at 390 px, wrapped onto two lines — which then made two
- * sibling doors different HEIGHTS, because a foot that grew by a line grows
- * the shell. Two rules close both halves of that:
- *
- *   THE WIDEST LABEL IN A ROW PICKS THE STEP FOR EVERY BUTTON IN IT. Four
- *   steps for the whole game (`short`, `medium`, `long`, `fill`), so siblings
- *   land on one width and rows across the game land on one of four.
- *
- *   A LABEL NEVER WRAPS. When the row runs out of room the PADDING yields
- *   (ui.css), never the line count.
- *
- * `square` is per-button and opts out of the step: an icon control is a glyph
- * in a box, it takes the ROW's height, and it stays square by `aspect-ratio`.
- * Not `vh` — the whole app is zoomed by `--ui-zoom` and viewport units ignore
- * that zoom, which ui.css records the cost of twice.
- */
-export const BUTTON_ROW_SIZES = Object.freeze(['short', 'medium', 'long', 'fill']);
-
-export function buttonRow({ size = 'medium', buttons = [], className = '' } = {}) {
-  if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown button row size '${size}'`);
-  const row = document.createElement('div');
-  row.className = `modal-btnrow${className ? ` ${className}` : ''}`;
-  row.dataset.size = size;
-  for (const button of buttons) if (button) row.appendChild(button);
-  return row;
-}
-
-/**
- * modalHead({ eyebrow, title, tabs, ... }) → a <header class="modal-head">
- *
- * IDENTITY LEFT, ACTIONS RIGHT, AND IDENTITY HAS EXACTLY TWO FORMS: an
- * eyebrow + title pair, or a tab strip. There is no third, and there is no
- * both — `tabs` REPLACES the pair when supplied. That is a decision and not a
- * discovery: it is what lets Settings (tabs) and the flask door (eyebrow +
- * title) be the same component rather than two. If the house later wants tabs
- * UNDER a persistent title, this is the one function that changes.
- *
- * The close control is not optional and is not the caller's. Every door keeps
- * its way out in the same corner, in the same box, wearing the same glyph.
- */
-export function modalHead({
-  eyebrow = '',
-  title = '',
-  titleId = '',
-  tabs = null,
-  onTab = null,
-  extras = null,
-  showMenuButton = null,
-  onMenu = null,
-  menuLabel = t('common.menu'),
-  closeLabel = 'Close',
-  onClose = null,
-} = {}) {
-  const tabList = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
-  if (!tabList.length && !title) {
-    throw new Error('modalHead requires a title, or tabs to stand in for one');
-  }
-  const head = document.createElement('header');
-  head.className = 'modal-head';
-
-  if (tabList.length) {
-    const strip = document.createElement('div');
-    strip.className = 'modal-tabs';
-    strip.setAttribute('role', 'tablist');
-    const selectedTab = tabList.find(tab => tab.selected) || tabList[0];
-    for (const tab of tabList) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'modal-tab';
-      button.setAttribute('role', 'tab');
-      button.setAttribute('aria-selected', String(tab === selectedTab));
-      button.tabIndex = tab === selectedTab ? 0 : -1;
-      button.dataset.modalTab = tab.id || tab.label;
-      button.dataset.focusable = 'true';
-      button.textContent = tab.label;
-      button.addEventListener('click', () => {
-        for (const sibling of strip.querySelectorAll('[role="tab"]')) {
-          const selected = sibling === button;
-          sibling.setAttribute('aria-selected', String(selected));
-          sibling.tabIndex = selected ? 0 : -1;
+    // The row wears both classes so the button-size ladder (written for .modal-btnrow) applies.
+    const actions = document.createElement('div');
+    actions.className = 'modal-foot-actions modal-btnrow';
+    actions.dataset.authoredSize = size;
+    actions.dataset.size = step;
+    const visibleSecondary = secondary.filter(button => button && !button.hidden);
+    const visiblePrimary = primary && !primary.hidden ? primary : null;
+    actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
+    // Footer buttons take equal shares of the foot; a sole action fills it.
+    const plan = planButtonGroup({ kind: 'footer', count: Number(actions.dataset.actionCount) });
+    actions.dataset.buttonGroup = plan.kind;
+    actions.dataset.buttonLayout = plan.layout;
+    for (const button of [...visibleSecondary, visiblePrimary])
+    {
+        if (button?.dataset)
+        {
+            button.dataset.buttonSize = plan.size;
         }
-        onTab?.(tab.id || tab.label);
-      });
-      strip.appendChild(button);
     }
-    strip.addEventListener('keydown', event => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      const buttons = [...strip.querySelectorAll('[role="tab"]')];
-      const index = buttons.indexOf(document.activeElement);
-      if (index < 0) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
-        : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
-      const target = buttons[next];
-      target.focus();
-      target.click();
-      // Hosts may rebuild the header when activating a tab.
-      const replacement = [...(head.isConnected ? head : document).querySelectorAll('.modal-tab')]
-        .find(button => button.dataset.modalTab === target.dataset.modalTab && button.isConnected);
-      replacement?.focus({ preventScroll: true });
+    // One line on purpose: tools/modal-shell-contract.mjs matches this exact text.
+    for (const button of visibleSecondary) actions.appendChild(button);
+    if (visiblePrimary)
+    {
+        markFooterPrimary(primary);
+        actions.appendChild(primary);
+    }
+    footer.appendChild(actions);
+    return footer;
+}
+
+/** Wraps focus inside the topmost modal on Tab; returns true when the key was a Tab. */
+function trapTabFocus(event, panel)
+{
+    if (event.key !== 'Tab')
+    {
+        return false;
+    }
+    if (topModalPanel() !== panel)
+    {
+        return true;
+    }
+    const controls = focusableControls(panel);
+    const firstControl = controls[0];
+    const lastControl = controls.at(-1);
+    const activeElement = document.activeElement;
+    const focusIsOutside = !firstControl
+        || !panel.contains(activeElement)
+        || activeElement === panel;
+    const focusIsAtEdge = event.shiftKey
+        ? activeElement === firstControl
+        : activeElement === lastControl;
+    if (focusIsOutside || focusIsAtEdge)
+    {
+        event.preventDefault();
+        (event.shiftKey ? lastControl : firstControl)?.focus();
+        if (!firstControl)
+        {
+            panel.focus();
+        }
+    }
+    return true;
+}
+
+/**
+ * Binds Escape, veil click and focus return for a modal; returns release().
+ * Escape closes only the topmost modal; a veil click counts only if it is on the veil itself.
+ * `escape: false` leaves Escape to the modal manager.
+ */
+export function BindModalDismiss({
+    veil,
+    panel,
+    close,
+    opener = document.activeElement,
+    escape = true,
+} = {})
+{
+    // Promote overflowing dialogs once per opening; shrinking back would oscillate.
+    const promoteLongPanel = () =>
+    {
+        if (!panel.isConnected || panel.dataset.height === 'long')
+        {
+            return;
+        }
+        const bodies = panel.querySelectorAll('.modal-body, .as-body, .as-pane');
+        if ([...bodies].some(body => body.scrollHeight > body.clientHeight + 2))
+        {
+            panel.dataset.height = 'long';
+        }
+    };
+    const resizeObserver = typeof ResizeObserver === 'function'
+        ? new ResizeObserver(promoteLongPanel)
+        : null;
+    resizeObserver?.observe(panel);
+    const mutationObserver = typeof MutationObserver === 'function'
+        ? new MutationObserver(promoteLongPanel)
+        : null;
+    mutationObserver?.observe(panel, { childList: true, subtree: true, characterData: true });
+    const onKeydown = (event) =>
+    {
+        if (event.defaultPrevented)
+        {
+            return;
+        }
+        if (trapTabFocus(event, panel))
+        {
+            return;
+        }
+        if (!escape || event.key !== 'Escape' || event.repeat)
+        {
+            return;
+        }
+        if (topModalPanel() !== panel)
+        {
+            return;
+        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        close();
+    };
+    // A scrim click cancels only when the press began on the scrim: a trailing
+    // click from the touch that opened the door must not close it.
+    let scrimPressed = false;
+    const onPointerDown = (event) =>
+    {
+        scrimPressed = event.target === veil;
+    };
+    const onClick = (event) =>
+    {
+        const pressedHere = scrimPressed;
+        scrimPressed = false;
+        if (event.target === veil && pressedHere)
+        {
+            close();
+        }
+    };
+    document.addEventListener('keydown', onKeydown, true);
+    veil.addEventListener('pointerdown', onPointerDown);
+    veil.addEventListener('click', onClick);
+    return function release({ restoreFocus = true } = {})
+    {
+        resizeObserver?.disconnect();
+        mutationObserver?.disconnect();
+        document.removeEventListener('keydown', onKeydown, true);
+        veil.removeEventListener('pointerdown', onPointerDown);
+        veil.removeEventListener('click', onClick);
+        if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function')
+        {
+            opener.focus({ preventScroll: true });
+        }
+    };
+}
+
+export function ButtonRow({
+    size = DEFAULT_ROW_SIZE,
+    buttons = [],
+    className = '',
+} = {})
+{
+    assertKnownSize(size, BUTTON_ROW_SIZES, 'button row size');
+    const buttonRow = createElementWithClass('div', withExtraClass(CLASS_BUTTON_ROW, className));
+    buttonRow.dataset.size = size;
+    for (const button of buttons)
+    {
+        if (button)
+        {
+            buttonRow.appendChild(button);
+        }
+    }
+    return buttonRow;
+}
+
+/** The index the arrow, Home or End key moves the tab focus to. */
+function nextTabIndex(pressedKey, currentIndex, tabCount)
+{
+    if (pressedKey === 'Home')
+    {
+        return 0;
+    }
+    if (pressedKey === 'End')
+    {
+        return tabCount - 1;
+    }
+    const direction = pressedKey === 'ArrowRight' ? 1 : -1;
+    return (currentIndex + direction + tabCount) % tabCount;
+}
+
+/** The tab strip: one button per tab, roving tabindex, arrow-key movement. */
+function buildTabStrip(tabList, onTab, head)
+{
+    const tabStrip = createElementWithClass('div', CLASS_TABS);
+    tabStrip.setAttribute('role', 'tablist');
+    const selectedTab = tabList.find(tabItem => tabItem.selected) || tabList[0];
+    for (const tabItem of tabList)
+    {
+        const tabId = tabItem.id || tabItem.label;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = CLASS_TAB;
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-selected', String(tabItem === selectedTab));
+        button.tabIndex = tabItem === selectedTab ? 0 : -1;
+        button.dataset.modalTab = tabId;
+        button.dataset.focusable = 'true';
+        button.textContent = tabItem.label;
+        button.addEventListener('click', () =>
+        {
+            for (const sibling of tabStrip.querySelectorAll(SELECTOR.tab))
+            {
+                const selected = sibling === button;
+                sibling.setAttribute('aria-selected', String(selected));
+                sibling.tabIndex = selected ? 0 : -1;
+            }
+            onTab?.(tabId);
+        });
+        tabStrip.appendChild(button);
+    }
+    tabStrip.addEventListener('keydown', event =>
+    {
+        if (!TAB_NAVIGATION_KEYS.includes(event.key))
+        {
+            return;
+        }
+        const tabButtons = [...tabStrip.querySelectorAll(SELECTOR.tab)];
+        const currentIndex = tabButtons.indexOf(document.activeElement);
+        if (currentIndex < 0)
+        {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const targetTab = tabButtons[nextTabIndex(event.key, currentIndex, tabButtons.length)];
+        targetTab.focus();
+        targetTab.click();
+        // Hosts may rebuild the header when activating a tab.
+        const searchRoot = head.isConnected ? head : document;
+        const targetId = targetTab.dataset.modalTab;
+        const replacement = [...searchRoot.querySelectorAll(`.${CLASS_TAB}`)]
+            .find(candidate => candidate.dataset.modalTab === targetId && candidate.isConnected);
+        replacement?.focus({ preventScroll: true });
     });
-    head.appendChild(strip);
-  } else {
-    const identity = document.createElement('div');
-    identity.className = 'modal-head-id';
-    if (eyebrow) {
-      const kind = document.createElement('span');
-      kind.className = 'modal-eyebrow';
-      kind.textContent = eyebrow;
-      identity.appendChild(kind);
+    return tabStrip;
+}
+
+/** The eyebrow and title pair that names a modal with no tabs. */
+function buildHeadIdentity({ eyebrow, title, titleId })
+{
+    const identity = createElementWithClass('div', 'modal-head-id');
+    if (eyebrow)
+    {
+        const eyebrowSpan = createElementWithClass('span', 'modal-eyebrow');
+        eyebrowSpan.textContent = eyebrow;
+        identity.appendChild(eyebrowSpan);
     }
     const heading = document.createElement('h2');
-    if (titleId) heading.id = titleId;
+    if (titleId)
+    {
+        heading.id = titleId;
+    }
     heading.textContent = title;
     identity.appendChild(heading);
-    head.appendChild(identity);
-  }
-
-  const actions = document.createElement('div');
-  actions.className = 'modal-head-actions';
-  if (extras) actions.appendChild(extras);
-  // menu IS NOT A DEFAULT, IT IS A PROPERTY OF WHAT THE DOOR IS.
-  //
-  // Constantine, 2026-09-03: the menu and close buttons "should come by
-  // default to all modal shells, I think, but improve on this if you think
-  // otherwise". Close: yes, unconditionally, and it already did — one way out,
-  // same corner, every door. menu: no, and the reason is what it opens. The
-  // hamburger opens the quick menu, which is a way to LEAVE for somewhere
-  // else. On a door that asks a question — "Load slot 1?", "Quit without
-  // saving?" — that is a third answer to a two-answer question, and it can
-  // navigate away mid-decision. On a door that IS a place, it is the obvious
-  // control and its absence is the defect.
-  //
-  // So the caller does not decide and does not have to remember: a TAB STRIP
-  // is what marks a door as a place rather than a question (Settings, the
-  // Armoury, the in-run overlay all carry one; the flask door, the confirm
-  // door and the inspector do not), so menu follows the tabs. `showMenuButton`
-  // stays overridable in both directions for the surface that is genuinely an
-  // exception, but nothing has to pass it to be right.
-  const wantsMenu = showMenuButton == null ? tabList.length > 0 : !!showMenuButton;
-  if (wantsMenu) {
-    const menu = document.createElement('button');
-    menu.type = 'button';
-    menu.className = 'subtle modal-iconbtn';
-    menu.dataset.size = 'square';
-    menu.dataset.focusable = 'true';
-    menu.title = menuLabel;
-    menu.setAttribute('aria-label', menuLabel);
-    menu.replaceChildren(engravedIcon('menu') || t('common.menu'));
-    if (onMenu) menu.addEventListener('click', onMenu);
-    actions.appendChild(menu);
-  }
-  const close = modalCloseButton({ label: closeLabel, onClick: onClose });
-  close.dataset.size = 'square';
-  close.dataset.focusable = 'true';
-  actions.appendChild(close);
-  head.appendChild(actions);
-  return head;
+    return identity;
 }
 
-/**
- * openModal(spec) → { veil, panel, head, body, foot, close }
- *
- * THE ONE DOOR-OPENER. Before this, every surface assembled its own veil,
- * panel, head and dismissal, and the audit found what that always finds: of
- * the surfaces carrying their own chrome, `piles.js` had NO Escape handler and
- * NO close control at all — the pile viewer could only be dismissed by
- * clicking the veil, which is not reachable from a keyboard or a pad. That is
- * not a styling divergence, it is a surface a player can get stuck in.
- *
- * What the caller supplies is CONTENT and INTENT. What it never supplies again
- * is chrome: the head (above), the footer's order and emphasis (modalFooter),
- * and Escape / veil-click / focus-return (bindModalDismiss) all come from
- * here, once.
- *
- * `body` is an element or a function that receives the body element — the
- * second form so a caller can fill a scroll container it does not have to
- * create. The body remains entirely the surface's own, for the reason at the
- * top of this file: a shell that also claimed the body would be five
- * components in a trench coat.
- */
-/**
- * FOUR MODAL WIDTHS, AND A BODY PICKS THE SMALLEST THAT HOLDS IT.
- *
- * Every door used to type its own width (`44rem` here, `96rem` there, `76rem`
- * on the overlay), so "how wide is a modal" had as many answers as there were
- * modals — and the detail door's answer was too small: measured 2026-09-03, it
- * broke "Defend Block +2. Weight 7." across two lines and its flavour across
- * two more, beside an ArtWell that had taken a third of the width. Nothing was
- * CLIPPED, so no overflow rule fired; cramped is the same defect one step
- * earlier, and the fix is a wider box, not a smaller font.
- *
- *   sm  one short question, two answers            a confirmation
- *   md  one thing described, art beside prose      the flask/armament door
- *   lg  a rail and a pane, or two panes            settings, the armoury
- *   xl  a chooser beside an inspector              the shrine's upgrade door
- *
- * The rung is a NAME, so a body that cramps takes the next one and a body that
- * rattles takes the one below — and neither edits a length. `max-width` in the
- * stylesheet keeps the phone case working without a second declaration here.
- */
-export const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
-
-/**
- * stampModalSize(panel, size) → the panel, wearing both words.
- *
- * THE ONE PLACE A MODAL'S WIDTH RUNG IS WRITTEN. `data-authored-size` is what
- * the surface asked for and never changes; `data-size` is that rung after the
- * player's answer (Settings → Advanced → Wireframes → Modals), and it is what
- * kit.css reads. Every door goes through here — openModal, the kit's pageDoor,
- * the Smith's W1i, the confirmation W2 and the Armoury's W1e — because a
- * choice that moved only the doors built by one constructor would be a setting
- * that is right about half the game.
- */
-export function stampModalSize(panel, size) {
-  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
-  panel.dataset.authoredSize = size;
-  panel.dataset.size = resolveModalRung(size, activeWireframeChoice('wireframeModalWidth'), MODAL_SIZES);
-  return panel;
-}
-
-/**
- * Run `fn` once, two animation frames from now (so it lands in a frame after
- * the one that paints whatever was just written), or after 250 ms if the page
- * is hidden and frames are paused. Never twice.
- */
-function afterFrames(fn) {
-  let done = false;
-  const run = () => { if (done) return; done = true; fn(); };
-  requestAnimationFrame(() => requestAnimationFrame(run));
-  setTimeout(run, 250)?.unref?.();
-}
-
-/**
- * restampModalWireframes(doc) → how many surfaces were re-resolved.
- *
- * A player changing a Modals choice is, almost always, looking at a modal while
- * they do it: Settings is a W1 door. So the answer is re-applied to everything
- * already on the page rather than only to the next door opened. Nothing is
- * re-rendered — the rung and the footer step are two data attributes, and
- * kit.css owns what they mean — and the AUTHORED value each surface asked for
- * is the one that is re-resolved, so this is idempotent and never compounds.
- */
-export function restampModalWireframes(doc = typeof document === 'undefined' ? null : document) {
-  if (!doc) return 0;
-  const width = activeWireframeChoice('wireframeModalWidth', doc.documentElement);
-  const footer = activeWireframeChoice('wireframeModalFooter', doc.documentElement);
-  let restamped = 0;
-  for (const panel of doc.querySelectorAll('.modal[data-authored-size]')) {
-    panel.dataset.size = resolveModalRung(panel.dataset.authoredSize, width, MODAL_SIZES);
-    restamped += 1;
-  }
-  for (const row of doc.querySelectorAll('.modal-foot-actions[data-authored-size]')) {
-    row.dataset.size = resolveFooterSize(row.dataset.authoredSize, footer, BUTTON_ROW_SIZES);
-    restamped += 1;
-  }
-  return restamped;
-}
-
-export function openModal({
-  name = '',
-  size = 'md',
-  className = '',
-  eyebrow = '',
-  title = '',
-  tabs = null,
-  onTab = null,
-  headExtras = null,
-  showMenuButton = null,
-  onMenu = null,
-  closeLabel = '',
-  body = null,
-  bodyClassName = '',
-  note = '',
-  secondary = [],
-  primary = null,
-  footSize = 'medium',
-  onClose = null,
-  opener = document.activeElement,
-  host = document.body,
-  role = 'dialog',
-  titleId: givenTitleId = '',
-  // Focus waits for the next frame, so opening does not force a layout in the
-  // frame that builds the door. `initialFocus()` may name the element to land
-  // on; the default is still the forward button (or the way out).
-  deferFocus = false,
-  deferLift = false,
-  initialFocus = null,
-} = {}) {
-  // A caller may name the heading (an instrument reads `aria-labelledby` by
-  // that name); otherwise the id is minted here so the label always resolves.
-  const titleId = givenTitleId || `modal-title-${Math.random().toString(36).slice(2, 8)}`;
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-
-  const panel = document.createElement('section');
-  panel.className = `modal${className ? ` ${className}` : ''}`;
-  // The rung the body asked for, then the player's answer about it. Both words
-  // are written by the one stamp above, which also refuses an unknown rung.
-  stampModalSize(panel, size);
-  panel.dataset.wireframe = role === 'alertdialog' ? 'W2' : 'W1';
-  panel.setAttribute('role', role);
-  panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-labelledby', titleId);
-  panel.tabIndex = -1;
-
-  let release = null;
-  let unregisterModal = null;
-  // close({ liftNow: true }) is for a caller that acts the moment the door closes (a command that moves focus):
-  // the page lock lifts and focus returns to the opener synchronously, so that command finds the page live.
-  const close = (options) => {
-    // Every close path comes through here. Keep the registry entry until focus
-    // has returned and the veil is gone: releasing the last modal synchronously
-    // runs whenNoOverlay() waiters, and one of those may replace the opener.
-    // Capture and clear first so an onClose callback cannot run cleanup twice.
-    if (!veil.isConnected) {
-      unregisterModal?.();
-      unregisterModal = null;
-      return;
+function buildMenuButton({ menuLabel, onMenu })
+{
+    const menuButton = document.createElement('button');
+    menuButton.type = 'button';
+    menuButton.className = 'subtle modal-iconbtn';
+    menuButton.dataset.size = 'square';
+    menuButton.dataset.focusable = 'true';
+    menuButton.title = menuLabel;
+    menuButton.setAttribute('aria-label', menuLabel);
+    menuButton.replaceChildren(engravedIcon('menu') || translate('common.menu'));
+    if (onMenu)
+    {
+        menuButton.addEventListener('click', onMenu);
     }
-    const releaseDismiss = release;
-    const unregister = unregisterModal;
-    release = null;
-    unregisterModal = null;
-    if (deferLift && options?.liftNow !== true && typeof requestAnimationFrame === 'function') {
-      // The veil leaves in this frame. Lifting inert restyles the whole app
-      // behind it, so the lift, the focus restore and the registry release
-      // wait for a later frame (inert has no rendering: pixels are identical,
-      // and a timer backs the frames up for a hidden page).
-      veil.remove();
-      onClose?.();
-      afterFrames(() => {
+    return menuButton;
+}
+
+/**
+ * A <header class="modal-head">: identity left, actions right.
+ * Identity is either an eyebrow + title pair or a tab strip; `tabs` replaces the pair.
+ * The close control is always present.
+ */
+export function ModalHead({
+    eyebrow = '',
+    title = '',
+    titleId = '',
+    tabs = null,
+    onTab = null,
+    extras = null,
+    showMenuButton = null,
+    onMenu = null,
+    menuLabel = translate('common.menu'),
+    closeLabel = DEFAULT_CLOSE_LABEL,
+    onClose = null,
+} = {})
+{
+    const tabList = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
+    if (!tabList.length && !title)
+    {
+        throw new Error('modalHead requires a title, or tabs to stand in for one');
+    }
+    const head = createElementWithClass('header', 'modal-head');
+
+    if (tabList.length)
+    {
+        head.appendChild(buildTabStrip(tabList, onTab, head));
+    }
+    else
+    {
+        head.appendChild(buildHeadIdentity({ eyebrow, title, titleId }));
+    }
+
+    const actions = createElementWithClass('div', 'modal-head-actions');
+    if (extras)
+    {
+        actions.appendChild(extras);
+    }
+    // The menu button follows the tab strip: a tabbed door is a place and wants
+    // the quick menu; a door that asks a question must not offer a way to leave.
+    // `showMenuButton` overrides in either direction.
+    const wantsMenu = showMenuButton == null ? tabList.length > 0 : !!showMenuButton;
+    if (wantsMenu)
+    {
+        actions.appendChild(buildMenuButton({ menuLabel, onMenu }));
+    }
+    const close = ModalCloseButton({ label: closeLabel, onClick: onClose });
+    close.dataset.size = 'square';
+    close.dataset.focusable = 'true';
+    actions.appendChild(close);
+    head.appendChild(actions);
+    return head;
+}
+
+/**
+ * The one place a modal's width rung is written.
+ * `data-authored-size` is what the surface asked for; `data-size` is that rung after
+ * the player's Wireframes choice, and is what kit.css reads.
+ */
+export function StampModalSize(panel, size)
+{
+    assertKnownSize(size, MODAL_SIZES, 'modal size');
+    const widthChoice = activeWireframeChoice(WIREFRAME_MODAL_WIDTH);
+    panel.dataset.authoredSize = size;
+    panel.dataset.size = resolveModalRung(size, widthChoice, MODAL_SIZES);
+    return panel;
+}
+
+/** Run `callback` once, two animation frames from now, or after 250 ms if frames are paused. */
+function afterFrames(callback)
+{
+    let hasRun = false;
+    const runOnce = () =>
+    {
+        if (hasRun)
+        {
+            return;
+        }
+        hasRun = true;
+        callback();
+    };
+    requestAnimationFrame(() => requestAnimationFrame(runOnce));
+    setTimeout(runOnce, FALLBACK_DELAY_MS)?.unref?.();
+}
+
+/**
+ * Re-resolve the Wireframes choices on every open modal and footer; returns the count.
+ * Idempotent: it re-resolves from the authored values, so it never compounds.
+ */
+export function RestampModalWireframes(targetDocument = currentDocument())
+{
+    if (!targetDocument)
+    {
+        return 0;
+    }
+    const rootElement = targetDocument.documentElement;
+    const widthChoice = activeWireframeChoice(WIREFRAME_MODAL_WIDTH, rootElement);
+    const footerChoice = activeWireframeChoice('wireframeModalFooter', rootElement);
+    let restampedCount = 0;
+    for (const panel of targetDocument.querySelectorAll(SELECTOR.authoredPanels))
+    {
+        const authoredSize = panel.dataset.authoredSize;
+        panel.dataset.size = resolveModalRung(authoredSize, widthChoice, MODAL_SIZES);
+        restampedCount += 1;
+    }
+    for (const footRow of targetDocument.querySelectorAll(SELECTOR.authoredFootRows))
+    {
+        const authoredSize = footRow.dataset.authoredSize;
+        footRow.dataset.size = resolveFooterSize(authoredSize, footerChoice, BUTTON_ROW_SIZES);
+        restampedCount += 1;
+    }
+    return restampedCount;
+}
+
+/**
+ * OpenModal(spec) -> { veil, panel, head, body, foot, close }
+ * The one door-opener: the caller supplies content and intent; head, footer order and
+ * dismissal come from here. `body` is an element, or a function that receives the body element.
+ */
+export function OpenModal({
+    name = '',
+    size = DEFAULT_MODAL_SIZE,
+    className = '',
+    eyebrow = '',
+    title = '',
+    tabs = null,
+    onTab = null,
+    headExtras = null,
+    showMenuButton = null,
+    onMenu = null,
+    closeLabel = '',
+    body = null,
+    bodyClassName = '',
+    note = '',
+    secondary = [],
+    primary = null,
+    footSize = DEFAULT_ROW_SIZE,
+    onClose = null,
+    opener = document.activeElement,
+    host = document.body,
+    role = DEFAULT_MODAL_ROLE,
+    titleId: givenTitleId = '',
+    // Focus waits for the next frame; `initialFocus()` may name the element to land on.
+    deferFocus = false,
+    deferLift = false,
+    initialFocus = null,
+    // The modal.json kind whose layout settings the panel takes.
+    kind = DEFAULT_MODAL_KIND,
+} = {})
+{
+    // A caller may name the heading; otherwise the id is minted so aria-labelledby resolves.
+    const titleId = givenTitleId || `modal-title-${Math.random().toString(36).slice(2, 8)}`;
+    const veil = createElementWithClass('div', 'modal-veil');
+
+    const panel = document.createElement('section');
+    panel.className = withExtraClass('modal', className);
+    StampModalSize(panel, size);
+    ModalModelFor(kind).apply(panel);
+    panel.dataset.wireframe = role === ROLE_ALERT_DIALOG ? 'W2' : 'W1';
+    panel.setAttribute('role', role);
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', titleId);
+    panel.tabIndex = -1;
+
+    let release = null;
+    let unregisterModal = null;
+    // close({ liftNow: true }) lifts the page lock and returns focus synchronously,
+    // for a caller that acts the moment the door closes.
+    const close = (closeOptions) =>
+    {
+        // Every close path comes through here. Capture and clear the handles first
+        // so an onClose callback cannot run cleanup twice.
+        if (!veil.isConnected)
+        {
+            unregisterModal?.();
+            unregisterModal = null;
+            return;
+        }
+        const releaseDismiss = release;
+        const unregister = unregisterModal;
+        release = null;
+        unregisterModal = null;
+        if (deferLift && closeOptions?.liftNow !== true && hasAnimationFrames())
+        {
+            // Lifting inert restyles the whole app, so lift, focus restore and
+            // registry release wait for a later frame.
+            veil.remove();
+            onClose?.();
+            afterFrames(() =>
+            {
+                unregister?.unlock?.();
+                releaseDismiss?.();
+                unregister?.();
+            });
+            return;
+        }
+        // Lift the page lock before focus returns: an inert element cannot take focus.
         unregister?.unlock?.();
         releaseDismiss?.();
+        veil.remove();
+        onClose?.();
         unregister?.();
-      });
-      return;
-    }
-    // Lift the page lock (inert) before focus returns to the opener: an
-    // element inside an inert subtree cannot take focus.
-    unregister?.unlock?.();
-    releaseDismiss?.();
-    veil.remove();
-    onClose?.();
-    unregister?.();
-  };
+    };
 
-  const head = modalHead({
-    eyebrow,
-    title,
-    titleId,
-    tabs,
-    onTab,
-    extras: headExtras,
-    showMenuButton,
-    onMenu,
-    closeLabel: closeLabel || (title ? `Close ${title}` : 'Close'),
-    onClose: close,
-  });
-  // A tab strip carries no <h2>, so the label the dialog is named by has to be
-  // the strip itself — otherwise `aria-labelledby` points at nothing and the
-  // door announces as an unnamed dialog.
-  if (!head.querySelector(`#${titleId}`)) head.querySelector('.modal-tabs')?.setAttribute('id', titleId);
-
-  const bodyEl = document.createElement('div');
-  bodyEl.className = `modal-body${bodyClassName ? ` ${bodyClassName}` : ''}`;
-  if (typeof body === 'function') body(bodyEl);
-  else if (body) bodyEl.appendChild(body);
-
-  panel.append(head, bodyEl);
-
-  const ways = Array.isArray(secondary) ? secondary.filter(Boolean) : [secondary].filter(Boolean);
-  let foot = null;
-  if (note || ways.length || primary) {
-    foot = modalFooter({ note, secondary: ways, primary, size: footSize });
-    // The ladder owns the actions row, so no caller can produce a ragged foot.
-    foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
-    panel.appendChild(foot);
-  }
-
-  veil.appendChild(panel);
-  host.appendChild(veil);
-  // The manager owns Escape for this door: it calls dismiss() on the top entry.
-  // close() is idempotent, so a dismiss after a programmatic close is a no-op.
-  const deferInert = deferLift && typeof requestAnimationFrame === 'function';
-  unregisterModal = registerModal(name || title || 'modal', panel, { dismiss: () => close(), back: true, deferInert });
-  release = bindModalDismiss({ veil, panel, close, opener, escape: false });
-
-  // Focus the way FORWARD when there is one, else the way out. Never the veil.
-  // A footer exit (the wide Close) outranks the head's small close.
-  const focusFirst = () => {
-    const first = (typeof initialFocus === 'function' ? initialFocus() : null)
-      || panel.querySelector('.modal-foot-actions .primary')
-      || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
-      || panel.querySelector('[data-focusable="true"]')
-      || panel.querySelector('.modal-close');
-    first?.focus?.({ preventScroll: true });
-  };
-  // The page lock (inert restyles everything behind the door) is armed a frame after mount whenever the door
-  // asked to defer it (deferLift), whether or not it also defers focus: an entry left unarmed locks nothing.
-  let armed = false;
-  const arm = () => { if (armed) return; armed = true; if (veil.isConnected) unregisterModal?.arm?.(); };
-  if (deferFocus && typeof requestAnimationFrame === 'function') {
-    // Mount landed in the frame before this one; focus here, and the page lock a frame later still.
-    requestAnimationFrame(() => {
-      if (veil.isConnected) focusFirst();
-      requestAnimationFrame(arm);
+    const titledCloseLabel = title ? `${DEFAULT_CLOSE_LABEL} ${title}` : DEFAULT_CLOSE_LABEL;
+    const head = ModalHead({
+        eyebrow,
+        title,
+        titleId,
+        tabs,
+        onTab,
+        extras: headExtras,
+        showMenuButton,
+        onMenu,
+        closeLabel: closeLabel || titledCloseLabel,
+        onClose: close,
     });
-    setTimeout(arm, 250)?.unref?.();
-  } else {
-    focusFirst();
-    if (deferInert) {
-      requestAnimationFrame(() => requestAnimationFrame(arm));
-      setTimeout(arm, 250)?.unref?.();
+    // A tab strip has no <h2>, so the strip itself names the dialog.
+    if (!head.querySelector(`#${titleId}`))
+    {
+        head.querySelector(`.${CLASS_TABS}`)?.setAttribute('id', titleId);
     }
-  }
 
-  return Object.freeze({ veil, panel, head, body: bodyEl, foot, close });
+    const bodyElement = createElementWithClass('div', withExtraClass('modal-body', bodyClassName));
+    if (typeof body === 'function')
+    {
+        body(bodyElement);
+    }
+    else if (body)
+    {
+        bodyElement.appendChild(body);
+    }
+
+    panel.append(head, bodyElement);
+
+    const secondaryList = Array.isArray(secondary) ? secondary : [secondary];
+    const secondaryButtons = secondaryList.filter(Boolean);
+    let foot = null;
+    if (note || secondaryButtons.length || primary)
+    {
+        foot = ModalFooter({
+            note,
+            secondary: secondaryButtons,
+            primary,
+            size: footSize,
+        });
+        foot.querySelector(SELECTOR.footActions)?.classList.add(CLASS_BUTTON_ROW);
+        panel.appendChild(foot);
+    }
+
+    veil.appendChild(panel);
+    host.appendChild(veil);
+    // The modal manager owns Escape for this door; close() is idempotent.
+    const deferInert = deferLift && hasAnimationFrames();
+    unregisterModal = registerModal(name || title || 'modal', panel, {
+        dismiss: () => close(),
+        back: true,
+        deferInert,
+    });
+    release = BindModalDismiss({
+        veil,
+        panel,
+        close,
+        opener,
+        escape: false,
+    });
+
+    // Focus the way forward when there is one, else the way out. A footer exit
+    // outranks the head's small close.
+    const focusFirst = () =>
+    {
+        const target = (typeof initialFocus === 'function' ? initialFocus() : null)
+            || panel.querySelector(SELECTOR.footPrimary)
+            || panel.querySelector(SELECTOR.footExit)
+            || panel.querySelector(SELECTOR.focusable)
+            || panel.querySelector(SELECTOR.headClose);
+        target?.focus?.({ preventScroll: true });
+    };
+    // The page lock is armed a frame after mount whenever the door defers it (deferLift).
+    let pageLockArmed = false;
+    const armPageLock = () =>
+    {
+        if (pageLockArmed)
+        {
+            return;
+        }
+        pageLockArmed = true;
+        if (veil.isConnected)
+        {
+            unregisterModal?.arm?.();
+        }
+    };
+    if (deferFocus && hasAnimationFrames())
+    {
+        // Focus a frame after mount, and the page lock a frame later still.
+        requestAnimationFrame(() =>
+        {
+            if (veil.isConnected)
+            {
+                focusFirst();
+            }
+            requestAnimationFrame(armPageLock);
+        });
+        setTimeout(armPageLock, FALLBACK_DELAY_MS)?.unref?.();
+    }
+    else
+    {
+        focusFirst();
+        if (deferInert)
+        {
+            afterFrames(armPageLock);
+        }
+    }
+
+    return Object.freeze({
+        veil,
+        panel,
+        head,
+        body: bodyElement,
+        foot,
+        close,
+    });
 }

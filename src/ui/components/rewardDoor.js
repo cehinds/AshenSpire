@@ -1,45 +1,138 @@
-import { el, modalHead } from '../kit/index.js';
-import { t } from '../strings.js';
+import { el as buildElement, modalHead } from '../kit/index.js';
+import { t as translate } from '../strings.js';
+import { ModalModelFor } from '../models/ModalModel.js';
 
-// Shared reward modal: preserves the open door across views and owns no reward policy.
-export function mountRewardDoor(app, { owner, eyebrow = '', title, body, foot, attrs = {}, status = null }) {
-  const head = modalHead({ eyebrow, title, closeLabel: t('reward.close'), extras: status });
-  head.querySelector('.modal-close').hidden = true;
-  const content = [head, el('div', { class: 'modal-body reward-body' }, body), foot];
-  const open = app.querySelector('.reward-veil .reward-door');
-  if (open && open.rewardDoorOwner === owner) {
-    for (const key of ['rewardDetail', 'victoryCompact', 'rewardLevel']) {
-      open.removeAttribute(`data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
-      delete open.dataset[key];
-    }
-    const { dataset = {}, ...rest } = attrs;
-    Object.assign(open.dataset, { size: 'md' }, dataset);
-    for (const [key, value] of Object.entries(rest)) open.setAttribute(key, value);
-    open.setAttribute('aria-label', title);
-    open.replaceChildren(...content.filter(Boolean));
-    return open;
-  }
-  app.querySelector('.reward-veil')?.remove();
-  if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
-  const modal = el('section', {
-    class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
-  }, content);
-  modal.rewardDoorOwner = owner;
-  const veil = el('div', { class: 'modal-veil reward-veil' }, modal);
-  app.appendChild(veil);
-  return modal;
+const OPEN_DOOR_SELECTOR = '.reward-veil .reward-door';
+// Dataset flags a previous view may have left on a door that is reused in place.
+const VIEW_DATASET_KEYS = Object.freeze([
+    'rewardDetail',
+    'victoryCompact',
+    'rewardLevel',
+]);
+
+function toKebabCase(camelCaseKey)
+{
+    return camelCaseKey.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
 
-/**
- * replaceRewardFoot(app, owner, foot) → true when the open door of `owner` took the new footer.
- * Only the footer node is swapped (the footer drops hidden buttons when built), so the door,
- * its body, the option cards, keyboard focus and scroll position all stay as they are.
- */
-export function replaceRewardFoot(app, owner, foot) {
-  const open = app.querySelector('.reward-veil .reward-door');
-  if (!open || open.rewardDoorOwner !== owner) return false;
-  const old = [...open.children].find((child) => child.tagName === 'FOOTER');
-  if (!old) return false;
-  old.replaceWith(foot);
-  return true;
+// The open door, only when this owner mounted it.
+function findOwnedDoor(appRoot, owner)
+{
+    const openDoor = appRoot.querySelector(OPEN_DOOR_SELECTOR);
+    return openDoor && openDoor.rewardDoorOwner === owner ? openDoor : null;
+}
+
+// Shared reward modal: keeps the open door across views and owns no reward policy.
+export function MountRewardDoor(
+    appRoot,
+    {
+        owner,
+        eyebrow = '',
+        title,
+        body,
+        foot,
+        attrs = {},
+        status = null,
+        kind = 'reward',
+    },
+)
+{
+    const model = ModalModelFor(kind);
+    const head = modalHead({
+        eyebrow,
+        title,
+        closeLabel: translate('reward.close'),
+        extras: status,
+    });
+    head.querySelector('.modal-close').hidden = true;
+    const bodyElement = buildElement(
+        'div',
+        {
+            class: 'modal-body reward-body',
+        },
+        body,
+    );
+    const content = [
+        head,
+        bodyElement,
+        foot,
+    ];
+    const ownedDoor = findOwnedDoor(appRoot, owner);
+    if (ownedDoor)
+    {
+        for (const key of VIEW_DATASET_KEYS)
+        {
+            ownedDoor.removeAttribute(`data-${toKebabCase(key)}`);
+            delete ownedDoor.dataset[key];
+        }
+        const {
+            dataset = {},
+            ...otherAttributes
+        } = attrs;
+        Object.assign(
+            ownedDoor.dataset,
+            {
+                size: 'md',
+            },
+            dataset,
+        );
+        for (const [name, value] of Object.entries(otherAttributes))
+        {
+            ownedDoor.setAttribute(name, value);
+        }
+        ownedDoor.setAttribute('aria-label', title);
+        ownedDoor.replaceChildren(...content.filter(Boolean));
+        model.apply(ownedDoor);
+        return ownedDoor;
+    }
+    appRoot.querySelector('.reward-veil')?.remove();
+    if (!appRoot.firstElementChild)
+    {
+        const backdrop = buildElement('div', {
+            class: 'screen reward-backdrop',
+        });
+        appRoot.appendChild(backdrop);
+    }
+    const modal = buildElement(
+        'section',
+        {
+            class: 'modal reward-door',
+            dataset: {
+                size: 'md',
+            },
+            role: 'dialog',
+            'aria-modal': 'true',
+            'aria-label': title,
+            ...attrs,
+        },
+        content,
+    );
+    modal.rewardDoorOwner = owner;
+    model.apply(modal);
+    const veil = buildElement(
+        'div',
+        {
+            class: 'modal-veil reward-veil',
+        },
+        modal,
+    );
+    appRoot.appendChild(veil);
+    return modal;
+}
+
+/** Swaps only the footer of the owner's open door; true when it took the new footer. */
+export function ReplaceRewardFoot(appRoot, owner, foot)
+{
+    const ownedDoor = findOwnedDoor(appRoot, owner);
+    if (!ownedDoor)
+    {
+        return false;
+    }
+    const oldFooter = [...ownedDoor.children].find((child) => child.tagName === 'FOOTER');
+    if (!oldFooter)
+    {
+        return false;
+    }
+    oldFooter.replaceWith(foot);
+    return true;
 }

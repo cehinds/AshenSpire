@@ -1643,7 +1643,7 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
     },
     {
       "file": "src/ui/components/statAllocationCard.js",
-      "symbol": "renderStatAllocationCard",
+      "symbol": "RenderStatAllocationCard",
       "status": "Current source reference; proposed W0/W1 layout"
     }
   ],
@@ -6923,7 +6923,7 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
   "references": [
     {
       "file": "src/ui/screens/reward.js",
-      "symbol": "mountRewards",
+      "symbol": "MountRewards",
       "status": "Current source reference; proposed W0/W1 layout"
     }
   ],

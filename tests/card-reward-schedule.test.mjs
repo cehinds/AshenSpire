@@ -15,7 +15,7 @@ import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 import { rollCardRewardIds, rollCombatCardOffer } from '../src/engine/encounters.js';
 import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIND_ORDER, rowKey, cardRewardPlan, cardRewardSchedule } from '../src/model/rewardplan.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
 import { rewardDom } from './helpers/dom.mjs';
 

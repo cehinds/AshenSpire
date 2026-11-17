@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { createRunState } from '../src/model/state.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { bindCardInspection, openBoundCardInspection } from '../src/ui/components/cardInspection.js';
 import { cardDetailHtml, relicText } from '../src/ui/components/card.js';
@@ -64,7 +64,7 @@ function mount(kind, id, extra = {}) {
   const run = { class: 'reaver', deck: [], sideboard: [], cinders: 17, xp: 21, skills: { blade: { level: 2, xp: 9 } } };
   const offer = { id: `${kind}-inspection`, options: [{ kind, id }, { kind: 'combatCards', id: 'scholarsInsight' }], taken: [], claimed: null, takeCount: 1 };
   const calls = [];
-  mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
     onTake() { calls.push('take'); throw new Error('save refused'); },
     onContinue() { calls.push('continue'); }, ...extra,
   });
@@ -154,7 +154,7 @@ test('Right-click reads an unchosen or already taken reward without choosing it'
     const taken = mount('weapons', weapon.id);
     taken.offer.taken.push(0);
     // Rebuild against the taken option using the same production renderer.
-    mountGameProfileOffers(taken.app, { registries, run: taken.run, offer: taken.offer, title: 'Rewards', onTake() { throw new Error('must not claim'); }, onContinue() {} });
+    MountGameProfileOffers(taken.app, { registries, run: taken.run, offer: taken.offer, title: 'Rewards', onTake() { throw new Error('must not claim'); }, onContinue() {} });
     assert.equal(taken.app.querySelector('.reward-pick').disabled, true);
     rightClick(taken.app);
     assert.ok(document.querySelector('.card-inspection-modal'));
@@ -248,7 +248,7 @@ for (const sample of normalCases) test(`normal ${sample.kind} inspection survive
     const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
     const checkpoint = { states: {} };
     let inspect, strip, refuse = true, writes = 0, dones = 0;
-    mountRewards(app, { registries: source, run, rewards: sample.rewards, checkpoint, onDone() { dones++; },
+    MountRewards(app, { registries: source, run, rewards: sample.rewards, checkpoint, onDone() { dones++; },
       onPersist() {
         writes++;
         assert.equal(inspect.disabled, true, 'commit blocks Inspect');

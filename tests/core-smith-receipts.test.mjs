@@ -12,7 +12,7 @@ import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
-import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
@@ -128,7 +128,7 @@ test('the item\'s upgrade modal lists the calculated item and card deltas, as be
     const rows = details.querySelectorAll('.confirmation-change-list .sr-name');
     assert.equal(rows.length, model.properties.selected.affectedRows.length + 1);
     assert.equal(details.querySelectorAll('.confirmation-change-list .as-statpair').length >= model.properties.selected.intrinsicChanges.length, true, 'every change is a before to after pair');
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));

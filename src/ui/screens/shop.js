@@ -11,7 +11,7 @@ import { renderCard } from '../components/card.js';
 import { servicePortrait } from '../components/servicePortrait.js';
 import { relicText, cardPlainText } from '../components/card.js';
 import { beatArmer } from '../../framework/optionDecision.js';
-import { modalHead, modalFooter } from '../components/modalShell.js';
+import { ModalHead, ModalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
@@ -59,11 +59,11 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const railed = el('div', { class: 'as-railed shop-railed' }, pane);
   const dock = el('nav', { class: 'merchant-category-dock', 'aria-label': t('shop.rail.aria') });
   const foot = el('div', { class: 'shop-foot-host' });
-  const frame = el('div', { class: 'shop-frame' }, [modalHead({ title: t('shop.title'), closeLabel: t('shop.leave'), onClose: onLeave, showMenuButton: false, extras: hud ? null : statusText(t('shop.purse', { cinders: run.cinders })) }), railed, dock, foot]);
+  const frame = el('div', { class: 'shop-frame' }, [ModalHead({ title: t('shop.title'), closeLabel: t('shop.leave'), onClose: onLeave, showMenuButton: false, extras: hud ? null : statusText(t('shop.purse', { cinders: run.cinders })) }), railed, dock, foot]);
   root.append(servicePortrait('merchant'), frame); app.append(root);
   const status = statusText('', { role: 'alert' });
   const leave = button({ label: t('shop.leave'), role: 'exit', id: 'leave-shop' }); leave.addEventListener('click', onLeave);
-  foot.append(status, modalFooter({ secondary: [leave], className: 'shop-foot' }));
+  foot.append(status, ModalFooter({ secondary: [leave], className: 'shop-foot' }));
   const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps' };
   const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
   const categories = [...new Set(offer.options.map(option => option.kind)), ...(sellEnabled ? ['sell'] : [])];

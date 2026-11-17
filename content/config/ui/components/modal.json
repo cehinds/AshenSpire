@@ -1,0 +1,40 @@
+{
+  "components": {
+    "base": {
+      "panelInsetRem": 1.4,
+      "panelInsetPhoneRem": 1,
+      "headGapRem": 1.2,
+      "footGapRem": 1.2
+    },
+    "confirm": {
+      "extends": "base"
+    },
+    "choice": {
+      "extends": "base",
+      "gridGapPx": 12,
+      "gridGapPhonePx": 8,
+      "gridRowGapPx": 64,
+      "gridPadTopPx": 64,
+      "optionGapRem": 0.6,
+      "optionGapPhoneRem": 0.4,
+      "nameButtonBasisRem": 3.5,
+      "nameButtonPadBlockRem": 0.7,
+      "nameButtonPadInlineRem": 0.8,
+      "nameButtonPadBlockPhoneRem": 0.45,
+      "nameButtonPadInlinePhoneRem": 0.4,
+      "showNameButton": true
+    },
+    "reward": {
+      "extends": "choice"
+    },
+    "cardUpgrade": {
+      "extends": "choice"
+    },
+    "compare": {
+      "extends": "choice"
+    },
+    "statUpgrade": {
+      "extends": "choice"
+    }
+  }
+}

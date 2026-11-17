@@ -2,7 +2,7 @@ import { t } from '../strings.js';
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { el, button, openModal, prose, titleS } from '../kit/index.js';
 import { primaryStatCards, classResourceGrid } from './creationCards.js';
-import { renderStatAllocationCard } from './statAllocationCard.js';
+import { RenderStatAllocationCard } from './statAllocationCard.js';
 import { attachTooltip, esc, hideTooltip, showTooltipFor } from './tooltip.js';
 import { progressionStats } from '../models/ProgressionInspectionModel.js';
 import { levelUpPlan, allocateAttributePoint } from '../../model/levelup.js';
@@ -86,7 +86,7 @@ export function openProgressionAllocation({ registries, run, settings = {}, onCh
       canDecrease: pending[attr.id] > 0, canIncrease: count() < plan.points,
     })) };
   };
-  allocation = renderStatAllocationCard(document.body, { ...spec(), modal: true, title: t('reward.level.button'),
+  allocation = RenderStatAllocationCard(document.body, { ...spec(), modal: true, title: t('reward.level.button'),
     note: t('progression.allocate.note'),
     onIncrease: id => { if (count() < plan.points) { pending[id]++; allocation.update(spec()); } },
     onDecrease: id => { if (pending[id]) { pending[id]--; allocation.update(spec()); } },

@@ -9,7 +9,7 @@
 // ONE SCREEN, ONE MODAL (owner, 2026-11-04). The desk is the list. Tapping a row opens that row's upgrade
 // confirmation modal straight away; there is no detail view and no Back button inside the desk.
 import { el, button } from '../kit/index.js';
-import { modalFooter } from './modalShell.js';
+import { ModalFooter } from './modalShell.js';
 
 /** A row's art in the editor's own `.deck-editor-art` slot (the host's ArtWell: its painted asset, or its glyph). */
 export function deskArt(node) {
@@ -69,7 +69,7 @@ export function mountUpgradeDesk(host, { title, titleId, listLabel, backLabel, k
 
   const backBtn = button({ label: backLabel, role: 'exit', className: 'deck-editor-cancel smith-back' });
   const confirmBtn = button({ label: '', weight: 'primary', className: 'deck-editor-done smith-confirm' });
-  const foot = modalFooter({ secondary: [backBtn], className: 'deck-editor-foot smith-modal-footer', size: 'medium' });
+  const foot = ModalFooter({ secondary: [backBtn], className: 'deck-editor-foot smith-modal-footer', size: 'medium' });
   panel.append(head, panes, el('div', { class: 'deck-editor-footer' }, foot));
   host.appendChild(veil);
 

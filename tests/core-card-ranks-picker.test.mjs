@@ -26,7 +26,7 @@ test('pendingRankUpRows lists queued rank-ups that have a card to raise, and not
 });
 
 test('the reward door shows the Core card at its next rank and raises it', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { MountRewards } = await import('../src/ui/screens/reward.js');
   const { rewardDom } = await import('./helpers/dom.mjs');
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
@@ -37,7 +37,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
     level(run, 'item:blade', 3);
     const strike = run.deck.find((c) => c.cardId === 'core.strike');
     let persisted = 0;
-    mountRewards(app, { registries, run, onDone() {}, onPersist: () => { persisted += 1; },
+    MountRewards(app, { registries, run, onDone() {}, onPersist: () => { persisted += 1; },
       saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
       rewards: { xpGains: { level: 0, tracks: {} }, skillRankUps: pendingRankUpRows(registries, run) } });
     const row = app.querySelector('.reward-kind[data-kind="skillRankUp"]');
@@ -87,7 +87,7 @@ test('a Core run with queued rank-ups and ranked cards is a sound saved run', as
 });
 
 test('a reload after a rank-up claim resumes the same door and offers no second rank-up there', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { MountRewards } = await import('../src/ui/screens/reward.js');
   const { rewardDom } = await import('./helpers/dom.mjs');
   const { validateRunShape } = await import('../src/model/state.js');
   const dom = rewardDom();
@@ -105,7 +105,7 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
       const pending = run.gameProfilePendingReward;
       const rows = pending.rankUpRows || pendingRankUpRows(registries, run);
       const app = document.createElement('main'); document.body.append(app);
-      mountRewards(app, { registries, run, onDone() {}, saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
+      MountRewards(app, { registries, run, onDone() {}, saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
         rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rows) },
         checkpoint: (pending.rankUpCheckpoint ||= {}),
         onPersist: () => { saves += 1; saveJson = JSON.stringify(run); } });
