@@ -55,8 +55,8 @@ function forecastAndPlay(combat) {
   return combat.enemies.map((enemy, i) => ({ forecast: forecast[i], live: live.get(enemy.id) }));
 }
 
-function expectMatch(rows, label) {
-  assert.ok(rows.some(row => row.live?.lost > 0), `${label}: some Poise is really lost, so the comparison means something`);
+function expectMatch(rows, label, { someLoss = true } = {}) {
+  if (someLoss) assert.ok(rows.some(row => row.live?.lost > 0), `${label}: some Poise is really lost, so the comparison means something`);
   rows.forEach(({ forecast, live }, i) => {
     assert.ok(forecast, `${label} #${i + 1}: the intent carries a Poise forecast`);
     assert.ok(live, `${label} #${i + 1}: the move played`);
@@ -77,7 +77,7 @@ test('an attack that empties the player Poise is marked BREAK', () => {
 });
 
 test('Block in front: the forecast spends Block first, as live does', () => {
-  for (const block of [3, 10, 40]) expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash']], { block })), `Block ${block}`);
+  for (const block of [3, 10, 40]) expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash']], { block })), `Block ${block}`, { someLoss: block < 19 });
 });
 
 test('Defend stance with Block keeps the 1 Poise floor in the forecast', () => {
