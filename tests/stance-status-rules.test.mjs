@@ -12,8 +12,9 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
-import { applyAttackDamage, dealPoiseDamage } from '../src/engine/actions.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
+import { applyAttackDamage, dealPoiseDamage, drainFixCorePoise } from '../src/engine/actions.js';
+import { clearCombatCounter } from '../src/engine/combatMatchups.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -24,8 +25,8 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const SLASH = { kind: 'attack', moveId: 'slash', damage: 8, hits: 1,
   combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
 
-function live({ enemyId = 'wanderingSoldier', rules = null, seed = 511 } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+function live({ enemyId = 'wanderingSoldier', rules = null, seed = 511, classId = 'reaver' } = {}) {
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
   if (rules) rules(combat.fixCoreRules);
   const enemy = combat.enemies[0];
@@ -216,16 +217,15 @@ test('rule 4: an unused badge decays by 1 at the enemy turn start and its Counte
   assert.equal(enemy.combatCounter, undefined);
 });
 
-test('rule 4 edge: a badge above 1 is not a second answer; a use takes 1 and spends the charge, the rest fades 1 per enemy turn start', () => {
+test('rule 4 edge: a badge above 1 is not a second answer; a use takes 1 and spends the charge, and the rest goes when the spent Counter ends', () => {
   const { combat, enemy } = gilded(rules => { rules.counter.enemyBadgeStacks = 3; });
   enemy.counterStacks = 3;
   play(combat, 'x', 'core.strike', {});
   assert.equal(enemy.counterStacks, 2, 'a use takes 1');
   assert.equal(enemy.combatCounter?.charges ?? 0, 0, 'the charge is spent: one answer per arming, as before');
-  const events = endTurn(combat);
-  assert.deepEqual(badgeEvents(events, enemy)[0], [-1, false, true]);
-  assert.equal(enemy.counterStacks, 1);
+  endTurn(combat);
   assert.equal(enemy.combatCounter, undefined, 'a spent Counter does not stay armed on the badge');
+  assert.equal(enemy.counterStacks ?? 0, 0, 'and the badge goes with the Counter it counted');
 });
 
 test('rule 4 edge: a fight saved without counter.enemyBadgeStacks grants no badge', () => {
@@ -307,4 +307,77 @@ test('rule 5 edge: an un-aimed hit (no target, a card face out of a fight) takes
   const { combat } = live();
   const plain = profileDamageReceipt(combat, combat.player, null, 40, { ...structuredClone(PHYSICAL), skipRatingBonus: true });
   assert.equal(plain.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness'), undefined);
+});
+
+test('rule 5: the real core.strike and core.smash (no authored range: melee) take the Prepared weakness, played live', () => {
+  for (const cardId of ['core.strike', 'core.smash']) {
+    const lost = rules => {
+      const { combat, enemy } = live({ rules });
+      Object.assign(enemy, { block: 0, persistentPoise: { value: 0, max: 0 } });
+      enemy.combatStance = { maneuver: 'casting', camp: 'spell', range: 'reach' };
+      const hp = enemy.hp;
+      play(combat, 'x', cardId);
+      return hp - enemy.hp;
+    };
+    const on = lost(), off = lost(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+    assert.ok(off > 0, `${cardId} lands`);
+    assert.ok(on > off, `${cardId}: a Prepared target takes more (${on} against ${off})`);
+    assert.ok(on >= Math.floor(off * 1.25) - 1 && on <= Math.ceil(off * 1.25) + 1, `${cardId}: about x1.25 (${on} against ${off})`);
+  }
+});
+
+/** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
+// The Starseer: the Reaver's starting Forsaken Medallion adds its own triggered Poise damage to the first attack, which is not this card's rider.
+function cleave({ block, poise }) {
+  const { combat, enemy } = live({ classId: 'starseer' });
+  Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'cleave', cardId: 'cleavingBlow' });
+  const view = previewCard(combat, 'cleave', enemy.id);
+  const rider = view.values.find(value => value.op === 'poiseDamage')?.perTargetPoise?.[enemy.id];
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cleave', targetId: enemy.id });
+  return { rider, poise: enemy.persistentPoise.value, broke: combat.eventLog.slice(from).some(e => e.type === 'poiseBroken' && e.targetId === enemy.id) };
+}
+
+test('rules 2-3: the preview keeps the Defend Poise floor the live rider keeps (Cleaving Blow, 100 Block, 3 Poise)', () => {
+  const r = cleave({ block: 100, poise: 3 });
+  assert.equal(r.poise, 1, 'live: the rider leaves 1 Poise');
+  assert.equal(r.broke, false);
+  assert.ok(r.rider, 'the preview quotes the rider');
+  assert.equal(r.rider.breaks, false, 'the preview does not say BREAK');
+  assert.equal(r.rider.removed, 2, 'the preview removes what live removes (3 -> 1)');
+});
+
+test('rules 2-3: a rider whose own hit spent the last Block still keeps the floor (Cleaving Blow, 5 Block, 4 Poise), in the preview and live', () => {
+  const r = cleave({ block: 5, poise: 4 });
+  assert.equal(r.poise, 1, 'live: the hit arrived while Block remained, so its rider leaves 1 Poise');
+  assert.equal(r.broke, false);
+  assert.equal(r.rider?.breaks, false, 'the preview agrees');
+});
+
+test('rules 2-3 edge: a rider on a hit that arrived at 0 Block breaks Poise normally', () => {
+  const r = cleave({ block: 0, poise: 4 });
+  assert.equal(r.poise, 0);
+  assert.equal(r.broke, true);
+  assert.equal(r.rider?.breaks, true);
+});
+
+test('rule 4 edge: showing the Counter intent again sets the badge, it does not stack', () => {
+  const { combat, enemy } = gilded();
+  const parry = registries.enemies.get('gildedKnight').moves.parry;
+  primeEnemyCounter(combat, enemy, parry, 'parry');
+  primeEnemyCounter(combat, enemy, parry, 'parry');
+  assert.equal(enemy.counterStacks, 1);
+});
+
+test('rule 4 edge: the badge goes when the Counter is cleared, by a stagger or a re-planned intent', () => {
+  for (const clear of ['stagger', 'replan']) {
+    const { combat, enemy } = gilded();
+    assert.equal(enemy.counterStacks, 1);
+    if (clear === 'stagger') drainFixCorePoise(combat, combat.player, enemy, 999);
+    else clearCombatCounter(enemy); // what a re-planned or re-shown intent does first (combat.js presentIntent / reshowIntent), with no fight context
+    assert.equal(enemy.combatCounter, undefined, `${clear}: the Counter is cleared`);
+    assert.equal(enemy.counterStacks ?? 0, 0, `${clear}: no stale badge`);
+  }
 });
