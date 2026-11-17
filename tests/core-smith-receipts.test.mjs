@@ -46,6 +46,9 @@ const pastFirstTier = (run) => { run.itemUpgradeLevels = { ...(run.itemUpgradeLe
 const cardsOf = (combat) => [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard];
 const liveDamage = (run, cardId) => {
   const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);
+  // The dummy holds no stance, so it is Idle and takes x1.25 (theme B), which can turn the face's +1 into +2 after the floor; this test is about the
+  // Smith receipt, so the target takes the hit at face value.
+  if (combat.fixCoreRules?.stanceBenefits?.neutral) delete combat.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
   combat.piles.hand = [card, ...combat.piles.hand.filter((row) => row !== card)];
   combat.player.stamina = combat.player.maxStamina = 99; combat.player.mana = combat.player.maxMana = 99; combat.player.energy = 99;
   const hp = combat.enemies[0].hp;

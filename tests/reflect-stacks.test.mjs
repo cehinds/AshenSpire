@@ -86,7 +86,8 @@ test('flagged and unreflectable hits are neither cut nor returned', () => {
   const carrier = (extra = {}, traits = []) => ({ combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits }, ...extra });
   const plain = profileDamageReceipt(combat, enemy, combat.player, 20, carrier());
   assert.ok(plain.reflect, 'a plain hit reflects'); assert.equal(plain.reflect.stacks, 3);
-  assert.equal(plain.damageReceipt.hits[0].incoming, Math.floor(plain.reflect.original * (1 - 0.9)));
+  // 3 stacks cut 90%, so 10% passes. Written as /10: (1 - 0.9) is 0.0999..., which floors an exact 2 (original 20 since the halved base and the Idle weakness) to 1.
+  assert.equal(plain.damageReceipt.hits[0].incoming, Math.floor(plain.reflect.original / 10));
   for (const [label, row] of [['unreflectable', carrier({}, ['unreflectable'])], ['reflected return', carrier({ reflectedHit: true })], ['counter return', carrier({ counterReturnAttack: true })]]) {
     const receipt = profileDamageReceipt(combat, enemy, combat.player, 20, row);
     assert.equal(receipt.reflect, undefined, label);
