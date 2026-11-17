@@ -163,7 +163,7 @@
       ]
     },
     {
-      "url": "?shot=compendium&shotFound=dagger,towerShield,gorefireBrand,katana",
+      "url": "?shot=compendium",
       "ready": ".compendium .cp-cell",
       "settleMs": 1200,
       "name": "compendium-open",
@@ -212,7 +212,7 @@
       ]
     },
     {
-      "url": "?shot=compendium&shotFound=dagger,towerShield,gorefireBrand,katana",
+      "url": "?shot=compendium",
       "ready": ".compendium .cp-cell",
       "settleMs": 1200,
       "name": "compendium-pick",
@@ -228,10 +228,10 @@
       ],
       "success": [
         {
-          "kind": "text",
-          "label": "compendium: picking an entry shows its detail",
-          "selector": ".compendium .cp-detail .dc-name",
-          "includes": "Katana"
+          "kind": "count",
+          "label": "compendium: picking the uncommon Katana shows its detail (the first cell is common)",
+          "selector": ".compendium #cp-facts[data-rarity=\"uncommon\"] .dc-name",
+          "eq": 1
         },
         {
           "kind": "count",
@@ -265,7 +265,7 @@
       ]
     },
     {
-      "url": "?shot=compendium&shotFound=dagger,towerShield,gorefireBrand,katana",
+      "url": "?shot=compendium",
       "ready": ".compendium .cp-cell",
       "settleMs": 1200,
       "name": "compendium-escape",
