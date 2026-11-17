@@ -610,3 +610,21 @@ test('a row\'s step and price are separate chips that may wrap, so a phone row i
   assert.match(chipRule, /white-space:\s*normal/, 'a chip wraps rather than overflowing its row');
   assert.match(css, /\.card-upgrade-modal \.option-row \.co-costs \{[^}]*flex-wrap:\s*wrap/, 'the chips wrap onto a second line');
 });
+
+test('choosing another card under an open card modal reopens it for that card', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const defend = run.deck.find(c => c.cardId === 'core.defend');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, strike(run).instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const titles = () => [...host.querySelectorAll('.card-upgrade-detail-modal .modal-head-id h2')].map(h => h.textContent);
+    assert.deepEqual(titles(), ['Strike']);
+    door.update(cardUpgradeModel(registries, run, defend.instanceId));
+    assert.deepEqual(titles(), ['Defend'], 'one modal, now titled for the new card');
+    door.update(cardUpgradeModel(registries, run, null));
+    assert.deepEqual(titles(), [], 'no selection: the card modal closes');
+    door.close();
+  });
+});

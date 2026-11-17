@@ -323,6 +323,7 @@ export function MountCardUpgradeModal(
     let candidateList = null;
     let detailShell = null;
     let detailConfirmButton = null;
+    let detailInstanceId = null;
 
     const confirmButton = buildConfirmButton();
     const backButton = buildBackButton(backLabel);
@@ -878,6 +879,7 @@ export function MountCardUpgradeModal(
         detailShell = null;
         detailsHost = null;
         detailConfirmButton = null;
+        detailInstanceId = null;
     }
 
     // Choosing a card opens its own modal (owner, 2026-11-17): before -> after, the options, an (i) that reads the
@@ -895,6 +897,7 @@ export function MountCardUpgradeModal(
         const opener = candidateList?.querySelector(selectorForRow(selected.instanceId)) || returnFocus;
         detailConfirmButton = buildConfirmButton(CLASS.detailConfirm);
         detailConfirmButton.addEventListener('click', commitSelectedUpgrade);
+        detailInstanceId = selected.instanceId;
         detailShell = OpenModal({
             title: selected.name,
             eyebrow: title,
@@ -933,6 +936,13 @@ export function MountCardUpgradeModal(
         if (!selected)
         {
             detailShell.close();
+            return;
+        }
+        // Another card chosen under an open modal: its title, (i) and faces are that card's, so open it afresh.
+        if (selected.instanceId !== detailInstanceId)
+        {
+            detailShell.close();
+            openDetailModal();
             return;
         }
         renderDetailsIfSelected(selected);
