@@ -280,6 +280,10 @@ export function openSaveSlotSelector({
   let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load', allowEmpty: canStart }).properties.selectedSlot;
   let activatedLoadSlot = null;
   let loadReviewSlot = null;
+  // The list door stays built while the review stands over it, so Back and Escape can show it
+  // again as it was. It is valid while the selection it was drawn for has not moved.
+  let listDoor = null;
+  let listDrawnFor = null;
   let closed = false;
   let holdCleanups = [];
   let tooltipCleanup = null;
@@ -333,11 +337,26 @@ export function openSaveSlotSelector({
     close({ restoreFocus: false });
     onRequestNew(slot, { trigger, returnFocusElement });
   };
+  const listIsValid = () => !!listDoor && listDrawnFor === selectedSlot;
   const openReview = (slot) => {
     if (slot == null) return;
     loadReviewSlot = slot;
-    render();
+    if (listIsValid() && listDoor.isConnected) {
+      hideTooltip();
+      const record = slots.find((candidate) => candidate.slot === slot);
+      listDoor.replaceWith(slotDecisionDoor({ kind: 'load', slot, summary: record?.summary || null }));
+    } else render();
     focus('[data-title-action="review-load"], [data-title-action="review-new"]');
+  };
+
+  // Back or Escape out of the review: the kept list door returns, armed as it was; a list
+  // drawn for another selection is drawn again.
+  const showList = () => {
+    const slot = loadReviewSlot;
+    loadReviewSlot = null;
+    if (listIsValid()) veil.replaceChildren(listDoor);
+    else render();
+    focus(`[data-slot-pick="${slot}"]`);
   };
 
   // Whether an empty row leads anywhere here. The in-run Quick Menu opens this
@@ -360,6 +379,7 @@ export function openSaveSlotSelector({
   const render = () => {
     if (closed) return;
     clearSlotHolds();
+    listDoor = null;
     tooltipCleanup?.();
     tooltipCleanup = null;
     veil.innerHTML = '';
@@ -372,7 +392,7 @@ export function openSaveSlotSelector({
     const selection = model();
     // W1m: the door is titled by what it is for, and its primary by what it
     // does — no "Choose a slot" sub-heading over the list.
-    veil.appendChild(slotDoor({
+    listDoor = slotDoor({
       eyebrow: '',
       title: t('title.slots.door.load'),
       closeLabel: 'Close Load Game',
@@ -381,7 +401,9 @@ export function openSaveSlotSelector({
       continueLabel: t('title.slots.primary.load'),
       canContinue: !!selection.properties.canContinue,
       actionSlot: selection.properties.actionSlot,
-    }));
+    });
+    listDrawnFor = selectedSlot;
+    veil.appendChild(listDoor);
 
     const duration = Number(registries?.balance?.ui?.titleLoadHold?.ms);
     const holdMs = Number.isFinite(duration) && duration > 0 ? duration : 600;
@@ -484,12 +506,8 @@ export function openSaveSlotSelector({
     if (!control || !veil.contains(control)) return;
     const action = control.dataset.titleAction;
     if (action === 'close-modal' || action === 'back') close();
-    else if (action === 'review-back') {
-      const slot = loadReviewSlot;
-      loadReviewSlot = null;
-      render();
-      focus(`[data-slot-pick="${slot}"]`);
-    } else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
+    else if (action === 'review-back') showList();
+    else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
     else if (action === 'review-new') requestNew(loadReviewSlot, 'review');
     else if (action === 'modal-continue') {
       // Continue asks before it acts: the decision door is the confirmation.
@@ -510,12 +528,8 @@ export function openSaveSlotSelector({
       if (event.repeat) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (loadReviewSlot != null) {
-        const slot = loadReviewSlot;
-        loadReviewSlot = null;
-        render();
-        focus(`[data-slot-pick="${slot}"]`);
-      } else close();
+      if (loadReviewSlot != null) showList();
+      else close();
     } else if (event.key === 'Tab') {
       const controls = [...veil.querySelectorAll('.title-menu-modal button:not([disabled])')];
       const first = controls[0];
