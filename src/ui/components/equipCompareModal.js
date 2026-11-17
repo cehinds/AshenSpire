@@ -1,6 +1,4 @@
-// The Replace comparison: the equipped item on the left, the candidate on the right,
-// and the facts that move listed under them. It borrows the card-upgrade modal's
-// frame and faces. The host owns the equip.
+// The Replace comparison modal: equipped item against the candidate.
 import {
     el as buildElement,
     modalHead,
@@ -31,14 +29,21 @@ const TITLE_ID = 'equip-compare-title';
 const NO_SCROLL = Object.freeze({ preventScroll: true });
 const ARIA_MODAL_SELECTOR = '[aria-modal="true"]';
 const CLICK_EVENT = 'click';
+const CURRENT_CAPTION_KEY = 'armoury.compare.current';
+const NEW_CAPTION_KEY = 'armoury.compare.new';
+const UNCHANGED_VERDICT = 'same';
+
+function isVisibleButton(node)
+{
+    return !node.hidden && node.getClientRects().length;
+}
 
 function focusableButtons(root)
 {
     const buttons = root.querySelectorAll('button:not([disabled])');
-    return [...buttons].filter((node) => !node.hidden && node.getClientRects().length);
+    return [...buttons].filter(isVisibleButton);
 }
 
-/** One comparison row: the label, then `before → after` coloured by its verdict. */
 export function CompareRowNode(compareRow)
 {
     const delta = deltaNode(String(compareRow.before), String(compareRow.after));
@@ -57,10 +62,11 @@ export function CompareRowNode(compareRow)
     });
 }
 
-/** One item card with its name and a "current" / "new" caption. */
 function buildFace(registries, side, entry)
 {
-    const whichKey = side === SIDE.current ? 'armoury.compare.current' : 'armoury.compare.new';
+    const whichKey = side === SIDE.current
+        ? CURRENT_CAPTION_KEY
+        : NEW_CAPTION_KEY;
     const equipmentCard = renderEquipmentCard(registries, entry.item, {
         interactive: false,
         inspection: false,
@@ -94,13 +100,11 @@ function buildFace(registries, side, entry)
     );
 }
 
-/** Only the topmost modal answers the keyboard. */
 function isTopmostModal(modal)
 {
     return [...document.querySelectorAll(ARIA_MODAL_SELECTOR)].at(-1) === modal;
 }
 
-/** Keeps Tab inside the modal, wrapping at both ends. */
 function trapTab(event, modal)
 {
     const buttons = focusableButtons(modal);
@@ -108,26 +112,33 @@ function trapTab(event, modal)
     {
         return;
     }
+
     const firstButton = buttons[0];
     const lastButton = buttons[buttons.length - 1];
-    if (event.shiftKey && document.activeElement === firstButton)
+    const activeElement = document.activeElement;
+    const wrapsBackward = event.shiftKey && activeElement === firstButton;
+    const wrapsForward = !event.shiftKey && activeElement === lastButton;
+
+    if (wrapsBackward)
     {
         event.preventDefault();
         lastButton.focus();
     }
-    else if (!event.shiftKey && document.activeElement === lastButton)
+    else if (wrapsForward)
     {
         event.preventDefault();
         firstButton.focus();
     }
-    else if (!modal.contains(document.activeElement))
+    else if (!modal.contains(activeElement))
     {
         event.preventDefault();
-        (event.shiftKey ? lastButton : firstButton).focus();
+        const entryButton = event.shiftKey
+            ? lastButton
+            : firstButton;
+        entryButton.focus();
     }
 }
 
-/** Mounts the Replace comparison into host and returns { close }. */
 export function MountEquipCompareModal(
     host,
     {
@@ -142,9 +153,13 @@ export function MountEquipCompareModal(
     },
 )
 {
+    const activeElement = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     const returnFocus = returnFocusElement instanceof HTMLElement
         ? returnFocusElement
-        : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+        : activeElement;
+
     const veil = document.createElement('div');
     veil.className = 'modal-veil smith-modal-veil equip-compare-veil';
     const modal = document.createElement('section');
@@ -176,8 +191,12 @@ export function MountEquipCompareModal(
             buildFace(registries, SIDE.next, next),
         ],
     );
-    const changedRows = rows.filter((compareRow) => compareRow.verdict !== 'same');
-    const unchangedRows = rows.filter((compareRow) => compareRow.verdict === 'same');
+    const changedRows = rows.filter(
+        (compareRow) => compareRow.verdict !== UNCHANGED_VERDICT,
+    );
+    const unchangedRows = rows.filter(
+        (compareRow) => compareRow.verdict === UNCHANGED_VERDICT,
+    );
     const rowsList = buildElement(
         'div',
         {
@@ -230,7 +249,11 @@ export function MountEquipCompareModal(
             return;
         }
         isClosed = true;
-        window.removeEventListener('keydown', onKeydown, true);
+        window.removeEventListener(
+            'keydown',
+            onKeydown,
+            true,
+        );
         veil.remove();
         if (restoreFocus && returnFocus?.isConnected)
         {
@@ -253,10 +276,12 @@ export function MountEquipCompareModal(
         {
             return;
         }
+
         if (!isTopmostModal(modal))
         {
             return;
         }
+
         if (event.key === 'Escape')
         {
             event.preventDefault();
@@ -279,7 +304,11 @@ export function MountEquipCompareModal(
     backButton.addEventListener(CLICK_EVENT, goBack);
     equipButton.addEventListener(CLICK_EVENT, confirmEquip);
     modal.querySelector('.modal-close')?.addEventListener(CLICK_EVENT, goBack);
-    window.addEventListener('keydown', onKeydown, true);
+    window.addEventListener(
+        'keydown',
+        onKeydown,
+        true,
+    );
     queueMicrotask(() => equipButton.focus(NO_SCROLL));
     return { close };
 }

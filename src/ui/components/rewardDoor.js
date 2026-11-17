@@ -3,7 +3,6 @@ import { t as translate } from '../strings.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 
 const OPEN_DOOR_SELECTOR = '.reward-veil .reward-door';
-// Dataset flags a previous view may have left on a door that is reused in place.
 const VIEW_DATASET_KEYS = Object.freeze([
     'rewardDetail',
     'victoryCompact',
@@ -12,17 +11,21 @@ const VIEW_DATASET_KEYS = Object.freeze([
 
 function toKebabCase(camelCaseKey)
 {
-    return camelCaseKey.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    return camelCaseKey.replace(
+        /[A-Z]/g,
+        (letter) => `-${letter.toLowerCase()}`,
+    );
 }
 
-// The open door, only when this owner mounted it.
 function findOwnedDoor(appRoot, owner)
 {
     const openDoor = appRoot.querySelector(OPEN_DOOR_SELECTOR);
-    return openDoor && openDoor.rewardDoorOwner === owner ? openDoor : null;
+    const isOwned = openDoor && openDoor.rewardDoorOwner === owner;
+    return isOwned
+        ? openDoor
+        : null;
 }
 
-// Shared reward modal: keeps the open door across views and owns no reward policy.
 export function MountRewardDoor(
     appRoot,
     {
@@ -58,6 +61,7 @@ export function MountRewardDoor(
         foot,
     ];
     const ownedDoor = findOwnedDoor(appRoot, owner);
+
     if (ownedDoor)
     {
         for (const key of VIEW_DATASET_KEYS)
@@ -81,10 +85,12 @@ export function MountRewardDoor(
             ownedDoor.setAttribute(name, value);
         }
         ownedDoor.setAttribute('aria-label', title);
-        ownedDoor.replaceChildren(...content.filter(Boolean));
+        const presentContent = content.filter(Boolean);
+        ownedDoor.replaceChildren(...presentContent);
         model.apply(ownedDoor);
         return ownedDoor;
     }
+
     appRoot.querySelector('.reward-veil')?.remove();
     if (!appRoot.firstElementChild)
     {
@@ -128,7 +134,9 @@ export function ReplaceRewardFoot(appRoot, owner, foot)
     {
         return false;
     }
-    const oldFooter = [...ownedDoor.children].find((child) => child.tagName === 'FOOTER');
+    const oldFooter = [...ownedDoor.children].find(
+        (child) => child.tagName === 'FOOTER',
+    );
     if (!oldFooter)
     {
         return false;

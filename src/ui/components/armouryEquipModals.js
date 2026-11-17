@@ -1,16 +1,7 @@
-// The Armoury's equip flow for an Inventory item: a "Choose a slot" modal, then a
-// confirm modal for an empty position (here) or the compare modal for an occupied one.
-// Escape / the header close / the veil answer Back; the host owns the equip and refusals.
-import {
-    openModal,
-    button,
-    el as buildElement,
-} from '../kit/index.js';
+// The Armoury's equip flow modals: slot choice, then equip confirm.
+import { openModal, button, el as buildElement } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
-import {
-    optionRowList,
-    markOptionRows,
-} from './optionRowList.js';
+import { optionRowList, markOptionRows } from './optionRowList.js';
 import { t as translate } from '../strings.js';
 
 const CLICK_EVENT = 'click';
@@ -18,8 +9,13 @@ const SLOT_OPTION_ATTRIBUTE = 'data-slot-option';
 const NO_SCROLL = Object.freeze({ preventScroll: true });
 const BACK_LABEL_KEY = 'common.back';
 const EQUIP_LABEL_KEY = 'armoury.picker.act.equip';
+const CARD_OPTIONS = Object.freeze({
+    inspection: false,
+    interactive: false,
+    level: 'inspect',
+    surface: 'armoury',
+});
 
-/** A Back button: the exit every way out of these modals lands on. */
 function createBackButton()
 {
     return button({
@@ -28,7 +24,6 @@ function createBackButton()
     });
 }
 
-/** Opens an md modal with a Back exit and the shared focus / close wiring. */
 function openBackableModal({
     backButton,
     primaryButton,
@@ -49,7 +44,6 @@ function openBackableModal({
     return modal;
 }
 
-/** Opens the "Choose a slot" modal; onChoose(id) runs after it has closed. */
 export function OpenSlotChoiceModal({ options, onChoose, opener })
 {
     const backButton = createBackButton();
@@ -60,6 +54,7 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
     });
     let optionList = null;
     let selectedSlotId = null;
+
     const modal = openBackableModal({
         backButton,
         primaryButton: chooseButton,
@@ -68,18 +63,29 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
         className: 'option-choice equip-slot-choice',
         initialFocus: () =>
         {
-            const optionRows = optionList?.querySelectorAll(`[${SLOT_OPTION_ATTRIBUTE}]`) || [];
-            return [...optionRows].find((optionRow) => !optionRow.disabled) || null;
+            const optionRows = optionList?.querySelectorAll(
+                `[${SLOT_OPTION_ATTRIBUTE}]`,
+            ) || [];
+            const firstEnabledRow = [...optionRows].find(
+                (optionRow) => !optionRow.disabled,
+            );
+            return firstEnabledRow || null;
         },
         body(host)
         {
-            const slotRows = options.map((option) => ({
-                id: option.id,
-                name: option.label,
-                text: option.disabled && option.hint ? option.hint : option.sub,
-                disabled: !!option.disabled,
-                className: 'equip-slot-option',
-            }));
+            const slotRows = options.map((option) =>
+            {
+                const showHint = option.disabled && option.hint;
+                return {
+                    id: option.id,
+                    name: option.label,
+                    text: showHint
+                        ? option.hint
+                        : option.sub,
+                    disabled: !!option.disabled,
+                    className: 'equip-slot-option',
+                };
+            });
             optionList = optionRowList(
                 slotRows,
                 {
@@ -112,7 +118,6 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
     return modal;
 }
 
-/** Opens the empty-position confirm: the item's card, Back / Equip. */
 export function OpenEquipConfirmModal({
     registries,
     item,
@@ -129,7 +134,7 @@ export function OpenEquipConfirmModal({
         weight: 'primary',
         className: 'equip-confirm-equip',
     });
-    // Every way out but Equip lands on the list it came from (modalReturn.js).
+    // Every way out but Equip returns to the list it came from.
     let hasEquipped = false;
     const modal = openBackableModal({
         backButton,
@@ -152,17 +157,17 @@ export function OpenEquipConfirmModal({
         initialFocus: () => equipButton,
         body(host)
         {
-            const renderedCard = renderEquipmentCard(registries, item, {
-                inspection: false,
-                interactive: false,
-                level: 'inspect',
-                surface: 'armoury',
-            });
-            host.append(buildElement(
+            const renderedCard = renderEquipmentCard(
+                registries,
+                item,
+                CARD_OPTIONS,
+            );
+            const cardWrap = buildElement(
                 'div',
                 { class: 'equip-confirm-card' },
                 [renderedCard.card],
-            ));
+            );
+            host.append(cardWrap);
         },
     });
     equipButton.addEventListener(CLICK_EVENT, () =>
