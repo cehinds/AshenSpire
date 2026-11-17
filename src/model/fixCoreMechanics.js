@@ -28,9 +28,16 @@ export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
 // floor(incoming x returnPerStack x stacks held) + the card's base damage (+ floor(advantageShare x incoming)) and consumes consumePerHit stacks;
 // decayPerTurn stacks fade at the owner's turn start. Stacks held have no cap. A rules object without `stackSource` (a fight saved earlier) keeps
 // the Block-as-stacks rule, mechanics.counter.stackFraction and decayPerTurn. Logic: src/engine/counterRule.js, guardStacks.js.
-const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']);
+// Owner, 2026-11-17 (theme B): `armedWhileStacks: true` keeps an armed Counter through its owner's turn start while Counter stacks remain (the stacks
+// follow the normal decay rule, so the Counter lasts as long as they do); `enemyBadgeStacks` is the Counter badge an enemy Counter move shows, which
+// fades by decayPerTurn at the enemy's turn start and loses 1 each time the Counter is used. A fight saved without a key keeps the earlier rule.
+const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard', 'armedWhileStacks', 'enemyBadgeStacks']);
 /** The Counter-stack rules a fight plays under (the `counter` block with `stackSource: "card"`), or null for the Block-as-stacks rule of an earlier fight. */
 export const FixCoreCounterStacks = ctx => fixCoreEnabled(ctx) && rawRules(ctx).counter?.stackSource === 'card' ? rawRules(ctx).counter : null;
+/** True when an armed Counter survives its owner's turn start while Counter stacks remain (theme B, 2026-11-17). */
+export const CounterArmedWhileStacks = ctx => FixCoreCounterStacks(ctx)?.armedWhileStacks === true;
+/** The Counter badge stacks an enemy Counter move grants (theme B, 2026-11-17); 0 for a fight saved without the key. */
+export const EnemyCounterBadgeStacks = ctx => Math.max(0, FixCoreCounterStacks(ctx)?.enemyBadgeStacks | 0);
 /** The Counter stacks one play of `cardId` grants under `rules` (a `counter` block with stackSource "card"): its table entry or stacksPerCard, +upgrade bonus, clamped to 1..stacksMax; 0 for another rule. */
 export function CounterStacksForCard(rules, cardId, upgraded = false) {
   if (rules?.stackSource !== 'card') return 0;
@@ -44,8 +51,10 @@ function validateCounterStacks(row) {
     || !(Number.isFinite(row.advantageShare) && row.advantageShare >= 0) || !Number.isInteger(row.stacksMax) || row.stacksMax < 1 || !whole(row.stacksUpgradeBonus)
     || !Number.isInteger(row.stacksPerCard) || row.stacksPerCard < 1 || row.stacksPerCard > row.stacksMax
     || (row.stacksByCard !== undefined && (typeof row.stacksByCard !== 'object' || row.stacksByCard === null
-      || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))) {
-    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax');
+      || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))
+    || (row.armedWhileStacks !== undefined && typeof row.armedWhileStacks !== 'boolean')
+    || (row.enemyBadgeStacks !== undefined && !whole(row.enemyBadgeStacks))) {
+    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax, boolean armedWhileStacks, whole enemyBadgeStacks');
   }
 }
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
@@ -132,9 +141,11 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 // Owner, 2026-11-14 (Wave 2.5): each stance has a natural benefit, in data. A missing block (a fight saved before this ruling) means no benefits.
 // Fields per stance: attack/prepared damageMultiplier; smash poiseDamageBonus; sweep splashFraction; counter blockMultiplier + hpReturnFraction;
-// defend blockMultiplier + poiseDamageTakenMultiplier; neutral extraDrawNextTurn. Logic: src/engine/stanceBenefits.js.
-const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
-  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier'], neutral: ['extraDrawNextTurn'] });
+// defend blockMultiplier + poiseDamageTakenMultiplier + poiseFloorWhileBlock (the Poise a Defend-stance target holding Block keeps against a
+// physical hit or Sweep) + poiseFloorWardMagic (1: also against magic while it holds Ward stacks; owner 2026-11-17); neutral extraDrawNextTurn. Stance weaknesses (owner 2026-11-17): prepared meleeDamageTakenMultiplier (melee hits on a Prepared target),
+// neutral damageTakenMultiplier (every hit on an Idle target). Logic: src/engine/stanceBenefits.js.
+const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier', 'meleeDamageTakenMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
+  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier', 'poiseFloorWhileBlock', 'poiseFloorWardMagic'], neutral: ['extraDrawNextTurn', 'damageTakenMultiplier'] });
 function validateStanceBenefits(rows) {
   if (rows === undefined) return;
   if (typeof rows !== 'object' || rows === null || rows.version !== 1) throw new Error('FixCore stanceBenefits requires version 1');

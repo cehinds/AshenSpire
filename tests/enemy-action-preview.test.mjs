@@ -22,6 +22,8 @@ function fixture(enemyId, moveId, normalize = true) {
       basePrecisionBonus: 1000, attributes: { dexterity: 0 }, persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
   }
+  // The normalized player holds no stance (Idle); these cases pin the authored per-hit amounts, so the Idle stance weakness (theme B, 2026-11-17) is left out.
+  if (normalize) delete combat.fixCoreRules?.stanceBenefits?.neutral?.damageTakenMultiplier;
   const move = registries.enemies.get(enemyId).moves[moveId];
   const projection = previewEnemyAction(combat, enemy, moveId);
   enemy.intent = { kind: move.intent, moveId, damage: move.damage ?? null, hits: move.hits ?? 1, combatProfile: projection.profile };

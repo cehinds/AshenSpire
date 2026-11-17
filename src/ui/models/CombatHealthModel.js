@@ -38,7 +38,7 @@ export function PoiseBonusView(pool) {
   return bonus > 0 ? Object.freeze({ base, shown: Math.min(value, base), bonus, max, value }) : null;
 }
 
-export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, counterDecay = mechanics.counter.decayPerTurn, reflectStacks = 0 } = {}) {
+export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, counterDecay = mechanics.counter.decayPerTurn, enemyCounter = false, reflectStacks = 0 } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);
   const warded = count(wardBlock);
@@ -66,7 +66,9 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStac
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
-        help: tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: counterDecay }) }] : []),
+        // An enemy's Counter badge (theme B, 2026-11-17) counts the uses of its armed Counter; its stacks add nothing to the return.
+        help: enemyCounter ? tFull('combat.protection.counterEnemy', { stacks: count(counterStacks), decay: counterDecay })
+          : tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: counterDecay }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
         help: tFull('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
     ],
