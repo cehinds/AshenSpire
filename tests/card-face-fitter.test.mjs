@@ -39,13 +39,26 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
 // Owner 2026-11-02: no Inspect replacement. Every clause stays on the face; the font shrinks to the floor.
 // Wave 2 (sizes): the floor is 13 px (rulesText.minPx), so a face that cannot fit its words at 13 px keeps them all, at 13 px,
 // and says so (rulesOverflow) for the Inspect cue instead of shrinking to an unreadable size.
-test('an overflowing primary keeps every clause and shrinks down to the 13px floor, never under it', () => {
+// Owner 2026-11-17: the box holds up to four lines with 1px of padding and nothing bleeds, so a face that cannot fit at
+// 13 px goes under it, to the size that holds four lines, never under the 6 px hard floor (rulesText.boxLines, hardMinPx).
+test('an overflowing primary keeps every clause and shrinks under the 13px floor to fit four lines', () => {
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
-  assert.equal(parseFloat(f.text.style.fontSize), 13, 'shrinks to the configured 13px floor and stops there');
-  assert.equal(f.face.dataset.rulesOverflow, 'true', 'it does not fit at the floor, so the face says so');
-  assert.equal(f.text.dataset.rulesComplete, 'false');
+  const font = parseFloat(f.text.style.fontSize);
+  assert.ok(font < 13 && font >= 6, `shrinks under the 13px floor to fit, never under 6px: ${font}`);
+  assert.equal(f.text.style.padding, '1px', 'the box keeps 1px of inner padding');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight, 'nothing bleeds');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+});
+
+test('a face too long even at the 6px hard floor stops there and says it overflows', () => {
+  const f = faceFixture([400, 100]);
+  fitIllustratedCards([f.card]);
+  assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6, 'never under the hard floor');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
 });
 
 test('a primary that fits at the 13px floor keeps every clause and reports no overflow', () => {
