@@ -47,7 +47,7 @@ for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6
 test('core.pommelStrike upgraded hit lands for the upgraded damage in the log', () => {
   const u = playCopy('core.pommelStrike', true), b = playCopy('core.pommelStrike', false);
   assert.equal(500 - u.combat.enemies[0].hp, u.hit.amount);
-  assert.equal(u.hit.amount - b.hit.amount, 2);
+  assert.equal(u.hit.amount - b.hit.amount, 1, 'Core halves the base damage, rounded up: 7 -> 4 and 5 -> 3');
 });
 
 test('Legacy profile resolution of an upgraded card is unchanged', () => {

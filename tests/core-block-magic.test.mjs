@@ -8,7 +8,8 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt,isPierceHit } from '../src/engine/gameProfileCombat.js';
 // Owner, 2026-10-25: Block soaks the whole hit, magic included, except floor(0.2 x damage) of a pierce hit (owner, 2026-10-26).
-const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
+// Base scale pinned to 1: the subject is the pierce fraction of a 10 hit, not Core's halved base damage.
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{effects:{baseDamageMultiplier:1}}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function liveCore() {
  const run=createRunState({registries:reg,classId:'reaver',seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
