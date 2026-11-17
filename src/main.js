@@ -686,7 +686,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
+function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null, startingCards = null }) {
   resetArmouryTraySession();
   // A caller that bypassed the seed field still gets a refusal without a reroll.
   const asked = seedString || randomSeedString();
@@ -738,7 +738,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
     enemyKnowledgeVersion: configuredProfile ? undefined : enemyKnowledgeVersion,
     reactionRulesVersion: configuredProfile ? undefined : reactionRulesVersion,
     classId, customization, custom, startingKitId, startingHands, startingArmourId,
-    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, quickStart,
+    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, startingCards, settings: saves.loadMeta().settings || {}, quickStart,
   });
   run = prepared.run;
   rng = prepared.rng;

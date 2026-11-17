@@ -36,6 +36,10 @@ export const deckRules = Object.freeze({
   // these character levels. With the min-slot relics (1 each) a run lands
   // near a minimum of 8 on average.
   minimumReductionLevels: Object.freeze([6, 12]),
+  // Owner, 2026-11-17: at Core creation the player chooses how many of each of
+  // these unranked cards start in the deck (basic attack, smash, counter,
+  // block, sweep). The class's other starting cards stay as authored.
+  creationPool: Object.freeze(['core.strike', 'core.smash', 'core.counter', 'core.defend', 'core.sweep']),
   // Plain card ids a run with no equipment may add without limit. An equipped
   // run's basics are its attack-slot and guard instances, matched by role.
   unlimitedCardIds: Object.freeze(['strike', 'defend']),

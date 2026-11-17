@@ -3,6 +3,7 @@ import { createRng, seedToString } from '../engine/rng.js';
 import { dealtAttackSlotCount, isPoolDeckMode, POOL_DECK_RULE } from '../model/cardRemoval.js';
 import { cancelDeckEdit } from '../model/deckRules.js';
 import { isConfiguredRun } from '../model/gameProfileRun.js';
+import { applyStartingDeckChoice } from '../model/startingDeckChoice.js';
 import { createDeck, createIdGen, createRunState } from '../model/state.js';
 
 /** Builds a complete run and RNG before the host adopts either. */
@@ -26,6 +27,8 @@ export function CreatePreparedRun({
     attributeMode,
     attributes,
     deckEdit,
+    startingCards,
+    settings,
     quickStart,
 })
 {
@@ -50,6 +53,11 @@ export function CreatePreparedRun({
     {
         cancelDeckEdit(run, deckEdit);
     }
+    // Core creation's starting-card choice (owner, 2026-11-17): the pool cards and their copies.
+    if (startingCards && isConfiguredRun(run))
+    {
+        applyStartingDeckChoice(run, startingCards, settings || {});
+    }
     run.advancedConfigSnapshot = configSnapshot;
     run.seedString = seedToString(seed);
     run.beginChoices = structuredClone({
@@ -64,6 +72,7 @@ export function CreatePreparedRun({
         attributeMode,
         attributes,
         ...(deckEdit ? { deckEdit } : {}),
+        ...(startingCards ? { startingCards } : {}),
     });
     run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
     run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
