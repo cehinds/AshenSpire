@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-17 (theme A balance: base damage halved, single-stat ratings, SP and MP at 3 points, stat-point gear, act levels for elites and bosses): the
+// three current-profile scenarios change their events and continuations by design; the historical scenario is unchanged.
 // Recaptured 2026-11-17 (theme B status and stance rules: Counter decay keeps it armed, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses): the
 // three current-profile scenarios change their events and continuations by design; the historical scenario changes only its snapshot, stored and loaded hashes (its events,
 // rng and continuation are identical, so a save from before keeps its rules).
