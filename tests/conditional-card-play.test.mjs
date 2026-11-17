@@ -10,7 +10,11 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
+import { PlayConditionTargetPlan } from '../src/engine/cardBehavior.js';
 import { actorRangeKey, rangePairKey } from '../src/model/combatEngagement.js';
+import { cardTargetPlan, forbiddenCardDrop } from '../src/model/cardTargets.js';
+import { ResolveTargetHudAction } from '../src/ui/models/CombatTargetingModel.js';
+import { targetLayer } from '../src/ui/models/TargetLayerModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -23,9 +27,9 @@ export const CONDITIONAL_CARDS = Object.freeze({
   starseer: ['unguardedBolt', 'focusedStar', 'rimeLance', 'distantStar'], rogue: ['breakFocus', 'dirtyStrike', 'closeQuarters'],
 });
 
-function live(classId, seed = 433) {
+function live(classId, seed = 433, enemyIds = ['wanderingSoldier']) {
   const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds });
   const enemy = combat.enemies[0];
   delete combat.reactionRules.contactPolicy;
   Object.assign(combat.player, { basePrecisionBonus: 1000, hp: 999, maxHp: 999, energy: 99, stamina: 99, maxStamina: 99, mana: 99, maxMana: 99, statuses: {} });
@@ -168,6 +172,34 @@ test('Lunging Thrust and Distant Star play only at Reach', () => {
     play(far.combat, cardId, far.enemy);
     assert.ok(far.enemy.hp < hp, `${cardId} hits at Reach`);
   }
+});
+
+test('a mixed-range fight offers and defaults to the eligible enemy for Reach-only cards', () => {
+  const { combat, player } = live('reaver', 433, ['wanderingSoldier', 'wanderingSoldier']);
+  const [near, far] = combat.enemies;
+  setBand(combat, near, 0);
+  setBand(combat, far, 1);
+  const card = registries.cards.get('lungingThrust');
+  const base = cardTargetPlan(card, player.id, combat.enemies);
+  assert.deepEqual(base.legalIds, [near.id, far.id]);
+  const ordinary = registries.cards.get('openingCut');
+  assert.equal(PlayConditionTargetPlan(combat, ordinary, base), base);
+  const plan = PlayConditionTargetPlan(combat, card, base);
+  assert.deepEqual(plan.legalIds, [far.id]);
+  assert.deepEqual(targetLayer({ armed: true, enemies: combat.enemies, legalIds: plan.legalIds }).eligibleIds, [far.id]);
+  const targetHud = id => ResolveTargetHudAction(id, {
+    combat, selected: 'probe', readTargetPlan: () => plan, inputBusy: () => false,
+    hasCardChoice: () => false, veilIsOpen: () => false,
+  });
+  assert.equal(targetHud(near.id).type, 'refused');
+  assert.equal(targetHud(far.id).targetId, far.id);
+  assert.equal(forbiddenCardDrop(plan, { x: 1, y: 1 }, [{ id: near.id, alive: true, bounds: { left: 0, top: 0, right: 2, bottom: 2 } }]), true);
+  combat.piles.hand.push({ instanceId: 'probe', cardId: card.id });
+  const automatic = previewCard(combat, 'probe');
+  const aimed = previewCard(combat, 'probe', far.id);
+  assert.deepEqual(automatic.values, aimed.values);
+  const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'probe' });
+  assert.equal(played.events.find(event => event.type === 'cardPlayed').targetId, far.id);
 });
 
 test('Close Quarters pays off at Melee and not at Reach', () => {
