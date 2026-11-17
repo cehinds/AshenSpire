@@ -1,3 +1,4 @@
+// @ts-check
 import { uiConfig } from '../../config/generated/ui.js';
 
 const MODAL_KINDS = uiConfig.components.modal.components;
@@ -62,6 +63,8 @@ export function ResolveModalConfig(kind, table = MODAL_KINDS)
     return mergedConfig;
 }
 
+/** @import { ModalPresentation } from '../contracts.js' */
+/** @implements {ModalPresentation} */
 export class ModalModel
 {
     constructor(kind, config)
@@ -72,6 +75,7 @@ export class ModalModel
 
     cssProperties()
     {
+        /** @type {Record<string, string>} */
         const customProperties = {};
 
         for (const [configKey, configValue] of Object.entries(this.config))

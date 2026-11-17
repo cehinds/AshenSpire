@@ -1,3 +1,4 @@
+// @ts-check
 // src/ui/haptics.js — vibration on card play, damage taken and turn start
 // (FINISH wave 13).
 //
