@@ -107,3 +107,15 @@ test('Shock caps at 10 and the Shocked contest does not run for a fight with ele
   assert.equal(combat.rng.getCounters().combatContest || 0, before, 'no contest dice');
   assert.equal(getStacks(enemies[0], 'shocked'), 0);
 });
+
+test('review #2822: the chained hit has its own contact, so its Block record never overwrites the first target\'s', () => {
+  const { combat, enemies, player } = fight({ enemies: 2 });
+  const receipt = { blockBefore: 7 };
+  const carrier = { ...SPARK, expansionContact: { index: 0, receipt } };
+  const [row] = ElementSecondaryPlan(combat, player, enemies[0], carrier);
+  assert.notEqual(row.carrier.expansionContact, carrier.expansionContact);
+  assert.notEqual(row.carrier.expansionContact.receipt, receipt);
+  row.carrier.expansionContact.receipt.blockBefore = 0; // what the chained hit's applyProfileDamage records
+  assert.equal(receipt.blockBefore, 7, 'the first target keeps the Block its hit met');
+  assert.equal(row.carrier.expansionContact.index, 0, 'the planned contact flags carry over');
+});
