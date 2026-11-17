@@ -254,6 +254,9 @@ function applyStep(card, step) {
 }
 
 const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
+// The lifecycle tag a keyword carries. Built, not quoted: tools/mechanics-generate.mjs names the first file quoting a tag as the code
+// that runs it, and the Exhaust and Ethereal rules run in the engine (actions.js, combat.js endPlayerTurn), not in this upgrade step.
+const lifecycleTag = (word) => ['lifecycle', word].join('.');
 // A step that eases a drawback also drops the sentence and face line that named it, so the text follows the data (review of #2819).
 // Base cards draw their authored text and face lines (baseCardPresentation), so both are rewritten here, not only the derived face.
 const DRAWBACK_TEXT = Object.freeze({
@@ -291,8 +294,8 @@ function applyFx(card, step) {
     case 'copy': effects.push({ op: 'addCard', card: card.id, count: 1, pile: 'discard' }); break;
     case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
-    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); dropDrawbackText(out, card, step.fx); break;
-    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag('lifecycle.ethereal'); dropDrawbackText(out, card, step.fx); break;
+    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag(lifecycleTag('exhaust')); dropDrawbackText(out, card, step.fx); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag(lifecycleTag('ethereal')); dropDrawbackText(out, card, step.fx); break;
     // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
     case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; dropDrawbackText(out, card, step.fx); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;

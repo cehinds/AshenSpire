@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/cardUpgrade.js",
-    "symbol": "applyFx"
+    "file": "src/engine/combat.js",
+    "symbol": "endPlayerTurn"
   }
 }
