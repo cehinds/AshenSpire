@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -336,7 +336,10 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const found = options(baseDef, current, applied, limits);
   // An authored `upgradeMenu` limits the rolled options to the kinds it names (Star Seer's Ethereal: Reaction, drop Ethereal or more Block).
-  const menu = Array.isArray(baseDef.upgradeMenu) ? baseDef.upgradeMenu : null;
+  // A ranked ability card's grade table owns its numbers, so it applies only drawback-removal steps (cardUpgrade.js DrawbackSteps):
+  // it is offered only those, so the offer equals the effect (review of #2819).
+  const menu = Array.isArray(baseDef.upgradeMenu) ? baseDef.upgradeMenu
+    : Array.isArray(baseDef.gradeProfiles) ? DrawbackSteps.map((fx) => `fx:${fx}`) : null;
   const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)));
   const out = [];
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.

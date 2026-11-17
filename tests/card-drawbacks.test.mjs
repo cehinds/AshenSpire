@@ -282,3 +282,31 @@ test("each reachable Evade card's upgrade eases its drawback", async () => {
   for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) for (const step of nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `q${seed}`, cardId: 'quickstep', upgraded: false }, quickstep, registries, 40, { noAuthored: true })) if (step.k === 'fx') offered.add(step.fx);
   assert.ok(offered.has('unexhaust'), 'Quickstep may roll the drop-Exhaust upgrade');
 });
+
+// Review of #2819 (Codex): a ranked ability card's grade table ignored every rolled step, so the offered drop-Exhaust did nothing.
+test('a ranked ability card is offered only drawback-removal steps, and drop-Exhaust really keeps it out of the exhaust pile', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
+  for (const cardId of ['quickstep', 'kickOff', 'warcry', 'reclamation', 'vanish', 'smokeBomb', 'perfectHeist']) {
+    const def = registries.cards.get(cardId);
+    assert.ok(Array.isArray(def.gradeProfiles) && def.keywords.includes('exhaust'), `${cardId} is a ranked card that Exhausts`);
+    const offered = nextUpgradeOptions({ seed: 3, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `o-${cardId}`, cardId, upgraded: false }, def, registries, 40, { noAuthored: true });
+    assert.deepEqual(offered.map((step) => `${step.k}:${step.fx}`), ['fx:unexhaust'], `${cardId}: only the step that applies is offered`);
+    const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocked });
+    const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    for (const pile of Object.values(combat.piles)) pile.length = 0;
+    for (let i = 0; i < 6; i += 1) combat.piles.draw.push({ instanceId: `d${i}`, cardId: 'core.defend', upgraded: false });
+    combat.piles.hand.push({ instanceId: 'plain', cardId, upgraded: false }, { instanceId: 'eased', cardId, upgraded: true, upgradeSteps: [{ k: 'fx', fx: 'unexhaust' }] });
+    combat.player.stamina = combat.player.maxStamina = 40;
+    combat.player.mana = combat.player.maxMana = 40;
+    for (const id of ['plain', 'eased']) {
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: combat.enemies[0].id }); }
+      catch { dispatch(combat, { type: 'playCard', cardInstanceId: id }); }
+    }
+    const where = (id) => Object.entries(combat.piles).filter(([, pile]) => pile.some((card) => card.instanceId === id)).map(([name]) => name);
+    assert.deepEqual(where('plain'), ['exhaust'], `${cardId}: the plain copy Exhausts`);
+    assert.ok(!where('eased').includes('exhaust') && where('eased').length === 1, `${cardId}: the upgraded copy does not (${where('eased')})`);
+  }
+});

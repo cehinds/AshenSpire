@@ -328,6 +328,15 @@ function applyFx(card, step) {
 /** The steps with each `combo` replaced by its inner steps (a combo is two effects in one slot). */
 export const FlatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
 
+/** The rolled steps that only remove a drawback (keyword or rising cost). They are the steps a ranked ability card can take: its grade
+ * table owns its numbers, so no other step applies, but these never touch a number (review of #2819: the offer must equal the effect). */
+export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']);
+/** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
+export function ApplyDrawbackSteps(card, steps) {
+  const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
+  return easing.reduce((out, step) => applyFx(out, step), card);
+}
+
 export function applyUpgradeSteps(base, steps) {
   if (!Array.isArray(steps) || !steps.length) return base;
   let card = steps[0].k === 'authored'
