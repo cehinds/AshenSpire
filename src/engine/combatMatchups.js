@@ -411,7 +411,7 @@ export function setCombatStance(ctx, entity, carrier) {
  * `counter.armedWhileStacks`, where a Counter whose owner still holds Counter stacks stays armed: the stacks fade by decayPerTurn at each
  * turn start and a covered hit spends them, and the Counter ends with the last one.
  */
-export function expireCombatCounterAtTurnStart(ctx, entity) {
+export function ExpireCombatCounterAtTurnStart(ctx, entity) {
   if (!entity) return;
   const counter = entity.combatCounter;
   if (counter?.charges > 0 && combatExpansionEnabled(ctx) && CounterArmedWhileStacks(ctx) && counterStackCount(entity) > 0) {
@@ -447,7 +447,7 @@ export function startTacticalTurn(ctx, entity) {
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start (owner 2026-10-31); the Counter then lasts only while stacks remain.
   if ((entity.kind === 'player' && fixCoreEnabled(ctx)) || EnemyCounterBadgeRule(ctx, entity)) decayCounterStacks(ctx, entity);
-  expireCombatCounterAtTurnStart(ctx, entity);
+  ExpireCombatCounterAtTurnStart(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null
