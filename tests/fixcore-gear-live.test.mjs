@@ -73,24 +73,27 @@ test('previously earned Core attribute entitlement remains claimable and changes
 });
 
 test('authored attribute gear reaches HP MP SP pools with one contribution on reload', () => {
-  // Owner, 2026-11-17 (gear statPoints): Core gear keeps only authored attribute and Poise points, so the pools move through
-  // attributes: CON 2 -> HP +10 (5 per CON) and SP +1 (CON 1 -> 3, one SP per 3 CON); WIS 1 lifts WIS 2 -> 3, MP +1 (one per 3 WIS).
+  // +1 CON gives 5 HP, while +1 DEX and +1 WIS bring each effective attribute to 4 for the first SP and MP increases.
   const catalog=loadGameProfileCatalog();
   const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='wayfarerPlate');
-  armor.points={constitution:2,wisdom:1};
+  armor.points={constitution:1,dexterity:1,wisdom:1};
   const selected=resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),catalog);
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
   const run=createRunState({registries,classId:'reaver',seed:10});
-  // An earned WIS point first (Reaver WIS 1 -> 2), so the armor's one WIS reaches the 3 WIS that buy an MP.
-  run.level.level=2; run.level.unspentPoints=1;
-  withGameProfileService(run,'levelUp',()=>applyLevelUp(registries,run,'wisdom'));
+  run.loadout.sets.armor[0]=null;
+  run.level.level=5; run.level.unspentPoints=4;
+  withGameProfileService(run,'levelUp',()=>{
+    for (const attribute of ['dexterity','dexterity','wisdom','wisdom']) applyLevelUp(registries,run,attribute);
+  });
   const unworn=[run.maxHp,run.maxMana,run.maxStamina];
+  assert.deepEqual(unworn.slice(1),[1,3]);
+  const unwornPoints=gameProfileEquipmentReceipt(registries,run).totals;
   run.loadout.sets.armor[0]='wayfarerPlate';
   rederivePools(registries,run,'test');
   const receipt=gameProfileEquipmentReceipt(registries,run);
-  assert.ok(receipt.totals.constitution>=2 && receipt.totals.wisdom>=1);
+  for (const attribute of ['constitution','dexterity','wisdom']) assert.equal(receipt.totals[attribute]-unwornPoints[attribute],1);
   const before=[run.maxHp,run.maxMana,run.maxStamina];
-  assert.deepEqual(before,unworn.map((n,i)=>n+[10,1,1][i]));
+  assert.deepEqual(before,unworn.map((n,i)=>n+[5,1,1][i]));
   const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
   const restored=save.loadRun(registries);assert.ok(restored,JSON.stringify(save.runStatus()));
   assert.deepEqual([restored.maxHp,restored.maxMana,restored.maxStamina],before);
@@ -100,7 +103,7 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
   assert.deepEqual([restored.maxHp,restored.maxMana,restored.maxStamina],before);
   run.loadout.sets.armor[0]=null;
   rederivePools(registries,run,'test');
-  assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],before.map((n,i)=>n-[10,1,1][i]));
+  assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],unworn);
 });
 
 test('equipment inspection exposes converted values and armor budget', async () => {

@@ -28,14 +28,14 @@ function fight(cardId, classId = 'reaver', reg = registries) {
   return { combat, card };
 }
 
-// Owner, 2026-11-17: MP = class base + floor(WIS / 3), so one MP costs three WIS points. The fixture raises the Reaver
-// (base 1) to WIS 2, still 1 MP; the earned point that reaches WIS 3 adds exactly one maximum MP.
-test('core Reaver starts with one MP and the earned WIS point that reaches a third WIS adds exactly one maximum MP', () => {
+// Owner, 2026-11-17: MP grows with the greater of INT and WIS, with the first increase at 4.
+test('core Reaver starts with one MP and an earned fourth WIS adds exactly one maximum MP', () => {
   // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
   const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
   assert.equal(run.attributes.wisdom, 1);
-  run.attributes.wisdom = 2; rederivePools(registries, run, 'test');
-  assert.equal(run.maxMana, 1, 'WIS 2 is still floor(2 / 3) = 0 MP over the base');
+  run.attributes.intelligence = 3; run.attributes.wisdom = 3;
+  rederivePools(registries, run, 'test');
+  assert.equal(run.maxMana, 1, 'INT 3 and WIS 3 leave Mana at the base');
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });

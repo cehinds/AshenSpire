@@ -83,20 +83,20 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
 
-test('a blight attribute bonus moves the threshold: the preview matches what allocateAttributePoint changes', () => {
+test('a blight INT bonus moves the Mana threshold in both the preview and allocation', () => {
   const { registries, run } = build((r) => {
-    r.ashenBlight = { milestones: [{ path: 'survivor', tier: 1 }] };
-    r.attributes.constitution = 1;
+    r.attributes.intelligence = 2;
     r.level.unspentPoints = 1;
   });
-  const stamina = () => run.maxStamina;
-  const predicted = attributePointGains(registries, run, 'constitution').find(g => g.statId === 'stamina')?.delta ?? 0;
+  const manaGain = () => attributePointGains(registries, run, 'intelligence').find(g => g.statId === 'mana')?.delta ?? 0;
+  assert.equal(manaGain(), 0, 'INT 2 to 3 alone does not increase Mana');
+  run.ashenBlight = { milestones: [{ path: 'spell', tier: 1 }] };
+  const predicted = manaGain();
   rederivePools(registries, run, 'test'); // the milestone was injected after birth: settle its one-off bonus first
-  const before = stamina();
-  allocateAttributePoint(registries, run, 'constitution');
-  assert.equal(stamina() - before, predicted, 'preview equals the real allocation');
-  // Owner, 2026-11-17: SP = 3 + floor(CON / 3). Unaided CON 1 -> 2 crosses nothing; the +1 CON bonus makes it 2 -> 3.
-  assert.equal(predicted, 1, 'the +1 CON bonus makes floor(CON / 3) cross a threshold at CON 2 -> 3');
+  const before = run.maxMana;
+  allocateAttributePoint(registries, run, 'intelligence');
+  assert.equal(run.maxMana - before, predicted, 'preview equals the real allocation');
+  assert.equal(predicted, 1, 'the bonus moves effective INT from 3 to 4 when the point is spent');
 });
 
 test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {
