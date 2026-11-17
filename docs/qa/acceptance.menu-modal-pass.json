@@ -76,7 +76,7 @@
         { "kind": "visible", "label": "The trader buys (Sell)", "selector": "[data-shop-category=\"sell\"]" }
       ],
       "failure": [
-        { "kind": "count", "label": "More than six buying shelves plus Sell and Blacksmith", "selector": ".merchant-category-dock > *", "min": 9 }
+        { "kind": "count", "label": "More than six options in all (Sell and Blacksmith counted)", "selector": ".merchant-category-dock > *", "min": 7 }
       ]
     },
     {

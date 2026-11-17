@@ -17,14 +17,16 @@ const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ash
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(configuredContentBundle(contentBundle, {}), profile)), profile);
 const newRun = (seed) => createRunState({ seed, classId: 'reaver', registries, runId: 'trader-variety' });
 
-test('every trader stocks 3-6 shelves including armaments, cards and relics, and the count varies', () => {
+test('every trader offers 3-6 options (Sell and a Blacksmith counted) including armaments, cards and relics, and the count varies', () => {
   const counts = new Set();
   let smiths = 0;
   for (let n = 0; n < 40; n += 1) {
     const run = newRun(100 + n);
     const shopId = `1:node${n}`;
     const shelves = ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories);
-    assert.ok(shelves.length >= 3 && shelves.length <= 6, `${shelves.length} shelves`);
+    // Sell, and a Blacksmith when the trader keeps one, count inside the 3-6 options (review on #2817).
+    const options = shelves.length + 1 + (ConfiguredTraderOffersSmith(run, shopId) ? 1 : 0);
+    assert.ok(options >= 3 && options <= 6, `${options} options`);
     for (const kind of ['weapons', 'combatCards', 'relics']) assert.ok(shelves.includes(kind), `${kind} is always stocked`);
     assert.deepEqual(ConfiguredTraderCategories(run, shopId, gameContent(run, 'rewards').categories), shelves, 'seeded: same node, same shelves');
     counts.add(shelves.length);
