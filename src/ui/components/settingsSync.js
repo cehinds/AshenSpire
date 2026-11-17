@@ -233,8 +233,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     const active = profileName(cfg);
     const lastAt = read(SYNC_STORAGE.lastAt);
     mount.innerHTML = `<div class="set-sync">
-      <p class="set-note">Your defaults are one file on GitHub. Save them from any device, and every other device can load them —
-        on request, or each time the game starts. Loading replaces this device's settings with the file's; a preview shows what will change first.</p>
+      <p class="set-note">Your defaults are one file on GitHub. Save them from any device, and every other device can load them,
+        on request or each time the game starts. Loading replaces this device's settings with the file's; a preview shows what will change first.</p>
       <div class="set-card-list">
         <div class="as-row setting set-row set-row-wide">
           <span class="as-labelstack"><span class="ls-label">Profile: <b class="set-sync-active" data-sync-active>${esc(active)}</b></span>
@@ -247,7 +247,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         <div class="set-sync-preview" data-sync-preview hidden></div>
         <div class="as-row setting set-row set-row-wide">
           <span class="as-labelstack"><span class="ls-label">Named profile</span>
-            <span class="ls-hint set-note">Keep several (desk, phone, balance-a…). Pick one, or type a new name — it is created on the first save.
+            <span class="ls-hint set-note">Keep several (desk, phone, balance-a…). Pick one, or type a new name. It is created on the first save.
               <span data-sync-list-note>${esc(listNote)}</span></span></span>
           <span class="r-trail set-sync-acts">
             <select class="set-sync-select" data-sync-profile aria-label="Named profile">${pickerOptions()}</select>
@@ -399,7 +399,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         if (mine !== generation || target !== cfg) return;
         const noted = write(SYNC_STORAGE.lastSha, result.sha || '');
         status((result.unchanged ? 'The profile on GitHub already matches this device.'
-          : `Saved the “${profileName(target)}” profile${result.branchCreated ? ` — created the ${target.branch} branch` : ''}. Other devices can load it now.`)
+          : `Saved the “${profileName(target)}” profile${result.branchCreated ? ` (created the ${target.branch} branch)` : ''}. Other devices can load it now.`)
           + (noted ? '' : ` ${UNNOTED}`));
         if (profiles && !profiles.includes(profileName(target))) { profiles = [...profiles, profileName(target)].sort((a, b) => a.localeCompare(b)); fillPicker(); }
       } catch (error) { status(error.message); } finally { busy(btn, false, 'Save my settings to GitHub'); }
@@ -428,7 +428,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('name', () => {
       const typed = mount.querySelector('[data-sync-name]').value;
       const name = normalizeProfileName(typed);
-      if (!name) { status(typed.trim() ? 'Use 1–40 letters, digits, dot, dash or underscore for a profile name.' : 'Type a profile name first.'); return; }
+      if (!name) { status(typed.trim() ? 'Use 1 to 40 letters, digits, dot, dash or underscore for a profile name.' : 'Type a profile name first.'); return; }
       useProfile(name);
     });
     on('token', () => {

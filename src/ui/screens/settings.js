@@ -930,7 +930,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
           <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
           <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(config.scenes[staged[0]]?.id || 'warmth')}">Open live scene editor</button>
           <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
-          ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
+          ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on, so the opening falls back to the five scenes it shipped with.</span>'}
         </div>
       </div></div>`;
   }
@@ -967,7 +967,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     return `${rowOpen('set-row-wide set-row-swatches')}${stack()}<span class="r-trail set-swatch-trail">
         <span class="as-swatches" role="group" aria-label="${esc(r.label)}">${chips}</span>
         <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-controls="set-wheel-${esc(r.key)}" aria-expanded="false">Colour wheel</button>
-        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
+        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} (colour wheel)" hidden>
       </span></div>`;
   }
   if (r.type === 'textarea') {
@@ -996,7 +996,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
             // (0.01 on a 0.05 step); `any` lets the thumb stand where the value is.
             sliderStep: r.integer === false || !Number.isInteger(step) ? 'any' : step })}
         </span>
-        ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
+        ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here: flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
@@ -1143,7 +1143,7 @@ function numberAppliedHtml(settings, row) {
   if (stored === undefined || stored === null || stored === '') return '';
   const used = resolveNumberRow(settings, row);
   if (String(stored).trim() === String(used)) return '';
-  return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
+  return `<p class="set-note set-applied">Using <b>${used}</b> (${row.min} to ${row.max}, whole numbers).</p>`;
 }
 
 export function resolveTapSize(settings) {
@@ -1183,7 +1183,7 @@ function tapCostHtml(settings) {
   // into a save file is the one person who needs to be told 32 is not a size.
   const badLine = bad
     ? `<p class="set-applied limited">Stored value ${esc(String(stored))} is not one of `
-      + `${esc(sizes.join(', '))} — using ${px}.</p>`
+      + `${esc(sizes.join(', '))}. Using ${px}.</p>`
     : '';
   if (px >= max) return badLine;
   const rate = UI_DEFAULTS.tapSize.missRate;
@@ -1192,7 +1192,7 @@ function tapCostHtml(settings) {
   const tail = here && there
     ? `: about ${here} misses here, against ${there} at ${max}`
     : '';
-  return `${badLine}<p class="set-applied">${px} px — below the size a fingertip`
+  return `${badLine}<p class="set-applied">${px} px is below the size a fingertip`
     + ` reliably hits${tail}.</p>`;
 }
 
@@ -1267,7 +1267,7 @@ function appliedHtml(settings) {
   // resolves; it lands on the wrapper instead of the paragraph inside it.
   return `<p class="set-applied${limited ? ' limited' : ''}">`
     + (limited
-      ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
+      ? `Showing ${shown}, the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
       : `Showing ${shown}`)
     + ` <span class="set-applied-hint">For bigger text, try Text size.</span>`
     + `</p>`;
@@ -1569,7 +1569,7 @@ function searchResultsHtml(settings, query, changedOnly = false, profile = null,
     where = at;
     return heading + settingsRowHtml(settings, row);
   }).join('');
-  const more = hits.length > shown.length ? `<p class="set-note">${hits.length - shown.length} more — add a word to narrow the search.</p>` : '';
+  const more = hits.length > shown.length ? `<p class="set-note">${hits.length - shown.length} more. Add a word to narrow the search.</p>` : '';
   const lead = changedOnly ? 'Every setting you have changed, from every section.' : 'Results from every section.';
   const noun = changedOnly ? `${hits.length} changed` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`;
   return `<div class="set-group-summary"><span>${lead}</span><output data-config-count aria-live="polite">${noun}</output></div>`
@@ -2568,10 +2568,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // is what the previous commit fixed. The pair covers both.
       const moved = settledRefusal !== refused || cardSizingExport(settled.levels) !== text;
       const what = moved
-        ? 'sizes that have since changed — copy again'
+        ? 'sizes that have since changed (copy again)'
         : settledRefusal
           ? `the AUTHORED sizes, not the ones shown: ${settledRefusal}`
-          : `the tuned sizes — ${cardSizingExportPath}`;
+          : `the tuned sizes (${cardSizingExportPath})`;
       if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
       // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
       // be withdrawn by the one that posted it. Exporting under a broken ladder
@@ -2582,8 +2582,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       showSettingsNotice(copied
         ? `Copied ${what}.`
         : held
-          ? `A copy is still with the clipboard, so this one is in the browser console instead — ${what}. Starting a second write could land out of order.`
-          : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
+          ? `A copy is still with the clipboard, so this one is in the browser console instead: ${what}. Starting a second write could land out of order.`
+          : `Could not reach the clipboard. The block is in the browser console: ${what}.`,
       settledRefusal ? 'card-size' : '');
       setTimeout(() => { btn.textContent = t('common.copy'); }, 2000);
     });
