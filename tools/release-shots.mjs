@@ -297,6 +297,8 @@ const SCREENS = [
   //           writes; the artifact is never modified.
   { name: 'compendium-empty', query: '?shot=compendium&shotFound=', landmark: '.compendium .cp-cell', state: 'compendium' },
   { name: 'compendium-held', query: '?shot=compendium&shotFound=' + encodeURIComponent('dagger,towerShield,gorefireBrand,katana'), landmark: '.compendium .cp-cell.state-held' },
+  // The Bestiary: the same knowledge door, its lifetime ledger seeded by ?shotKnown= (src/dev/shotStates.js).
+  { name: 'bestiary', query: '?shot=bestiary', landmark: '.bestiary .cp-list .as-option', state: 'bestiary' },
   // The reward MENU (E11/#256) — a SCREENS entry and NOT an EXCLUDED_STATES
   // line, for the reason the Shrine and the event entries above already carry:
   // `?shot=reward` exists BECAUSE the reworked screen needed pictures instead
