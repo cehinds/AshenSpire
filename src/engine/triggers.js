@@ -540,7 +540,7 @@ const COMBAT_STANCE_ALIASES = Object.freeze({ prepared: 'casting', defense: 'def
 function entityInStance(ctx, entity, stance) {
   if (!entity) return false;
   // A card preview's view of an enemy whose intent is not read hides its stance (combat.js previewCard): unknown is no stance at all, Idle included.
-  if (entity.combatStanceHidden) return entity.stanceId === stance;
+  if (entity.combatStanceUnknown) return entity.stanceId === stance;
   const combatStances = activeCombatStances(ctx, entity).filter(row => row?.maneuver && row.maneuver !== 'neutral');
   if (stance === 'idle') return combatStances.length === 0;
   const wanted = COMBAT_STANCE_ALIASES[stance] || stance;

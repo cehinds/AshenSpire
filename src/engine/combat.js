@@ -2116,8 +2116,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
         enemy.intent = { kind: 'unknown', moveId: null };
         delete enemy.combatStance;
-        // Hidden, not absent: a stance condition reads it as unknown, never as Idle (engine/triggers.js entityInStance).
-        enemy.combatStanceHidden = true;
+        // Its stance is unknown, not Idle: the preview prices no stance weakness for it (theme B; live pays the real stance's),
+        // and a stance condition reads it as no stance at all (engine/triggers.js entityInStance).
+        enemy.combatStanceUnknown = true;
         delete enemy.combatCounter;
         delete enemy.pendingMove;
       }
