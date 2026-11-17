@@ -1,5 +1,5 @@
 import { combatPacingChanges } from '../../model/autoCombatPolicy.js';
-import { MarkSelected } from '../selection.js';
+import { MarkSelected, RovingList } from '../selection.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
 import { SETTINGS_ROWS, UI_DEFAULTS, resolveGraceRefill, bindSettingsRowHooks } from '../models/SettingsRowsModel.js';
 import { mountGameProfileSettings, readNewGameProfile } from '../components/gameProfileSelector.js';
@@ -1971,22 +1971,22 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     repaintPanel({ keepScroll: true });
   } });
 
+  const subtabList = container.querySelector('.set-subtabs');
+  if (subtabList) {
+    RovingList(subtabList, {
+      items: () => [...container.querySelectorAll('.set-subtab')],
+      orientation: () => (subtabList.getAttribute('aria-orientation') === 'vertical' ? 'vertical' : 'horizontal'),
+      hasHomeEnd: true,
+      shouldStopPropagation: true,
+      onMove: (target) => {
+        const id = target.dataset.advancedGroup;
+        target.click();
+        container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(id)}"]`)?.focus();
+      },
+    });
+  }
   container.querySelectorAll('.set-subtab').forEach((button) => {
     button.classList.add('as-railitem');
-    button.addEventListener('keydown', (event) => {
-      const tabs = [...container.querySelectorAll('.set-subtab')];
-      const vertical = button.closest('[role="tablist"]').getAttribute('aria-orientation') === 'vertical';
-      const delta = event.key === (vertical ? 'ArrowDown' : 'ArrowRight') ? 1
-        : event.key === (vertical ? 'ArrowUp' : 'ArrowLeft') ? -1 : 0;
-      const target = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1)
-        : delta ? tabs[(tabs.indexOf(button) + delta + tabs.length) % tabs.length] : null;
-      if (!target) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const id = target.dataset.advancedGroup;
-      target.click();
-      container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(id)}"]`)?.focus();
-    });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
       settings[ADVANCED_CAT_KEY] = group;
