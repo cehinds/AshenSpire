@@ -294,5 +294,25 @@
   "brimmingGourd": {
     "name": "Brimming Gourd",
     "text": "Picking it up refills your flasks."
+  },
+  "basicTraining": {
+    "name": "Basic Training",
+    "text": "Deck editing adds any number of Basic martial cards (unranked)."
+  },
+  "graduate": {
+    "name": "Graduate",
+    "text": "Deck editing adds any number of cantrips (unranked spells)."
+  },
+  "threadbareSatchel": {
+    "name": "Threadbare Satchel",
+    "text": "Your deck may be 1 card smaller."
+  },
+  "asceticsCord": {
+    "name": "Ascetic's Cord",
+    "text": "Your deck may be 1 card smaller."
+  },
+  "pruningHook": {
+    "name": "Pruning Hook",
+    "text": "Your deck may be 1 card smaller."
   }
 }
