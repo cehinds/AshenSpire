@@ -170,6 +170,8 @@ test('deck editor: a refused tab change shows only the refusal line beside Done'
     assert.equal(root.querySelector('#deck-editor-done'), done, 'Done is the same node');
     assert.equal(line.hasAttribute('hidden'), false);
     assert.match(line.textContent, /\d/, 'the line names the count and the bound');
+    assert.equal(root.querySelector('[data-modal-tab="armory"]').getAttribute('aria-selected'), 'false', 'the refused tab is not marked');
+    assert.equal(root.querySelector('[data-modal-tab="deck"]').getAttribute('aria-selected'), 'true', 'the Deck tab stays marked');
     editor.close();
   });
 });

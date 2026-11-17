@@ -60,6 +60,26 @@ test('Armoury: a refusal to leave shows the toast over the same panel and redraw
   });
 });
 
+test('Armoury: the Deck tab refused in combat shows the toast and keeps the open tab marked', () => {
+  withKitDom((dom) => {
+    armouryDom(dom);
+    mount(dom, freshRun(), { inCombat: true });
+    const panel = armoury(dom);
+    const body = panel.querySelector('.armoury-body');
+    const tab = (id) => panel.querySelector(`.armoury-head [data-modal-tab="${id}"]`);
+    const deckTab = tab('deck');
+    deckTab.click();
+    assert.match(panel.querySelector('.as-toast').textContent, /unavailable during combat/);
+    assert.equal(armoury(dom), panel, 'the panel is the same node');
+    assert.equal(panel.querySelector('.armoury-body'), body, 'the slots are the same node');
+    assert.equal(tab('deck'), deckTab, 'the tab is the same node');
+    assert.equal(deckTab.getAttribute('aria-selected'), 'false', 'the refused tab is not marked');
+    assert.equal(tab('armory').getAttribute('aria-selected'), 'true', 'the open page stays marked');
+    assert.equal(tab('armory').tabIndex, 0);
+    assert.equal(deckTab.tabIndex, -1);
+  });
+});
+
 test('Armoury: a refused attunement adds only its line; the panel, the section and its rows stay', () => {
   withKitDom((dom) => {
     armouryDom(dom);

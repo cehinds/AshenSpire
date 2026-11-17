@@ -12,6 +12,7 @@ import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCa
 import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { MarkSelected } from '../selection.js';
+import { ReselectTab } from '../components/tabSelection.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { MountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
@@ -626,6 +627,8 @@ export function mountEquipment(host, {
   let notice = ''; // a status or refusal, shown as a toast on the next draw
   const toast = createToast();
   // A refusal changes nothing but the toast, so it shows the toast and leaves the panel as it is.
+  // A refused Deck tab leaves the page that is open marked, as the strip drew it.
+  const reselectOpenTab = () => ReselectTab(wrap.querySelector('.armoury-head'), view === 'grid' ? 'character' : 'armory');
   const showNotice = (text) => {
     const panel = wrap.querySelector('.armoury');
     if (panel) toast.show(text, panel);
@@ -1742,11 +1745,11 @@ export function mountEquipment(host, {
         hideTooltip();
         if (id === 'deck') {
           // Remember the Deck tab as the last menu, so the Armoury button reopens the editor (main.js showArmoury).
-          if (onEditDeck) { onChange?.(run.loadout, { equipView: 'deck' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
+          if (onEditDeck) { onChange?.(run.loadout, { equipView: 'deck' }); leave(); if (!wrap.isConnected) onEditDeck(); else reselectOpenTab(); }
           else {
             const restOnly = !inCombat && RestOpensDeckEditor(run);
-            notice = inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.';
-            draw();
+            reselectOpenTab();
+            showNotice(inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.');
             // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
             if (restOnly) openPileModal(registries, t('armoury.hub.deck'), run.deck || []);
           }

@@ -53,6 +53,7 @@ import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 import { MarkSelected } from '../selection.js';
+import { ReselectTab } from '../components/tabSelection.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -242,6 +243,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
   function select(row, source, open = false) {
     if (source === 'collection' && row.equipmentEligible === false) return;
+    // Focus coming back to the card the inspector already shows changes nothing there.
+    const alreadyInspected = !open && inspected?.key === selectionKey(row, source) && inspected.source === source;
     selected = { key: selectionKey(row, source), source, row };
     inspected = selected;
     inspectOrigin = source;
@@ -252,8 +255,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       node => node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source,
       { className: null },
     );
-    const inspector = panel.querySelector('.deck-editor-inspector');
-    if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
+    if (!alreadyInspected && panel.querySelector('.deck-editor-inspector')) replaceInspector();
     syncPanes();
     syncInert();
     if (open && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) {
@@ -817,6 +819,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     line.textContent = refusalText();
     if (refusalText()) line.removeAttribute('hidden');
     else line.setAttribute('hidden', 'true');
+    restoreFocus();
   }
 
   function markHeld() {
@@ -898,7 +901,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
         const result = session.confirm();
-        if (!result.ok) { notice = result.refusal || model.done.refusal; showRefusal(); return; }
+        if (!result.ok) { notice = result.refusal || model.done.refusal; ReselectTab(head, 'deck'); showRefusal(); return; }
         close(); onNavigate(id);
       } });
       for (const tab of head.querySelectorAll('[data-modal-tab]')) progressionTip(tab,
