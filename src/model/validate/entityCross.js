@@ -25,9 +25,10 @@ export function entityCrossProblems(b, err, ctx) {
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
-    if (card.costGrowth) {
-      for (const key of ['stamina','mana']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || Math.abs(card.costGrowth[key])>10)) err(`${path}.costGrowth.${key}`,'must be an integer from -10 to 10');
-      for (const key of ['perUse','max']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || card.costGrowth[key]<1 || card.costGrowth[key]>100)) err(`${path}.costGrowth.${key}`,'must be an integer from 1 to 100');
+    for (const [growth, at] of [[card.costGrowth, `${path}.costGrowth`], [card.upgrade?.costGrowth, `${path}.upgrade.costGrowth`]]) {
+      if (!growth) continue;
+      for (const key of ['stamina','mana']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || Math.abs(growth[key])>10)) err(`${at}.${key}`,'must be an integer from -10 to 10');
+      for (const key of ['perUse','max']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || growth[key]<1 || growth[key]>100)) err(`${at}.${key}`,'must be an integer from 1 to 100');
     }
     for (const [i,variant] of (card.effectVariants || []).entries()) { validatePredicate(variant.if,`${path}.effectVariants[${i}].if`,vctx);validateEffects(variant.effects,`${path}.effectVariants[${i}].effects`,vctx); }
   }
