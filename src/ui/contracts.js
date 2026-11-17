@@ -201,9 +201,24 @@
  * @returns {void}
  */
 
+/**
+ * @typedef {object} KeyActivationOptions
+ * @property {((event: KeyboardEvent) => boolean) | null} [canActivate]
+ * @property {boolean} [shouldStopPropagation]
+ */
+
+/**
+ * @callback KeyActivator
+ * @param {HTMLElement} element
+ * @param {((event: KeyboardEvent) => void) | null} [onActivate]
+ * @param {KeyActivationOptions} [options]
+ * @returns {Disarm}
+ */
+
 export const CONTRACT_NAMES = Object.freeze([
     'EffectLayers',
     'FeedbackChannel',
+    'KeyActivator',
     'Modal',
     'Picker',
     'RailItem',

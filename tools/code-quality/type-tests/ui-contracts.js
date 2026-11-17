@@ -4,6 +4,7 @@
 /**
  * @import {
  *     FeedbackChannel,
+ *     KeyActivator,
  *     Modal,
  *     ModalPresentation,
  *     MountEffectLayers,
@@ -22,7 +23,7 @@ import { ModalModel, ModalModelFor } from '../../../src/ui/models/ModalModel.js'
 import { armouryRailItems } from '../../../src/ui/models/ArmouryWorkspaceModel.js';
 import { creationRailItems } from '../../../src/ui/models/CreationWorkspaceModel.js';
 import { mountCardEffectLayers, playCardEffectLayers } from '../../../src/ui/cardEffectLayers.js';
-import { MarkSelected } from '../../../src/ui/selection.js';
+import { ActivateOnKey, MarkSelected } from '../../../src/ui/selection.js';
 import { mountCombatantEffectLayers } from '../../../src/ui/combatantEffectLayers.js';
 
 /** @type {FeedbackChannel[]} */
@@ -83,6 +84,13 @@ export class PresentationWithNumericProperties
 /** @type {SelectionMarker} */
 export const selectionMarker = MarkSelected;
 
+/** @type {KeyActivator} */
+export const keyActivator = ActivateOnKey;
+
 /** @type {SelectionMarker} */
 // @ts-expect-error A selection marker takes its options as an object.
 export const markerWithTextOptions = (nodes, isSelected, /** @type {string} */ options) => void options;
+
+/** @type {KeyActivator} */
+// @ts-expect-error A key activator returns its disarm.
+export const activatorWithoutDisarm = () => undefined;

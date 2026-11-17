@@ -1,9 +1,15 @@
 // @ts-check
 /**
  * @import {
+ *     KeyActivator,
  *     SelectionMarker,
  * } from './contracts.js'
  */
+
+const ACTIVATION_KEYS = new Set([
+    'Enter',
+    ' ',
+]);
 
 function listOf(value)
 {
@@ -87,4 +93,52 @@ export function MarkSelected(
             marking,
         );
     });
+}
+
+/**
+ * ActivateOnKey(element, onActivate, options) runs `onActivate(event)` (or `element.click()`)
+ * on Enter or Space, after preventing the key's default. Returns disarm().
+ * @type {KeyActivator}
+ */
+export function ActivateOnKey(
+    element,
+    onActivate = null,
+    {
+        canActivate = null,
+        shouldStopPropagation = false,
+    } = {},
+)
+{
+    const handleKeydown = (event) =>
+    {
+        if (
+            !ACTIVATION_KEYS.has(event.key)
+            || (canActivate && !canActivate(event))
+        )
+        {
+            return;
+        }
+        event.preventDefault();
+        if (shouldStopPropagation)
+        {
+            event.stopPropagation();
+        }
+        if (onActivate)
+        {
+            onActivate(event);
+        }
+        else
+        {
+            element.click();
+        }
+    };
+    element.addEventListener(
+        'keydown',
+        handleKeydown,
+    );
+    return () =>
+        element.removeEventListener(
+            'keydown',
+            handleKeydown,
+        );
 }

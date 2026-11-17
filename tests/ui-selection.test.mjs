@@ -1,7 +1,7 @@
 // tests/ui-selection.test.mjs — the shared selected-state, Enter/Space and arrow-key helpers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MarkSelected } from '../src/ui/selection.js';
+import { ActivateOnKey, MarkSelected } from '../src/ui/selection.js';
 
 function fakeElement(name = '')
 {
@@ -67,4 +67,29 @@ test('MarkSelected takes one node, several classes, and no aria attribute', () =
     MarkSelected(node, false, { className: null });
     assert.deepEqual([...node.classes], ['selected', 'is-chosen']);
     assert.equal(node.getAttribute('aria-pressed'), 'false');
+});
+
+test('ActivateOnKey answers Enter and Space once, honours canActivate, and disarms', () =>
+{
+    const node = fakeElement();
+    const seen = [];
+    const disarm = ActivateOnKey(node, (event) => seen.push(event.key), { canActivate: (event) => event.target === node, shouldStopPropagation: true });
+    const enter = node.dispatchKey('Enter');
+    assert.equal(enter.isDefaultPrevented, true);
+    assert.equal(enter.isPropagationStopped, true);
+    node.dispatchKey(' ');
+    node.dispatchKey('a');
+    node.dispatchKey('Enter', fakeElement());
+    assert.deepEqual(seen, ['Enter', ' ']);
+    disarm();
+    node.dispatchKey('Enter');
+    assert.deepEqual(seen, ['Enter', ' ']);
+});
+
+test('ActivateOnKey without a handler clicks the element', () =>
+{
+    const node = fakeElement();
+    const event = (ActivateOnKey(node), node.dispatchKey(' '));
+    assert.equal(node.clickCount, 1);
+    assert.equal(event.isPropagationStopped, false);
 });
