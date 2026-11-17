@@ -12,6 +12,7 @@
     "../../src/ui/components/optionRowList.js",
     "../../src/ui/selection.js",
     "../../src/ui/pressable.js",
+    "../../src/ui/components/knowledgeDoor.js",
     "type-tests/ui-contracts.js"
   ]
 }

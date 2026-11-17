@@ -168,7 +168,7 @@
 /**
  * @callback Screen
  * @param {HTMLElement} app
- * @param {object} [options]
+ * @param {any} [options]
  * @returns {ScreenHandle | void}
  */
 
@@ -248,11 +248,11 @@ export const CONTRACT_NAMES = Object.freeze([
     'Pressable',
     'RailItem',
     'RovingNavigator',
+    'Screen',
     'SelectionMarker',
 ]);
 
 export const PLANNED_CONTRACT_NAMES = Object.freeze([
     'CardRenderer',
     'ChoiceModal',
-    'Screen',
 ]);

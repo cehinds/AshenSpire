@@ -13,6 +13,7 @@
  *     Pressable,
  *     RailItem,
  *     RovingNavigator,
+ *     Screen,
  *     SelectionMarker,
  * } from '../../../src/ui/contracts.js'
  */
@@ -28,6 +29,7 @@ import { mountCardEffectLayers, playCardEffectLayers } from '../../../src/ui/car
 import { ActivateOnKey, MarkSelected, RovingList } from '../../../src/ui/selection.js';
 import { ArmLongPress, GuardOnce } from '../../../src/ui/pressable.js';
 import { mountCombatantEffectLayers } from '../../../src/ui/combatantEffectLayers.js';
+import { MountKnowledgeDoor } from '../../../src/ui/components/knowledgeDoor.js';
 
 /** @type {FeedbackChannel[]} */
 export const feedbackChannels = [sfx, haptic, CreateCueChannel()];
@@ -120,3 +122,14 @@ export const pressableWithTextHold = {
     // @ts-expect-error A long press is timed in milliseconds.
     armLongPress: (element, /** @type {{ holdMs: string }} */ options) => () => void [element, options],
 };
+
+/** @type {Screen} */
+export const knowledgeDoorScreen = MountKnowledgeDoor;
+
+/** @type {Screen} */
+// @ts-expect-error A screen mounts into its host element.
+export const screenWithTextHost = (/** @type {string} */ host) => void host;
+
+/** @type {Screen} */
+// @ts-expect-error A screen's teardown is a function.
+export const screenWithTextDispose = () => ({ dispose: 'now' });
