@@ -11,11 +11,12 @@ import { recordCollectedCards } from './collectedCards.js';
 
 const loose = (card) => !!card && !card.grantedBy && !card.equipmentRole;
 
-/** The pool card ids this run may choose from (Core only; ids its cards define), in pool order. */
+/** The pool card ids this run may choose from (Core only; ids its cards define), in pool order; a caster's swaps applied. */
 export function StartingPoolIds(run) {
   if (!isCoreProfile(run)) return [];
   const known = new Set((gameContent(run, 'cards') || []).map((card) => card.id));
-  return deckRules.creationPool.filter((id) => known.has(id));
+  const swaps = deckRules.creationPoolSwaps[run.class] || {};
+  return deckRules.creationPool.map((id) => swaps[id] || id).filter((id) => known.has(id));
 }
 
 /** StartingPoolCounts(run) → { cardId: copies } of each pool card loose in the run's deck now. */

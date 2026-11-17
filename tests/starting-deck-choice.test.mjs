@@ -34,10 +34,27 @@ test('the counts start at the class deck, and a choice rebuilds only the pool ca
 
 test('a class may take a pool card it did not start with, and it is collected', () => {
   const run = make('starseer');
-  assert.equal(StartingPoolCounts(run)['core.strike'], 0);
-  ApplyStartingDeckChoice(run, { ...StartingPoolCounts(run), 'core.strike': 1 });
-  assert.ok(run.deck.some((card) => card.cardId === 'core.strike'));
-  assert.ok(run.collectedCardIds.includes('core.strike'));
+  assert.equal(StartingPoolCounts(run)['core.defend'], 0);
+  ApplyStartingDeckChoice(run, { ...StartingPoolCounts(run), 'core.defend': 1 });
+  assert.ok(run.deck.some((card) => card.cardId === 'core.defend'));
+  assert.ok(run.collectedCardIds.includes('core.defend'));
+});
+
+// Owner, 2026-11-17 (decision on #2815): casters pick the most basic cantrip, Arcane Spark (core.cantrip), in place of Strike.
+test('Starseer and Herald swap Strike for Arcane Spark; Reaver and Rogue keep Strike', () => {
+  for (const classId of ['starseer', 'herald']) {
+    const pool = StartingPoolIds(make(classId));
+    assert.deepEqual(pool, ['core.cantrip', 'core.smash', 'core.counter', 'core.defend', 'core.sweep'], classId);
+    assert.equal(registries.cards.get('core.cantrip').name, 'Arcane Spark');
+  }
+  for (const classId of ['reaver', 'rogue']) assert.equal(StartingPoolIds(make(classId))[0], 'core.strike', classId);
+  assert.equal(StartingPoolCounts(make('starseer'))['core.cantrip'], 2, "the Starseer's two starting Arcane Sparks");
+  const herald = make('herald');
+  assert.equal(StartingPoolCounts(herald)['core.cantrip'], 0);
+  ApplyStartingDeckChoice(herald, { ...StartingPoolCounts(herald), 'core.cantrip': 2 });
+  assert.equal(herald.deck.filter((card) => card.cardId === 'core.cantrip').length, 2);
+  assert.ok(herald.collectedCardIds.includes('core.cantrip'));
+  assert.match(StartingDeckChoiceRefusal(make('herald'), { 'core.strike': 1 }), /not a starting card choice/, 'a caster cannot take Strike');
 });
 
 test('the deck minimum and maximum still apply', () => {

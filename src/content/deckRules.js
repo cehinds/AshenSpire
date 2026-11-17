@@ -48,6 +48,14 @@ export const deckRules = Object.freeze({
   // collected, own-class or colorless cards of these rarities (review of #2815).
   trainingRarities: Object.freeze(['starter', 'common']),
   creationPool: Object.freeze(['core.strike', 'core.smash', 'core.counter', 'core.defend', 'core.sweep']),
+  // Owner, 2026-11-17: a caster's pool swaps the basic attack for the most basic
+  // unranked spell, Arcane Spark (core.cantrip): the Starseer's own starter
+  // cantrip, and the only loose starter cantrip in Core (the Herald's Mana Surge
+  // is the sceptre's lent art, not a card the deck owns). Martial classes keep Strike.
+  creationPoolSwaps: Object.freeze({
+    starseer: Object.freeze({ 'core.strike': 'core.cantrip' }),
+    herald: Object.freeze({ 'core.strike': 'core.cantrip' }),
+  }),
   // Plain card ids a run with no equipment may add without limit. An equipped
   // run's basics are its attack-slot and guard instances, matched by role.
   unlimitedCardIds: Object.freeze(['strike', 'defend']),
