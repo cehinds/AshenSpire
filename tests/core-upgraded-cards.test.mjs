@@ -36,11 +36,12 @@ for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6
     assert.equal(u.resolved.name, `${baseDef.name}+`);
     assert.equal(b.resolved.name, baseDef.name);
     assert.equal(u.hit.amount - b.hit.amount > 0, true, 'applied damage rises with the upgrade');
-    const face = playingCardModel(registries, u.instance, { rules: u.combat, definition: undefined });
+    const upFace = playingCardModel(registries, u.instance, { rules: u.combat });
     const baseFace = playingCardModel(registries, b.instance, { rules: b.combat });
-    assert.equal(face.name, `${baseDef.name}+`);
-    assert.notEqual(JSON.stringify(face), JSON.stringify(baseFace));
-    assert.ok(JSON.stringify(face).includes(String(wantUp[0])), 'face text carries the upgraded number');
+    const multiplier = b.combat.gameProfile.modules.effects.baseDamageMultiplier ?? 1;
+    assert.equal(upFace.name, `${baseDef.name}+`);
+    assert.equal(baseFace.tokens.damage, Math.ceil(wantBase[0] * multiplier), 'base face shows the profile-scaled damage');
+    assert.equal(upFace.tokens.damage, Math.ceil(wantUp[0] * multiplier), 'upgraded face shows the profile-scaled damage');
   });
 }
 
