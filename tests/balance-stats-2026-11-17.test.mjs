@@ -260,3 +260,14 @@ test('item 7: resuming a run without stat-point gear preserves its Blacksmith it
   assert.equal(PlanSmithUpgrade(current, item).cinders, 50);
   assert.deepEqual(options(current), ['poise', 'attr:strength', 'attr:constitution']);
 });
+
+test('review of #2820: a Blacksmith card upgrade is priced by upgradeCount (an authored-only upgrade counts as one)', async () => {
+  const { upgradeArtPlan } = await import('../src/model/blacksmith.js');
+  const { CardUpgradePrice } = await import('../src/model/blacksmithConfig.js');
+  const run = newRun('reaver');
+  run.cinders = 9999;
+  const card = run.deck.find(row => row.cardId === 'core.strike');
+  card.upgraded = true; delete card.upgradeSteps; // a save from before step lists: upgraded, no steps
+  assert.equal(upgradeArtPlan(registries, run, card.instanceId).cost, CardUpgradePrice(run, { upgrades: 1, rank: 1 }));
+  assert.ok(CardUpgradePrice(run, { upgrades: 1, rank: 1 }) > CardUpgradePrice(run));
+});

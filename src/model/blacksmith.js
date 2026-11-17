@@ -25,6 +25,7 @@ import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
 import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
+import { upgradeCount } from './cardUpgrade.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
 import { SmithUpgradeSlots } from './smithUpgrade.js';
 import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
@@ -237,7 +238,7 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
   const due = verdict ? Math.max(0, (verdict.cost ?? 0) - blacksmithStoneDiscount(run)) : 0;
   const payable = !!verdict && (verdict.ok || (verdict.code === 'stones' && stones(run) >= due));
   const cost = blacksmithRules(run) && card
-    ? cinders(CardUpgradePrice(run, { upgrades: Array.isArray(card.upgradeSteps) ? card.upgradeSteps.length : 0, rank: InstanceRank(card) }), priceMult) : 0;
+    ? cinders(CardUpgradePrice(run, { upgrades: upgradeCount(card), rank: InstanceRank(card) }), priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!card) reason = say('shop.refuse.gone');
