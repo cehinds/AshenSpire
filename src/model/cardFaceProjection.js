@@ -129,12 +129,16 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   return packed.map(html => ({ ...line, html }));
 }
 
+// A bare selection prompt ("Choose a hand card.") is not an effect: the sentence after it says what happens to that card.
+const SELECTION_PROMPT = /^Choose (?:a|an|one|up to \d+|\d+) [^.]*\bcards?\.$/i;
 // Split only complete authored sentences. A following qualification belongs
-// to the preceding sentence (caps, generated-card costs and pronoun riders).
+// to the preceding sentence (caps, generated-card costs and pronoun riders),
+// and the effect after a selection prompt belongs to that prompt.
 function authoredClauses(html) {
   const sentences = SplitAfter(html, /[.!?]\s+(?=[A-Z(])/), out = [];
   for (const sentence of sentences) {
-    if (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
+    const previous = out.length ? plain(out[out.length - 1]).trim() : '';
+    if (out.length && (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) || SELECTION_PROMPT.test(previous))) out[out.length - 1] += ' ' + sentence;
     else out.push(sentence);
   }
   return out.map(html => ({ kind: 'effect', html: shorten(html) }));
@@ -175,6 +179,8 @@ export function cardFaceProjection(def, opts = {}) {
   const compact = compactFaceProjection(def, opts);
   const { roomy: budget, roomyLines = opts.lines ?? null, authoredHtml = '', registries = null, effects = def.effects || [] } = opts;
   if (!budget) return compact;
+  // A summary generated from every effect (`summaryComplete`) already says the whole card: the authored prose adds no fact.
+  if (opts.summaryComplete && compact.summarized) return compact;
   const wide = computedFaceProjection(def, { lines: roomyLines, authoredHtml, registries, effects,
     budget: { clauses: budget.clauses, characters: budget.characters, words: budget.clauseWords } });
   // The compact summary appends a card's Exhaust / Ethereal keyword as a cost; the authored-prose path does not, so the
@@ -283,6 +289,15 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects,
   const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'detail', html: entry.line.html }); };
   const primary = fitted.find(entry => !reserved.includes(entry));
   if (primary && !primary.parts && clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
+  // Owner, 2026-11-17: an authored face never keeps a short stub and silently drops the plain effect after it ("Gain 2
+  // Conceal" without "Hide X hand cards ..."). A later unconditional sentence too long to split keeps its real words while
+  // the face has room. A conditional rider ("If ...", "In Smash stance, ...", "Starstone: ...") still waits in Information.
+  const sizeOf = list => list.reduce((sum, clause) => sum + plain(clause.html).length + 2, 0);
+  const rider = html => CONDITIONAL_START.test(plain(html)) || /^In [^,]+,/.test(plain(html)) || /^[^:]{1,30}:/.test(plain(html));
+  if (!lines && clauses.length) for (const entry of fitted) {
+    if (entry.parts || chosen.has(entry) || reserved.includes(entry) || rider(entry.line.html) || clauses.length >= CLAUSES) continue;
+    if (sizeOf(clauses) + plain(entry.line.html).length <= CHARACTERS) addReal(entry);
+  }
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
   if (clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) addReal(fitted.find(entry => !reserved.includes(entry)));
   // An unfamiliar long rule is named, never shortened mid-condition. Current
