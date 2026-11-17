@@ -349,7 +349,7 @@
     "name": "Crown of Stitches",
     "rarity": "boss",
     "icon": "relic",
-    "textTemplate": "Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.",
+    "textTemplate": "Begin each combat with {strength} Strength and {frail} Frail. New limbs are heavy.",
     "flavor": "It fits. That is the worst part."
   },
   {

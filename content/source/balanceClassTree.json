@@ -39,5 +39,5 @@
   "feint": { "poiseDamage": 4 },
   "spareWhetstone": { "gainEnergy": 1 },
   "whettedGuard": { "block": 1 },
-  "$note": { "{node}.{variable}": "{talent}, {talentPlace} — {effect}.{blurbSuffix}" }
+  "$note": { "{node}.{variable}": "{talent}, {talentPlace}: {effect}.{blurbSuffix}" }
 }
