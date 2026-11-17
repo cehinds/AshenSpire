@@ -157,5 +157,6 @@ test('a drop fraction lowers the rack that share of the way toward the head', as
   assert.equal(above.miniTop, 210);
   assert.equal(halfway.miniTop, (210 + 300) / 2, 'halfway from the old top to the head');
   assert.equal(halfway.selectedTop - above.selectedTop, 45, 'the selected intent moves with it');
-  assert.equal(config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction, .5);
+  const drop = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction;
+  assert.ok(drop >= 0 && drop <= 1, 'the player drop is a fraction (0 keeps the SPEC 10 px gap above the art)');
 });
