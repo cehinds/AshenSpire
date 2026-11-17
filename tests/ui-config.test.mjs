@@ -49,6 +49,7 @@ test('the real tree compiles clean and the generated module is current', () => {
 test('inspection gesture and Undo defaults are compiled into their existing presentation owners', () => {
   assert.deepEqual(uiConfig.presentation.combatInspection.behavior, { holdMs: 600, movementTolerancePx: 8 });
   assert.deepEqual(uiConfig.presentation.settingsUndo.behavior, { windowMs: 8000 });
+  assert.deepEqual(uiConfig.presentation.armamentRadial.behavior, { holdMs: 360 });
   const result = compileEntries(realEntries(), { requireInteractionConfigs: true });
   assert.deepEqual(result.config.presentation.combatInspection.behavior, uiConfig.presentation.combatInspection.behavior);
   assert.deepEqual(result.config.presentation.settingsUndo.behavior, uiConfig.presentation.settingsUndo.behavior);
@@ -103,6 +104,7 @@ test('interaction config refuses missing, unknown, and out-of-range tunables', (
     [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.holdMs = 2_147_483_648; }), 'behavior.holdMs must be a positive safe integer'],
     [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.movementTolerancePx = -1; }), 'behavior.movementTolerancePx must be a finite nonnegative number'],
     [planted('ui/presentation/settingsUndo.json', (d) => { d.behavior.windowMs = 1.5; }), 'behavior.windowMs must be a positive safe integer'],
+    [planted('ui/presentation/armamentRadial.json', (d) => { d.behavior.holdMs = -360; }), 'behavior.holdMs must be a positive safe integer'],
   ];
   for (const [entries, message] of cases) {
     assert.ok(compileEntries(entries).errors.some((error) => error.includes(message)), message);
