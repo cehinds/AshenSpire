@@ -658,7 +658,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function deckPane() {
-    const search =searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
+    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
     search?.addEventListener('input', () => {
       deckQuery = search.value;
       const caret = search.selectionStart;
