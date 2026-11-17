@@ -36,8 +36,6 @@ function buildRankUpRow(card, registries, run)
         id: card.instanceId,
         className: ROW_CLASS,
         name: definition?.name || card.cardId,
-        line: [],
-        costs: [],
         text: translate('blacksmith.rankUp.desc', {
             from: rank,
             to: rank + 1,

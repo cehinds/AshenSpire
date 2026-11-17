@@ -30,8 +30,6 @@ function buildOptionRows(options)
         id: option.id,
         name: option.name,
         text: option.text || '',
-        line: [],
-        costs: [],
         disabled: !!option.disabled,
     }));
 }
@@ -42,8 +40,6 @@ function buildKeepRows(rows)
         id: row.key,
         name: row.text,
         text: '',
-        line: [],
-        costs: [],
     }));
 }
 

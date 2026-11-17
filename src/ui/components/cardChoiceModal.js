@@ -24,8 +24,6 @@ function buildChoiceRow(option)
             : ROW_CLASS,
         name: `${option.name}${nameSuffix}`,
         text: option.tooltip || '',
-        line: [],
-        costs: [],
         disabled: isActive,
     };
 }
