@@ -5340,5 +5340,116 @@
         }
       ]
     }
+  },
+  {
+    "id": "wickerHind",
+    "name": "Wicker_Hind",
+    "displayName": "Wicker Hind",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "goldboughBranch",
+            "name": "Goldbough_Branch",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 4,
+        "intelligence": 4,
+        "level": 5
+      },
+      "total": 41,
+      "formula": "10+10+5+3+4+4+5 = 41"
+    },
+    "pools": {
+      "hp": 41,
+      "sp": 3,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 7
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "goldboughBranch",
+        "name": "Goldbough_Branch"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "wickerHind.antlerRake",
+          "name": "Antler_Rake",
+          "copies": 1
+        },
+        {
+          "id": "wickerHind.hallowSpark",
+          "name": "Hallow_Spark",
+          "copies": 1
+        },
+        {
+          "id": "wickerHind.hoofStamp",
+          "name": "Hoof_Stamp",
+          "copies": 1
+        },
+        {
+          "id": "wickerHind.wickerMend",
+          "name": "Wicker_Mend",
+          "copies": 1
+        },
+        {
+          "id": "wickerHind.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "wickerHind.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

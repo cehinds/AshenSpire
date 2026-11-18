@@ -43,6 +43,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:thornMatriarch | The Thorn Matriarch | boss |
 | enemy:valkyrieShade | Valkyrie Shade | minion |
 | enemy:wanderingSoldier | Wandering Soldier | minion |
+| enemy:wickerHind | Wicker Hind | elite |
 | enemy:wickerTitheman | Wicker Titheman | minion |
 | enemy:wyrmAspirant | Wyrm Aspirant | elite |
 | enemy:wyrmLord | Wyrm Lord | elite |
@@ -218,6 +219,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:siltCrownNewt.drowningCoil | Drowning Coil | attack | 3 | 0 | Deal {damage} damage. Apply {frail} Frail to the enemy. |
 | card:siltCrownNewt.siltShroud | Silt Shroud | skill | 1 | 0 | Gain {block} Block. |
 | card:siltCrownNewt.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:wickerHind.antlerRake | Antler Rake | attack | 1 | 0 | Deal {damage} damage. |
+| card:wickerHind.hallowSpark | Hallow Spark | attack | 1 | 1 | Deal {damage} damage. |
+| card:wickerHind.hoofStamp | Hoof Stamp | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:wickerHind.wickerMend | Wicker Mend | power | 2 | 1 | Heal {heal} HP. |
+| card:wickerHind.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:wickerHind.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

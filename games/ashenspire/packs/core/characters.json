@@ -3974,5 +3974,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "wickerHind",
+    "name": "Wicker_Hind",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "wickerHind.antlerRake",
+      "wickerHind.hallowSpark",
+      "wickerHind.hoofStamp",
+      "wickerHind.wickerMend",
+      "wickerHind.advance",
+      "wickerHind.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "goldboughBranch"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "wickerHind",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "wickerHind.hallowSpark",
+      "poiseMax": 10,
+      "cardHints": {
+        "wickerHind.antlerRake": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "antlerRake",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.hallowSpark": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hallowSpark",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.hoofStamp": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hoofStamp",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.wickerMend": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wickerMend",
+          "coreSp": "card"
+        },
+        "wickerHind.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "wickerHind.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

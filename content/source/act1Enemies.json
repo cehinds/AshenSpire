@@ -1122,5 +1122,75 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "wickerHind",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 5,
+      "intelligence": 4
+    },
+    "size": "large",
+    "name": "Wicker Hind",
+    "hp": [
+      74,
+      80
+    ],
+    "poiseMax": 20,
+    "levelProfile": {
+      "min": 4,
+      "max": 6
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "antlerRake": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "hallowSpark": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "hoofStamp": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 17,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "wickerMend": {
+        "sp": 2,
+        "intent": "buff",
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 12
+          }
+        ]
+      }
+    },
+    "firstMove": "hallowSpark",
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "damage"
+      },
+      {
+        "to": "fire",
+        "effect": "damage"
+      }
+    ]
   }
 ]
