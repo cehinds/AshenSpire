@@ -814,6 +814,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
     ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
       immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0,
+      ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
       magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
       ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
     spendSilencedStack(ctx, target);
