@@ -1,0 +1,130 @@
+{
+  "request": "Long-press (touch hold) or right-click on an enemy opens that enemy's inspection with its active effects; a short tap keeps targeting.",
+  "success": "Holding the enemy 800ms, or right-clicking it, opens the combatant inspector listing its statuses.",
+  "failure": "Nothing opens, or the inspector lacks the statuses.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "enemy-hold",
+      "url": "?shot=combat&shotSeed=4&shotEnemyContext=status",
+      "ready": ".combatant.enemy .combatant-stack",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.enemy .combatant-stack",
+            "ms": 800
+          }
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The enemy's inspection opens",
+          "selector": ".combatant-door .combatant-inspector-body"
+        },
+        {
+          "kind": "visible",
+          "label": "It lists active effects",
+          "selector": ".combatant-door .combatant-inspector-row"
+        },
+        {
+          "kind": "text",
+          "label": "Crimson Blight is listed",
+          "selector": ".combatant-door",
+          "includes": "Blight"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "enemy-hud-hold",
+      "url": "?shot=combat&shotSeed=4&shotEnemyContext=status",
+      "ready": ".combatant.enemy .combatant-stack",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.enemy .target-hud-overhead-meters",
+            "ms": 800
+          }
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The enemy's inspection opens",
+          "selector": ".combatant-door .combatant-inspector-body"
+        },
+        {
+          "kind": "visible",
+          "label": "It lists active effects",
+          "selector": ".combatant-door .combatant-inspector-row"
+        },
+        {
+          "kind": "text",
+          "label": "Crimson Blight is listed",
+          "selector": ".combatant-door",
+          "includes": "Blight"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "enemy-rightclick",
+      "url": "?shot=combat&shotSeed=4&shotEnemyContext=status",
+      "ready": ".combatant.enemy .combatant-stack",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "rightClick": ".combatant.enemy .combatant-stack"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The enemy's inspection opens",
+          "selector": ".combatant-door .combatant-inspector-body"
+        },
+        {
+          "kind": "visible",
+          "label": "It lists active effects",
+          "selector": ".combatant-door .combatant-inspector-row"
+        },
+        {
+          "kind": "text",
+          "label": "Crimson Blight is listed",
+          "selector": ".combatant-door",
+          "includes": "Blight"
+        }
+      ],
+      "failure": []
+    }
+  ]
+}
