@@ -14,6 +14,8 @@
       "settleMs": 1500,
       "actions": [
         { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
         { "wait": { "ms": 1200 } }
       ],
       "success": [
