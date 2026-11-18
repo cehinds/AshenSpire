@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsMoveEngagement, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
+import { BandsActive, BandsMoveEngagement, PlayerRetreat, SetAdvanced, SetEnemyRow, PlayerRetreatBands, SpendPlayerRetreat } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -79,6 +79,7 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
   return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weaponCoverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
+    retreatBands: rangeBand(coverage) > 0 ? 0 : PlayerRetreatBands(ctx, source, target),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
 }
 const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger','arcaneBuildup']);
@@ -138,7 +139,7 @@ export function rangeHitContact(ctx, source, target, carrier) {
     return { ...row, inRange: !ctx.rangeState.policy.enabled || row.bypass || row.effectiveBand <= Math.min(2, row.coverage + (plan.route === 'throw' && row.throwCapable ? 1 : 0)) };
   }
   const row = rangeActionPlan(ctx.rangeState, actorRangeKey(ctx, source), [rangeSourceContact(ctx, source, target, carrier)], { context: ctx._rangeContext }).targets[0];
-  return { ...row, inRange: !ctx.rangeState.policy.enabled || row.bypass || row.band <= row.coverage };
+  return { ...row, inRange: !ctx.rangeState.policy.enabled || row.bypass || row.band + (row.retreatBands || 0) <= row.coverage };
 }
 export function executeEngagementMovement(ctx, action) {
   if (!ctx.rangeState?.policy.enabled) return;
@@ -208,6 +209,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
     else if (BandsActive(ctx) && source.kind !== 'enemy') SetAdvanced(ctx, source, true);
     else ctx.rangeState = advancedEngagementState(before, plan);
+    SpendPlayerRetreat(ctx, source, plan);
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };

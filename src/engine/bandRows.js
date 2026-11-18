@@ -97,6 +97,20 @@ export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   return true;
 }
 
+/** PlayerRetreatBands(ctx, source, target): 1 when the player in this pair holds a Retreat stack (owner 2026-11-18 section 22), else 0. The enemy's own Retreat is its back row (a band). */
+export function PlayerRetreatBands(ctx, source, target) {
+  if (!BandsActive(ctx)) return 0;
+  const player = [source, target].find(entity => entity && entity.kind !== 'enemy');
+  return player && RetreatStacks(player) > 0 ? 1 : 0;
+}
+
+/** SpendPlayerRetreat(ctx, source, plan): the Advance a plan paid for a player's Retreat spends one of that player's stacks. */
+export function SpendPlayerRetreat(ctx, source, plan) {
+  if (!BandsActive(ctx) || !plan?.targets?.some(row => row.retreatBands > 0)) return;
+  const keys = new Set(source.kind === 'enemy' ? plan.targets.filter(row => row.retreatBands > 0).map(row => row.targetKey) : [actorRangeKey(ctx, source)]);
+  for (const player of playerEntities(ctx)) if (keys.has(actorRangeKey(ctx, player))) spendRetreat(ctx, player, 1);
+}
+
 /** PullEnemy(ctx, target): Gale Pull (owner 2026-11-18 section 22). Removes 1 Retreat stack from the target; with none left the target comes forward to the front row. No rows: nothing. */
 export function PullEnemy(ctx, target) {
   if (!BandsActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;
@@ -172,6 +186,8 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     // A retreated enemy's approach removes one of its Retreat stacks instead of moving it forward; with none it steps forward as normal.
     // The move is spent either way, so the intent shown (the step forward) is the move played.
     if (source.row === 'back') { if (RetreatStacks(source) > 0) spendRetreat(ctx, source, 1); else SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
+    // The enemy's Advance against a player holding Retreat spends one of the player's stacks (owner 2026-11-18 section 22).
+    if (target?.kind !== 'enemy' && RetreatStacks(target) > 0) { spendRetreat(ctx, target, 1); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.

@@ -101,12 +101,14 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     const inherited = context?.targets?.find(row => rangePairKey(context.sourceKey,row.targetKey) === rangePairKey(sourceKey,targetKey));
     const actualBand = inherited?.actualBand ?? engagementBand(state, sourceKey, targetKey);
     const distance = contextBand(context, sourceKey, targetKey, actualBand);
-    const missingBands = policy.enabled && !bypass ? Math.max(0, distance - coverage) : 0;
+    // Retreat on the player's side (owner 2026-11-18 section 22): one more Advance, for a hit with no Reach (the contact says so; Reach ignores Retreat).
+    const retreatBands = policy.enabled && !bypass ? Math.max(0, Math.floor(contact.retreatBands || 0)) : 0;
+    const missingBands = policy.enabled && !bypass ? Math.max(0, distance + retreatBands - coverage) : 0;
     const extended = route === 'throw' && missingBands > 0;
     if (extended && (!throwCapable || missingBands > 1)) available = false;
     maxMissing = Math.max(maxMissing, missingBands);
     return { contactId: contact.contactId ?? String(index), targetKey, actualBand, band: distance, coverage,
-      weapon: !!weapon, throwCapable: !!throwCapable, bypass: !!bypass, sourceWeaponId,
+      weapon: !!weapon, throwCapable: !!throwCapable, bypass: !!bypass, sourceWeaponId, ...(retreatBands ? { retreatBands } : {}),
       missingBands, effectiveBand: !policy.enabled || bypass ? Math.min(distance, coverage) : route === 'advance' ? Math.min(distance, coverage) : distance,
       precisionDelta: policy.enabled ? (weapon && rangeBand(contact.weaponCoverage ?? contact.coverage) === 1 && actualBand === 0 ? policy.reachPrecisionBonus : 0) - (extended ? policy.throwPrecisionPenalty : 0) : 0 };
   });
@@ -126,9 +128,9 @@ export function rangePlanProblems(plan, state, actorKeys = null) {
     || !['advance', 'throw'].includes(plan.route) || typeof plan.available !== 'boolean' || !count(plan.advanceSp) || !Array.isArray(plan.targets)
     || !text(plan.sourceKey) || !/^(player|enemy):.+/.test(plan.sourceKey) || actorKeys && !actorKeys.includes(plan.sourceKey)
     || plan.rootId !== undefined && !text(plan.rootId)) return ['Invalid range action plan'];
-  for (const row of plan.targets) if (!fields(row, ['contactId', 'targetKey', 'actualBand', 'band', 'coverage', 'weapon', 'throwCapable', 'bypass', 'sourceWeaponId', 'missingBands', 'effectiveBand', 'precisionDelta'])
+  for (const row of plan.targets) if (!fields(row, ['contactId', 'targetKey', 'actualBand', 'band', 'coverage', 'weapon', 'throwCapable', 'bypass', 'sourceWeaponId', 'retreatBands', 'missingBands', 'effectiveBand', 'precisionDelta'])
     || !text(row.contactId) || !opposingRangeKeys(plan.sourceKey, row.targetKey) || actorKeys && !actorKeys.includes(row.targetKey)
-    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.missingBands > 2
+    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.missingBands > 2 || row.retreatBands !== undefined && !count(row.retreatBands)
     || !Number.isSafeInteger(row.precisionDelta) || !['weapon', 'throwCapable', 'bypass'].every(k => typeof row[k] === 'boolean')
     || row.sourceWeaponId !== null && !text(row.sourceWeaponId)) return ['Invalid range contact receipt'];
   if (new Set(plan.targets.map(row => row.contactId)).size !== plan.targets.length) return ['Duplicate range contacts'];
