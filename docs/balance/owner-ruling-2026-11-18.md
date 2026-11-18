@@ -19,7 +19,8 @@ This is the working spec for the 2026-11-18 pass. The owner gave the requests in
 - **Retreat bug:** some cards' Retreat does nothing. Retreat must move the character to the back row.
 
 ## 1. Multipliers (player and enemy)
-- Physical damage and Block gained drop another ×0.7 on top of the earlier 0.7 cut (PR #2833), so they end at ×0.49 of the pre-2833 value. *(decided)* This mostly lands on enemies, because player cards are re-tuned to the curve in section 2.
+- Physical damage and Block gained drop another ×0.7 for **both** player and enemy, on top of the earlier 0.7 cut (PR #2833), so they end at ×0.49 of the pre-2833 value. The owner will play it first to get a feel for it. The card re-tune to the section 2 curve follows that playtest.
+- Every number reported for this cut comes from `tools/card-budget-report.mjs` run on the branch, never from arithmetic (owner: "your previous tunings don't seem to result the way you say").
 
 ## 2. Cost curve for player cards
 The curve gives the final in-combat value at level 1 with the starting kit. *(decided: the baseline)* Total cost is SP + MP; an MP point counts the same as an SP point.
@@ -54,6 +55,9 @@ Existing effects that count as drawbacks:
 - Staggered no longer carries its own ×1.5 damage taken (`statuses.json` `staggered.modifiers.damageTakenMult`).
 - A Poise break (FixCore `poise.brokenDamageMultiplier` 1.5, `fixCoreMechanics.json`) also drops its ×1.5. Instead the break applies **1 stack of Vulnerable** (×1.25, 25% more attack damage, decays as Vulnerable does).
 - What Staggered keeps: the lost action, or the lost SP for the player.
+- **A Poise break applies 1 stack each of Staggered, Vulnerable, Weak and Frail**, lasting until the start of the broken side's next turn (owner).
+- **Fortified (new status, owner):** the opposite of Frail. Gains more Block. The Defend stance (+50%) and Counter stance (+25%) Block bonuses are expressed as Fortified, so they show on the status bar.
+- The tag list in sections 0a, 3, 3a, 4 and 5 is approved (owner, 2026-11-18).
 
 ## 4. Confused (existing status, new effect)
 - At the start of its owner's turn, each stack re-rolls the SP cost of one random card in hand to 0–3 SP. The rolled cost lasts that turn only, and the card face shows it.
