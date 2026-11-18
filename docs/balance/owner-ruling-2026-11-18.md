@@ -163,5 +163,7 @@ Existing effects that count as drawbacks:
 - **One-handed Poise** (owner): the Straight Sword and Frost Spear add 0 Poise. The Battleaxe adds **+1** Poise.
 - **Signature Block timing** (owner): Block granted at the end of a turn lasts until the start of its holder's next turn.
 - The signature table goes to the owner as a readable page before anything is built.
-- **Number colours** (owner): every number on a card face, in and out of combat, is **green** if raised above base, **black** if at base, and **red** if reduced below base.
-  - "Base" means the card's own number after the global game multipliers, so that most numbers at level 1 read black. *(decided, pending the measured count)*
+- **Number colours** (owner, final): card face numbers are **black** by default, including attributes, gear, level and the global multipliers, so out-of-combat faces are always black.
+  - A number turns **green** only when an in-combat effect raises it: a buff, the current stance's bonus, or a relic or card trigger active this fight.
+  - A number turns **red** only when an in-combat effect lowers it: a debuff such as Weak or Frail.
+  - The comparison is against the same card's out-of-combat face.
