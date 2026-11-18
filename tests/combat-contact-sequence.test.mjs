@@ -23,7 +23,7 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 // the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
-  effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
+  effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the

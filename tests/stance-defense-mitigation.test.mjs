@@ -24,7 +24,7 @@ function context(mode = 'core') {
   const gameProfile = structuredClone(resolveGameProfile(mode));
   gameProfile.modules.stances = { ...defaults, mode: mode === 'core' ? 'configured' : 'legacy' };
   // These tests pin the defense-mitigation stage, not damage scale: halved hits leave Block soaking whole hits, so the Core 0.5 base-damage scale is off here.
-  gameProfile.modules.effects = { ...gameProfile.modules.effects, baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 };
+  gameProfile.modules.effects = { ...gameProfile.modules.effects, baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 };
   return { gameProfile };
 }
 const fighter = (id, combatStance) => ({ id, kind: id === 'player' ? 'player' : 'enemy', alive: true, hp: 100, maxHp: 100, statuses: {}, block: 0, ratings: { ar: 0, dr: 0, poise: 0 }, combatStance });
