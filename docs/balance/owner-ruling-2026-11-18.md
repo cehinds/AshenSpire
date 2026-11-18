@@ -129,5 +129,8 @@ Existing effects that count as drawbacks:
 ## 12. Follow-ups (owner, 2026-11-18)
 - **Retreat hold:** an enemy sent back by Retreat or a push stays in the back row through its next turn. After that the normal "empty front row pulls the back row forward" rule applies.
 - **Perception:** disabled for now through its JSON toggle (no track, XP or intent bonus). If it is re-enabled later, it rolls once per enemy per fight, and the roll sets the **percent chance of seeing each intent** that fight.
-- **Hand base:** 5 + floor(INT/4), not 4. Base 4 would leave a starting character with 4 cards, against the owner's 5–6 target. *(decided, to confirm)*
+- **Hand base: 5** + floor(INT/4) (owner, confirmed).
+  - Targets: Starseer starts with 6 cards and has about 7 by the end of act 3, before relics and equipment.
+  - Large hands should come only from card effects, relics, Retain and the like, never from stats alone.
+  - Verify the act-3 figure with a run sim (INT reached by the end of act 3, at 1 attribute point per level).
 - **Armaments to re-tune** (ratings used to tell these pairs apart): greatsword vs warhammer, halberd vs warhammer, buckler vs kite shield, buckler vs round shield, round shield vs kite shield, Dusk Chime vs Blight Rod.
