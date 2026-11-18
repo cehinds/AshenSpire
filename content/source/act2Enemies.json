@@ -1015,5 +1015,78 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "carrionHeadsman",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "size": "medium",
+    "name": "Carrion Headsman",
+    "hp": [
+      42,
+      46
+    ],
+    "poiseMax": 16,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "cleaveStroke": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "rendingCut": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 5,
+        "weight": 25,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      },
+      "executionDrop": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "hoodGuard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "rendingCut",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "lightning",
+        "effect": "damage"
+      }
+    ]
   }
 ]

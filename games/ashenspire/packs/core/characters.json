@@ -4964,5 +4964,98 @@
         }
       ]
     }
+  },
+  {
+    "id": "carrionHeadsman",
+    "name": "Carrion_Headsman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "carrionHeadsman.cleaveStroke",
+      "carrionHeadsman.rendingCut",
+      "carrionHeadsman.executionDrop",
+      "carrionHeadsman.hoodGuard",
+      "carrionHeadsman.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "carrionHeadsman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "carrionHeadsman.rendingCut",
+      "poiseMax": 8,
+      "cardHints": {
+        "carrionHeadsman.cleaveStroke": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "cleaveStroke",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.rendingCut": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rendingCut",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.executionDrop": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "executionDrop",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.hoodGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hoodGuard",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

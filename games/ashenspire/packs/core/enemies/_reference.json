@@ -37,6 +37,10 @@
       "name": "Briar Hermit",
       "tier": "minion"
     },
+    "enemy:carrionHeadsman": {
+      "name": "Carrion Headsman",
+      "tier": "minion"
+    },
     "enemy:chainScavenger": {
       "name": "Chain Scavenger",
       "tier": "minion"
@@ -2382,6 +2386,56 @@
       "usedBy": "enemy sheet"
     },
     "card:waxsealBailiff.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:carrionHeadsman.cleaveStroke": {
+      "name": "Cleave Stroke",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:carrionHeadsman.rendingCut": {
+      "name": "Rending Cut",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:carrionHeadsman.executionDrop": {
+      "name": "Execution Drop",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:carrionHeadsman.hoodGuard": {
+      "name": "Hood Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:carrionHeadsman.advance": {
       "name": "Advance",
       "type": "skill",
       "cost": {

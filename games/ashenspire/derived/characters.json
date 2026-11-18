@@ -6459,5 +6459,111 @@
         }
       ]
     }
+  },
+  {
+    "id": "carrionHeadsman",
+    "name": "Carrion_Headsman",
+    "displayName": "Carrion Headsman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 56,
+      "formula": "10+20+15+3+2+1+5 = 56"
+    },
+    "pools": {
+      "hp": 56,
+      "sp": 2,
+      "mp": 1,
+      "ar": 3,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "carrionHeadsman.cleaveStroke",
+          "name": "Cleave_Stroke",
+          "copies": 1
+        },
+        {
+          "id": "carrionHeadsman.rendingCut",
+          "name": "Rending_Cut",
+          "copies": 1
+        },
+        {
+          "id": "carrionHeadsman.executionDrop",
+          "name": "Execution_Drop",
+          "copies": 1
+        },
+        {
+          "id": "carrionHeadsman.hoodGuard",
+          "name": "Hood_Guard",
+          "copies": 1
+        },
+        {
+          "id": "carrionHeadsman.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

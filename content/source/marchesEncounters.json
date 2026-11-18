@@ -243,5 +243,23 @@
       "min": 2,
       "max": 3
     }
+  },
+  {
+    "id": "a2_headsman",
+    "enemies": [
+      "carrionHeadsman",
+      "gildedKnight"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "marches",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
   }
 ]

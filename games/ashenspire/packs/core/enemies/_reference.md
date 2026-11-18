@@ -17,6 +17,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:blightedValkyrie | The Blighted Valkyrie | boss |
 | enemy:brackenTusker | Bracken Tusker | minion |
 | enemy:briarHermit | Briar Hermit | minion |
+| enemy:carrionHeadsman | Carrion Headsman | minion |
 | enemy:chainScavenger | Chain Scavenger | minion |
 | enemy:charredColossus | Charred Colossus | minion |
 | enemy:cinderMantis | Cinder Mantis | minion |
@@ -280,6 +281,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:waxsealBailiff.sealPress | Seal Press | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:waxsealBailiff.ledgerGuard | Ledger Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:waxsealBailiff.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:carrionHeadsman.cleaveStroke | Cleave Stroke | attack | 1 | 0 | Deal {damage} damage. |
+| card:carrionHeadsman.rendingCut | Rending Cut | attack | 1 | 0 | Deal {damage} damage. Apply {bleed} Bleed to the enemy. |
+| card:carrionHeadsman.executionDrop | Execution Drop | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:carrionHeadsman.hoodGuard | Hood Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:carrionHeadsman.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
