@@ -4418,7 +4418,12 @@
         "id": "warhammer"
       }
     ],
-    "defaultRelics": [],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.woundwoodHeart"
+      }
+    ],
     "presentation": {
       "art": "woundwoodTusker",
       "size": "large",

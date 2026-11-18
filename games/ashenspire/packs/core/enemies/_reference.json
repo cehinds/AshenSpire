@@ -2904,6 +2904,14 @@
         "self.constitution=+3",
         "self.sp=-1"
       ]
+    },
+    "relic:enemy.relic.woundwoodHeart": {
+      "name": "Woundwood Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.strength=+1"
+      ]
     }
   }
 }

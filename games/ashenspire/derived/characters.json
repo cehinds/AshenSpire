@@ -5851,9 +5851,15 @@
             "name": "Warhammer",
             "kind": "gear",
             "amount": 2
+          },
+          {
+            "source": "enemy.relic.woundwoodHeart",
+            "name": "Woundwood_Heart",
+            "kind": "relic",
+            "amount": 1
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -5862,8 +5868,15 @@
       },
       "constitution": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "enemy.relic.woundwoodHeart",
+            "name": "Woundwood_Heart",
+            "kind": "relic",
+            "amount": 3
+          }
+        ],
+        "total": 5
       },
       "wisdom": {
         "own": 1,
@@ -5879,21 +5892,21 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 20,
+        "constitution": 50,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 10
       },
-      "total": 69,
-      "formula": "10+20+20+6+2+1+10 = 69"
+      "total": 104,
+      "formula": "10+50+25+6+2+1+10 = 104"
     },
     "pools": {
-      "hp": 69,
-      "sp": 3,
-      "mp": 1,
-      "ar": 4,
+      "hp": 104,
+      "sp": 4,
+      "mp": 2,
+      "ar": 5,
       "dr": 2,
       "hand": 5
     },
@@ -5904,7 +5917,13 @@
         "name": "Warhammer"
       }
     ],
-    "relics": [],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.woundwoodHeart",
+        "name": "Woundwood_Heart"
+      }
+    ],
     "deck": {
       "size": 8,
       "cards": [

@@ -91,5 +91,14 @@
       "self.sp=-1"
     ],
     "text": "CON +3, SP -1"
+  },
+  {
+    "id": "enemy.relic.woundwoodHeart",
+    "name": "Woundwood_Heart",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.strength=+1"
+    ],
+    "text": "CON +3, STR +1"
   }
 ]

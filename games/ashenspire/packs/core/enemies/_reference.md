@@ -330,3 +330,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
+| relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |

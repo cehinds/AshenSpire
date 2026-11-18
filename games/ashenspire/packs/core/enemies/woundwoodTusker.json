@@ -33,7 +33,12 @@
       "ref": "gear:warhammer"
     }
   ],
-  "relics": [],
+  "relics": [
+    {
+      "slot": "relic1",
+      "ref": "relic:enemy.relic.woundwoodHeart"
+    }
+  ],
   "deck": [
     "card:woundwoodTusker.woundGore",
     "card:woundwoodTusker.woundGore",
