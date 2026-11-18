@@ -343,9 +343,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
  * five files import that name and a rename would be churn that proves nothing.
  */
 // `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
-/** The run's effective attributes for a face outside combat: `rules` is the run (it has a deck and a profile pin); a combat or no run reads none. */
+/** The always-on attributes for a static face: `rules` is the run (deck + profile pin), a combat (its player's base live stats), or a preview's faceRules; none otherwise. */
 function faceAttributes(registries, rules) {
   if (rules?.faceAttributes) return rules.faceAttributes;
+  // A combat (e.g. the draw or spent pile viewer) carries the player's always-on attributes on its live stats, as previewCard's faceRules do.
+  if (rules?.gameProfile && rules.player && !Array.isArray(rules.deck)) return rules.player.liveStats?.base?.attributes ?? rules.player.attributes ?? null;
   if (!rules?.gameProfile || !Array.isArray(rules.deck) || !registries) return null;
   try { return gameProfileEffectiveAttributes(registries, rules); } catch { return null; }
 }
