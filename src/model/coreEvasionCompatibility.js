@@ -37,7 +37,9 @@
 // W25-W (2026-11-15): Ward's Block-first routing (`ward.routing` in fixCoreMechanics.json) and the Barrier -> "Gain N Poise" wording move the runtime hash; batch 3's 753eed... is kept.
 // Theme C of the 2026-11-17 playtest (tooltip wording on the Melee, Reach, Ranged, Reaction and Ethereal mechanic manifests), merged on theme B, moves the runtime hash again; wording only, no rule. Theme B's 73fdb0... and theme C's own cb5271... are kept.
 // The Ethereal manifest's reader is the engine again (review of #2819: it pointed at the upgrade step); wording only, edad64... is kept.
+// Owner ruling 2026-11-18 section 20 (Force is physical with a half-Poise share: elements.force.poiseShare replaces poiseMultiplier; Ward decay and max Poise) moves the runtime hash again; a save from 8be512... keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c',
   'sha256:edad64eb5d0992e6eee07b451ea4b95fc51302018437017d6697c7cd1cecf6c5',
   'sha256:73fdb07daecf40ce03f3d066a795fb5519b3eb0048c21447511d23c33ee9ff53',
   'sha256:cb5271059640a11d4d4b87795a6e553464d721ca14c05e327b2fe0396f5497f9',
@@ -111,7 +113,7 @@ const PREVIOUS_RUNTIMES = new Set([
 // The 2026-11-18 rulings (ratings removed, 0.7 cuts, hand, SP and MP per four points) move it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
 // The physical cut (2026-11-18: physicalDamageMultiplier 0.7, blockGainMultiplier 0.49) moves it again; 11f068... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c';
+const FIXED_EVASION_RUNTIME = 'sha256:b41fec05502e1c7473ac5f75fd92cfaf1efb6afd40607e7d4c5a5b00340cc404';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

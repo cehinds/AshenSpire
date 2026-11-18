@@ -118,8 +118,18 @@ export function ElementProtectionView(ctx, source, target, carrier) {
 }
 
 /**
+ * ForcePoiseShare(ctx, carrier) -> the share of a Force hit's post-Block damage that goes to Poise (`elements.force.poiseShare`, 0.5;
+ * owner 2026-11-18: the other half is HP, where a normal physical hit sends 25% to Poise), or null for any other hit.
+ */
+export function ForcePoiseShare(ctx, carrier) {
+  const rules = ElementRulesOf(ctx);
+  const share = rules?.force?.poiseShare;
+  return rules && Number.isFinite(share) && ElementOfHit(carrier) === 'force' ? Math.min(1, Math.max(0, share)) : null;
+}
+
+/**
  * The Poise lost in addition to what absorbed the hit: Fire's ignored points leave the pool (they never absorb, so a fire
- * hit can still break it), and Force adds (multiplier - 1) of the Poise damage the hit did.
+ * hit can still break it). Force's Poise rule is a share of the hit, not extra loss: see ForcePoiseShare.
  */
 export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const rules = ElementRulesOf(ctx);
@@ -128,7 +138,6 @@ export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const dealt = (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0);
   let extra = 0;
   if (view?.ignored > 0) extra += view.ignored;
-  if (element === 'force' && !receipt.evaded) extra += Math.floor(dealt * (rules.force.poiseMultiplier - 1));
   const left = Math.max(0, (pool?.value || 0) - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0));
   const added = receipt.evaded ? 0 : Math.min(extra, left);
   if (added > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + added;

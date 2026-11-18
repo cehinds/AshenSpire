@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/elementIdentity.js",
-    "symbol": "ElementReceiptFinish"
+    "file": "src/engine/actions.js",
+    "symbol": "prepareExpandedDefense"
   }
 }

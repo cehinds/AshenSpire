@@ -231,7 +231,7 @@
       "freezePlayerStaminaLoss": 2
     },
     "force": {
-      "poiseMultiplier": 1.5
+      "poiseShare": 0.5
     }
   }
 }
