@@ -1486,7 +1486,7 @@ export function mountCustomize(app, {
     ]);
     if (!inspection) {
       bindCardInspection(card, {
-        title: `${name} — ${cls.name}`,
+        title: `${name} (${cls.name})`,
         identity: 'creation-character-summary',
         open: opener => {
           const explained = resources.filter((entry) => entry.explanation);
@@ -1498,7 +1498,7 @@ export function mountCustomize(app, {
             ])),
           ]);
           return openCardInspection({
-            title: `${name} — ${cls.name}`,
+            title: `${name} (${cls.name})`,
             card: characterSummaryCard(run, projection, true),
             details,
             opener,

@@ -59,7 +59,7 @@ test('the counter reads "N / min–max" and the refusal is the rules\' sentence'
   const run = freshRun();
   const n = run.deck.length;
   const inside = deckEditorModel({ registries: REG, run, settings: { deckMinSize: 1 } });
-  assert.equal(inside.counter.text, `${n} / 1–∞`);
+  assert.equal(inside.counter.text, `${n} / 1-∞`);
   assert.equal(inside.counter.outOfBounds, false);
   assert.equal(inside.done.disabled, false);
   const out = deckEditorModel({ registries: REG, run, settings: { deckMinSize: n + 5 } });
@@ -68,7 +68,7 @@ test('the counter reads "N / min–max" and the refusal is the rules\' sentence'
   assert.match(out.done.refusal, new RegExp(`\\b${n}\\b`));
   assert.match(out.done.refusal, new RegExp(`\\b${n + 5}\\b`));
   const capped = deckEditorModel({ registries: REG, run, settings: { deckMinSize: 1, deckMaxUnlimited: false, deckMaxSize: n + 2 } });
-  assert.equal(capped.counter.text, `${n} / 1–${n + 2}`);
+  assert.equal(capped.counter.text, `${n} / 1-${n + 2}`);
 });
 
 test('the curve counts the whole deck; filters and sort shape only the lists', () => {
@@ -358,7 +358,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     const counter = () => root.querySelector('.deck-editor-counter');
     const refusal = () => root.querySelector('#deck-editor-refusal');
     const doneButton = () => root.querySelector('#deck-editor-done');
-    assert.equal(counter().textContent, `${n} / ${n}–∞`);
+    assert.equal(counter().textContent, `${n} / ${n}-∞`);
     assert.equal(doneButton().disabled, false);
 
     // Selection is read-only. Only the explicit inspector action changes a copy.
@@ -368,7 +368,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     openInspector(root.querySelector('.deck-editor-row .deck-editor-main[aria-pressed="true"]'));
     root.querySelector('[data-focus-key="selected-remove"]').click();
     assert.equal(run.deck.length, n - 1);
-    assert.equal(counter().textContent, `${n - 1} / ${n}–∞`);
+    assert.equal(counter().textContent, `${n - 1} / ${n}-∞`);
     assert.equal(counter().dataset.state, 'out');
     assert.equal(doneButton().disabled, true, 'Done is disabled out of bounds');
     assert.equal(doneButton().getAttribute('aria-disabled'), 'true');

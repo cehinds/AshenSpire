@@ -87,8 +87,9 @@ export function IntentPoiseRead(intent) {
 export function PoiseRead(poise, damage) {
   if (!poise || !(poise.max > 0 || poise.mayBreak)) return null;
   const breakNote = poise.breaks ? t('combat.intent.poiseBreaks') : poise.mayBreak ? t('combat.intent.poiseMayBreak') : '';
-  return { value: poise.label, breaks: !!poise.breaks, mayBreak: !!poise.mayBreak,
-    summary: t('combat.intent.poiseSummary', { damage: damage ?? '?', poise: poise.label }) + (breakNote ? ` ${breakNote}` : '') };
+  const value = poise.label.replaceAll('–', '-');
+  return { value, breaks: !!poise.breaks, mayBreak: !!poise.mayBreak,
+    summary: t('combat.intent.poiseSummary', { damage: damage ?? '?', poise: value }) + (breakNote ? ` ${breakNote}` : '') };
 }
 
 export const ChargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
@@ -125,8 +126,8 @@ export function intentDamageRead(intent) {
   const hits = Array.isArray(intent.hitDamages) && intent.hitDamages.length ? intent.hitDamages : Array.from({ length: Math.max(1, intent.hits || 1) }, () => intent.damage);
   const same = hits.every(n => n === hits[0]);
   const label = hits.length === 1 && intent.projectedDamage ? intent.projectedDamage.label : same ? `${hits[0]}${hits.length > 1 ? `×${hits.length}` : ''}`
-    : hits.length <= 3 ? hits.join('+') : `${Math.min(...hits)}–${Math.max(...hits)}×${hits.length}`;
-  const bounds = intent.projectedDamage?.label || (intent.hpLossBounds ? intent.hpLossBounds[0] === intent.hpLossBounds[1] ? String(intent.hpLossBounds[1]) : intent.hpLossBounds.join('–') : String(intent.totalDamage ?? hits.reduce((a, b) => a + b, 0)));
+    : hits.length <= 3 ? hits.join('+') : `${Math.min(...hits)}-${Math.max(...hits)}×${hits.length}`;
+  const bounds = intent.projectedDamage?.label || (intent.hpLossBounds ? intent.hpLossBounds[0] === intent.hpLossBounds[1] ? String(intent.hpLossBounds[1]) : intent.hpLossBounds.join('-') : String(intent.totalDamage ?? hits.reduce((a, b) => a + b, 0)));
   const basis = intent.projectedDamage?.basis === 'hp' || intent.damageBasis === 'hp' || intent.hpLossBounds ? t('combat.intent.damageHp') : t('combat.intent.damageBeforeBlock');
   return { label, summary: intent.damageScope === 'contact'
     ? t('combat.intent.damageContact', { index: (intent.contactIndex || 0) + 1, count: intent.contactCount || 1, amount: bounds, basis })

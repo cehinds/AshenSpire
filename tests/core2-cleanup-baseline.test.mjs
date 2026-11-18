@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
+// Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
 // Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.
 // Current profiles, events and snapshots change by design; RNG counters and the historical scenario are unchanged.
 // Recaptured 2026-11-17 (theme C, on theme B: the card changes move the default profile hash and the tooltip wording moves the runtime hash, so only the profile, runtime, snapshot, stored and loaded hashes moved).

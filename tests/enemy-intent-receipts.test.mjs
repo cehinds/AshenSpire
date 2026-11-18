@@ -93,7 +93,7 @@ test('all 33 ordinary, elite and boss current actions capture without changing e
 test('long varying attacks use a bounded per-hit range and retain an explicitly marked total', () => {
   const view = combatIntentPresentation({ kind: 'attack', moveId: 'long', damage: 1, hits: 10,
     hitDamages: [1,2,3,4,5,6,7,8,9,10], totalDamage: 55, damageBasis: 'hp' });
-  assert.equal(view.parts[0].value, '1–10×10');
+  assert.equal(view.parts[0].value, '1-10×10');
   assert.equal(view.parts[0].summary, 'Total 55 damage');
 });
 

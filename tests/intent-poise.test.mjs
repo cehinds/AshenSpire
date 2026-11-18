@@ -130,6 +130,16 @@ test('the intent presentation puts the Poise beside the attack number, with a pl
   assert.doesNotMatch(read.summary, /—/, 'no em dashes');
 });
 
+test('the visible Poise range uses a hyphen and keeps the original forecast labels', () => {
+  const projectedPoise = Object.freeze({ min: 2, max: 4, label: '2–4', mayBreak: true, breaks: false });
+  const projectedDamage = Object.freeze({ min: 7, max: 9, label: '7–9', basis: 'hp' });
+  const read = IntentPoiseRead({ projectedPoise, projectedDamage });
+  assert.equal(read.value, '2-4');
+  assert.equal(read.summary, '7–9 damage, 2-4 Poise (may break your Poise)');
+  assert.equal(projectedPoise.label, '2–4');
+  assert.equal(projectedDamage.label, '7–9');
+});
+
 test('no Poise mark when the attack costs no Poise, or the intent is hidden', () => {
   const combat = fight([['wanderingSoldier', 'slash']], { block: 60 });
   assert.equal(IntentPoiseRead(projectCombatIntent(combat, combat.enemies[0].id)), null);

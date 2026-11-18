@@ -304,7 +304,7 @@ test('generated balance descriptions derive their names from the bundle', () => 
   };
 
   const relic = (contentBundle.relics || []).find((entry) => entry.id === 'ivoryComb');
-  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name} —`),
+  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name}:`),
     `the relic's own name should open its row: ${note('powers.ivoryComb.n')}`);
 
   // THE TIER AND THE CLASS COME FROM THE TREE, not from this file. Hard-coding
