@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-18
 
-- **A clearer event screen** ([#2823](https://github.com/cehinds/AshenSpire/pull/2823), `0.7.4.148`). The event art now fills at least half the screen on a phone. The panel has slim, even margins, a smaller title and text, and no greyed-out Continue until you pick a response. Larger text sizes still grow the event text, and short, wide screens keep the art beside the choices.
+- **A clearer event screen** ([#2823](https://github.com/cehinds/AshenSpire/pull/2823), `0.7.4.150`). The event art now fills at least half the screen on a phone. The panel has slim, even margins, a smaller title and text, and no greyed-out Continue until you pick a response. Larger text sizes still grow the event text, and short, wide screens keep the art beside the choices.
+- **Smaller numbers** ([#2820](https://github.com/cehinds/AshenSpire/pull/2820), `0.7.4.150`). Base damage is halved. Attack rating now comes from STR alone, defence from DEX alone, and magic resistance from your higher of INT and WIS. Your health is 30 plus 5 for each point of CON and each level. Armour and weapons give stat points and Poise instead of ratings. Each extra Action or Mana point costs 3 stat points. Elites and bosses are cut back to the strength of their act. Blacksmith upgrades start at about 50 cinders and cost more with rank and with each earlier upgrade.
 
 ## 2026-11-17
 

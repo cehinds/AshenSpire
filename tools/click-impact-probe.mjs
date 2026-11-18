@@ -26,7 +26,6 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 //
 //   CHROME=/path/to/chrome node tools/click-impact-probe.mjs [--rounds 1] [--plays 5]
 
-import { CORE_ENTRY_SEED } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,7 +56,9 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
 const ROUNDS = Math.max(1, Math.floor(Number(argOf('--rounds') || 2)) || 1);
-const SEED = Number(argOf('--seed') || CORE_ENTRY_SEED);
+// The timing fixture starts against a Briar Hermit with Sweep and Strike in hand.
+// The quick-start input fixture's hand can end its first fight in two hits.
+const SEED = Number(argOf('--seed') || 97);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl, pageErrors = []) {

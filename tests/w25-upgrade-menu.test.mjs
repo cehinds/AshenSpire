@@ -17,9 +17,13 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const strike = () => registries.cards.get('core.strike');
 const withSteps = (steps) => ({ upgraded: true, upgradeSteps: steps });
 
-function fight(cards, { enemies = ['wanderingSoldier'] } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: enemies });
+// The `other`-target half hit is a rule about the card's base number; the Core base-damage halving (0.5, rounded up)
+// makes 6 and 3 both land as 3 + AR, so that one test pins baseDamageMultiplier 1 to keep the halves distinguishable.
+const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1 } } });
+const unscaledRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, unscaledProfile)), unscaledProfile);
+function fight(cards, { enemies = ['wanderingSoldier'], registries: reg = registries } = {}) {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: enemies });
   for (const pile of Object.values(combat.piles)) pile.length = 0;
   combat.piles.hand.push(...cards);
   for (let i = 0; i < 8; i += 1) combat.piles.draw.push({ instanceId: `f${i}`, cardId: 'core.defend', upgraded: false });
@@ -107,25 +111,25 @@ test('target (a step saved before `other`) hits a second enemy; a temporary boos
 
 test('target with `other` hits one OTHER enemy at half damage, never the main target again, and nothing extra against a lone enemy', () => {
   const step = { k: 'fx', fx: 'target', other: true };
-  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(plain, 'p');
   const main = 500 - plain.enemies[0].hp;
-  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(c, 'p');
   assert.equal(500 - c.enemies[0].hp, main, 'the main target takes only the card\'s own hit');
   assert.ok(c.enemies[1].hp < 500 && 500 - c.enemies[1].hp < main, 'the other enemy takes the half hit');
-  const lone = fight([inst('p', 'core.strike', [step])]);
+  const lone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
   play(lone, 'p');
   assert.equal(500 - lone.enemies[0].hp, main, 'a lone enemy takes one hit, not a second');
   assert.match(JSON.stringify(applyUpgradeSteps(strike(), [step]).effects), /otherEnemy/);
-  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   const half = (aimed) => previewCard(q, 'p', aimed.id).values.find((row) => row.target === 'otherEnemy');
   for (const [aimed, other] of [[q.enemies[0], q.enemies[1]], [q.enemies[1], q.enemies[0]]]) {
     const row = half(aimed);
     assert.deepEqual(Object.keys(row.perTarget), [other.id], 'the half hit is quoted only on the other enemy');
     assert.ok(row.perTarget[other.id] > 0);
   }
-  const alone = fight([inst('p', 'core.strike', [step])]);
+  const alone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
   assert.deepEqual(Object.keys(previewCard(alone, 'p', alone.enemies[0].id).values.find((row) => row.target === 'otherEnemy').perTarget), [], 'a lone enemy is quoted no half hit');
 });
 

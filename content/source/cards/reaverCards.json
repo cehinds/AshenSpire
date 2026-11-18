@@ -2337,7 +2337,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 5
         },
         {
           "op": "loseHp",

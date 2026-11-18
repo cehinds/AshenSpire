@@ -36,7 +36,7 @@ import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
 import { CounterPreviewAgainst } from './combatCounterPreview.js';
-import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
+import { tacticalCarrier, AuthoredCounterHp, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, ExpireCombatCounterAtTurnStart, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
 import { NeutralExtraDraw, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
@@ -361,14 +361,19 @@ export function createCombat({
     if (fixCoreEnabled(combat)) {
       combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
       combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
-      for (const enemy of combat.enemies) {
+      for (const [index, enemy] of combat.enemies.entries()) {
         const definition = registries.enemies.get(enemy.enemyId);
         enemy.attributes = { ...(definition.attributes || {}) };
         enemy.baseEvasionBonus = definition.baseEvasionBonus || definition.evasionBonus || 0;
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
-        Object.assign(enemy, gameProfileEnemyRatings(combat,enemy) || {});
+        const { effectiveMaxHp, hpScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
+        Object.assign(enemy, ratings);
+        // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
+        if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
+        // Then its tier's HP scale (enemies.hpScaleByTier), on the level HP or the rolled range alike.
+        if (Number.isFinite(hpScale) && hpScale !== 1) enemy.hp = enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hpScale));
       }
     }
   }
@@ -2215,9 +2220,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const coreCounterCard = configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter';
   let coreCounterRead;
   // The card's own damage: what the armed Counter holds as its base return (live: payload.hp), plus any charged bonus.
-  const counterBaseHp = resolvedTarget => chargedEffects.reduce((sum, effect) => sum + (effect.op === 'damage'
-    ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, { energySpent: shownCost })?.total || 0 : 0), 0)
-    + Math.max(0, charges.damage + charges.damageEffect);
+  const counterBaseHp = resolvedTarget => {
+    const meta = { energySpent: shownCost };
+    const authored = AuthoredCounterHp(combat, p, resolvedTarget, action.card, meta);
+    const base = authored ? authored.base + authored.rating : chargedEffects.reduce((sum, effect) => sum + (effect.op === 'damage'
+      ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, meta)?.total || 0 : 0), 0);
+    return base + Math.max(0, charges.damage + charges.damageEffect);
+  };
   const coreCounterReturnRead = () => {
     if (coreCounterRead !== undefined) return coreCounterRead;
     const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
