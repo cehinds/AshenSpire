@@ -30,7 +30,7 @@ Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal 
 
 ## Scrolls (owner, 2026-11-18)
 - **Where they live:** scrolls are consumables in the **potions (flask) section**, not deck cards. They **do not count against the potion limit**.
-- **Using one in a fight:** the scroll is spent and **its card goes into your hand**. Once that card is played it leaves for good; it never joins the deck. Some scroll cards have **Retain** (they wait in hand until played); the rest are lost at the end of the turn if not played.
+- **Using one in a fight:** the scroll is spent and **its card goes into your hand**. **A scroll's card costs 0 to play** (no MP or SP), whatever the spell normally costs (owner). Once that card is played it leaves for good; it never joins the deck. Some scroll cards have **Retain** (they wait in hand until played); the rest are lost at the end of the turn if not played.
 - **Spell scrolls:** most scrolls are one-use copies of existing spells. **Every spell has a scroll version**, named "Scroll of <spell>", at the spell's base grade. Each card's Retain is set per scroll in the rules pass.
 - **Unique scrolls:** a few exist only as scrolls:
 
@@ -50,5 +50,5 @@ Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal 
 2. Caster classes (10% Arcane Trader chance) are Starseer and Herald; the others get 5%.
 3. Scrolls sit in the potions section, outside the potion limit.
 4. A regular trader stocks 1 scroll on 50% of visits.
-5. A spell scroll costs 60 + 40 × the spell's cost, and rare spells +50%.
+5. A spell scroll costs 60 + 40 × the spell's cost, and rare spells +50%. The price follows the spell's normal cost; casting the scroll is free.
 6. Build order: after feature/MapRouteSpread merges into dev, together with the map relics.
