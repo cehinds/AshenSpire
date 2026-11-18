@@ -6239,5 +6239,113 @@
         }
       ]
     }
+  },
+  {
+    "id": "brassThroatIbex",
+    "name": "Brass-Throat_Ibex",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "brassThroatIbex.brassCall",
+      "brassThroatIbex.hornRam",
+      "brassThroatIbex.thunderLeap",
+      "brassThroatIbex.stormPeal",
+      "brassThroatIbex.advance",
+      "brassThroatIbex.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "duskChime"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.brassThroat"
+      }
+    ],
+    "presentation": {
+      "art": "brassThroatIbex",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "brassThroatIbex.brassCall",
+      "poiseMax": 14,
+      "cardHints": {
+        "brassThroatIbex.hornRam": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "hornRam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.brassCall": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "brassCall",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.thunderLeap": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "thunderLeap",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.stormPeal": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "stormPeal",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "brassThroatIbex.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
+    }
   }
 ]

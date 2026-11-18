@@ -16,6 +16,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:blightHound | Blight Hound | minion |
 | enemy:blightedValkyrie | The Blighted Valkyrie | boss |
 | enemy:brackenTusker | Bracken Tusker | minion |
+| enemy:brassThroatIbex | Brass-Throat Ibex | elite |
 | enemy:briarHermit | Briar Hermit | minion |
 | enemy:carrionHeadsman | Carrion Headsman | minion |
 | enemy:chainScavenger | Chain Scavenger | minion |
@@ -357,6 +358,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:sootwingBat.ashWingBeat | Ash Wing Beat | attack | 1 | 0 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
 | card:sootwingBat.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:sootwingBat.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:brassThroatIbex.hornRam | Horn Ram | attack | 1 | 0 | Deal {damage} damage. |
+| card:brassThroatIbex.brassCall | Brass Call | attack | 1 | 1 | Deal {damage} damage. |
+| card:brassThroatIbex.thunderLeap | Thunder Leap | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:brassThroatIbex.stormPeal | Storm Peal | attack | 3 | 2 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
+| card:brassThroatIbex.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:brassThroatIbex.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 
@@ -432,3 +439,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
+| relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |

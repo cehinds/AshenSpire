@@ -165,5 +165,14 @@
       "self.sp=-1"
     ],
     "text": "CON +3, STR +1, SP -1"
+  },
+  {
+    "id": "enemy.relic.brassThroat",
+    "name": "Brass_Throat",
+    "modifiers": [
+      "self.wisdom=+2",
+      "self.constitution=+1"
+    ],
+    "text": "WIS +2, CON +1"
   }
 ]

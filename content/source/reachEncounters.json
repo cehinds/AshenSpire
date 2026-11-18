@@ -313,5 +313,22 @@
       "min": 4,
       "max": 5
     }
+  },
+  {
+    "id": "a3_eliteBrassIbex",
+    "enemies": [
+      "brassThroatIbex"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
   }
 ]

@@ -1036,5 +1036,78 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "brassThroatIbex",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 5,
+      "intelligence": 4
+    },
+    "size": "large",
+    "name": "Brass-Throat Ibex",
+    "hp": [
+      132,
+      140
+    ],
+    "poiseMax": 28,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "hornRam": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 30,
+        "maxConsecutive": 2
+      },
+      "brassCall": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "thunderLeap": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 19,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "stormPeal": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 27,
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      }
+    },
+    "firstMove": "brassCall",
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      }
+    ]
   }
 ]

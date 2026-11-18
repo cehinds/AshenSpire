@@ -648,3 +648,7 @@
 "enemyMove","slagtongImp","cinderCackle","debuff","false","false","","","spell","","fire","","","",""
 "enemyMove","sootwingBat","sootFlurry","attack","true","false","weapon","piercing","physical","attack","","","delivery:projectile","",""
 "enemyMove","sootwingBat","ashWingBeat","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
+"enemyMove","brassThroatIbex","hornRam","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
+"enemyMove","brassThroatIbex","brassCall","attack","true","false","spell","lightning","spell","","lightning","","delivery:projectile","",""
+"enemyMove","brassThroatIbex","thunderLeap","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
+"enemyMove","brassThroatIbex","stormPeal","attack","true","false","spell","lightning","spell","","lightning","","delivery:projectile","",""

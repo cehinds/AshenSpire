@@ -7993,5 +7993,135 @@
         }
       ]
     }
+  },
+  {
+    "id": "brassThroatIbex",
+    "name": "Brass-Throat_Ibex",
+    "displayName": "Brass-Throat Ibex",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "enemy.relic.brassThroat",
+            "name": "Brass_Throat",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "wisdom": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "duskChime",
+            "name": "Dusk_Chime",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.brassThroat",
+            "name": "Brass_Throat",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 30,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 14,
+        "intelligence": 2,
+        "level": 15
+      },
+      "total": 79,
+      "formula": "10+30+5+3+14+2+15 = 79"
+    },
+    "pools": {
+      "hp": 79,
+      "sp": 4,
+      "mp": 4,
+      "ar": 1,
+      "dr": 1,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "duskChime",
+        "name": "Dusk_Chime"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.brassThroat",
+        "name": "Brass_Throat"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "brassThroatIbex.brassCall",
+          "name": "Brass_Call",
+          "copies": 1
+        },
+        {
+          "id": "brassThroatIbex.hornRam",
+          "name": "Horn_Ram",
+          "copies": 1
+        },
+        {
+          "id": "brassThroatIbex.thunderLeap",
+          "name": "Thunder_Leap",
+          "copies": 1
+        },
+        {
+          "id": "brassThroatIbex.stormPeal",
+          "name": "Storm_Peal",
+          "copies": 1
+        },
+        {
+          "id": "brassThroatIbex.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "brassThroatIbex.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]
