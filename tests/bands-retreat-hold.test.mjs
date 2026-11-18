@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dispatch } from '../src/engine/combat.js';
 import { SetAdvanced } from '../src/engine/bandRows.js';
+import { applyStatus } from '../src/engine/statuses.js';
 import { bandsFight } from './helpers/bands-fight.mjs';
 
 const endTurn = combat => dispatch(combat, { type: 'endTurn' });
@@ -79,4 +80,18 @@ test('two enemies: an unstacked back enemy steps forward at once; the stacked on
   endTurn(combat);
   assert.equal(rowEvents(combat, wisp.id, 'frontEmpty').length, 1, 'the unstacked back enemy steps forward');
   assert.equal(rowEvents(combat, soldier.id, 'frontEmpty').length, 0, 'the stacked one stays');
+});
+
+// Codex on PR #2835: a second Advance in the same turn (already at full duration) still spends a Retreat stack.
+test('a repeated Advance spends a stack each time, even at full Advance duration', () => {
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier'], hand: ['core.galePush'] });
+  const enemy = combat.enemies[0];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id });
+  applyStatus(combat, enemy, 'retreat', 1); // a second push's stack, without the SP for a second card
+  assert.equal(stacks(enemy), 2);
+  assert.equal(SetAdvanced(combat, combat.player, true), true);
+  assert.equal(stacks(enemy), 1);
+  assert.equal(SetAdvanced(combat, combat.player, true), true, 'the second Advance still acts');
+  assert.equal(stacks(enemy), 0);
+  assert.equal(SetAdvanced(combat, combat.player, true), false, 'with no stacks left and full duration it does nothing');
 });

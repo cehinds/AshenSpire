@@ -124,9 +124,11 @@ export function SetAdvanced(ctx, entity, on) {
   const rules = BandsActive(ctx);
   if (!rules || !entity) return false;
   if (!on) { if (!(entity.advanced > 0)) return false; endAdvance(ctx, entity); return true; }
-  if (entity.advanced === rules.advancedTurnEnds) return false;
+  // Each Advance of the player removes Retreat stacks from every enemy (one each by default), even when the Advance is already
+  // at its full duration (Codex on PR #2835: a second Advance in a turn still spends a stack).
+  const holding = ctx.enemies.some(enemy => enemy.alive && RetreatStacks(enemy) > 0);
+  if (entity.advanced === rules.advancedTurnEnds && !holding) return false;
   entity.advanced = rules.advancedTurnEnds;
-  // Each Advance of the player removes Retreat stacks from every enemy (one each by default).
   for (const enemy of ctx.enemies) if (enemy.alive) spendRetreat(ctx, enemy, rules.advanceRemovesStacks ?? 1);
   SyncBandRows(ctx);
   ctx.emit?.('combatAdvancedChanged', { sourceId: entity.id, advanced: true, turnEnds: entity.advanced });
