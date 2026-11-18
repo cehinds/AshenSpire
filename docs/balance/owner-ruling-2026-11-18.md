@@ -229,8 +229,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 | Hammer | +1 Poise damage on attacks, Sweeps and Smashes. Smash inflicts 1 Vulnerable. |
 | Spear / Rapier / Bow | +1 Pierce. |
 | Rapier | +1 Counter stack at the end of the turn while in Defend or Counter stance. |
-| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. |
-| Sceptre | +1 to magic damage and magic stacks. Magic focus. |
+| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. 1 Ward stack at the start of each turn. |
+| Sceptre | +1 to magic damage and magic stacks. Magic focus. 1 Ward stack at the start of each turn. |
 
 **Armour groups (new tag)**
 
@@ -277,3 +277,4 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
 - **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
 - **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(decided: +5 per stack, since the config already counts Ward in stacks of 5 Poise)*
+- **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).

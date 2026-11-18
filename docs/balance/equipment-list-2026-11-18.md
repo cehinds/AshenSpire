@@ -114,7 +114,7 @@ How each item reads: **type base** (owner ruling §18) **+ one second bonus of i
 | ★ Beast Claws | uncommon | Attacks apply 1 Bleed |
 
 ## Staves and sceptres
-Base for both: magic focus, −1 MP on spells in Prepared stance. Staves also have Reach. Sceptres also give +1 magic damage and +1 to magic stacks.
+Base for both: magic focus, −1 MP on spells in Prepared stance; 1 Ward stack at the start of each turn (owner, 2026-11-18). Staves also have Reach. Sceptres also give +1 magic damage and +1 to magic stacks.
 
 | Item | Type | Rarity | Second bonus |
 |---|---|---|---|
