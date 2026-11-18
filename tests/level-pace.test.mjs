@@ -44,8 +44,8 @@ test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly
   assert.equal(award.levelUps, 1);
   assert.equal(run.level.level, 2);
   assert.ok(run.level.xp < xpToNext(reg, 2), `xp ${run.level.xp} must stay under the step ${xpToNext(reg, 2)}`);
-  // With 0 — the shipped cap — a large award can cross several levels (three since the boss tier doubled XP, owner 2026-11-18).
-  assert.equal(playAward({ ...settings, [CAP]: 0 }, 'boss', 1).award.levelUps, 3);
+  // With 0 — the shipped cap — a large award can cross several levels (four since the boss tier tripled XP, owner 2026-11-18).
+  assert.equal(playAward({ ...settings, [CAP]: 0 }, 'boss', 1).award.levelUps, 4);
   assert.equal(playAward({}, 'boss', 1).award.levelUps, 0);
 });
 

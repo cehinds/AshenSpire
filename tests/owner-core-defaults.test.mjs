@@ -8,8 +8,8 @@ import { uiConfig } from '../src/config/generated/ui.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
 
 test('Core content carries the owner\'s balance defaults', () => {
-  // level.xp.growth is the owner's exported 1.5 (SPEC §13.4o, owner 2026-11-05).
-  assert.equal(balance.level.xp.growth, 1.5);
+  // level.xp.growth: 1.5 under SPEC §13.4o (owner 2026-11-05), 1.2 since the pace ruling (owner 2026-11-18).
+  assert.equal(balance.level.xp.growth, 1.2);
   assert.equal(balance.rewards.cardChoices, 3);
   const chance = balance.rewards.cardRewards.chancePct;
   assert.deepEqual([chance.normal, chance.elite, chance.boss], [10, 10, 10]);
