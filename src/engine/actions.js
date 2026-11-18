@@ -318,7 +318,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
-    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true, carrier }) });
+    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true, carrier, source }) });
   for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
@@ -920,7 +920,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
       const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
-    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}`, carrier, blockAtHit: tactical?.blockBefore });
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}`, carrier, source, blockAtHit: tactical?.blockBefore });
     // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
     // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
     else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
@@ -1563,7 +1563,7 @@ function splitSmashPressure(ctx, action, target, row) {
   const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
-    dealPoiseDamage(ctx, target, poise, { carrier: action.card }); // a Smash: it may break a Defend target's last Poise
+    dealPoiseDamage(ctx, target, poise, { carrier: action.card, source: action.source }); // a Smash: it may break a Defend target's last Poise
     trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
@@ -2128,7 +2128,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         // Block at the hit: the card's own (its action receipt), or for a trigger on a landed hit (a relic: the Forsaken Medallion) that hit's damageDealt.
         const hit = action.meta?.event?.targetId === t.id && Number.isFinite(action.meta.event.blockRemaining) ? action.meta.event : null;
         const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
-        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, blockAtHit });
+        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, source: action.source, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }

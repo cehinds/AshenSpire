@@ -164,3 +164,20 @@ test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the pre
   const now = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
   assert.equal(now - had, scaled.value, 'the quote equals the Block and Ward the card gave');
 });
+
+test('an explicit spell poiseDamage effect: the preview quote equals the Poise the play removes, at the x2 factor', () => {
+  const run = (world) => {
+    const combat = begin(world, { classId: 'starseer' });
+    const enemy = combat.enemies[0];
+    enemy.persistentPoise = { value: 40, max: 40 };
+    combat.piles.hand.push({ instanceId: 'grasp', cardId: 'core.shockingGrasp' });
+    const row = previewCard(combat, 'grasp', enemy.id).values.find(value => value.op === 'poiseDamage');
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'grasp', targetId: enemy.id });
+    const spent = combat.eventLog.filter(e => e.type === 'persistentPoiseChanged' && e.source === 'poiseDamage').reduce((n, e) => n + e.spent, 0);
+    return { quoted: row?.perTargetPoise?.[enemy.id]?.removed ?? row?.perTargetPoise?.removed, spent };
+  };
+  const doubled = run(shippedWorld), single = run(variant({ spellPoiseDamageMultiplier: 1 }));
+  assert.ok(single.spent > 0, 'the spell has an explicit Poise effect');
+  assert.equal(doubled.spent, single.spent * 2);
+  assert.equal(doubled.quoted, doubled.spent, 'the preview quote is what the play removed');
+});
