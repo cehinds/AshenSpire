@@ -259,7 +259,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - Crossbow: Reach, +2 Pierce, Escalating.
   - Tome (off-hand): the first spell each turn draws 1; 2 Ward stacks at the start of each turn (owner, 2026-11-18).
   - Talisman (off-hand): +1 Ward at the start of each turn.
-- **Armour bonuses come from specific pieces (owner):** there are no group-wide or set bonuses. Thorns, the Counter and Evade stack bonuses and +1 max MP are each the **second bonus of a specific armour piece** (see the equipment list), not something every armour of a group gives.
+- **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
 - **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
 - Each new type ships with 2–3 items across rarities. Placeholder art is used until real art exists.
 
@@ -303,8 +303,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - To keep heavy above medium, medium goes from +3 to **+1** and light from +1 to **0**. *(decided)*
   - Shields keep their +1 Poise.
   - Result: about 17 for that Reaver, close to 15; the rest is left for playtest.
-- **The Counter and Evade stack bonuses (owner; each on a specific armour piece, not on every light or medium armour):** these replace the free stacks.
+- **Light and medium full-set bonuses (owner):** these replace the free stacks.
   - Medium (mail): whenever you gain Counter stacks, gain 1 more. If you end your turn in Counter stance while holding Counter stacks, gain 1 more Counter (3 left becomes 4).
   - Light (leathers): whenever you gain Evade stacks, gain 1 more. If you end your turn in Defend stance while holding Evade stacks, gain 1 more Evade.
   - Holding no stacks gives nothing; the bonus only adds to stacks you have or are gaining.
-- **Poise break (owner):** a broken Poise applies **2 stacks** each of Staggered, Vulnerable, Weak and Frail (was 1), until the start of that character's next turn.

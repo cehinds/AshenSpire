@@ -159,20 +159,20 @@ Group bases:
 - **Medium (mail):** +3 Poise, Block cards +2.
 - **Heavy (plate):** +5 Poise, −1 DEX, Block cards +3.
 
-No group-wide or set bonuses (owner): the bonuses below belong to specific pieces.
+Full-set bonuses: unarmoured +1 MP; light: +1 to every Evade gain, and +1 Evade when you end a turn in Defend stance holding Evade; medium: +1 to every Counter gain, and +1 Counter when you end a turn in Counter stance holding Counter; heavy Thorns 1. No class restrictions; class-themed drops appear 75% of the time.
 
 | Item | Group | Rarity | Second bonus |
 |---|---|---|---|
-| Wayfarer Plate | heavy | common | +1 CON; Thorns 1 |
+| Wayfarer Plate | heavy | common | +1 CON |
 | Gilded Oathsworn | heavy | uncommon | +1 STR |
 | Bastion Harness | heavy | uncommon | +1 Counter at end of turn; −1 max SP |
 | ★ Cinderforged Plate | heavy | rare | Resist Fire; Thorns +1 |
-| Ashen Vigil | medium | uncommon | Every Counter gain +1; ending a turn in Counter stance holding Counter gives +1 (owner) |
+| Ashen Vigil | medium | uncommon | +1 Counter at end of turn |
 | Warden Mail | medium | uncommon | Defend cards Retain |
 | ★ Ringmail Hauberk | medium | common | 1 Block at start of turn |
 | ★ Wyrmscale Mail | medium | rare | Resist Frost; +1 Poise |
 | Gutter Leathers | light | common | +1 max SP on your first turn |
-| Nightveil Coat | light | uncommon | Every Evade gain +1; ending a turn in Defend stance holding Evade gives +1 (owner) |
+| Nightveil Coat | light | uncommon | 1 Evade at start of turn |
 | Duelist Jerkin | light | uncommon | Counter returns +1 damage |
 | Shadow Mantle | light | uncommon | +1 STR |
 | Waywatcher Coat | light | uncommon | Bow attacks +1 |
