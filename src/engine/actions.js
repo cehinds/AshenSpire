@@ -4,7 +4,7 @@ import * as Engagement from './combatEngagement.js';
 import { SwapEnemyRows } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
-import { stanceEffectiveness } from '../model/stanceRules.js';
+import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
 import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -2104,8 +2104,13 @@ export const OPCODE_HANDLERS = Object.freeze({
       // (the same setter a maneuver card uses), so the sprite, icon, benefits and matchups all read it.
       const followCombatStance = () => {
         if (!def.maneuver) return;
+        // Already in that stance (the card's own maneuver put the figure there): nothing to change, and the setter's
+        // per-accepted-card Defend restore must not run a second time.
+        if (stanceOf(ctx.player.combatStance)?.maneuver === def.maneuver) return;
         const carrier = { ...action.card, combatProfile: { ...action.card?.combatProfile, maneuver: def.maneuver, stanceTrigger: true,
-          range: action.card?.combatProfile?.range || 'melee', camp: action.card?.combatProfile?.camp || 'physical' } };
+          range: action.card?.combatProfile?.range || 'melee', camp: action.card?.combatProfile?.camp || 'physical' },
+          // A registry stance entry pays no maneuver entry grant (the card does not show one): only the stance changes.
+          registryStanceEntry: true };
         Matchups.setCombatStance(ctx, ctx.player, carrier);
       };
       if (ctx.player.stanceId === stanceId) { followCombatStance(); return; } // already in it: no registry change (StS)

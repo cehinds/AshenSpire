@@ -370,7 +370,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (changed) {
     if(stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
-    const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
+    const grants = carrier?.registryStanceEntry ? { block: 0, barrier: 0, precision: 0, evade: 0 } : stanceEntryBonuses({ combatProfile: profile }, ctx);
     if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
       entity.nextEvadeMode = { advantage: !!profile.evade.advantage, disadvantage: !!profile.evade.disadvantage,
         ...(profile.evade.whileStatus ? { whileStatus: profile.evade.whileStatus } : {}) };

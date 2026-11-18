@@ -83,3 +83,30 @@ test('the figure\'s pose and glyph read the stance the engine ended on, live and
   assert.equal(CardAsEnteredStance(reg.cards.get('core.defend'), out.events, played), reg.cards.get('core.defend'));
   assert.equal(CardAsEnteredStance(card, [played], played), card);
 });
+
+// Non-Core (createRegistries(contentBundle), no profile): the numbers match what dev paid before the stance change.
+const plainReg = createRegistries(contentBundle);
+async function plainPlay(cardId) {
+  const { createCombat } = await import('../src/engine/combat.js');
+  const player = { id: 'p', classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 5, maxStamina: 5, energyMax: 3, drawPerTurn: 5,
+    deck: [{ instanceId: 'x1', cardId, upgraded: false }, ...Array.from({ length: 8 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'strike', upgraded: false }))], relicIds: [], flasks: [] };
+  const combat = createCombat({ registries: plainReg, rng: createRng(1), combatExpansionVersion: 2, player, enemyIds: [contentBundle.enemies[0].id] });
+  if (!combat.piles.hand.some(c => c.instanceId === 'x1')) combat.piles.hand.push({ instanceId: 'x1', cardId, upgraded: false });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'x1' });
+  return combat.player;
+}
+
+test('non-Core: Defend-stance cards do not restore Block and Barrier a second time (dev numbers)', async () => {
+  for (const [cardId, block] of [['enterBulwark', 13], ['brace', 12]]) {
+    const player = await plainPlay(cardId);
+    assert.deepEqual([player.block, player.barrier ?? 0], [block, 0], cardId);
+    assert.equal(player.combatStance.maneuver, 'defend');
+  }
+});
+
+test('non-Core: Enter Gorefire pays no unquoted Precision entry grant', async () => {
+  const gorefire = await plainPlay('enterGorefire');
+  assert.equal(gorefire.stanceId, 'gorefire');
+  assert.equal(gorefire.statuses?.precision?.stacks ?? 0, 0);
+  assert.equal(gorefire.block ?? 0, 2, 'dev number');
+});
