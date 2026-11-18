@@ -1109,5 +1109,83 @@
         "amount": 20
       }
     ]
+  },
+  {
+    "id": "kilnbackTerrapin",
+    "attributes": {
+      "strength": 4,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "size": "large",
+    "name": "Kilnback Terrapin",
+    "hp": [
+      136,
+      144
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "shellRam": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "siegeLob": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "emberVolley": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 27,
+        "weight": 15,
+        "maxConsecutive": 1
+      },
+      "siegePlate": {
+        "sp": 2,
+        "intent": "block",
+        "block": 14,
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      "bunkerGuard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 8,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "siegeLob",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

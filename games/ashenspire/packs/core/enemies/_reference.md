@@ -36,6 +36,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
 | enemy:inkveilNautilus | Inkveil Nautilus | elite |
+| enemy:kilnbackTerrapin | Kilnback Terrapin | elite |
 | enemy:kilnshellTortoise | Kilnshell Tortoise | minion |
 | enemy:knellcapSentinel | Knellcap Sentinel | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
@@ -364,6 +365,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:brassThroatIbex.stormPeal | Storm Peal | attack | 3 | 2 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
 | card:brassThroatIbex.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:brassThroatIbex.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:kilnbackTerrapin.shellRam | Shell Ram | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:kilnbackTerrapin.siegeLob | Siege Lob | attack | 2 | 1 | Deal {damage} damage. |
+| card:kilnbackTerrapin.emberVolley | Ember Volley | attack | 3 | 1 | Deal {damage} damage. |
+| card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:kilnbackTerrapin.bunkerGuard | Bunker Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:kilnbackTerrapin.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -440,3 +447,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
+| relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |

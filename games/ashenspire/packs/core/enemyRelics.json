@@ -174,5 +174,14 @@
       "self.constitution=+1"
     ],
     "text": "WIS +2, CON +1"
+  },
+  {
+    "id": "enemy.relic.kilnbackFurnace",
+    "name": "Kilnback_Furnace",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.strength=+1"
+    ],
+    "text": "CON +2, STR +1"
   }
 ]

@@ -652,3 +652,8 @@
 "enemyMove","brassThroatIbex","brassCall","attack","true","false","spell","lightning","spell","","lightning","","delivery:projectile","",""
 "enemyMove","brassThroatIbex","thunderLeap","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "enemyMove","brassThroatIbex","stormPeal","attack","true","false","spell","lightning","spell","","lightning","","delivery:projectile","",""
+"enemyMove","kilnbackTerrapin","shellRam","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
+"enemyMove","kilnbackTerrapin","siegeLob","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
+"enemyMove","kilnbackTerrapin","emberVolley","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
+"enemyMove","kilnbackTerrapin","siegePlate","block","false","false","","","physical","defend","","","","",""
+"enemyMove","kilnbackTerrapin","bunkerGuard","block","false","false","","","physical","defend","","","","",""

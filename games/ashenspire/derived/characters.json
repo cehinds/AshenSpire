@@ -8123,5 +8123,146 @@
         }
       ]
     }
+  },
+  {
+    "id": "kilnbackTerrapin",
+    "name": "Kilnback_Terrapin",
+    "displayName": "Kilnback Terrapin",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.kilnbackFurnace",
+            "name": "Kilnback_Furnace",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 5
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "towerShield",
+            "name": "Tower_Shield",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.kilnbackFurnace",
+            "name": "Kilnback_Furnace",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 70,
+        "strength": 25,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 15
+      },
+      "total": 129,
+      "formula": "10+70+25+6+2+1+15 = 129"
+    },
+    "pools": {
+      "hp": 129,
+      "sp": 4,
+      "mp": 2,
+      "ar": 5,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield",
+        "name": "Tower_Shield"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.kilnbackFurnace",
+        "name": "Kilnback_Furnace"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "kilnbackTerrapin.shellRam",
+          "name": "Shell_Ram",
+          "copies": 1
+        },
+        {
+          "id": "kilnbackTerrapin.siegeLob",
+          "name": "Siege_Lob",
+          "copies": 1
+        },
+        {
+          "id": "kilnbackTerrapin.emberVolley",
+          "name": "Ember_Volley",
+          "copies": 1
+        },
+        {
+          "id": "kilnbackTerrapin.siegePlate",
+          "name": "Siege_Plate",
+          "copies": 1
+        },
+        {
+          "id": "kilnbackTerrapin.bunkerGuard",
+          "name": "Bunker_Guard",
+          "copies": 1
+        },
+        {
+          "id": "kilnbackTerrapin.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

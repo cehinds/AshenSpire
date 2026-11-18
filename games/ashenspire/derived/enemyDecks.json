@@ -6887,5 +6887,155 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "kilnbackTerrapin",
+    "name": "Kilnback_Terrapin",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "kilnbackTerrapin.shellRam",
+        "name": "Shell_Ram",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellRam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "kilnbackTerrapin.siegeLob",
+        "name": "Siege_Lob",
+        "copies": 1,
+        "sp": 2,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegeLob",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "kilnbackTerrapin.emberVolley",
+        "name": "Ember_Volley",
+        "copies": 1,
+        "sp": 3,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 27
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberVolley",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "kilnbackTerrapin.siegePlate",
+        "name": "Siege_Plate",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegePlate",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "kilnbackTerrapin.bunkerGuard",
+        "name": "Bunker_Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bunkerGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "kilnbackTerrapin.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

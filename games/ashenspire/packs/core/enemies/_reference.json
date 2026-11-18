@@ -113,6 +113,10 @@
       "name": "Inkveil Nautilus",
       "tier": "elite"
     },
+    "enemy:kilnbackTerrapin": {
+      "name": "Kilnback Terrapin",
+      "tier": "elite"
+    },
     "enemy:kilnshellTortoise": {
       "name": "Kilnshell Tortoise",
       "tier": "minion"
@@ -3152,6 +3156,66 @@
       },
       "text": "Fall back one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.shellRam": {
+      "name": "Shell Ram",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.siegeLob": {
+      "name": "Siege Lob",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.emberVolley": {
+      "name": "Ember Volley",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.siegePlate": {
+      "name": "Siege Plate",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block. Heal {heal} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.bunkerGuard": {
+      "name": "Bunker Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnbackTerrapin.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3891,6 +3955,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.kilnbackFurnace": {
+      "name": "Kilnback Furnace",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
       ]
     }
   }

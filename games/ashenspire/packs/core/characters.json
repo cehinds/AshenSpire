@@ -6347,5 +6347,115 @@
         }
       ]
     }
+  },
+  {
+    "id": "kilnbackTerrapin",
+    "name": "Kilnback_Terrapin",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "kilnbackTerrapin.shellRam",
+      "kilnbackTerrapin.siegeLob",
+      "kilnbackTerrapin.emberVolley",
+      "kilnbackTerrapin.siegePlate",
+      "kilnbackTerrapin.bunkerGuard",
+      "kilnbackTerrapin.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.kilnbackFurnace"
+      }
+    ],
+    "presentation": {
+      "art": "kilnbackTerrapin",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "kilnbackTerrapin.siegeLob",
+      "poiseMax": 15,
+      "cardHints": {
+        "kilnbackTerrapin.shellRam": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellRam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.siegeLob": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegeLob",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.emberVolley": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberVolley",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.siegePlate": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegePlate",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.bunkerGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bunkerGuard",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]
