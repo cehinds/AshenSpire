@@ -1086,7 +1086,7 @@
       "school:force",
       "retreat"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "textTemplate": "Deal {damage} damage. Inflict Retreat.",
     "upgrade": {
       "effects": [
         {

@@ -24,3 +24,16 @@ test('every tag on Gale Push is in the tag vocabulary', async () => {
   const ids = new Set(tags.map(tag => tag.id));
   for (const tag of ['retreat', 'school:force']) assert.ok(ids.has(tag), tag);
 });
+
+test('Gale Push says it inflicts Retreat on its face and in its tag rail', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { cardSideTags } = await import('../src/ui/components/cardTagSymbols.js');
+  const face = (cardFaceLines(card, null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
+  assert.match(face, /Inflict Retreat/, face);
+  const rowTags = card.tags.map(id => reg.tags.find(tag => tag.id === id)).filter(Boolean);
+  const rail = cardSideTags({ tags: rowTags }, card, reg);
+  const retreat = rail.find(tag => tag.id === 'retreat');
+  assert.ok(retreat, 'the Retreat tag shows in the rail: ' + rail.map(tag => tag.id).join(','));
+  assert.match(retreat.blurb, /Inflicts Retreat/);
+  assert.ok(rail.some(tag => tag.id === 'school:force'), 'and the Force tag');
+});

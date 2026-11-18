@@ -49,6 +49,7 @@ combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}%
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
 combat.protection.acBase,,"Base, Dexterity and gear {value}",,
+card.tag.retreatInflicts,,,"Inflicts Retreat: the foe is sent back a band, to the back row, and gains a Retreat stack that keeps it there.",
 status.ward.tooltipBlockFirst,,,"Ward gives Poise: each stack adds {poise} maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP. Lose {decay} Ward at the start of your turn, and its +{poise} maximum Poise with it.",
 status.ward.tooltipPoiseFirst,,,"Ward gives Poise: each stack adds {poise} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose {decay} Ward at the start of your turn, and its +{poise} maximum Poise with it.",
 status.ward.breaks,,,"When your Poise reaches 0, all Ward is lost.",
