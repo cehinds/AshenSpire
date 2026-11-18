@@ -84,12 +84,27 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, op
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
   // Owner, 2026-11-17 (theme B): a Defend-stance target holding Block keeps at least 1 Poise against what the hit costs it (ApplyDefendPoiseFloor).
   const view = ElementProtectionView(ctx, source, target, carrier);
-  if (!view) return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise));
+  if (!view) return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise)));
   const real = target.persistentPoise.value;
   target.persistentPoise.value = view.value;
   let receipt;
   try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
-  return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real }));
+  return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real })));
+}
+/**
+ * Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise it costs an enemy. Applied last, to the completed net loss
+ * (absorbed + Poise damage + the element's ignored or Force Poise, less what a Defend target spared), never past the pool the hit leaves; HP is unchanged.
+ * The one place for the live hit and the preview, so the quote equals the play. actions.js drainFixCorePoise and combatDamagePreview.js read the same factor for explicit Poise effects.
+ */
+function SpellPoiseFinish(ctx, source, target, carrier, receipt) {
+  if (!receipt || receipt.evaded || !fixCoreEnabled(ctx) || carrier?.counterReturnAttack) return receipt;
+  const m = SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
+  if (!(m > 1)) return receipt;
+  const net = Math.max(0, (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0) - (receipt.poiseSpared || 0));
+  const left = Math.max(0, Math.floor(target?.persistentPoise?.value || 0) - net);
+  const extra = Math.max(0, Math.min(Math.floor((m - 1) * net), left));
+  if (extra > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
+  return receipt;
 }
 /** The factor a player's spell-camp card puts on the Poise it takes from an enemy (1 otherwise); `carrier` is the card or its hit carrier. */
 export function SpellPoiseMultiplier(effects, source, target, carrier) {
@@ -351,10 +366,6 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  // Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise it would take from an enemy (absorbed plus Poise
-  // damage), never past the pool; HP is unchanged. actions.js drainFixCorePoise and combatDamagePreview.js previewPoiseDrain read the same factor.
-  const spellPoise = modern && !evaded && !flatReturn ? SpellPoiseMultiplier(effects, source, target, carrier) : 1;
-  if (spellPoise > 1) poiseDrain += Math.max(0, Math.min(Math.floor((spellPoise - 1) * (poiseMitigated + poiseDrain)), Math.floor(target?.persistentPoise?.value || 0) - poiseMitigated - poiseDrain));
   return { raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),

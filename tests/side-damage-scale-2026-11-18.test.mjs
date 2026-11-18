@@ -125,8 +125,7 @@ test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchan
   };
   const doubled = cast(shippedWorld), single = cast(variant({ spellPoiseDamageMultiplier: 1 }));
   assert.ok(single.taken > 0, 'the spell reaches Poise');
-  assert.equal(doubled.drain, single.drain + single.taken, 'the hit drains as much Poise again as it took');
-  assert.equal(doubled.poiseLost, single.poiseLost + single.taken, 'the pool loses the extra');
+  assert.equal(doubled.poiseLost, single.poiseLost * 2, 'the pool loses exactly twice the net Poise the hit took');
   assert.equal(doubled.hp, single.hp, 'HP is unchanged by the Poise multiplier');
   const strike = world => {
     const combat = begin(world);
@@ -180,4 +179,30 @@ test('an explicit spell poiseDamage effect: the preview quote equals the Poise t
   assert.ok(single.spent > 0, 'the spell has an explicit Poise effect');
   assert.equal(doubled.spent, single.spent * 2);
   assert.equal(doubled.quoted, doubled.spent, 'the preview quote is what the play removed');
+});
+
+test('spell Poise x2 doubles the completed net loss: a fire spell\'s ignored Poise and a Defend target\'s spared share', async () => {
+  const { previewCard: preview } = await import('../src/engine/combat.js');
+  const loss = (world, setup) => {
+    const combat = begin(world, { classId: 'starseer' });
+    const enemy = combat.enemies[0];
+    Object.assign(enemy, { hp: 500, maxHp: 500 });
+    enemy.persistentPoise = { value: 100, max: 100 };
+    setup?.(enemy);
+    combat.piles.hand.push({ instanceId: 'sp', cardId: setup?.card || 'core.cantrip' });
+    const row = preview(combat, 'sp', enemy.id).values.find(value => value.op === 'damage');
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'sp', targetId: enemy.id });
+    const pool = combat.enemies[0].persistentPoise;
+    const live = pool.max === 100 ? 100 - pool.value : pool.missing || 0; // a Poise change may re-derive the pool's max from ratings, which records the loss as `missing`
+    return { live, quoted: row?.perTargetPoise?.[enemy.id]?.removed ?? row?.perTargetPoise?.removed };
+  };
+  const fire = enemy => { enemy.__fire = true; };
+  fire.card = 'core.cinderDart';
+  const defend = enemy => { enemy.block = 2; enemy.combatStance = { id: 'defend', maneuver: 'defend', camp: 'physical' }; };
+  for (const setup of [fire, defend]) {
+    const one = loss(variant({ spellPoiseDamageMultiplier: 1 }), setup), two = loss(shippedWorld, setup);
+    assert.ok(one.live > 0, 'the spell costs Poise');
+    assert.equal(two.live, one.live * 2, 'exactly twice the m=1 net loss');
+    if (two.quoted !== undefined) assert.equal(two.quoted, two.live, 'preview equals play');
+  }
 });
