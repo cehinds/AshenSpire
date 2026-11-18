@@ -4,7 +4,7 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 // Owner, 2026-11-15 (Wave 2 batch 5): the Counter-stack keys (`counter.stackSource`, `returnPerStack`, ...) are newer than every earlier fight.
 // Every wrapper below removes them from the shipped defaults while it builds, and puts them back after.
-const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard'];
+const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard'];
 function stripCounterStacks() {
   const held = Object.fromEntries(COUNTER_STACK_KEYS.map(key => [key, fixCoreMechanics.counter[key]]));
   for (const key of COUNTER_STACK_KEYS) delete fixCoreMechanics.counter[key];
