@@ -30,8 +30,12 @@ const live = (classId, seed, floor) => {
   run.floor = floor;
   return run;
 };
-const offered = (classId, seed, floor) => gameProfileRewardOffers(registries, live(classId, seed, floor), createRng(seed + 50000), { offerId: 'b3' })
-  .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+const offered = (classId, seed, floor, withoutCardId) => {
+  const run = live(classId, seed, floor);
+  if (withoutCardId) run.deck = run.deck.filter(card => card.cardId !== withoutCardId);
+  return gameProfileRewardOffers(registries, run, createRng(seed + 50000), { offerId: 'b3' })
+    .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+};
 
 test('every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
@@ -125,9 +129,13 @@ test('offers never cross classes: Magic spells only reach their own class, color
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
-      // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): it stays far rarer than an unowned class card.
-      if (owner === classId && starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other)).map(other => counts.get(other) || 0)), `${classId} was offered ${id} as often as a card it does not own`);
+      // Compare Sanctified Ward against itself on the same seeds so rarity, card type and pool changes cannot distort the ownership check.
+      if (owner === classId && starter.has(id)) {
+        let unownedCount = 0;
+        for (let seed = 1; seed <= 600; seed++) if (offered(classId, seed, 1 + (seed % 6), id).includes(id)) unownedCount++;
+        const ownedCount = counts.get(id) || 0;
+        assert.ok(ownedCount * 3 < unownedCount, `${classId} was offered ${id} ${ownedCount} times when owned and ${unownedCount} when unowned`);
+      }
       else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
