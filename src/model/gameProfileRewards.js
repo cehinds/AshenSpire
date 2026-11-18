@@ -6,7 +6,7 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, CombatRankUpIsBonus, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -242,23 +242,29 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   // W25-R: a won fight may also offer to raise a card's rank (rewards.json rankUp.chancePct by fight tier). It rolls on a hash of
   // the run's seed and the offer's id, not on a stream, so it moves no counter and a reload answers the same.
-  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,...(CombatRankUpIsBonus(run,offerId)?{bonus:true}:{})});
+  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,bonus:true});
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
 /** Owner 2026-11-18: a "Rank up a card" option is its own step after the card pick, never one of the card picks, so it counts
- * as a bonus pick whether or not the saved offer flagged it (an older saved offer lists it without `bonus`). */
-export const IsBonusOption = option => !!option && (option.bonus === true || option.kind === RANK_UP_OPTION.kind);
+ * as a bonus pick whether or not the saved offer flagged it (an older saved offer lists it without `bonus`). An older offer's
+ * rank-up that was already TAKEN was spent as its plain pick (before the ruling it used one), so once taken it is no bonus. */
+export const IsBonusOption = (option, taken = false) => !!option && (option.bonus === true || (option.kind === RANK_UP_OPTION.kind && !taken));
+const bonusAt = (offer, at) => IsBonusOption(offer.options[at], offer.taken.includes(at));
+/** BonusFreeOffer(offer) -> the offer as the plain card picks see it: bonus options and the picks taken on them removed. */
+export function BonusFreeOffer(offer) {
+  return { ...offer, options: offer.options.filter((_, at) => !bonusAt(offer, at)), taken: offer.taken.filter(at => !bonusAt(offer, at)) };
+}
 /**
  * OfferPicksLeft(offer) -> how many picks the player may still make. A bonus option (a rank-up that came beside the card pick,
  * rewards.json rankUp.bonusPickPct) is one extra pick on top of takeCount; every other option shares takeCount. An offer
  * without a bonus option counts exactly as before.
  */
 export function OfferPicksLeft(offer) {
-  const bonus = offer.options.filter(IsBonusOption), plain = offer.options.length - bonus.length;
-  const plainTaken = offer.taken.filter(at => !IsBonusOption(offer.options[at])).length, bonusTaken = offer.taken.length - plainTaken;
+  const bonus = offer.options.filter((_, at) => bonusAt(offer, at)), plain = offer.options.length - bonus.length;
+  const plainTaken = offer.taken.filter(at => !bonusAt(offer, at)).length, bonusTaken = offer.taken.length - plainTaken;
   return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
 }
 export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal', takeCount: takeOverride = null } = {}) {
@@ -374,7 +380,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if(!IsBonusOption(option)&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!IsBonusOption(row)),taken:offer.taken.filter(at=>!IsBonusOption(offer.options[at]))})<1)throw new Error('Reward offer is missing or already claimed');
+  if(!IsBonusOption(option)&&OfferPicksLeft(BonusFreeOffer(offer))<1)throw new Error('Reward offer is missing or already claimed');
   if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   let raised=null;
