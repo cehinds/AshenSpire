@@ -1,0 +1,26 @@
+{
+  "id": "status.thornsFire",
+  "tag": "status.thornsFire",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Fire Thorns",
+  "description": "When the holder's Block stops an attack, the attacker takes Fire damage equal to its Fire Thorns stacks.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.thornsFire"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

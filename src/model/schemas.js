@@ -1060,6 +1060,10 @@ export const SCHEMAS = Object.freeze({
     // Inert schema carrier for Arcane Exposure's registered break effect.
     // The engine slice will consume only explicit magic-school HP packets.
     schoolDamageVulnerability: opt(obj({ school: en(...DAMAGE_SCHOOLS) })),
+    // Owner, 2026-11-18: an attacker landing a hit takes `perStack` x stacks damage (Thorns); `element` types it, `onBlockOnly` needs the hit to meet Block.
+    thorns: opt(obj({ perStack: int, element: opt(str), onBlockOnly: opt(bool) })),
+    // Owner, 2026-11-18: one tag per element, each stack adds `perStack` of that element's damage taken (Fire Vulnerable, Frost Vulnerable, ...).
+    elementVulnerability: opt(obj({ element: str, perStack: num })),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),
