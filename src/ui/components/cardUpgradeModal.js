@@ -352,6 +352,8 @@ export function MountCardUpgradeModal(
     let detailShell = null;
     let detailConfirmButton = null;
     let detailInstanceId = null;
+    let listSignature = '';
+    let detailOptionsSignature = '';
 
     const confirmButton = buildConfirmButton();
     const backButton = buildBackButton(backLabel);
@@ -645,7 +647,7 @@ export function MountCardUpgradeModal(
     function chooseOption(optionIndex)
     {
         chosenOptionIndex = optionIndex;
-        renderDetails();
+        renderDetails({ keepOptions: true });
         const optionSelector = `[data-card-upgrade-option="${optionIndex}"]`;
         detailsHost?.querySelector(optionSelector)?.focus(FOCUS_WITHOUT_SCROLL);
     }
@@ -684,12 +686,52 @@ export function MountCardUpgradeModal(
         );
     }
 
-    function renderDetails()
+    // The chosen option is marked in place on the radio buttons (class, aria-checked, tabindex); the pane's change
+    // rows and faces after them are the only part that is rebuilt (owner, 2026-11-18: change only what changed).
+    function markChosenOption(optionsGroup)
+    {
+        for (const optionButton of optionsGroup.querySelectorAll('[data-card-upgrade-option]'))
+        {
+            const isChosen = Number(optionButton.dataset.cardUpgradeOption) === chosenOptionIndex;
+            optionButton.classList.toggle(CLASS.selected, isChosen);
+            optionButton.setAttribute('aria-checked', String(isChosen));
+            optionButton.setAttribute('tabindex', isChosen ? '0' : '-1');
+        }
+    }
+
+    function readOptionsSignature(selected)
+    {
+        return hasOptionChoice(selected)
+            ? JSON.stringify(selected.options.map((option) => option.changes))
+            : '';
+    }
+
+    function patchDetailTail(optionsGroup)
+    {
+        markChosenOption(optionsGroup);
+        while (optionsGroup.nextSibling)
+        {
+            optionsGroup.nextSibling.remove();
+        }
+        optionsGroup.after(...buildDetailNodes(currentModel).filter(Boolean));
+    }
+
+    function renderDetails({ keepOptions = false } = {})
     {
         if (!detailsHost)
         {
             return;
         }
+        const optionsSignature = readOptionsSignature(currentModel.selected);
+        const optionsGroup = keepOptions && optionsSignature === detailOptionsSignature
+            ? detailsHost.querySelector(`.${CLASS.options}`)
+            : null;
+        if (optionsGroup)
+        {
+            patchDetailTail(optionsGroup);
+            return;
+        }
+        detailOptionsSignature = optionsSignature;
         const detailChildren = [
             buildOptionsGroup(currentModel),
             ...buildDetailNodes(currentModel),
@@ -704,7 +746,7 @@ export function MountCardUpgradeModal(
             && currentModel.faces
         )
         {
-            renderDetails();
+            renderDetails({ keepOptions: true });
         }
     }
 
@@ -832,8 +874,63 @@ export function MountCardUpgradeModal(
         );
     }
 
+    // Everything on a row except whether it is the selected one. When this is the same as last time only the
+    // selection marks move; the list, its rows, the scroll position and the focused row stay as they are.
+    function readListSignature(model)
+    {
+        return JSON.stringify(model.rows.map((row) => [
+            buildCandidateRow(row),
+            Boolean(row.inDeck),
+            readUpgradeState(row),
+            buildRowAriaLabel(row),
+        ]));
+    }
+
+    function patchCandidateSelection(model)
+    {
+        for (const rowElement of candidateList.querySelectorAll(ANY_ROW_SELECTOR))
+        {
+            const rowInstanceId = rowElement.getAttribute(INSTANCE_ID_ATTRIBUTE);
+            const row = model.rows.find((candidate) => candidate.instanceId === rowInstanceId);
+            if (!row)
+            {
+                continue;
+            }
+            const rowIsSelected = isRowSelected(model, row);
+            rowElement.setAttribute('aria-pressed', String(rowIsSelected));
+            MarkSelected(
+                rowElement,
+                rowIsSelected,
+                {
+                    className: CLASS.selected,
+                    ariaAttribute: 'aria-selected',
+                },
+            );
+            markUiComponent(
+                rowElement,
+                UI_COMPONENTS.smithCandidateCard,
+                rowIsSelected
+                    ? 'selected'
+                    : 'available',
+            );
+        }
+    }
+
     function renderCandidateList(model, selectedInstanceId)
     {
+        const signature = readListSignature(model);
+        if (
+            candidateList
+            && candidateList.isConnected
+            && signature === listSignature
+        )
+        {
+            patchCandidateSelection(model);
+            return;
+        }
+        listSignature = signature;
+        const scrollHosts = [listHost, bodyHost, shell.panel].filter(Boolean);
+        const scrollTops = scrollHosts.map((scrollHost) => scrollHost.scrollTop);
         const candidateRows = model.rows.map((row) => buildCandidateRow(row));
         candidateList = optionRowList(candidateRows, {
             idAttr: INSTANCE_ID_ATTRIBUTE,
@@ -853,6 +950,10 @@ export function MountCardUpgradeModal(
             decorateRowElement(rowElement, model);
         }
         listHost.replaceChildren(candidateList);
+        scrollHosts.forEach((scrollHost, index) =>
+        {
+            scrollHost.scrollTop = scrollTops[index];
+        });
     }
 
     function readBlockedMessage(model)
@@ -955,6 +1056,27 @@ export function MountCardUpgradeModal(
         updateConfirmButton(currentModel, selected);
     }
 
+    function retargetDetailModal(selected)
+    {
+        detailInstanceId = selected.instanceId;
+        const headingId = detailShell.panel.getAttribute('aria-labelledby');
+        const heading = headingId
+            ? detailShell.panel.querySelector(`#${headingId}`)
+            : null;
+        if (heading)
+        {
+            heading.textContent = selected.name;
+        }
+        const inspectButton = detailShell.panel.querySelector(`.${CLASS.inspect}`);
+        if (inspectButton)
+        {
+            const label = translate('cardUpgrade.inspect', { name: selected.name });
+            inspectButton.title = label;
+            inspectButton.setAttribute('aria-label', label);
+        }
+        renderDetails();
+    }
+
     function syncDetailModal(selected)
     {
         if (!detailShell)
@@ -966,11 +1088,11 @@ export function MountCardUpgradeModal(
             detailShell.close();
             return;
         }
-        // Another card chosen under an open modal: its title, (i) and faces are that card's, so open it afresh.
+        // Another card chosen under an open modal: the same modal keeps its place and takes that card's title,
+        // (i) and faces, instead of closing and opening afresh.
         if (selected.instanceId !== detailInstanceId)
         {
-            detailShell.close();
-            openDetailModal();
+            retargetDetailModal(selected);
             return;
         }
         renderDetailsIfSelected(selected);

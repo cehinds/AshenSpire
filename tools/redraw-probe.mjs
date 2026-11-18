@@ -115,7 +115,7 @@ for (const scenario of SCENARIOS) {
       window.__probeObserver?.disconnect();
       window.__probeObserver = new MutationObserver((records) => {
         for (const record of records) {
-          for (const node of record.addedNodes) window.__probe.added += count(node);
+          for (const node of record.addedNodes) { window.__probe.added += count(node); if (node.nodeType === 1) (window.__probe.roots ||= []).push(`${node.tagName}.${String(node.className).slice(0, 40)}:${count(node)}`); }
           for (const node of record.removedNodes) window.__probe.removed += count(node);
         }
       });
@@ -133,6 +133,7 @@ for (const scenario of SCENARIOS) {
       const sc = document.querySelector(scroll);
       return { ...window.__probe, scrollAfter: sc ? sc.scrollTop : null, kept: Boolean(document.querySelector('[data-probe-keep]')) };
     }, { scroll: scenario.scroll, keep: scenario.keep });
+    if (process.env.PROBE_ROOTS && result.roots) console.error(step.name, '->', result.roots.join(', '));
     rows.push({ scenario: scenario.name, step: step.name, ...result });
   }
   if (errors.length) rows.push({ scenario: scenario.name, step: `(page errors: ${errors.slice(0, 2).join(' | ')})`, skipped: true });
