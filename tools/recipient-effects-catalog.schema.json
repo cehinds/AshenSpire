@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AshenSpire recipient-effects intake catalog",
+  "type": "object",
+  "required": ["schemaVersion", "catalog", "frameCount", "entries", "provenance"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "catalog": { "const": "recipient-effects/v5" },
+    "frameCount": { "const": 3 },
+    "entries": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["asset", "columns", "rows", "row", "frameSize", "size", "sha256", "source", "tiers"],
+        "properties": {
+          "asset": { "type": "string", "pattern": "^assets/recipient-effects/v5/[a-z-]+\\.png$" },
+          "columns": { "const": 3 },
+          "rows": { "const": 1 },
+          "row": { "const": 0 },
+          "frameSize": { "const": [256, 256] },
+          "size": { "const": [768, 256] },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "source": { "type": "string", "minLength": 1 },
+          "tiers": {
+            "type": "object", "required": ["hd", "light"],
+            "properties": {
+              "hd": { "type": "string", "pattern": "^hd/assets/recipient-effects/v5/" },
+              "light": { "type": "string", "pattern": "^light/assets/recipient-effects/v5/" }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^provenance/recipient-effects/v5/" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}
