@@ -186,3 +186,16 @@ These override the generic Poise rule for the named items:
 - **Lantern:** when it blocks an attack, the attacker takes 1 Fire damage. Each physical attack deals +1 Fire damage.
 
 **Thorns (new tag):** an attacker that lands a hit takes N damage, where N is the number of Thorns stacks. The value is constant and does not decay. Only a timed effect, which lasts a stated number of turns and is printed on the card, changes it.
+
+## 17. Weapon rulings (owner, 2026-11-18)
+- **Halberd:** all physical attacks have Reach. +1 Poise. Sweep attacks deal +1 damage.
+- **Battleaxe:** 1 Poise. Smash +1 damage, and Smash inflicts 1 Bleed.
+- **Dagger:** "Throwable. Gain 1 Counter at the end of your turn while in Defend stance. 0-cost cards gain Multi-hit."
+  - **Throwable:** Attack and Smash cards can be thrown, which gives them Reach. A thrown attack also carries a temporary Weak drawback. *(decided: Weak 1 for that attack only)*
+- **Twinblade:** Multi-hit on all attacks.
+- **Bows:** gain 1 Reach stack at the end of your turn.
+- **Katana:** add DEX to melee physical attacks. Smash inflicts 1 Bleed.
+
+**New tags:**
+- **Multi-hit:** each stack repeats the attack once more, so 1 stack makes 1 attack into 2.
+- **Reach:** becomes a stack effect with normal decay (1 per turn at the end of its owner's turn).
