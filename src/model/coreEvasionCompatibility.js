@@ -102,6 +102,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8',
   'sha256:11f0682ec2b9f37d14ec0ed489d95a54d2ce7167cc50f4cfbaa296280e0a9655',
   'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c',
+  'sha256:f959055404a8638a465770e8f3a5572e04bdb2ba259e4e13441482a673b63b05',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
@@ -112,8 +113,9 @@ const PREVIOUS_RUNTIMES = new Set([
 // The 2026-11-18 rulings (ratings removed, 0.7 cuts, hand, SP and MP per four points) move it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
 // The physical cut (2026-11-18: physicalDamageMultiplier 0.7, blockGainMultiplier 0.49) moves it again; 11f068... is now in PREVIOUS_RUNTIMES.
 // The Retreat status mechanic folder and the Magic Focus text (2026-11-18 green-discovered pass: engine/mechanics/status.retreat, item_magic-focus) move it again; 8be512... is now in PREVIOUS_RUNTIMES.
+// The equipment.mainHand and offHand mechanic text (feature merge, 2026-11-18) moves it again; f95905... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:f959055404a8638a465770e8f3a5572e04bdb2ba259e4e13441482a673b63b05';
+const FIXED_EVASION_RUNTIME = 'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
