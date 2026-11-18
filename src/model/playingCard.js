@@ -372,7 +372,8 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
   const damageStat = attributes ? (magicHit ? Math.max(attributes.intelligence || 0, attributes.wisdom || 0) : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
-  const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : finesseHit ? 'dr' : 'ar');
+  // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
+  const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : 'ar');
   const blockBonus = attributes ? (attributes.dexterity || 0) * ChannelWeight(faceEffects, 'dr') : 0;
   const blockMultiplier = faceEffects?.blockGainMultiplier;
   const sideScale = (value, scaled) => {
