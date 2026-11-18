@@ -58,6 +58,8 @@ import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEffectPlan } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
+import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
+import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -411,6 +413,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
+  const recipientVisualState = CreateRecipientEffectState();
   let appliedVisualEvents = new Set();
   function applyVisualEvents(events) {
     for (const event of events) {
@@ -496,6 +499,30 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const played = returned?.sourceKind === 'player' ? { ...returned, cardType: 'attack' } : beat.events.find(event => event.type === 'cardPlayed');
       const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
       if (!played && !moved) return null;
+      // The authored caster motion still owns contact timing. Start the new
+      // circle at that motion's onset on every actor path, including Reaver.
+      const windup = beat.events.map(event => event.recipientWindup).filter(Boolean);
+      const withRecipientWindup = animation => {
+        const impactMs = animation?.impactMs ?? (animation?.totalMs || 0) * COMBAT_TIMING.windupFraction;
+        const circles = impactMs > 0 ? windup.map(effect => ({ ...effect, durationMs: Math.min(effect.durationMs, impactMs) })) : [];
+        const cancelRecipientWindup = PlayRecipientEffectLayers(fxCtx.layer, circles, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
+        // Sprite frame-hold floors must not keep a short circle past contact.
+        // This only removes presentation; it never adds a timeline wait.
+        const circleDeadline = circles.length ? setTimeout(cancelRecipientWindup, impactMs) : null;
+        const stopCircle = () => { clearTimeout(circleDeadline); cancelRecipientWindup(); };
+        // Authored frame contact can resolve before the numeric timing estimate.
+        animation?.contact?.then?.(stopCircle, stopCircle);
+        const contacts = beat.events.flatMap(event => [event.recipientDelivery, ...(event.recipientEffects || [])]).filter(effect => effect?.delivery);
+        const deliveries = contacts.map(effect => {
+          const durationMs = Math.min(effect.delivery.durationMs, impactMs);
+          return { ...effect, phase: 'delivery', impactShape: effect.impactShape || effect.shape, shape: null, durationMs, delayMs: Math.max(0, impactMs - durationMs),
+            delivery: { ...effect.delivery, durationMs } };
+        });
+        const cancelDelivery = PlayRecipientEffectLayers(fxCtx.layer, deliveries, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
+        return { ...animation, cancel() {
+          stopCircle(); cancelDelivery(); animation?.cancel?.();
+        } };
+      };
       // The pre-dispatch hand snapshot retains Powers removed from every pile,
       // and the full instance carries equipment profile tags and upgrades.
       // Resolve it before falling back to a live pile or bare legacy receipt.
@@ -542,7 +569,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // Other actors use existing CSS and only sprite poses they actually ship.
       if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver'
         || !['slash', 'thrust', 'strike'].includes(plan.family)) {
-        return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
+        return withRecipientWindup(playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack'));
       }
       const figure = figureSpec(registries, run.loadout, run.class);
       const eligible = isReaverAttackEligible({
@@ -553,9 +580,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
       if (eligible && !stage?.animationSetId && !actorEl.querySelector('.painted-outfit')) {
         const timing = reaverAttackTiming(speed);
-        return fxCtx.figureAnimations === false ? { ...timing, cancel() {} } : playReaverAttack(actorEl, timing);
+        return withRecipientWindup(fxCtx.figureAnimations === false ? { ...timing, cancel() {} } : playReaverAttack(actorEl, timing));
       }
-      return playFamilyAnimation(actorEl, stage, plan, speed);
+      return withRecipientWindup(playFamilyAnimation(actorEl, stage, plan, speed));
     },
   };
 
@@ -573,7 +600,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
     const authoredTargets=presentationTargetIds(plan.effectEvents,combat.player.id,plan.spriteEffect?.bindingContext.objectId).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
-    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180,actor:actorEl,localBox:anchorLocalBox});
+    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180,actor:actorEl,localBox:anchorLocalBox,recipientEffects:!plan.effectEvents?.some(event=>Array.isArray(event.recipientEffects))});
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
@@ -3575,6 +3602,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!isCurrentMount()) return;
     // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
+    try {
+      events = DecorateRecipientEffects(events, {
+        state: recipientVisualState,
+        resolveStatus: id => registries.statuses.get(id),
+        // Solo enemy action queues explicitly aim at combat.player. Co-op
+        // needs a seat on the receipt; never guess a different ally's target.
+        resolveTelegraphTargets: event => event.targetId ? [event.targetId]
+          : combat.players instanceof Map ? [] : [combat.player.id],
+        resolveCard: event => {
+          const instance = event.cardInstance || disp?.hand.find(card => card.instanceId === event.cardInstanceId)
+            || findInst(event.cardInstanceId) || { cardId: event.cardId };
+          return resolvePlayedCombatCard(combat, event, instance);
+        },
+        resolveEnemyMove: event => registries.enemies.get(event.enemyId)?.moves?.[event.moveId],
+      });
+    } catch (e) { console.warn('[combat] recipient effect decoration failed:', e && e.message); }
     playbackEvents = events;
     try { playbackCounterOrigins = selectedCounterOrigins(events); } catch (e) { playbackCounterOrigins = new Set(); console.warn('[combat] counter origins failed:', e && e.message); }
     // Capture definitions while disp still holds consumed Powers and equipment

@@ -38,11 +38,12 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   const view = previewCard(combat, 'bundled-core-counter', enemy.id);
   const returned = view.values.find(row => row.op === 'damage').counterReturn;
   // The soldier's 8 is halved by the Core base-damage scale (effects.baseDamageMultiplier 0.5): 4 incoming.
-  assert.equal(returned.incoming, 4);
-  // The card's 9 Block become 9 stacks. The scaled base 2 + floor(0.9 x 4) + 1 = 6, Poise floor(0.5 x 6) = 3.
-  assert.equal(returned.hp, 6);
-  assert.equal(returned.poise, 3);
-  assert.equal(returned.block, 1);
+  // Owner, 2026-11-18: the enemy side scale (x0.7) takes that 4 to 3.
+  assert.equal(returned.incoming, 3);
+  // The card's 9 Block, scaled by blockGainMultiplier 0.7 to 6, become 6 stacks. The scaled base 2 + floor(0.6 x 3) = 3, Poise floor(0.5 x 3) = 1.
+  assert.equal(returned.hp, 3);
+  assert.equal(returned.poise, 1);
+  assert.equal(returned.block, 0, "the Counter Block grant is a share of the scaled 3-damage hit (floor(0.25 x 3) = 0) and takes no blockGainMultiplier");
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
@@ -50,7 +51,7 @@ test('bundled Core Counter under the card-stack rule previews 2 + floor(0.1 x 4 
   const { combat, enemy } = coreCounterFixture({ cardStacks: true });
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const returned = previewCard(combat, 'bundled-core-counter', enemy.id).values.find(row => row.op === 'damage').counterReturn;
-  assert.equal(returned.incoming, 4, 'the soldier\'s 8, halved by the Core base-damage scale');
+  assert.equal(returned.incoming, 3, 'the soldier\'s 8, halved by the Core base-damage scale, then scaled by the enemy side x0.7');
   assert.equal(returned.hp, 2, 'core.counter grants 1 stack: floor(4 x 0.1 x 1) = 0 on top of the scaled base 2');
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });

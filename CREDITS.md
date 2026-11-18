@@ -874,3 +874,19 @@ backgrounds and effects remain separate components.
 ### Reviewed card-art cutouts (2026-10-30)
 
 The 73 additional status/mineral cutouts reuse existing project proposal PNGs byte-for-byte. Source URLs, SHA-256 hashes and original component labels are recorded in `asset-data/card-art/reviewed-library.json` and [AI-Art provenance](https://github.com/cehinds/AI-Art/blob/ashenspire-hd-assets-v25/provenance/AshenSpire/reviewed-card-cutouts.json). Existing authorship and unresolved provenance remain unchanged; reuse does not establish a new license.
+
+### Recipient impact, casting and reaction sprites (2026-11-18)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/recipient-effects/` | Original OpenAI ImageGen pixel effects under human direction; [v27 provenance and SHA-256 catalog](https://github.com/cehinds/AI-Art/tree/ashenspire-hd-assets-v27/provenance/recipient-effects/v5) retain source PNGs, prompts and extraction records for all 35 strips. | Project-directed AI-generated artwork; no third-party artwork or license claimed. |
+
+Original pixel effects generated with OpenAI ImageGen under human direction.
+The 35 runtime strips use `assets/recipient-effects/v5/*.png` in both art tiers.
+[AI-Art PR #4](https://github.com/cehinds/AI-Art/pull/4) retains the original raw
+PNGs, exact generation prompts, extraction scripts and SHA-256 catalog under
+`provenance/recipient-effects/v5/`. The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md)
+documents local export and preview. No third-party artwork or license is claimed;
+art publication and release pinning are separate. Debug SVG marks are authored
+game code. Ward and Evade reuse each affected actor's existing artwork and
+attribution rather than the demonstration silhouette sprite.
