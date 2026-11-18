@@ -2915,10 +2915,11 @@
     },
     "relic:enemy.relic.funeralPall": {
       "name": "Funeral Pall",
-      "text": "CON +3, WIS +1",
+      "text": "CON +3, WIS +1, SP -2",
       "modifiers": [
         "self.constitution=+3",
-        "self.wisdom=+1"
+        "self.wisdom=+1",
+        "self.sp=-2"
       ]
     }
   }
