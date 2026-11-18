@@ -229,8 +229,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 | Hammer | +1 Poise damage on attacks, Sweeps and Smashes. Smash inflicts 1 Vulnerable. |
 | Spear / Rapier / Bow | +1 Pierce. |
 | Rapier | +1 Counter stack at the end of the turn while in Defend or Counter stance. |
-| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. |
-| Sceptre | +1 to magic damage and magic stacks. Magic focus. |
+| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. 1 Ward stack at the start of each turn. |
+| Sceptre | +1 to magic damage and magic stacks. Magic focus. 1 Ward stack at the start of each turn. |
 
 **Armour groups (new tag)**
 
@@ -257,7 +257,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - Whip: Reach; attacks remove 1 Retreat stack from the target.
   - Claws / Fists: Sweeps gain Multi-hit; attacks −1 SP and −1 damage.
   - Crossbow: Reach, +2 Pierce, Escalating.
-  - Tome (off-hand): the first spell each turn draws 1.
+  - Tome (off-hand): the first spell each turn draws 1; 2 Ward stacks at the start of each turn (owner, 2026-11-18).
   - Talisman (off-hand): +1 Ward at the start of each turn.
 - **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
 - **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
@@ -276,4 +276,18 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - No built-in Retreat on Force (owner withdrew it). Retreat stays its own tag.
   - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
 - **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
-- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(decided: +5 per stack, since the config already counts Ward in stacks of 5 Poise)*
+- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(owner: +5 per stack)*
+  - **Ward decay (owner):** Ward loses **1 stack** at the start of its invoker's next turn, not all of it. The max Poise from the lost stack leaves with it, and current Poise is clamped to the new max.
+  - **Ward cards (owner):** every card that grants Ward carries the **Reaction** tag (`trait:reaction`), so it can be played as a reaction. Each Ward card pays for it with one of: a higher cost, Exhaust, or sharing its budget with Block. *(per-card choice in the rules pass)*
+  - **Ward breaks (owner):** when Poise reaches 0, all Ward stacks are removed. No stack cap is needed; a tome's growing Ward is answered by Poise damage. Magic hits deal extra Poise damage, and Force sends half its damage to Poise, so magic and Force are the natural counters to Ward.
+  - **Magic absorption (owner, open):** some Ward cards may absorb magic. The mechanic is not decided yet.
+- **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
+- **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
+- **Magic Smash (owner):** a magic Smash deals far more Poise damage than a physical one (+100% versus +50%), because magic damage hits Ward first. Proposal: docs/balance/magic-smash-sweep-proposal-2026-11-18.md.
+
+## 21. Pierce deals Poise damage first (owner, 2026-11-18)
+- Each Pierce stack deals **5 Poise damage before the card's damage resolves**; Pierce no longer ignores Poise. The card's damage then routes as usual: Block, then Poise, then HP.
+- If that up-front Poise damage takes Poise to 0, the target is broken at once, and the break's Vulnerable (×1.25) applies to the same hit. Example: a 4-damage Pierce 1 attack on a target with 5 or less Poise breaks it first, then deals 5 (4 × 1.25), with no Poise left to absorb any of it.
+- Example: against 8 Poise, Pierce 1 strips 5 (leaving 3), then the 4 damage goes Block, then Poise, then HP.
+- Pierce's existing Block bypass stays as it is. *(reading: the ruling replaces "ignores Poise", not the Block bypass)*
+- Stone Skin still reduces Pierce damage by 1 per stack. Whether it also cuts Pierce's 5 Poise per stack is open.

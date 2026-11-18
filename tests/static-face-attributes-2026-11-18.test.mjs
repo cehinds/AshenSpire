@@ -89,3 +89,16 @@ test('an untyped spell face reads the wielded armament type, as the combat carri
     assert.equal(number(face(combat, 'core.cantrip')), expected, `${classId} Arcane Spark in the pile viewer`);
   }
 });
+
+// Codex review on PR #2835: the hand preview's face baseline (faceRules) resolves the same armament type as the run face.
+test('the hand preview face baseline matches the run face for an untyped spell', () => {
+  for (const classId of ['herald', 'starseer']) {
+    const run = newRun(classId);
+    const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+    combat.piles.hand.push({ instanceId: 'probe', cardId: 'core.cantrip' });
+    const preview = previewCard(combat, 'probe', combat.enemies[0].id);
+    assert.ok(preview.faceRules, 'the preview carries its face baseline');
+    const baseline = number(cardPlainText(registries, { cardId: 'core.cantrip' }, { rules: preview.faceRules }));
+    assert.equal(baseline, number(face(run, 'core.cantrip')), `${classId} Arcane Spark hand baseline`);
+  }
+});
