@@ -129,7 +129,24 @@ test('a saved deck that still holds an ally card plays it safely: the ally part 
 // Item 14: an unupgraded card that deals at least OVERTUNED times Strike's damage for each Stamina and Mana it costs pays a penalty.
 const OVERTUNED = 2.5;
 const PENALTIES = ['exhaust', 'ethereal', 'risingCost', 'selfDamage'];
+// Owner, 2026-11-18: the Core side damage scale (x0.7, floored) cuts every card alike but rounds small hits unevenly, so the tuning rule is measured with it at 1.
+// Card power is compared as before; the base-damage halving and every card's own numbers are untouched.
+async function tuningRegistries() {
+  const { gameDigest } = await import('../engine/kernel/gameConfig.js');
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const Profile = await import('../src/model/gameProfile.js');
+  const profile = structuredClone(Profile.resolveGameProfile('default'));
+  profile.modules.effects.playerDamageMultiplier = 1;
+  profile.modules.effects.enemyDamageMultiplier = 1;
+  delete profile.hash;
+  profile.hash = gameDigest(profile);
+  return Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, profile)), profile);
+}
+let tuning;
 async function damagePerPoint(cardId, upgraded = false) {
+  tuning ||= await tuningRegistries();
+  const registries = tuning;
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const { dispatch } = await import('../src/engine/combat.js');
