@@ -75,6 +75,7 @@ export function InitBandRows(ctx, placements = []) {
 export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   if (!BandsActive(ctx) || !BandRows.includes(row) || enemy.row === row) return false;
   enemy.row = row;
+  if (row === 'front') enemy.rowHold = 0;
   placeInRow(ctx, enemy);
   for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, row === 'back' ? 1 : 0);
   SyncBandRows(ctx);
@@ -126,7 +127,10 @@ export function BandsPlayerTurnEnd(ctx) {
 export function BandsEnemyPhaseStart(ctx) {
   if (!BandsActive(ctx)) return;
   const living = ctx.enemies.filter(enemy => enemy.alive);
-  if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
+  // Retreat hold (owner 2026-11-18, ruling §12): an enemy the player sent back stays back through its next turn; the hold is spent at this phase start.
+  const held = new Set(living.filter(enemy => enemy.rowHold > 0));
+  if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) if (!held.has(enemy)) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
+  for (const enemy of held) enemy.rowHold = 0;
 }
 
 /** BandsFormationBlock(ctx, enemy): the Block an enemy gains at its turn start for standing in a row with another living enemy (0 when alone or without rows). */
@@ -145,7 +149,7 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
-  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); return true; }
+  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); target.rowHold = 1; return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
@@ -158,7 +162,7 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
 export function PlayerRetreat(ctx, entity) {
   if (!BandsActive(ctx)) return false;
   SetAdvanced(ctx, entity, false);
-  for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'front') SetEnemyRow(ctx, enemy, 'back', 'retreat');
+  for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'front') { SetEnemyRow(ctx, enemy, 'back', 'retreat'); enemy.rowHold = 1; }
   return true;
 }
 
@@ -188,7 +192,7 @@ export function GrantRetreatCard(ctx) {
 /** BandsEnemyBackAtPhase(ctx, enemy): true when the enemy will still stand in the back row when the coming enemy phase begins (an empty front row steps it forward first). */
 export function BandsEnemyBackAtPhase(ctx, enemy) {
   if (!BandsActive(ctx) || enemy?.row !== 'back') return false;
-  return ctx.enemies.some(other => other.alive && other.row === 'front');
+  return enemy.rowHold > 0 || ctx.enemies.some(other => other.alive && other.row === 'front');
 }
 
 /**
@@ -206,7 +210,7 @@ export function BandsEnemyPhaseRangeState(ctx) {
     const key = rangePairKey(actorRangeKey(ctx, player), actorRangeKey(ctx, enemy));
     if (!Object.hasOwn(copy.engagements, key)) continue;
     const advanced = player.advanced > 1;
-    const staysBack = enemy.row === 'back' && frontHeld;
+    const staysBack = enemy.row === 'back' && (frontHeld || enemy.rowHold > 0);
     if (advanced) copy.engagements[key] = 0;
     else if (enemy.row === 'back') copy.engagements[key] = staysBack ? Math.min(Math.max(1, copy.engagements[key]), bandCap(view.rangeState.policy)) : 0;
   }

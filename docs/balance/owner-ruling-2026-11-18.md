@@ -151,3 +151,7 @@ Existing effects that count as drawbacks:
   - every player reaches at least **level 4**.
 - Paths differ: some offer several elites, others only 1–2.
 - Measured today (every fight won, the new elite ×1.5 / boss ×2): about level 2 / 3 / 4 at the end of acts 1 / 2 / 3.
+- **Starting armours** (owner): map the four `default` outfit rows to their gear items (Wayfarer Plate, Nightweave, Rite Vestments, Gutter Leathers), so starting armour adds its Poise and attribute points.
+- **One-handed Poise** (owner): the Straight Sword and Frost Spear add 0 Poise. The Battleaxe adds **+1** Poise.
+- **Signature Block timing** (owner): Block granted at the end of a turn lasts until the start of its holder's next turn.
+- The signature table goes to the owner as a readable page before anything is built.

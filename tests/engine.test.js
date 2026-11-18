@@ -8771,7 +8771,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(armourSteps.slice(0, 5).join(','), '100,200,400,795,1585', 'armour starts at 100 and each step costs about 1.995 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{"perception":{"xp":0,"level":0,"pendingDrafts":0}}', 'a fresh run starts only automatic Perception at zero');
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run starts with no Perception track (off, owner 2026-11-18)');
     eq(skillLevel(run, 'item:blade'), 0);
     const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
     eq(first.levelUps, 2, 'enough XP for two steps climbs two');
