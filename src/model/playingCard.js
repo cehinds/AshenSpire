@@ -52,7 +52,7 @@ export function PlayConditionPhrase(pred) {
 }
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
-import { combatProfileFor, isSpellCard, ScaleCardBaseDamage } from './combatCardProfile.js';
+import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
@@ -348,7 +348,17 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const playerMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.playerDamageMultiplier : undefined;
   // A Counter's damage is its armed base: its return is final damage and takes no side scale (the receipt's flat-return rule).
   const counterCard = combatProfileFor(def)?.maneuver === 'counter';
-  const sideScale = (value, scaled) => scaled && !counterCard && Number.isFinite(playerMultiplier) && playerMultiplier !== 1 && value > 0 ? Math.max(playerMultiplier > 0 ? 1 : 0, Math.floor(value * playerMultiplier)) : value;
+  // Owner, 2026-11-18: `effects.physicalDamageMultiplier` cuts the physical share of the figure first (the receipt's physical-damage-scale stage), then the side scale.
+  const faceEffects = rules?.gameProfile ? configuredModule(rules, 'effects') : null;
+  const physicalMultiplier = faceEffects?.physicalDamageMultiplier;
+  const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(combatProfileFor(def) || {}) || 0));
+  const sideScale = (value, scaled) => {
+    if (!scaled || counterCard || !(value > 0)) return value;
+    const hasSide = Number.isFinite(playerMultiplier) && playerMultiplier !== 1;
+    let chain = ScalePhysicalDamage(value, physicalFraction, physicalMultiplier);
+    if (hasSide) chain = Math.max(chain >= 1 && playerMultiplier > 0 ? 1 : 0, chain * playerMultiplier);
+    return chain === value ? value : Math.max(0, Math.floor(chain));
+  };
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {

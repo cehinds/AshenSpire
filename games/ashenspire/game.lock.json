@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:431ce710014f3b13b7e9e5b788e272e7d8edd81f8a8ab1bc71ff5ffa9b6ac604",
+      "hash": "sha256:f51c29bce0f811a698c43fcebcb2588e109a349b784b156309ead6bc501f4a3a",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -202,7 +202,7 @@
           "path": "engine/modules/effects/defaults.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:7db71554f486c1e9072c2451c27a94e50af773b9cf0acaf016d5f2b6b9e54d4f"
+          "hash": "sha256:b72af1c75483f2d483ae9bdb4f7901c80b264a8606aba537b881676d5172f344"
         },
         {
           "path": "engine/modules/effects/module.json",
@@ -214,7 +214,7 @@
           "path": "engine/modules/effects/settings.schema.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:2ea341a165eedb0b32a46f4ecdc4014da60d8226bb4cc3d422448d4bb86b673b"
+          "hash": "sha256:c2ecc8c46d47caf8a6533d62e04e6dae2674195932d7f4c427180702827a7629"
         },
         {
           "path": "engine/modules/enemies/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8"
     },
     "core": {
-      "hash": "sha256:431ce710014f3b13b7e9e5b788e272e7d8edd81f8a8ab1bc71ff5ffa9b6ac604",
+      "hash": "sha256:f51c29bce0f811a698c43fcebcb2588e109a349b784b156309ead6bc501f4a3a",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -926,7 +926,7 @@
           "path": "engine/modules/effects/defaults.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:7db71554f486c1e9072c2451c27a94e50af773b9cf0acaf016d5f2b6b9e54d4f"
+          "hash": "sha256:b72af1c75483f2d483ae9bdb4f7901c80b264a8606aba537b881676d5172f344"
         },
         {
           "path": "engine/modules/effects/module.json",
@@ -938,7 +938,7 @@
           "path": "engine/modules/effects/settings.schema.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:2ea341a165eedb0b32a46f4ecdc4014da60d8226bb4cc3d422448d4bb86b673b"
+          "hash": "sha256:c2ecc8c46d47caf8a6533d62e04e6dae2674195932d7f4c427180702827a7629"
         },
         {
           "path": "engine/modules/enemies/defaults.json",

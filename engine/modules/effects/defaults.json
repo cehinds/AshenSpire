@@ -8,6 +8,7 @@
   "baseDamageMultiplier": 1,
   "playerDamageMultiplier": 1,
   "enemyDamageMultiplier": 1,
+  "physicalDamageMultiplier": 1,
   "blockGainMultiplier": 1,
   "spellPoiseDamageMultiplier": 1
 }
