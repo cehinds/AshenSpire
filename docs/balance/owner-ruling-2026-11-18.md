@@ -163,3 +163,5 @@ Existing effects that count as drawbacks:
 - **One-handed Poise** (owner): the Straight Sword and Frost Spear add 0 Poise. The Battleaxe adds **+1** Poise.
 - **Signature Block timing** (owner): Block granted at the end of a turn lasts until the start of its holder's next turn.
 - The signature table goes to the owner as a readable page before anything is built.
+- **Number colours** (owner): every number on a card face, in and out of combat, is **green** if raised above base, **black** if at base, and **red** if reduced below base.
+  - "Base" means the card's own number after the global game multipliers, so that most numbers at level 1 read black. *(decided, pending the measured count)*
