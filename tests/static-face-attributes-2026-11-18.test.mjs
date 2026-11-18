@@ -59,3 +59,13 @@ test('the face equals the combat receipt amount before any stance stage', () => 
     assert.equal(number(face(run, 'core.strike')), withoutStance, `${classId}: the static face is the receipt's STR stage through the cuts, without the stance stages`);
   }
 });
+
+// Codex review on PR #2835: the in-combat pile viewer passes the combat as `rules`; its faces keep the player's always-on attributes.
+test('a face rendered with the combat as rules matches the same card outside combat', () => {
+  for (const classId of ['reaver', 'rogue']) {
+    const run = newRun(classId);
+    const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+    assert.equal(number(face(combat, 'core.strike')), number(face(run, 'core.strike')), `${classId} Strike in the pile viewer`);
+    assert.equal(number(face(combat, 'core.defend')), number(face(run, 'core.defend')), `${classId} Defend in the pile viewer`);
+  }
+});
