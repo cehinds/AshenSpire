@@ -37,5 +37,11 @@
   "variedNeighbours": true,
   "shopsPerBranch": 1,
   "forkPercent": 70,
-  "crossLinkPercent": 100
+  "crossLinkPercent": 100,
+  "startRestFromAct": null,
+  "restGap": null,
+  "restFloorSpread": null,
+  "branchSpread": null,
+  "singlePrebossRest": null,
+  "fogCommittedBranch": null
 }

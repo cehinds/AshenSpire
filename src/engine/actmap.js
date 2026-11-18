@@ -139,10 +139,14 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   if (!Number.isInteger(columns) || columns < 2 || columns > 5) throw new Error('Invalid configured branchColumns');
   const minimumThreatFloor = rules.minimumThreatFloor;
   if (!Number.isInteger(minimumThreatFloor) || minimumThreatFloor < 1 || count + 1 < minimumThreatFloor) throw new Error('Invalid configured minimumThreatFloor');
-  const restFloors = rules.restFloors;
-  if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
-  if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
-  if (rules.requirePrebossRest && !restFloors.includes(count)) throw new Error('Configured route requires a rest immediately before the boss');
+  const authoredRestFloors = rules.restFloors;
+  if (!Array.isArray(authoredRestFloors)) throw new Error('Configured route requires authored restFloors');
+  if (authoredRestFloors.length !== rules.restsPerAct || new Set(authoredRestFloors).size !== rules.restsPerAct || authoredRestFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
+  if (rules.requirePrebossRest && !authoredRestFloors.includes(count)) throw new Error('Configured route requires a rest immediately before the boss');
+  // startRestFromAct (owner, 2026-11-18): acts before it open on the depth-1 node firstFloor draws, so depth 1 leaves that act's rest floors.
+  const startRestFromAct = rules.startRestFromAct ?? null;
+  if (startRestFromAct !== null && (!Number.isInteger(startRestFromAct) || startRestFromAct < 1 || startRestFromAct > rules.acts)) throw new Error('Invalid configured startRestFromAct');
+  const restFloors = startRestFromAct !== null && tier < startRestFromAct ? authoredRestFloors.filter(floor => floor !== 1) : authoredRestFloors;
   const firstFloor = rules.firstFloor ?? null;
   const shopShare = rules.shopShare ?? null;
   if (shopShare !== null && !(shopShare >= 0 && shopShare <= 1)) throw new Error('Invalid configured shopShare');
@@ -248,8 +252,40 @@ function drawBranchShape(rng, lanes, count, forkPercent = FORK_PERCENT) {
   }
   return { active, edges };
 }
+/**
+ * placeRestFloors(rng, restFloors, count, { restGap, restFloorSpread }) → the sorted rest depths of one act (owner, 2026-11-18).
+ * Depth 1 (when listed) and the pre-boss depth `count` stay put. Every other rest may move up to `restFloorSpread` depths either way,
+ * one 'map' draw each, so that the non-rest nodes between it and the rest before it (the start counts as a rest) stay inside
+ * restGap { min, max }. The gap that ends at the pre-boss rest is not limited. A rest with no legal depth keeps its authored one.
+ * Every path shares the result: each branch rests on the same depths.
+ */
+export function PlaceRestFloors(rng, restFloors, count, { restGap = null, restFloorSpread = null } = {}) {
+  const sorted = [...restFloors].sort((a, b) => a - b);
+  if (!restGap) return sorted;
+  const { min, max } = restGap;
+  const spread = restFloorSpread || 0;
+  const fixedFirst = sorted[0] === 1;
+  const movable = sorted.filter(floor => floor !== 1 && floor !== count);
+  const placed = fixedFirst ? [1] : [];
+  let previous = fixedFirst ? 1 : 0;
+  for (let i = 0; i < movable.length; i++) {
+    const authored = movable[i], next = movable[i + 1];
+    const candidates = [];
+    for (let floor = authored - spread; floor <= authored + spread; floor++) {
+      const gap = floor - previous - 1;
+      if (floor < 2 || floor >= count || gap < min || gap > max) continue;
+      if (next !== undefined && next - spread - floor - 1 < min) continue;
+      candidates.push(floor);
+    }
+    const chosen = candidates.length > 1 && spread > 0 ? rng.pick('map', candidates) : candidates.length ? candidates[0] : authored;
+    placed.push(chosen);
+    previous = chosen;
+  }
+  if (sorted.includes(count)) placed.push(count);
+  return placed;
+}
 function buildBranchedActMap(registries, rng, seat, tier, ctx) {
-  const { rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
+  const { rules, count, columns: laneColumns, minimumThreatFloor, restFloors: authoredRests, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
   const maxBranches = rules.maxBranches;
   // Visible-fork keys (owner, 2026-11-14). Each is read only when present, so older pinned profiles keep today's draws exactly.
   const percent = (key, fallback) => {
@@ -271,10 +307,32 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   if (!Number.isInteger(maxBranches) || maxBranches < 1 || maxBranches > 5) throw new Error('Invalid configured maxBranches');
   const pool = registries.encounters.all().filter(enc => enc.pool === 'boss' && encounterFitsSeat(enc, { seat, tier, finalTier: rules.acts }));
   if (!pool.length) throw new Error(`Configured route has no boss for ${seat}/${tier}`);
+  // Rest depths (restGap / restFloorSpread): drawn first, one set per act, shared by every branch. Absent keys draw nothing.
+  const restGap = rules.restGap ?? null;
+  if (restGap !== null && !(Number.isInteger(restGap.min) && Number.isInteger(restGap.max) && restGap.min >= 0 && restGap.min <= restGap.max)) throw new Error('Invalid configured restGap');
+  const restFloors = PlaceRestFloors(rng, authoredRests, count, { restGap, restFloorSpread: rules.restFloorSpread ?? 0 });
+  if (restGap !== null) {
+    let previous = restFloors[0] === 1 ? 1 : 0;
+    for (const floor of restFloors.filter(f => f !== 1 && f !== count)) {
+      if (floor - previous - 1 < restGap.min || floor - previous - 1 > restGap.max) throw new Error(`Configured rest depth ${floor} breaks restGap`);
+      previous = floor;
+    }
+  }
+  const singlePrebossRest = rules.singlePrebossRest === true && restFloors.includes(count);
+  const branchSpread = rules.branchSpread ?? 0;
+  if (typeof branchSpread !== 'number' || !(branchSpread >= 0)) throw new Error('Invalid configured branchSpread');
   const branchCount = rng.int('map', 1, Math.min(maxBranches, pool.length));
   const bosses = rng.shuffle('map', pool).slice(0, branchCount);
-  const lanes = Math.max(1, Math.min(columns, Math.floor(2 * columns / branchCount)));
+  const lanes = Math.max(1, Math.min(laneColumns, Math.floor(2 * laneColumns / branchCount)));
   const total = branchCount * lanes;
+  // branchSpread (V spread): branch k's centre moves away from the board centre in proportion to depth, so the branches fan apart.
+  const middle = (total - 1) / 2;
+  const maxShift = branchSpread * Math.max(0, ...Array.from({ length: branchCount }, (_, k) => Math.abs(k * lanes + (lanes - 1) / 2 - middle)));
+  const boardColumns = Math.ceil(total + 2 * maxShift);
+  const colAt = (floor, col, branch) => {
+    const centre = branch == null ? 0 : (branch * lanes + (lanes - 1) / 2 - middle) * branchSpread * (floor - 1) / count;
+    return Math.round((col + centre + maxShift) * 1000) / 1000;
+  };
   const restSet = new Set(restFloors);
   const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
   // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
@@ -342,17 +400,24 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     const layer = [];
     // Depth 1 is the single start node shared by every branch, centred over the board.
     if (floor === 1) {
-      layer.push(makeNode('n1_0', 1, (total - 1) / 2, null, restSet.has(1), 0));
+      layer.push(makeNode('n1_0', 1, colAt(1, middle, null), null, restSet.has(1), 0));
       if (rules.startNodeRefills !== false) nodes.n1_0.refill = true;
     }
+    else if (singlePrebossRest && floor === count) {
+      // One pre-boss rest per branch, centred over its lanes, linked only to its own boss.
+      for (let k = 0; k < branchCount; k++) {
+        const lane = k * lanes + Math.floor((lanes - 1) / 2);
+        layer.push(makeNode(nodeId(floor, lane), floor, colAt(floor, k * lanes + (lanes - 1) / 2, k), k, true, lane));
+      }
+    }
     else for (let k = 0; k < branchCount; k++) {
-      for (let j = 0; j < lanes; j++) if (laneAt(k, floor, j)) layer.push(makeNode(nodeId(floor, k * lanes + j), floor, k * lanes + j, k, restSet.has(floor), k * lanes + j));
+      for (let j = 0; j < lanes; j++) if (laneAt(k, floor, j)) layer.push(makeNode(nodeId(floor, k * lanes + j), floor, colAt(floor, k * lanes + j, k), k, restSet.has(floor), k * lanes + j));
     }
     layers.push(layer);
   }
   const bossIds = bosses.map((boss, k) => {
     const id = `boss_${k}`;
-    nodes[id] = { id, floor: count + 1, col: k * lanes + (lanes - 1) / 2, branch: k, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id), destinationLabel: bossDestinationLabel(registries, boss.id) }; // named now, so each branch shows its boss before any reload
+    nodes[id] = { id, floor: count + 1, col: colAt(count + 1, k * lanes + (lanes - 1) / 2, k), branch: k, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id), destinationLabel: bossDestinationLabel(registries, boss.id) }; // named now, so each branch shows its boss before any reload
     return id;
   });
   layers.push(bossIds);
@@ -369,7 +434,12 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
       for (let j = 0; j < lanes; j++) if (laneAt(k, floor, j) && laneAt(k, floor + 1, j)) link(nodeId(floor, base + j), nodeId(floor + 1, base + j));
     }
     for (const [floor, from, to] of shapes[k].edges) link(nodeId(floor, base + from), nodeId(floor + 1, base + to));
-    if (count >= 2) for (let j = 0; j < lanes; j++) if (laneAt(k, count, j)) link(nodeId(count, base + j), bossIds[k]);
+    if (singlePrebossRest) {
+      const restId = layers[count - 1].find(id => nodes[id].branch === k);
+      for (let j = 0; j < lanes; j++) if (laneAt(k, count - 1, j)) link(nodeId(count - 1, base + j), restId);
+      link(restId, bossIds[k]);
+    }
+    else if (count >= 2) for (let j = 0; j < lanes; j++) if (laneAt(k, count, j)) link(nodeId(count, base + j), bossIds[k]);
   }
   const crossings = new Map(); // `${floor}:${branch}` -> [fromId, toId]
   if (crossLinkPercent !== null) {
@@ -377,6 +447,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     // ONE diagonal edge (direction 50/50). An edge that would swap column order with one already in the gap is dropped, so edges never cross.
     for (let floor = 2; floor < count; floor++) for (let k = 0; k < branchCount; k++) for (let j = 0; j + 1 < lanes; j++) {
       if (![floor, floor + 1].every(f => laneAt(k, f, j) && laneAt(k, f, j + 1))) continue;
+      if (singlePrebossRest && floor + 1 === count) continue;
       const hit = rng.chance('map', crossLinkPercent), forward = hit && rng.chance('map', 50);
       if (!hit) continue;
       const g = k * lanes + j;
@@ -392,7 +463,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     for (let k = 0; k < branchCount; k++) {
       const hit = rng.chance('map', REMERGE_PERCENT), pick = rng.int('map', 0, Math.max(0, lanes - 2)), forward = rng.chance('map', 50);
       const pairs = [];
-      for (let j = 0; j + 1 < lanes; j++) if ([floor, floor + 1].every(f => laneAt(k, f, j) && laneAt(k, f, j + 1))) pairs.push(j);
+      for (let j = 0; j + 1 < lanes; j++) if ([floor, floor + 1].every(f => laneAt(k, f, j) && laneAt(k, f, j + 1)) && !(singlePrebossRest && floor + 1 === count)) pairs.push(j);
       if (!hit || !pairs.length) continue;
       const j = pairs[pick % pairs.length], g = k * lanes + j;
       crossings.set(`${floor}:${k}`, forward ? [nodeId(floor, g), nodeId(floor + 1, g + 1)] : [nodeId(floor, g + 1), nodeId(floor + 1, g)]);
@@ -407,7 +478,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   for (const id of Object.keys(nodes)) nodes[id].next.sort((a, b) => nodes[a].col - nodes[b].col || (a < b ? -1 : 1));
   const shrineIds = restSet.has(count) ? layers[count - 1].filter(id => nodes[id].actualType === 'rest') : [];
   const branches = bosses.map((boss, k) => ({ index: k, bossId: bossIds[k], encounterId: boss.id, firstCol: k * lanes, lanes, restIds: layers.flat().filter(id => nodes[id].branch === k && nodes[id].actualType === 'rest') }));
-  return { nodes, startIds: layers[0], shrineId: shrineIds[0] ?? null, shrineIds, bossId: bossIds[0], bossIds, branches, floors: count + 1, columns: total, gameProfileHash: registries.gameProfile.hash };
+  return { nodes, startIds: layers[0], shrineId: shrineIds[0] ?? null, shrineIds, bossId: bossIds[0], bossIds, branches, floors: count + 1, columns: boardColumns, gameProfileHash: registries.gameProfile.hash };
 }
 
 
