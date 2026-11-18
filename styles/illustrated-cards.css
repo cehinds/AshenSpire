@@ -2,6 +2,17 @@
 :root .card.illustrated-card { display:block; padding:0; border:0; border-radius:0; background:none; box-shadow:none; aspect-ratio:var(--card-ratio,2/3); height:auto; min-height:0; overflow:visible; }
 :root .card.illustrated-card::before,:root .card.illustrated-card::after { display:none; }
 :root .card.illustrated-card > .illustrated-card-face { position:relative; width:100%; height:100%; aspect-ratio:var(--illustrated-ratio,2/3); container-type:inline-size; isolation:isolate; pointer-events:none; }
+/* The pennant's metal edge is a separate cut of its painting. Tint only that
+   cut so the original highlights and dark seams remain legible. */
+.illustrated-card.rarity-common [data-component="flag-trim"] img {
+  filter:grayscale(1) brightness(2.7);
+}
+.illustrated-card.rarity-uncommon [data-component="flag-trim"] img {
+  filter:grayscale(1) sepia(1) saturate(2.8) hue-rotate(82deg) brightness(2.3);
+}
+.illustrated-card.rarity-rare [data-component="flag-trim"] img {
+  filter:grayscale(1) sepia(1) saturate(3.8) hue-rotate(177deg) brightness(2.6);
+}
 :root .illustrated-card-face .ic-plane { position:absolute; inset:0; pointer-events:none; }
 :root .illustrated-card-face .ic-layer { display:flex; flex-direction:column; justify-content:center; position:absolute; transform-origin:center; }
 :root .illustrated-card-face .ic-image { position:relative; display:block; width:100%; height:100%; overflow:hidden; }
