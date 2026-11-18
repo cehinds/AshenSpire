@@ -144,3 +144,10 @@ Existing effects that count as drawbacks:
   - Retain on Defend cards;
   - an element resistance, and so on.
 - The proposal table is in `docs/balance/equipment-signature-proposal-2026-11-18.md`, pending owner approval.
+
+## 14. Levelling pace (owner, 2026-11-18)
+- Raise XP so that, by the end of act 3:
+  - a player who takes many elites reaches about **level 8**;
+  - every player reaches at least **level 4**.
+- Paths differ: some offer several elites, others only 1–2.
+- Measured today (every fight won, the new elite ×1.5 / boss ×2): about level 2 / 3 / 4 at the end of acts 1 / 2 / 3.
