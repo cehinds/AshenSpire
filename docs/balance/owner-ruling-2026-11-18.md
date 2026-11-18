@@ -208,3 +208,6 @@ These override the generic Poise rule for the named items:
   - core.retreat: 1 SP + Exhaust.
   - Cards that bundle Retreat with other effects (Backstep) gain Escalating unless they already Exhaust. *(decided)*
 - **Reach ignores Retreat (owner):** Reach attacks hit a retreated back-row enemy normally and don't remove its stacks.
+- **Bows (owner):** the wielder is **vulnerable to melee physical attacks, Smashes and Sweeps**: takes Vulnerable-sized extra damage from them, through the existing Vulnerable rule. *(decided: +25%, the Vulnerable amount)*
+  - A Reach physical card played while the target has a Retreat stack adds DEX on top of STR: base damage + STR + DEX.
+- **Escalating:** is built with the drawback-tag pass. Until then, Backstep's upgrade must keep Exhaust, because the upgrade currently drops it. dodgeRoll and crawlingShot take Escalating in that pass. *(decided)*
