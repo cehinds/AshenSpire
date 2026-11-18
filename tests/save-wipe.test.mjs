@@ -69,3 +69,13 @@ test('the toggle is a boolean in content/config and is OFF on release and main b
     assert.equal(file.behavior.discardOnNewBuild, false, 'turn saves.json discardOnNewBuild OFF before a public release (DEVELOPER.md, Release checklist)');
   }
 });
+
+test('ON + the stamp cannot be written: nothing is wiped this session', () => {
+  const storage = seeded('old');
+  const failing = { length: storage.length, key: i => storage.key(i), getItem: k => storage.getItem(k), removeItem: k => storage.removeItem(k),
+    setItem: () => { throw new Error('QuotaExceededError'); } };
+  const out = ApplyBuildWipe(failing, { enabled: true, buildId: 'new' });
+  assert.equal(out.cleared, false);
+  assert.notEqual(storage.getItem(RUN_KEY), null);
+  assert.notEqual(storage.getItem(runKey(2)), null);
+});

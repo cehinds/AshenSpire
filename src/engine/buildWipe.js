@@ -8,6 +8,7 @@
 // CLEARED when ON and the stamp differs (or is absent while run saves exist):
 //   every run slot key (sote_run_v1, sote_run_v1_s2, ...).
 // KEPT: meta/profile (settings, unlocks, history), meta backup, the archive drawer.
+// NEVER cleared when the new stamp could not be written (quota, blocked storage).
 // OFF: nothing is deleted and the stamp is still written; the load/migration path is untouched.
 
 import { RUN_KEY } from './saveArchive.js';
@@ -35,10 +36,13 @@ export function ApplyBuildWipe(storage, { enabled, buildId }) {
   let previous = null;
   try { previous = storage.getItem(BUILD_STAMP_KEY); } catch { /* blocked storage */ }
   const keys = runKeys(storage);
-  const stale = enabled === true && keys.length > 0 && previous !== buildId;
-  if (stale) for (const k of keys) storage.removeItem(k);
-  if (previous !== buildId) {
-    try { storage.setItem(BUILD_STAMP_KEY, buildId); } catch { /* full or blocked: the next boot retries */ }
+  // The new stamp is written FIRST and read back: if storage refuses it (quota, blocked), nothing is wiped this session, so the same
+  // build's saves are never deleted at the next boot for want of a stamp. Only a verified stamp makes the wipe safe.
+  let stamped = previous === buildId;
+  if (!stamped) {
+    try { storage.setItem(BUILD_STAMP_KEY, buildId); stamped = storage.getItem(BUILD_STAMP_KEY) === buildId; } catch { /* full or blocked: no wipe, the next boot retries */ }
   }
+  const stale = enabled === true && stamped && keys.length > 0 && previous !== buildId;
+  if (stale) for (const k of keys) storage.removeItem(k);
   return { cleared: stale, slots: stale ? keys.length : 0, previous };
 }
