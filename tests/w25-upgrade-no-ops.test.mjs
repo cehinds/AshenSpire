@@ -10,7 +10,9 @@ const ids = registries.cards.all().filter((c) => c.id.startsWith('core.')).map((
 // Ramp upgrades act from the second play, and Hexmark's contest fails in the single-play harness: a single play cannot show them.
 const RAMP = new Set(['core.flick', 'core.brace', 'core.temperedEdge', 'core.hexmark']);
 // Menu steps whose effect is not in the single play (end of turn, start of the next fight, a trait): tests/w25-upgrade-menu.test.mjs proves each in the engine.
-const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction']);
+// Dropping Ethereal acts at the end of a turn the card stays in hand, and stopping a rising cost acts from the second play:
+// tests/card-cost-balance.test.mjs proves both in the engine.
+const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady']);
 // A run-long `attr` step (+1 INT/WIS) changes no single play: it acts when the deck loads into a fight. tests/w25-live-stats-run-bonus.test.mjs
 // ('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight') proves it there.
 const isDeferred = (step) => (step.k === 'fx' && DEFERRED.has(step.fx)) || step.k === 'attr';

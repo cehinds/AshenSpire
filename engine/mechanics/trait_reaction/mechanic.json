@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "trait",
   "label": "Reaction",
-  "description": "Playable from hand during the opponent's turn, before the pending action resolves.",
+  "description": "Can be played on the enemy's turn, before its action lands.",
   "attaches": [
     "card"
   ],

@@ -72,7 +72,7 @@ export function CardHpLossWording(effect, amount) {
   if (hostile) return { hostile: true, text: `${hostile} ${amount} HP (ignores Block)` };
   const prefix = effect.target === 'allAllies' ? 'All allies lose'
     : effect.target === 'ally' ? 'Ally loses' : effect.offering ? 'Offer' : 'Pay';
-  const suffix = effect.nonlethal ? ' (leave at least 1 HP)' : '';
+  const suffix = effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : '';
   return { hostile: false, text: `${prefix} ${amount} HP${suffix}` };
 }
 
