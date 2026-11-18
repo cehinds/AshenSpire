@@ -18,7 +18,7 @@ import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
-import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
+import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, DefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
 import { FluxMultiplier } from './elementFlux.js';
 import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
 
@@ -101,8 +101,10 @@ function SpellPoiseFinish(ctx, source, target, carrier, receipt) {
   const m = SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
   if (!(m > 1)) return receipt;
   const net = Math.max(0, (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0) - (receipt.poiseSpared || 0));
-  // A Defend target's Poise floor (receipt.defendPoiseFloor) still holds against the extra.
-  const left = Math.max(0, Math.floor(target?.persistentPoise?.value || 0) - net - (receipt.defendPoiseFloor || 0));
+  // A Defend target's Poise floor holds against the extra whether or not the base hit reached it: the same predicate ApplyDefendPoiseFloor reads.
+  const pool = Math.max(0, Math.floor(target?.persistentPoise?.value || 0));
+  const keep = Math.min(pool, DefendPoiseFloor(ctx, target, carrier, receipt.defenseStance));
+  const left = Math.max(0, pool - net - keep);
   const extra = Math.max(0, Math.min(Math.floor((m - 1) * net), left));
   if (extra > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
   return receipt;

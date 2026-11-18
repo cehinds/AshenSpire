@@ -206,3 +206,52 @@ test('spell Poise x2 doubles the completed net loss: a fire spell\'s ignored Poi
     if (two.quoted !== undefined) assert.equal(two.quoted, two.live, 'preview equals play');
   }
 });
+
+test('a Defend target holding Block and Ward keeps its Poise floor against the spell Poise extra, whether or not the base hit reached it', async () => {
+  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
+  const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane', magicShare: 1 }, tags: ['school:force'], magicShare: 1 };
+  const receipt = world => {
+    const combat = begin(world, { classId: 'starseer' });
+    const enemy = combat.enemies[0];
+    Object.assign(enemy, { hp: 500, maxHp: 500, block: 1, statuses: { ward: { stacks: 1 } }, persistentPoise: { value: 16, max: 16 } });
+    enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+    return profileDamageReceipt(combat, combat.player, enemy, 20, { ...FORCE, skipRatingBonus: true }, { roll: 0 });
+  };
+  for (const [name, world] of [['x2', shippedWorld], ['x1', variant({ spellPoiseDamageMultiplier: 1 })]]) {
+    const r = receipt(world);
+    const lost = (r.poiseMitigated || 0) + (r.poiseDrain || 0) - (r.poiseSpared || 0);
+    assert.ok(16 - lost >= 1, `${name}: at least the Defend floor of 1 Poise is left (lost ${lost})`);
+  }
+  // The preview prices through the same receipt, so the quote cannot drain past the floor either.
+  const combat = begin(shippedWorld, { classId: 'starseer' });
+  const enemy = combat.enemies[0];
+  Object.assign(enemy, { hp: 500, maxHp: 500, block: 1, statuses: { ward: { stacks: 1 } }, persistentPoise: { value: 16, max: 16 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'cleave', cardId: 'core.cantrip' });
+  const quoted = previewCard(combat, 'cleave', enemy.id).values.find(value => value.op === 'damage')?.perTargetPoise?.[enemy.id]?.removed;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cleave', targetId: enemy.id });
+  const pool = combat.enemies[0].persistentPoise;
+  assert.ok(pool.value >= 1, 'the played spell left the floor');
+  if (quoted !== undefined) assert.ok(16 - quoted >= 1, 'and so did its quote');
+});
+
+test('cantrip into a Defend target with Block and Ward: x2 leaves the same Poise floor as x1, and the quote equals the play', () => {
+  const cast = (world, value) => {
+    const combat = begin(world, { classId: 'starseer' });
+    const enemy = combat.enemies[0];
+    Object.assign(enemy, { hp: 500, maxHp: 500, block: 2, statuses: { ...(enemy.statuses || {}), ward: { stacks: 1 } } });
+    enemy.persistentPoise = { value, max: value };
+    enemy.combatStance = { id: 'defend', maneuver: 'defend', camp: 'physical' };
+    combat.piles.hand.push({ instanceId: 'sp', cardId: 'core.cantrip' });
+    const quoted = previewCard(combat, 'sp', enemy.id).values.find(v => v.op === 'damage')?.perTargetPoise?.[enemy.id]?.removed;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'sp', targetId: enemy.id });
+    return { left: combat.enemies[0].persistentPoise.value, quoted };
+  };
+  for (const pool of [10, 5]) {
+    const one = cast(variant({ spellPoiseDamageMultiplier: 1 }), pool), two = cast(shippedWorld, pool);
+    assert.ok(one.left >= 1, `pool ${pool}: the Defend floor holds at x1`);
+    assert.ok(two.left >= 1, `pool ${pool}: and at x2 (left ${two.left})`);
+    assert.ok(two.left <= one.left, `pool ${pool}: x2 never leaves more than x1`);
+    if (two.quoted !== undefined) assert.equal(pool - two.quoted, two.left, `pool ${pool}: the quote equals the play`);
+  }
+});
