@@ -61,8 +61,8 @@ const SCENARIOS = [
     name: 'Deck editor', url: '?shot=map', ready: '#map-enter', mount: MOUNT_DECK, settle: '.deck-editor',
     scroll: '[data-pane="collection"] .deck-editor-list', keep: '.deck-editor-panes',
     steps: [
-      { name: 'select a collection card', click: '.deck-editor-tile .deck-editor-main' },
-      { name: 'add a card (+)', click: '.deck-editor-tile .deck-editor-step[data-action="add"]:not([disabled])' },
+      { name: 'select a collection card', click: '.deck-editor-tile:not(.spent) .deck-editor-main' },
+      { name: 'add a card (+)', click: '.deck-editor-tile:not(.spent) .deck-editor-step[data-action="add"]:not([disabled])' },
       { name: 'switch pane with ] (no data change)', key: ']' },
       { name: 'remove a card (-)', click: '.deck-editor-row .deck-editor-step[data-action="remove"]' },
       { name: 'select a deck row', click: '.deck-editor-row .deck-editor-main' },
@@ -95,6 +95,7 @@ for (const scenario of SCENARIOS) {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  if (process.env.PROBE_ROOTS) { page.on('console', (m) => { if (m.text().startsWith('PATCH')) console.error(m.text().slice(0, 300)); }); }
   await page.goto(`${server.url}index.html${scenario.url}`, { waitUntil: 'load', timeout: 90000 });
   await page.waitForSelector(scenario.ready, { timeout: 30000 });
   await page.waitForTimeout(1500);
@@ -102,14 +103,15 @@ for (const scenario of SCENARIOS) {
   for (const selector of scenario.setup || []) { await page.click(selector); await page.waitForTimeout(500); }
   try { await page.waitForSelector(scenario.settle, { timeout: 10000 }); } catch { rows.push({ scenario: scenario.name, step: '(scene did not open)', skipped: true }); await context.close(); continue; }
   await page.waitForTimeout(500);
+  if (process.env.PROBE_ROOTS) await page.evaluate(() => { globalThis.__dbgPatch = true; });
   for (const step of scenario.steps) {
     const target = page.locator(step.click || 'body').first();
     if (!step.key && !(await target.count())) { rows.push({ scenario: scenario.name, step: step.name, skipped: true }); continue; }
     await page.evaluate(({ scroll, keep }) => {
       const sc = document.querySelector(scroll);
-      if (sc && sc.scrollHeight > sc.clientHeight) sc.scrollTop = Math.min(120, sc.scrollHeight - sc.clientHeight);
-      document.querySelectorAll('[data-probe-keep]').forEach((node) => node.removeAttribute('data-probe-keep'));
-      document.querySelector(keep)?.setAttribute('data-probe-keep', '1');
+      if (sc && sc.scrollHeight > sc.clientHeight) sc.scrollTop = Math.min(30, sc.scrollHeight - sc.clientHeight);
+      
+      window.__probeKeep = document.querySelector(keep);
       window.__probe = { added: 0, removed: 0, scrollBefore: sc ? sc.scrollTop : null };
       const count = (node) => (node.nodeType === 1 ? 1 + node.querySelectorAll('*').length : 0);
       window.__probeObserver?.disconnect();
@@ -131,7 +133,7 @@ for (const scenario of SCENARIOS) {
       });
       window.__probeObserver.disconnect();
       const sc = document.querySelector(scroll);
-      return { ...window.__probe, scrollAfter: sc ? sc.scrollTop : null, kept: Boolean(document.querySelector('[data-probe-keep]')) };
+      return { ...window.__probe, scrollAfter: sc ? sc.scrollTop : null, kept: Boolean(window.__probeKeep && window.__probeKeep.isConnected) };
     }, { scroll: scenario.scroll, keep: scenario.keep });
     if (process.env.PROBE_ROOTS && result.roots) console.error(step.name, '->', result.roots.join(', '));
     rows.push({ scenario: scenario.name, step: step.name, ...result });

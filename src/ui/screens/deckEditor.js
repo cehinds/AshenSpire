@@ -53,6 +53,7 @@ import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 import { MarkSelected } from '../selection.js';
+import { patchChildren } from '../keyedPatch.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -80,6 +81,26 @@ let liveEditor = null;
 // Text search is off for now (owner, 2026-10-11): the search inputs are not
 // rendered unless a mount passes `search: true`. The filter code stays so the
 // search comes back by flipping that one option.
+// What names a node across redraws: a card tile's key, a deck row's instance, a pane, a list, a fold group.
+// The art loader stamps and clears these after a card face is inserted, so a fresh face and a live one differ in them alone.
+const PATCH_IGNORED = ['data-art-placeholder'];
+// A card's art well refreshes itself (placeholder, outline, then the loaded art), so it is compared by its place only.
+const PATCH_OPAQUE = ['data-card-art-refresh'];
+const PATCH_CONTAINERS = new Set(['panes', 'pane', 'bar', 'list', 'group']);
+function patchKey(node) {
+  const has = (name) => node.classList?.contains?.(name);
+  if (has('deck-editor-item')) {
+    if (node.dataset.key) return `tile:${node.dataset.key}`;
+    return node.dataset.instanceId ? `row:${node.dataset.instanceId}` : null;
+  }
+  if (has('deck-editor-pane')) return `pane:${node.dataset.pane}`;
+  if (has('deck-editor-panes')) return 'panes';
+  if (has('deck-editor-pane-bar')) return 'bar';
+  if (has('deck-editor-list')) return 'list';
+  if (has('deck-editor-group')) return `group:${node.children?.[0]?.dataset?.focusKey || ''}`;
+  return null;
+}
+
 export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, backLabel = '', dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
@@ -242,6 +263,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
   function select(row, source, open = false) {
     if (source === 'collection' && row.equipmentEligible === false) return;
+    // The same card selected again (a click after its focus) changes nothing: the inspector stays as it is.
+    const unchanged = !open && selected?.key === selectionKey(row, source) && selected.source === source && inspected === selected && selected.row === row;
+    if (unchanged) return;
     selected = { key: selectionKey(row, source), source, row };
     inspected = selected;
     inspectOrigin = source;
@@ -822,9 +846,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const currentInspected = inspectedRows.find(row => selectionKey(row, inspected.source) === inspected.key);
       inspected = currentInspected ? { ...inspected, row: currentInspected } : selected;
     }
-    panel.replaceChildren?.();
-    if (!panel.replaceChildren) panel.innerHTML = '';
     panel.dataset.mobileView = mobileView;
+    const parts = [];
     if (onNavigate) {
       const head = ModalHead({ tabs: [
         { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
@@ -836,12 +859,15 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       } });
       for (const tab of head.querySelectorAll('[data-modal-tab]')) progressionTip(tab,
         tab.dataset.modalTab === 'deck' ? 'Edit your deck' : `Save deck and open ${tab.textContent}`);
-      panel.append(head);
+      parts.push(head);
     }
     // The toolbar row holds only the phone's Draw order chip; it is left out
     // when there is nothing for it (the filters live on the collection's bar).
     const nav = navigation();
-    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
+    parts.push(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
+    // Only what changed is replaced (owner, 2026-11-18): the lists and panes stay, so scroll position, focus and
+    // the unchanged cards are not rebuilt by one add, remove or selection.
+    patchChildren(panel, parts, { keyOf: patchKey, isContainer: (key) => PATCH_CONTAINERS.has(key.split(':')[0]), ignoreAttributes: PATCH_IGNORED, opaqueAttributes: PATCH_OPAQUE });
     syncInert();
     restoreFocus();
   }
