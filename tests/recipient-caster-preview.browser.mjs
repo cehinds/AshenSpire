@@ -1,6 +1,8 @@
 // Focused production-preview caster/recipient contract; requires staged effect art.
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+// Same optional installed-tool seam as the other browser suites.
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, relative, sep } from 'node:path';
