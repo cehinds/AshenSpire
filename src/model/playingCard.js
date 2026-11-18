@@ -351,14 +351,16 @@ function faceAttributes(registries, rules) {
 }
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
+  // A live preview carries only the always-on attributes (`faceAttributes`); the profile pin is the registries' own.
+  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);
-  const baseDamageMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
+  const baseDamageMultiplier = holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
   // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
-  const playerMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.playerDamageMultiplier : undefined;
+  const playerMultiplier = holder ? configuredModule(holder, 'effects')?.playerDamageMultiplier : undefined;
   // A Counter's damage is its armed base: its return is final damage and takes no side scale (the receipt's flat-return rule).
   const counterCard = combatProfileFor(def)?.maneuver === 'counter';
   // Owner, 2026-11-18: `effects.physicalDamageMultiplier` cuts the physical share of the figure first (the receipt's physical-damage-scale stage), then the side scale.
-  const faceEffects = rules?.gameProfile ? configuredModule(rules, 'effects') : null;
+  const faceEffects = holder ? configuredModule(holder, 'effects') : null;
   const physicalMultiplier = faceEffects?.physicalDamageMultiplier;
   const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(combatProfileFor(def) || {}) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:

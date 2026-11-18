@@ -2524,7 +2524,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     // The rules a face outside combat would read for this player: the profile pin and the always-on attributes (no fight boosts). A live number is
     // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
-    ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { gameProfile: combat.gameProfile, deck: [], faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes } } : {}),
+    ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes } } : {}),
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
