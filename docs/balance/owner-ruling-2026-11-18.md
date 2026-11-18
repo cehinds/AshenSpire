@@ -262,3 +262,9 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
 - **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
 - Each new type ships with 2–3 items across rarities. Placeholder art is used until real art exists.
+
+## 19. Equipment approvals (owner, 2026-11-18)
+- **Equipment list** (`docs/balance/equipment-list-2026-11-18.md`): approved to build. The owner will tweak items after a playtest.
+- **Axe type base:** an axe attack grants +1 STR until the end of the turn; Sweeps get +1. *(decided: the STR stacks with each axe attack that turn)*
+- **Twinblades** (and Moon Glaives) keep −1 damage per hit as their drawback.
+- **Resist (element):** take 25% less damage of that element.
