@@ -20,7 +20,17 @@ function matchingGrants(action, event) {
 
 /** One state per mounted fight, never a global dedup cache or engine state. */
 export function createRecipientEffectState() {
-  return { serial: 0, actions: new Map(), contacts: new Map(), current: null, wardColors: new Map() };
+  return { serial: 0, actions: new Map(), contacts: new Map(), roots: new Map(), current: null, wardColors: new Map() };
+}
+
+// activateCombatContact names each hit `${rootKey}:hit:${contactIndex}`.
+// Keep that root for once-per-action presentation, while contactIndex still
+// isolates the individual hit's defense and secondary-effect receipts.
+function rootContactKey(event) {
+  if (typeof event.contactKey !== 'string') return null;
+  const suffix = `:hit:${event.contactIndex}`;
+  return Number.isSafeInteger(event.contactIndex) && event.contactKey.endsWith(suffix)
+    ? event.contactKey.slice(0, -suffix.length) : event.contactKey;
 }
 
 // Presentation-only annotations. Definitions select appearance; engine receipts
@@ -31,7 +41,7 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     const event = combatEffectReceipt(raw);
     if (BOUNDARIES.has(event.type)) {
       segment++;
-      state.actions.clear(); state.contacts.clear(); state.current = null;
+      state.actions.clear(); state.contacts.clear(); state.roots.clear(); state.current = null;
     }
     let marker = null;
     if (MARKERS.has(event.type)) {
@@ -41,8 +51,11 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       const continuation = ['combatHitStarted', 'combatContactPrepared'].includes(event.type)
         || (event.type === 'enemyMoveStarted' && event.contactPrepared);
       const keyed = event.contactKey && state.contacts.get(event.contactKey);
+      const root = rootContactKey(event);
+      const rootId = root == null ? null : JSON.stringify([sourceId, root]);
+      const rooted = rootId && state.roots.get(rootId);
       const context = keyed?.sourceId === sourceId ? keyed
-        : !event.contactKey && continuation ? prior : null;
+        : rooted || (!event.contactKey && continuation ? prior : null);
       let definition = (event.type === 'cardPlayed' || event.sourceKind === 'player' ? resolveCard?.(event) : resolveEnemyMove?.(event)) || context?.definition || {};
       // Enemy receipts capture the expanded move profile under their public
       // intent/action projection. It outranks the raw authored move's tags.
@@ -54,6 +67,7 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       marker.definition = { ...definition, sourceId };
       state.actions.set(sourceId, marker);
       if (event.contactKey) state.contacts.set(event.contactKey, marker);
+      if (rootId) state.roots.set(rootId, marker);
       state.current = marker;
     }
     const owner = event.sourceId;
@@ -134,6 +148,16 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     }
     // A break replaces the same defense's hit pulse for this contact. Multiple
     // damage receipts still retain their distinct physical impacts.
+    if (['blockBroken', 'combatGuardBroken'].includes(event.type)) {
+      // A legacy Smash reports both the depleted Block and the Smash guard
+      // consequence. They describe one break. A later damage receipt starts
+      // another contact even when legacy events have no explicit hit index.
+      const lastDamage = annotated.slice(0, i).findLastIndex(other => sameContact(row, other) && other.event.type === 'damageDealt');
+      const pairedType = event.type === 'blockBroken' ? 'combatGuardBroken' : 'blockBroken';
+      if (annotated.slice(lastDamage + 1, i).some(other => sameContact(row, other) && other.event.type === pairedType)) {
+        result.recipientEffects = result.recipientEffects.filter(layer => layer.shape !== 'block-break');
+      }
+    }
     for (const layer of result.recipientEffects) {
       const hitShape = layer.shape === 'block-break' ? 'block-hit' : layer.shape === 'poise-break' ? 'poise-hit'
         : layer.shape === 'ward' && layer.treatment === 'break' ? 'ward' : null;

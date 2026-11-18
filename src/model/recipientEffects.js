@@ -6,6 +6,10 @@ import {
   RECIPIENT_NEGATIVE_STATUSES as NEGATIVE,
   RECIPIENT_POSITIVE_STATUSES as POSITIVE,
   RECIPIENT_EFFECT_TIMING as TIMING,
+  RECIPIENT_ELEMENT_PALETTES as ELEMENT_PALETTES,
+  RECIPIENT_LEGACY_MAGIC_TAGS as MAGIC_TAGS,
+  RECIPIENT_SILENT_STATUSES as SILENT_STATUSES,
+  RECIPIENT_BLOOD_STATUSES as BLOOD_STATUSES,
 } from '../content/recipientEffectRecipes.js';
 import { normalizeRange } from './combatRanges.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../content/recipientEffectSettings.js';
@@ -18,7 +22,7 @@ const canonical = value => has(ALIASES, value) ? ALIASES[value] : value;
 const paletteOf = value => has(PALETTES, canonical(value)) ? canonical(value) : null;
 const elementalPaletteOf = value => {
   const palette = paletteOf(value);
-  return ['fire', 'frost', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth', 'blood'].includes(palette) ? palette : null;
+  return ELEMENT_PALETTES.includes(palette) ? palette : null;
 };
 const tagged = (tags, prefix) => tags.find(tag => tag.startsWith(prefix))?.slice(prefix.length);
 const sourceOf = (action, event) => event.sourcePlayerId || event.sourceId || action.sourcePlayerId || action.sourceId;
@@ -65,7 +69,7 @@ export function resolveRecipientEffect(action = {}, event = {}) {
   // Modern camp/source identity wins. Old cards predate those fields: preserve
   // their nonphysical damage-school and explicit magic presentation identity.
   const legacySpell = !action.equipmentProfileId && ((action.damageSchool && action.damageSchool !== 'physical')
-    || legacy.some(tag => ['magic', 'arcane', 'starstone', 'ritual', 'oath'].includes(tag)));
+    || legacy.some(tag => MAGIC_TAGS.includes(tag)));
   const spell = camp ? camp === 'spell' : source ? source === 'spell' : action.type === 'spell' || legacySpell;
   let maneuver = profile.mirrors || profile.maneuver || action.maneuver || tagged(tags, 'maneuver:') || action.stance;
   if (maneuver === 'ranged') maneuver = 'attack';
@@ -200,7 +204,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   const type = event.type;
   if (type === 'statusApplied' && Number.isFinite(event.total) && Number.isFinite(event.previousTotal)
     && event.total <= event.previousTotal) return [];
-  if (type === 'statusApplied' && event.status === 'stanceShifted') return [];
+  if (type === 'statusApplied' && SILENT_STATUSES.includes(event.status)) return [];
   const targetId = targetOf(event) || (['combatAdvancedChanged', 'implicitAdvance'].includes(type) ? sourceOf(action, event) : null);
   if (!targetId) return [];
   event = { ...event, targetId };
@@ -284,7 +288,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   const status = event.status || (event.triggeredBy?.kind === 'status' ? event.triggeredBy.id : String(event.cause).split(':')[1]);
   const resolved = resolveRecipientEffect(action, { ...event, type: 'statusApplied', status });
   const palette = STATUS_PALETTES[status] || resolved.palette;
-  const blood = ['bleed', 'bleeding'].includes(status);
+  const blood = BLOOD_STATUSES.includes(status);
   const clear = ['clear', 'resist'].includes(lifecycle);
   const shape = lifecycle === 'apply' && ['buff', 'debuff'].includes(resolved.shape) && (!STATUS_PALETTES[status] || resolved.polarity === 'positive')
     ? resolved.shape : `status-${lifecycle}`;
@@ -298,7 +302,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
     ...(['buff', 'debuff'].includes(shape) ? { anchor: 'card-bottom', sizing: 'card' } : {}) });
   if (!blood) return [primary];
   return [primary, clip('bleed-drops', { phase: 'status', status, lifecycle, secondary: !clear,
-    palette: 'blood', color: PALETTES.blood, overlay: null, claimsDamage: false,
+    palette, color: PALETTES[palette], overlay: null, claimsDamage: false,
     delayMs: clear ? 0 : primary.durationMs * SETTINGS.motion.secondaryStartFrame / SETTINGS.behavior.frameCount,
     overlayTreatment: primary.overlayTreatment, treatment: primary.overlayTreatment,
     scale: clear ? SETTINGS.sizing.statusOverlay[lifecycle] : 1,

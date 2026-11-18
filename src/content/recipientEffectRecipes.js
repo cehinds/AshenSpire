@@ -3,6 +3,15 @@
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from './recipientEffectSettings.js';
 export const RECIPIENT_EFFECT_PALETTES = SETTINGS.behavior.palettes;
 
+// Presentation identity vocabulary lives with the recipe data, separate from
+// the engine's mechanic readers and its generated ownership documentation.
+export const RECIPIENT_ELEMENT_PALETTES = Object.freeze([
+  'fire', 'frost', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth', 'blood',
+]);
+export const RECIPIENT_LEGACY_MAGIC_TAGS = Object.freeze(['magic', 'arcane', 'starstone', 'ritual', 'oath']);
+export const RECIPIENT_SILENT_STATUSES = Object.freeze(['stanceShifted']);
+export const RECIPIENT_BLOOD_STATUSES = Object.freeze(['bleed', 'bleeding']);
+
 export const RECIPIENT_ATTRIBUTE_ALIASES = Object.freeze({
   str: 'strength', dex: 'dexterity', int: 'intelligence',
   con: 'constitution', wis: 'wisdom', cha: 'charisma', sp: 'stamina', mp: 'mana',

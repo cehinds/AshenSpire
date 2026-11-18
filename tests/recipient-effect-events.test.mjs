@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, executeAction, applyLoseHp } from '../src/engine/actions.js';
 import { applyStatus, removeStatus } from '../src/engine/statuses.js';
@@ -12,6 +12,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { recipientEffectsForEvent, recipientWindupFor, recipientDeliveryFor, recipientStatusPolarity } from '../src/model/recipientEffects.js';
 import { decorateRecipientEffects, createRecipientEffectState } from '../src/ui/recipientEffectEvents.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../src/content/recipientEffectSettings.js';
+import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 
 const physical = { tags: ['camp:physical', 'maneuver:attack', 'damage:slashing'] };
 const fire = { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], effects: [{ op: 'gainWard', target: 'self' }] };
@@ -393,4 +394,68 @@ test('co-op recipient aliases and attribute colors cannot redirect or recolor th
   ], { resolveCard: () => spell });
   assert.deepEqual(rows[0].recipientWindup.targetIds, ['seat-a']);
   assert.equal(rows[1].recipientTargetId, 'seat-b');
+});
+
+test('real legacy Smash paired break receipts render one break per distinct contact', () => {
+  const { combat, enemy, decorate } = fixture();
+  const smash = { tags: ['maneuver:smash'], combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee', damageType: 'slashing' } };
+  for (let contact = 0; contact < 2; contact++) {
+    enemy.block = 2;
+    applyAttackDamage(combat, combat.player, enemy, 10, [], smash);
+  }
+  assert.equal(combat.eventLog.filter(event => event.type === 'damageDealt').length, 2);
+  assert.equal(combat.eventLog.filter(event => event.type === 'blockBroken').length, 2);
+  assert.equal(combat.eventLog.filter(event => event.type === 'combatGuardBroken').length, 2);
+  const before = structuredClone(combat.eventLog);
+  const layers = flatten(decorate(smash));
+  assert.equal(layers.filter(layer => layer.shape === 'block-break').length, 2, 'paired receipts coalesce, distinct damage contacts do not');
+  assert.equal(layers.filter(layer => layer.shape === 'block-hit').length, 0);
+  assert.equal(layers.filter(layer => layer.phase === 'contact').length, 2);
+  assert.deepEqual(combat.eventLog, before, 'presentation leaves both engine consequences intact');
+});
+
+test('real per-hit root keys retain one Sweep/circle across batches and isolate defense reactions', () => {
+  const base = createRegistries(contentBundle);
+  const registries = { ...base, enemies: { ...base.enemies, get(id) {
+    const row = base.enemies.get(id);
+    return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: {
+      ...row.moves.slash, damage: 3, hits: 3,
+      tags: ['camp:spell', 'maneuver:sweep', 'school:fire', 'damage:fire', 'range:reach'],
+    } } } : row;
+  } } };
+  const combat = createCombat({ registries, rng: createRng(511), combatExpansionVersion: 2, reactionRulesVersion: 2,
+    reactionRules: { ...reactionRulesSnapshot(), contactPolicy: 'perHit' }, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', hp: 500, maxHp: 500, energyMax: 20, stamina: 20, maxStamina: 20,
+      mana: 20, maxMana: 20, drawPerTurn: 1, deck: [] } });
+  combat.player.block = 7;
+  combat.player.persistentPoise = { value: 0, max: 0 };
+  combat.player.persistentWard = { value: 0, max: 0 };
+  Object.assign(combat.enemies[0], { basePrecisionBonus: 1000, stamina: 3, maxStamina: 3, plannedMoves: [] });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  const prepared = events.filter(event => event.type === 'combatContactPrepared');
+  assert.equal(prepared.length, 3);
+  assert.deepEqual(prepared.map(event => event.contactIndex), [0, 1, 2]);
+  const rootKey = prepared[0].contactKey.replace(/:hit:0$/, '');
+  assert.deepEqual(prepared.map(event => event.contactKey), [0, 1, 2].map(index => `${rootKey}:hit:${index}`));
+  const chunks = [[]];
+  for (const event of events) {
+    if (event.type === 'combatContactPrepared' && event.contactIndex > 0) chunks.push([]);
+    chunks.at(-1).push(event);
+  }
+  const state = createRecipientEffectState();
+  const results = chunks.flatMap(chunk => decorateRecipientEffects(chunk, { state,
+    resolveEnemyMove: event => registries.enemies.get(event.enemyId).moves[event.moveId],
+    resolveTelegraphTargets: () => ['player'], resolveStatus: id => registries.statuses.get(id),
+  }));
+  const contacts = results.filter(event => event.type === 'damageDealt' && event.sourceId === combat.enemies[0].id);
+  assert.equal(contacts.length, 3);
+  assert.equal(new Set(contacts.map(event => event.recipientActionKey)).size, 1);
+  assert.equal(new Set(contacts.map(event => event.recipientContactKey)).size, 3);
+  assert.equal(results.filter(event => event.recipientWindup).length, 1, 'one circle for the root spell');
+  const layers = flatten(results);
+  assert.equal(layers.filter(layer => layer.shape === 'sweep').length, 1, 'one Sweep for the root action');
+  assert.equal(layers.filter(layer => layer.shape === 'block-hit').length, 2, 'later break preserves earlier hit reactions');
+  assert.equal(layers.filter(layer => layer.shape === 'block-break').length, 1);
 });
