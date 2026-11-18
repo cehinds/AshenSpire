@@ -110,3 +110,17 @@ test('non-Core: Enter Gorefire pays no unquoted Precision entry grant', async ()
   assert.equal(gorefire.statuses?.precision?.stacks ?? 0, 0);
   assert.equal(gorefire.block ?? 0, 2, 'dev number');
 });
+
+test('entered-stance helper: only this play\'s receipts count, and Prepared reads as casting', async () => {
+  const { CardAsEnteredStance, kindForCard } = await import('../src/model/alternativeStance.js');
+  const card = reg.cards.get('enterGorefire');
+  const played = { type: 'cardPlayed', sourceId: 'player' }, later = { type: 'cardPlayed', sourceId: 'player' };
+  const change = maneuver => ({ type: 'combatStanceChanged', sourceId: 'player', maneuver });
+  // A restored log holds the whole fight: a later play's stance change is not this card's.
+  assert.equal(CardAsEnteredStance(card, [played, change('attack'), later, change('defend')], played).cardTags.at(-1), 'maneuver:attack');
+  assert.equal(CardAsEnteredStance(card, [played, later, change('defend')], played), card);
+  // Prepared (an immediate-transition Prepare) must not become an unknown maneuver tag.
+  const prepared = CardAsEnteredStance(card, [played, change('prepared')], played);
+  assert.equal(prepared.cardTags.at(-1), 'maneuver:casting');
+  assert.doesNotThrow(() => kindForCard(prepared));
+});

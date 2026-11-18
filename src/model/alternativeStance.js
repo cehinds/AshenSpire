@@ -57,9 +57,12 @@ export function stanceForCard(card = {}) {
 export function CardAsEnteredStance(card = {}, events = [], played = {}) {
   if (!card?.effects?.some?.(effect => effect.op === 'enterStance')) return card;
   const actor = played.playerId || played.sourceId || 'player';
-  const after = events.slice(events.indexOf(played) + 1);
+  const start = events.indexOf(played) + 1;
+  const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
+  const after = events.slice(start, next < 0 ? undefined : next);
   const changed = after.filter(event => event.type === 'combatStanceChanged' && (event.sourcePlayerId || event.sourceId || event.targetId) === actor).pop();
-  const maneuver = changed?.maneuver;
+  // Core 2 reports a Prepare as 'prepared'; the tag family spells it 'casting'.
+  const maneuver = changed?.maneuver === 'prepared' ? 'casting' : changed?.maneuver;
   if (!maneuver || maneuver === 'staggered' || maneuver === 'neutral') return card;
   const tags = (card.cardTags ?? card.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
   return { ...card, cardTags: [...tags.filter(tag => !tag.startsWith('maneuver:')), `maneuver:${maneuver}`] };
