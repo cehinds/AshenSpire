@@ -27,9 +27,9 @@ New tags:
 - **Reckless:** you lose Poise. Fully breaking your own Poise is self-Broken (below).
 - **Bloodprice:** the card also costs HP.
 - **Wound:** adds a Wound card (the existing `wound`) to your discard pile.
+- **Winded:** start your next turn with 1 less SP per stack. It replaces the proposed "Overexert" and self-Broken. Unlike Broken (a Poise break), it does not make you take extra damage. *(owner: the name)*
 
 Existing effects that count as drawbacks:
-- **Broken (self):** replaces the proposed "Overexert". You lose your next action, or 1 SP next turn.
 - **Vulnerable (self):** replaces the proposed "Exposed".
 - **Exhaust** and **Ethereal**.
 - **Confused (self):** see section 4.
