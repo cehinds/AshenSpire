@@ -5033,5 +5033,134 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "waxsealBailiff",
+    "name": "Waxseal_Bailiff",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "waxsealBailiff.waxBrand",
+        "name": "Wax_Brand",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "waxBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "waxsealBailiff.writOfDebt",
+        "name": "Writ_of_Debt",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "writOfDebt",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "waxsealBailiff.sealPress",
+        "name": "Seal_Press",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 15
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sealPress",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "waxsealBailiff.ledgerGuard",
+        "name": "Ledger_Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ledgerGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "waxsealBailiff.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

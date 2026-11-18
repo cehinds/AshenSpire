@@ -937,5 +937,83 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "waxsealBailiff",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 3,
+      "dexterity": 2,
+      "constitution": 1,
+      "wisdom": 4,
+      "intelligence": 3
+    },
+    "size": "medium",
+    "name": "Waxseal Bailiff",
+    "hp": [
+      30,
+      34
+    ],
+    "poiseMax": 9,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "waxBrand": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "writOfDebt": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ]
+      },
+      "sealPress": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 15,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "ledgerGuard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "writOfDebt",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

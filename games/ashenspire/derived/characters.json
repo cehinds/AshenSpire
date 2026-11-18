@@ -6341,5 +6341,123 @@
         }
       ]
     }
+  },
+  {
+    "id": "waxsealBailiff",
+    "name": "Waxseal_Bailiff",
+    "displayName": "Waxseal Bailiff",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "straightSword",
+            "name": "Straight_Sword",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "torch",
+            "name": "Torch",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 10,
+        "dexterity": 3,
+        "wisdom": 4,
+        "intelligence": 3,
+        "level": 5
+      },
+      "total": 45,
+      "formula": "10+10+10+3+4+3+5 = 45"
+    },
+    "pools": {
+      "hp": 45,
+      "sp": 2,
+      "mp": 2,
+      "ar": 2,
+      "dr": 1,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "straightSword",
+        "name": "Straight_Sword"
+      },
+      {
+        "key": "offHand",
+        "id": "torch",
+        "name": "Torch"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "waxsealBailiff.waxBrand",
+          "name": "Wax_Brand",
+          "copies": 1
+        },
+        {
+          "id": "waxsealBailiff.writOfDebt",
+          "name": "Writ_of_Debt",
+          "copies": 1
+        },
+        {
+          "id": "waxsealBailiff.sealPress",
+          "name": "Seal_Press",
+          "copies": 1
+        },
+        {
+          "id": "waxsealBailiff.ledgerGuard",
+          "name": "Ledger_Guard",
+          "copies": 1
+        },
+        {
+          "id": "waxsealBailiff.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

@@ -4868,5 +4868,101 @@
         }
       ]
     }
+  },
+  {
+    "id": "waxsealBailiff",
+    "name": "Waxseal_Bailiff",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "waxsealBailiff.waxBrand",
+      "waxsealBailiff.writOfDebt",
+      "waxsealBailiff.sealPress",
+      "waxsealBailiff.ledgerGuard",
+      "waxsealBailiff.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "straightSword"
+      },
+      {
+        "key": "offHand",
+        "id": "torch"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "waxsealBailiff",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "waxsealBailiff.writOfDebt",
+      "poiseMax": 4,
+      "cardHints": {
+        "waxsealBailiff.waxBrand": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "waxBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.writOfDebt": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "writOfDebt",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.sealPress": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sealPress",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.ledgerGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ledgerGuard",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

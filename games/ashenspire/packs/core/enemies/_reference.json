@@ -165,6 +165,10 @@
       "name": "Wandering Soldier",
       "tier": "minion"
     },
+    "enemy:waxsealBailiff": {
+      "name": "Waxseal Bailiff",
+      "tier": "minion"
+    },
     "enemy:wickerHind": {
       "name": "Wicker Hind",
       "tier": "elite"
@@ -2335,6 +2339,56 @@
         "mana": 0
       },
       "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:waxsealBailiff.waxBrand": {
+      "name": "Wax Brand",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:waxsealBailiff.writOfDebt": {
+      "name": "Writ of Debt",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:waxsealBailiff.sealPress": {
+      "name": "Seal Press",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:waxsealBailiff.ledgerGuard": {
+      "name": "Ledger Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:waxsealBailiff.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
       "usedBy": "enemy sheet"
     }
   },
