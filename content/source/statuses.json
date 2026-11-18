@@ -1330,7 +1330,7 @@
     "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 stack at the start of your turn.",
+    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 Ward at the start of your turn, and its +5 maximum Poise with it. When your Poise reaches 0, all Ward is lost.",
     "sharedWord": true
   },
   {

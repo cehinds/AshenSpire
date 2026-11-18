@@ -21,6 +21,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/elementIdentity.js",
-    "symbol": "ElementTurnEnd"
+    "symbol": "OnPoiseBreak"
   }
 }

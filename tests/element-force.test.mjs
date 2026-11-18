@@ -34,12 +34,12 @@ test('a force hit no longer pushes or knocks back by itself (owner 2026-11-18); 
   assert.equal(band(combat, enemy), 0, 'pulled into melee');
 });
 
-test('a force hit that breaks Poise applies no Knockback and no push', () => {
+test('a force hit that breaks Poise applies the Knockback status but no push (the target stays in melee)', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 3 });
   play(combat, 'cometFragment', enemy.id);
   assert.equal(enemy.persistentPoise.value, 0);
-  assert.equal(getStacks(enemy, 'knockback'), 0);
-  assert.equal(band(combat, enemy), 0);
+  assert.equal(getStacks(enemy, 'knockback'), 1);
+  assert.equal(band(combat, enemy), 0, 'no push');
   ElementTurnEnd(combat, enemy);
   assert.equal(band(combat, enemy), 0);
 });

@@ -49,6 +49,9 @@ combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}%
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
 combat.protection.acBase,,"Base, Dexterity and gear {value}",,
+status.ward.tooltipBlockFirst,,,"Ward gives Poise: each stack adds {poise} maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP. Lose {decay} Ward at the start of your turn, and its +{poise} maximum Poise with it.",
+status.ward.tooltipPoiseFirst,,,"Ward gives Poise: each stack adds {poise} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose {decay} Ward at the start of your turn, and its +{poise} maximum Poise with it.",
+status.ward.breaks,,,"When your Poise reaches 0, all Ward is lost.",
 combat.protection.barrier,,Bonus Poise,"Bonus Poise is Poise above the maximum, shown in blue. Cards that Gain Poise add it. It can exceed the maximum and fades 5 per turn.",Bonus Poise
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard

@@ -4,6 +4,7 @@ import { rangePolicyProblems } from './combatEngagement.js';
 import { fixCoreMechanics as defaults } from '../content/generated/fixCoreMechanics.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { compileBindings, evaluateModifiers, queryBinding, parameterDefaults } from './mechanicsKernel.js';
+import { tFull } from './strings.js';
 const mechanics = new Map(fixCoreProtection);
 const behaviorTags = new Set(fixCoreProtection.map(([, row]) => row.manifest.tag));
 
@@ -90,6 +91,15 @@ export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === fal
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 // Owner, 2026-11-15 (W25-W): every hit meets Block first; a target holding Ward stacks then has its Poise absorb the whole remainder 1:1 before HP.
 // `ward.routing: "blockFirst"` turns it on; a fight saved without the key keeps the Poise-first Ward routing (the whole hit to Poise, the rest to Block).
+// Owner, 2026-11-18 (section 20): Ward loses `ward.decayPerTurn` stacks (1) at the start of its holder's turn, and its +poisePerStack maximum Poise leaves
+// with each stack; when the holder's Poise reaches 0 (`ward.breaksAtZeroPoise`) every Ward stack is removed. A fight saved without the keys keeps the old decay and no break.
+/** FixCoreWardDecay(ctx, entity) -> the Ward stacks lost at the start of the holder's turn (`ward.decayPerTurn`), else the generic status decay. */
+export function FixCoreWardDecay(ctx, entity, fallback) {
+  const rules = fixCoreEnabled(ctx) ? fixCoreRules(ctx, entity).ward : null;
+  return Number.isInteger(rules?.decayPerTurn) ? rules.decayPerTurn : fallback;
+}
+/** FixCoreWardBreaksAtZeroPoise(ctx) -> true when a Poise break strips every Ward stack. */
+export const FixCoreWardBreaksAtZeroPoise = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.breaksAtZeroPoise === true;
 export const FixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
 // Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
 // of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
@@ -192,9 +202,11 @@ function validateElementFlux(row) {
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
   const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
-  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
-    || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
+    || (rules.ward.decayPerTurn !== undefined && !(Number.isInteger(rules.ward.decayPerTurn) && rules.ward.decayPerTurn >= 0))
+    || (rules.ward.breaksAtZeroPoise !== undefined && typeof rules.ward.breaksAtZeroPoise !== 'boolean')
+    || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst", decayPerTurn?:whole number, breaksAtZeroPoise?:boolean}');
   if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
@@ -325,7 +337,11 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
-  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Ward gives Poise: each stack adds ${rules.ward.poisePerStack} maximum and current Poise. ${rules.ward.routing === 'blockFirst' ? 'While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP.' : 'While Ward is above 0, all damage goes to Poise first, then Block, then HP.'} Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'ward' && rules.ward?.poisePerStack > 0) {
+    const tokens = { poise: rules.ward.poisePerStack, decay: rules.ward.decayPerTurn ?? rules.statuses.decayAmount };
+    row.tooltip = row.description = [tFull(rules.ward.routing === 'blockFirst' ? 'status.ward.tooltipBlockFirst' : 'status.ward.tooltipPoiseFirst', tokens),
+      ...(rules.ward.breaksAtZeroPoise ? [tFull('status.ward.breaks')] : [])].join(' ');
+  }
   else if (id === 'barrier') { const per = ctx?.ratingsRules?.barrier?.poisePerStack ?? ctx?.registries?.balance?.combatRatings?.barrier?.poisePerStack ?? 5; row.tooltip = row.description = `Poise gained above your maximum. Each stack is +${per} maximum and current Poise. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${per} maximum Poise with it.`; }
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;

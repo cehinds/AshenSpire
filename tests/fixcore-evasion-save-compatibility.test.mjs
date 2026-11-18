@@ -137,7 +137,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:b3d018c775738b836c0c580aad4b7ea94d2cdf88130fb0a25f3eb77acff17838');
+  assert.equal(profile.lock.runtimeHash, 'sha256:f9d51e17560db6382e4e4d4e26bab9fdf20b9c33e86a6f98a23c3a64d68124a1');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

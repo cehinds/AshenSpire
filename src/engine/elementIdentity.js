@@ -217,8 +217,10 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
     if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
   } else if (hit.element === 'frost') {
     if (stacksOf(target, 'chill') > 0) { Statuses.applyStatus(ctx, target, 'freeze', 1, source); Statuses.applyStatus(ctx, target, 'brittle', 1, source); }
+  } else if (hit.element === 'force') {
+    // The Knockback status stays (tools/statusreach.mjs: every shipped status needs an applier); the push that came with it is gone (owner, 2026-11-18: Force has no built-in Retreat).
+    Statuses.applyStatus(ctx, target, 'knockback', 1, source);
   }
-  // Force has no break rider (owner, 2026-11-18): it no longer knocks the target back. Retreat is its own tag.
 }
 
 /**

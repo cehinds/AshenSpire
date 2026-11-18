@@ -3223,7 +3223,8 @@
       "source:spell",
       "maneuver:casting",
       "classification.skill",
-      "rank.cantrip"
+      "rank.cantrip",
+      "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {

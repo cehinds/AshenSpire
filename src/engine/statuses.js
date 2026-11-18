@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreWardDecay } from '../model/fixCoreMechanics.js';
 import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
@@ -401,7 +401,8 @@ export function decayAtTurnStart(ctx, entity) {
       const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
       if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
     } else if (def.decay === 'perTurnEnd' || id === 'evade') {
-      removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
+      // Owner, 2026-11-18: Ward's own decay is `ward.decayPerTurn`; its max Poise leaves with each stack (syncPoolsAfterStatus clamps current Poise).
+      removeStatus(ctx, entity, id, { amount: id === 'ward' ? FixCoreWardDecay(ctx, entity, amount) : amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {
       inst.duration -= 1;
       if (inst.duration <= 0) removeStatus(ctx, entity, id, { reason: 'expired' });

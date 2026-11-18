@@ -5,7 +5,9 @@
   "ward": {
     "enabled": false,
     "poisePerStack": 5,
-    "routing": "blockFirst"
+    "routing": "blockFirst",
+    "decayPerTurn": 1,
+    "breaksAtZeroPoise": true
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]
