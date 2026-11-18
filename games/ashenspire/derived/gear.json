@@ -2706,5 +2706,121 @@
         "max": 4
       }
     }
+  },
+  {
+    "id": "kris",
+    "name": "Kris",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "dagger",
+      "flurry",
+      "bleed"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.hits=+1",
+      "strike.bleed=+2"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  },
+  {
+    "id": "stiletto",
+    "name": "Stiletto",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "dagger",
+      "flurry"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.hits=+1"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
+    }
   }
 ]

@@ -3625,6 +3625,29 @@
         "light",
         "unwieldy"
       ]
+    },
+    "gear:kris": {
+      "name": "Kris",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "dagger",
+        "flurry",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:stiletto": {
+      "name": "Stiletto",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "dagger",
+        "flurry"
+      ],
+      "range": "melee"
     }
   },
   "relics": {

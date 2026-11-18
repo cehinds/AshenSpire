@@ -156,3 +156,11 @@ armament/cinderAxe,1,card:guard:effect:block,3
 armament/duskChime,1,upgrade:cost:smithing-stone,1
 armament/duskChime,1,card:attack:effect:damage,3
 armament/duskChime,1,card:guard:effect:block,3
+armament/kris,1,upgrade:cost:smithing-stone,1
+armament/kris,1,card:attack:effect:damage,3
+armament/kris,1,card:guard:effect:block,3
+armament/kris,1,card:technique:effect:block,2
+armament/stiletto,1,upgrade:cost:smithing-stone,1
+armament/stiletto,1,card:attack:effect:damage,3
+armament/stiletto,1,card:guard:effect:block,3
+armament/stiletto,1,card:technique:effect:block,2

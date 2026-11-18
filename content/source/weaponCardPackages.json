@@ -530,5 +530,43 @@
         "artCardId": "vesperWard"
       }
     }
+  },
+  {
+    "weaponId": "kris",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "twinFang"
+      ],
+      "learnableArts": [
+        "serratedShiv",
+        "cheapShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinFang"
+      }
+    }
+  },
+  {
+    "weaponId": "stiletto",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "twinFang"
+      ],
+      "learnableArts": [
+        "serratedShiv",
+        "cheapShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinFang"
+      }
+    }
   }
 ]

@@ -404,6 +404,8 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:armor.bastionHarness | Bastion Harness | armor | armor | uncommon | plate, encumbered |
 | gear:armor.rimeweaveRobes | Rimeweave Robes | armor | armor | uncommon | robes, frost, thin |
 | gear:armor.waywatcherCoat | Waywatcher Coat | armor | armor | uncommon | leathers, light, unwieldy |
+| gear:kris | Kris | rightHand | weapon | uncommon | dagger, flurry, bleed |
+| gear:stiletto | Stiletto | rightHand | weapon | rare | dagger, flurry |
 
 ## Relics (relic:)
 

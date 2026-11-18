@@ -10,7 +10,9 @@
       ],
       "dagger": [
         "dagger",
-        "parryDagger"
+        "parryDagger",
+        "kris",
+        "stiletto"
       ],
       "bow": [
         "shortbow"

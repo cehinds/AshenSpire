@@ -17,7 +17,7 @@ test('the closed range vocabulary is melee, reach and ranged', () => {
 });
 
 test('every weapon row states a valid range, and weaponRangeOf returns it', () => {
-  assert.equal(weapons.length, 28, 'the weapons table has 28 armaments');
+  assert.equal(weapons.length, 30, 'the weapons table has 30 armaments');
   for (const def of weapons) {
     assert.ok(WEAPON_RANGES.includes(def.range), `${def.id} states range '${def.range}'`);
     assert.equal(weaponRangeOf(def), def.range, `${def.id} helper matches its def`);

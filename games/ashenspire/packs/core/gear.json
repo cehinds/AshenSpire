@@ -934,5 +934,42 @@
       "file": "content/source/outfits.csv",
       "id": "waywatcher"
     }
+  },
+  {
+    "id": "kris",
+    "name": "Kris",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "dagger",
+      "flurry",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "kris"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "stiletto",
+    "name": "Stiletto",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "dagger",
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "stiletto"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]

@@ -392,6 +392,16 @@
         "caster": true,
         "conductive": true
       }
+    },
+    "kris": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "stiletto": {
+      "traits": {
+        "conductive": true
+      }
     }
   },
   "enemies": {

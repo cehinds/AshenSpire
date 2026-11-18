@@ -12,7 +12,7 @@ const packages = () => (reg.equipment.armaments || []).filter(piece => piece.wea
 
 test('every Core weapon has one default art and two distinct learnable arts', () => {
   const rows = packages();
-  assert.equal(rows.length, 28);
+  assert.equal(rows.length, 30);
   for (const pkg of rows) {
     assert.equal(pkg.weaponArtDefaults.length, 1, `${pkg.weaponId} default`);
     assert.equal(pkg.learnableArts.length, 2, `${pkg.weaponId} learnable`);
