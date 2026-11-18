@@ -2,7 +2,8 @@
 // (docs/balance/owner-ruling-2026-11-18.md §14, docs/balance/level-pace-2026-11-18.md).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultRegistries, simulateRun, paceReport, percentile } from '../tools/level-pace-sim.mjs';
+import { fightCurveFactor } from '../src/model/levelup.js';
+import { defaultRegistries, simulateRun, paceReport, percentile, bandCheck } from '../tools/level-pace-sim.mjs';
 
 const reg = defaultRegistries();
 
@@ -19,10 +20,18 @@ test('percentile picks from a sorted list', () => {
   assert.equal(percentile([], 0.5), 0);
 });
 
-test('owner pace: elite-heavy ~level 8 by act 3, everyone at least 4, no act-1 flood', () => {
+test('owner pace: end-of-act levels sit in the owner bands, floor 1 pays little, one fight climbs at most 2', () => {
   const rep = paceReport(reg, { seeds: 100 });
-  assert.ok(rep.max.acts[2].p50 >= 7 && rep.max.acts[2].p50 <= 8, `max p50 ${rep.max.acts[2].p50}`);
-  assert.ok(rep.max.acts[2].p90 <= 9, `max p90 ${rep.max.acts[2].p90}`);
-  assert.ok(rep.min.acts[2].p10 >= 4, `min p10 ${rep.min.acts[2].p10}`);
-  for (const p of ['min', 'typical', 'max']) assert.ok(rep[p].maxLevelsInFight <= 2, `${p} climbed ${rep[p].maxLevelsInFight} in one fight`);
+  assert.deepEqual(bandCheck(rep), []);
+  for (const p of ['min', 'typical', 'max']) {
+    assert.ok(rep[p].maxLevelsInFight <= 2, `${p} climbed ${rep[p].maxLevelsInFight} in one fight`);
+    assert.ok(rep[p].firstFightXp < 10, `first fight of act 1 pays ${rep[p].firstFightXp}`);
+  }
+  assert.ok(rep.max.acts[2].mean > rep.min.acts[2].mean, 'elite-heavy routes finish higher');
+});
+
+test('fightCurveFactor rises with floor and with act, and is neutral without a position', () => {
+  assert.equal(fightCurveFactor(reg, null), 1);
+  assert.ok(fightCurveFactor(reg, { floor: 1, floors: 10, act: 1 }) < fightCurveFactor(reg, { floor: 10, floors: 10, act: 1 }));
+  assert.ok(fightCurveFactor(reg, { floor: 5, floors: 10, act: 1 }) < fightCurveFactor(reg, { floor: 5, floors: 10, act: 3 }));
 });

@@ -21,6 +21,16 @@ import { seatAtTier } from '../src/model/seats.js';
 import { combatXpReceipt, climbLevels } from '../src/model/levelup.js';
 
 export const POLICIES = ['min', 'typical', 'max'];
+// Owner 2026-11-18: level at the END of each act, low-elite routes at the bottom of the band, elite-heavy at the top.
+export const BANDS = [[2, 3], [4, 6], [6, 8]];
+export function bandCheck(rep) {
+  const bad = [];
+  BANDS.forEach(([lo, hi], i) => {
+    if (rep.min.acts[i].p10 < lo) bad.push(`min act${i + 1} p10 ${rep.min.acts[i].p10} < ${lo}`);
+    if (rep.max.acts[i].p90 > hi) bad.push(`max act${i + 1} p90 ${rep.max.acts[i].p90} > ${hi}`);
+  });
+  return bad;
+}
 
 function poolOf(node) {
   const t = node.type;
@@ -61,6 +71,7 @@ export function simulateRun(registries, seed, policy, acts = 3) {
   const levels = [];
   const fights = { normal: 0, elite: 0, boss: 0 };
   let maxLevelsInFight = 0;
+  let firstFightXp = null;
   for (let act = 1; act <= acts; act++) {
     const seat = seatAtTier(seatOrder, act);
     const map = buildActMap(registries, rng, seat, act, null, { history });
@@ -85,7 +96,9 @@ export function simulateRun(registries, seed, policy, acts = 3) {
           return { enemyId: id, level: Math.round((min + max) / 2), alive: false, hp: 0 };
         });
         fights[pool]++;
-        const gain = combatXpReceipt(registries, { victory: true, pool, enemies }).total;
+        const floors = Math.max(...Object.values(map.nodes).map((n) => n.floor || 0));
+        const gain = combatXpReceipt(registries, { victory: true, pool, enemies, position: { floor: node.floor, floors, act } }).total;
+        if (firstFightXp === null) firstFightXp = gain;
         const c = climbLevels(registries, { level: lv.level, xp: lv.xp, gain });
         maxLevelsInFight = Math.max(maxLevelsInFight, c.level - lv.level);
         lv = c;
@@ -97,7 +110,7 @@ export function simulateRun(registries, seed, policy, acts = 3) {
     }
     levels.push(lv.level);
   }
-  return { levels, fights, maxLevelsInFight };
+  return { levels, fights, maxLevelsInFight, firstFightXp };
 }
 
 export function paceReport(registries, { seeds = 200, firstSeed = 1000, acts = 3 } = {}) {
@@ -105,15 +118,18 @@ export function paceReport(registries, { seeds = 200, firstSeed = 1000, acts = 3
   for (const policy of POLICIES) {
     const byAct = Array.from({ length: acts }, () => []);
     const elites = [];
+    const first = [];
     let maxFight = 0;
     for (let s = firstSeed; s < firstSeed + seeds; s++) {
       const r = simulateRun(registries, s, policy, acts);
       r.levels.forEach((l, i) => byAct[i].push(l));
       elites.push(r.fights.elite);
+      first.push(r.firstFightXp);
       maxFight = Math.max(maxFight, r.maxLevelsInFight);
     }
     out[policy] = {
       meanElites: mean(elites),
+      firstFightXp: mean(first),
       maxLevelsInFight: maxFight,
       acts: byAct.map((a) => {
         const s = [...a].sort((x, y) => x - y);
@@ -138,7 +154,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`level at end of act (seeds ${seeds}): mean [p10 p50 p90]`);
     for (const p of POLICIES) {
       const r = rep[p];
-      console.log(`${p.padEnd(8)} elites/run ${r.meanElites.toFixed(1)}  maxLevelsInOneFight ${r.maxLevelsInFight}  ` + r.acts.map((a, i) => `act${i + 1} ${a.mean.toFixed(2)} [${a.p10} ${a.p50} ${a.p90}]`).join('  '));
+      console.log(`${p.padEnd(8)} elites/run ${r.meanElites.toFixed(1)}  maxLevelsInOneFight ${r.maxLevelsInFight}  firstFightXP ${r.firstFightXp.toFixed(1)}  ` + r.acts.map((a, i) => `act${i + 1} ${a.mean.toFixed(2)} [${a.p10} ${a.p50} ${a.p90}]`).join('  '));
     }
+    const bad = bandCheck(rep);
+    console.log(bad.length ? `OUTSIDE BANDS ${BANDS.map((x) => x.join('-')).join(' / ')}: ${bad.join('; ')}` : `within bands ${BANDS.map((x) => x.join('-')).join(' / ')}`);
   }
 }
