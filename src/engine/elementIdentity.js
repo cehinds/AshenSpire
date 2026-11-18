@@ -123,7 +123,7 @@ export function ElementProtectionView(ctx, source, target, carrier) {
 export function ForcePoiseShare(ctx, carrier) {
   const rules = ElementRulesOf(ctx);
   const share = rules?.force?.poiseShare;
-  return rules && Number.isFinite(share) && ElementOfHit(carrier) === 'force' ? Math.min(1, Math.max(0, share)) : null;
+  return rules && Number.isFinite(share) && ElementOfHit(carrier) === 'force' ? Math.max(0, share) : null;
 }
 
 /**

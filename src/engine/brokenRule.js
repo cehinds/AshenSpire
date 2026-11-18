@@ -10,6 +10,10 @@
 // `entity.broken` is the one record of it: { since, endTurn, loseNext?, cancelledMove? }. A rules object without the key never
 // reaches this module: a fight saved before this ruling keeps the Staggered stance of actions.js (fixCoreStagger).
 import { cancelKnowledgeAction } from './enemyKnowledge.js';
+import * as Statuses from './statuses.js';
+
+/** The statuses a Poise break applies, `poise.breakStatusStacks` stacks each (owner, 2026-11-18): they leave with Broken, at the start of the owner's next turn. */
+export const BREAK_STATUS_IDS = Object.freeze(['staggered', 'vulnerable', 'weak', 'frail']);
 
 const seatOf = (ctx, entity) => ctx.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {};
 
@@ -80,6 +84,10 @@ export function BreakCombatant(ctx, entity, rules) {
     if (cancelledMove) record.cancelledMove = cancelledMove;
   }
   entity.broken = record;
+  if (rules.statusStacks > 0) {
+    record.statusIds = [...BREAK_STATUS_IDS];
+    for (const id of BREAK_STATUS_IDS) Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);
+  }
   entity.combatStance = brokenStance(entity, rules);
   ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered', broken: true });
   if (player) ctx.emit('playerStaggered', { targetId: entity.id, actionLoss: 1, statuses: {}, broken: true,
@@ -105,6 +113,8 @@ export function ApplyPendingLoss(ctx, enemy) {
 export function EndBrokenWhenDue(ctx, entity) {
   const broken = entity?.broken;
   if (!broken || broken.loseNext || (ctx.turn || 0) < broken.endTurn) return false;
+  // Still Broken while the statuses go, so the pool re-sync keeps the bar empty until the refill below.
+  for (const id of broken.statusIds || []) if (entity.statuses?.[id]?.stacks > 0) Statuses.removeStatus(ctx, entity, id, { reason: 'brokenEnd' });
   delete entity.broken;
   if (entity.combatStance?.broken) delete entity.combatStance;
   const poise = entity.persistentPoise;

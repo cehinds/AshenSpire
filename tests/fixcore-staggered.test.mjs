@@ -38,7 +38,7 @@ function live(poise = 20) {
 const hit = (combat, target, amount, source = combat.player) => { primeAccuracyRolls(combat); applyAttackDamage(combat, source, target, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('shipped Core data: Poise drains what it prevented; Staggered stance -1 SP +1 Vulnerable extend-only', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 }, 'the Staggered stance below is the legacy rule a saved fight keeps');
+  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5, breakStatusStacks: 2 }, 'the Staggered stance below is the legacy rule a saved fight keeps');
   assert.deepEqual(shipped.staggered, { stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
   assert.equal(shipped.statuses.staggerRiders.weak, 0);
   assert.deepEqual(fixCorePoiseRules({}), { drain: 'prevented' }, 'old saves fall back to the ruling');

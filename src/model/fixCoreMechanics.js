@@ -74,7 +74,8 @@ export const FIXCORE_BROKEN_DAMAGE_MULTIPLIER = 1.5;
 export function FixCoreBrokenRules(ctx) {
   if (!fixCoreEnabled(ctx)) return null;
   const poise = rawRules(ctx).poise;
-  return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER } : null;
+  // Owner, 2026-11-18: a break also applies `breakStatusStacks` stacks each of Staggered, Vulnerable, Weak and Frail until the owner's next turn starts (0 or absent: none).
+  return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER, statusStacks: poise.breakStatusStacks ?? 0 } : null;
 }
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
 // and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
@@ -211,8 +212,9 @@ export function validateFixCoreRules(rules) {
   if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
-  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
-    || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1}');
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier','breakStatusStacks'].includes(key))
+    || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1))
+    || (poise.breakStatusStacks !== undefined && !(Number.isInteger(poise.breakStatusStacks) && poise.breakStatusStacks >= 0)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1, breakStatusStacks?:whole number}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
   fractions('counter', rules.counter && Object.fromEntries(Object.entries(rules.counter).filter(([key]) => !COUNTER_STACK_KEYS.includes(key))), Object.keys(FIXCORE_COUNTER_DEFAULTS));

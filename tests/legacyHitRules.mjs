@@ -36,12 +36,15 @@ function stripThemeB() {
 // rebuild. A fight made before them keeps Pierce's 20% Block bypass, Force's x1.5 Poise key, and no Ward decay or break keys. Owners are rebuilt whole on the way back so key order never moves.
 function stripSection20() {
   const ward = fixCoreMechanics.ward, wardRows = Object.entries(ward), pierce = fixCoreMechanics.pierce, force = fixCoreMechanics.elements?.force;
-  delete ward.decayPerTurn; delete ward.breaksAtZeroPoise;
+  const poise = fixCoreMechanics.poise, poiseRows = Object.entries(poise);
+  delete ward.decayPerTurn; delete ward.breaksAtZeroPoise; delete poise.breakStatusStacks;
   fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
   if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
   return () => {
     for (const key of Object.keys(ward)) delete ward[key];
     for (const [key, value] of wardRows) ward[key] = value;
+    for (const key of Object.keys(poise)) delete poise[key];
+    for (const [key, value] of poiseRows) poise[key] = value;
     fixCoreMechanics.pierce = pierce;
     if (force) fixCoreMechanics.elements.force = force;
   };
