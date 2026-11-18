@@ -59,3 +59,26 @@ test('an old save with only restRevisit loads and reads as a rest site', () => {
   assert.equal(restRevisitNodeId(loaded), 'n1');
   assert.equal(siteRevisitKind(loaded.restRevisit), 'rest');
 });
+
+// Blacksmith stock: a node's own Blacksmith and the workshop a trader keeps both hold their stock across leave and re-entry.
+import { visitSiteStock, stashSiteStock } from '../src/model/restRevisit.js';
+for (const [label, kind, slot] of [['a Blacksmith node', 'blacksmith', 'stock'], ['a trader\'s Blacksmith', 'shop', 'smithStock']]) {
+  test(`${label}: buy, leave, re-enter shows the same stock minus the purchase, with no new roll`, () => {
+    const run = standingOn('n4_1');
+    openSiteRecord(run, kind);
+    let rolls = 0;
+    const roll = () => { rolls++; return { kind: 'blacksmith', offerings: ['a', 'b', 'c'] }; };
+    run.shopStock = visitSiteStock(run, slot, roll);
+    assert.equal(rolls, 1);
+    run.shopStock.offerings = run.shopStock.offerings.filter(id => id !== 'b'); // bought
+    stashSiteStock(run, slot, run.shopStock); // back to the trader / leave
+    run.shopStock = null;                      // the trader's Leave clears the live stock
+    markRestLeft(run);
+    // Survives a save and load between visits.
+    const loaded = deserializeRun(JSON.parse(JSON.stringify(serializeRun(run))), REG);
+    run.restRevisit = loaded.restRevisit;
+    run.shopStock = visitSiteStock(run, slot, roll);
+    assert.equal(rolls, 1, 're-entry never re-rolls');
+    assert.deepEqual(run.shopStock.offerings, ['a', 'c']);
+  });
+}

@@ -51,6 +51,22 @@ export function openSiteRecord(run, kind) {
   return run.restRevisit;
 }
 
+// A Blacksmith's stock, kept on the place's record under `slot` ('stock' for a Blacksmith node, 'smithStock' for the workshop a
+// trader keeps), so leaving and re-entering shows the same stock, minus what was bought, and never rolls a new one.
+// `roll` makes a fresh stock and is called only when the record holds none.
+export function visitSiteStock(run, slot, roll) {
+  const record = matchesPlace(run, run.restRevisit) ? run.restRevisit : null;
+  if (record && record[slot]) return record[slot];
+  const stock = roll();
+  if (record) record[slot] = stock;
+  return stock;
+}
+
+// Leaving the workshop: the stock as it now stands (purchases taken out) goes back on the record under `slot`.
+export function stashSiteStock(run, slot, stock) {
+  if (matchesPlace(run, run.restRevisit) && stock) run.restRevisit[slot] = stock;
+}
+
 // What kind of site a record is: records saved before traders could be re-entered have no `kind` and are rest sites.
 export function siteRevisitKind(record) {
   return record ? record.kind || 'rest' : null;
