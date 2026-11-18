@@ -11,25 +11,12 @@ How it works, using existing tags only (the owner's principle: reference a tag, 
 
 | Element | Built-in tags | Strong against (+25%) | Weak against (−25%) | Stance interplay |
 |---|---|---|---|---|
-| **Fire** | Burn on hit; Spread (60% to an adjacent enemy); ignores some Poise | Frost (melts: also removes Chill); Poison/Venom (burns it off) | Earth (smothered) | Strong vs **Prepared** (casters in robes); Spread blocked by **Defend** |
-| **Frost** | Chill (references Weak); 3 Chill = Frozen (references Staggered); Brittle (next hit ×1.5 → references Vulnerable) | Lightning (grounds the charge); Earth? *(no, Earth is Lightning's target; see note)* | Fire | Strong vs **Attack** and **Smash** stance (slows the aggressor) |
-| **Lightning** | Shock (references Staggered chance and Lightning-Vulnerable); Chain (50% to a second enemy) | Earth? *(see note)* → **Metal**: targets with heavy or medium armour, or a shield | Frost | Strong vs **Defend** (arcs through Block: ignores 2 Block) |
-| **Earth** | Slowed (references Staggered on its 2nd stack); +1 Poise damage | Fire (smothers); Lightning (grounds) | Frost? *(see note)* → **Force** | Strong vs **Evade** (Evade stacks don't dodge Earth); weak vs **Retreat** (no Reach) |
+| **Fire** | Burn on hit; Spread (60% to an adjacent enemy); ignores some Poise | **Frost** (melts: also removes Chill); Poison (burns off Venom) | **Earth** (smothered) | Strong vs **Prepared** (casters in robes); Spread is blocked by **Defend** |
+| **Frost** | Chill (references Weak); 3 Chill = Frozen (references Staggered); Brittle (references Vulnerable) | **Lightning** (grounds the charge) | **Fire** | Strong vs **Attack** and **Smash** stance (slows the aggressor) |
+| **Lightning** | Shock (references Staggered chance and Lightning-Vulnerable); Chain (50% to a second enemy) | **Earth**; metal targets (medium or heavy armour, shields) | **Frost** | Strong vs **Defend** (arcs through Block: ignores 2 Block) |
+| **Earth** | Slowed (2nd stack references Staggered); +1 Poise damage | **Fire** (smothers) | **Lightning** | Strong vs **Evade** (Evade stacks don't dodge Earth) |
 
-Note on the cycle: a clean four-way wheel is **Fire > Frost > Lightning > Earth > Fire**. That means:
-- Fire beats Frost.
-- Frost beats Lightning.
-- Lightning beats Earth.
-- Earth beats Fire.
-
-Each element is weak to the one before it. The table above pulls in a few non-wheel advantages (Metal, Force) for flavour. If the owner prefers the strict wheel, use these rows instead:
-
-| Element | Strong against | Weak against |
-|---|---|---|
-| Fire | Frost | Earth |
-| Frost | Lightning | Fire |
-| Lightning | Earth | Frost |
-| Earth | Fire | Lightning |
+The wheel runs **Fire > Frost > Lightning > Earth > Fire**: each element beats the next and loses to the one before. Two flavour extras sit on top: Fire also beats Poison, and Lightning also beats metal armour.
 
 ## Spirit cycle (Holy > Necrotic > Psychic > Holy)
 
@@ -56,6 +43,6 @@ Each element is weak to the one before it. The table above pulls in a few non-wh
 | **Blunt** | +Poise damage; Smash Vulnerable (hammers) | Heavy armour and shields | Unarmoured (−25%, nothing to crush) | Strong vs **Counter** (breaks the stance) |
 
 ## Open choices for the owner
-1. Strict four-way wheel, or the flavoured table with extras (Metal, Force)?
+1. Keep the flavour extras (Fire vs Poison, Lightning vs metal), or use the strict wheel only?
 2. Should advantages be +25% damage (Vulnerable size) for every element, or vary by element?
 3. Should armour groups count as element targets (Lightning vs metal armour, Slashing vs robes)? This makes armour choice part of the element game.
