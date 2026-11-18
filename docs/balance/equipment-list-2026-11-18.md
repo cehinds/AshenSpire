@@ -46,7 +46,7 @@ How each item reads: **type base** (owner ruling §18) **+ one second bonus of i
 | ★ Scythe | uncommon | Sweeps apply 1 Bleed to each target |
 | ★ Reaper's Crescent | rare | A kill with a Sweep restores 3 HP |
 
-**Hammers.** Base: +1 Poise damage on attacks, Sweeps and Smashes; Smash inflicts 1 Vulnerable.
+**Hammers.** Base: +1 Poise damage on attacks, Sweeps and Smashes; Smash inflicts 1 Vulnerable and 1 Retreat stack (owner).
 
 | Item | Rarity | Second bonus |
 |---|---|---|
@@ -159,7 +159,7 @@ Group bases:
 - **Medium (mail):** +3 Poise, Block cards +2.
 - **Heavy (plate):** +5 Poise, −1 DEX, Block cards +3.
 
-Armour-type bonuses (owner, 2026-11-18), from wearing the one armour piece of that type (there are no multi-piece sets): unarmoured +1 max MP; light: every Evade gain +1 stack, and ending a turn in Defend stance holding Evade gives +1; medium: every Counter gain +1 stack, and ending a turn in Counter stance holding Counter gives +1; heavy Thorns 1.
+Full-set bonuses: unarmoured +1 MP; light: +1 to every Evade gain, and +1 Evade when you end a turn in Defend stance holding Evade; medium: +1 to every Counter gain, and +1 Counter when you end a turn in Counter stance holding Counter; heavy Thorns 1. No class restrictions; class-themed drops appear 75% of the time.
 
 | Item | Group | Rarity | Second bonus |
 |---|---|---|---|

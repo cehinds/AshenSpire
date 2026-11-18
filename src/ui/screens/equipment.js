@@ -1158,7 +1158,7 @@ export function mountEquipment(host, {
     const head = el('div', { class: 'armament-compact-heading armoury-position-values' }, [
       el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
       el('strong', { class: 'armament-position-name', text: position.summary.name }),
-      pill({ label: position.active ? 'Equipped' : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
+      pill({ label: position.active ? t('deckEditor.tag.equipped') : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
     ]);
     // W25-R: the item's properties as a short chip list under its name.
     const chips = ItemPropertyChips(propertyLinesOf(position.summary.item, position.summary.category));
@@ -1386,7 +1386,7 @@ export function mountEquipment(host, {
         key: id,
         kind: 'relic',
         disclosure: 'face',
-        face: { label: relic.name, value: 'Equipped' },
+        face: { label: relic.name, value: t('deckEditor.tag.equipped') },
         reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.', ...relicPropertyLines(id)] },
       };
     });

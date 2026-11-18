@@ -124,9 +124,11 @@ export function SetAdvanced(ctx, entity, on) {
   const rules = BandsActive(ctx);
   if (!rules || !entity) return false;
   if (!on) { if (!(entity.advanced > 0)) return false; endAdvance(ctx, entity); return true; }
-  if (entity.advanced === rules.advancedTurnEnds) return false;
+  // Each Advance of the player removes Retreat stacks from every enemy (one each by default), even when the Advance is already
+  // at its full duration (Codex on PR #2835: a second Advance in a turn still spends a stack).
+  const holding = ctx.enemies.some(enemy => enemy.alive && RetreatStacks(enemy) > 0);
+  if (entity.advanced === rules.advancedTurnEnds && !holding) return false;
   entity.advanced = rules.advancedTurnEnds;
-  // Each Advance of the player removes Retreat stacks from every enemy (one each by default).
   for (const enemy of ctx.enemies) if (enemy.alive) spendRetreat(ctx, enemy, rules.advanceRemovesStacks ?? 1);
   SyncBandRows(ctx);
   ctx.emit?.('combatAdvancedChanged', { sourceId: entity.id, advanced: true, turnEnds: entity.advanced });
@@ -164,7 +166,9 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
-  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
+  // The push also ends the pusher's Advance: the combatEngagementMoved event it emits is a +1 band (the strips step back out), so the engine must agree
+  // when the target already stood in the back row and only the Advance held the pair closed.
+  if (bands > 0 && target?.kind === 'enemy') { SetAdvanced(ctx, source, false); SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
