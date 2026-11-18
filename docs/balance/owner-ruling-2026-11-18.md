@@ -199,3 +199,8 @@ These override the generic Poise rule for the named items:
 **New tags:**
 - **Multi-hit:** each stack repeats the attack once more, so 1 stack makes 1 attack into 2.
 - **Reach:** becomes a stack effect with normal decay (1 per turn at the end of its owner's turn).
+- **Retreat stack (owner):** this replaces the one-turn hold.
+  - Retreat, or a push, gives each enemy sent back 1 **Retreat** stack. While it has any stacks, it stays in the back row.
+  - The player's Advance removes a stack, and so does the enemy's own advance (instead of moving forward).
+  - Advancing costs 1 SP unless another effect changes it.
+  - Every enemy loses 1 stack when the player advances. *(decided)*
