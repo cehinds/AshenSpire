@@ -189,3 +189,11 @@ armament/duelistsFoil,1,card:attack:effect:damage,3
 armament/duelistsFoil,1,card:guard:effect:block,3
 armament/duelistsFoil,1,card:technique:effect:block,2
 armament/duelistsFoil,1,requirement:strength,-1
+armament/ashenClaymore,1,upgrade:cost:smithing-stone,1
+armament/ashenClaymore,1,card:attack:effect:damage,3
+armament/ashenClaymore,1,card:guard:effect:block,3
+armament/ashenClaymore,1,card:technique:effect:block,2
+armament/zweihander,1,upgrade:cost:smithing-stone,1
+armament/zweihander,1,card:attack:effect:damage,3
+armament/zweihander,1,card:guard:effect:block,3
+armament/zweihander,1,card:technique:effect:block,2

@@ -3095,5 +3095,123 @@
         "max": 5
       }
     }
+  },
+  {
+    "id": "ashenClaymore",
+    "name": "Ashen_Claymore",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 2,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 2,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.cost=+1",
+      "strike.poise=+3"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  },
+  {
+    "id": "zweihander",
+    "name": "Zweihander",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 2,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 9,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 2,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.cost=+1",
+      "strike.poise=+3"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
+    }
   }
 ]

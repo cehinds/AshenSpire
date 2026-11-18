@@ -663,5 +663,43 @@
         "artCardId": "executionWindow"
       }
     }
+  },
+  {
+    "weaponId": "ashenClaymore",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "executioner"
+      ],
+      "learnableArts": [
+        "ruinousBlow",
+        "bloodTithe"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "executioner"
+      }
+    }
+  },
+  {
+    "weaponId": "zweihander",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "progression-breaker-s-toll"
+      ],
+      "learnableArts": [
+        "ruinousBlow",
+        "warriorsVow"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "progression-breaker-s-toll"
+      }
+    }
   }
 ]

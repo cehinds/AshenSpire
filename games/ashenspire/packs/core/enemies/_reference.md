@@ -411,6 +411,8 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:rapier | Rapier | rightHand | weapon | common | sword |
 | gear:estoc | Estoc | rightHand | weapon | uncommon | sword |
 | gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
+| gear:ashenClaymore | Ashen Claymore | rightHand | weapon | uncommon | greatsword, heavy, stagger |
+| gear:zweihander | Zweihander | rightHand | weapon | rare | greatsword, heavy, stagger |
 
 ## Relics (relic:)
 

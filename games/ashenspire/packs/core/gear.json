@@ -1057,5 +1057,43 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "ashenClaymore",
+    "name": "Ashen_Claymore",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "ashenClaymore"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "zweihander",
+    "name": "Zweihander",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "zweihander"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]

@@ -430,6 +430,16 @@
       "traits": {
         "conductive": true
       }
+    },
+    "ashenClaymore": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "zweihander": {
+      "traits": {
+        "conductive": true
+      }
     }
   },
   "enemies": {

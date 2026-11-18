@@ -79,7 +79,9 @@
         "item:blade"
       ],
       "members": [
-        "greatsword"
+        "greatsword",
+        "ashenClaymore",
+        "zweihander"
       ]
     },
     "daggers": {

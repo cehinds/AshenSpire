@@ -3699,6 +3699,30 @@
         "sword"
       ],
       "range": "melee"
+    },
+    "gear:ashenClaymore": {
+      "name": "Ashen Claymore",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "greatsword",
+        "heavy",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:zweihander": {
+      "name": "Zweihander",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "greatsword",
+        "heavy",
+        "stagger"
+      ],
+      "range": "melee"
     }
   },
   "relics": {
