@@ -212,7 +212,7 @@ These override the generic Poise rule for the named items:
   - A Reach physical card played while the target has a Retreat stack adds DEX on top of STR: base damage + STR + DEX.
 - **Escalating:** is built with the drawback-tag pass. Until then, Backstep's upgrade must keep Exhaust, because the upgrade currently drops it. dodgeRoll and crawlingShot take Escalating in that pass. *(decided)*
 
-## 18. Equipment types: base effects (owner, 2026-11-18; proposal pending approval)
+## 18. Equipment types: base effects (owner, 2026-11-18; approved with the changes below)
 Every item of a type carries its type's base effect. An item's own signature (sections 16–17) adds to it. Art comes later; new items may ship with placeholder art.
 
 **Weapons**
@@ -242,3 +242,23 @@ Every item of a type carries its type's base effect. An item's own signature (se
 | Heavy | +5 Poise. −1 DEX. Block cards +5. |
 
 **More content:** new weapons, armour pieces and relics, including new weapon groups and armour groups.
+
+**Approved changes (owner):**
+- **Dagger:** 0-cost attacks gain Multi-hit. The SP discount is removed.
+- **Unarmoured (robes):** spells −1 MP, +1 max MP, Vulnerable to melee. No DEX.
+- **Block-card bonus by group:** light +1, medium +2, heavy +3. Heavy also has −1 DEX.
+- **Spear:** one row: Reach, +1 Sweep, +1 Pierce.
+- **Type plus signature:** they add together. Item signature sizes shrink so totals stay inside the cost curve.
+- **Magic focus:** staves and sceptres both give −1 MP on spells, **only in Prepared stance**.
+
+**Approved new content:**
+- **New weapon types:**
+  - Mace / Flail: attacks ignore 1 Block per hit; Smash +1 Poise damage.
+  - Whip: Reach; attacks remove 1 Retreat stack from the target.
+  - Claws / Fists: Sweeps gain Multi-hit; attacks −1 SP and −1 damage.
+  - Crossbow: Reach, +2 Pierce, Escalating.
+  - Tome (off-hand): the first spell each turn draws 1.
+  - Talisman (off-hand): +1 Ward at the start of each turn.
+- **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
+- **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
+- Each new type ships with 2–3 items across rarities. Placeholder art is used until real art exists.
