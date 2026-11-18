@@ -1,3 +1,4 @@
+import { channelLabel } from './damageChannels.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
@@ -57,7 +58,7 @@ const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.to
  * hundred rows. One reader now, so the tab and its rows cannot disagree
  * (owner, 2026-09-21: "make them consistent with what I see with each other").
  */
-const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
+const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : channelLabel(id));
 
 /**
  * phrase(id) → a key-derived label that reads like the ones beside it.
@@ -205,7 +206,7 @@ export function combatRatingRows(bundle) {
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
   add('enabled', true, 'Enable ratings, Poise & Ward', 'General', {
-    note: 'On: AR, DR, PR, Poise and Ward come from their stat rows under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
+    note: 'On: Poise and Ward come from their stat rows under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
   });
   // (The per-rating formulas and the global multiplier moved to the stat rows
   // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
@@ -265,7 +266,6 @@ export function combatRatingRows(bundle) {
         integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
         note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
           + `Attributes, relics and status bonuses are added to it.${itemRatingColumn(bundle.equipment, piece, id) ? ' The item card shows this number.' : ` ${piece.name} has no authored ${ratingLabel(id)} column, so this one is carried as a rating only and the item card does not print it.`}`
-          + (id === 'dr' && piece.kind === 'armor' ? ' The DR the armour card prints is the Block its own effects add, which is a different number and is not set here.' : '')
           + (id === 'poise' && piece.kind === 'armor' ? ' Armour Poise is also its weight (SPEC §13.4): raising it raises what the set costs to wear.' : '')
           + ' Applies to a new run.',
       });

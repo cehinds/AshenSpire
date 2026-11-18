@@ -8,10 +8,11 @@
 //   minDeckDelta                    whole number, summed: the deck editor's minimum drops by this
 //   weaponBonuses  [{ damageType, amount }]            a separate typed packet on every melee weapon attack
 //   onHit          [{ status, stacks }]                statuses every attack applies to its target
-//   stanceRating   { <stance>: { <rating>: n } }       a rating bonus while in a stance
+//   stanceAttribute { stance, attribute, n }          +n STR / DEX / INT while in a stance (summarised as { <stance>: { <channel>: n } })
 //   resist         { <damageType>: 'resist'|'immune' } incoming damage of a type is halved or negated
 //   statusShorten  { <status>: n }                     statuses applied to the player start n stacks smaller
 //   unlimited      ['Basic'|'Cantrip']                 card kinds deck editing adds without limit
+import { ATTRIBUTE_CHANNEL } from './damageChannels.js';
 import { ITEM_PROPERTIES } from '../content/itemProperties.js';
 import { ItemPropertyIds, ItemPicks } from './itemPicks.js';
 
@@ -41,10 +42,14 @@ export function ItemPropertySummary(run) {
       for (const key of SUMMED) if (Number.isFinite(fx[key])) bump(key, fx[key]);
       if (fx.weaponBonus) (out.weaponBonuses ||= []).push({ ...fx.weaponBonus });
       if (fx.onHit) (out.onHit ||= []).push({ ...fx.onHit });
-      if (fx.stanceRating) {
-        const { stance, rating, n } = fx.stanceRating;
-        const row = ((out.stanceRating ||= {})[stance] ||= {});
-        row[rating] = (row[rating] || 0) + n;
+      // `stanceAttribute` (owner, 2026-11-18): +n STR / DEX / INT while in a stance. The summary keeps the damage-channel key the fight reads
+      // (a fight saved before the ruling carries it), so the attribute is turned into its channel here; `stanceRating` is the old spelling.
+      const stanceBonus = fx.stanceAttribute
+        ? { stance: fx.stanceAttribute.stance, rating: ATTRIBUTE_CHANNEL[fx.stanceAttribute.attribute], n: fx.stanceAttribute.n }
+        : fx.stanceRating;
+      if (stanceBonus?.rating) {
+        const row = ((out.stanceRating ||= {})[stanceBonus.stance] ||= {});
+        row[stanceBonus.rating] = (row[stanceBonus.rating] || 0) + stanceBonus.n;
       }
       for (const [type, kind] of Object.entries(fx.resist || {})) {
         const map = (out.resist ||= {});

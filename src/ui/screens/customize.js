@@ -40,7 +40,7 @@ import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources, startingResourceRows } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
-import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
+import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand, quickStartRunConfig,
@@ -96,9 +96,6 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   mana: 'Mana',
   stamina: 'Stamina',
   energy: 'Action Points (AP)',
-  ar: 'Attack Rating (AR)',
-  dr: 'Defense Rating (DR)',
-  pr: 'Potency Rating (PR)',
   openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
 });
@@ -695,10 +692,8 @@ export function mountCustomize(app, {
     const poise = playerPoiseThresholdReceipt(registries, run);
     // Legacy ratings-off configurations still expose their equipment kit
     // attack and guard receipts. Modern totals come from the Poise receipt.
-    const legacyRatings = poise.ratings ? [] : equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run)
-      .filter((entry) => ['attack', 'guard'].includes(entry.role))
-      .map((entry) => ({ id: entry.role === 'attack' ? 'ar' : 'dr', value: entry.receipt.value,
-        formula: `${entry.profile.displayName} · before card-specific modifiers.` }));
+    // AR and DR are gone (owner, 2026-11-18): a ratings-off kit shows no attack or guard rating chip either.
+    const legacyRatings = [];
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
     const resources = creationResources(run, projection)
@@ -1424,10 +1419,10 @@ export function mountCustomize(app, {
       explanation: poise.note,
     });
     if (poise.ratings) {
-      for (const id of ['ward', 'ar', 'dr', 'pr']) {
+      for (const id of ['ward']) {
         resources.push({
           id,
-          label: id === 'ward' ? 'Ward' : id.toUpperCase(),
+          label: 'Ward',
           inspectionLabel: CREATION_INSPECTION_LABELS[id] || 'Ward',
           value: poise.ratings[id],
           explanation: null,

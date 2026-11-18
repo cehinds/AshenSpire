@@ -4,6 +4,7 @@
 // class: an Eyebrow heads each receipt, a StatRow carries a name and its
 // numbers, a delta is the kit's `→` pair, a note is Flavour. The `.equip-*` /
 // `.player-*-receipt` / `data-*` names are the hooks the tools and tests read.
+import { channelLabel } from '../../model/damageChannels.js';
 import { t } from '../strings.js';
 import { esc } from './tooltip.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
@@ -76,15 +77,15 @@ function ratingCalculationHtml(id, value, receipt) {
     ...additions,
   ].join(' + ');
   return `<div class="rating-calculation" data-rating-id="${esc(id)}">`
-    + `<div class="rating-calculation-head"><span>${esc(id.toUpperCase())}</span><strong>${numberText(value)}</strong></div>`
+    + `<div class="rating-calculation-head"><span>${esc(channelLabel(id))}</span><strong>${numberText(value)}</strong></div>`
     + `<div class="rating-attributes"><span class="rating-line-label">${esc(t('progression.attributes'))}</span>${terms}</div>`
     + `<div class="rating-formula"><span class="rating-line-label">Calculation</span>${formula} = <strong>${numberText(value)}</strong></div>`
     + '</div>';
 }
 
 export function renderPlayerPoise(receipt) {
-  if (receipt.ratings) return `<section class="player-poise-receipt">${eyebrowHtml('Ratings, Poise & Ward')}`
-    + `<div class="rating-calculations">${Object.entries(receipt.ratings).map(([id, value]) => ratingCalculationHtml(id, value, receipt)).join('')}</div>`
+  if (receipt.ratings) return `<section class="player-poise-receipt">${eyebrowHtml('Poise & Ward')}`
+    + `<div class="rating-calculations">${Object.entries(receipt.ratings).filter(([id]) => id === 'poise' || id === 'ward').map(([id, value]) => ratingCalculationHtml(id, value, receipt)).join('')}</div>`
     + flavourHtml(receipt.note) + '</section>';
   return `<section class="player-poise-receipt">${eyebrowHtml(receipt.label)}`
     + sourcesHtml(receipt.sources, 'No item or relic contribution.')
@@ -121,7 +122,7 @@ export function renderRoleCopies(surface) {
     attrs: ` data-role="${esc(row.role)}"`,
     nameHtml: `${esc(row.profile.displayName)} <em class="as-pill role-copy-count">x${row.copies}</em>`,
     hintHtml: `${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}`,
-    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity =`,
+    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.rating.value} ${channelLabel(row.receipt.rating.id)} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity =`,
     `<strong>${row.receipt.value}</strong>`),
   })).join('');
 }

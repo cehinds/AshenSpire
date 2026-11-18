@@ -545,7 +545,7 @@ const RETIRED_BALANCE_PATHS = new Set([
 // base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
 // "HP", which is the very mismatch this block exists to end.
 const LABEL_ACRONYMS = new Map(Object.entries({
-  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+  hp: 'HP', xp: 'XP', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
 }));
 
 /**

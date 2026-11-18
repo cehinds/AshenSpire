@@ -3,11 +3,7 @@
   "handAttribute": "intelligence",
   "attributePointTotal": 6,
   "levelGains": {
-    "strength": {
-      "ar": 1
-    },
     "dexterity": {
-      "dr": 1,
       "sp": 1
     },
     "constitution": {

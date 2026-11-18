@@ -509,7 +509,7 @@ export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
 }
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
-  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
   const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, enemyAttributeTotal(row, settings, id, own[id], bonus)]));
   const pools = {};

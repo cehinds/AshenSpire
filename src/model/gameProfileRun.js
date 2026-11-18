@@ -66,7 +66,7 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
     ...(rows[id] || {}), base,
   };
   // Owner, 2026-11-17: under `secondaryPolicy: "primaryOnly"` a row levelGains names reads only the attributes it lists
-  // (AR from STR, DR from DEX, Stamina from CON, Mana from WIS); every other attribute weight of that row is zeroed.
+  // (Stamina from DEX, HP from CON, Mana from WIS); every other attribute weight of that row is zeroed.
   if (stats.secondaryPolicy === 'primaryOnly') {
     for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
   }
