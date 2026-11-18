@@ -109,6 +109,10 @@
       "name": "Inkveil Nautilus",
       "tier": "elite"
     },
+    "enemy:kilnshellTortoise": {
+      "name": "Kilnshell Tortoise",
+      "tier": "minion"
+    },
     "enemy:knellcapSentinel": {
       "name": "Knellcap Sentinel",
       "tier": "minion"
@@ -2928,6 +2932,56 @@
       "usedBy": "enemy sheet"
     },
     "card:sixleggedHearse.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnshellTortoise.shellBash": {
+      "name": "Shell Bash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnshellTortoise.kilnBreath": {
+      "name": "Kiln Breath",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnshellTortoise.shellTuck": {
+      "name": "Shell Tuck",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnshellTortoise.kilnPlate": {
+      "name": "Kiln Plate",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:kilnshellTortoise.advance": {
       "name": "Advance",
       "type": "skill",
       "cost": {

@@ -223,5 +223,23 @@
       "min": 3,
       "max": 4
     }
+  },
+  {
+    "id": "a3_kilnShell",
+    "enemies": [
+      "kilnshellTortoise",
+      "ashRevenant"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
   }
 ]

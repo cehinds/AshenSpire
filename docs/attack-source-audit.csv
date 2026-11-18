@@ -639,3 +639,7 @@
 "enemyMove","ashheartDragon","tailBastion","block","false","false","","","physical","defend","","","","",""
 "enemyMove","ashheartDragon","heartRumble","buff","false","false","","","physical","","","","","",""
 "enemyMove","ashheartDragon","ashBreath","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
+"enemyMove","kilnshellTortoise","shellBash","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
+"enemyMove","kilnshellTortoise","kilnBreath","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
+"enemyMove","kilnshellTortoise","shellTuck","block","false","false","","","physical","defend","","","","",""
+"enemyMove","kilnshellTortoise","kilnPlate","block","false","false","","","physical","defend","","","","",""

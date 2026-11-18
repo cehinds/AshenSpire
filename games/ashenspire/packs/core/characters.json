@@ -5966,5 +5966,101 @@
         }
       ]
     }
+  },
+  {
+    "id": "kilnshellTortoise",
+    "name": "Kilnshell_Tortoise",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "kilnshellTortoise.shellBash",
+      "kilnshellTortoise.kilnBreath",
+      "kilnshellTortoise.shellTuck",
+      "kilnshellTortoise.kilnPlate",
+      "kilnshellTortoise.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "kilnshellTortoise",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "kilnshellTortoise.kilnPlate",
+      "poiseMax": 12,
+      "cardHints": {
+        "kilnshellTortoise.shellBash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "shellBash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.kilnBreath": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "kilnBreath",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.shellTuck": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellTuck",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.kilnPlate": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "kilnPlate",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

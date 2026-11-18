@@ -35,6 +35,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
 | enemy:inkveilNautilus | Inkveil Nautilus | elite |
+| enemy:kilnshellTortoise | Kilnshell Tortoise | minion |
 | enemy:knellcapSentinel | Knellcap Sentinel | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
 | enemy:livingArmor | Living Armour | minion |
@@ -340,6 +341,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:sixleggedHearse.graveReek | Grave Reek | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
 | card:sixleggedHearse.lastRites | Last Rites | attack | 3 | 1 | Deal {damage} damage. |
 | card:sixleggedHearse.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:kilnshellTortoise.shellBash | Shell Bash | attack | 1 | 0 | Deal {damage} damage. |
+| card:kilnshellTortoise.kilnBreath | Kiln Breath | attack | 1 | 1 | Deal {damage} damage. |
+| card:kilnshellTortoise.shellTuck | Shell Tuck | skill | 1 | 0 | Gain {block} Block. |
+| card:kilnshellTortoise.kilnPlate | Kiln Plate | skill | 2 | 0 | Gain {block} Block. |
+| card:kilnshellTortoise.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

@@ -848,5 +848,70 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "kilnshellTortoise",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 4,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "size": "medium",
+    "name": "Kilnshell Tortoise",
+    "hp": [
+      56,
+      60
+    ],
+    "poiseMax": 24,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "shellBash": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 6,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "kilnBreath": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "shellTuck": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "kilnPlate": {
+        "sp": 2,
+        "intent": "block",
+        "block": 14,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "kilnPlate",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

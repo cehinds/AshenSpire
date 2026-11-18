@@ -7668,5 +7668,123 @@
         }
       ]
     }
+  },
+  {
+    "id": "kilnshellTortoise",
+    "name": "Kilnshell_Tortoise",
+    "displayName": "Kilnshell Tortoise",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "roundShield",
+            "name": "Round_Shield",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 30,
+        "strength": 20,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 10
+      },
+      "total": 79,
+      "formula": "10+30+20+6+2+1+10 = 79"
+    },
+    "pools": {
+      "hp": 79,
+      "sp": 2,
+      "mp": 1,
+      "ar": 4,
+      "dr": 2,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield",
+        "name": "Round_Shield"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "kilnshellTortoise.shellBash",
+          "name": "Shell_Bash",
+          "copies": 1
+        },
+        {
+          "id": "kilnshellTortoise.kilnBreath",
+          "name": "Kiln_Breath",
+          "copies": 1
+        },
+        {
+          "id": "kilnshellTortoise.shellTuck",
+          "name": "Shell_Tuck",
+          "copies": 1
+        },
+        {
+          "id": "kilnshellTortoise.kilnPlate",
+          "name": "Kiln_Plate",
+          "copies": 1
+        },
+        {
+          "id": "kilnshellTortoise.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

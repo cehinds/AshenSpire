@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:fe282ff055fe58ac9b5349b030b3bde163c4c77b0c86f8fa86af28243e8ac567",
+      "hash": "sha256:1db93315c76c4cca38f87ae097934a0bc246d498a59762788e1fa5d5a2741cc9",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -640,7 +640,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:df3af788f203dc3642b555024e6a637489122eed5fa9239c066f74e9ff326540"
+          "hash": "sha256:909d7af81a465a79a1fe7384aa5974ab762f47a33a413c9fd9cfba0b165b8273"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -652,7 +652,7 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:4e162a337eb72f8fd44c2430efb73c566abf319312ca5128cad9af1943c9d53e"
+          "hash": "sha256:691f86d71535d24bcc870406683e2827811145f29dc376eb33c7eec5e8c79640"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8"
     },
     "core": {
-      "hash": "sha256:fe282ff055fe58ac9b5349b030b3bde163c4c77b0c86f8fa86af28243e8ac567",
+      "hash": "sha256:1db93315c76c4cca38f87ae097934a0bc246d498a59762788e1fa5d5a2741cc9",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1364,7 +1364,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:df3af788f203dc3642b555024e6a637489122eed5fa9239c066f74e9ff326540"
+          "hash": "sha256:909d7af81a465a79a1fe7384aa5974ab762f47a33a413c9fd9cfba0b165b8273"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -1376,7 +1376,7 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:4e162a337eb72f8fd44c2430efb73c566abf319312ca5128cad9af1943c9d53e"
+          "hash": "sha256:691f86d71535d24bcc870406683e2827811145f29dc376eb33c7eec5e8c79640"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
