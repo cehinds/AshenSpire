@@ -49,11 +49,7 @@
       "min": 1,
       "max": 20
     },
-    "hp": {
-      "base": 51,
-      "constitution": 1,
-      "perLevel": 2
-    },
+    "hp": { "base": 51, "constitution": 1, "perLevel": 2 },
     "stamina": {
       "base": 3,
       "dexterity": 0.25,

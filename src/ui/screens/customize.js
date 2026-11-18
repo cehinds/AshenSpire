@@ -1422,7 +1422,7 @@ export function mountCustomize(app, {
       for (const id of ['ward']) {
         resources.push({
           id,
-          label: 'Ward',
+          label: t('combat.protection.ward'),
           inspectionLabel: CREATION_INSPECTION_LABELS[id] || 'Ward',
           value: poise.ratings[id],
           explanation: null,
