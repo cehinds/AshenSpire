@@ -6565,5 +6565,130 @@
         }
       ]
     }
+  },
+  {
+    "id": "knellcapSentinel",
+    "name": "Knellcap_Sentinel",
+    "displayName": "Knellcap Sentinel",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "roundShield",
+            "name": "Round_Shield",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.knellcapHelm",
+            "name": "Knellcap_Helm",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 5
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 50,
+        "strength": 20,
+        "dexterity": 3,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 91,
+      "formula": "10+50+20+3+2+1+5 = 91"
+    },
+    "pools": {
+      "hp": 91,
+      "sp": 2,
+      "mp": 2,
+      "ar": 4,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield",
+        "name": "Round_Shield"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.knellcapHelm",
+        "name": "Knellcap_Helm"
+      }
+    ],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "knellcapSentinel.knellStrike",
+          "name": "Knell_Strike",
+          "copies": 1
+        },
+        {
+          "id": "knellcapSentinel.bellRing",
+          "name": "Bell_Ring",
+          "copies": 1
+        },
+        {
+          "id": "knellcapSentinel.capGuard",
+          "name": "Cap_Guard",
+          "copies": 2
+        },
+        {
+          "id": "knellcapSentinel.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

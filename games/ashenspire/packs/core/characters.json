@@ -5057,5 +5057,99 @@
         }
       ]
     }
+  },
+  {
+    "id": "knellcapSentinel",
+    "name": "Knellcap_Sentinel",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "knellcapSentinel.knellStrike",
+      "knellcapSentinel.bellRing",
+      "knellcapSentinel.capGuard",
+      "knellcapSentinel.capGuard",
+      "knellcapSentinel.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.knellcapHelm"
+      }
+    ],
+    "presentation": {
+      "art": "knellcapSentinel",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 11,
+      "cardHints": {
+        "knellcapSentinel.knellStrike": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "knellStrike",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.bellRing": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bellRing",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.capGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "capGuard",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

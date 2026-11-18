@@ -110,5 +110,14 @@
       "self.sp=-2"
     ],
     "text": "CON +3, WIS +1, SP -2"
+  },
+  {
+    "id": "enemy.relic.knellcapHelm",
+    "name": "Knellcap_Helm",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.sp=-1"
+    ],
+    "text": "CON +2, SP -1"
   }
 ]

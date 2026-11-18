@@ -34,6 +34,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:graveWisp | Grave Wisp | minion |
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
+| enemy:knellcapSentinel | Knellcap Sentinel | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
@@ -286,6 +287,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:carrionHeadsman.executionDrop | Execution Drop | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:carrionHeadsman.hoodGuard | Hood Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:carrionHeadsman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:knellcapSentinel.knellStrike | Knell Strike | attack | 1 | 0 | Deal {damage} damage. |
+| card:knellcapSentinel.bellRing | Bell Ring | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:knellcapSentinel.capGuard | Cap Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:knellcapSentinel.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -355,3 +360,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
+| relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |

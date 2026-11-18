@@ -105,6 +105,10 @@
       "name": "Husk Brute",
       "tier": "minion"
     },
+    "enemy:knellcapSentinel": {
+      "name": "Knellcap Sentinel",
+      "tier": "minion"
+    },
     "enemy:lanternMoth": {
       "name": "Lantern Moth",
       "tier": "minion"
@@ -2444,6 +2448,46 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:knellcapSentinel.knellStrike": {
+      "name": "Knell Strike",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:knellcapSentinel.bellRing": {
+      "name": "Bell Ring",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:knellcapSentinel.capGuard": {
+      "name": "Cap Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:knellcapSentinel.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3126,6 +3170,14 @@
         "self.constitution=+3",
         "self.wisdom=+1",
         "self.sp=-2"
+      ]
+    },
+    "relic:enemy.relic.knellcapHelm": {
+      "name": "Knellcap Helm",
+      "text": "CON +2, SP -1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.sp=-1"
       ]
     }
   }

@@ -261,5 +261,41 @@
       "min": 2,
       "max": 3
     }
+  },
+  {
+    "id": "a2_knellWatch",
+    "enemies": [
+      "knellcapSentinel",
+      "stitchedHound"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "marches",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "a2_waxAndBell",
+    "enemies": [
+      "waxsealBailiff",
+      "knellcapSentinel"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "marches",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
   }
 ]
