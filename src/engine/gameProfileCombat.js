@@ -31,6 +31,25 @@ export function isPierceHit(profile, carrier) {
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
+/**
+ * PierceStacks(ctx, target, carrier, profile) -> the Pierce stacks a hit carries (owner, 2026-11-18, section 21): 0 for a hit that is not Pierce or a reaction,
+ * else the carrier's `pierceStacks` (a weapon or card grants more), else 1. The ONE place the stack count is read, so a defence that cancels
+ * Pierce stacks (Stone Skin, built on the gear branch) reduces it here first.
+ */
+export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}) {
+  if (!isPierceHit(profile, carrier) || carrier?.combatReaction) return 0;
+  return Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1;
+}
+/**
+ * PierceBlockIgnored(ctx, target, carrier, profile, total) -> the Block a hit ignores: each Pierce stack ignores `pierce.blockIgnoredPerStack` (1) point of
+ * Block; whatever passes still routes Block, then Poise, then HP. A fight saved without that key keeps the old rule, `blockBypassFraction` (20%) of the hit.
+ */
+export function PierceBlockIgnored(ctx, target, carrier, profile, total) {
+  const stacks = PierceStacks(ctx, target, carrier, profile);
+  if (!(stacks > 0)) return 0;
+  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  return rules.blockIgnoredPerStack > 0 ? Math.floor(stacks * rules.blockIgnoredPerStack) : Math.floor(rules.blockBypassFraction * total);
+}
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
@@ -285,7 +304,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     const afterBlock = total - blocked;
@@ -303,7 +322,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
@@ -330,7 +349,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical);
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
