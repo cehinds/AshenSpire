@@ -4056,6 +4056,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
 .merchant-offer-media > .card-info-button,
+.card-upgrade-detail-modal .card-upgrade-inspect,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
