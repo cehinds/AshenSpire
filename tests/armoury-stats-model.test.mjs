@@ -17,7 +17,8 @@ test('out of combat the model carries no attribute rows and nothing open at firs
   assert.equal(model.attributeRows, null);
   assert.equal(model.attributesSummary, '');
   assert.equal(model.configuredFoundation, false);
-  assert.equal(model.skillRows.length, 2);
+  // Owner 2026-11-18 (ruling §10, §12): Perception is off behind its JSON toggle, so only the class track shows.
+  assert.equal(model.skillRows.length, 1);
   assert.equal(model.skillRows[0].sense, 'Reaver — level 0, 400 XP to level 1.');
   assert.deepEqual(model.staleTracks, []);
   assert.equal(model.equipmentCardsSummary, 'Slashing Strike x1 · Shield Defend x0 · Weapon Technique x0');

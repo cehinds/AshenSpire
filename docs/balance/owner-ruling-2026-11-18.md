@@ -297,3 +297,17 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Retreat on either side:** a hit between two combatants needs **Reach** if either one holds a Retreat stack (the player can hold them too, e.g. a bow's end-of-turn stack). Without Reach, each side holding Retreat must be closed with an Advance (1 SP each, which spends one stack). When both sides hold Retreat, both Advances are needed (2 SP).
 - **Status-only plays are Reach by default:** a card's status effects that don't come from a melee attack, Sweep, Smash or Counter reach any target with no Advance cost. Example: a Defend card that inflicts Weak applies it to a retreated enemy for free.
 - **Self-and-all cards:** a card that affects the player and every enemy plays when you select the player **or** any enemy as its target.
+- **Poise target (owner):** a level-1 Reaver in plate starts near 15 Poise (was 21 = attributes 3 + Greatsword item 6 + plate item 6 + type bonuses 6). The fix is to lower the **type bonuses** and keep the items' own Poise:
+  - The heavy group goes from +5 to **+2** Poise.
+  - The Greatsword type goes from +1 to **0** Poise.
+  - To keep heavy above medium, medium goes from +3 to **+1** and light from +1 to **0**. *(decided)*
+  - Shields keep their +1 Poise.
+  - Result: about 17 for that Reaver, close to 15; the rest is left for playtest.
+- **Light and medium full-set bonuses (owner):** these replace the free stacks.
+  - Medium (mail): whenever you gain Counter stacks, gain 1 more. If you end your turn in Counter stance while holding Counter stacks, gain 1 more Counter (3 left becomes 4).
+  - Light (leathers): whenever you gain Evade stacks, gain 1 more. If you end your turn in Defend stance while holding Evade stacks, gain 1 more Evade.
+  - Holding no stacks gives nothing; the bonus only adds to stacks you have or are gaining.
+- **Armour type bonuses, clarified (owner):** "set bonus" meant the one armour piece you wear; there is one armour slot, so no multi-piece sets. The bonus comes from wearing that type: mail (medium) gives the Counter stack bonus, leathers (light) the Evade stack bonus, plate (heavy) Thorns 1, robes (unarmoured) +1 max MP.
+- **Poise break (owner):** a broken Poise applies **2 stacks** each of Staggered, Vulnerable, Weak and Frail (was 1), until the start of that character's next turn.
+- **Robes (owner):** unarmoured gives **+2 max MP** from the worn piece.
+- **Map (owner):** the longer acts are accepted for playtest (Act 1 sim win rate 95% → 85%). The V widens gradually with depth. By the pre-boss rest the player must not see another branch's pre-boss rest or boss; hiding the other branches' boss nodes is an acceptable way to get there.

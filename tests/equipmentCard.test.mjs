@@ -72,9 +72,10 @@ test('the inspect door pins its own level, whatever a caller forwards through op
     "level: 'inspect' must come AFTER ...options so a forwarded level cannot override the reading door");
 });
 
-test('armor DR shows additive defense bonuses once and preserves other effects', () => {
+test('armor defend.block shows additive defense bonuses once and preserves other effects', () => {
  const m = equipmentCardModel(r, {...r.equipment.armour[0], mods:['defend.block=+2','self.maxHp=+4']});
- assert.equal(m.facts[0].label, 'DR');
+ // Owner 2026-11-18 (§8): DR is gone, so the additive defend.block bonus reads as Block.
+ assert.equal(m.facts[0].label, 'Block');
  assert.equal(m.facts[0].value, 2);
  assert.equal(m.bonuses.length, 1);
  assert.match(m.bonuses[0].label, /4/);

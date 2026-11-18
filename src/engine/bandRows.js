@@ -136,7 +136,14 @@ export function SwapEnemyRows(ctx, target) {
   return true;
 }
 
+// The card play (its range root id) whose own Advance stepped the entity in, so a push in that same play (Hit and Run) steps it back out, while a
+// push in a play that did not advance (Gale Push while already Advanced) leaves the Advance alone (SPEC: Advanced lasts until your next turn ends or you play Retreat).
+const advancedByPlay = new WeakMap();
+/** MarkAdvancedByPlay(entity, rootId): the play with this root advanced the entity in. */
+export function MarkAdvancedByPlay(entity, rootId) { if (entity && rootId) advancedByPlay.set(entity, rootId); }
+
 function endAdvance(ctx, entity) {
+  advancedByPlay.delete(entity);
   entity.advanced = 0;
   for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'back') setPair(ctx, entity, enemy, 1);
   SyncBandRows(ctx);
@@ -179,7 +186,7 @@ export function BandsFormationBlock(ctx, enemy) {
 }
 
 /** BandsMoveEngagement(ctx, source, target, bands): a moveEngagement effect under rows. Returns true when rows handled it (the pair band is not moved by the caller). */
-export function BandsMoveEngagement(ctx, source, target, bands) {
+export function BandsMoveEngagement(ctx, source, target, bands, rootId = null) {
   if (!BandsActive(ctx)) return false;
   if (source.kind === 'enemy') {
     if (bands > 0) { SetEnemyRow(ctx, source, 'back', 'retreat'); return true; }
@@ -191,7 +198,8 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
-  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
+  // The push ends the pusher's Advance only when this same play advanced in first (Hit and Run steps back out); any other push leaves the Advance on.
+  if (bands > 0 && target?.kind === 'enemy') { if (rootId && advancedByPlay.get(source) === rootId) SetAdvanced(ctx, source, false); SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
