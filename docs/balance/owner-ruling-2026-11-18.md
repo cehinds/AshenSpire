@@ -211,3 +211,34 @@ These override the generic Poise rule for the named items:
 - **Bows (owner):** the wielder is **vulnerable to melee physical attacks, Smashes and Sweeps**: takes Vulnerable-sized extra damage from them, through the existing Vulnerable rule. *(decided: +25%, the Vulnerable amount)*
   - A Reach physical card played while the target has a Retreat stack adds DEX on top of STR: base damage + STR + DEX.
 - **Escalating:** is built with the drawback-tag pass. Until then, Backstep's upgrade must keep Exhaust, because the upgrade currently drops it. dodgeRoll and crawlingShot take Escalating in that pass. *(decided)*
+
+## 18. Equipment types: base effects (owner, 2026-11-18; proposal pending approval)
+Every item of a type carries its type's base effect. An item's own signature (sections 16–17) adds to it. Art comes later; new items may ship with placeholder art.
+
+**Weapons**
+
+| Type | Base effect |
+|---|---|
+| Dagger | 0-cost attacks gain Multi-hit. Attack-stance attack cards cost 1 less SP (not Smash or Sweep). |
+| Sword | +1 to physical attacks and Sweeps. |
+| Spear / Scythe / Halberd | Reach. +1 to Sweeps. |
+| Greatsword | Two-handed. Smashes add STR a second time (base + STR + STR + other). +1 Poise. |
+| Bow | Reach on physical attacks, Smashes and Sweeps. Adds DEX against a Retreat-stacked target. +1 Retreat stack at the end of the turn. |
+| Twinblade | Multi-hit on attacks, Smashes and Sweeps. |
+| Shield | +1 Poise. +2 Block at the end of the turn. |
+| Hammer | +1 Poise damage on attacks, Sweeps and Smashes. Smash inflicts 1 Vulnerable. |
+| Spear / Rapier / Bow | +1 Pierce. |
+| Rapier | +1 Counter stack at the end of the turn while in Defend or Counter stance. |
+| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. |
+| Sceptre | +1 to magic damage and magic stacks. Magic focus. |
+
+**Armour groups (new tag)**
+
+| Group | Base effect |
+|---|---|
+| Unarmoured (robes) | Spells −1 MP. +3 DEX. Vulnerable to melee damage. |
+| Light (leathers) | +1 Poise. +1 DEX. Block cards +1. |
+| Medium | +3 Poise. Block cards +2. |
+| Heavy | +5 Poise. −1 DEX. Block cards +5. |
+
+**More content:** new weapons, armour pieces and relics, including new weapon groups and armour groups.
