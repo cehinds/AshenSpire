@@ -121,7 +121,7 @@ test('the class track opens its tree tiers at tierAt and lists only the run\'s o
     assert.equal(tier.tier, index + 1);
     assert.ok(tier.nodes.length > 0);
   });
-  assert.equal(sheet.tracks.length, skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules }).filter((t) => t.kind !== 'class').length + 1);
+  assert.equal(sheet.tracks.length, skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && run.enemyKnowledgeRules.perception.enabled !== false }).filter((t) => t.kind !== 'class').length + 1);
 });
 
 test('a trained track reads its level and XP', () => {

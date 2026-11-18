@@ -25,8 +25,9 @@ export const enemyKnowledge = {
     },
   },
   perception: {
-    base: 3, growth: 1.5, roundTo: 1, maxLevel: 10, correctPredictionXp: 1,
+    enabled: false, base: 3, growth: 1.5, roundTo: 1, maxLevel: 10, correctPredictionXp: 1,
     [NOTE]: {
+      enabled: 'Perception switch (owner 2026-11-18). False: no Perception track, no XP, no intent-read bonus; intent reveals use the base rules. When re-enabled, the plan is to roll once per enemy per fight for the percent chance of seeing each intent (not built).',
       base: 'XP required for the first run Perception level.',
       growth: 'Multiplier for successive Perception level costs.',
       roundTo: 'Unit used to round Perception level costs.',
