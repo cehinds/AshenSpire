@@ -176,3 +176,13 @@ Existing effects that count as drawbacks:
 - **Equipment for every class (owner):** every weapon and armour piece can be found, equipped and used by any class, with no class restriction left.
   - When a reward, shop or armament offer picks an item, each pick comes from the player's class-themed items 75% of the time and from the whole pool 25% of the time.
   - Each pick rolls separately; a class with no themed item left falls back to the whole pool. *(decided)*
+
+## 16. Item rulings (owner, 2026-11-18)
+These override the generic Poise rule for the named items:
+- **Greatsword:** 1 Poise, +2 STR.
+- **Warhammer:** 2 Poise, +1 STR.
+- **Frost Spear:** +1 Frost damage, −1 Fire damage.
+- **Spiked Shield:** +1 Counter damage, and **Thorns 1**.
+- **Lantern:** when it blocks an attack, the attacker takes 1 Fire damage. Each physical attack deals +1 Fire damage.
+
+**Thorns (new tag):** an attacker that lands a hit takes N damage, where N is the number of Thorns stacks. The value is constant and does not decay. Only a timed effect, which lasts a stated number of turns and is printed on the card, changes it.
