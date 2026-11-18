@@ -16,8 +16,10 @@ const weapon = registries.equipment.armaments[0];
 const armor = registries.equipment.armour.find(item => item.classId === 'reaver');
 const relic = registries.relics.all()[0];
 const potion = registries.flasks.all()[0];
+const cardCases = [['combatCards', 'frostNova'], ['weaponArts', 'guardCounter']];
+// Owner 2026-11-18: a door of only cards is the multi-pick door (no Inspect button; the (i), right-click and long-press read);
+// the Inspect button stays on the doors that mix in an item, a relic or a flask.
 const cases = [
-  ['combatCards', 'frostNova'], ['weaponArts', 'guardCounter'],
   ['weapons', weapon.id], ['armor', armor.id], ['relics', relic.id], ['potions', potion.id],
 ];
 
@@ -70,6 +72,31 @@ function mount(kind, id, extra = {}) {
   });
   return { app, run, offer, calls };
 }
+
+for (const [kind, id] of cardCases) test(`${kind} on the card door is read by the (i) and a right-click, never claimed by reading`, () => {
+  withInspectionDom(() => {
+    const { app, run, offer, calls } = mount(kind, id);
+    const before = structuredClone({ run, offer });
+    assert.equal(app.querySelector('#reward-inspect'), null, 'a card door has no Inspect button');
+    const face = app.querySelector('.reward-choice-face');
+    face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true }));
+    face.click();
+    assert.equal(document.querySelector('.card-inspection-modal'), null, 'a tap only selects');
+    const chosen = app.querySelector('.reward-selected');
+    mouseRightClick(chosen);
+    const dialog = document.querySelector('.card-inspection-modal');
+    assert.ok(dialog, 'right-click opens the reading door');
+    assert.equal(dialog.querySelector('.card-inspection-act'), null, 'reading has no choose or claim action');
+    assert.equal(dialog.querySelector('.playing-card-details').inspectionMarkup, cardDetailHtml(registries, { cardId: id, instanceId: 'offer:0', upgraded: false }, { rules: run }));
+    dialog.querySelector('.modal-close').click();
+    chosen.querySelector('.card-info-button').click();
+    assert.ok(document.querySelector('.card-inspection-modal'), 'the (i) opens it too');
+    document.querySelector('.card-inspection-modal .modal-close').click();
+    assert.equal(app.querySelector('.reward-selected'), chosen, 'inspection preserves the selected face');
+    assert.deepEqual({ run, offer }, before, 'reading cannot change XP, decks, claims, or offers');
+    assert.deepEqual(calls, []);
+  });
+});
 
 for (const [kind, id] of cases) test(`${kind} can be fully inspected in selection and review without advancing`, () => {
   withInspectionDom(() => {
@@ -179,8 +206,9 @@ test('bound inspection API refuses detached and unbound nodes without invoking a
   });
 });
 
-test('pending claims block inspection and failed saves and exits restore the review for retry', async () => {
+test('pending claims lock the strip and failed saves and exits leave the door ready to retry', async () => {
   await withInspectionDom(async () => {
+    globalThis.HTMLElement ??= class HTMLElement {};
     let rejectClaim, resolveClaim, takes = 0, exits = 0;
     const { app, run, offer } = mount('combatCards', 'frostNova', {
       onTake() {
@@ -190,43 +218,35 @@ test('pending claims block inspection and failed saves and exits restore the rev
       onContinue() { exits++; if (exits === 1) throw new Error('exit refused'); },
     });
     const before = structuredClone({ run, offer });
+    const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+    const strip = () => app.querySelector('.reward-row');
     app.querySelector('.reward-pick').click();
-    const chosen = app.querySelector('.reward-selected');
-    const inspect = app.querySelector('#reward-inspect');
-    const confirm = app.querySelector('#reward-card-confirm');
-    const strip = app.querySelector('.reward-row');
-    confirm.click(); confirm.click();
-    assert.equal(takes, 1); assert.equal(inspect.disabled, true);
-    assert.equal(strip.inert, true, 'face Information is unavailable while saving');
-    // Dispatch directly as well as pressing the disabled button: the handler
-    // guards stale queued activation independently of disabled presentation.
-    inspect.click(); inspect.dispatchEvent(new Event('click', { bubbles: true }));
-    assert.equal(document.querySelector('.card-inspection-modal'), null);
+    app.querySelector('#reward-card-confirm').click();
+    document.querySelector('.confirmation-confirm').click();
+    assert.equal(takes, 1); assert.equal(strip().inert, true, 'the strip is locked while saving');
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, true);
     rejectClaim(new Error('save refused'));
-    await Promise.resolve(); await Promise.resolve();
-    assert.equal(inspect.disabled, false); assert.equal(strip.inert, false);
-    assert.equal(confirm.textContent, 'Continue');
-    assert.deepEqual({ run, offer }, before);
-    inspect.click(); document.querySelector('.card-inspection-modal .modal-close').click();
-    assert.equal(document.activeElement, inspect);
-    assert.equal(app.querySelector('.reward-selected'), chosen);
+    await tick();
     assert.equal(takes, 1); assert.equal(exits, 0);
-    confirm.click(); assert.equal(takes, 2); assert.equal(inspect.disabled, true);
+    assert.equal(app.querySelector('.reward-confirm-status').textContent, 'save refused');
+    assert.notEqual(strip().inert, true, 'a refused save frees the door');
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, false);
+    assert.deepEqual({ run, offer }, before);
+    app.querySelector('.reward-pick').click();
+    app.querySelector('#reward-card-confirm').click();
+    document.querySelector('.confirmation-confirm').click();
+    assert.equal(takes, 2);
     offer.taken.push(0); offer.claimed = 0; resolveClaim(offer);
-    await Promise.resolve(); await Promise.resolve();
-    assert.equal(exits, 1); assert.equal(inspect.disabled, false);
-    assert.equal(strip.inert, false, 'an exit save refusal restores Information');
-    inspect.click(); document.querySelector('.card-inspection-modal .modal-close').click();
-    assert.equal(document.activeElement, inspect);
-    assert.equal(app.querySelector('.reward-selected'), chosen);
-    assert.equal(confirm.textContent, 'Continue');
-    assert.deepEqual(run, before.run); assert.deepEqual(offer.taken, [0]);
-    confirm.click();
-    await Promise.resolve(); await Promise.resolve();
+    await tick();
+    assert.equal(exits, 1);
+    assert.equal(app.querySelector('.reward-confirm-status').textContent, 'exit refused');
+    assert.notEqual(strip().inert, true, 'an exit save refusal frees the door');
+    app.querySelector('#reward-card-confirm').click();
+    await tick();
+    assert.equal(document.querySelector('.confirmation-modal'), null, 'the exit retry asks nothing again');
     assert.equal(takes, 2, 'exit retry must not repeat the claim'); assert.equal(exits, 2);
-    assert.equal(inspect.disabled, true); assert.equal(strip.inert, true);
-    inspect.dispatchEvent(new Event('click', { bubbles: true }));
-    assert.equal(document.querySelector('.card-inspection-modal'), null, 'completed reviews cannot reopen inspection');
+    assert.equal(strip().inert, true, 'a finished door stays locked');
+    await new Promise(resolve => setTimeout(resolve, 800));
   });
 });
 

@@ -1416,6 +1416,7 @@ function mountCardPickDoor(appRoot, doorArgs)
         {
             onContinue();
             isCompleted = true;
+            choiceStrip.inert = true;
         }
         catch (error)
         {
