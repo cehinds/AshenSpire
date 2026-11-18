@@ -75,12 +75,13 @@ test('Quickstep: Evade, a Counter and a draw', () => {
 });
 
 test('Nightstep pays exactly 1 SP and 1 MP (no spell surcharge), gives Evade 2 and +1 INT this turn', () => {
-  const c = fight('progression-nightstep', { stamina: 3 }); c.player.mana = 3;
+  const c = fight('progression-nightstep', { stamina: 3 });
+  assert.equal(c.player.mana, 1, 'the Rogue starts with one Mana');
   const pv = previewCard(c, 'qa0', undefined);
   assert.deepEqual([pv.staminaCost, pv.manaCost], [1, 1]);
   const int = LiveAttribute(c.player, 'intelligence');
   play(c);
-  assert.equal(c.player.stamina, 2); assert.equal(c.player.mana, 2);
+  assert.equal(c.player.stamina, 2); assert.equal(c.player.mana, 0);
   assert.equal(evade(c), 2); assert.equal(LiveAttribute(c.player, 'intelligence'), int + 1);
   dispatch(c, { type: 'endTurn' });
   assert.equal(LiveAttribute(c.player, 'intelligence'), int);

@@ -101,7 +101,9 @@ function spellDamage(itemTier) {
   dispatch(combat, { type: 'playCard', cardInstanceId: 'p1', targetId: combat.enemies[0].id });
   return combat.eventLog.slice(start).find((e) => e.type === 'damageDealt').amount;
 }
+// Owner, 2026-11-17 (gear `statPoints`): a tier adds an attribute point split by the sceptre's weights, not PR, so a
+// tier whose point lands on the lower of INT/WIS leaves PR = max(INT, WIS) alone; the ladder still raises the spell.
 test('a magic weapon tier raises spell damage', () => {
   const amounts = [0, 1, 2, 3].map(spellDamage);
-  assert.ok(amounts[1] > amounts[0] && amounts[3] > amounts[1], amounts.join(','));
+  assert.ok(amounts.every((amount, i) => i === 0 || amount >= amounts[i - 1]) && amounts[3] > amounts[0], amounts.join(','));
 });

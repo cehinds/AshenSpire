@@ -67,6 +67,7 @@ test('a Poise break that takes the head move\'s SP changes the intent during the
   const enemy = combat.enemies[0];
   assert.equal(enemy.intent.moveId, 'slash');
   assert.equal(enemy.maxStamina, 1);
+  enemy.persistentPoise.value = 5; // gear now adds Poise (8 in all); start at the old 5 so one Strike breaks it
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   play(combat, strike);
   assert.ok(enemy.pendingStaminaLoss > 0, 'the Poise break owes SP');
@@ -81,6 +82,7 @@ test('a Poise break makes the enemy Broken: the head is cancelled, not owed SP, 
   const combat = fight('wanderingSoldier');
   const enemy = combat.enemies[0];
   assert.equal(enemy.intent.moveId, 'slash');
+  enemy.persistentPoise.value = 5; // gear now adds Poise (8 in all); start at the old 5 so one Strike breaks it
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   play(combat, strike);
   assert.ok(enemy.broken, 'the Poise break made the enemy Broken');

@@ -50,9 +50,9 @@ test('Starseer and Herald swap Strike for Arcane Spark; Reaver and Rogue keep St
   for (const classId of ['reaver', 'rogue']) assert.equal(StartingPoolIds(make(classId))[0], 'core.strike', classId);
   assert.equal(StartingPoolCounts(make('starseer'))['core.cantrip'], 2, "the Starseer's two starting Arcane Sparks");
   const herald = make('herald');
-  assert.equal(StartingPoolCounts(herald)['core.cantrip'], 0);
-  ApplyStartingDeckChoice(herald, { ...StartingPoolCounts(herald), 'core.cantrip': 2 });
-  assert.equal(herald.deck.filter((card) => card.cardId === 'core.cantrip').length, 2);
+  assert.equal(StartingPoolCounts(herald)['core.cantrip'], 2);
+  ApplyStartingDeckChoice(herald, { ...StartingPoolCounts(herald), 'core.cantrip': 3 });
+  assert.equal(herald.deck.filter((card) => card.cardId === 'core.cantrip').length, 3);
   assert.ok(herald.collectedCardIds.includes('core.cantrip'));
   assert.match(StartingDeckChoiceRefusal(make('herald'), { 'core.strike': 1 }), /not a starting card choice/, 'a caster cannot take Strike');
 });

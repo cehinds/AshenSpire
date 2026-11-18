@@ -36,7 +36,7 @@ const upgrade = (registries, run, ref = WEAPON) => {
   return commitBlacksmithUpgrade(registries, run, quote);
 };
 
-test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 25,50,85,135,195,255 cinders; the seventh is refused and keeps both purses', () => {
+test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 50,85,120,155,190,225 cinders; the seventh is refused and keeps both purses', () => {
   const run = smithRun(coreOut, 12);
   const spent = [];
   const paid = [];
@@ -48,7 +48,7 @@ test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 25,50,85,1
     paid.push(purse - run.cinders);
   }
   assert.deepEqual(spent, [1, 1, 1, 2, 2, 2]);
-  assert.deepEqual(paid, [25, 50, 85, 135, 195, 255]);
+  assert.deepEqual(paid, [50, 85, 120, 155, 190, 225]);
   assert.equal(run.itemUpgradePicks[WEAPON].length, 6);
   const left = run.smithingStones, cinders = run.cinders;
   const quote = blacksmithUpgradePlan(coreOut, run, WEAPON);

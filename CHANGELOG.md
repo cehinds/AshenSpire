@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-18
 
-- **Character review stays put** ([#2827](https://github.com/cehinds/AshenSpire/pull/2827), `0.7.4.148`). A quick double tap on Customise no longer skips the character Review step and starts the run. Shops saved before traders varied now show 3 to 6 options like every other trader.
+- **Character review stays put** ([#2827](https://github.com/cehinds/AshenSpire/pull/2827), `0.7.4.150`). A quick double tap on Customise no longer skips the character Review step and starts the run. Shops saved before traders varied now show 3 to 6 options like every other trader.
+- **Smaller numbers** ([#2820](https://github.com/cehinds/AshenSpire/pull/2820), `0.7.4.150`). Base damage is halved. Attack rating now comes from STR alone, defence from DEX alone, and magic resistance from your higher of INT and WIS. Your health is 30 plus 5 for each point of CON and each level. Armour and weapons give stat points and Poise instead of ratings. Each extra Action or Mana point costs 3 stat points. Elites and bosses are cut back to the strength of their act. Blacksmith upgrades start at about 50 cinders and cost more with rank and with each earlier upgrade.
 
 ## 2026-11-17
 

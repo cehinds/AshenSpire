@@ -110,9 +110,11 @@ const CLASS_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline']
 // `pointsBaseline` is the hand rules' "points before bonuses", subtracted from
 // the attribute total before the tier; `multiplier` is the rating formula's
 // global multiplier, applied to the floored attribute total.
-const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery', 'cap', 'pointsBaseline', 'multiplier'];
+// `maxOf` (owner, 2026-11-17: Core MP reads max(INT, WIS)): the listed attributes count as one term, the highest of them.
+const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery', 'cap', 'pointsBaseline', 'multiplier', 'maxOf'];
 // Every key a row may carry that is NOT an attribute weight — the legacy
 // spellings included, because a normalized row is built by stripping these.
+const STORED_ROW_ATTRIBUTES_LIST = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const NON_WEIGHT_FIELDS = Object.freeze([...new Set([...RULE_FIELDS, ...UNIFIED_RULE_FIELDS, ...STAT_ROW_FIELDS, ...CARRIER_FIELDS])]);
 const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
@@ -263,6 +265,9 @@ function validateUnifiedRule(out, value, path, options, partial) {
   }
   validatePoints(out, value.pointsPerIncrease, `${path}.pointsPerIncrease`, false);
   validateGain(out, value.gain, `${path}.gain`, false, options.classFields);
+  if (value.maxOf !== undefined && !(Array.isArray(value.maxOf) && value.maxOf.length > 1 && value.maxOf.every(id => STORED_ROW_ATTRIBUTES_LIST.includes(id)))) {
+    problem(out, `${path}.maxOf`, 'must list two or more attribute ids');
+  }
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
   validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, false);
@@ -745,6 +750,12 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
     const counted = Number.isFinite(row.attributeBaseline) && row.attributeBaseline > 0 ? Math.max(0, value - row.attributeBaseline) : value;
     terms[id] = Math.floor(counted * weight + EPSILON);
     points += terms[id];
+  }
+  // A `maxOf` row prices only the highest of its listed attributes' terms; the others count 0.
+  if (Array.isArray(row.maxOf) && row.maxOf.length > 1) {
+    const listed = row.maxOf.filter(id => Object.hasOwn(terms, id));
+    const best = listed.reduce((top, id) => (top === null || terms[id] > terms[top] ? id : top), null);
+    for (const id of listed) if (id !== best) { points -= terms[id]; terms[id] = 0; }
   }
   const gain = row.gain === undefined ? 1 : gainValue(row.gain, classDef, statId);
   const rounding = row.rounding === undefined ? 'floor' : row.rounding;

@@ -37,20 +37,21 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const view = previewCard(combat, 'bundled-core-counter', enemy.id);
   const returned = view.values.find(row => row.op === 'damage').counterReturn;
-  assert.equal(returned.incoming, 8);
-  // Re-pin (SPEC §17, Counter stacks 2026-10-31): the card's 9 Block become 9 stacks, so 4 + floor(0.9 x 8) + 2 = 13, Poise floor(0.5 x 13) = 6.
-  assert.equal(returned.hp, 13);
-  assert.equal(returned.poise, 6);
-  assert.equal(returned.block, 2);
+  // The soldier's 8 is halved by the Core base-damage scale (effects.baseDamageMultiplier 0.5): 4 incoming.
+  assert.equal(returned.incoming, 4);
+  // The card's 9 Block become 9 stacks. The scaled base 2 + floor(0.9 x 4) + 1 = 6, Poise floor(0.5 x 6) = 3.
+  assert.equal(returned.hp, 6);
+  assert.equal(returned.poise, 3);
+  assert.equal(returned.block, 1);
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
-test('bundled Core Counter under the card-stack rule previews 4 + floor(0.1 x 8 x 1 stack) and mutates nothing', () => {
+test('bundled Core Counter under the card-stack rule previews 2 + floor(0.1 x 4 x 1 stack) and mutates nothing', () => {
   const { combat, enemy } = coreCounterFixture({ cardStacks: true });
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const returned = previewCard(combat, 'bundled-core-counter', enemy.id).values.find(row => row.op === 'damage').counterReturn;
-  assert.equal(returned.incoming, 8);
-  assert.equal(returned.hp, 4, 'core.counter grants 1 stack: floor(8 x 0.1 x 1) = 0 on top of the card\'s 4');
+  assert.equal(returned.incoming, 4, 'the soldier\'s 8, halved by the Core base-damage scale');
+  assert.equal(returned.hp, 2, 'core.counter grants 1 stack: floor(4 x 0.1 x 1) = 0 on top of the scaled base 2');
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
