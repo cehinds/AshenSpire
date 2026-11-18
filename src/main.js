@@ -1482,8 +1482,8 @@ function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place 
     registries,
     run,
     focusCard,
-    // A manual drag order is saved at once, so a reload keeps it.
-    onOrderChange: () => persist(),
+    // The drag order rides the run and is written with the confirmed edit (onDone) or the next run save. Saving it on every drag
+    // would also write unconfirmed deck changes, which Cancel then restores only in memory (Codex review, PR #2835).
     backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
