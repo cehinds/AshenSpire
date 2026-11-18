@@ -48,6 +48,23 @@ export function stanceForCard(card = {}) {
   return 'casting';
 }
 
+/**
+ * A card that enters a stance (an `enterStance` effect) leaves the figure in the combat stance the engine ended on, so the
+ * figure's pose and the action glyph read that one stance, not the card's own kind. `events` are the play's receipts in
+ * order after `played` (the cardPlayed receipt); the last `combatStanceChanged` for the player's seat wins. Other cards,
+ * and a play that changed no stance, return the card untouched.
+ */
+export function cardAsEnteredStance(card = {}, events = [], played = {}) {
+  if (!card?.effects?.some?.(effect => effect.op === 'enterStance')) return card;
+  const actor = played.playerId || played.sourceId || 'player';
+  const after = events.slice(events.indexOf(played) + 1);
+  const changed = after.filter(event => event.type === 'combatStanceChanged' && (event.sourcePlayerId || event.sourceId || event.targetId) === actor).pop();
+  const maneuver = changed?.maneuver;
+  if (!maneuver || maneuver === 'staggered' || maneuver === 'neutral') return card;
+  const tags = (card.cardTags ?? card.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
+  return { ...card, cardTags: [...tags.filter(tag => !tag.startsWith('maneuver:')), `maneuver:${maneuver}`] };
+}
+
 /** Accept ONLY previewIntent()/coopEnemyIntent() output, never an enemy or private move. */
 export function stanceForPublicIntent(intent = {}) {
   intent ??= {};

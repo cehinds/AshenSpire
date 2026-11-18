@@ -68,3 +68,18 @@ test('entering a stance never touches an enemy\'s stance', () => {
   assert.equal(JSON.stringify(enemy.combatStance ?? null), snap);
   assert.equal(enemy.stanceId ?? null, null);
 });
+
+test('the figure\'s pose and glyph read the stance the engine ended on, live and from a restored log', async () => {
+  const { cardAsEnteredStance, stanceForCard, kindForCard } = await import('../src/model/alternativeStance.js');
+  const combat = liveCore();
+  const out = play(combat, give(combat, 'enterGorefire', 'eg1'));
+  const played = out.events.find(e => e.type === 'cardPlayed');
+  const card = reg.cards.get('enterGorefire');
+  assert.equal(stanceForCard(card), 'casting', 'the card alone reads as a skill');
+  const entered = cardAsEnteredStance(card, out.events, played);
+  assert.equal(stanceForCard(entered), 'offensive');
+  assert.equal(kindForCard(entered).maneuver, combat.player.combatStance.maneuver);
+  // A card with no stance change, or no enterStance effect, is returned as it came.
+  assert.equal(cardAsEnteredStance(reg.cards.get('core.defend'), out.events, played), reg.cards.get('core.defend'));
+  assert.equal(cardAsEnteredStance(card, [played], played), card);
+});
