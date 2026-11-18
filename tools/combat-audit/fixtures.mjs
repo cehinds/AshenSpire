@@ -114,7 +114,30 @@ export function setAuditPredicate(combat, predicate, truth, target = combat.enem
     case 'hpBelowPct':
       for (const entity of entities) entity.hp = truth ? Math.max(1, Math.floor(entity.maxHp * p.pct / 100) - 1) : Math.min(entity.maxHp - 1, Math.floor(entity.maxHp * p.pct / 100) + 1);
       return;
-    case 'inStance': combat.player.stanceId = truth ? p.stance : null; return;
+    case 'inStance': {
+      // A class stance (Bulwark and kin) is the player's stanceId; a combat stance (and Idle, none at all) is the entity's combatStance.
+      const maneuver = { prepared: 'casting', defense: 'defend' }[p.stance] || p.stance;
+      if (!['attack', 'smash', 'defend', 'counter', 'sweep', 'casting', 'staggered', 'idle'].includes(maneuver)) { combat.player.stanceId = truth ? p.stance : null; return; }
+      for (const entity of entities) {
+        delete entity.concurrentStances;
+        const held = truth ? maneuver : maneuver === 'attack' ? 'defend' : 'attack';
+        if (held === 'idle') delete entity.combatStance;
+        else entity.combatStance = { maneuver: held, camp: held === 'casting' ? 'spell' : 'physical', range: 'melee' };
+      }
+      return;
+    }
+    case 'atRange': {
+      // The engagement band between the player and the target (0 melee, 1 reach, 2 ranged), keyed as model/combatEngagement.js keys it.
+      const want = ['melee', 'reach', 'ranged'].indexOf(p.range);
+      const playerKey = combat.player.rangeActorKey || 'player:player';
+      const pairKey = enemy => JSON.stringify([playerKey, `enemy:${enemy.id}`].sort());
+      // A fight without range mechanics counts every pair as melee; give the witness a minimal enabled engagement state.
+      if (!combat.rangeState?.policy?.enabled) combat.rangeState = { version: 1,
+        policy: { version: 1, enabled: true, advanceSpPerBand: 1, reachPrecisionBonus: 1, throwPrecisionPenalty: 1, maxRange: 'ranged' },
+        engagements: Object.fromEntries(combat.enemies.map(enemy => [pairKey(enemy), 0])) };
+      combat.rangeState.engagements[pairKey(target)] = truth ? want : want === 0 ? 1 : 0;
+      return;
+    }
     case 'firstCardThisTurn': combat.player.counters.cardsPlayedThisTurn = truth ? 0 : 1; return;
     case 'turnMetric': {
       const state = combat.player.abilityRiders;

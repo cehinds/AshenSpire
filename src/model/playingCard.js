@@ -38,6 +38,17 @@ import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
+
+/** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
+const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepared: 'in Prepared', defend: 'in Defense', defense: 'in Defense' });
+const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance}`;
+
+/** A card's `playIf` as a short face line ("Only at Reach"), or null when the face has no words for it. */
+export function PlayConditionPhrase(pred) {
+  if (pred?.p === 'atRange') return `Only at ${pred.range[0].toUpperCase()}${pred.range.slice(1)}`;
+  if (pred?.p === 'inStance') return `Only ${['target', 'enemy'].includes(pred.of) ? 'while the target is' : 'while'} ${stanceWords(pred.stance)}`;
+  return null;
+}
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
@@ -50,6 +61,20 @@ import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
 
 const freeze = (value) => Object.freeze(value);
+const HOSTILE_HP_LOSS = Object.freeze({
+  enemy: 'Target loses', allEnemies: 'All enemies lose', randomEnemy: 'A random enemy loses',
+  otherEnemy: 'Another enemy loses', otherEnemies: 'Other enemies lose',
+});
+
+/** Shared wording and polarity for HP loss on a card face or in its summary. */
+export function CardHpLossWording(effect, amount) {
+  const hostile = HOSTILE_HP_LOSS[effect.target];
+  if (hostile) return { hostile: true, text: `${hostile} ${amount} HP (ignores Block)` };
+  const prefix = effect.target === 'allAllies' ? 'All allies lose'
+    : effect.target === 'ally' ? 'Ally loses' : effect.offering ? 'Offer' : 'Pay';
+  const suffix = effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : '';
+  return { hostile: false, text: `${prefix} ${amount} HP${suffix}` };
+}
 
 /** Actual damage labels; a spell's school never substitutes for its damage. */
 // A uiStrings row with its {tokens} filled in. The row is the only copy of the sentence.
@@ -138,7 +163,8 @@ export function cardSummaryContext(def, preview = null, registries = null, rules
     if (pred.p === 'hasBlock') return `${pred.of === 'self' ? 'you' : 'the target'} ${pred.of === 'self' ? 'have' : 'has'} Block${pred.snapshot === 'beforePlay' ? ' before this card' : ''}`;
     if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
     if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
-    if (pred.p === 'inStance') return `you are in ${pred.stance}`;
+    if (pred.p === 'inStance') return `${['target', 'enemy'].includes(pred.of) ? 'the target is' : 'you are'} ${stanceWords(pred.stance)}`;
+    if (pred.p === 'atRange') return `the target is at ${title(pred.range)}`;
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
       const threshold = [pred.atLeast !== undefined ? `at least ${pred.atLeast}` : '', pred.atMost !== undefined ? `at most ${pred.atMost}` : ''].filter(Boolean).join(' and ');
@@ -239,7 +265,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
       case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
-      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : ''}`; break;
+      case 'loseHp': text = CardHpLossWording(effect, n).text; break;
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
@@ -299,6 +325,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
   if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
+  if (PlayConditionPhrase(def.playIf)) parts.unshift(PlayConditionPhrase(def.playIf));
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
   return parts.length ? `${parts.join('. ')}.` : null;
 }
