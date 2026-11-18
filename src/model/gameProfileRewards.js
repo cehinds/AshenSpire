@@ -260,7 +260,7 @@ export function OfferPicksLeft(offer) {
   const plainTaken = offer.taken.filter(at => !IsBonusOption(offer.options[at])).length, bonusTaken = offer.taken.length - plainTaken;
   return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
 }
-export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
+export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal', takeCount: takeOverride = null } = {}) {
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
@@ -268,7 +268,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
   const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
-  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:takeOverride??module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
