@@ -291,3 +291,9 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - This replaces "Stone Skin reduces Pierce damage by 1 per stack" and the old "Pierce bypasses up to 2 Block".
 - **Gale Push (owner):** it carries an explicit **inflict Retreat** tag (it gives the target a Retreat stack), shown on the face beside Force.
 - **Hammers (owner):** a hammer Smash also inflicts **1 Retreat stack** on its target. This is part of the hammer type base, alongside +1 Poise damage and Smash Vulnerable.
+
+## 22. Retreat, Reach and targeting (owner, 2026-11-18)
+- **Gale Pull (new card):** the opposite of Gale Push. It carries the Force tag and removes 1 Retreat stack from its target, bringing it forward when it has none left.
+- **Retreat on either side:** a hit between two combatants needs **Reach** if either one holds a Retreat stack (the player can hold them too, e.g. a bow's end-of-turn stack). Without Reach, each side holding Retreat must be closed with an Advance (1 SP each, which spends one stack). When both sides hold Retreat, both Advances are needed (2 SP).
+- **Status-only plays are Reach by default:** a card's status effects that don't come from a melee attack, Sweep, Smash or Counter reach any target with no Advance cost. Example: a Defend card that inflicts Weak applies it to a retreated enemy for free.
+- **Self-and-all cards:** a card that affects the player and every enemy plays when you select the player **or** any enemy as its target.
