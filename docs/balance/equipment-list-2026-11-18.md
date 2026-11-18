@@ -147,8 +147,8 @@ Off-hands with their own bases:
 | Lantern | light source | common | A blocked attack deals 1 Fire to the attacker; physical attacks +1 Fire (owner) |
 | Torch | light source | common | Fire hits apply 1 Fire Vulnerable |
 | Dusk Chime | chime | rare | Gain 1 Ward when you cast a spell |
-| ★ Grimoire (tome) | first spell each turn draws 1 | uncommon | Fire spells +1 |
-| ★ Prayer Book (tome) | first spell each turn draws 1 | common | Healing +1 |
+| ★ Grimoire (tome) | first spell each turn draws 1; 2 Ward at start of turn | uncommon | Fire spells +1 |
+| ★ Prayer Book (tome) | first spell each turn draws 1; 2 Ward at start of turn | common | Healing +1 |
 | ★ Sun Talisman (talisman) | +1 Ward at start of turn | uncommon | Heal 1 at start of turn |
 | ★ Bone Talisman (talisman) | +1 Ward at start of turn | uncommon | Blight spells +1 |
 

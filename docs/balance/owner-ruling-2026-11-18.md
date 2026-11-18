@@ -257,7 +257,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - Whip: Reach; attacks remove 1 Retreat stack from the target.
   - Claws / Fists: Sweeps gain Multi-hit; attacks −1 SP and −1 damage.
   - Crossbow: Reach, +2 Pierce, Escalating.
-  - Tome (off-hand): the first spell each turn draws 1.
+  - Tome (off-hand): the first spell each turn draws 1; 2 Ward stacks at the start of each turn (owner, 2026-11-18).
   - Talisman (off-hand): +1 Ward at the start of each turn.
 - **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
 - **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
@@ -278,3 +278,4 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
 - **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(decided: +5 per stack, since the config already counts Ward in stacks of 5 Poise)*
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
+- **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
