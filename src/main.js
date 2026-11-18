@@ -2948,6 +2948,8 @@ function showFirstScreenNow(createShotStates) {
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
     beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
     showSettings, showStartupGate, showCustomize,
+    // `?shotAct=<n>`: the act's map, built as advanceAct builds it.
+    poseActNumber: (act) => { run.actNumber = act; run.mapGraph = buildActMap(registries, rng, currentSeat(), act, null, { history: run.history }); run.mapNodeId = null; run.path = []; run.floor = 0; },
     getRun: () => run, getRng: () => rng, getRegistries: () => registries,
     setActiveMeta: (value) => { activeMeta = value; },
     setActiveSettings: (value) => { activeSettings = value; },
