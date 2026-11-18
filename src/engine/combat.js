@@ -1,6 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsEnemyPhaseEnd, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -858,6 +858,7 @@ function enemyPhase(combat) {
     }
   }
 
+  BandsEnemyPhaseEnd(combat); // rows (W25-BANDS): the retreat hold carried through this phase is spent
   combat.emit('enemyTurnEnd', { turn: combat.turn });
   // The player's Broken lasts through the round after the break (its short turn and the enemy phase that answers it).
   if (combat.player.alive) EndBrokenWhenDue(combat, combat.player);

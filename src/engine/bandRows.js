@@ -127,10 +127,17 @@ export function BandsPlayerTurnEnd(ctx) {
 export function BandsEnemyPhaseStart(ctx) {
   if (!BandsActive(ctx)) return;
   const living = ctx.enemies.filter(enemy => enemy.alive);
-  // Retreat hold (owner 2026-11-18, ruling §12): an enemy the player sent back stays back through its next turn; the hold is spent at this phase start.
+  // Retreat hold (owner 2026-11-18, ruling §12): an enemy the player sent back stays back through its next turn; the hold is spent at the END of this phase (BandsEnemyPhaseEnd), so
+  // its own approach move is blocked too (BandsMoveEngagement) and the forecast of "back through its turn" is what happens.
   const held = new Set(living.filter(enemy => enemy.rowHold > 0));
   if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) if (!held.has(enemy)) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
-  for (const enemy of held) enemy.rowHold = 0;
+  for (const enemy of held) enemy.rowHoldActive = true;
+}
+
+/** BandsEnemyPhaseEnd(ctx): the retreat hold an enemy carried through this phase is spent. A hold set during the phase waits for the next one. */
+export function BandsEnemyPhaseEnd(ctx) {
+  if (!BandsActive(ctx)) return;
+  for (const enemy of ctx.enemies) if (enemy.rowHoldActive) { enemy.rowHold = 0; delete enemy.rowHoldActive; }
 }
 
 /** BandsFormationBlock(ctx, enemy): the Block an enemy gains at its turn start for standing in a row with another living enemy (0 when alone or without rows). */
@@ -145,7 +152,8 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
   if (!BandsActive(ctx)) return false;
   if (source.kind === 'enemy') {
     if (bands > 0) { SetEnemyRow(ctx, source, 'back', 'retreat'); return true; }
-    if (source.row === 'back') { SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
+    // A retreated or pushed enemy stays back through its next turn: its approach spends the move and goes nowhere (the intent shown is the move played).
+    if (source.row === 'back') { if (!(source.rowHold > 0)) SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
