@@ -24,6 +24,7 @@ import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 
 export function createShotStates(ctx) {
   const {
@@ -259,6 +260,11 @@ export function createShotStates(ctx) {
       run.path = walked;
       showMap();
     }
+    // `?shotDeckEditor=1` — the deck editor open over the map, on this run's deck, so a sandbox check can add and
+    // remove a card and see which nodes the editor rebuilds (docs/perf/redraw-2026-11-18.md). Memory-only like every lever.
+    if (name === 'map' && shotParams.get('shotDeckEditor') === '1') {
+      mountDeckEditor(document.body, { registries: ctx.getRegistries(), run, settings: {}, onDone() {}, onCancel() {} });
+    }
     if (name === 'death') {
       // A run that ended on floor 4 with a few fights behind it, so the stats
       // table has real numbers under the title instead of a row of zeroes.
@@ -391,6 +397,7 @@ export function createShotStates(ctx) {
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
       // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
       if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
       // attribute point waiting, paid through the production XP ledger, so its level-up modal can be reached.
@@ -403,10 +410,11 @@ export function createShotStates(ctx) {
         run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
         persist(); return showGameProfileReward();
       }
+      const shotTake = Math.floor(Number(shotParams.get('shotTake')));
       const victory = shotParams.get('shotVictory') === 'points';
       if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
         pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
-      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
+      beginGameProfileReward({ source: 'combat', after: 'map', takeCount: shotTake >= 1 ? Math.min(5, shotTake) : null, pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
         ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the

@@ -107,3 +107,21 @@ Existing effects that count as drawbacks:
   - The stance properties "+2 AR / DR / PR while in X stance" become "+2 STR / DEX / INT while in X stance".
 - It lands in the same playtest build as the ×0.7 cut.
 - All before and after numbers are measured with `tools/card-budget-report.mjs`.
+
+## 9. Hand, SP and MP (owner, 2026-11-18)
+- **Opening hand and draw per turn:** 4 + floor(INT / 4).
+- **Max MP:** base + floor(WIS / 4).
+- **Max SP:** base + floor(DEX / 4).
+- Each +1 needs 4 points in its stat. INT, WIS and DEX replace today's fractional mixes (stamina currently reads DEX, CON, WIS and INT).
+- A typical starting character holds 5–6 cards.
+- Staffs and sceptres inherently lower every spell's MP cost by 1 (minimum 0).
+- A few magic relics give +1 max MP.
+
+## 10. Perception (owner, 2026-11-18)
+- Perception stays, behind a JSON toggle.
+- **Roll:** 1d20 + INT + WIS + 10 against **DC** 5 + the enemy's INT + WIS. A natural 1 always fails and a natural 20 always succeeds.
+- The owner asked for pros and cons before it is built; they are in the session reply.
+
+## 11. Saves across builds (owner, 2026-11-18)
+- A JSON toggle (default **on** for development) lets a new build delete old saves rather than migrate them. The owner starts a new save each build.
+- Set the toggle **off** before any public release, so saves are kept.

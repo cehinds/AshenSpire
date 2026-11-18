@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsMoveEngagement, SetAdvanced, SetEnemyRow } from './bandRows.js';
+import { BandsActive, BandsMoveEngagement, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -142,9 +142,9 @@ export function rangeHitContact(ctx, source, target, carrier) {
 }
 export function executeEngagementMovement(ctx, action) {
   if (!ctx.rangeState?.policy.enabled) return;
-  // The Retreat card (W25-BANDS): the owner steps back out of the Advance. It moves nothing else, and does nothing in a fight without rows.
+  // The Retreat card (W25-BANDS; owner 2026-11-18): ends the Advance and sends every front-row enemy to the back row. Does nothing in a fight without rows.
   // An Evade card's own Advance (bands -1, no target; owner 2026-11-15, W25-EvadeCards) steps the owner in the same way, also only with rows.
-  if (action.effect.target === 'self') { if (BandsActive(ctx)) SetAdvanced(ctx, action.source, action.effect.bands < 0); return; }
+  if (action.effect.target === 'self') { if (BandsActive(ctx)) { if (action.effect.bands < 0) SetAdvanced(ctx, action.source, true); else PlayerRetreat(ctx, action.source); } return; }
   let target = action.target;
   if (action.effect.target === 'pendingAttacker' && (!target || target.kind === action.source.kind)) target = ctx.enemies.find(row => row.id === ctx._reactionSourceId) || ctx._reactionSource;
   if (!target || target.kind === action.source.kind) throw Error('Engagement movement requires an opposing target');

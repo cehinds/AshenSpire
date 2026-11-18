@@ -1803,14 +1803,13 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 /* Playtest 2026-11-17 item 44: reward CARDS (not armaments, relics or flasks) are 25% smaller, so four fit without
    scrolling. A grid of cards only also narrows its columns to the smaller face, so the gap between them holds. */
 .reward-door { --reward-card-scale: .75; }
-.reward-door .reward-choice-option > :is(.card:not(.equipment-poker-card), .rank-up-offer-card) { max-width: calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)); }
-:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid:not(:has(.equipment-poker-card:not(.rank-up-offer-card))) { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)))); }
+.reward-door .reward-choice-option > .card:not(.equipment-poker-card) { max-width: calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)); }
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid:not(:has(.equipment-poker-card)) { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)))); }
 
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
    their common height, including when phone choices wrap onto a second row. */
 .reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 182.4px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
-.reward-door .reward-choice-option > .rank-up-offer-card { max-width: calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)); }
 .reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
 .reward-door .reward-choice-option > .reward-pick { flex: 1 0 var(--modal-name-button-basis, 3.5rem); height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: var(--modal-name-button-pad-block, .7rem) var(--modal-name-button-pad-inline, .8rem); gap: .3rem; }
 /* modal.json `showNameButton: false`: the face is the radio; the button stays in the DOM for the door's code. */
@@ -1832,16 +1831,22 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-choice-option > .card:hover,
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
-.reward-door .reward-confirm:not(:disabled) {
+.reward-door .reward-confirm.primary:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
   color: var(--parchment);
 }
-.reward-door .reward-confirm:not(:disabled):hover,
-.reward-door .reward-confirm:not(:disabled):focus-visible {
+.reward-door .reward-confirm.primary:not(:disabled):hover,
+.reward-door .reward-confirm.primary:not(:disabled):focus-visible {
   background: color-mix(in srgb, var(--green) 34%, var(--panel));
   border-color: var(--green);
 }
+/* Owner 2026-11-18: the card-pick door's Continue stays neutral until every pick is made (then it wears .primary above);
+   the confirmation lists the chosen cards with one destination choice for all of them. */
+.reward-pick-confirm-list { margin: 0 0 .5rem; padding-left: 1.2rem; }
+.reward-pick-confirm-unused { margin: .25rem 0 .5rem; opacity: .85; }
+.reward-pick-destinations { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+.reward-pick-destination.is-chosen { background: color-mix(in srgb, var(--green) 22%, var(--panel)); border-color: var(--green); }
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in
