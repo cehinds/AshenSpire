@@ -52,6 +52,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:sixleggedHearse | The Sixlegged Hearse | boss |
 | enemy:slagtongImp | Slagtong Imp | minion |
+| enemy:sootwingBat | Sootwing Bat | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
@@ -352,6 +353,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:slagtongImp.cinderCackle | Cinder Cackle | power | 1 | 1 | Apply {weak} Weak to the enemy. |
 | card:slagtongImp.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:slagtongImp.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:sootwingBat.sootFlurry | Soot Flurry | attack | 1 | 0 | Deal {damage} damage {hits} times. |
+| card:sootwingBat.ashWingBeat | Ash Wing Beat | attack | 1 | 0 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
+| card:sootwingBat.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:sootwingBat.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

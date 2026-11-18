@@ -259,5 +259,59 @@
       "min": 3,
       "max": 4
     }
+  },
+  {
+    "id": "a3_sootRoost",
+    "enemies": [
+      "sootwingBat",
+      "valkyrieShade"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_impRoost",
+    "enemies": [
+      "slagtongImp",
+      "sootwingBat"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_eliteOathCamel",
+    "enemies": [
+      "pallidOathCamel",
+      "sootwingBat"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
   }
 ]

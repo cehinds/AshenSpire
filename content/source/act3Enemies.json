@@ -977,5 +977,64 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "sootwingBat",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 5,
+      "constitution": 1,
+      "wisdom": 3,
+      "intelligence": 3
+    },
+    "size": "small",
+    "name": "Sootwing Bat",
+    "hp": [
+      26,
+      30
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "sootFlurry": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 2,
+        "hits": 3,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "ashWingBeat": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 5,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      }
+    },
+    "firstMove": "ashWingBeat",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "piercing",
+        "effect": "damage"
+      }
+    ]
   }
 ]

@@ -177,6 +177,10 @@
       "name": "Slagtong Imp",
       "tier": "minion"
     },
+    "enemy:sootwingBat": {
+      "name": "Sootwing Bat",
+      "tier": "minion"
+    },
     "enemy:stitchCrab": {
       "name": "Stitch Crab",
       "tier": "minion"
@@ -3036,6 +3040,46 @@
       "usedBy": "enemy sheet"
     },
     "card:slagtongImp.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sootwingBat.sootFlurry": {
+      "name": "Soot Flurry",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage {hits} times.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sootwingBat.ashWingBeat": {
+      "name": "Ash Wing Beat",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sootwingBat.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sootwingBat.retreat": {
       "name": "Retreat",
       "type": "skill",
       "cost": {

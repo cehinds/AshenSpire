@@ -646,3 +646,5 @@
 "enemyMove","slagtongImp","slagSpit","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
 "enemyMove","slagtongImp","tongueBrand","attack","true","false","weapon","fire","physical","attack","","","delivery:melee","",""
 "enemyMove","slagtongImp","cinderCackle","debuff","false","false","","","spell","","fire","","","",""
+"enemyMove","sootwingBat","sootFlurry","attack","true","false","weapon","piercing","physical","attack","","","delivery:projectile","",""
+"enemyMove","sootwingBat","ashWingBeat","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""

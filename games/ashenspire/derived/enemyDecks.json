@@ -6637,5 +6637,105 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "sootwingBat",
+    "name": "Sootwing_Bat",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "sootwingBat.sootFlurry",
+        "name": "Soot_Flurry",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "sootFlurry",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "sootwingBat.ashWingBeat",
+        "name": "Ash_Wing_Beat",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ashWingBeat",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "sootwingBat.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "sootwingBat.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

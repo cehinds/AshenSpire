@@ -7985,5 +7985,118 @@
       "classification.skill"
     ],
     "textTemplate": "Fall back one band."
+  },
+  {
+    "id": "sootwingBat.sootFlurry",
+    "name": "Soot_Flurry",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2,
+        "hits": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage {hits} times.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "sootwingBat.ashWingBeat",
+    "name": "Ash_Wing_Beat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "sootwingBat.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
+  },
+  {
+    "id": "sootwingBat.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   }
 ]

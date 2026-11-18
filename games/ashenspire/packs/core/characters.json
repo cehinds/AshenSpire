@@ -6154,5 +6154,90 @@
         }
       ]
     }
+  },
+  {
+    "id": "sootwingBat",
+    "name": "Sootwing_Bat",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "sootwingBat.sootFlurry",
+      "sootwingBat.sootFlurry",
+      "sootwingBat.ashWingBeat",
+      "sootwingBat.advance",
+      "sootwingBat.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "shortbow"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "sootwingBat",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "sootwingBat.ashWingBeat",
+      "poiseMax": 4,
+      "cardHints": {
+        "sootwingBat.sootFlurry": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "sootFlurry",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sootwingBat.ashWingBeat": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ashWingBeat",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sootwingBat.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "sootwingBat.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]
