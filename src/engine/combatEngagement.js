@@ -65,6 +65,11 @@ function committedRangeSource(ctx,source,carrier,effect,profile) {
   }
   return resolved;
 }
+// Status-only parts are Reach (owner 2026-11-18 section 22): a status effect that does not come from a melee attack, Sweep, Smash or Counter
+// reaches any target with no Advance and no Retreat cost. Beside a melee hit in the same card, only the hit pays.
+const MELEE_MANEUVERS = new Set(['attack', 'sweep', 'smash', 'counter']);
+const STATUS_OPS = new Set(['applyStatus', 'buildup', 'arcaneBuildup']);
+const statusOnlyReach = (effect, profile) => STATUS_OPS.has(effect.op) && !MELEE_MANEUVERS.has(profile.maneuver);
 const fartherRange = (a, b) => rangeBand(b ?? a) > rangeBand(a) ? b : a;
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   ctx=rangeSourceContext(ctx,source);
@@ -80,7 +85,7 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     retreatBands: rangeBand(coverage) > 0 ? 0 : PlayerRetreatBands(ctx, source, target),
-    bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
+    bypass: statusOnlyReach(effect, profile) || profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
 }
 const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger','arcaneBuildup']);
 export function quoteRangeActions(ctx, source, actions, { route = 'advance', context = ctx._rangeContext, preview = false } = {}) {
