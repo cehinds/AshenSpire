@@ -59,7 +59,7 @@ test('every enemy can pay its dearest card', () => {
   }
 });
 
-test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level, plus the level term; SP/MP/AR/DR/hand follow the existing stat rows', () => {
+test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level, plus the level term; SP/MP/hand follow the existing stat rows (no AR/DR since 2026-11-18)', () => {
   assert.deepEqual(settings.statRules.hp, { strength: 5, dexterity: 3, constitution: 10, wisdom: 2, intelligence: 1, perLevel: 5 });
   for (const tier of ['minion', 'elite', 'boss']) assert.equal(settings.tagRules['tier.' + tier].pools.hp, 10);
   for (const e of enemies) {
@@ -68,8 +68,9 @@ test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level,
     // No attributeOffset is configured since 2026-11-07; the rows here have no gear.
     const a = e.attributes;
     assert.equal(p.hp, 10 + 10 * a.constitution + 5 * a.strength + 3 * a.dexterity + 2 * a.wisdom + 1 * a.intelligence + 5 * (level - 1), e.id);
-    assert.equal(p.ar, a.strength, e.id);
-    assert.equal(p.dr, a.dexterity, e.id);
+    // Owner 2026-11-18 (ruling §8): AR/DR are removed; STR and DEX act through damage and Block, not a rating pool.
+    assert.equal(p.ar, undefined, e.id);
+    assert.equal(p.dr, undefined, e.id);
   }
   // Level feeds in: the same character is stronger at a higher level.
   const wisp = enemies.find(e => e.id === 'graveWisp');
@@ -308,8 +309,8 @@ test('a configured attributeOffset still lowers STR, CON and DEX by 2 after own 
   const custom = { ...settings, attributeOffset: { strength: -2, constitution: -2, dexterity: -2 } };
   const soldier = enemies.find(e => e.id === 'wanderingSoldier');
   const flat = { ...soldier, resolvedAttributes: { strength: 3, dexterity: 1, constitution: 2, wisdom: 0, intelligence: 0 } };
-  assert.equal(enemyPools(flat, custom).ar, 1, 'STR 3 - 2');
-  assert.equal(enemyPools(flat, custom).dr, 0, 'DEX 1 - 2 floors at 0');
-  assert.equal(enemyPools({ ...flat, tier: null }, custom).ar, 3, 'a row without a tier (a player) is not offset');
-  assert.equal(enemyPools(flat, settings).ar, 3, 'the default config applies no offset');
+  // Owner 2026-11-18 (§8): the offset is read through HP (CON 10, STR 5, DEX 3 per point) now that AR/DR are gone.
+  const hp = (row, config) => enemyPools(row, config).hp;
+  assert.equal(hp(flat, settings) - hp(flat, custom), 5 * 2 + 3 * 1 + 10 * 2, 'STR 3-2 = 1, DEX 1-2 floors at 0, CON 2-2 = 0');
+  assert.equal(hp({ ...flat, tier: null }, custom), hp({ ...flat, tier: null }, settings), 'a row without a tier (a player) is not offset');
 });
