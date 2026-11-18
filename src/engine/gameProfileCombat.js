@@ -44,7 +44,8 @@ export function setProfileStance(ctx, entity, carrier) {
   if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx, entity, carrier).stance.effectivenessMultiplier - 1 : 0;
   const previous=entity.combatStance;
   const entering = entity?.itemProps && !sameStance(entity,carrier);
-  const grants = fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
+  // A registry stance entry (enterStance) is a stance-only change: no maneuver entry grant, which the card face does not quote.
+  const grants = !carrier?.registryStanceEntry && fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)

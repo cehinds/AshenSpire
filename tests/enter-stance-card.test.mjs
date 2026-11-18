@@ -177,3 +177,13 @@ test('non-Core Strike and Settle keeps dev numbers: Defend pick Block 8, Counter
   assert.deepEqual(numbers('counter'), [3, 0, 'counter']);
   assert.deepEqual(numbers('attack'), [0, 0, 'attack']);
 });
+
+test('Core 2 with the hit rolls a supported save keeps: Enter: Gorefire pays no unquoted Precision', async () => {
+  const { withLegacyDefaults } = await import('./legacyHitRules.mjs');
+  const combat = withLegacyDefaults(() => liveCore());
+  const before = combat.player.statuses?.precision?.stacks ?? 0;
+  play(combat, give(combat, 'enterGorefire', 'eg1'));
+  assert.equal(combat.player.stanceId, 'gorefire');
+  assert.equal(combat.player.combatStance.maneuver, 'attack');
+  assert.equal(combat.player.statuses?.precision?.stacks ?? 0, before);
+});
