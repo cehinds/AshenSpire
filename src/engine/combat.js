@@ -1948,8 +1948,9 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
-  QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
+  const afterGear = QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
   drainQueue(combat);
+  afterGear();
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;
 

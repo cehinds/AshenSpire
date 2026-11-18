@@ -79,7 +79,7 @@ export function runMods(registries, loadout, classId, run = null) {
   const worn = equippedPieces(registries, loadout, classId);
   for (const piece of worn) {
     const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
-    // The piece's type or group base and a full set's bonus read like its own mods (owner, 2026-11-18; content/source/equipmentTypes.json).
+    // The piece's type or armour group base reads like its own mods (owner, 2026-11-18; content/source/equipmentTypes.json).
     for (const raw of GearPieceMods(piece, worn)) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];

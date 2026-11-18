@@ -23,11 +23,12 @@ export const GearFirstTurnSp = entity => Number(GearProps(entity)?.firstTurnSp) 
 function grantEffect(grant) {
   const n = Math.max(0, grant.amount);
   if (grant.grant === 'block') return { op: 'block', amount: n };
-  if (grant.grant === 'counter') return { op: 'gainCounterStacks', amount: n };
+  // The end-of-turn grants are exact: they take no gain bonus.
+  if (grant.grant === 'counter') return { op: 'gainCounterStacks', amount: n, noGainBonus: true };
   if (grant.grant === 'retreat') return { op: 'moveEngagement', bands: 1 };
   if (grant.grant === 'heal') return { op: 'heal', amount: n };
   if (grant.grant === 'draw') return { op: 'draw', amount: n };
-  if (grant.status) return { op: 'applyStatus', status: grant.status, stacks: n };
+  if (grant.status) return { op: 'applyStatus', status: grant.status, stacks: n, noGainBonus: true };
   return null;
 }
 
@@ -45,14 +46,17 @@ export function QueueGearTurnGrants(ctx, player, phase) {
 
 /** QueueGearCardPlayed(ctx, player, def): what playing a matching card grants (Evade on a Defend, Ward on a spell, a draw, STR until end of turn). */
 export function QueueGearCardPlayed(ctx, player, def) {
+  const after = [];
   const props = GearProps(player);
   const spell = (def?.tags || def?.cardTags || []).includes('camp:spell');
   const state = GearState(ctx, player);
   if (props?.playGrants) for (const grant of props.playGrants) {
     if (!GearSelectorMatches(grant.selector, grant.arg, def) || !grant.conds.every(cond => GearCondMet(cond, state))) continue;
-    if (grant.grant === 'strength') ChangeAttribute(ctx, player, 'strength', grant.amount, { thisTurn: true });
+    // STR until the end of the turn lands once the card's own effects have resolved, so the play that earns it does not quote or deal it.
+    if (grant.grant === 'strength') after.push(() => ChangeAttribute(ctx, player, 'strength', grant.amount, { thisTurn: true }));
     else { const effect = grantEffect(grant); if (effect && grant.amount > 0) queue(ctx, player, effect); }
   }
   if (spell && player?.counters) player.counters.spellsPlayedThisTurn = (player.counters.spellsPlayedThisTurn || 0) + 1;
+  return () => { for (const run of after) run(); };
 }
 

@@ -363,7 +363,7 @@ export function statusReach(bundle, opts = {}) {
   const eq = bundle.equipment || {};
   const modFields = eq.modFields || {};
   // Owner, 2026-11-18: a type's or group's base mods are spoken by every piece of that type, so they count as users too.
-  const typeRows = [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)].map(([id, row]) => ({ id: `type:${id}`, mods: [...(row.mods || []), ...(row.setMods || [])] }));
+  const typeRows = [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)].map(([id, row]) => ({ id: `type:${id}`, mods: row.mods || [] }));
   const pieces = [...(eq.armaments || []), ...(eq.armour || []), ...typeRows];
   const fieldsUsed = new Map(); // field -> [piece ids]
   for (const p of pieces) {

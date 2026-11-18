@@ -25,10 +25,10 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const owned = { has: () => true };
 
-function build({ right, left, classId = 'reaver', player } = {}) {
+function build({ right, left, armor, classId = 'reaver', player } = {}) {
   const run = createRunState({ registries, classId, seed: 31, profileMeta: META });
   const equip = (slot, id) => id && equipPiece(registries, run.loadout, slot, 0, id, owned, { inCombat: false, classId: run.class, attributes: run.attributes });
-  equip('rightHand', right); equip('leftHand', left);
+  equip('rightHand', right); equip('leftHand', left); equip('armor', armor);
   const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'], ...(player ? { player } : {}) });
   dispatch(combat, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(combat, { count: 3 });
@@ -59,12 +59,11 @@ test('mod strings parse selectors, conditions and values; unknown ones are not p
   assert.ok(ParseGearMod('self.thorns=+1'));
 });
 
-test('a type base and a piece signature add together; a full set adds its group bonus', () => {
+test('a type base and a piece signature add together; an armour group base carries its Thorns', () => {
   const sword = registries.equipment.armaments.find(piece => piece.id === 'straightSword');
   assert.deepEqual(GearPieceMods(sword), ['attack.cardDamage=+1', 'sweep.cardDamage=+1', ...sword.mods]);
   const plate = registries.equipment.armour.find(piece => piece.classId === 'reaver' && piece.id === 'default');
-  assert.ok(GearPieceMods(plate, [plate]).includes('self.thorns=+1'), 'a full heavy set carries Thorns 1');
-  assert.ok(!GearPieceMods(plate, []).includes('self.thorns=+1'));
+  assert.ok(GearPieceMods(plate).includes('self.thorns=+1'), 'the heavy body piece carries Thorns 1');
 });
 
 test('the Sword base adds +1 to a physical attack, on the face and in the hit (preview equals play)', () => {
@@ -225,7 +224,7 @@ test('turn grants: a Shield gives 2 Block at the end of the turn', () => {
 test('the gear summary reads types, groups and signatures from data for every worn piece', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 3, profileMeta: META });
   const summary = GearSummary(registries, run.loadout, run.class);
-  assert.ok(summary.statPoints.poise >= 1, 'a light armour group adds Poise');
+  assert.ok(summary.statPoints.dexterity >= 1, 'a light armour group adds DEX');
   assert.ok(summary.cardRules.some(rule => rule.stat === 'block'), 'and Block-card bonuses');
   assert.equal(GearModText(registries, 'sweep.cardDamage=+1'), 'Sweeps: +1 Damage');
   assert.equal(GearModText(registries, 'anyAttack@target:retreating.cardAddDex=+1'), 'Physical attacks against a Retreat-stacked target: +1 DEX to damage');
@@ -264,4 +263,118 @@ test('the face baseline holds always-on gear only; a first-attack trigger turns 
   assert.ok(lit.some(entry => entry.startsWith('up')), `a first-attack bonus is a triggered effect: ${lit}`);
   const calm = build({ right: 'dagger' });
   assert.ok(faceClasses(calm, 'core.sweep').every(entry => entry.startsWith('black')), 'with nothing triggered the face is black');
+});
+
+test('a Hammer Smash sends a front-row enemy back with 1 Retreat stack, as a push does', () => {
+  const world = build({ right: 'warhammer' });
+  const { combat, enemy } = world;
+  assert.ok(combat.player.itemProps.hitRules.some(rule => rule.selector === 'smash' && rule.push === 1), 'the Hammer type carries the push');
+  assert.equal(enemy.row, 'front', 'fixture: the soldier opens in the front row');
+  assert.equal(enemy.statuses.retreat?.stacks || 0, 0);
+  const id = addCard(world, 'core.smash');
+  dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
+  assert.equal(enemy.statuses.retreat?.stacks, 1, 'one Retreat stack');
+  assert.equal(enemy.row, 'back', 'in the back row');
+});
+
+
+// Owner, 2026-11-18: Medium and Light armour. Every Counter (or Evade) gain gives +1 more stack; ending your turn in Counter (or Defend) stance while
+// holding at least 1 of them gives +1. Holding none gives nothing from the end-of-turn part.
+const counterGains = (world, from) => world.combat.eventLog.slice(from).filter(e => e.type === 'counterStacksChanged' && e.targetId === world.combat.player.id).map(e => e.amount);
+const evadeGains = (world, from) => world.combat.eventLog.slice(from).filter(e => e.type === 'statusApplied' && e.status === 'evade' && e.targetId === world.combat.player.id);
+
+test('Medium mail: 3 Counter, ending the turn in Counter stance, gives 1 more', () => {
+  const world = build({ armor: 'vigil' });
+  assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'counter'));
+  world.combat.player.counterStacks = 3;
+  world.combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  const from = world.combat.eventLog.length;
+  dispatch(world.combat, { type: 'endTurn' });
+  assert.deepEqual(counterGains(world, from).slice(0, 1), [1], 'exactly +1, the end grant takes no gain bonus');
+});
+
+test('Medium mail: a card granting 2 Counter gives 3', () => {
+  const world = build({ armor: 'vigil' });
+  const { combat } = world;
+  combat.player.counterStacks = 0;
+  combat.enqueue({ effect: { op: 'gainCounterStacks', target: 'self', amount: 2 }, source: combat.player, owner: combat.player, target: combat.player });
+  dispatch(combat, { type: 'playCard', cardInstanceId: addCard(world, 'core.defend'), targetId: undefined });
+  assert.equal(combat.player.counterStacks, 3);
+});
+
+test('Medium mail: holding no Counter gives nothing at the end of the turn', () => {
+  const world = build({ armor: 'vigil' });
+  world.combat.player.counterStacks = 0;
+  world.combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  const from = world.combat.eventLog.length;
+  dispatch(world.combat, { type: 'endTurn' });
+  assert.deepEqual(counterGains(world, from).slice(0, 1).filter(amount => amount > 0), []);
+});
+
+test('Light leathers: 2 Evade, ending the turn in Defend stance, gives 1 more; with none held, nothing', () => {
+  const world = build({ classId: 'rogue', armor: 'nightveil' });
+  assert.ok(world.combat.player.itemProps.gainBonus.evade === 1);
+  applyStatus(world.combat, world.combat.player, 'evade', 2, world.combat.player);
+  world.combat.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  const from = world.combat.eventLog.length;
+  dispatch(world.combat, { type: 'endTurn' });
+  const gains = evadeGains(world, from);
+  assert.ok(gains.length >= 1 && gains[0].stacks === 1, `exactly +1: ${JSON.stringify(gains.map(e => e.stacks))}`);
+  const none = build({ classId: 'rogue', armor: 'nightveil' });
+  none.combat.player.statuses = {};
+  none.combat.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  const start = none.combat.eventLog.length;
+  dispatch(none.combat, { type: 'endTurn' });
+  assert.equal(evadeGains(none, start).length, 0);
+});
+
+test('Light leathers: a card granting 2 Evade gives 3', () => {
+  const world = build({ classId: 'rogue', armor: 'nightveil' });
+  world.combat.player.statuses = {};
+  world.combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: 'evade', stacks: 2 }, source: world.combat.player, owner: world.combat.player, target: world.combat.player });
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: addCard(world, 'core.defend'), targetId: undefined });
+  assert.equal(world.combat.player.statuses.evade.stacks, 3);
+});
+
+test('Stone Skin is spent hit by hit: Pierce 1, three hits, Stone Skin 2 leaves the third hit piercing for 1', () => {
+  const world = build({ right: 'halberd' });
+  const { combat, enemy } = world;
+  applyStatus(combat, combat.player, 'multiHit', 2, combat.player);
+  enemy.block = 30;
+  applyStatus(combat, enemy, 'stoneHide', 2, enemy);
+  const id = addCard(world, 'core.strike');
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
+  const hits = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
+  assert.equal(hits.length, 3);
+  assert.deepEqual(hits.map(hit => hit.pierced || 0), [0, 0, 1], 'only the third hit passes Block');
+  assert.equal(enemy.statuses.stoneHide?.stacks || 0, 0);
+});
+
+test('the Axe STR arrives after the card resolves: the second Strike quotes what it deals', () => {
+  const world = build({ right: 'battleaxe' });
+  const first = quoteAndPlay(world, 'core.strike');
+  assert.equal(first.quote, first.dealt);
+  const second = quoteAndPlay(world, 'core.strike');
+  assert.equal(second.quote, second.dealt, 'preview equals play on the second Strike');
+  assert.ok(second.dealt >= first.dealt, 'the first Strike STR is in the second');
+});
+
+test('Escalating raises the card cost by 1 SP each time it is played', () => {
+  const world = build({ right: 'straightSword' });
+  world.combat.player.itemProps.cardRules.push({ selector: 'attack', arg: null, conds: [], stat: 'escalate', amount: 1, mode: 'add', source: 'test' });
+  const costOf = () => resolveCombatCard(world.combat, { instanceId: 'esc', cardId: 'core.strike' }).staminaCost;
+  const before = costOf();
+  world.combat.player.energy = 9;
+  const id = addCard(world, 'core.strike');
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: id, targetId: world.enemy.id });
+  const played = world.combat.piles.discard.find(card => card.instanceId === id);
+  assert.ok(played);
+  assert.equal(resolveCombatCard(world.combat, played).staminaCost, before + 1);
+});
+
+test('a Bow Reach stack is granted at the start of the turn, so it is live for the attack that follows', () => {
+  const world = build({ right: 'shortbow' });
+  assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'start' && grant.status === 'reach'));
+  assert.equal(world.combat.player.statuses.reach?.stacks, 1, 'the stack is there at turn 1');
 });

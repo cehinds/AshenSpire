@@ -1,4 +1,5 @@
 import { ChannelWeight } from '../model/damageChannels.js';
+import { GearGainBonus } from './gearReceipt.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -1689,7 +1690,7 @@ function runGuardStackOpcode(ctx, action, eff) {
     // A Counter card adds the Block it stands behind, after its own Block grant.
     // Owner 2026-11-15: under the card-stack rule the grant is the card's own 1..3 (CounterStackGrant), never the Block held.
     const grant = eff.amount === undefined ? CounterStackGrant(ctx, action.card) : 0;
-    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount !== undefined ? evalNum(ctx, action, eff.amount, 0, t) : grant || t.block);
+    for (const t of resolveTargets(ctx, action, eff.target)) { const gained = eff.amount !== undefined ? evalNum(ctx, action, eff.amount, 0, t) : grant || t.block; gainCounterStacks(ctx, t, gained > 0 && !eff.noGainBonus ? gained + GearGainBonus(t, 'counter') : gained); }
     return true;
   }
   if (eff.op === 'applyReflect') {
@@ -1925,7 +1926,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     applyStatus: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const authored = evalNum(ctx, action, eff.stacks, 1, t);
+        const authored = evalNum(ctx, action, eff.stacks, 1, t) + (eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(t, 'evade') : 0); // Light full set: every Evade gain gives more
         const stacks = FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0)); // W25-F: the flux lifts the stacks a card applies
         const held = t.statuses?.[eff.status]?.stacks || 0;
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {

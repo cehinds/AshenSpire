@@ -27,9 +27,9 @@ for (const [classId, gearId] of Object.entries(GEAR)) {
   });
 }
 
-test('an armour group base Poise replaces the armour item\'s own Poise: a level-1 Reaver in plate opens at 15', () => {
+test('type and group Poise bases are small (Heavy +2, Medium +1, Light 0, Greatsword 0): a level-1 Reaver in plate with a Greatsword keeps its items\' own Poise', () => {
   const run = createRunState({ registries, classId: 'reaver', seed: 7, profileMeta: meta });
   const receipt = gameProfileEquipmentReceipt(registries, run);
-  assert.equal(receipt.sources.find(row => row.slot === 'armor').poise, 0, 'the plate\'s item Poise is replaced by the Heavy base');
-  assert.equal(receipt.sources.find(row => row.sourceId === 'type/poise').poise, 6, 'Heavy +5 and the Greatsword +1');
+  assert.equal(receipt.sources.find(row => row.slot === 'armor').poise, 6, 'the plate keeps its item Poise');
+  assert.equal(receipt.sources.find(row => row.sourceId === 'type/poise').poise, 2, 'and the Heavy base adds 2');
 });

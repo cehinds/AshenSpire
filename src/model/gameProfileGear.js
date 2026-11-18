@@ -4,7 +4,7 @@ import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfi
 import { ItemStatBonus } from './itemPicks.js';
 import { ClassLevelAttributeBonus } from './classLevelBonus.js';
 import { GearIdOf } from './gearIds.js';
-import { GearSummary, GearGroupSetsPoise } from './gearEffects.js';
+import { GearSummary } from './gearEffects.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
@@ -27,8 +27,6 @@ export function gameProfileEquipmentReceipt(registries, run) {
     const resolved = resolveGearItem(item, settings, {rank: (item.rank ?? 1) + upgradeTierBonus(gameModule(run,'equipment'), tier)});
     // The Blacksmith's picks and the item's properties add stat points on top (W25 step 4).
     const values = { ...resolved.values };
-    // The armour group's base Poise replaces the piece's own Poise points (owner, 2026-11-18), so armour is not counted twice.
-    if (armor && GearGroupSetsPoise((registries?.equipment?.armour || []).find(row => row.classId === run.class && row.id === id))) values.poise = 0;
     for (const [key, n] of Object.entries(ItemStatBonus(run, sourceId))) values[key] = (values[key] || 0) + n;
     for (const key of STATS) totals[key] += values[key] || 0;
     sources.push({ name:item.name.replace(/_/g,' '), kind:'equipment', sourceId, slot, itemId:item.id, ...values, resolved });

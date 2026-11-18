@@ -3950,8 +3950,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(cycleSet(POOL_REG, run.loadout, 'rightHand', 1, { meta: {}, inCombat: false }), 'the probe set becomes active');
     stampDeck(POOL_REG, run);
     eq(JSON.stringify(runMods(POOL_REG, run.loadout, run.class)), JSON.stringify({
-      maxHp: 10, maxMana: 1, maxStamina: 1, swapCostDelta: 0, startStatuses: [{ status: 'thorns', stacks: 1 }], statPoints: { poise: 6, dexterity: -1 },
-    }), 'runMods exposes every authored pool bonus (a Reaver heavy starting set adds Thorns 1, +5 Poise and -1 DEX, 2026-11-18)');
+      maxHp: 10, maxMana: 1, maxStamina: 1, swapCostDelta: 0, startStatuses: [{ status: 'thorns', stacks: 1 }], statPoints: { poise: 3, dexterity: -1 },
+    }), 'runMods exposes every authored pool bonus (a Reaver heavy starting armour adds Thorns 1, +2 Poise, plus 1 from the weapon, and -1 DEX, 2026-11-18)');
     eq(run.maxHp, base.hp + 10, 'camp equip adds 10 maximum HP');
     eq(run.maxHp - run.hp, 7, 'camp equip carries the absolute HP deficit');
     eq(run.maxMana, base.mana + 1, 'camp equip adds 1 maximum Mana');

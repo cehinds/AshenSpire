@@ -17,7 +17,7 @@ export const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale'
 export const EQUIPMENT_POOL_FIELDS = Object.freeze(['maxHp', 'maxMana', 'maxStamina']);
 export const RUN_MOD_APPLIES = Object.freeze([...EQUIPMENT_POOL_FIELDS, 'startStatus', 'swapCost', 'statPoint', 'flag', 'resist']);
 // Owner, 2026-11-18: the gear scope. Each word is a consumer in model/gearEffects.js (card rules, hit rules, turn and play grants).
-export const GEAR_MOD_APPLIES = Object.freeze(['cardStat', 'hitStatus', 'hitRemove', 'turnGrant', 'playGrant']);
+export const GEAR_MOD_APPLIES = Object.freeze(['cardStat', 'hitStatus', 'hitRemove', 'hitPush', 'turnGrant', 'playGrant']);
 export const EQUIPMENT_POOL_CURRENT = Object.freeze({ maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' });
 
 /** Move one maximum while retaining deficit that may exceed the smaller vessel. */

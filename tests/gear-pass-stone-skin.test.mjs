@@ -88,3 +88,21 @@ test('Stone Skin is gone at the start of its owner\'s turn', () => {
   decayAtTurnStart(combat, player);
   assert.ok(!player.statuses.stoneHide || player.statuses.stoneHide.stacks === 0);
 });
+
+test('a three-hit card spends Stone Skin hit by hit in the quote too: Pierce 1, Stone Skin 2 passes only the third hit', () => {
+  const card = { tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], gear: { pierce: 1 } };
+  const setup = () => {
+    const { combat, enemy, player } = world();
+    enemy.block = 30;
+    applyStatus(combat, enemy, 'stoneHide', 2, enemy);
+    return { combat, enemy, player };
+  };
+  const quoted = setup();
+  const quote = previewDamageHits(quoted.combat, quoted.player, quoted.enemy, 20, card.tags, card, 3);
+  const live = setup();
+  const before = live.enemy.hp;
+  for (let hit = 0; hit < 3; hit++) applyAttackDamage(live.combat, live.player, live.enemy, 20, card.tags, card);
+  assert.equal(quote.hpLoss, before - live.enemy.hp, 'the quote equals the three hits');
+  assert.equal(live.enemy.statuses.stoneHide?.stacks || 0, 0);
+  assert.equal(quoted.enemy.statuses.stoneHide.stacks, 2, 'the quote spent nothing on the real target');
+});

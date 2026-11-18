@@ -1,4 +1,6 @@
 import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as ProfileCombat from './gameProfileCombat.js';
 import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
@@ -106,6 +108,12 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
   // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
   defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
+  // Stone Skin spent against this hit's Pierce reaches the next hit of the same card, as live does (actions.js applyProfileDamage).
+  if (receipt.skinSpent > 0) {
+    const skin = fixCorePierceRules(fixCoreRules(ctx, defender)).skinStatus, held = skin && defender.statuses?.[skin];
+    // The detached copy shares its statuses with the real target, so the change is made on a copy.
+    if (held) { const left = held.stacks - receipt.skinSpent, next = { ...defender.statuses }; if (left > 0) next[skin] = { ...held, stacks: left }; else delete next[skin]; defender.statuses = next; }
+  }
   // A reflected hit spends one Reflect stack, as live does (SPEC §17).
   if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
   if (!fixCoreEnabled(ctx)) return;

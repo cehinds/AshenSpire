@@ -43,17 +43,10 @@ export function GearTypeRow(piece) {
   return id && GEAR_TYPES.weaponTypes[id] ? { id, group: false, ...GEAR_TYPES.weaponTypes[id] } : null;
 }
 
-/** True when every worn armour piece belongs to `groupId` and at least `setPieces` of them are worn (owner: a full set of one group). */
-export function GearFullSet(pieces, groupId) {
-  const armour = pieces.filter(piece => piece.kind === 'armor');
-  return armour.length >= GEAR_TYPES.setPieces && armour.every(piece => GearArmourGroupOf(piece) === groupId);
-}
-
-/** GearPieceMods(piece, worn) -> the mod strings a worn piece carries: its type or group base, the group's full-set bonus, then its own mods. */
-export function GearPieceMods(piece, worn = []) {
+/** GearPieceMods(piece) -> the mod strings a worn piece carries: its type or armour group base (one body piece wears the whole group base, Thorns and all), then its own mods. */
+export function GearPieceMods(piece) {
   const row = GearTypeRow(piece);
-  const base = row ? [...(row.mods || []), ...(row.group && GearFullSet(worn, row.id) ? row.setMods || [] : [])] : [];
-  return [...base, ...(piece?.mods || [])];
+  return [...(row?.mods || []), ...(piece?.mods || [])];
 }
 
 const wholeNumber = (mode, value, prior = 0) => (mode === 'add' ? prior + value : value);
@@ -67,7 +60,7 @@ export function GearSummary(registries, loadout, classId) {
   const worn = loadout ? equippedPieces(registries, loadout, classId) : [];
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
     mainWeaponType: loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
-  for (const piece of worn) for (const raw of GearPieceMods(piece, worn)) {
+  for (const piece of worn) for (const raw of GearPieceMods(piece)) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
     const common = { selector: mod.selector, arg: mod.arg, conds: mod.conds, source: piece.id };
@@ -80,6 +73,7 @@ export function GearSummary(registries, loadout, classId) {
       if (spec.apply === 'cardStat') out.cardRules.push({ ...common, stat: spec.op, amount: mod.value, mode: mod.mode });
       else if (spec.apply === 'hitStatus') out.hitRules.push({ ...common, status: spec.status, stacks: mod.value });
       else if (spec.apply === 'hitRemove') out.hitRules.push({ ...common, remove: spec.status, stacks: mod.value });
+      else if (spec.apply === 'hitPush') out.hitRules.push({ ...common, push: mod.value });
       else if (spec.apply === 'turnGrant') out.turnGrants.push({ phase: mod.selector, conds: mod.conds, grant: spec.op || 'status', status: spec.status || null, amount: mod.value, source: piece.id });
       else if (spec.apply === 'playGrant') out.playGrants.push({ ...common, grant: spec.op || 'status', status: spec.status || null, amount: mod.value });
     }
@@ -93,6 +87,11 @@ export function GearItemProps(summary) {
   for (const key of ['cardRules', 'hitRules', 'turnGrants', 'playGrants']) if (summary[key].length) props[key] = summary[key];
   if (Object.keys(summary.resist).length) props.gearResist = summary.resist;
   for (const key of ['firstTurnSp', 'vulnMelee', 'twoHanded']) if (summary.flags[key]) props[key] = summary.flags[key];
+  // Every Counter or Evade gain gives this many more stacks (Medium and Light armour); the end-of-turn grants below are exempt.
+  const gainBonus = {};
+  if (summary.flags.gainCounter) gainBonus.counter = summary.flags.gainCounter;
+  if (summary.flags.gainEvade) gainBonus.evade = summary.flags.gainEvade;
+  if (Object.keys(gainBonus).length) props.gainBonus = gainBonus;
   if (summary.mainWeaponType) props.mainWeaponType = summary.mainWeaponType;
   return props;
 }
@@ -127,6 +126,7 @@ export function GearCondMet(cond, state = {}) {
   const kind = GEAR_TYPES.conditions[cond.name]?.kind;
   if (kind === 'stance') return state.stance === cond.arg;
   if (kind === 'weapon') return state.weaponType === cond.arg;
+  if (kind === 'holding') return (state.holding?.[cond.arg] || 0) >= 1; // holding 0 stacks gives nothing
   if (kind === 'first') return cond.arg === 'fight' ? (state.attacksPlayedThisCombat || 0) === 0 : (state.spellsPlayedThisTurn || 0) === 0;
   return true;
 }
@@ -219,13 +219,14 @@ export function GearHitAdds(rules, carrier, target, state = {}) {
 
 /** Hit riders: the statuses a matching hit applies and the stacks it removes, for `proposalHitRules`. */
 export function GearHitRiders(rules, carrier, target, state = {}) {
-  const applies = [], removes = [];
+  const applies = [], removes = [], pushes = [];
   for (const rule of rules || []) {
     if (!GearSelectorMatches(rule.selector, rule.arg, carrier)) continue;
     if (!rule.conds.every(cond => (GEAR_TYPES.conditions[cond.name]?.kind === 'target' ? GearTargetCondMet(cond, target) : GearCondMet(cond, state)))) continue;
-    if (rule.remove) removes.push({ status: rule.remove, stacks: rule.stacks }); else applies.push({ status: rule.status, stacks: rule.stacks });
+    if (rule.push) pushes.push({ bands: rule.push });
+    else if (rule.remove) removes.push({ status: rule.remove, stacks: rule.stacks }); else applies.push({ status: rule.status, stacks: rule.stacks });
   }
-  return { applies, removes };
+  return { applies, removes, pushes };
 }
 
 /**
@@ -259,13 +260,4 @@ export function GearModText(registries, raw) {
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;
-}
-
-/**
- * GearGroupSetsPoise(piece) -> true when an armour piece's group base states Poise (Light +1, Medium +3, Heavy +5). Owner, 2026-11-18: that base REPLACES the
- * piece's old per-item Poise points rather than adding to them, so armour is not counted twice.
- */
-export function GearGroupSetsPoise(piece) {
-  const row = piece?.kind === 'armor' ? GearTypeRow(piece) : null;
-  return !!row && (row.mods || []).some(raw => ParseGearMod(raw)?.field === 'statPoise');
 }

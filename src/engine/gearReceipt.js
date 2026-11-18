@@ -3,6 +3,8 @@ import { GearHitAdds } from '../model/gearEffects.js';
 import { ChannelWeight } from '../model/damageChannels.js';
 import { sourceRatingValue } from '../model/combatRatings.js';
 
+/** GearGainBonus(entity, kind) -> the extra stacks every `counter` or `evade` gain gives its wearer (0 for an enemy or no such gear). */
+export const GearGainBonus = (entity, kind) => Math.max(0, Number(GearProps(entity)?.gainBonus?.[kind]) || 0);
 export const GearProps = entity => (entity && entity.kind !== 'enemy' ? entity.itemProps || null : null);
 
 /** The state a gear condition reads, from the player as it stands now. */
@@ -11,6 +13,7 @@ export const GearState = (ctx, entity) => ({
   attacksPlayedThisCombat: entity?.counters?.attacksPlayedThisCombat || 0,
   spellsPlayedThisTurn: entity?.counters?.spellsPlayedThisTurn || 0,
   weaponType: GearProps(entity)?.mainWeaponType || null,
+  holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
 });
 
 /**

@@ -185,7 +185,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (Array.isArray(eq.armour) && !eq.armour.some((piece) => piece.id === pieceId)) problems.push(`equipmentTypes.json: armour '${pieceId}' is not an outfit`);
   }
   for (const [id, row] of [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)]) {
-    for (const raw of [...(row.mods || []), ...(row.setMods || [])]) {
+    for (const raw of (row.mods || [])) {
       const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
       if (!spec) problems.push(`equipmentTypes.json: '${id}' has an unknown or unparseable mod '${raw}'`);
       else if (spec.scope === 'gear') problems.push(...gearModProblems(id, raw));

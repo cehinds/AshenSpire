@@ -159,7 +159,7 @@ Group bases:
 - **Medium (mail):** +3 Poise, Block cards +2.
 - **Heavy (plate):** +5 Poise, −1 DEX, Block cards +3.
 
-Full-set bonuses: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1. No class restrictions; class-themed drops appear 75% of the time.
+Armour-type bonuses (owner, 2026-11-18), from wearing the one armour piece of that type (there are no multi-piece sets): unarmoured +1 max MP; light: every Evade gain +1 stack, and ending a turn in Defend stance holding Evade gives +1; medium: every Counter gain +1 stack, and ending a turn in Counter stance holding Counter gives +1; heavy Thorns 1.
 
 | Item | Group | Rarity | Second bonus |
 |---|---|---|---|
