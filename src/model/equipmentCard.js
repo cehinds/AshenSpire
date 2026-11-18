@@ -41,8 +41,8 @@ export function equipmentCardModel(registries, piece) {
   const type = armor ? `Armour · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });
   let facts = armor
-    ? [field('DR', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armour bonus to Defense cards: adds this much Block. This is not damage reduction or the full equipped Defense Rating.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
-    : [field('Attack', piece.attackRating, 'Base intrinsic Attack Rating, before attributes and smithing. This is not the final damage of a played card.'), field('Defense', piece.defenseRating, 'Base intrinsic Defense Rating. See the live comparison and resulting cards for actual Block and combat bonuses.'), field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
+    ? [field('Block', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armour bonus to Defense cards: adds this much Block. This is not damage reduction.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
+    : [field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
   let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
     const mod = parseMod(raw);
     const spec = registries.equipment.modFields[mod.field];
@@ -56,12 +56,12 @@ export function equipmentCardModel(registries, piece) {
     (row.source?.id || row.id) === piece.id && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
-    const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
+    const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'STR',dr:'DEX',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
     // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule), except under `statPoints`,
     // where the tier is attribute points already in the receipt (owner, 2026-11-17).
     const tierAR = !armor && piece.kind !== 'shield' && !configuredGear.statPoints ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
-      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
+      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped STR.`
         : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
     const effect = gearEffectText(registries, receipt.values, labels, piece.blurb);
     bonuses = armor || piece.kind === 'shield' ? [field(effect.text, effect.text, effect.explanation)] : [];

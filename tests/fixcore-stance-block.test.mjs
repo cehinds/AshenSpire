@@ -27,7 +27,7 @@ function liveCore() {
  return combat;
 }
 test('Core defend stance adds its DR bonus to Block: face, preview and live gain agree (owner 2026-10-19)',()=>{
- const combat=liveCore(),weight=combat.gameProfile.modules?.effects?.defenseRatingWeight??1;
+ const combat=liveCore(),weight=combat.gameProfile.modules?.effects?.dexterityBlockWeight??1;
  const inst={instanceId:'stance-defend',cardId:'core.defend',upgraded:false};combat.piles.hand.push(inst);
  const shown=previewCard(combat,inst.instanceId).values.find(v=>v.op==='block');
  combat.player.combatStance={maneuver:'defend',camp:'physical',range:'melee'};

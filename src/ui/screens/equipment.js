@@ -1,3 +1,4 @@
+import { channelLabel } from '../../model/damageChannels.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { logicalViewport } from '../viewViewport.js';
@@ -1352,7 +1353,7 @@ export function mountEquipment(host, {
       const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
-        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
+        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${channelLabel(row.receipt.rating.id)} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
       // A power face: the label, its gear bonus as the description, the value trailing as StatusText.
       const powerFace = face({
@@ -1600,8 +1601,6 @@ export function mountEquipment(host, {
       fact('Combat bonuses', summaryItem.bonus),
       fact('Smithing tier', String(smithingLevel)),
       ...(intrinsic ? [
-        fact('Attack rating (AR)', String(intrinsic.attackRating)),
-        fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
         fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
         fact('Unique Skill Stamina', String(intrinsic.uniqueSkillStaminaCost)),

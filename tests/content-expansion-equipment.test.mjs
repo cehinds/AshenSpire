@@ -143,7 +143,7 @@ for (const [id, classId, slot, pool] of [
     assert.equal(receipt.thresholds, level === 6 ? 2 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
   }
   const beforeAssignment = run[maxKey];
-  const assigned = pool === 'mana' ? 'wisdom' : 'constitution';
+  const assigned = pool === 'mana' ? 'wisdom' : 'dexterity'; // owner, 2026-11-18: Mana is WIS and Stamina is DEX, each in fours
   const attributeBefore = run.attributes[assigned];
   for (let point = 0; point < 5; point++) {
     applyLevelUp(r, run, assigned);

@@ -543,7 +543,6 @@
       "plate"
     ],
     "points": {
-      "dr": 1,
       "constitution": 1
     },
     "classes": [
@@ -567,9 +566,7 @@
     "tags": [
       "mail"
     ],
-    "points": {
-      "dr": 1
-    },
+    "points": {},
     "classes": [
       "reaver"
     ],
@@ -589,7 +586,6 @@
       "plate"
     ],
     "points": {
-      "dr": 1,
       "strength": 1
     },
     "classes": [
@@ -611,9 +607,7 @@
       "mail",
       "unwieldy"
     ],
-    "points": {
-      "dr": 1
-    },
+    "points": {},
     "classes": [
       "reaver"
     ],
@@ -716,9 +710,7 @@
     "tags": [
       "robes"
     ],
-    "points": {
-      "dr": 1
-    },
+    "points": {},
     "classes": [
       "herald",
       "reaver",
@@ -780,7 +772,6 @@
       "robes"
     ],
     "points": {
-      "dr": 1,
       "constitution": 1
     },
     "classes": [
@@ -822,9 +813,7 @@
     "tags": [
       "leathers"
     ],
-    "points": {
-      "dr": 1
-    },
+    "points": {},
     "classes": [
       "rogue"
     ],
@@ -883,9 +872,7 @@
       "plate",
       "encumbered"
     ],
-    "points": {
-      "dr": 1
-    },
+    "points": {},
     "classes": [
       "reaver"
     ],

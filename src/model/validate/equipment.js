@@ -56,7 +56,7 @@ export function equipmentProblems(b, err, ctx) {
     }
     const armamentTagIds = (id) => armamentTags.get(id) || [];
 
-    const intrinsicFields = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost'];
+    const intrinsicFields = ['weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost'];
     for (const row of Array.isArray(equipment.armaments) ? equipment.armaments : []) {
       const id = row && row.id || '?';
       for (const field of intrinsicFields) {

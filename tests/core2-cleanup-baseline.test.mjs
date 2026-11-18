@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-18 (AR, DR and PR removed; hand, SP and MP per four points): the runtime hash and the current-profile scenarios moved by design.
 // Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
 // Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
 // Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.

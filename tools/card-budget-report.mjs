@@ -35,7 +35,7 @@ const registries = Profile.bindGameProfileRegistries(createRegistries(Profile.ap
 const META = { gameProfileUnlocks: { [shipped.id]: { completedRunIds: ['a', 'b', 'c'] } } };
 const CLASSES = ['reaver', 'starseer', 'rogue', 'herald'];
 const effects = shipped.modules.effects;
-const SHIPPED_SETTINGS = ['playerDamageMultiplier', 'enemyDamageMultiplier', 'blockGainMultiplier', 'baseDamageMultiplier', 'spellPoiseDamageMultiplier', 'attackRatingWeight', 'defenseRatingWeight']
+const SHIPPED_SETTINGS = ['playerDamageMultiplier', 'enemyDamageMultiplier', 'blockGainMultiplier', 'baseDamageMultiplier', 'spellPoiseDamageMultiplier', 'strengthDamageWeight', 'dexterityBlockWeight']
   .map(key => `${key} ${effects[key]}`).join(', ');
 
 // ---------------------------------------------------------------------------------------------------------------------

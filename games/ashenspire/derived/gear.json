@@ -1624,7 +1624,6 @@
       "plate"
     ],
     "setPoints": {
-      "dr": 1,
       "constitution": 1
     },
     "points": {
@@ -1680,9 +1679,7 @@
     "tags": [
       "mail"
     ],
-    "setPoints": {
-      "dr": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1737,7 +1734,6 @@
       "plate"
     ],
     "setPoints": {
-      "dr": 1,
       "strength": 1
     },
     "points": {
@@ -1794,9 +1790,7 @@
       "mail",
       "unwieldy"
     ],
-    "setPoints": {
-      "dr": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2082,9 +2076,7 @@
     "tags": [
       "robes"
     ],
-    "setPoints": {
-      "dr": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2255,7 +2247,6 @@
       "robes"
     ],
     "setPoints": {
-      "dr": 1,
       "constitution": 1
     },
     "points": {
@@ -2368,9 +2359,7 @@
     "tags": [
       "leathers"
     ],
-    "setPoints": {
-      "dr": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2540,9 +2529,7 @@
       "plate",
       "encumbered"
     ],
-    "setPoints": {
-      "dr": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,

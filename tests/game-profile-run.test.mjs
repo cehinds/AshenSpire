@@ -32,7 +32,7 @@ test('fixed classes, eleven starters, persistent pin and restamping do not mint 
  stampDeck(reg,run);assert.equal(run.deck.length,11);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,2);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
- const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);
+ const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,5+Math.floor(gameProfileEffectiveAttributes(reg,star).intelligence/4));
  const restored=deserializeRun(serializeRun(run));assert.equal(restored.gameProfile.hash,profile.hash);assert.equal(restored.runId,run.runId);
 });
 
