@@ -194,7 +194,7 @@ These override the generic Poise rule for the named items:
   - **Throwable:** Attack and Smash cards can be thrown, which gives them Reach. A thrown attack also carries a temporary Weak drawback. *(decided: Weak 1 for that attack only)*
 - **Twinblade:** Multi-hit on all attacks.
 - **Bows:** gain 1 Reach stack at the end of your turn.
-- **Katana:** add DEX to melee physical attacks. Smash inflicts 1 Bleed.
+- **Katana:** adds DEX to Attack, Sweep and Smash cards. Smash also inflicts 1 Bleed.
 
 **New tags:**
 - **Multi-hit:** each stack repeats the attack once more, so 1 stack makes 1 attack into 2.
