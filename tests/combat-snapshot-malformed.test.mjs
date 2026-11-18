@@ -28,6 +28,8 @@ function pendingReaction() {
   const { combat } = fight;
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  // The knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it, so lend the Strike attack rating.
+  combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: combat.enemies[0].id });
   assert.ok(combat.pendingReaction);
   assert.ok(combat.reactionStack.entries.some(entry => entry.side === 'enemy'));
