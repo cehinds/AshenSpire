@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (245 tool files, plus the 9 subfolders)
+## Tools something references (246 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -165,6 +165,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `launch.mjs` | launch — the one-click launcher. | wf sync-dev-to-alternative-dev, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
 | `layered-art.mjs` | (no header comment) | tests display-art-cache, layered-art-pack; tools asset-pack, buildversion, bundle +1 |
+| `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
 | `linkcheck.mjs` | linkcheck — every named import in the tree resolves to a real | wf dev-preview; tests linkcheck-batch-sharing, run-node-lanes, run-node +1; tools gatelist; docs DEVELOPER.md; other src/ui/screens/rest.js |
 | `local-checks.mjs` | Shared finite local QA payload. Run in an owned background worker when needed. | tests local-checks-snapshot; docs docs/local-background-checks.md |
