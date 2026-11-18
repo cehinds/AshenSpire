@@ -69,3 +69,23 @@ test('a face rendered with the combat as rules matches the same card outside com
     assert.equal(number(face(combat, 'core.defend')), number(face(run, 'core.defend')), `${classId} Defend in the pile viewer`);
   }
 });
+
+// Codex review on PR #2835: an untyped spell takes its wielded armament's type before the physical/magic split, as combat resolves it
+// (a Herald's Arcane Spark is Arcane, half magic), so its face cuts the same physical share as the receipt.
+test('an untyped spell face reads the wielded armament type, as the combat carrier does', async () => {
+  const { tacticalCarrier } = await import('../src/engine/combatCardTactics.js');
+  const { magicShareOf } = await import('../src/model/combatRatings.js');
+  for (const classId of ['herald', 'starseer']) {
+    const run = newRun(classId);
+    const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+    combat.piles.hand.push({ instanceId: 'probe', cardId: 'core.cantrip' });
+    const hit = previewCard(combat, 'probe', combat.enemies[0].id).values[0].damageReceipt.hits[0];
+    const attributed = hit.sources.find(source => source.id === 'pr:0' || source.id === 'pr');
+    assert.ok(attributed, 'the receipt names the magic-stat stage');
+    const share = magicShareOf(tacticalCarrier(registries.cards.get('core.cantrip'), {}, combat, combat.player).combatProfile);
+    const physical = attributed.effective * (1 - share);
+    const expected = Math.floor((attributed.effective - physical + physical * effects.physicalDamageMultiplier) * effects.playerDamageMultiplier);
+    assert.equal(number(face(run, 'core.cantrip')), expected, `${classId} Arcane Spark outside combat`);
+    assert.equal(number(face(combat, 'core.cantrip')), expected, `${classId} Arcane Spark in the pile viewer`);
+  }
+});
