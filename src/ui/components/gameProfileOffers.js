@@ -931,7 +931,8 @@ function buildPickConfirmDetails({
     names,
     unused,
     canDeck,
-    toDeck,
+    canEdit,
+    destination,
     onDestination,
 })
 {
@@ -977,29 +978,37 @@ function buildPickConfirmDetails({
     const deckButton = buildDestinationButton('reward.configured.addToDeck', 'deck');
     deckButton.disabled = !canDeck;
     const libraryButton = buildDestinationButton('reward.configured.addToLibrary', 'library');
-    const mark = (isDeck) =>
+    // Edit deck keeps the card in the library and opens the deck editor with it ready (one card only).
+    const editButton = canEdit
+        ? buildDestinationButton('reward.configured.editDeck', 'edit')
+        : null;
+    const buttons = [deckButton, libraryButton, editButton].filter(Boolean);
+    const mark = (chosen) =>
     {
-        for (const [node, isChosen] of [[deckButton, isDeck], [libraryButton, !isDeck]])
+        for (const node of buttons)
         {
+            const isChosen = node.dataset.destination === chosen;
             node.classList.toggle(CHOSEN_CLASS, isChosen);
             node.setAttribute('aria-checked', String(isChosen));
         }
-        onDestination(isDeck);
+        onDestination(chosen);
     };
-    deckButton.addEventListener('click', () =>
+    for (const node of buttons)
     {
-        if (!deckButton.disabled)
+        node.addEventListener('click', () =>
         {
-            mark(true);
-        }
-    });
-    libraryButton.addEventListener('click', () => mark(false));
-    mark(toDeck);
+            if (!node.disabled)
+            {
+                mark(node.dataset.destination);
+            }
+        });
+    }
+    mark(destination);
     details.append(buildElement('div', {
         class: 'reward-pick-destinations',
         role: 'radiogroup',
         'aria-label': translate('reward.picks.destination.label'),
-    }, [deckButton, libraryButton]));
+    }, buttons));
     if (!canDeck)
     {
         details.append(buildElement('p', {
@@ -1020,6 +1029,8 @@ function mountCardPickDoor(appRoot, doorArgs)
         onContinue,
         onAddToDeck,
         addRefusal,
+        onEditDeck,
+        canEditDeck,
         deckMax,
         spoils,
         initialStatus,
@@ -1234,7 +1245,10 @@ function mountCardPickDoor(appRoot, doorArgs)
         }
         const picks = [...selected].sort((a, b) => a - b);
         const canDeck = canAllJoinDeck(picks);
-        let toDeck = canDeck;
+        const canEdit = !!(onEditDeck && canEditDeck) && picks.length === 1;
+        let destination = canDeck
+            ? 'deck'
+            : 'library';
         OpenConfirmationModal({
             title: translate('reward.picks.continue.title'),
             message: picks.length
@@ -1248,16 +1262,17 @@ function mountCardPickDoor(appRoot, doorArgs)
                 }),
                 unused: picksAllowed - picks.length,
                 canDeck,
-                toDeck,
-                onDestination: (isDeck) =>
+                canEdit,
+                destination,
+                onDestination: (chosen) =>
                 {
-                    toDeck = isDeck;
+                    destination = chosen;
                 },
             }),
             confirmLabel: translate(CONFIRM_LABEL_KEY),
             cancelLabel: translate('common.back'),
             returnFocusElement: continueButton,
-            onConfirm: () => claimChosen(picks, () => toDeck),
+            onConfirm: () => claimChosen(picks, destination),
         });
     }
 
@@ -1289,10 +1304,10 @@ function mountCardPickDoor(appRoot, doorArgs)
         }
     }
 
-    async function claimChosen(picks, readToDeck)
+    async function claimChosen(picks, destination)
     {
         setBusy(true);
-        const toDeck = readToDeck();
+        const toDeck = destination === 'deck';
         try
         {
             for (const optionIndex of picks)
@@ -1315,6 +1330,12 @@ function mountCardPickDoor(appRoot, doorArgs)
         }
         areCardsClaimed = true;
         setBusy(false);
+        if (destination === 'edit')
+        {
+            // The deck editor opens with the card ready; leaving it carries on to the next step.
+            onEditDeck(picks[0], afterCards);
+            return;
+        }
         afterCards();
     }
 
