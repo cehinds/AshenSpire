@@ -1082,7 +1082,9 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "rank.cantrip"
+      "rank.cantrip",
+      "school:force",
+      "retreat"
     ],
     "textTemplate": "Deal {damage} damage. Retreat one band.",
     "upgrade": {
