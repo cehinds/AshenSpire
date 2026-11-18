@@ -1070,9 +1070,9 @@ Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward 
 
   | Card | Class | Camp | Condition | Payoff |
   |---|---|---|---|---|
-  | Opening Cut | Reaver | martial | target Idle | 3 (4) damage; the target loses 3 (4) HP |
+  | Opening Cut | Reaver | martial | target Idle | 3 (5) damage; the target loses 3 (4) HP |
   | Break Focus | Rogue | martial | target in Prepared | 3 (4) damage; the target loses 2 (3) HP |
-  | Unguarded Bolt | Starseer | spell | target Idle | 3 (4) damage; the target loses 2 (3) HP |
+  | Unguarded Bolt | Starseer | spell | target Idle | 3 (5) damage; the target loses 1 HP |
   | Hold the Line | Reaver | martial | you in Defense | 3 (4) damage, 5 (7) Block |
   | Sanctified Guard | Herald | spell | you in Defense | 4 (5) Block, +4 (6) |
   | Focused Star | Starseer | spell | you in Prepared | 3 (4) damage, +3 (4) |
@@ -1083,7 +1083,7 @@ Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward 
   | Distant Star | Starseer | spell | playable only at Reach | 5 (7) damage, 1 Weak |
   | Close Quarters | Rogue | martial, Reach | target at Melee | 3 (4) damage, +3 (4) |
 
-- **No double-dip with the stance weakness** (owner, 2026-11-17, #2816 review). Idle (×1.25 from every hit) and Prepared (×1.25 from melee) already pay against a matching target, so the stance payoffs add a flat HP loss (not damage, so no rating or weakness scales it, and no Vulnerable). Like every `loseHp`, it ignores Block, Ward and Barrier (§4.2); the rules text says "ignoring Block", and every text path reads it as "Target loses N HP (ignores Block)", never as a cost the player pays ("Pay N HP" stays for HP the card's owner loses). Against a matching target the whole play lands at 1.5–2× the same card's hit on a target in an ordinary stance: Opening Cut 12 vs 7 (1.71×), Break Focus 14 vs 7 (2.00×), Unguarded Bolt 12 vs 7 (1.71×); upgraded 15 vs 9, 16 vs 9, 15 vs 9 (reference reaver, rogue and starseer against a Wandering Soldier).
+- **No double-dip with the stance weakness** (owner, 2026-11-17, #2816 review). Idle (×1.25 from every hit) and Prepared (×1.25 from melee) already pay against a matching target, so the stance payoffs add a flat HP loss (not damage, so no rating or weakness scales it, and no Vulnerable). Like every `loseHp`, it ignores Block, Ward and Barrier (§4.2); the rules text says "ignoring Block", and every text path reads it as "Target loses N HP (ignores Block)", never as a cost the player pays ("Pay N HP" stays for HP the card's owner loses). Against a matching target the whole play lands at 1.5–2× the same card's hit on a target in an ordinary stance. With Core's halved base damage, Opening Cut lands for 12 vs 6, Break Focus for 8 vs 5, and Unguarded Bolt for 6 vs 3. Upgraded, the totals are 13 vs 7, 9 vs 5, and 8 vs 4 (reference Reaver, Rogue and Starseer against a Wandering Soldier).
 - *Falsify:* `tests/conditional-cards.test.mjs` (each condition true and false) and `tests/conditional-card-play.test.mjs` (each card played for real, both sides of its condition; reach-only cards refused at Melee).
 
 #### Notes and history
