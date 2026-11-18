@@ -2,34 +2,64 @@ import {combatPoseAttachment,COMBATANT_EFFECT_PLANES,ATTACHMENT_SIZE} from '../c
 import {combatEffectFrames} from './assets.js';
 import {combatEffectOpacity} from '../content/combatEffectPresentation.js';
 import {reducedMotionRequested} from './motion.js';
-import { hintImage } from './imageHints.js';
-// Each frame re-resolves its tier as it is shown (Art quality may change mid-effect).
-import { currentArtUrl } from './highResArt.js';
+import { CreateEffectPlanes } from './effectPlanes.js';
 import {uiConfig} from '../config/generated/ui.js';
 
 // Canvas size, default duration and frame count live in
 // content/config/ui/presentation/combatEffectPlayback.json.
 const PLAY=uiConfig.presentation.combatEffectPlayback;
 const CANVAS=PLAY.sizing.poseCanvas, PCT=PLAY.sizing.percent;
+const COMBATANT_PLANE_LAYERS = PLAY.layering.effectPlanes.combatant;
 const visiblePose=stage=>stage.querySelector('.studio-pose-frame')?.dataset.pose||stage.dataset.pose;
+
+const COMBATANT_PLANE_LOOK = Object.freeze({
+ className: 'combatant-effect-layer',
+ imageHintOptions: { swapped: true },
+ behindZIndex: String(COMBATANT_PLANE_LAYERS.behindZIndex),
+ frontZIndex: String(COMBATANT_PLANE_LAYERS.frontZIndex),
+ styleOf: () => ({ maxHeight: 'none' }),
+});
+
+function placeCombatantPlanes(nodes, settings) {
+ const point = combatPoseAttachment(settings.actor, settings.pose, settings.anchor);
+ for (const { el, part } of nodes) {
+  el.hidden = !point || !settings[part.plane];
+  if (!point) continue;
+  el.dataset.anchor = settings.anchor;
+  el.dataset.pose = settings.pose;
+  Object.assign(el.style, {
+   left: point.x / CANVAS * PCT + '%',
+   top: point.y / CANVAS * PCT + '%',
+   width: (ATTACHMENT_SIZE[settings.anchor] || PLAY.sizing.defaultAttachment) * settings.scale / CANVAS * PCT + '%',
+   height: 'auto',
+   opacity: String(Math.max(0, Math.min(1, settings.opacity)) * part.opacity),
+   transform: `translate(-50%,-50%) rotate(${point.rotation}deg)`,
+  });
+ }
+}
 
 // Mount inside the pose's 640px canvas: character transforms, zoom and facing
 // apply to these siblings together. The isolated rear plane stays under the art.
 export function mountCombatantEffectLayers(host,kind,{actor,pose='idle',anchor='weapon',frames=combatEffectFrames(kind),opacity=combatEffectOpacity(kind),scale=1}={}) {
  if(!host||!frames.length||!combatPoseAttachment(actor,pose,anchor))return null;
- const state={actor,pose,anchor,opacity,scale,behind:true,front:true};
- const nodes=COMBATANT_EFFECT_PLANES.map(part=>{
-  const el=hintImage(document.createElement('img'),{swapped:true});el.className='combatant-effect-layer';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;el.dataset.plane=part.plane;
-  Object.assign(el.style,{position:'absolute',pointerEvents:'none',maxWidth:'none',maxHeight:'none',aspectRatio:'1',objectFit:'contain',zIndex:part.plane==='behind'?'-1':'2',maskImage:part.mask,webkitMaskImage:part.mask});host.append(el);return {el,part};
+ return CreateEffectPlanes({
+  host,
+  kind,
+  frames,
+  planes: COMBATANT_EFFECT_PLANES,
+  planeLook: COMBATANT_PLANE_LOOK,
+  settings: {
+   actor,
+   pose,
+   anchor,
+   opacity,
+   scale,
+   behind: true,
+   front: true,
+  },
+  placePlanes: placeCombatantPlanes,
+  shouldSkipRepeatedFrame: true,
  });
- let stopped=false;
- const update=options=>{if(stopped)return;Object.assign(state,options);const point=combatPoseAttachment(state.actor,state.pose,state.anchor);for(const {el,part} of nodes){el.hidden=!point||!state[part.plane];if(!point)continue;el.dataset.anchor=state.anchor;el.dataset.pose=state.pose;Object.assign(el.style,{left:point.x/CANVAS*PCT+'%',top:point.y/CANVAS*PCT+'%',width:(ATTACHMENT_SIZE[state.anchor]||PLAY.sizing.defaultAttachment)*state.scale/CANVAS*PCT+'%',height:'auto',opacity:String(Math.max(0,Math.min(1,state.opacity))*part.opacity),transform:`translate(-50%,-50%) rotate(${point.rotation}deg)`});}};
- // The tick calls show() every animation frame; rewriting the same src restarts
- // the masked images' update and repaints them, so only a new frame writes.
- let shown=-1;
- const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));if(i===shown)return;shown=i;const src=currentArtUrl(frames[i]);for(const {el}of nodes){el.src=src;el.dataset.frame=String(i+1);}};
- update({});show(0);
- return {show,update,stop(){stopped=true;for(const {el}of nodes)el.remove();}};
 }
 
 export function playCombatantEffectLayers(actor,kind,{anchor='weapon',duration=PLAY.motion.layerDurationMs,delay=0,scale=1,onStop=()=>{}}={}) {

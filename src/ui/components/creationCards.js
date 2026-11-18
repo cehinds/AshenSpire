@@ -19,6 +19,7 @@ import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIcon } from './engravedIcon.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { MarkSelected } from '../selection.js';
 import {
   el, eyebrow, titleM, hairline, artWell, optionCard, statStrip, chip, segmented, toggle,
   row, labelStack, pill,
@@ -32,8 +33,7 @@ function visualNode(visual) {
 
 /** A pressable choice: aria-pressed says which one is chosen; `.chosen` rides along for the pad cursor. */
 function pressable(node, selected, onChoose) {
-  node.setAttribute('aria-pressed', selected ? 'true' : 'false');
-  node.classList.toggle('chosen', !!selected);
+  MarkSelected(node, selected, { className: 'chosen' });
   if (onChoose) node.addEventListener('click', onChoose);
   return node;
 }

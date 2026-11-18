@@ -17,9 +17,13 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const strike = () => registries.cards.get('core.strike');
 const withSteps = (steps) => ({ upgraded: true, upgradeSteps: steps });
 
-function fight(cards, { enemies = ['wanderingSoldier'] } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: enemies });
+// The `other`-target half hit is a rule about the card's base number; the Core base-damage halving (0.5, rounded up)
+// makes 6 and 3 both land as 3 + AR, so that one test pins baseDamageMultiplier 1 to keep the halves distinguishable.
+const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const unscaledRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, unscaledProfile)), unscaledProfile);
+function fight(cards, { enemies = ['wanderingSoldier'], registries: reg = registries } = {}) {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: enemies });
   for (const pile of Object.values(combat.piles)) pile.length = 0;
   combat.piles.hand.push(...cards);
   for (let i = 0; i < 8; i += 1) combat.piles.draw.push({ instanceId: `f${i}`, cardId: 'core.defend', upgraded: false });
@@ -39,7 +43,8 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
     { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }, { k: 'fx', fx: 'counter', n: 1 }];
   // Batch 2: INT / WIS boosts exist, for this turn or the rest of the fight. They are the same kind ('boost'), so the kind count is unchanged.
   const attributeBoosts = [{ k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' }, { k: 'fx', fx: 'boost', stat: 'wisdom', n: 1, until: 'fight' }];
-  assert.equal(FX_KINDS.length, steps.length + 1, 'unexhaust is the thirteenth kind; counter (batch 5) is the fourteenth');
+  // unexhaust, unethereal and steady change nothing on Strike (it has no Exhaust, Ethereal or rising cost); tests/card-cost-balance.test.mjs covers the last two.
+  assert.equal(FX_KINDS.length, steps.length + 3, 'unexhaust is the thirteenth kind; counter (batch 5) the fourteenth; unethereal and steady (theme C) the last two');
   for (const step of steps) {
     assert.deepEqual(upgradeStepsProblems(withSteps([step]), 'x'), [], JSON.stringify(step));
     assert.notDeepEqual(JSON.stringify(applyUpgradeSteps(strike(), [step])), JSON.stringify(applyUpgradeSteps(strike(), [{ k: 'dmg', n: 0 }])), step.fx);
@@ -74,7 +79,7 @@ test('a card is only offered what it lacks', () => {
 test('Block, draw, copy, shuffle and cull do what the card says', () => {
   let c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'block', n: 4 }])]);
   play(c, 'p');
-  assert.ok(c.player.block >= 4, `block ${c.player.block}`);
+  assert.ok(c.player.block >= Math.floor(4 * 0.7), `block ${c.player.block}`); // Core blockGainMultiplier 0.7 (owner, 2026-11-18)
   c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'draw', n: 1 }])]);
   play(c, 'p');
   assert.equal(c.piles.hand.length, 1, 'drew one card');
@@ -106,25 +111,25 @@ test('target (a step saved before `other`) hits a second enemy; a temporary boos
 
 test('target with `other` hits one OTHER enemy at half damage, never the main target again, and nothing extra against a lone enemy', () => {
   const step = { k: 'fx', fx: 'target', other: true };
-  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(plain, 'p');
   const main = 500 - plain.enemies[0].hp;
-  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(c, 'p');
   assert.equal(500 - c.enemies[0].hp, main, 'the main target takes only the card\'s own hit');
   assert.ok(c.enemies[1].hp < 500 && 500 - c.enemies[1].hp < main, 'the other enemy takes the half hit');
-  const lone = fight([inst('p', 'core.strike', [step])]);
+  const lone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
   play(lone, 'p');
   assert.equal(500 - lone.enemies[0].hp, main, 'a lone enemy takes one hit, not a second');
   assert.match(JSON.stringify(applyUpgradeSteps(strike(), [step]).effects), /otherEnemy/);
-  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   const half = (aimed) => previewCard(q, 'p', aimed.id).values.find((row) => row.target === 'otherEnemy');
   for (const [aimed, other] of [[q.enemies[0], q.enemies[1]], [q.enemies[1], q.enemies[0]]]) {
     const row = half(aimed);
     assert.deepEqual(Object.keys(row.perTarget), [other.id], 'the half hit is quoted only on the other enemy');
     assert.ok(row.perTarget[other.id] > 0);
   }
-  const alone = fight([inst('p', 'core.strike', [step])]);
+  const alone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
   assert.deepEqual(Object.keys(previewCard(alone, 'p', alone.enemies[0].id).values.find((row) => row.target === 'otherEnemy').perTarget), [], 'a lone enemy is quoted no half hit');
 });
 

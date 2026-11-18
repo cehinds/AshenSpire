@@ -41,14 +41,14 @@ function configuredOfferText(registries, run, kind, def, ref) {
   return '';
 }
 
-export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
+export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith = null, shelfKinds = null, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
   app.replaceChildren();
   if (hud) {
     const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
     app.append(...band.childNodes);
-    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud }) });
+    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith, shelfKinds, meta, hud }) });
   }
   const root = el('div', { class: 'screen room-screen shop-workspace merchant-workspace', dataset: { wireframe: 'W1d', shopRail: 'dock' } });
   const paneHead = el('div', { class: 'as-pane-head shop-pane-head' });
@@ -66,7 +66,9 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   foot.append(status, ModalFooter({ secondary: [leave], className: 'shop-foot' }));
   const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps' };
   const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
-  const categories = [...new Set(offer.options.map(option => option.kind)), ...(sellEnabled ? ['sell'] : [])];
+  // `shelfKinds` is the dock the host allows (the 3-6 options rule); an offer on a shelf left off is not drawn.
+  const stocked = [...new Set(offer.options.map(option => option.kind))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
+  const categories = [...stocked, ...(sellEnabled ? ['sell'] : [])];
   let active = categories.includes(previousCategory) ? previousCategory : categories[0];
   const shopId = offer.id.slice('shop:'.length);
   const shelves = new Map(); const tabs = new Map();
@@ -83,8 +85,15 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const tab = railItem({ label: t(labels[kind]), member: kind, current: kind === active, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: kind }, 'aria-controls': 'shop-pane' } });
     tab.removeAttribute('role'); tab.addEventListener('click', () => showCategory(kind)); tabs.set(kind, tab); dock.append(tab);
   }
+  // Some traders also keep a Blacksmith's workshop (playtest 2026-11-17 item 42): its dock item opens the Blacksmith,
+  // whose Leave comes back here.
+  if (onSmith) {
+    const smith = railItem({ label: t('shop.bar.smith'), member: 'smith', current: false, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: 'smith' } } });
+    smith.removeAttribute('role'); smith.addEventListener('click', onSmith); dock.append(smith);
+  }
   const arm = beatArmer(meta, registries);
   for (const [index, option] of offer.options.entries()) {
+    if (!shelves.has(option.kind)) continue;
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const service = option.kind === 'rankUps';
     const def = service ? { name: t('rankUp.name') } : card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
@@ -111,7 +120,14 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
         price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
         action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
-      if (quote.ok) arm(sell, 'shopSell', { onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } } });
+      // A sale asks for confirmation (playtest 2026-11-17 item 37): the review names the item and the cinders it returns.
+      if (quote.ok) arm(sell, 'shopSell', {
+        question: t('shop.sell.question', { name: def.name }),
+        target: def.name,
+        message: t('shop.sell.message', { price }),
+        confirmLabel: t('shop.action.sell', { price }),
+        onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } },
+      });
       shelves.get('sell').append(tile);
     }
     if (!sales.length) shelves.get('sell').append(statusText(t('shop.status.nothingWanted')));

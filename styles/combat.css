@@ -1041,7 +1041,9 @@
 }
 
 /* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
-.hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
+/* Playtest 2026-11-17: the draw is quicker (240 ms before). */
+.hand { --hand-draw-ms: 160ms; --hand-discard-ms: 200ms; }
+.hand .card.card-drawn { animation: card-arrive var(--hand-draw-ms) ease-out; }
 @keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
 @keyframes card-arrive-lite { from { opacity: 0.35; } to { opacity: 1; } }
 :root[data-performance='lite'] .hand .card.card-drawn { animation-name: card-arrive-lite; }
@@ -2036,11 +2038,35 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .mount-service-modal .mount-service-outcome { flex-wrap: wrap; gap: 0.6rem; }
 .mount-service-modal .smith-card-sprite { flex: 0 0 auto; min-width: max-content; }
 .card-upgrade-modal .smith-header-stones { margin: 0 0 0.5rem; }
+/* Upgrade picker and the chosen card's modal (owner, 2026-11-17: chips cut off as "In de", hold more words): one step
+   smaller text; a row's name and In deck marker share the first line and its step and price are chips that wrap, so the
+   whole row fits a 390px phone. :root lifts these above the option-choice sizes. */
+:root .modal.card-upgrade-modal, :root .modal.card-upgrade-detail-modal {
+  --upgrade-name: max(15px, calc(15px / var(--ui-zoom, 1)));
+  --upgrade-text: max(13px, calc(13px / var(--ui-zoom, 1)));
+  --upgrade-small: max(12px, calc(12px / var(--ui-zoom, 1)));
+}
+:root .modal.option-choice.card-upgrade-modal .option-row-text { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.4rem; }
+:root .modal.option-choice.card-upgrade-modal .option-row-name { flex: 0 1 auto; min-width: 0; font-size: var(--upgrade-name); }
+:root .modal.option-choice.card-upgrade-modal .option-row-text > .in-deck-badge { align-self: center; margin: 0; }
+:root .modal.option-choice.card-upgrade-modal .option-row-status { flex: 1 0 100%; min-width: 0; font-size: var(--upgrade-text); }
+:root .modal.option-choice.card-upgrade-modal .option-row .co-costs { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+:root .modal.option-choice.card-upgrade-modal .option-row .co-chip { max-width: 100%; font-size: var(--upgrade-text); white-space: normal; overflow-wrap: anywhere; }
+:root .modal.option-choice.card-upgrade-modal .option-row-chip { font-size: var(--upgrade-text); }
+:root .modal.card-upgrade-detail-modal .modal-body { font-size: var(--upgrade-text); line-height: 1.35; }
+:root .modal.card-upgrade-detail-modal .modal-body p { font-size: var(--upgrade-text); }
+:root .modal.card-upgrade-detail-modal .confirmation-cost { font-size: var(--upgrade-text); }
+:root .modal.card-upgrade-detail-modal .card-upgrade-option-title { font-size: var(--upgrade-text); }
+:root .modal.card-upgrade-detail-modal .card-upgrade-option-changes { align-self: flex-start; box-sizing: border-box; margin: 0.4rem 0 0; padding: 0.3rem 0.5rem; font-size: var(--upgrade-small); line-height: 1.3; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+:root .modal.card-upgrade-detail-modal .confirmation-change-list .as-statrow { align-items: baseline; gap: 0 0.8rem; padding: 0.35rem 0; }
+:root .modal.card-upgrade-detail-modal .confirmation-change-list .sr-name { flex: 0 0 auto; font-size: var(--upgrade-text); }
+:root .modal.card-upgrade-detail-modal .confirmation-change-list .sr-vals { flex: 1 1 auto; min-width: 0; margin-left: auto; text-align: right; }
+:root .modal.card-upgrade-detail-modal .confirmation-change-list .as-delta { font-size: var(--upgrade-text); white-space: normal; overflow-wrap: anywhere; }
 .option-row .co-order { flex: 0 0 auto; font-weight: 700; color: var(--gold); }
 .card-option .val.up { color: var(--green); font-weight: 700; }
 .card-option .val.down { color: var(--ember); font-weight: 700; }
 .card-option[aria-pressed='true'] { outline: var(--focus-ring); }
-.card-option:disabled { opacity: 0.55; }
+.card-option:disabled { opacity: var(--btn-disabled-opacity); }
 .card-option .co-effect-text, .card-option .co-effect-html { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .card-option .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
 .card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
@@ -2085,7 +2111,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
   box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
 }
-.option-row.as-railitem:disabled { opacity: 0.55; cursor: not-allowed; }
+.option-row.as-railitem:disabled { opacity: var(--btn-disabled-opacity); cursor: not-allowed; }
 /* Reaction choice legibility pass (owner, 2026-11-02: "the text on the modal is hard to read"). Scoped to
    `.reaction-choice` so the discard and card pickers sharing optionRowList keep their rows. The layout is
    unchanged; only the text and the surface behind it move:

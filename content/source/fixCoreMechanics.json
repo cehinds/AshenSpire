@@ -39,6 +39,8 @@
     "stacksPerCard": 1,
     "stacksUpgradeBonus": 1,
     "stacksMax": 3,
+    "armedWhileStacks": true,
+    "enemyBadgeStacks": 1,
     "stacksByCard": {
       "core.counter": 1, "guardCounter": 1, "quickstep": 1, "riposte": 2, "rondelParry": 1, "wardingStar": 1, "nockAndWait": 1,
       "lowGuardRiposte": 2, "spikedReprisal": 2, "progression-crimson-reprisal": 2, "progression-rime-mirror": 2,
@@ -76,13 +78,17 @@
     },
     "defend": {
       "blockMultiplier": 1.5,
-      "poiseDamageTakenMultiplier": 0.75
+      "poiseDamageTakenMultiplier": 0.75,
+      "poiseFloorWhileBlock": 1,
+      "poiseFloorWardMagic": 1
     },
     "prepared": {
-      "damageMultiplier": 1.25
+      "damageMultiplier": 1.25,
+      "meleeDamageTakenMultiplier": 1.25
     },
     "neutral": {
-      "extraDrawNextTurn": 1
+      "extraDrawNextTurn": 1,
+      "damageTakenMultiplier": 1.25
     }
   },
   "spellCosts": {

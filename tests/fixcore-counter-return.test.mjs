@@ -16,7 +16,8 @@ import { dispatch } from '../src/engine/combat.js';
 import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
 import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
 const mantisBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'cinderMantis' ? { ...row, firstMove: 'scythePair' } : row) };
 const wyrmBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'wyrmLord' ? { ...row, firstMove: 'tailSweep' } : row) };

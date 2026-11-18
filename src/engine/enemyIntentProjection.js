@@ -113,7 +113,8 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
     const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
     if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
-    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
+    // An unread attacker can spend the player's Poise or change what protects it before this move.
+    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
     decayAtTurnStart(ctx, other);
     if (!broken) {
       const head = advance(other, intent.moveId, intent.damage, intent.hits);
@@ -130,6 +131,33 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
       if (step === 'delay') break;
     }
   }
+}
+
+/**
+ * Owner, 2026-11-17 ("it's hard for the player to know how much poise damage they are taking from an attack"): the Poise the player loses to this move,
+ * over the states where every reachable hit connected. Each state already carries its hits' Poise (absorbed, drained, spared, floored); the move's
+ * own Poise and Ward damage at the player then drain it as live does (previewPoiseDrain, the same door applyMoveEffects uses for earlier moves).
+ * { min, max, breaks, mayBreak } in whole Poise, or null when the player holds no Poise pool.
+ */
+function PoiseBounds(source, move, carrier, prepared, states, start, mostLanded, proposalChance) {
+  if (!Number.isFinite(start)) return null;
+  if (prepared.unreadBefore && start > 0) return { min: null, max: null, breaks: false, mayBreak: true };
+  const pools = (move.effects || []).filter(effect => PLAYER_POOL_OPS.has(effect?.op) && effect.target === 'player' && Number.isFinite(effect.amount));
+  const outcomes = states.map(row => {
+    const target = pools.length ? structuredClone(row.target) : row.target;
+    for (const effect of pools) Damage.previewPoiseDrain(prepared.previewCtx, row.attacker || source, { ...prepared, defender: target }, effect, carrier, effect.amount);
+    const remaining = Math.max(0, target.persistentPoise?.value ?? start);
+    return { lost: Math.max(0, start - remaining), broke: start > 0 && remaining === 0, landed: row.landed };
+  });
+  const lost = outcomes.filter(row => row.landed === mostLanded).map(row => row.lost);
+  return { min: Math.min(...lost), max: Math.max(...lost),
+    breaks: proposalChance === 1 && outcomes.every(row => row.broke), mayBreak: outcomes.some(row => row.broke) };
+}
+
+/** The Poise forecast with its label: "7", "5–7", or "?" when an unread earlier move can change the amount. */
+function PoiseLabelled(poise) {
+  const label = poise.max == null ? '?' : poise.min === poise.max ? String(poise.max) : `${poise.min}–${poise.max}`;
+  return { ...poise, label };
 }
 
 function damageBounds(combat, enemy, move, base, hits, neutral, action = null, own = null) {
@@ -159,6 +187,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
     const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => { if (advanceThroughEarlierEnemies(ctx, source, state, own?.moves) === 'stop' && own) own.unknown = true; });
     // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
     // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
+    const poiseStart = prepared.defender?.persistentPoise?.value ?? null;
     let states = [{ attacker: Damage.cloneDetachedAttacker(source), target: prepared.defender, key: targetKey(prepared.defender), loss: 0, landed: 0, probability: 1 }];
     for (let hit = 0; hit < hits; hit++) {
       const next = new Map();
@@ -191,7 +220,9 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
     const losses = connected.map(row => row.loss);
     const min = Math.min(...losses), max = Math.max(...losses);
     const expected = sum(states.map(row => row.loss * row.probability)) * proposalChance;
-    return { min: proposalChance === 0 ? 0 : min, max: proposalChance === 0 ? 0 : max, hitChance: sum(connected.map(row => row.probability)) * proposalChance, expected };
+    const poise = neutral || proposalChance === 0 ? null : PoiseBounds(source, move, carrier, prepared, states, poiseStart, mostLanded, proposalChance);
+    return { min: proposalChance === 0 ? 0 : min, max: proposalChance === 0 ? 0 : max, hitChance: sum(connected.map(row => row.probability)) * proposalChance, expected,
+      ...(poise ? { poise } : {}) };
   } else if (ctx.combatExpansionVersion === 2) {
     const amount = Actions.computeAttackDamage(ctx, source, player, base, carrier.tags, carrier, { matchups: false, beforeDefense: true });
     const contacts = Array.from({ length: hits }, () => ({ amount,
@@ -225,7 +256,9 @@ export function projectEnemyIntentDamage(combat, enemy, intent, { action = null,
   if (!actual || !baseline) return { ...intent, projectedDamage: unknown('unsupportedDefenseMode') };
   const stanceReduced = actual.expected < baseline.expected - 1e-9;
   const displayedReduction = stanceReduced && actual.min <= baseline.min && actual.max < baseline.max;
-  return { ...intent, projectedDamage: { basis: 'hp', ...actual,
+  const { poise, ...hp } = actual;
+  return { ...intent, ...(poise ? { projectedPoise: PoiseLabelled(poise) } : {}),
+    projectedDamage: { basis: 'hp', ...hp,
     label: actual.min === actual.max ? String(actual.max) : `${actual.min}–${actual.max}`,
     tone: displayedReduction ? 'green' : 'red', stanceReduced, displayedReduction, uncertain: actual.min !== actual.max,
     baseline: { min: baseline.min, max: baseline.max, expected: baseline.expected },
@@ -278,6 +311,8 @@ export function ProjectPlannedMoveDamage(combat, enemy, index) {
   if (!Number.isFinite(base) || hits > 100) return null;
   try {
     const bounds = damageBounds(combat, enemy, move, base, hits, false, null, { moves, moveId: planned[index].moveId });
-    return bounds && { min: bounds.min, max: bounds.max, label: bounds.min === bounds.max ? String(bounds.max) : `${bounds.min}–${bounds.max}` };
+    // The follow-up carries its Poise too (owner, 2026-11-17): what it takes after the head and the follow-ups before it, and whether it breaks.
+    return bounds && { min: bounds.min, max: bounds.max, label: bounds.min === bounds.max ? String(bounds.max) : `${bounds.min}–${bounds.max}`,
+      ...(bounds.poise ? { poise: PoiseLabelled(bounds.poise) } : {}) };
   } catch { return null; }
 }

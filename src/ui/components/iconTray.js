@@ -27,6 +27,7 @@ import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
 import { layoutMetrics } from '../layoutMetrics.js';
+import { ActivateOnKey } from '../selection.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 
 const trays = new WeakMap();
@@ -101,11 +102,9 @@ export function trayIcon({
   // The tooltip's content lives in a hook so a node kept across a rebuild (domWrite.morph) explains with its newest text.
   const liveTip = () => (node.__hooks?.tip || tip)();
   const yields = () => typeof yieldTap === 'function' && yieldTap();
-  node.addEventListener('keydown', (event) => {
-    if (!['Enter', ' '].includes(event.key) || yields()) return;
-    event.preventDefault(); event.stopPropagation();
+  ActivateOnKey(node, () => {
     if (activate) { hideTooltip(); activate(node); } else explain(node, liveTip);
-  });
+  }, { canActivate: () => !yields(), shouldStopPropagation: true });
   node.addEventListener('click', (event) => {
     if (yields()) return;
     event.stopPropagation();

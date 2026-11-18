@@ -11,6 +11,7 @@ import { ChildModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
+import { MarkSelected } from '../selection.js';
 import {
   el, modalHead, modalFooter, button, popover, row, statusText, pill, keycap, eyebrow,
 } from '../kit/index.js';
@@ -136,11 +137,7 @@ export function renderMenuOverlay(model) {
 }
 
 export function updateMenuSelection(root, tabs, id) {
-  root.querySelectorAll('.ov-tab').forEach((tabButton) => {
-    const active = tabButton.dataset.member === id;
-    tabButton.classList.toggle('on', active);
-    tabButton.setAttribute('aria-selected', active ? 'true' : 'false');
-  });
+  MarkSelected(root.querySelectorAll('.ov-tab'), tabButton => tabButton.dataset.member === id, { className: 'on', ariaAttribute: 'aria-selected' });
   const switcher = root.querySelector('#ov-switch');
   if (switcher) switcher.textContent = `${tabs.find((tab) => tab.id === id)?.label || id} ▾`;
   const body = root.querySelector('.overlay-body');

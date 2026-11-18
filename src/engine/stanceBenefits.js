@@ -7,17 +7,22 @@
 //   prepared   spells deal +25% damage (chosen over the Mana discount)   AttackDamageMultiplier
 //   smash      +50% Poise damage                                 PoiseLossAdjust         (profileDamageReceipt, before the receipt returns)
 //   defend     +50% Block gained, -25% Poise damage taken        BlockGainMultiplier (computeBlockGain), PoiseLossAdjust
+//              while it holds Block, Poise stays at 1 or more against physical hits and Sweeps (and magic with Ward stacks)  DefendPoiseFloor (2026-11-17)
 //   counter    +25% Block gained (BlockGainMultiplier); a saved fight with `hpReturnFraction` also returns that share of the HP lost (CounterReturnAmount); none ships since 2026-11-15
 //   sweep      an attack also hits every other enemy in range at 50%   SweepSplashTargets / SplashCarrier (the damage effect, actions.js)
 //   neutral    the player draws 1 extra card at its next turn start   NeutralExtraDraw (startPlayerTurn)
+// Stance weaknesses (owner 2026-11-17, theme B): a target in Prepared takes x1.25 from melee hits, one in Idle (no stance) x1.25 from every hit.
+//              StanceWeaknessMultiplier (profileDamageReceipt, an offense stage)
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceOf } from '../model/stanceRules.js';
 import { configuredStance } from '../model/profileStance.js';
+import { magicShareOf, isMagicalAttack } from '../model/combatRatings.js';
 import * as Engagement from './combatEngagement.js';
 
 const ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
 const count = value => Number.isFinite(value) ? value : 0;
+const PHYSICAL_POISE = Object.freeze({ combatProfile: Object.freeze({ camp: 'physical' }) });
 
 /** The `stanceBenefits` block this fight plays under, or null (not Core 2, or a fight created before the ruling). */
 export function StanceBenefitRules(ctx) {
@@ -42,6 +47,28 @@ export function AttackDamageMultiplier(ctx, source, carrier) {
   return count(rules[HeldStance(source, carrier)]?.damageMultiplier) || 1;
 }
 
+/**
+ * The range a hit is delivered at: its authored range, else the engine's default for a card or move that names none (expandedEnemyMove,
+ * combatCardTactics.js; applyExpandedDamage reads a missing range as melee too): a Ranged maneuver or a spell reaches, everything else is melee.
+ * So core.strike and core.smash, which name no range, are melee.
+ */
+export const HitRange = (profile = {}) => profile?.range || (profile?.maneuver === 'ranged' || profile?.camp === 'spell' ? 'reach' : 'melee');
+
+/**
+ * Stance weakness (owner 2026-11-17, theme B): the multiplier on a hit against a target holding `defendingStance`. Prepared takes
+ * `prepared.meleeDamageTakenMultiplier` from a melee hit (HitRange); Idle (no stance, 'neutral') takes `neutral.damageTakenMultiplier` from every hit.
+ * 1 for a return hit, another stance, or a fight saved without the key.
+ */
+export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile, target = null) {
+  const rules = StanceBenefitRules(ctx);
+  // A preview whose target's intent cannot be read hides its stance (combat.js previewCard): unknown is no weakness, never Idle.
+  if (!rules || isReturn(carrier) || target?.combatStanceUnknown) return 1;
+  const stance = ALIASES[defendingStance] || defendingStance || 'neutral';
+  if (stance === 'prepared' && HitRange(profile) === 'melee') return count(rules.prepared?.meleeDamageTakenMultiplier) || 1;
+  if (stance === 'neutral' || stance === 'idle') return count(rules.neutral?.damageTakenMultiplier) || 1;
+  return 1;
+}
+
 /** Counter +25%, Defend +50%: the multiplier on the Block a card or turn-start protection grants. */
 export function BlockGainMultiplier(ctx, entity, card = null) {
   const rules = StanceBenefitRules(ctx);
@@ -62,6 +89,45 @@ export function PoiseLossAdjust(ctx, source, carrier, defendingStance, { taken =
   const keep = rules[ALIASES[defendingStance] || defendingStance]?.poiseDamageTakenMultiplier;
   const spared = Number.isFinite(keep) && keep < 1 ? Math.min(taken + extra, Math.floor((1 - keep) * (taken + extra))) : 0;
   return { extra, spared };
+}
+
+/** A hit of magic: a spell-camp carrier, or one with a magic share or a magic school (the same test that makes a hit read PR). */
+function magicHit(ctx, carrier) {
+  const profile = { ...(carrier?.combatProfile || {}), ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}) };
+  return profile.camp === 'spell' || magicShareOf(profile) > 0 || (!!ctx?.registries?.cards && isMagicalAttack(ctx, carrier));
+}
+
+/**
+ * Defend (owner 2026-11-17, theme B): the least Poise a hit or a Poise rider leaves a Defend-stance target that holds Block (`blockBefore`, the
+ * Block it held when the hit arrived). A physical hit or a Sweep cannot take it below `poiseFloorWhileBlock` (1); a Smash always can; a magic hit
+ * can, unless the target also holds Ward stacks and `poiseFloorWardMagic` is set. 0 when no floor applies (no Block, another stance, a return hit,
+ * or a fight saved without the key).
+ */
+export function DefendPoiseFloor(ctx, target, carrier, defendingStance, blockBefore = target?.block || 0) {
+  const rules = StanceBenefitRules(ctx)?.defend;
+  const floor = Math.max(0, Math.floor(count(rules?.poiseFloorWhileBlock)));
+  // Poise damage with no card of its own (a relic, a trigger) is physical: it keeps the floor too (owner decision, 2026-11-17).
+  carrier = carrier || PHYSICAL_POISE;
+  if (!floor || isReturn(carrier) || (ALIASES[defendingStance] || defendingStance) !== 'defend' || !(blockBefore > 0)) return 0;
+  if (configuredStance(carrier) === 'smash' || carrier?.combatProfile?.maneuver === 'smash') return 0;
+  if (magicHit(ctx, carrier) && !(count(rules.poiseFloorWardMagic) > 0 && (target?.statuses?.ward?.stacks || 0) > 0)) return 0;
+  return floor;
+}
+
+/**
+ * Applies DefendPoiseFloor to a damage receipt whose pool loss is poiseMitigated + poiseDrain - poiseSpared: the target keeps
+ * min(pool, floor) Poise, so poise = max(poise - poiseDamage, 1). The extra Poise kept is added to poiseSpared; HP is unchanged.
+ */
+export function ApplyDefendPoiseFloor(ctx, target, carrier, receipt) {
+  if (!receipt || receipt.evaded) return receipt;
+  const floor = DefendPoiseFloor(ctx, target, carrier, receipt.defenseStance);
+  const pool = Math.max(0, Math.floor(target?.persistentPoise?.value || 0));
+  const keep = Math.min(pool, floor);
+  const left = pool - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0);
+  if (!(keep > 0) || left >= keep) return receipt;
+  receipt.poiseSpared = (receipt.poiseSpared || 0) + (keep - left);
+  receipt.defendPoiseFloor = keep;
+  return receipt;
 }
 
 /** Counter: the HP an attacker takes back from a hit that cost its Counter-stance target `hpLoss` HP (0 when fully blocked, or for a return hit). */

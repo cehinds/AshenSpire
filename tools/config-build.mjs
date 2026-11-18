@@ -54,6 +54,12 @@ const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
 const maxTimerDelayMs = 2_147_483_647;
 const interactionConfigContracts = new Map([
+  ['ui/presentation/armamentRadial.json', {
+    keys: ['holdMs'],
+    validate(values, at, errors) {
+      if (Object.hasOwn(values, 'holdMs')) validateTimer(values.holdMs, 'holdMs', at, errors);
+    },
+  }],
   ['ui/presentation/combatInspection.json', {
     keys: ['holdMs', 'movementTolerancePx'],
     validate(values, at, errors) {
@@ -286,6 +292,7 @@ export function compileEntries(entries, { requireInteractionConfigs = false } = 
     config[f.group][f.key] = out;
     if (f.group === 'scenes') errors.push(...sceneProblems(f.rel, out));
     if (f.group === 'presentation' && f.key === 'deckEditorCosts') errors.push(...deckEditorCostProblems(f.rel, out));
+    if (f.group === 'presentation' && f.key === 'combatEffectPlayback') errors.push(...effectPlaneProblems(f.rel, out));
     errors.push(...interactionConfigProblems(f.rel, out));
   }
 
@@ -464,6 +471,36 @@ function colorProblems(color, at, only, out) {
 }
 
 /** Cost presentation may regroup pools, but cannot hide or double-count one. */
+const EFFECT_PLANE_OWNERS = ['card', 'combatant'];
+const EFFECT_PLANE_KEYS = ['behindZIndex', 'frontZIndex'];
+
+export function effectPlaneProblems(rel, presentation) {
+  const at = `${CONFIG_DIR}/${rel}: layering.effectPlanes`;
+  const planes = presentation.layering?.effectPlanes;
+  if (!isObject(planes)) return [`${at} must be an object`];
+  const out = [];
+  for (const owner of Object.keys(planes)) {
+    if (!EFFECT_PLANE_OWNERS.includes(owner)) out.push(`${at}.${owner} is unknown — allowed owners are ${EFFECT_PLANE_OWNERS.join(', ')}`);
+  }
+  for (const owner of EFFECT_PLANE_OWNERS) {
+    const look = planes[owner];
+    if (!isObject(look)) {
+      out.push(`${at}.${owner} is required`);
+      continue;
+    }
+    for (const key of Object.keys(look)) {
+      if (!EFFECT_PLANE_KEYS.includes(key)) out.push(`${at}.${owner}.${key} is unknown — allowed keys are ${EFFECT_PLANE_KEYS.join(', ')}`);
+    }
+    for (const key of EFFECT_PLANE_KEYS) {
+      if (!Number.isSafeInteger(look[key])) out.push(`${at}.${owner}.${key} must be an integer z-index`);
+    }
+    if (Number.isSafeInteger(look.behindZIndex) && Number.isSafeInteger(look.frontZIndex) && look.behindZIndex >= look.frontZIndex) {
+      out.push(`${at}.${owner}.behindZIndex must be below frontZIndex`);
+    }
+  }
+  return out;
+}
+
 export function deckEditorCostProblems(rel, presentation) {
   const at = `${CONFIG_DIR}/${rel}: components.resourceGroups`;
   const groups = presentation.components?.resourceGroups;

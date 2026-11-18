@@ -593,6 +593,17 @@ export function saveSlotCopyHtml({ slot, summary }) {
   return html(slotOption({ slot, summary }).querySelector('.title-slot-copy'));
 }
 
+function openSaveNotice(noticeKind, { slot, returnFocusElement }) {
+  OpenConfirmationModal({
+    title: t(`save.${noticeKind}.title`),
+    message: t(`save.${noticeKind}.message`, { slot }),
+    cancelLabel: t(`save.${noticeKind}.close`),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
+}
+
 /**
  * openRefusedSaveNotice({ slot, returnFocusElement }) — the in-run Load door's
  * landing when loadRun refuses a slot that is not newer (content validation,
@@ -600,14 +611,7 @@ export function saveSlotCopyHtml({ slot, summary }) {
  * this says so. Nothing to confirm; the only way on is back to the climb.
  */
 export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
-  OpenConfirmationModal({
-    title: t('save.refused.title'),
-    message: t('save.refused.message', { slot }),
-    cancelLabel: t('save.refused.close'),
-    confirmEnabled: false,
-    onConfirm: () => {},
-    returnFocusElement,
-  });
+  openSaveNotice('refused', { slot, returnFocusElement });
 }
 
 /**
@@ -618,12 +622,5 @@ export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
  * no confirm, only the way out; Delete stays the slot's own confirmed act.
  */
 export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
-  OpenConfirmationModal({
-    title: t('save.newer.title'),
-    message: t('save.newer.message', { slot }),
-    cancelLabel: t('save.newer.close'),
-    confirmEnabled: false,
-    onConfirm: () => {},
-    returnFocusElement,
-  });
+  openSaveNotice('newer', { slot, returnFocusElement });
 }

@@ -96,10 +96,10 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
 
   const lead = isNewer
     ? [
-        prose('It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.', { class: 'lead' }),
+        prose('It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it. Nothing has been altered or deleted.', { class: 'lead' }),
         el('p', { class: 'as-prose lead' }, el('strong', { text: 'Update Ashen Spire to open it again.' })),
       ]
-    : [prose('So we’ve set it aside instead of deleting it — it’s still here.', { class: 'lead' })];
+    : [prose('So we’ve set it aside instead of deleting it. It’s still here.', { class: 'lead' })];
 
   const body = decide({
     title: isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile',
@@ -150,7 +150,7 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
       if (res.ok) { onContinue(); return; }
       // Sunna's line, verbatim — the raw parser error goes to the support
       // disclosure, never into the sentence (her D2).
-      say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
+      say('That didn’t work. Those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
     });
   }
 
@@ -177,52 +177,26 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
   fresh.addEventListener('click', () => {
     const cancel = button({ label: 'Not yet', className: 'cancel' });
     const go = button({ label: 'Start fresh', weight: 'primary', className: 'danger go' });
-    // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
-    // else: five focusables sat reachable behind the open dialog, Escape did
-    // nothing, and clicking the scrim did nothing. Nothing irreversible was
-    // reachable back there, so it was confusing rather than dangerous — but a
-    // dialog you can Tab out of is not a dialog.
-    const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
-    behind.forEach((node) => {
-      node.setAttribute('tabindex', '-1');
-      node.setAttribute('aria-hidden', 'true');
-    });
-    let door2 = null;
-    function onKey(e) {
-      if (e.key !== 'Tab' || !door2) return;
-      const stops = [...door2.panel.querySelectorAll('button:not([disabled])')];
-      if (!stops.length) return;
-      const first = stops[0];
-      const last = stops[stops.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey && (active === first || !door2.panel.contains(active))) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && (active === last || !door2.panel.contains(active))) { e.preventDefault(); first.focus(); }
-    }
-    door2 = openModal({
+    // A REAL focus trap (Sunna D9): the shell's page lock hides the notice
+    // behind the dialog and keeps Tab and focus inside it.
+    const door2 = openModal({
       size: 'sm',
       className: 'confirm-box',
       eyebrow: 'Profile',
       title: 'Start a new profile?',
       closeLabel: 'Close',
-      body: decide({ children: [prose('Your old one is set aside — this doesn’t delete it. You can come back to it any time from Profile on the title screen.')] }),
+      body: decide({ children: [prose('Your old one is set aside. This doesn’t delete it. You can come back to it any time from Profile on the title screen.')] }),
       secondary: [cancel],
       primary: go,
       footSize: 'medium',
       opener: fresh,
       onClose: () => {
-        behind.forEach((node) => {
-          node.removeAttribute('tabindex');
-          node.removeAttribute('aria-hidden');
-        });
-        document.removeEventListener('keydown', onKey, true);
         $('.fresh')?.focus(); // the cursor comes back to where it left
       },
     });
     door2.veil.classList.add('confirm-fresh');
-    document.addEventListener('keydown', onKey, true);
     cancel.addEventListener('click', door2.close);
     go.addEventListener('click', async () => {
-      document.removeEventListener('keydown', onKey, true);
       const res = await saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
       if (!res.ok) { say('The new profile could not be saved. Your existing copy is preserved.'); return; }
       onContinue();

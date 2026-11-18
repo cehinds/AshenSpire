@@ -206,7 +206,7 @@
       "assets": {}
     },
     "messages": {
-      "duration": "Sequence duration must be {min}–{max} ms",
+      "duration": "Sequence duration must be {min} to {max} ms",
       "poses": "Choose {min} to {max} pose frames",
       "tooManyClips": "Too many effects (maximum {max})"
     }

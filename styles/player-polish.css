@@ -314,8 +314,8 @@ main > .shared-hud.workspace-hud :is(.hud-info-row,.hud-vitals-panel,.hud-contro
 :is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell) {
   transition:filter 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 }
-:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell):not(:disabled):not([aria-disabled='true']):hover { filter:brightness(1.18); box-shadow:inset 0 0 0 1px var(--gold); }
-:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem):not(:disabled):active { filter:brightness(.86); }
+:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell):not(:disabled):not([aria-disabled='true']):hover { filter:var(--btn-hover-filter); box-shadow:var(--btn-hover-ring); }
+:is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem):not(:disabled):active { filter:var(--btn-active-filter); }
 body:not(.reduced-motion) .screen:not(.combat):not(.startup-gate) { animation:playerSceneReveal 280ms ease-out both; }
 @keyframes playerSceneReveal { from { opacity:0; } to { opacity:1; } }
 body.reduced-motion :is(.ember,.title-glow) { animation:none; }
@@ -651,7 +651,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.merchant-workspace :is(.merchant-offer-actions,.shop-book-actions) { grid-column:auto; display:grid; gap:4px; min-width:0; }
 :root .shop-workspace.merchant-workspace :is(.merchant-offer-price,.shop-book-price) { font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--gold); }
 :root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy) { min-height:calc(44px / var(--ui-zoom,1)); height:auto; padding:4px; font-size:calc(13px / var(--ui-zoom,1)); border:1px solid var(--control-positive-border); border-radius:3px; background-color:var(--control-positive-fill); background-image:none; color:var(--control-positive-text); }
-:root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy):disabled { opacity:.55; }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy):disabled { opacity:var(--btn-disabled-opacity); }
 .merchant-thumbnail.as-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; min-height:44px; width:100%; height:100%; max-height:96px; padding:2px; border:1px solid var(--line-soft); border-radius:3px; background:var(--bg-raise); color:var(--ink-dim); }
 .merchant-thumbnail > :first-child { width:100%; height:100%; min-height:0; object-fit:contain; flex:1 1 auto; }
 :root .shop-workspace.merchant-workspace .merchant-offer-media { height:100%; min-height:0; grid-row:auto; }
@@ -715,3 +715,34 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
    height would clip it, so the track and the row grow to fit. */
 :root .shop-workspace.blacksmith-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
 :root .shop-workspace.blacksmith-workspace .shop-shelf .merchant-offer { height:auto; min-height:var(--merchant-row-height,110px); }
+
+/* EVENT LAYOUT (owner, 2026-11-17, phone screenshot of an event): the image takes at least half the viewport's
+   height, the door fills the rest edge to edge, every side keeps the same small gutter, and the text and choices
+   are compact so a short event fits without scrolling. A phone stacks image over door; a wider screen puts the
+   door beside the image, which then takes the full height. */
+:root { --event-gutter:calc(8px / var(--ui-zoom, 1)); }
+:root[data-layout] .event-screen.choice-screen { padding-inline:var(--event-gutter); padding-bottom:var(--event-gutter); gap:0; }
+/* The run HUD stands above the screen in flow, so the top needs only the same gutter (a short-wide window keeps its clearance). */
+:root[data-layout]:not([data-composition='short-wide']) .event-screen.choice-screen { padding-top:var(--event-gutter); }
+/* The door takes the height its text and choices need and the image takes the rest: at the default Text size a
+   short event leaves the image half the height or more, and at L or XL the image gives way (to 30% at least) before
+   any choice scrolls out of sight. */
+:root[data-layout] .event-screen .polish-scene-painting { width:100%; max-width:none; height:auto; max-height:none; aspect-ratio:auto; flex:1 1 0; min-height:calc(30vh / var(--ui-zoom, 1)); }
+:root[data-layout] .event-screen .choice-door.event-door { width:100%; max-width:none; max-height:none; flex:0 1 auto; min-height:0; margin:0; }
+.choice-door.event-door > :is(.modal-head, .modal-body, .modal-foot) { padding-inline:var(--event-gutter); }
+.choice-door.event-door > .modal-body { padding-block:var(--event-gutter); }
+.choice-door.event-door > .modal-foot { padding-block:var(--event-gutter); min-height:0; }
+.event-door .choice-body-columns { row-gap:var(--event-gutter); column-gap:calc(2 * var(--event-gutter)); }
+/* Type in rem over the zoom: 13px at the default Text size, growing with L and XL (the root font-size it reads). */
+.event-door .event-narrative > .as-prose { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.4; }
+.event-door .ev-choices { gap:calc(6px / var(--ui-zoom, 1)); }
+.event-door .as-option.ev-choice { padding:calc(6px / var(--ui-zoom, 1)) calc(10px / var(--ui-zoom, 1)); }
+.event-door .as-option.ev-choice .on { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.3; }
+.event-door .event-result { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.4; }
+:root:not([data-layout='narrow']) .event-screen.choice-screen { flex-direction:row; align-items:stretch; column-gap:var(--event-gutter); }
+:root:not([data-layout='narrow']) .event-screen .polish-scene-painting { flex:1 1 auto; height:auto; min-height:calc(50vh / var(--ui-zoom, 1)); }
+:root:not([data-layout='narrow']) .event-screen .choice-door.event-door { flex:0 0 min(30rem, 38%); width:auto; }
+:root:not([data-layout='narrow']) .event-door .choice-body-columns { grid-template-columns:minmax(0, 1fr); }
+/* A short-wide window keeps the image too (the general short-wide rule hides scene paintings), beside the door. */
+:root[data-composition='short-wide'] .event-screen .polish-scene-painting { display:block; min-height:0; }
+:root[data-composition='short-wide'] .event-screen .choice-door.event-door { flex:0 0 50%; }

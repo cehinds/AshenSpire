@@ -29,15 +29,25 @@ export const blacksmithStoneDiscount = (subject) => {
   return Number.isInteger(n) && n > 0 ? n : 0;
 };
 
-/** The cinder price rows: tierUpgrade[tier-1], cardUpgrade, rankUp. Missing rows read 0. */
+/** The cinder price rows: tierUpgrade[tier-1], cardUpgrade (+ cardUpgradePerUpgrade, cardUpgradePerRank), rankUp. Missing rows read 0. */
 export function blacksmithPrices(subject) {
   const prices = blacksmithRules(subject)?.prices || {};
   const whole = (n) => (Number.isSafeInteger(n) && n >= 0 ? n : 0);
   return {
     tierUpgrade: (Array.isArray(prices.tierUpgrade) ? prices.tierUpgrade : []).map(whole),
     cardUpgrade: whole(prices.cardUpgrade),
+    cardUpgradePerUpgrade: whole(prices.cardUpgradePerUpgrade),
+    cardUpgradePerRank: whole(prices.cardUpgradePerRank),
     rankUp: whole(prices.rankUp),
   };
+}
+/**
+ * Cinders for one Blacksmith card upgrade (owner, 2026-11-17): `cardUpgrade` (about 50) plus `cardUpgradePerUpgrade` for each
+ * upgrade the card already has and `cardUpgradePerRank` for each rank above 1.
+ */
+export function CardUpgradePrice(subject, { upgrades = 0, rank = 1 } = {}) {
+  const prices = blacksmithPrices(subject);
+  return prices.cardUpgrade + prices.cardUpgradePerUpgrade * Math.max(0, upgrades) + prices.cardUpgradePerRank * Math.max(0, rank - 1);
 }
 /** Cinders for promoting an item to `nextTier` (1-based); the last row repeats past the table. */
 export const tierUpgradePrice = (subject, nextTier) => {

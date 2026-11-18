@@ -30,9 +30,9 @@ function smithRun({ classId = 'reaver', stones = 40, cinders = 5000, seed = 31 }
 }
 const GS = 'armament/greatsword';
 
-test('cost table: cinders 25, 50, 85, 135 then +60; stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9', () => {
-  const rows = Array.from({ length: 10 }, (_, i) => SmithUpgradeCost(i + 1));
-  assert.deepEqual(rows.map((r) => r.cinders), [25, 50, 85, 135, 195, 255, 315, 375, 435, 495]);
+test('cost table: cinders 50, 85, 120, 155 then +35 (owner 2026-11-17); stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9', () => {
+  const rows = Array.from({ length: 10 }, (_, i) => SmithUpgradeCost(i + 1, 0, profile));
+  assert.deepEqual(rows.map((r) => r.cinders), [50, 85, 120, 155, 190, 225, 260, 295, 330, 365]);
   assert.deepEqual(rows.map((r) => r.stones), [1, 1, 1, 2, 2, 2, 3, 3, 3, 4]);
 });
 
@@ -49,38 +49,40 @@ test('every quote offers two or three distinct options, the same every time it i
   assert.deepEqual([...counts].sort(), [2, 3], 'both counts occur');
 });
 
-test('a martial weapon rolls AR / DR / a related attribute; a magic weapon rolls Poise damage / magic damage / INT, WIS or Mana', () => {
+// Owner, 2026-11-17: gear grants no AR, DR or PR, so the picks are Poise or attributes (martial +3 Poise or a related
+// attribute; magic +10% Poise damage or INT / WIS / Mana).
+test('a martial weapon rolls +3 Poise / a related attribute; a magic weapon rolls Poise damage / INT, WIS or Mana', () => {
   const martial = smithRun();
   assert.equal(ItemFamily(martial, GS), 'martial');
   const ids = new Set(SmithOptionPool(martial, GS).map((row) => row.pick.id));
-  assert.deepEqual([...ids].filter((id) => !id.startsWith('prop:')).sort(), ['ar', 'attr:constitution', 'attr:strength', 'dr']);
+  assert.deepEqual([...ids].filter((id) => !id.startsWith('prop:')).sort(), ['attr:constitution', 'attr:strength', 'poise']);
   const magic = smithRun({ classId: 'starseer' });
   const staff = `armament/${magic.loadout.sets.rightHand[0]}`;
   assert.equal(ItemFamily(magic, staff), 'magic');
   const magicIds = SmithOptionPool(magic, staff).map((row) => row.pick.id).filter((id) => !id.startsWith('prop:'));
-  assert.ok(magicIds.includes('poisePct') && magicIds.includes('magicDamage'), magicIds.join());
+  assert.ok(magicIds.includes('poisePct'), magicIds.join());
   assert.ok(magicIds.some((id) => /^attr:(intelligence|wisdom|mp)$/.test(id)));
-  assert.ok(!magicIds.includes('ar'));
+  assert.ok(!magicIds.includes('ar') && !magicIds.includes('magicDamage'), magicIds.join());
 });
 
 test('the blacksmith quote prices upgrade n and commit applies the chosen option', () => {
   const run = smithRun();
   assert.ok(SmithUpgradeItems(registries, run).some((row) => row.itemRef === GS));
   assert.ok(serviceCandidates(registries, run, 'upgrade').some((row) => row.itemRef === GS));
-  const arBefore = gameProfileRatingReceipt(registries, run).totals;
+  const ratingsBefore = gameProfileRatingReceipt(registries, run).totals;
   let quote = blacksmithUpgradePlan(registries, run, GS);
   assert.equal(quote.ok, true, quote.reason);
-  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 25, 1]);
-  const pick = quote.options.find((o) => o.k === 'stat' && o.stat === 'ar') || quote.options[0];
+  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 50, 1]);
+  const pick = quote.options.find((o) => o.k === 'stat' && o.stat === 'poise') || quote.options[0];
   const stonesBefore = run.smithingStones;
   const receipt = commitBlacksmithUpgrade(registries, run, { ...quote, optionId: pick.id });
   assert.equal(receipt.pick.id, pick.id);
-  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, 5000 - 25]);
+  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, 5000 - 50]);
   assert.equal(ItemUpgradeCount(run, GS), 1);
   assert.equal(run.itemUpgradeLevels?.[GS] || 0, 0, 'the fixed tier ladder is untouched');
   quote = blacksmithUpgradePlan(registries, run, GS);
-  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 50, 2]);
-  if (pick.stat === 'ar') assert.equal(gameProfileRatingReceipt(registries, run).totals.ar, arBefore.ar + 1);
+  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 85, 2]);
+  if (pick.stat === 'poise') assert.equal(gameProfileRatingReceipt(registries, run).totals.poise, ratingsBefore.poise + pick.n);
 });
 
 test('a picked +1 attribute reaches the effective attributes and +1 DR reaches the rating receipt', () => {

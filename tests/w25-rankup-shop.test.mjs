@@ -10,6 +10,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { InstanceRank, RankUpCandidates } from '../src/model/rankUpService.js';
+import { ConfiguredTraderCategories } from '../src/model/gameProfileShopKind.js';
+import { gameContent } from '../src/model/gameProfile.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -96,9 +98,14 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   const { shopId, stock } = shopWithRankUp(run);
   const real = stock.options.filter((option) => option.kind !== 'rankUps').length;
   assert.equal(stock.options.length, real + 1);
-  assert.equal(stock.takeCount, plain.takeCount + 1);
+  // Traders vary (playtest 2026-11-17 item 42): a plain stock for THIS shop is its own shelves times the shelf size.
+  // The rank-up shelf is one of the trader's dock options, so a shop that stocks it makes room among its shelves.
+  const shelves = (id, rankUpShelf) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories, { rankUpShelf }).length;
+  assert.equal(plain.takeCount, 3 * shelves('1:plain', false));
+  const plainHere = 3 * shelves(shopId, true);
+  assert.equal(stock.takeCount, plainHere + 1);
   assert.ok(stock.takeCount >= real + 1, 'every real item and the shelf can all be bought');
-  assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plain.takeCount + 1);
+  assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plainHere + 1);
   const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
-  assert.equal(again.takeCount, plain.takeCount + 1, 'a reload does not raise it again');
+  assert.equal(again.takeCount, plainHere + 1, 'a reload does not raise it again');
 });

@@ -347,7 +347,7 @@ test('a typed out-of-range number explains itself on its row, and the message ma
   assert.equal(typedNumberRefusal(row, String(row.def)), null, 'a legal value leaves no message');
   assert.equal(typedNumberRefusal(row, ''), null, 'an empty field is not a zero');
   const message = typedNumberRefusal(row, '999');
-  assert.ok(message.includes(`${row.min}–${row.max}`) && message.includes('was refused'));
+  assert.ok(message.includes(`${row.min} to ${row.max}`) && message.includes('was refused'));
   const used = resolveNumberRow({ [row.key]: '999' }, row);
   assert.equal(used, row.max, 'the clamp is what the message says is in use');
   assert.ok(message.includes(`The value in use is ${used}`));

@@ -10,6 +10,8 @@ import { validateEffects, validatePredicate } from './effectGrammar.js';
 import { validateCardRamp, validateCardContest, validateCardTemplates, validateRelicTemplate } from './templates.js';
 import { relicPropertyTagIndex } from './propertyRules.js';
 import { validateSigils } from './sigilRows.js';
+import { UPGRADE_OPTION_KINDS } from '../cardUpgradeSteps.js';
+import { ITEM_PROPERTIES } from '../../content/itemProperties.js';
 
 export function entityCrossProblems(b, err, ctx) {
   const { ids, vctx } = ctx;
@@ -25,9 +27,11 @@ export function entityCrossProblems(b, err, ctx) {
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
-    if (card.costGrowth) {
-      for (const key of ['stamina','mana']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || Math.abs(card.costGrowth[key])>10)) err(`${path}.costGrowth.${key}`,'must be an integer from -10 to 10');
-      for (const key of ['perUse','max']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || card.costGrowth[key]<1 || card.costGrowth[key]>100)) err(`${path}.costGrowth.${key}`,'must be an integer from 1 to 100');
+    for (const [i, kind] of (Array.isArray(card.upgradeMenu) ? card.upgradeMenu : []).entries()) if (!UPGRADE_OPTION_KINDS.includes(kind)) err(`${path}.upgradeMenu[${i}]`, `unknown upgrade option '${kind}'`);
+    for (const [growth, at] of [[card.costGrowth, `${path}.costGrowth`], [card.upgrade?.costGrowth, `${path}.upgrade.costGrowth`]]) {
+      if (!growth) continue;
+      for (const key of ['stamina','mana']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || Math.abs(growth[key])>10)) err(`${at}.${key}`,'must be an integer from -10 to 10');
+      for (const key of ['perUse','max']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || growth[key]<1 || growth[key]>100)) err(`${at}.${key}`,'must be an integer from 1 to 100');
     }
     for (const [i,variant] of (card.effectVariants || []).entries()) { validatePredicate(variant.if,`${path}.effectVariants[${i}].if`,vctx);validateEffects(variant.effects,`${path}.effectVariants[${i}].effects`,vctx); }
   }
@@ -45,6 +49,10 @@ export function entityCrossProblems(b, err, ctx) {
     const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
     if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
       err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
+    }
+    // A relic's authored item properties must name rows of content/source/itemProperties.json.
+    for (const [index, id] of (Array.isArray(relic.properties) ? relic.properties : []).entries()) {
+      if (!ITEM_PROPERTIES.some((row) => row.id === id)) err(`relics.${relic.id}.properties[${index}]`, `names no item property: '${id}'`);
     }
   }
 

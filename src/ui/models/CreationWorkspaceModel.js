@@ -10,6 +10,7 @@
 // attribute columns a pane width earns. Every number comes from
 // uiConfig.screens.creation (content/config/ui/screens/creation.json).
 import { uiConfig } from '../../config/generated/ui.js';
+import { BuildRailItems } from './railItems.js';
 
 const CONFIG = uiConfig.screens.creation;
 
@@ -87,12 +88,10 @@ export function creationFooterPlan({ categories, current }) {
  */
 export function creationRailItems({ categories, current, labels = {}, values = {} }) {
   if (!categories.includes(current)) throw new Error(`creationRailItems: '${current}' is not a creation category`);
-  return Object.freeze(categories.map((id) => Object.freeze({
-    id,
+  return BuildRailItems(categories, current, (id) => ({
     label: labels[id] ?? id,
     value: values[id] ?? '',
-    selected: id === current,
-  })));
+  }));
 }
 
 /**

@@ -1,4 +1,5 @@
 import { RANGES } from './combatRanges.js';
+import { SplitAfter } from './splitAfter.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
@@ -73,7 +74,8 @@ export const MAX_CARD_UPGRADES = 10;
 // retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
 // for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
 // card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter'));
+// unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -253,6 +255,28 @@ function applyStep(card, step) {
 }
 
 const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
+// The lifecycle tag a keyword carries. Built, not quoted: tools/mechanics-generate.mjs names the first file quoting a tag as the code
+// that runs it, and the Exhaust and Ethereal rules run in the engine (actions.js, combat.js endPlayerTurn), not in this upgrade step.
+const lifecycleTag = (word) => ['lifecycle', word].join('.');
+// A step that eases a drawback also drops the sentence and face line that named it, so the text follows the data (review of #2819).
+// Base cards draw their authored text and face lines (baseCardPresentation), so both are rewritten here, not only the derived face.
+const DRAWBACK_TEXT = Object.freeze({
+  unexhaust: /^Exhaust\.?$/i,
+  unethereal: /^Ethereal\.?$/i,
+  steady: /Stamina each play|per prior play/i,
+});
+function dropDrawbackText(out, card, fx) {
+  const pattern = DRAWBACK_TEXT[fx];
+  if (typeof card.textTemplate === 'string') {
+    const sentences = SplitAfter(card.textTemplate, /\.\s+/);
+    const kept = sentences.filter((sentence) => !pattern.test(sentence.trim()));
+    if (kept.length) out.textTemplate = kept.join(' ');
+  }
+  if (Array.isArray(card.faceTemplate)) {
+    const kept = card.faceTemplate.filter((line) => !pattern.test(line.trim()));
+    if (kept.length) out.faceTemplate = kept;
+  }
+}
 const reactionTag = 'trait:reaction';
 // One effect-menu step on a card (an `fx` step). New effects are appended, so the card's own effects keep their indices.
 function applyFx(card, step) {
@@ -272,7 +296,10 @@ function applyFx(card, step) {
     case 'copy': effects.push({ op: 'addCard', card: card.id, count: 1, pile: 'discard' }); break;
     case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
-    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
+    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag(lifecycleTag('exhaust')); dropDrawbackText(out, card, step.fx); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag(lifecycleTag('ethereal')); dropDrawbackText(out, card, step.fx); break;
+    // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
+    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; dropDrawbackText(out, card, step.fx); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
     case 'boost':
       // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).
@@ -300,6 +327,15 @@ function applyFx(card, step) {
  */
 /** The steps with each `combo` replaced by its inner steps (a combo is two effects in one slot). */
 export const FlatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
+
+/** The rolled steps that only remove a drawback (keyword or rising cost). They are the steps a ranked ability card can take: its grade
+ * table owns its numbers, so no other step applies, but these never touch a number (review of #2819: the offer must equal the effect). */
+export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']);
+/** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
+export function ApplyDrawbackSteps(card, steps) {
+  const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
+  return easing.reduce((out, step) => applyFx(out, step), card);
+}
 
 export function applyUpgradeSteps(base, steps) {
   if (!Array.isArray(steps) || !steps.length) return base;

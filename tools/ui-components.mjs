@@ -978,7 +978,9 @@ export function findings(r) {
       || !/capture\.onCancel\?\.\(\)/.test(r.input)
       || !/UI\.controlsRebindCapture/.test(r.controls)
       || !/UI\.controlsKeyRebindControl/.test(r.controls)
-      || !/onCancel:[\s\S]*reset\(btn, 'Key'\)[\s\S]*btn\.focus/.test(r.controls)
+      || !/captureNextKey\(onCaptured, \{ onCancel \}\),\s*shouldRestoreFocus: true/.test(r.controls)
+      || !/const finishCapture = \(btn, rebindKind\) => \{\s*reset\(btn, idleLabelOf\(btn\)\);[\s\S]*?if \(rebindKind\.shouldRestoreFocus\) btn\.focus/.test(r.controls)
+      || !/\}, \(\) => finishCapture\(btn, rebindKind\)\);/.test(r.controls)
       || !controlsIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))) {
     bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');

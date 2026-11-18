@@ -10,11 +10,14 @@
     "src/services/runPersistence.js",
     "src/ui/components/combatMount.js",
     "src/ui/components/combatPlayback.js",
+    "src/ui/contracts.js",
     "src/ui/models/CombatPlaybackModel.js",
     "src/ui/models/CombatTargetingModel.js",
     "src/ui/models/ComponentModel.js",
     "src/ui/models/CounterStackPercentModel.js",
     "src/ui/models/SettingsDraftModel.js",
+    "src/ui/pressable.js",
+    "src/ui/selection.js",
     "src/ui/viewModels/RunHudViewModel.js"
   ],
   "formatProtected": [

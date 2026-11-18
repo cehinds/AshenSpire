@@ -12,6 +12,7 @@ import { landControl } from '../kit/index.js';
 import { workspaceFrameVars } from '../models/WorkspaceModel.js';
 import { resolveWorkspaceSpec } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
+import { MarkSelected } from '../selection.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 
 // A SURFACE'S OWN SHARES, KEPT WITH THE SURFACE. W1i (the Smith) and W1j/W1k
@@ -64,10 +65,5 @@ export const land = landControl;
 
 /** markCurrent(items, id) — the rail's selected state, in the kit's words. */
 export function markCurrent(items, id) {
-  for (const item of items) {
-    const on = item.dataset.member === id;
-    item.classList.toggle('on', on);
-    item.setAttribute('aria-selected', on ? 'true' : 'false');
-    if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-  }
+  MarkSelected(items, item => item.dataset.member === id, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
 }

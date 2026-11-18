@@ -13,8 +13,8 @@ import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
-import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
+import { SpellPoiseMultiplier, configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier, DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { FluxMultiplier, FluxScale } from './elementFlux.js';
 import { ApplyElementReceipt, OnPoiseBreak, ElementTargets, ElementChain } from './elementIdentity.js';
 import { gainCounterStacks, CounterStackGrant, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
@@ -318,7 +318,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
-    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true }) });
+    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true, carrier, source }) });
   for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
@@ -352,10 +352,17 @@ function fixCorePoiseBreak(ctx, source, target) {
  * Extra Poise damage a card or trigger carries (Smash pressure, a Poise rider) under FixCore: whole numbers,
  * never more than the pool holds; emptying it breaks Poise. Poise absorbed by a hit is spent in the hit itself.
  */
-export function drainFixCorePoise(ctx, source, target, amount) {
-  const poise = target?.persistentPoise, n = Math.max(0, Math.floor(amount));
+export function drainFixCorePoise(ctx, source, target, amount, carrier = null, blockAtHit = 0) {
+  const poise = target?.persistentPoise;
+  // Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise damage it deals an enemy (combatDamagePreview.js reads the same factor).
+  const n = Math.max(0, Math.floor(amount * SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier)));
   if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
-  const spent = Math.min(poise.value, n);
+  // Owner, 2026-11-17 (theme B): the Poise rider of a physical hit cannot take a Defend-stance target holding Block below the floor either.
+  // Poise damage with no card of its own (a relic's or a trigger's, the Forsaken Medallion) is physical and keeps the floor too (owner decision, 2026-11-17).
+  // The floor reads the Block held when the hit arrived (the rider follows the hit that may have spent it): SPEC, Owner decisions of 2026-11-17.
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, target, carrier, HeldStance(target), Math.max(target.block || 0, blockAtHit || 0)));
+  const spent = Math.min(poise.value - keep, n);
+  if (!(spent > 0)) return 0;
   poise.value -= spent;
   ctx.emit('persistentPoiseChanged', { targetId: target.id, spent, value: poise.value, max: poise.max, source: 'poiseDamage', ...seatOf(ctx, target) });
   if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target);
@@ -384,6 +391,9 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && !carrier?.reflectedHit && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   if (carrier?.onLandedContact?.() === false) return 0; // lightning: Bedrock and the Shocked contest only on a landed hit (SPEC 4.7)
+  // The Block the target holds as this hit arrives, kept per hit on the action's receipt for the Poise riders that follow (the preview's
+  // previewBlockAtHit), whatever the contact policy: one receipt can carry every hit of a whole-action play.
+  if (carrier?.expansionContact?.receipt) carrier.expansionContact.receipt.blockBefore = Math.max(0, target.block || 0);
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
   // Automatic returns share the owner-cycle limit. A newly paid per-contact
@@ -910,7 +920,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
       const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
-    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}` });
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}`, carrier, source, blockAtHit: tactical?.blockBefore });
     // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
     // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
     else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
@@ -974,6 +984,9 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
   return amount;
 }
 
+// Owner, 2026-11-18: `effects.blockGainMultiplier` scales every configured Block gain, both sides (the live Block preview calls computeBlockGain).
+const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.blockGainMultiplier; return Number.isFinite(m) && m >= 0 ? m : 1; };
+
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
  * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
@@ -982,7 +995,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -1003,8 +1016,9 @@ export function computeSpellDefenseGain(ctx, entity, base, card = null) {
   const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
   const nominalBlock = parts.block + bonus.block;
   const nominalWard = parts.ward + bonus.ward;
+  // Owner, 2026-11-18: a spell's Block and Ward split takes `effects.blockGainMultiplier` on its total, as every other configured Block gain does.
   const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
-    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+    * statuses.getMult(ctx, entity, 'blockGainedMult') * (configuredCombat(ctx) ? BlockGainScale(ctx) : 1)));
   if (!(total > 0)) return { block: 0, ward: 0 };
   // A negative Block add may exceed the base, but must still reduce ratings.
   // Allocate the final total over the remaining nominal portions in that case.
@@ -1319,10 +1333,11 @@ export function staggerPlayer(ctx, player) {
  * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
  * meter grows by balance.poise.growthMult either way.
  */
-export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
-  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
+export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null, blockAtHit = 0 } = {}) {
+  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on,
+  // `blockAtHit` the Block the target held when that hit arrived (the hit may have spent it since).
   if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
-    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount);
+    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier, blockAtHit);
     return;
   }
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
@@ -1466,14 +1481,15 @@ function resolveRawTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    // Owner 2026-11-17: there are no ally mechanics yet, so in a solo fight an ally effect reaches no one (it used to fall back to the
+    // player). A saved deck that still holds an ally card plays it safely: its ally part does nothing, its own parts still apply.
     case 'allAllies':
-      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [ctx.player].filter(p=>p?.alive);
+      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [];
     case 'ally': {
-      // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
-      // back to the source, so every ally card stays fully solo-valid.
+      // Co-op: the explicitly aimed living teammate. Solo, or no teammate picked: no one (owner, 2026-11-17).
       const t = action.target;
       if (t && t.kind === 'player' && t !== action.source && t.alive) return [t];
-      return [action.source].filter(Boolean);
+      return [];
     }
     default:
       throw new Error(`Unknown effect target '${targetSpec}'`);
@@ -1547,7 +1563,7 @@ function splitSmashPressure(ctx, action, target, row) {
   const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
-    dealPoiseDamage(ctx, target, poise);
+    dealPoiseDamage(ctx, target, poise, { carrier: action.card, source: action.source }); // a Smash: it may break a Defend target's last Poise
     trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
@@ -1801,7 +1817,9 @@ export const OPCODE_HANDLERS = Object.freeze({
         if (fixCoreWardDisabled(ctx) && t.persistentPoise) {
           const drained = drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
             * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1)
-            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1));
+            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1),
+            // The card decides the Defend floor (its magic and Smash rules); only Poise damage with no card at all is treated as physical.
+            action.card, row?.receipt?.blockBefore);
           // Same bookkeeping as the Ward path, recorded as the Poise pressure it now is.
           trackOwnPressure(ctx, action, t, 'poiseDealt', drained);
           creditKnowledgeImpact(ctx, t, drained);
@@ -2107,7 +2125,10 @@ export const OPCODE_HANDLERS = Object.freeze({
           : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
+        // Block at the hit: the card's own (its action receipt), or for a trigger on a landed hit (a relic: the Forsaken Medallion) that hit's damageDealt.
+        const hit = action.meta?.event?.targetId === t.id && Number.isFinite(action.meta.event.blockRemaining) ? action.meta.event : null;
+        const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
+        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, source: action.source, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
