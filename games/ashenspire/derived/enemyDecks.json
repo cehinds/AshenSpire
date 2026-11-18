@@ -5686,5 +5686,127 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "mirrorFanAbbess",
+    "name": "Mirror-Fan_Abbess",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "mirrorFanAbbess.fanSlash",
+        "name": "Fan_Slash",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "fanSlash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "mirrorFanAbbess.mirrorRiposte",
+        "name": "Mirror_Riposte",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "mirrorRiposte",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "mirrorFanAbbess.glassGlare",
+        "name": "Glass_Glare",
+        "copies": 1,
+        "sp": 2,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 17
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "glassGlare",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "mirrorFanAbbess.wardingFan",
+        "name": "Warding_Fan",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wardingFan",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "mirrorFanAbbess.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

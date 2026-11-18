@@ -129,6 +129,10 @@
       "name": "The Mire Processional",
       "tier": "boss"
     },
+    "enemy:mirrorFanAbbess": {
+      "name": "Mirror-Fan Abbess",
+      "tier": "elite"
+    },
     "enemy:mirrorScribe": {
       "name": "Mirror Scribe",
       "tier": "minion"
@@ -2615,6 +2619,56 @@
         "mana": 0
       },
       "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mirrorFanAbbess.fanSlash": {
+      "name": "Fan Slash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mirrorFanAbbess.mirrorRiposte": {
+      "name": "Mirror Riposte",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block. Prepare Counter: return {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mirrorFanAbbess.glassGlare": {
+      "name": "Glass Glare",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mirrorFanAbbess.wardingFan": {
+      "name": "Warding Fan",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mirrorFanAbbess.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
       "usedBy": "enemy sheet"
     }
   },

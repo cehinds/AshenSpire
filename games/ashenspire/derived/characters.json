@@ -6962,5 +6962,141 @@
         }
       ]
     }
+  },
+  {
+    "id": "mirrorFanAbbess",
+    "name": "Mirror-Fan_Abbess",
+    "displayName": "Mirror-Fan Abbess",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "straightSword",
+            "name": "Straight_Sword",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.riteVestments",
+            "name": "Rite_Vestments",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 20,
+        "dexterity": 9,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 10
+      },
+      "total": 66,
+      "formula": "10+10+20+9+6+1+10 = 66"
+    },
+    "pools": {
+      "hp": 66,
+      "sp": 3,
+      "mp": 2,
+      "ar": 4,
+      "dr": 3,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "straightSword",
+        "name": "Straight_Sword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.riteVestments",
+        "name": "Rite_Vestments"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "mirrorFanAbbess.fanSlash",
+          "name": "Fan_Slash",
+          "copies": 1
+        },
+        {
+          "id": "mirrorFanAbbess.mirrorRiposte",
+          "name": "Mirror_Riposte",
+          "copies": 2
+        },
+        {
+          "id": "mirrorFanAbbess.glassGlare",
+          "name": "Glass_Glare",
+          "copies": 1
+        },
+        {
+          "id": "mirrorFanAbbess.wardingFan",
+          "name": "Warding_Fan",
+          "copies": 1
+        },
+        {
+          "id": "mirrorFanAbbess.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

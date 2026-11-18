@@ -40,6 +40,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mireProcessional | The Mire Processional | boss |
+| enemy:mirrorFanAbbess | Mirror-Fan Abbess | elite |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:pallidOathCamel | Pallid Oath Camel | elite |
 | enemy:pearlbackSnail | Pearlback Snail | elite |
@@ -305,6 +306,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:inkveilNautilus.shellGuard | Shell Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:inkveilNautilus.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:inkveilNautilus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:mirrorFanAbbess.fanSlash | Fan Slash | attack | 1 | 0 | Deal {damage} damage. |
+| card:mirrorFanAbbess.mirrorRiposte | Mirror Riposte | attack | 2 | 0 | Gain {block} Block. Prepare Counter: return {damage} damage. |
+| card:mirrorFanAbbess.glassGlare | Glass Glare | attack | 2 | 1 | Deal {damage} damage. |
+| card:mirrorFanAbbess.wardingFan | Warding Fan | skill | 1 | 0 | Gain {block} Block. |
+| card:mirrorFanAbbess.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

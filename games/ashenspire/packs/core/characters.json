@@ -5366,5 +5366,107 @@
         }
       ]
     }
+  },
+  {
+    "id": "mirrorFanAbbess",
+    "name": "Mirror-Fan_Abbess",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "mirrorFanAbbess.fanSlash",
+      "mirrorFanAbbess.mirrorRiposte",
+      "mirrorFanAbbess.mirrorRiposte",
+      "mirrorFanAbbess.glassGlare",
+      "mirrorFanAbbess.wardingFan",
+      "mirrorFanAbbess.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "straightSword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.riteVestments"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "mirrorFanAbbess",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "mirrorFanAbbess.mirrorRiposte",
+      "poiseMax": 13,
+      "cardHints": {
+        "mirrorFanAbbess.fanSlash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "fanSlash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.mirrorRiposte": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "mirrorRiposte",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.glassGlare": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "glassGlare",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.wardingFan": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wardingFan",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

@@ -1301,5 +1301,72 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "mirrorFanAbbess",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 2
+    },
+    "size": "large",
+    "name": "Mirror-Fan Abbess",
+    "hp": [
+      88,
+      94
+    ],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 10,
+      "max": 11
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "fanSlash": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "mirrorRiposte": {
+        "sp": 2,
+        "intent": "block",
+        "counterDamage": 7,
+        "block": 10,
+        "weight": 35,
+        "maxConsecutive": 1
+      },
+      "glassGlare": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 17,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "wardingFan": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "mirrorRiposte",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      },
+      {
+        "to": "magic",
+        "effect": "damage"
+      }
+    ]
   }
 ]
