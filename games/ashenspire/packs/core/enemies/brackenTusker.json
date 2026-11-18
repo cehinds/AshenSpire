@@ -30,7 +30,7 @@
   "equipment": [
     {
       "slot": "mainHand",
-      "ref": "gear:dagger"
+      "ref": "gear:warhammer"
     }
   ],
   "relics": [],
@@ -46,20 +46,25 @@
     "card:brackenTusker.gore": {
       "aiWeight": 45,
       "maxConsecutive": 2,
-      "costSource": "stance",
-      "legacyMove": "gore"
+      "costSource": "authored",
+      "legacyMove": "gore",
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:brackenTusker.bristle": {
       "aiWeight": 25,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "bristle"
+      "costSource": "authored",
+      "legacyMove": "bristle",
+      "coreSp": "card"
     },
     "card:brackenTusker.trample": {
       "aiWeight": 30,
       "maxConsecutive": 1,
       "costSource": "authored",
-      "legacyMove": "trample"
+      "legacyMove": "trample",
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:brackenTusker.advance": {
       "aiWeight": 0,
@@ -68,6 +73,7 @@
     }
   },
   "behaviour": {
+    "firstCard": "card:brackenTusker.trample",
     "startingRange": "melee",
     "rangeClosingMove": "advance",
     "rangeRoutePolicy": "advance",
@@ -101,12 +107,12 @@
       "enemy"
     ],
     "enemy": [
+      "firstCard",
       "poiseMax",
       "cardHints",
       "startingRange",
       "rangeClosingMove",
       "rangeRoutePolicy",
-      "rangeRetreatMove",
       "weaknesses"
     ]
   }

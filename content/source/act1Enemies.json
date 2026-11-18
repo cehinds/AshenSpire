@@ -828,25 +828,28 @@
     "artFaces": "left",
     "moves": {
       "gore": {
+        "sp": 1,
         "intent": "attack",
-        "damage": 10,
+        "damage": 7,
         "weight": 45,
         "maxConsecutive": 2
       },
       "bristle": {
+        "sp": 1,
         "intent": "block",
         "block": 7,
         "weight": 25,
         "maxConsecutive": 1
       },
       "trample": {
-        "intent": "attack",
         "sp": 2,
-        "damage": 12,
+        "intent": "attack",
+        "damage": 16,
         "weight": 30,
         "maxConsecutive": 1
       }
     },
+    "firstMove": "trample",
     "weaknesses": [
       {
         "to": "lightning",

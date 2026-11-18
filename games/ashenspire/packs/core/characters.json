@@ -3565,7 +3565,7 @@
     "defaultGear": [
       {
         "key": "mainHand",
-        "id": "dagger"
+        "id": "warhammer"
       }
     ],
     "defaultRelics": [],
@@ -3575,25 +3575,31 @@
       "artFaces": "left"
     },
     "enemy": {
+      "firstCard": "brackenTusker.trample",
       "poiseMax": 6,
       "cardHints": {
         "brackenTusker.gore": {
           "aiWeight": 45,
           "maxConsecutive": 2,
-          "costSource": "stance",
-          "legacyMove": "gore"
+          "costSource": "authored",
+          "legacyMove": "gore",
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "brackenTusker.bristle": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "bristle"
+          "costSource": "authored",
+          "legacyMove": "bristle",
+          "coreSp": "card"
         },
         "brackenTusker.trample": {
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "authored",
-          "legacyMove": "trample"
+          "legacyMove": "trample",
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "brackenTusker.advance": {
           "aiWeight": 0,
