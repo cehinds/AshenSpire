@@ -1476,6 +1476,8 @@ function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place 
     registries,
     run,
     focusCard,
+    // A manual drag order is saved at once, so a reload keeps it.
+    onOrderChange: () => persist(),
     backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
