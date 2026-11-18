@@ -3726,10 +3726,13 @@ enemyMove,fenwickToad,tongueLash,camp:physical
 enemyMove,fenwickToad,tongueLash,maneuver:attack
 enemyMove,fenwickToad,tongueLash,damage:blunt
 enemyMove,fenwickToad,tongueLash,delivery:melee
+enemyMove,fenwickToad,tongueLash,source:weapon
 enemyMove,fenwickToad,tongueLash,classification.enemyMove
 enemyMove,fenwickToad,bileSpit,camp:physical
 enemyMove,fenwickToad,bileSpit,maneuver:attack
 enemyMove,fenwickToad,bileSpit,delivery:projectile
+enemyMove,fenwickToad,bileSpit,damage:blunt
+enemyMove,fenwickToad,bileSpit,source:weapon
 enemyMove,fenwickToad,bileSpit,classification.enemyMove
 enemyMove,fenwickToad,puffUp,camp:physical
 enemyMove,fenwickToad,puffUp,maneuver:defend
@@ -3746,6 +3749,7 @@ enemyMove,wickerTitheman,tithe,camp:physical
 enemyMove,wickerTitheman,tithe,maneuver:attack
 enemyMove,wickerTitheman,tithe,damage:slashing
 enemyMove,wickerTitheman,tithe,delivery:melee
+enemyMove,wickerTitheman,tithe,source:weapon
 enemyMove,wickerTitheman,tithe,classification.enemyMove
 enemyMove,wickerTitheman,bindingStraw,camp:spell
 enemyMove,wickerTitheman,bindingStraw,classification.enemyMove
