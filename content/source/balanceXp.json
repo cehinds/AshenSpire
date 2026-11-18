@@ -12,10 +12,10 @@
   "combatPowerMultiplier": 0.2,
   "tierMultiplier": {
     "normal": 1,
-    "elite": 2,
+    "elite": 3,
     "boss": 1.5,
     "$note": {
-      "{kind}": "Multiplier on the whole fight's character XP (win plus kills) when {pool} is fought. Owner 2026-11-18: an elite pays double, a boss one and a half times, on top of the fightCurve (pace tuned with tools/level-pace-sim.mjs)."
+      "{kind}": "Multiplier on the whole fight's character XP (win plus kills) when {pool} is fought. Owner 2026-11-18: an elite pays triple, a boss one and a half times, on top of the fightCurve (pace tuned with tools/level-pace-sim.mjs)."
     }
   },
   "fightCurve": {

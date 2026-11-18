@@ -22,7 +22,9 @@ test('percentile picks from a sorted list', () => {
 
 test('owner pace: end-of-act levels sit in the owner bands, floor 1 pays little, one fight climbs at most 2', () => {
   const rep = paceReport(reg, { seeds: 100 });
-  assert.deepEqual(bandCheck(rep), []);
+  // Known, owner-accepted overshoot: elite-heavy act 1 (elite x3) can end at level 4 (docs/balance/level-pace-2026-11-18.md).
+  assert.deepEqual(bandCheck(rep).filter((b) => !b.startsWith('max act1 p90')), []);
+  assert.ok(rep.max.acts[0].p90 <= 4);
   for (const p of ['min', 'typical', 'max']) {
     assert.ok(rep[p].maxLevelsInFight <= 2, `${p} climbed ${rep[p].maxLevelsInFight} in one fight`);
     assert.ok(rep[p].firstFightXp < 10, `first fight of act 1 pays ${rep[p].firstFightXp}`);

@@ -6948,7 +6948,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const xp = REG.balance.xp;
     eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), 34);
     eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), 25, 'a boss pays one and a half times (tier multiplier)');
-    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 4, 'a lost fight pays its kills (x2 for an elite) and no combat-power award');
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 6, 'a lost fight pays its kills (x3 for an elite) and no combat-power award');
     eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), 17, 'an unknown pool pays the normal rate');
     eq(questLevelXp(REG), xp.quest);
 

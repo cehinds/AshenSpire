@@ -12,11 +12,11 @@ Measure with `node tools/level-pace-sim.mjs [seeds]` (zero-dep; walks the real a
 
 | Policy | Act | Before (flat, elite x1.5, boss x2) | After |
 |---|---|---|---|
-| min elites | 1 / 2 / 3 | 1.99 / 2.95 / 3.75 | 2.16 [2 2 3] / 4.39 [4 4 5] / 6.30 [6 6 7] |
-| typical | 1 / 2 / 3 | 2.15 / 3.13 / 3.95 | 2.36 [2 2 3] / 4.72 [4 5 6] / 6.66 [6 7 7] |
-| max elites | 1 / 2 / 3 | 2.28 / 3.35 / 4.00 | 2.60 [2 3 3] / 5.02 [4 5 6] / 6.93 [6 7 7] |
+| min elites | 1 / 2 / 3 | 1.99 / 2.95 / 3.75 | 2.17 [2 2 3] / 4.42 [4 4 5] / 6.35 [6 6 7] |
+| typical | 1 / 2 / 3 | 2.15 / 3.13 / 3.95 | 2.52 [2 2 3] / 4.96 [4 5 6] / 6.92 [6 7 8] |
+| max elites | 1 / 2 / 3 | 2.28 / 3.35 / 4.00 | 2.81 [2 3 4] / 5.44 [5 5 6] / 7.43 [7 7 8] |
 
-Most levels in one fight: 1 before, 2 after. First fight of act 1 pays about 1.8 XP (was 17 or more).
+Most levels in one fight: 1 before, 2 after (a 300-seed typical run once climbs 3; 100 seeds show 2). First fight of act 1 pays about 1.8 XP (was 17 or more).
 
 ## Settings
 
@@ -25,8 +25,10 @@ Most levels in one fight: 1 before, 2 after. First fight of act 1 pays about 1.8
 | `balanceXp.fightCurve.scale` | none | 2.7 |
 | `balanceXp.fightCurve.floorExponent` | none | 1.8 |
 | `balanceXp.fightCurve.actExponent` | none | 1.5 |
-| `balanceXp.tierMultiplier.elite` | 1.5 | 2 |
+| `balanceXp.tierMultiplier.elite` | 1.5 | 3 (owner, after the first pass at 2) |
 | `balanceXp.tierMultiplier.boss` | 2 | 1.5 |
 | `balanceCore.level.xp.growth` | 1.5 | 1.5 (unchanged) |
 
 The boss multiplier is below the owner's suggested 2-3 on purpose: a boss already stands on the act's last floor, where the curve peaks, and boss 2 or more let a low-elite route climb 3 levels in one fight. Pinned by `tests/level-pace-sim.test.mjs`.
+
+Owner set elite to x3 (boss stays x1.5). Known overshoot: an elite-heavy act 1 can end at level 4 (p90), one above the 2-3 band; lowering `scale` did not remove it without dropping low-elite act 1 below level 2 (p10 1), so scale stays 2.7. Elite-heavy routes end act 3 at about 7-8 (p50 7, p90 8).

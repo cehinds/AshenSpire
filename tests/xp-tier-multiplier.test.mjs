@@ -1,4 +1,4 @@
-// Owner 2026-11-18: an elite fight pays double and a boss fight one and a half times the character XP, on top of the floor/act fightCurve (docs/balance/level-pace-2026-11-18.md) (balance.xp.tierMultiplier).
+// Owner 2026-11-18: an elite fight pays triple and a boss fight one and a half times the character XP, on top of the floor/act fightCurve (docs/balance/level-pace-2026-11-18.md) (balance.xp.tierMultiplier).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -13,16 +13,16 @@ const core = bindGameProfileRegistries(createRegistries(applyGameProfileToConten
 const dead = (n, level = 5) => Array.from({ length: n }, () => ({ level, hp: 0, alive: false }));
 
 for (const [label, registries] of [['content bundle', plain], ['default Core profile', core]]) {
-  test(`the tier multipliers ship as normal 1, elite 2, boss 1.5 (${label})`, () => {
+  test(`the tier multipliers ship as normal 1, elite 3, boss 1.5 (${label})`, () => {
     const tiers = registries.balance.xp.tierMultiplier;
-    assert.deepEqual([tiers.normal, tiers.elite, tiers.boss], [1, 2, 1.5]);
+    assert.deepEqual([tiers.normal, tiers.elite, tiers.boss], [1, 3, 1.5]);
   });
 
-  test(`elite pays 2x and boss 1.5x the same fight's XP; normal is unchanged (${label})`, () => {
+  test(`elite pays 3x and boss 1.5x the same fight's XP; normal is unchanged (${label})`, () => {
     const fight = pool => combatLevelXp(registries, { victory: true, pool, enemies: dead(2) });
     const normal = fight('normal');
     assert.equal(normal, 50, 'a normal two-kill fight is the old number');
-    assert.equal(fight('elite'), normal * 2);
+    assert.equal(fight('elite'), normal * 3);
     assert.equal(fight('boss'), Math.floor(normal * 1.5));
   });
 
@@ -31,7 +31,7 @@ for (const [label, registries] of [['content bundle', plain], ['default Core pro
     assert.equal(win.rows.reduce((sum, row) => sum + row.amount, 0), win.total, 'every row adds to the receipt total');
     assert.ok(win.rows.some(row => row.kind === 'tier' && row.pool === 'boss' && row.amount === 25));
     assert.equal(combatLevelXp(registries, { victory: false, pool: 'boss', enemies: dead(2) }), 30, 'loss: two level-5 kills at 10 each, x1.5');
-    assert.equal(combatLevelXp(registries, { victory: false, pool: 'elite', enemies: dead(3) }), 60);
+    assert.equal(combatLevelXp(registries, { victory: false, pool: 'elite', enemies: dead(3) }), 90);
   });
 }
 
