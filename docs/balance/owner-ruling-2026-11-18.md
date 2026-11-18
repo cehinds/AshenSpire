@@ -277,6 +277,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
 - **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
 - **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(owner: +5 per stack)*
-  - **Ward decays like Block** at the start of its owner's turn, and its max Poise leaves with it (current Poise is clamped to the new max). Without this, per-turn Ward from staves (1) and tomes (2) would pile up without limit. With it, a tome gives +10 Poise per turn and a staff +5. *(decided)*
+  - **Ward decay (owner):** Ward loses **1 stack** at the start of its invoker's next turn, not all of it. The max Poise from the lost stack leaves with it, and current Poise is clamped to the new max.
+  - **Ward cards (owner):** every card that grants Ward carries the **Reaction** tag (`trait:reaction`), so it can be played as a reaction. Each Ward card pays for it with one of: a higher cost, Exhaust, or sharing its budget with Block. *(per-card choice in the rules pass)*
+  - **Magic absorption (owner, open):** some Ward cards may absorb magic. The mechanic is not decided yet.
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
 - **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
