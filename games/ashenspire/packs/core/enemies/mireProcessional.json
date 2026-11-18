@@ -41,7 +41,12 @@
       "ref": "gear:armor.ossuaryWeave"
     }
   ],
-  "relics": [],
+  "relics": [
+    {
+      "slot": "relic1",
+      "ref": "relic:enemy.relic.funeralPall"
+    }
+  ],
   "deck": [
     "card:mireProcessional.pallLash",
     "card:mireProcessional.bogCandle",

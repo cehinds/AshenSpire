@@ -2912,6 +2912,14 @@
         "self.constitution=+3",
         "self.strength=+1"
       ]
+    },
+    "relic:enemy.relic.funeralPall": {
+      "name": "Funeral Pall",
+      "text": "CON +3, WIS +1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.wisdom=+1"
+      ]
     }
   }
 }

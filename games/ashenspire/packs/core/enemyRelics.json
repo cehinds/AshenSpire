@@ -100,5 +100,14 @@
       "self.strength=+1"
     ],
     "text": "CON +3, STR +1"
+  },
+  {
+    "id": "enemy.relic.funeralPall",
+    "name": "Funeral_Pall",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.wisdom=+1"
+    ],
+    "text": "CON +3, WIS +1"
   }
 ]

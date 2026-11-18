@@ -5985,8 +5985,15 @@
       },
       "constitution": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "enemy.relic.funeralPall",
+            "name": "Funeral_Pall",
+            "kind": "relic",
+            "amount": 3
+          }
+        ],
+        "total": 5
       },
       "wisdom": {
         "own": 2,
@@ -6008,9 +6015,15 @@
             "name": "Ossuary_Weave",
             "kind": "gear",
             "amount": 1
+          },
+          {
+            "source": "enemy.relic.funeralPall",
+            "name": "Funeral_Pall",
+            "kind": "relic",
+            "amount": 1
           }
         ],
-        "total": 5
+        "total": 6
       },
       "intelligence": {
         "own": 2,
@@ -6034,20 +6047,20 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
+        "constitution": 50,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 10,
+        "wisdom": 12,
         "intelligence": 5,
         "level": 10
       },
-      "total": 63,
-      "formula": "10+20+5+3+10+5+10 = 63"
+      "total": 95,
+      "formula": "10+50+5+3+12+5+10 = 95"
     },
     "pools": {
-      "hp": 63,
-      "sp": 5,
-      "mp": 3,
+      "hp": 95,
+      "sp": 6,
+      "mp": 5,
       "ar": 1,
       "dr": 1,
       "hand": 9
@@ -6069,7 +6082,13 @@
         "name": "Ossuary_Weave"
       }
     ],
-    "relics": [],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.funeralPall",
+        "name": "Funeral_Pall"
+      }
+    ],
     "deck": {
       "size": 8,
       "cards": [
