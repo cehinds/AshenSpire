@@ -35,7 +35,11 @@
       "settings": {
         "fixCoreVersion": 1,
         "core2ActionRulesVersion": 2,
-        "baseDamageMultiplier": 0.5
+        "baseDamageMultiplier": 0.5,
+        "playerDamageMultiplier": 0.7,
+        "enemyDamageMultiplier": 0.7,
+        "blockGainMultiplier": 0.7,
+        "spellPoiseDamageMultiplier": 2
       }
     },
     "statuses": {
@@ -147,9 +151,9 @@
         },
         "effectiveLevelHp": true,
         "hpScaleByTier": {
-          "minion": 0.55,
-          "elite": 0.6,
-          "boss": 0.65
+          "minion": 0.385,
+          "elite": 0.42,
+          "boss": 0.455
         }
       }
     },

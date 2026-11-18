@@ -5,5 +5,9 @@
   "spellRanks": false,
   "attackRatingWeight": 1,
   "defenseRatingWeight": 1,
-  "baseDamageMultiplier": 1
+  "baseDamageMultiplier": 1,
+  "playerDamageMultiplier": 1,
+  "enemyDamageMultiplier": 1,
+  "blockGainMultiplier": 1,
+  "spellPoiseDamageMultiplier": 1
 }

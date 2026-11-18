@@ -37,6 +37,26 @@
       "minimum": 0,
       "maximum": 10
     },
+    "playerDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "enemyDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "blockGainMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "spellPoiseDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
     "fixCoreVersion": {
       "type": "integer",
       "enum": [
