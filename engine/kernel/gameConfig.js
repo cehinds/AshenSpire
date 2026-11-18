@@ -810,7 +810,7 @@ export function resolveGameAuthor(author, catalog) {
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
-    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
+    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + Math.floor(row.attributes.intelligence / Math.max(1, content.stats.handPointsPerIncrease || 1))]));
   }
   const artifacts = [...catalog.runtimeArtifacts, ...bundle.artifacts,
     ...Object.entries(modules).filter(([,v]) => v).flatMap(([id]) => catalog.modules[id].artifacts),

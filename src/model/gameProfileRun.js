@@ -85,7 +85,7 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
     rows[id] = { ...(rows[id] || {}), maxOf: [...ids] };
   }
   for (const id of ['openingHand', 'draw']) rows[id] = {
-    ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
+    ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0, pointsPerIncrease: Math.max(1, stats.handPointsPerIncrease || 1),
     byClass: {},
   };
   // Every class's pool base and per-level growth (owner, 2026-11-17: HP = 30 + 5 x (CON + level) is base 35, CON 5 and 5 per level

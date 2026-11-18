@@ -42,13 +42,12 @@ test('ruleset 8 carries nine rows in ONE shape: base, five weights, perLevel, mi
   }
 });
 
-test("Mana weights sum to 1; Stamina scales from base 3; each remaining rating has one primary point", () => {
+test("Mana is 1 + floor(WIS / 4); Stamina is 3 + floor(DEX / 4); each remaining rating has one primary point (owner, 2026-11-18)", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
-  assert.equal(sum('mana'), 1);
-  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0.125, 0, 0.25, 0.5, 0.125]);
+  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0, 0, 0, 0.25, 0]);
   assert.equal(table.rules.mana.base, 1);
-  assert.ok(Math.abs(sum('stamina') - 0.9) < 1e-9);
-  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0.25, 0.2, 0.2]);
+  assert.equal(sum('stamina'), 0.25);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0, 0, 0]);
   assert.equal(table.rules.stamina.perLevel, 0.1);
   assert.equal(table.rules.stamina.base, 3);
   for (const id of ['ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
@@ -66,7 +65,7 @@ test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8
 
 test('hand scaling remains preserved while ratings use their single primary bonus', () => {
   for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
-    const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
+    const draw = Math.min(10, 5 + Math.floor(attrs.intelligence / 4));
     assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 7 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5)));
