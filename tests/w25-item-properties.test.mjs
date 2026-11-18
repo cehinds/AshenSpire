@@ -95,6 +95,7 @@ test('entering a stance draws 1 card and refunds 1 Stamina', () => {
 
 test('melee attacks add a separate typed packet, and attacks apply a status', () => {
   const c = fight(newRun({ [GS]: ['edgeFire', 'bleedingEdge'] }));
+  Object.assign(c.enemies[0], { hp: 500, maxHp: 500 }); // Core's 70% enemy HP tiers (owner, 2026-11-18) let the two packets kill a 12-HP soldier, and the dead take no Bleed
   play(c, 'core.strike');
   const types = c.eventLog.filter((e) => e.type === 'damageDealt').map((e) => e.damageType);
   assert.equal(c.eventLog.filter((e) => e.type === 'damageDealt').length, 2, 'the blow and the fire packet');

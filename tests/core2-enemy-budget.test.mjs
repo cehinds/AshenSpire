@@ -14,7 +14,7 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { withoutBands } from './legacyBandsRules.mjs';
 import { BandsEnemyPhaseRangeState } from '../src/engine/bandRows.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function fight(id = 'fellWarden') {
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });

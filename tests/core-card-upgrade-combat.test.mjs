@@ -70,8 +70,10 @@ test('combat plays exactly the face the steps give', () => {
   assert.equal(faceAmount(more), faceAmount(authored) + 3);
   assert.equal(faceAmount(rolled), faceAmount(play([{ k: 'dmg', n: 0 }])) + 3, 'a rolled first step starts from the base');
   // Attribute bonuses add the same flat amount to every copy, so dealt - scaled face is constant: combat plays the face.
-  const offset = authored.hit.amount - scaledFace(authored);
-  for (const r of [authored, more, rolled]) assert.equal(r.hit.amount - scaledFace(r), offset, 'dealt damage tracks the face');
+  // Owner, 2026-11-18: the player's side scale (x0.7) then multiplies the hit, so the constant offset is read just before that stage.
+  const beforeSide = (r) => r.hit.damageReceipt.hits[0].sources.find((row) => row.id === 'side-damage-scale')?.requested ?? r.hit.amount;
+  const offset = beforeSide(authored) - scaledFace(authored);
+  for (const r of [authored, more, rolled]) assert.equal(beforeSide(r) - scaledFace(r), offset, 'dealt damage tracks the face');
   assert.ok(more.hit.amount > authored.hit.amount);
 });
 

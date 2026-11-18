@@ -91,7 +91,7 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
   // Live poiseDamage and Ward-off wardDamage carry their card into drainFixCorePoise, so the card's Defend floor applies here too, and no card reads as physical
   // (theme B, 2026-11-17).
   const keep = Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0)));
-  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount)));
+  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount * ProfileCombat.SpellPoiseMultiplier(ProfileCombat.configuredModule(ctx, 'effects'), source, defender, card))));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   if (poise.value === 0) previewPoiseBreak(ctx, defender);

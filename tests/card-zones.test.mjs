@@ -114,10 +114,10 @@ test('configured X spends remaining SP and scales actual damage and target count
  const combat=fixture([{op:'damage',target:'allEnemies',amount:{f:'energySpent',per:4}}],{cost:'X',manaCost:1,definition:{targetLimit:{f:'energySpent',per:1}}});
  combat.gameProfile=resolveGameProfile('core');combat.player.stamina=2;
  combat.enemies.push(...[1,2].map(i=>({...structuredClone(combat.enemies[0]),id:`extra-${i}`})));
- const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,2);const preview=previewCard(combat,id);assert.equal(preview.values[0].value,3); // the authored 8 is halved to 4 by the Core base-damage scale, then configured Poise mitigates it by 25%
+ const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,2);const preview=previewCard(combat,id);assert.equal(preview.values[0].value,1); // the authored 8 is halved to 4 by the Core base-damage scale, scaled by the player side x0.7 (2.8), then configured Poise mitigates it by 25%
 
  dispatch(combat,{type:'playCard',cardInstanceId:id});assert.equal(combat.player.stamina,0);
- assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[3,3,0]);
+ assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[1,1,0]);
 });
 test('Many Forms uses one best defensive receipt for each attack and expires back to the primary stance',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.gameProfile=resolveGameProfile('core');
