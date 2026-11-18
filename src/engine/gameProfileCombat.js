@@ -106,7 +106,12 @@ function SpellPoiseFinish(ctx, source, target, carrier, receipt) {
   const keep = Math.min(pool, DefendPoiseFloor(ctx, target, carrier, receipt.defenseStance));
   const left = Math.max(0, pool - net - keep);
   const extra = Math.max(0, Math.min(Math.floor((m - 1) * net), left));
-  if (extra > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
+  if (extra > 0) {
+    receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
+    // The nested damage receipt (log, inspector breakdown) shows the doubled Poise damage too.
+    const hit = receipt.damageReceipt?.hits?.[0];
+    if (hit) hit.poiseDamage = (hit.poiseDamage || 0) + extra;
+  }
   return receipt;
 }
 /** The factor a player's spell-camp card puts on the Poise it takes from an enemy (1 otherwise); `carrier` is the card or its hit carrier. */

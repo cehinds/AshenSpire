@@ -127,6 +127,7 @@ test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchan
   assert.ok(single.taken > 0, 'the spell reaches Poise');
   assert.equal(doubled.poiseLost, single.poiseLost * 2, 'the pool loses exactly twice the net Poise the hit took');
   assert.equal(doubled.hp, single.hp, 'HP is unchanged by the Poise multiplier');
+  assert.equal(doubled.taken, doubled.poiseLost, 'the damage receipt the log and inspector read shows the doubled Poise');
   const strike = world => {
     const combat = begin(world);
     const enemy = combat.enemies[0];
