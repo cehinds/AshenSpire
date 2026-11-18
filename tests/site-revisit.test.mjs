@@ -6,7 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
 import {
-  openRestRecord, openSiteRecord, siteRevisitKind, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel,
+  openRestRecord, OpenSiteRecord, SiteRevisitKind, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel,
 } from '../src/model/restRevisit.js';
 
 const REG = createRegistries(contentBundle);
@@ -16,10 +16,10 @@ for (const kind of ['shop', 'blacksmith']) {
   test(`a left ${kind} node stays enterable until another node is chosen`, () => {
     const run = standingOn('n4_1');
     assert.equal(restRevisitNodeId(run), null);
-    const record = openSiteRecord(run, kind);
-    assert.equal(siteRevisitKind(record), kind);
+    const record = OpenSiteRecord(run, kind);
+    assert.equal(SiteRevisitKind(record), kind);
     assert.equal(restRevisitNodeId(run), 'n4_1', 'the node is the re-entry target while its record exists');
-    assert.equal(openSiteRecord(run, kind), record, 'a re-entry reuses the record');
+    assert.equal(OpenSiteRecord(run, kind), record, 'a re-entry reuses the record');
     markRestLeft(run);
     assert.equal(run.restRevisit.left, true);
     assert.equal(restRevisitNodeId(run), 'n4_1');
@@ -32,7 +32,7 @@ for (const kind of ['shop', 'blacksmith']) {
 
 test('a Blacksmith keeps the stock it was left with', () => {
   const run = standingOn('n4_1');
-  const record = openSiteRecord(run, 'blacksmith');
+  const record = OpenSiteRecord(run, 'blacksmith');
   record.stock = { kind: 'blacksmith', offerings: [] };
   const saved = deserializeRun(JSON.parse(JSON.stringify(serializeRun(run))), REG);
   assert.deepEqual(saved.restRevisit.stock, { kind: 'blacksmith', offerings: [] });
@@ -40,10 +40,10 @@ test('a Blacksmith keeps the stock it was left with', () => {
 
 test('a record for another place is replaced, not reused', () => {
   const run = standingOn('n4_1');
-  openSiteRecord(run, 'shop');
+  OpenSiteRecord(run, 'shop');
   run.mapNodeId = 'n6_0';
   assert.equal(restRevisitNodeId(run), null);
-  const record = openSiteRecord(run, 'shop');
+  const record = OpenSiteRecord(run, 'shop');
   assert.equal(record.nodeId, 'n6_0');
 });
 
@@ -51,33 +51,33 @@ test('an old save with only restRevisit loads and reads as a rest site', () => {
   const run = standingOn('n1');
   openRestRecord(run);
   assert.equal(Object.hasOwn(run.restRevisit, 'kind'), false, 'rest records carry no kind, as saved before');
-  assert.equal(siteRevisitKind(run.restRevisit), 'rest');
+  assert.equal(SiteRevisitKind(run.restRevisit), 'rest');
   const data = JSON.parse(JSON.stringify(serializeRun(run)));
   assert.doesNotThrow(() => validateRunShape(data));
   const loaded = deserializeRun(data, REG);
   assert.equal(loaded.restRevisit.nodeId, 'n1');
   assert.equal(restRevisitNodeId(loaded), 'n1');
-  assert.equal(siteRevisitKind(loaded.restRevisit), 'rest');
+  assert.equal(SiteRevisitKind(loaded.restRevisit), 'rest');
 });
 
 // Blacksmith stock: a node's own Blacksmith and the workshop a trader keeps both hold their stock across leave and re-entry.
-import { visitSiteStock, stashSiteStock } from '../src/model/restRevisit.js';
+import { VisitSiteStock, StashSiteStock } from '../src/model/restRevisit.js';
 for (const [label, kind, slot] of [['a Blacksmith node', 'blacksmith', 'stock'], ['a trader\'s Blacksmith', 'shop', 'smithStock']]) {
   test(`${label}: buy, leave, re-enter shows the same stock minus the purchase, with no new roll`, () => {
     const run = standingOn('n4_1');
-    openSiteRecord(run, kind);
+    OpenSiteRecord(run, kind);
     let rolls = 0;
     const roll = () => { rolls++; return { kind: 'blacksmith', offerings: ['a', 'b', 'c'] }; };
-    run.shopStock = visitSiteStock(run, slot, roll);
+    run.shopStock = VisitSiteStock(run, slot, roll);
     assert.equal(rolls, 1);
     run.shopStock.offerings = run.shopStock.offerings.filter(id => id !== 'b'); // bought
-    stashSiteStock(run, slot, run.shopStock); // back to the trader / leave
+    StashSiteStock(run, slot, run.shopStock); // back to the trader / leave
     run.shopStock = null;                      // the trader's Leave clears the live stock
     markRestLeft(run);
     // Survives a save and load between visits.
     const loaded = deserializeRun(JSON.parse(JSON.stringify(serializeRun(run))), REG);
     run.restRevisit = loaded.restRevisit;
-    run.shopStock = visitSiteStock(run, slot, roll);
+    run.shopStock = VisitSiteStock(run, slot, roll);
     assert.equal(rolls, 1, 're-entry never re-rolls');
     assert.deepEqual(run.shopStock.offerings, ['a', 'c']);
   });

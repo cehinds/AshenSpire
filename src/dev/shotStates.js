@@ -23,7 +23,7 @@ import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
-import { openSiteRecord, markRestLeft } from './../model/restRevisit.js';
+import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
 export function createShotStates(ctx) {
   const {
@@ -234,7 +234,7 @@ export function createShotStates(ctx) {
       while (queue.length) { const id = queue.shift(); for (const next of g.nodes[id].next || []) if (!(next in parent)) { parent[next] = id; queue.push(next); } }
       run.path = shotParams.get('shotTrail') === '1' && at in parent ? (() => { const trail = []; for (let id = at; id; id = parent[id]) trail.unshift(id); return trail; })() : [at];
       // `?shotRevisit=shop` — the trader (or rest) you stand on was left: its node re-opens from the map (restRevisit.js).
-      if (shotParams.get('shotRevisit')) { openSiteRecord(run, shotParams.get('shotRevisit')); markRestLeft(run); }
+      if (shotParams.get('shotRevisit')) { OpenSiteRecord(run, shotParams.get('shotRevisit')); markRestLeft(run); }
       showMap();
     }
     // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.
