@@ -23,7 +23,7 @@ import { execFileSync } from 'node:child_process';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const CHECK_KINDS = ['visible', 'hidden', 'count', 'text', 'within', 'noOverlap', 'style', 'consoleErrors'];
-export const ACTION_KINDS = ['click', 'tap', 'hold', 'key', 'wait'];
+export const ACTION_KINDS = ['click', 'tap', 'rightClick', 'hold', 'key', 'wait'];
 
 // ---------- pure: spec validation ----------
 
@@ -64,7 +64,7 @@ export function validateAction(action, where) {
   const kind = Object.keys(action).find((k) => ACTION_KINDS.includes(k));
   if (!kind) return [`${where}: unknown action (one of ${ACTION_KINDS.join(', ')})`];
   const v = action[kind];
-  if ((kind === 'click' || kind === 'tap' || kind === 'key') && !isStr(v)) return [`${where}: ${kind} needs a string`];
+  if ((kind === 'click' || kind === 'tap' || kind === 'rightClick' || kind === 'key') && !isStr(v)) return [`${where}: ${kind} needs a string`];
   if (kind === 'wait' && !(v && Number.isFinite(v.ms))) return [`${where}: wait needs {ms}`];
   if (kind === 'hold' && !(v && isStr(v.selector) && Number.isFinite(v.ms))) return [`${where}: hold needs {selector, ms}`];
   if (kind === 'hold' && v.position != null && !['x', 'y'].every(axis => Number.isFinite(v.position[axis]) && v.position[axis] >= 0 && v.position[axis] <= 1)) return [`${where}: hold position needs x and y fractions between 0 and 1`];
@@ -209,6 +209,7 @@ async function collectFacts(page, check, consoleErrors) {
 async function runActions(page, actions) {
   for (const a of actions || []) {
     if (a.click) await page.click(a.click, { timeout: 5000 });
+    else if (a.rightClick) await page.click(a.rightClick, { button: 'right', timeout: 5000 });
     else if (a.tap) await page.tap(a.tap, { timeout: 5000 }).catch(() => page.click(a.tap, { timeout: 5000 }));
     else if (a.hold) {
       const box = await (await page.waitForSelector(a.hold.selector, { timeout: 5000 })).boundingBox();
