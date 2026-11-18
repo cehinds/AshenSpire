@@ -309,7 +309,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   const control = run(0);
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
   // With 11 stacks held (10 + the card's 1), each answered hit returns the scaled base 2 plus floor(incoming x 0.1 x stacks held), then spends one stack.
-  assert.equal(control.forecast.hp, 66, 'control forecast with the card-stack Counter rule: 19 + 25 + 22');
+  assert.equal(control.forecast.hp, 48, 'control forecast with the card-stack Counter rule; the enemy side x0.7 (owner, 2026-11-18) took it from 66 (19 + 25 + 22)');
   const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
   const legacy = withoutBatch2Rules(() => run(0, fullProfile, 20));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');

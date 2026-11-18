@@ -201,7 +201,7 @@ test('Ward off: Ward damage drains Poise with the piercing x1.25, floored', () =
   wardHit(combat, target, 3);
   assert.equal(target.persistentPoise.value, 17);
   wardHit(combat, target, 4, { combatProfile: { camp: 'spell', damageType: 'piercing' } });
-  assert.equal(target.persistentPoise.value, 12, 'floor(4 x 1.25) = 5');
+  assert.equal(target.persistentPoise.value, 7, 'floor(4 x 1.25) = 5, doubled by Core spellPoiseDamageMultiplier 2 (owner, 2026-11-18) = 10');
 });
 
 test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {

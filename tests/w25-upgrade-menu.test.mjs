@@ -79,7 +79,7 @@ test('a card is only offered what it lacks', () => {
 test('Block, draw, copy, shuffle and cull do what the card says', () => {
   let c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'block', n: 4 }])]);
   play(c, 'p');
-  assert.ok(c.player.block >= 4, `block ${c.player.block}`);
+  assert.ok(c.player.block >= Math.floor(4 * 0.7), `block ${c.player.block}`); // Core blockGainMultiplier 0.7 (owner, 2026-11-18)
   c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'draw', n: 1 }])]);
   play(c, 'p');
   assert.equal(c.piles.hand.length, 1, 'drew one card');
