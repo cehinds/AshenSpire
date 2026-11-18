@@ -60,8 +60,11 @@ test('rest heals ceil(30% max HP), refills mana, stamina and both flasks, and cl
 test('smith restores nothing and closes the visit', () => {
   const { run } = fixture();
   const candidate = smithingPlan(registries, run, undefined, { free: true, maxTier: restSmithMaxTier(run) }).candidates[0];
+  const deficit = run.maxHp - run.hp;
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
-  assert.equal(run.hp, 10);
+  // Owner, 2026-11-17 (gear `statPoints`): the greatsword's tier adds CON, so max HP grows; the pool keeps its deficit
+  // (reconcileRunLoadoutHp), which is no heal.
+  assert.equal(run.maxHp - run.hp, deficit);
   assert.deepEqual(pools(run).slice(3), [0, 0]);
   assert.throws(() => commitGameProfileRest(registries, run, 'rest', {}), /unavailable or spent/);
 });

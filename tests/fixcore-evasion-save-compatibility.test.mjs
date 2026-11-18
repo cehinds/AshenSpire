@@ -53,7 +53,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 24);
+  // The envelope is today's Core profile under an older runtime pin, so it carries effects.baseDamageMultiplier 0.5 (2026-11-17): 12 -> 6, x2 = 12.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 12);
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
@@ -132,9 +133,11 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move it again (the branch pins 63e86f... and 8af5d7... are now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-NC, Wave 2 batch 5, W25-BANDS): statusCaps, the Counter stack rule and the bands rules move the runtime hash; W25-EvadeCards moved it again (the Evade card face phrase and Quickstep's Counter stack); every earlier hash, 8c57f3... included, is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme B, status and stance rules): armedWhileStacks, the Defend Poise floor, enemyBadgeStacks and the stance weaknesses move it; b9c055... is in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-17 (theme A balance: base damage halved, single-stat ratings, stat-point gear, act levels, Smith prices); 73fdb0... is in PREVIOUS_RUNTIMES.
+  // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:a81550e92799eaf09bb092dc21b1c310d0e2a80e0a2dd1708547952693e1ad4f');
+  assert.equal(profile.lock.runtimeHash, 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -150,7 +153,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 15);
+  // The shipped Core halves base damage (effects.baseDamageMultiplier 0.5, 2026-11-17): 12 -> 6, x1.25 floors to 7.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 7);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
 

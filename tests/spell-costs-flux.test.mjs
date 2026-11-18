@@ -128,7 +128,8 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const FIRE = { cardId: 'core.cinderDart', instanceId: 'i1', combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 }, tags: ['school:fire'], magicShare: 1 };
 const FROST = { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'frost' }, tags: ['school:frost'] };
-const quote = (combat, carrier, base) => profileDamageReceipt(combat, combat.player, combat.enemies[0], base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// The printed base is doubled because Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the flux stage meets `base`.
+const quote = (combat, carrier, base) => profileDamageReceipt(combat, combat.player, combat.enemies[0], base * 2, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const flux = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'element-flux');
 
 test('a card of the flux element is lifted x1.25 and floored: 10 -> 12, 7 -> 8, 3 -> 3; another element, no flux, a return hit and an old fight are not', () => {
