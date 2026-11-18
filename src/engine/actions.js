@@ -2015,7 +2015,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     restoreStamina: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const amount = Math.max(0, Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1))));
-        t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
+        t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect', ...seatOf(ctx, t) });
       }
       return;
     },
@@ -2034,7 +2034,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         } else {
           t.mana = Math.min(t.maxMana, t.mana + n);
         }
-        ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
+        ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before, ...seatOf(ctx, t) });
       }
       return;
     },
