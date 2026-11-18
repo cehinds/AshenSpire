@@ -1221,7 +1221,7 @@ export function mountCustomize(app, {
           // Hew — is the named card behind the fold.
           const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
           const summary = preview.cards.length
-            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+            ? t('creation.startingCards.adds', { count: preview.total, plural: preview.total === 1 ? '' : 's' })
               + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
             : 'Adds no combat cards with the other hand as it stands';
           const fold = el('details', { class: 'cc-starting-fold' });
