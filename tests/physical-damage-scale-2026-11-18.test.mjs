@@ -144,7 +144,8 @@ test('a static card face applies the physical cut to a physical damage figure, a
   };
   const neutral = { playerDamageMultiplier: 1, baseDamageMultiplier: 1 };
   const plain = variant({ ...neutral, physicalDamageMultiplier: 1 }), halved = variant({ ...neutral, physicalDamageMultiplier: 0.5 });
-  assert.equal(faceOf(plain, 'core.strike', 'reaver'), 6);
-  assert.equal(faceOf(halved, 'core.strike', 'reaver'), 3, 'floor(6 x 0.5)');
+  // Owner, 2026-11-18 (static faces): a face outside combat adds the run's STR first (a new Reaver's effective STR is 5), then the cut.
+  assert.equal(faceOf(plain, 'core.strike', 'reaver'), 6 + 5);
+  assert.equal(faceOf(halved, 'core.strike', 'reaver'), Math.floor((6 + 5) * 0.5), 'floor((6 + STR) x 0.5)');
   assert.equal(faceOf(halved, 'core.cantrip', 'starseer'), faceOf(plain, 'core.cantrip', 'starseer'), 'a spell face is untouched');
 });

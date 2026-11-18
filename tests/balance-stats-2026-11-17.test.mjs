@@ -79,8 +79,10 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
 
   // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
   // Owner, 2026-11-18 (second cut): the physical share takes another x0.7 first: floor(3 x 0.7 x 0.7) = 1.
-  assert.equal(damageLine(strike, run), '1 damage');
-  assert.equal(damageLine(ranked, run), '1 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), then floor(4 x 0.7 x 0.7)');
+  // Owner, 2026-11-18 (static faces): the run's always-on STR joins before the cuts, as a neutral-stance hit does. A new Reaver's effective STR is 5 (class, gear and level):
+  // floor((3 + 5) x 0.7 x 0.7) = 3, and rank 2: floor((4 + 5) x 0.7 x 0.7) = 4.
+  assert.equal(damageLine(strike, run), '3 damage');
+  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), adds STR, then the cuts');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
@@ -189,14 +191,16 @@ test('item 2: the attribute part of AR, DR and PR reads one stat each (STR, DEX,
 test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2) and a Poise value, never AR or DR', async () => {
   const { resolveGearItem } = await import('../engine/kernel/gameConfig.js');
   const settings = profile.modules.gear;
-  const totals = [];
+  const totals = [], guarding = [];
   for (const item of profile.content.gear) {
     const resolved = resolveGearItem(item, settings);
     const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + resolved.points[id], 0);
     assert.equal(resolved.values.ar, 0, `${item.id} AR`);
     assert.equal(resolved.values.dr, 0, `${item.id} DR`);
     assert.ok(attributes >= 1 && attributes <= 3, `${item.id}: ${attributes} attribute points`);
-    assert.ok(resolved.values.poise > 0, `${item.id} has a Poise value`);
+    // Owner, 2026-11-18 (con-poise): Poise comes from guarding gear only; a weapon or shield with no Poise weight (dagger, buckler, staffs) grants none.
+    assert.ok(resolved.values.poise >= 0, `${item.id} has a non-negative Poise value`);
+    if (resolved.values.poise > 0) guarding.push(item.id);
     totals.push(attributes);
     // A Smith tier adds an attribute point, still never AR or DR.
     const tiered = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + 2 });
@@ -205,6 +209,7 @@ test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2)
   }
   const average = totals.reduce((a, b) => a + b, 0) / totals.length;
   assert.ok(average >= 1 && average <= 2, `average ${average}`);
+  assert.ok(guarding.length > 0 && guarding.includes('armor.wayfarerPlate'), 'guarding gear (body armour, tower shield) still carries Poise');
 });
 
 test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective STR', async () => {

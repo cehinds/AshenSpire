@@ -145,9 +145,10 @@ test('a static card face shows the player side scale', () => {
   const run = createRunState({ registries: shippedWorld.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strike = shippedWorld.registries.cards.get('core.strike');
   const line = def => cardFaceLines(def, undefined, shippedWorld.registries, run).find(row => row.kind === 'damage').html.replace(/<[^>]+>/g, '');
-  assert.equal(line(strike), '1 damage', 'ceil(6 x 0.5) = 3, then floor(3 x 0.7 x 0.7) = 1 (physical cut, then side scale)');
+  // Owner, 2026-11-18 (static faces): the run's always-on STR (5 for a new Reaver) joins the halved base before the cuts.
+  assert.equal(line(strike), '3 damage', 'ceil(6 x 0.5) = 3, + STR 5, then floor(8 x 0.7 x 0.7) = 3 (physical cut, then side scale)');
   const ranked = playingCardDefinition(shippedWorld.registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
-  assert.equal(line(ranked), '1 damage', 'rank 2: ceil(7 x 0.5) = 4, floor(4 x 0.7 x 0.7) = 1');
+  assert.equal(line(ranked), '4 damage', 'rank 2: ceil(7 x 0.5) = 4, + STR 5, floor(9 x 0.7 x 0.7) = 4');
 });
 
 test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the preview quotes the played total', () => {
