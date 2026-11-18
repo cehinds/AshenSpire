@@ -23,6 +23,7 @@ import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 
 export function createShotStates(ctx) {
   const {
@@ -257,6 +258,11 @@ export function createShotStates(ctx) {
       run.floor = g.nodes[id].floor;
       run.path = walked;
       showMap();
+    }
+    // `?shotDeckEditor=1` — the deck editor open over the map, on this run's deck, so a sandbox check can add and
+    // remove a card and see which nodes the editor rebuilds (docs/perf/redraw-2026-11-18.md). Memory-only like every lever.
+    if (name === 'map' && shotParams.get('shotDeckEditor') === '1') {
+      mountDeckEditor(document.body, { registries: ctx.getRegistries(), run, settings: {}, onDone() {}, onCancel() {} });
     }
     if (name === 'death') {
       // A run that ended on floor 4 with a few fights behind it, so the stats
