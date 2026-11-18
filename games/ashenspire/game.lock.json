@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:5c1611e4be9c8224bbb2aa52f4459195d50789ac6b27fff3146266fbaa0359df",
+      "hash": "sha256:e93c401062558a7be6e0e01e247d864f8508b305714273c9c30a3e13b4c2e373",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:da47c6177338d2145a217a64a22da6d1998f12d951464d7e216735c7cf2d1da9"
+          "hash": "sha256:48ed3040ff9890f8f8942aff77b6c11571563be2c5bb2ed812c4f95875d432be"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:4cdbaa66e60c439c5787f84bf3d2b4eef5348255be5022abf0eb8115017df09c"
+      "runtimeHash": "sha256:762310eb16c196c873c0e69b91389fe4d7113d17f2e489374f0db294ce6a879b"
     },
     "core": {
-      "hash": "sha256:5c1611e4be9c8224bbb2aa52f4459195d50789ac6b27fff3146266fbaa0359df",
+      "hash": "sha256:e93c401062558a7be6e0e01e247d864f8508b305714273c9c30a3e13b4c2e373",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:da47c6177338d2145a217a64a22da6d1998f12d951464d7e216735c7cf2d1da9"
+          "hash": "sha256:48ed3040ff9890f8f8942aff77b6c11571563be2c5bb2ed812c4f95875d432be"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:4cdbaa66e60c439c5787f84bf3d2b4eef5348255be5022abf0eb8115017df09c"
+      "runtimeHash": "sha256:762310eb16c196c873c0e69b91389fe4d7113d17f2e489374f0db294ce6a879b"
     }
   }
 }
