@@ -41,8 +41,8 @@ kiteShield,Kite Shield,shield,either,common,kite,1.00,8E8678,C9A227,shieldAttack
 towerShield,Tower Shield,shield,either,rare,tower,1.00,7E766A,C9A227,shieldAttack,shieldGuard,weaponTechnique,self.maxHp=+10,,You will not be moved. You will not move.,4,,12,12,1,0,,blunt,melee,metal
 roundShield,Round Shield,shield,either,common,round,1.00,8E8678,7FA8C9,shieldAttack,shieldGuard,weaponTechnique,,,"Plain, round, and enough.",10,,7,7,1,0,,blunt,melee,metal
 spikedShield,Spiked Shield,shield,either,uncommon,spiked,1.00,8E8678,C9502E,shieldAttack,shieldGuard,weaponTechnique,,,Defence with an opinion.,7,,8,8,1,0,,piercing,melee,metal
-lantern,Lantern,shield,either,common,lantern,0.85,6B5D45,C9A227,shieldAttack,shieldGuard,weaponTechnique,self.regen=+1,,Light enough to see what is coming.,10,,2,2,1,0,,blunt,melee,metal
-torch,Torch,shield,either,common,torch,0.90,6B5D45,C9502E,shieldAttack,shieldGuard,weaponTechnique,strike.burn=+2,,Fire remembers what steel forgets.,10,,2,2,1,0,,blunt,melee,
+lantern,Lantern,shield,either,common,lantern,0.85,6B5D45,C9A227,shieldAttack,shieldGuard,weaponTechnique,self.regen=+1|self.thornsFire=+1,,Light enough to see what is coming.,10,,2,2,1,0,,blunt,melee,metal
+torch,Torch,shield,either,common,torch,0.90,6B5D45,C9502E,shieldAttack,shieldGuard,weaponTechnique,strike.burn=+2|spell:fire.hitFireVulnerable=+1,,Fire remembers what steel forgets.,10,,2,2,1,0,,blunt,melee,
 parryDagger,Parrying Dagger,shield,either,uncommon,dagger,0.85,C0B8A6,7FA8C9,shieldAttack,shieldGuard,weaponTechnique,strike.poise=+2,,Held wrong on purpose.,7,,3,3,1,0,,piercing,melee,metal
 ashStaff,Ash Staff,staff,either,common,staffOrb,1.00,6B5D45,C9A227,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2,,"Grey wood, warm at the grip.",10,,3,3,1,0,,blunt,reach,
 starstoneStaff,Starstone Staff,staff,either,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2|strike.frost=+2,,The stone hums before you do.,7,,3,3,1,0,,blunt,reach,metal

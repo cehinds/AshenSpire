@@ -453,10 +453,36 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
+  ThornsReturn(ctx, source, target, carrier, receipt);
   if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   if (receipt.hpLoss > 0 && fixCoreEnabled(ctx)) stanceCounterBack(ctx, source, target, carrier, receipt);
   delete ctx.elementHit;
   return receipt.amount;
+}
+
+/**
+ * Thorns (owner, 2026-11-18): an attacker that lands a hit on a holder takes damage equal to the holder's Thorns stacks (a status row's `thorns.perStack` per stack).
+ * Constant, no decay. A row with `onBlockOnly` (Fire Thorns, the Lantern) answers only a hit that met Block. The return is plain HP loss, never an attack, so it
+ * cannot trigger Thorns, Reflect or a Counter; a reflected, countered or reactive hit is not an attacker landing a hit.
+ */
+export function ThornsReturn(ctx, source, target, carrier, receipt) {
+  if (!source?.alive || !target || source === target || source.kind === target.kind || receipt?.evaded || carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return 0;
+  let total = 0;
+  for (const [id, inst] of Object.entries(target.statuses || {})) {
+    const row = inst?.stacks > 0 ? ctx.registries?.statuses?.get(id)?.thorns : null;
+    if (!row || (row.onBlockOnly && !(receipt.blocked > 0))) continue;
+    let amount = row.perStack * inst.stacks;
+    if (row.element) {
+      const resist = Math.min(100, Math.max(0, source.damageResistPercent?.[row.element] || 0));
+      amount = Math.max(0, Math.ceil(amount * (1 - resist / 100)));
+    }
+    total += amount;
+  }
+  if (total > 0) {
+    ctx.emit('thornsReturned', { sourceId: target.id, targetId: source.id, amount: total });
+    applyLoseHp(ctx, source, total, 'thorns', { sourceId: target.id });
+  }
+  return total;
 }
 
 // Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returned 25% of the HP a hit cost it; the shipped data dropped that return on 2026-11-15 (batch 5), so only a fight saved with `hpReturnFraction` still runs it.

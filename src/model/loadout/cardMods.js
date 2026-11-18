@@ -10,6 +10,8 @@ import { parseMod } from './modStrings.js';
 import { EQUIPMENT_POOL_FIELDS, EQUIPMENT_POOL_CURRENT, moveEquipmentPool } from './applyVocab.js';
 import { WeaponCardPackageModel } from './weaponPackages.js';
 import { equippedPieces } from './equipped.js';
+import { GearPieceMods } from '../gearEffects.js';
+import { GEAR_TYPES } from '../../content/gearTypes.js';
 
 /**
  * cardMods(registries, loadout, classId) → Map(cardId → ['damage=+4', ...]).
@@ -73,9 +75,12 @@ export function runMods(registries, loadout, classId, run = null) {
   const stacks = new Map();
   const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
-  for (const piece of equippedPieces(registries, loadout, classId)) {
+  const statPoints = {}, flags = {}, resist = {};
+  const worn = equippedPieces(registries, loadout, classId);
+  for (const piece of worn) {
     const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
-    for (const raw of piece.mods || []) {
+    // The piece's type or group base and a full set's bonus read like its own mods (owner, 2026-11-18; content/source/equipmentTypes.json).
+    for (const raw of GearPieceMods(piece, worn)) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
@@ -85,6 +90,12 @@ export function runMods(registries, loadout, classId, run = null) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
         swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
+      } else if (spec.apply === 'statPoint') {
+        statPoints[spec.op] = mod.mode === 'add' ? (statPoints[spec.op] || 0) + mod.value : mod.value;
+      } else if (spec.apply === 'flag') {
+        flags[spec.op] = mod.mode === 'add' ? (flags[spec.op] || 0) + mod.value : mod.value;
+      } else if (spec.apply === 'resist') {
+        resist[spec.op] = Math.min(100, (resist[spec.op] || 0) + GEAR_TYPES.resistPercent * Math.max(1, mod.value));
       } else if (spec.apply === 'startStatus') {
         const prev = stacks.get(spec.status) || 0;
         stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
@@ -96,6 +107,8 @@ export function runMods(registries, loadout, classId, run = null) {
     ...pools,
     swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
+    // Owner, 2026-11-18: the gear vocabulary's run words (stat points, flags, Resist); left out when nothing sets them.
+    ...(Object.keys(statPoints).length ? { statPoints } : {}), ...(Object.keys(flags).length ? { flags } : {}), ...(Object.keys(resist).length ? { resist } : {}),
   };
 }
 

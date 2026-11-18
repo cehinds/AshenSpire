@@ -1,4 +1,5 @@
 import { applyStatus } from './statuses.js';
+import { GearReceiptAdd, GearMeleeHit } from './gearReceipt.js';
 import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtra } from './itemPropertyHooks.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { ChannelLabel, ChannelWeight } from '../model/damageChannels.js';
@@ -40,14 +41,17 @@ export function isPierceHit(profile, carrier) {
 export function PierceBypass(ctx, target, profile, carrier, total, blockSoak) {
   if (carrier?.combatReaction) return 0;
   const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  // Gear: +N Pierce passes N more Block per hit (Stone Skin still cuts it); Ignore N Block passes N Block regardless.
+  const flatPierce = Math.max(0, carrier?.gear?.pierce || 0), ignored = Math.max(0, carrier?.gear?.ignoreBlock || 0);
   const tagged = isPierceHit(profile, carrier);
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
   const builtIn = (rules.builtInElements || []).some(element => tags.includes(`school:${element}`) || canonicalDamageType(profile?.damageType) === element || carrier?.damageType === element);
-  if (!tagged && !builtIn) return 0;
-  let bypass = Math.floor(rules.blockBypassFraction * total);
+  if (!tagged && !builtIn && !flatPierce) return ignored;
+  let bypass = tagged || builtIn ? Math.floor(rules.blockBypassFraction * total) : 0;
   if (!tagged && builtIn && rules.earthSource) bypass = Math.min(bypass, Math.max(0, blockSoak - Math.min(target?.earthBlock || 0, target?.block || 0)));
+  bypass += flatPierce;
   const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
-  return Math.max(0, bypass - skin);
+  return Math.max(0, bypass - skin) + ignored;
 }
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
@@ -193,6 +197,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     }
     raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
   } else raw = transition('ar',ratingLabel,raw,raw+ratingBonus);
+  // Owner, 2026-11-18: gear that adds DEX to a hit (Katana, a Bow against a Retreat-stacked target), STR a second time (Greatsword Smash) and damage
+  // against a target (a Pike against the front row) is one receipt stage, so the quote equals the hit. A triggered one is a fight effect for the face.
+  const gearAdd = modern && !carrier.skipRatingBonus && source?.kind === 'player' ? GearReceiptAdd(ctx, source, target, carrier, { ratingId, ar, effects }) : 0;
+  if (gearAdd) raw = transition('gear', 'Gear', raw, raw + gearAdd);
   // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
   const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
@@ -211,6 +219,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // An un-aimed face (no target) names no stance, so it takes no weakness.
   const weaknessMultiplier = flatReturn || !target ? 1 : StanceWeaknessMultiplier(ctx,carrier,defending,profile,target);
   raw = transition('stance-weakness','Stance weakness',raw,raw*weaknessMultiplier,'offense',weaknessMultiplier);
+  // Owner, 2026-11-18: a wearer Vulnerable to melee (robes, a bow) takes the Vulnerable amount from melee physical attacks, Smashes and Sweeps.
+  if (modern && !flatReturn && target?.itemProps?.vulnMelee && GearMeleeHit(profile, carrier)) raw = transition('vulnerable-melee', 'Vulnerable to melee (gear)', raw, raw * fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier, 'offense', fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
@@ -240,7 +250,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     raw=transition('status-rules','Other status modifiers',raw,statusPlan.amount);
   }
   // An item property's resistance or immunity to this damage type (W25 step 6) scales the hit like a status modifier does.
-  const itemPercent = target?.itemProps ? ItemIncomingPercent(target, canonicalDamageType(profile.damageType)) : 0;
+  const itemPercent = target?.itemProps ? ItemIncomingPercent(target, canonicalDamageType(profile.damageType), (carrier?.tags || []).find(tag => typeof tag === 'string' && tag.startsWith('school:'))?.slice(7)) : 0;
   if (itemPercent) raw = transition('item-resist', itemPercent <= -100 ? 'Immunity (item)' : 'Resistance (item)', raw, Math.max(0, raw * (100 + itemPercent) / 100), 'offense', Math.max(0, (100 + itemPercent) / 100));
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the

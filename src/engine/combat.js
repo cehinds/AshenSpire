@@ -1,3 +1,4 @@
+import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp } from './gearHooks.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
@@ -529,6 +530,7 @@ function startPlayerTurn(combat) {
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
   p.counters.cardsPlayedThisTurn = 0;
+  p.counters.spellsPlayedThisTurn = 0;
   const eqcfg = combat.registries.balance.equipment || {};
   combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
 
@@ -553,10 +555,12 @@ function startPlayerTurn(combat) {
     Blight.beginAshenBlightCycle(combat, p, String(p.combatOwnerCycle));
   }
   QueueItemTurnStart(combat, p); // W25 step 6: Block and a Poise guard from the player's item properties
+  QueueGearTurnGrants(combat, p, 'start'); // owner, 2026-11-18: gear grants at the start of your turn
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  if (combat.turn === 1) p.energy = Math.max(0, p.energy + GearFirstTurnSp(p)); // Encumbered: -1 SP on your first turn
   if (configuredCombat(combat)) {
     combat.gameProfileCommands = 0;
     const resources = configuredModule(combat, 'resources');
@@ -596,6 +600,7 @@ function endPlayerTurn(combat, discardIds = []) {
   BandsPlayerTurnEnd(combat); // rows (W25-BANDS): one turn end of the Advance is spent
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
+  QueueGearTurnGrants(combat, p, 'end'); // owner, 2026-11-18: gear grants at the end of your turn
   drainQueue(combat);
   ElementTurnEnd(combat, p); // element identity (W25): Necrotic build-up
   if (combat.result) return;
@@ -1694,6 +1699,7 @@ function actionCardCarrier(combat, source, def, inst, kind, committed = false)
         type: kind,
         tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined),
         attack: def.attack,
+        ...(def.gear ? { gear: def.gear } : {}),
         sourceHand: inst.sourceHand,
         derivedTags,
         // Tactical projection can replace tags. Trigger predicates still read the authored row.
@@ -1941,6 +1947,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
+  QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
   drainQueue(combat);
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;

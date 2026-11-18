@@ -4,6 +4,7 @@ import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfi
 import { ItemStatBonus } from './itemPicks.js';
 import { ClassLevelAttributeBonus } from './classLevelBonus.js';
 import { GearIdOf } from './gearIds.js';
+import { GearSummary } from './gearEffects.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
@@ -30,6 +31,9 @@ export function gameProfileEquipmentReceipt(registries, run) {
     for (const key of STATS) totals[key] += values[key] || 0;
     sources.push({ name:item.name.replace(/_/g,' '), kind:'equipment', sourceId, slot, itemId:item.id, ...values, resolved });
   }
+  // Owner, 2026-11-18: a piece's type or group base (Heavy +5 Poise, robes +3 DEX ...) adds stat points on top of its item points.
+  const base = GearSummary(registries, run.loadout, run.class).statPoints;
+  for (const key of STATS) if (base[key]) { totals[key] += base[key]; sources.push({ name: 'Equipment type', kind: 'equipment', sourceId: `type/${key}`, itemId: 'type', [key]: base[key] }); }
   // A held relic's properties are stat points too (a relic has no gear row, so nothing else adds them).
   for (const id of run.relics || []) {
     const bonus = ItemStatBonus(run, `relic/${id}`);

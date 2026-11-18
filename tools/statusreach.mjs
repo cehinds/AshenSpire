@@ -177,6 +177,7 @@
 // that a run can ever draw it.
 
 import { readFileSync } from 'node:fs';
+import { GEAR_TYPES } from '../src/content/gearTypes.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
@@ -194,6 +195,18 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // how you ADMIT a Law 1 clause 1 breach rather than hide one, so keep it short
 // and keep the reason in the row.
 export const CODE_APPLIERS = [
+  {
+    status: 'stoneHide',
+    file: 'content/source/fixCoreMechanics.json',
+    needle: `"skinStatus": "stoneHide"`,
+    why: 'Stone Skin (owner 2026-11-18): Earth Defend cards grant it as an ordinary applyStatus effect; no card is retuned to say so yet (the Earth cards are a later pass), so the engine rule that reads it is the declared half until they do',
+  },
+  {
+    status: 'multiHit',
+    file: 'src/model/gearEffects.js',
+    needle: `stacks('multiHit')`,
+    why: 'Multi-hit (owner 2026-11-18): a card or relic grants stacks as an ordinary applyStatus effect; the gear card rules read them. No shipped card names it until the item content pass, so the reader is the declared half',
+  },
   {
     status: 'retreat',
     file: 'src/engine/bandRows.js',
@@ -349,7 +362,9 @@ export function statusReach(bundle, opts = {}) {
   // ---- R4: equipment needs BOTH halves ------------------------------------
   const eq = bundle.equipment || {};
   const modFields = eq.modFields || {};
-  const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  // Owner, 2026-11-18: a type's or group's base mods are spoken by every piece of that type, so they count as users too.
+  const typeRows = [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)].map(([id, row]) => ({ id: `type:${id}`, mods: [...(row.mods || []), ...(row.setMods || [])] }));
+  const pieces = [...(eq.armaments || []), ...(eq.armour || []), ...typeRows];
   const fieldsUsed = new Map(); // field -> [piece ids]
   for (const p of pieces) {
     for (const raw of p.mods || []) {
@@ -359,7 +374,7 @@ export function statusReach(bundle, opts = {}) {
     }
   }
   for (const [field, spec] of Object.entries(modFields)) {
-    if (!spec || (spec.apply !== 'status' && spec.apply !== 'startStatus')) continue;
+    if (!spec || !['status', 'startStatus', 'hitStatus', 'turnGrant', 'playGrant'].includes(spec.apply)) continue;
     if (typeof spec.status !== 'string' || !spec.status) continue;
     const users = fieldsUsed.get(field) || [];
     if (users.length === 0) continue; // vocabulary nobody speaks — NOT reach
