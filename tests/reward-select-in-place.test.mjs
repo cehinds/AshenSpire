@@ -26,7 +26,9 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
     const picks = [...app.querySelectorAll('.reward-pick')];
     const faces = [...app.querySelectorAll('.reward-choice-face')];
     const confirm = app.querySelector('#reward-card-confirm');
-    assert.ok(confirm.disabled);
+    assert.equal(confirm.disabled, false, 'Continue is always live');
+    assert.ok(!confirm.classList.contains('primary'), 'and neutral until every pick is made ');
+    assert.equal(app.querySelector('.reward-pick-prompt').textContent, 'Select 1 card reward');
 
     picks[0].click();
     assert.equal(app.querySelector('.reward-door'), door, 'same modal node');
@@ -39,9 +41,8 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
     assert.equal(picks[1].getAttribute('aria-checked'), 'false');
     assert.ok(picks[0].classList.contains('is-chosen') && faces[0].classList.contains('is-chosen'));
     assert.equal(confirm.disabled, false);
-    assert.equal(confirm.textContent, 'Add to deck', 'action button relabelled');
-    assert.equal(app.querySelector('#reward-keep').hidden, false);
-    assert.ok(app.querySelector('#reward-keep').isConnected && app.querySelector('#reward-edit-deck').isConnected, 'new buttons are in the footer');
+    assert.ok(confirm.classList.contains('primary'), 'Continue turns primary once the pick is made');
+    assert.equal(app.querySelector('.reward-pick-prompt').textContent, 'Select 0 card rewards');
 
     picks[1].click();
     assert.equal(app.querySelector('.reward-door'), door);
