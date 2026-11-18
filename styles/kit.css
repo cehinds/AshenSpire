@@ -1392,6 +1392,13 @@ input[type="range"] { min-height: var(--tap-floor); }
 .event-narrative > .as-artwell { margin: 0 auto 1.2rem; }
 .event-narrative > .as-prose { margin: 0; }
 .event-door .as-options { text-align: left; }
+/* The foot holds Continue only once a response is taken (event.js setContinueShown). */
+.event-door > .modal-foot[hidden] { display: none !important; }
+/* Less chrome (owner, 2026-11-17): the head is the title alone, smaller. The {Status} line ("Choose a response")
+   stays for screen readers, out of sight. */
+.choice-door.event-door > .modal-head { min-height: 0; padding-block: calc(8px / var(--ui-zoom, 1)); }
+.choice-door.event-door > .modal-head .modal-head-id h2 { font-size: calc(1.5rem / var(--ui-zoom, 1)); line-height: 1.2; }
+.event-door > .modal-head .choice-head-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: var(--btn-disabled-opacity); cursor: default; }
 .event-door .as-option .on { white-space: normal; }

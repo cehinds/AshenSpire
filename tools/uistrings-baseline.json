@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 199,
-  "distinct": 173,
+  "sites": 198,
+  "distinct": 172,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -54,7 +54,6 @@
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
     "src/ui/screens/about.js": 1,
-    "src/ui/screens/event.js": 1,
     "src/ui/screens/map.js": 1
   }
 }
