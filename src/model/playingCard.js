@@ -357,7 +357,7 @@ function faceDamageProfile(def, registries, rules) {
   const profile = { ...(combatProfileFor(def) || {}), ...(def?.combatProfile || {}) };
   const loadout = rules?.loadout;
   if (!loadout || !registries) return profile;
-  const classId = Array.isArray(rules.deck) ? rules.class : rules.player?.classId;
+  const classId = rules.classId ?? (Array.isArray(rules.deck) ? rules.class : rules.player?.classId);
   const carrier = { tags: def.cardTags ?? def.tags, attack: def.attack, damageSchool: def.damageSchool, sourceArmamentId: def.sourceArmamentId,
     sourceHand: def.sourceHand, combatProfile: profile };
   try { return ResolveCarrierDamageType(carrier, registries, loadout, classId).combatProfile; } catch { return profile; }
