@@ -90,8 +90,8 @@ test('Hold Block keeps all remaining protection for exactly its displayed number
       // Retention must keep that actual protection too, rather than regranting
       // or capping it at the nominal six printed on the unmodified card.
       const expectedBlock=combat.player.block;
-      // Owner, 2026-11-18: the Core blockGainMultiplier (0.7) takes each printed 6 to 4 in play (the face keeps the authored number).
-      assert.ok(expectedBlock>=initialBlock+Math.floor(6*0.7)*plays);
+      // Owner, 2026-11-18: the Core blockGainMultiplier (0.49 after the second cut) takes each printed 6 to 2 or more in play (the face keeps the authored number).
+      assert.ok(expectedBlock>=initialBlock+Math.floor(6*0.49)*plays);
       assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block; keep it 1 turn\. Costs 1 more Stamina each play/);
       for(let turn=0;turn<plays;turn++){
         for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}

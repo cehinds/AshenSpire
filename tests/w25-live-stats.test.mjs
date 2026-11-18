@@ -13,7 +13,7 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats, LiveAttribute, ElementStatScale, StatScaledNumber } from '../src/engine/liveStats.js';
 import { ratingValue } from '../src/model/combatRatings.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(classId = 'reaver', seed = 511) {
   const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

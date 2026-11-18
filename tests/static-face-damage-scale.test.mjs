@@ -34,13 +34,13 @@ test('Strike, Smash, Sweep and Counter faces outside combat state the scaled bas
     for (const rules of [run]) {
       const face = staticCardTokens(def, registries, rules)[binding.token];
       // Owner, 2026-11-18: the player's side scale (x0.7, floored, never 0) follows the halving; a Counter's armed base takes none (its return is final damage).
-      const side = id === 'core.counter' ? Math.ceil(authored / 2) : Math.max(1, Math.floor(Math.ceil(authored / 2) * 0.7));
+      const side = id === 'core.counter' ? Math.ceil(authored / 2) : Math.max(1, Math.floor(Math.ceil(authored / 2) * 0.7 * 0.7)); // + the physical x0.7 cut (owner, 2026-11-18, second cut)
       assert.equal(face, side, `${id} face (run rules): ${authored} halves to ${Math.ceil(authored / 2)}, scaled to ${side}`);
       // Combat's own first hit of the card: the receipt's scaled base is the face number (AR, stance and defence add from there).
       const receipt = profileDamageReceipt(combat, combat.player, combat.enemies[0], authored, { ...combatProfileFor(def), counterReturnAttack: false });
       const scaled = receipt.damageReceipt.hits[0].sources.find(row => row.id === 'base-damage-scale')?.effective ?? authored;
       if (id === 'core.counter') assert.equal(face, scaled, `${id}: the face equals combat's scaled base`);
-      else assert.equal(face, Math.max(1, Math.floor(scaled * 0.7)), `${id}: the face equals combat's scaled base, then the player side scale`);
+      else assert.equal(face, Math.max(1, Math.floor(scaled * 0.7 * 0.7)), `${id}: the face equals combat's scaled base, then the physical cut and the player side scale`);
     }
   }
 });
