@@ -477,8 +477,8 @@ export function ThornsReturn(ctx, source, target, carrier, receipt) {
     if (!row || (row.onBlockOnly && !(receipt.blocked > 0))) continue;
     let amount = row.perStack * inst.stacks;
     if (row.element) {
-      const resist = Math.min(100, Math.max(0, source.damageResistPercent?.[row.element] || 0));
-      amount = Math.max(0, Math.ceil(amount * (1 - resist / 100)));
+      const resist = Math.max(0, source.damageResistPercent?.[row.element] || 0);
+      amount = Math.max(0, Math.ceil(amount * (1 - resist / 100))); // a floor of 0 damage, no ceiling on resistance
     }
     total += amount;
   }

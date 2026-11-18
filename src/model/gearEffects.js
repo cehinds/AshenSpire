@@ -67,7 +67,7 @@ export function GearSummary(registries, loadout, classId) {
     if (spec.scope === 'run') {
       if (spec.apply === 'statPoint') out.statPoints[spec.op] = wholeNumber(mod.mode, mod.value, out.statPoints[spec.op]);
       else if (spec.apply === 'flag') out.flags[spec.op] = wholeNumber(mod.mode, mod.value, out.flags[spec.op]);
-      else if (spec.apply === 'resist') out.resist[spec.op] = Math.min(100, (out.resist[spec.op] || 0) + GEAR_TYPES.resistPercent * Math.max(1, mod.value));
+      else if (spec.apply === 'resist') out.resist[spec.op] = (out.resist[spec.op] || 0) + GEAR_TYPES.resistPercent * Math.max(1, mod.value);
       else if (spec.apply === 'startStatus') out.startStatuses[spec.status] = wholeNumber(mod.mode, mod.value, out.startStatuses[spec.status]);
     } else if (spec.scope === 'gear') {
       if (spec.apply === 'cardStat') out.cardRules.push({ ...common, stat: spec.op, amount: mod.value, mode: mod.mode });
@@ -191,7 +191,7 @@ export function ApplyGearCardRules(rules, def, state = {}) {
     else if (rule.stat === 'manaCost') { mana = Math.max(0, adjust(mana, rule)); note(); }
     else if (rule.stat === 'reach') { if (range !== 'ranged') range = 'reach'; note(); }
     else if (rule.stat === 'retain') { keywords = [...new Set([...(keywords || []), 'retain'])]; note(); }
-    else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: 3, stamina: 1 }; note(); }
+    else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: Number.MAX_SAFE_INTEGER, stamina: 1 }; note(); }
     else if (['pierce', 'ignoreBlock', 'addDex', 'addStr'].includes(rule.stat)) { gear[rule.stat] = adjust(gear[rule.stat], rule); note(); }
   }
   const costs = hasCost ? { cost: stamina, staminaCost: stamina } : {};

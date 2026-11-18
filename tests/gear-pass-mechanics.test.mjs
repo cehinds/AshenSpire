@@ -7,7 +7,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { equipPiece, validateEquipment } from '../src/model/loadout.js';
+import { equipPiece, validateEquipment, runMods } from '../src/model/loadout.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
@@ -377,4 +377,12 @@ test('a Bow Reach stack is granted at the start of the turn, so it is live for t
   const world = build({ right: 'shortbow' });
   assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'start' && grant.status === 'reach'));
   assert.equal(world.combat.player.statuses.reach?.stacks, 1, 'the stack is there at turn 1');
+});
+
+test('the unarmoured type gives +1 max MP and a specific robe adds its own on top, uncapped', () => {
+  assert.ok(GEAR_TYPES.armourGroups.unarmoured.mods.includes('self.maxMana=+1'));
+  const plain = build({ classId: 'starseer' }).run;
+  assert.equal(runMods(registries, plain.loadout, plain.class).maxMana, 1, 'a plain robe: the type base');
+  const nightweave = build({ classId: 'starseer', armor: 'nightweave' }).run;
+  assert.equal(runMods(registries, nightweave.loadout, nightweave.class).maxMana, 2, 'Nightweave: the type base plus its own +1');
 });
