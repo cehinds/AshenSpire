@@ -5151,5 +5151,115 @@
         }
       ]
     }
+  },
+  {
+    "id": "pallidOathCamel",
+    "name": "Pallid_Oath_Camel",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "pallidOathCamel.oathKick",
+      "pallidOathCamel.hallowSpit",
+      "pallidOathCamel.packCrush",
+      "pallidOathCamel.oathWater",
+      "pallidOathCamel.pilgrimBurden",
+      "pallidOathCamel.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "lantern"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.oathPack"
+      }
+    ],
+    "presentation": {
+      "art": "pallidOathCamel",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 13,
+      "cardHints": {
+        "pallidOathCamel.oathKick": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "oathKick",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.hallowSpit": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hallowSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.packCrush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "packCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.oathWater": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "oathWater",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.pilgrimBurden": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pilgrimBurden",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "magic",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

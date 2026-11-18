@@ -5391,5 +5391,156 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "pallidOathCamel",
+    "name": "Pallid_Oath_Camel",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "pallidOathCamel.oathKick",
+        "name": "Oath_Kick",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "oathKick",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pallidOathCamel.hallowSpit",
+        "name": "Hallow_Spit",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hallowSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pallidOathCamel.packCrush",
+        "name": "Pack_Crush",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "packCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pallidOathCamel.oathWater",
+        "name": "Oath_Water",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "oathWater",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pallidOathCamel.pilgrimBurden",
+        "name": "Pilgrim_Burden",
+        "copies": 1,
+        "sp": 3,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 26
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pilgrimBurden",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pallidOathCamel.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

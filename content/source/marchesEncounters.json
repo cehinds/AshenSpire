@@ -297,5 +297,22 @@
       "min": 2,
       "max": 3
     }
+  },
+  {
+    "id": "a2_eliteOathCamel",
+    "enemies": [
+      "pallidOathCamel"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "marches",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
   }
 ]

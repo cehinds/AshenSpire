@@ -6690,5 +6690,147 @@
         }
       ]
     }
+  },
+  {
+    "id": "pallidOathCamel",
+    "name": "Pallid_Oath_Camel",
+    "displayName": "Pallid Oath Camel",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "enemy.relic.oathPack",
+            "name": "Oath_Pack",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "lantern",
+            "name": "Lantern",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.oathPack",
+            "name": "Oath_Pack",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 40,
+        "strength": 20,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 10
+      },
+      "total": 93,
+      "formula": "10+40+20+6+6+1+10 = 93"
+    },
+    "pools": {
+      "hp": 93,
+      "sp": 4,
+      "mp": 3,
+      "ar": 4,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "lantern",
+        "name": "Lantern"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.oathPack",
+        "name": "Oath_Pack"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "pallidOathCamel.oathKick",
+          "name": "Oath_Kick",
+          "copies": 1
+        },
+        {
+          "id": "pallidOathCamel.hallowSpit",
+          "name": "Hallow_Spit",
+          "copies": 1
+        },
+        {
+          "id": "pallidOathCamel.packCrush",
+          "name": "Pack_Crush",
+          "copies": 1
+        },
+        {
+          "id": "pallidOathCamel.oathWater",
+          "name": "Oath_Water",
+          "copies": 1
+        },
+        {
+          "id": "pallidOathCamel.pilgrimBurden",
+          "name": "Pilgrim_Burden",
+          "copies": 1
+        },
+        {
+          "id": "pallidOathCamel.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

@@ -40,6 +40,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mireProcessional | The Mire Processional | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
+| enemy:pallidOathCamel | Pallid Oath Camel | elite |
 | enemy:pearlbackSnail | Pearlback Snail | elite |
 | enemy:quarryRam | Quarry Ram | minion |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
@@ -291,6 +292,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:knellcapSentinel.bellRing | Bell Ring | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:knellcapSentinel.capGuard | Cap Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:knellcapSentinel.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:pallidOathCamel.oathKick | Oath Kick | attack | 1 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.hallowSpit | Hallow Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:pallidOathCamel.packCrush | Pack Crush | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:pallidOathCamel.pilgrimBurden | Pilgrim Burden | attack | 3 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -361,3 +368,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
+| relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |

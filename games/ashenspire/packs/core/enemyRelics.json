@@ -119,5 +119,14 @@
       "self.sp=-1"
     ],
     "text": "CON +2, SP -1"
+  },
+  {
+    "id": "enemy.relic.oathPack",
+    "name": "Oath_Pack",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.wisdom=+1"
+    ],
+    "text": "CON +2, WIS +1"
   }
 ]

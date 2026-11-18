@@ -129,6 +129,10 @@
       "name": "Mirror Scribe",
       "tier": "minion"
     },
+    "enemy:pallidOathCamel": {
+      "name": "Pallid Oath Camel",
+      "tier": "elite"
+    },
     "enemy:pearlbackSnail": {
       "name": "Pearlback Snail",
       "tier": "elite"
@@ -2488,6 +2492,66 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.oathKick": {
+      "name": "Oath Kick",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.hallowSpit": {
+      "name": "Hallow Spit",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.packCrush": {
+      "name": "Pack Crush",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.oathWater": {
+      "name": "Oath Water",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block. Heal {heal} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.pilgrimBurden": {
+      "name": "Pilgrim Burden",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pallidOathCamel.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3178,6 +3242,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.oathPack": {
+      "name": "Oath Pack",
+      "text": "CON +2, WIS +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.wisdom=+1"
       ]
     }
   }
