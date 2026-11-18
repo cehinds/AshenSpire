@@ -715,3 +715,34 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
    height would clip it, so the track and the row grow to fit. */
 :root .shop-workspace.blacksmith-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
 :root .shop-workspace.blacksmith-workspace .shop-shelf .merchant-offer { height:auto; min-height:var(--merchant-row-height,110px); }
+
+/* EVENT LAYOUT (owner, 2026-11-17, phone screenshot of an event): the image takes at least half the viewport's
+   height, the door fills the rest edge to edge, every side keeps the same small gutter, and the text and choices
+   are compact so a short event fits without scrolling. A phone stacks image over door; a wider screen puts the
+   door beside the image, which then takes the full height. */
+:root { --event-gutter:calc(8px / var(--ui-zoom, 1)); }
+:root[data-layout] .event-screen.choice-screen { padding-inline:var(--event-gutter); padding-bottom:var(--event-gutter); gap:0; }
+/* The run HUD stands above the screen in flow, so the top needs only the same gutter (a short-wide window keeps its clearance). */
+:root[data-layout]:not([data-composition='short-wide']) .event-screen.choice-screen { padding-top:var(--event-gutter); }
+/* The door takes the height its text and choices need and the image takes the rest: at the default Text size a
+   short event leaves the image half the height or more, and at L or XL the image gives way (to 30% at least) before
+   any choice scrolls out of sight. */
+:root[data-layout] .event-screen .polish-scene-painting { width:100%; max-width:none; height:auto; max-height:none; aspect-ratio:auto; flex:1 1 0; min-height:calc(30vh / var(--ui-zoom, 1)); }
+:root[data-layout] .event-screen .choice-door.event-door { width:100%; max-width:none; max-height:none; flex:0 1 auto; min-height:0; margin:0; }
+.choice-door.event-door > :is(.modal-head, .modal-body, .modal-foot) { padding-inline:var(--event-gutter); }
+.choice-door.event-door > .modal-body { padding-block:var(--event-gutter); }
+.choice-door.event-door > .modal-foot { padding-block:var(--event-gutter); min-height:0; }
+.event-door .choice-body-columns { row-gap:var(--event-gutter); column-gap:calc(2 * var(--event-gutter)); }
+/* Type in rem over the zoom: 13px at the default Text size, growing with L and XL (the root font-size it reads). */
+.event-door .event-narrative > .as-prose { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.4; }
+.event-door .ev-choices { gap:calc(6px / var(--ui-zoom, 1)); }
+.event-door .as-option.ev-choice { padding:calc(6px / var(--ui-zoom, 1)) calc(10px / var(--ui-zoom, 1)); }
+.event-door .as-option.ev-choice .on { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.3; }
+.event-door .event-result { font-size:calc(1.3rem / var(--ui-zoom, 1)); line-height:1.4; }
+:root:not([data-layout='narrow']) .event-screen.choice-screen { flex-direction:row; align-items:stretch; column-gap:var(--event-gutter); }
+:root:not([data-layout='narrow']) .event-screen .polish-scene-painting { flex:1 1 auto; height:auto; min-height:calc(50vh / var(--ui-zoom, 1)); }
+:root:not([data-layout='narrow']) .event-screen .choice-door.event-door { flex:0 0 min(30rem, 38%); width:auto; }
+:root:not([data-layout='narrow']) .event-door .choice-body-columns { grid-template-columns:minmax(0, 1fr); }
+/* A short-wide window keeps the image too (the general short-wide rule hides scene paintings), beside the door. */
+:root[data-composition='short-wide'] .event-screen .polish-scene-painting { display:block; min-height:0; }
+:root[data-composition='short-wide'] .event-screen .choice-door.event-door { flex:0 0 50%; }

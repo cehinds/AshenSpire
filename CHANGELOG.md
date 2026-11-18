@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-18
 
+- **A clearer event screen** ([#2823](https://github.com/cehinds/AshenSpire/pull/2823), `0.7.4.156`). Event art gets a larger frame, and the layout makes room for longer choices or larger text. The panel has slim, even margins and a smaller title and body text. Continue appears after you pick a response. Short, wide screens keep the art beside the choices.
 - **Character review stays put** ([#2827](https://github.com/cehinds/AshenSpire/pull/2827), `0.7.4.156`). A quick double tap on Customise no longer skips the character Review step and starts the run. Shops saved before traders varied now show 3 to 6 options like every other trader.
 - **A clearer upgrade picker** ([#2828](https://github.com/cehinds/AshenSpire/pull/2828), `0.7.4.154`). Choosing a card to upgrade opens its own window, with an (i) to read the whole card. Rows fit on a phone, and each upgrade says what it adds in plain words, such as Also hits another enemy.
 - **A bigger fighter on a longer field** ([#2824](https://github.com/cehinds/AshenSpire/pull/2824), `0.7.4.152`). Your fighter is 60% larger and the battlefield stretches down to the top of your hand. On a phone the enemy rows stand further back. Your health and Poise bars now sit beside your fighter, larger and easier to read, and move to the other side or above when there is no room.
