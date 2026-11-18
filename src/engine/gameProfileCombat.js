@@ -6,7 +6,7 @@ import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, ca
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules, fixCoreStaggeredRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -79,48 +79,6 @@ function reflectApplies(target, source, carrier, profile) {
   return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
 // `forecast`: a preview of an attack that will certainly be avoided (Evade, out of range, hit roll off) prices 0 HP, as the play will; the landed receipt never sets it.
-/**
- * PierceOpener(ctx, target, carrier) -> { spent, stacks } when a Pierce hit strips Poise before its damage resolves (owner, 2026-11-18, section 21):
- * each Pierce stack deals `pierce.poisePerStack` (5) Poise damage first, never more than the pool holds. A hit carries 1 stack unless the carrier says
- * `pierceStacks` (gear grants more). Null for any other hit, a reaction, or a fight whose rules lack the key.
- */
-export function PierceOpener(ctx, target, carrier) {
-  if (!fixCoreEnabled(ctx) || !(target?.persistentPoise?.value > 0) || carrier?.combatReaction || carrier?.counterReturnAttack) return null;
-  const profile = carrier?.combatProfile || {};
-  if (!isPierceHit(profile, carrier)) return null;
-  const per = fixCorePierceRules(fixCoreRules(ctx, target)).poisePerStack;
-  const stacks = Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1;
-  const spent = Math.min(target.persistentPoise.value, Math.floor(per * stacks));
-  return spent > 0 ? { spent, stacks } : null;
-}
-/** The target as it stands once the Pierce opener has taken its Poise: the pool lowered and, when it hits 0, the break's effect on this same hit (Broken's multiplier, or the Staggered stance's Vulnerable). */
-function PierceOpenedTarget(ctx, target, opener) {
-  const poise = { ...target.persistentPoise, value: target.persistentPoise.value - opener.spent };
-  const opened = { ...target, persistentPoise: poise };
-  if (poise.value > 0) return opened;
-  if (FixCoreBrokenRules(ctx)) opened.broken = target.broken || { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1 };
-  else {
-    const stacks = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules).vulnerableStacks;
-    if (stacks > 0) opened.statuses = { ...target.statuses, vulnerable: { ...target.statuses?.vulnerable, stacks: (target.statuses?.vulnerable?.stacks || 0) + stacks } };
-  }
-  return opened;
-}
-/**
- * The damage receipt of one hit. A Pierce hit first strips its Poise (PierceOpener): the receipt is priced against the target as that leaves it (a break
- * applies to this same hit), and carries the stripped Poise in `poiseDrain` and `pierceOpener`, so the apply step takes it off the real pool and the
- * break lands after the hit as any other. Block, then Poise, then HP follow as usual; the existing Block bypass is unchanged.
- */
-export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
-  const opener = PierceOpener(ctx, target, carrier);
-  if (!opener) return profileDamageReceiptWithElements(ctx, source, target, base, carrier, options);
-  const receipt = profileDamageReceiptWithElements(ctx, source, PierceOpenedTarget(ctx, target, opener), base, carrier, options);
-  if (receipt.evaded) return profileDamageReceiptWithElements(ctx, source, target, base, carrier, options);
-  receipt.poiseDrain = (receipt.poiseDrain || 0) + opener.spent;
-  receipt.pierceOpener = opener;
-  const hit = receipt.damageReceipt?.hits?.[0];
-  if (hit) hit.poiseDamage = (hit.poiseDamage || 0) + opener.spent;
-  return receipt;
-}
 /** A Force hit's Poise share of what Block left (`poiseIn`): Poise absorbs that share (never more than it holds) and HP takes the rest, rounded down. Keeps the normal absorption if that is larger. */
 function ForcePoiseReceipt(target, poiseIn, share, normal) {
   const held = Math.max(0, target?.persistentPoise?.value || 0);
@@ -129,7 +87,7 @@ function ForcePoiseReceipt(target, poiseIn, share, normal) {
   return { ...normal, amount: poiseIn - reduced, reduced,
     sources: [{ id: 'force-poise-share', label: 'Force: a share of the hit goes to Poise', stage: 'mitigation', operation: 'multiply', multiplier: 1 - share, amount: -reduced, requested: poiseIn, effective: poiseIn - reduced }] };
 }
-function profileDamageReceiptWithElements(ctx, source, target, base, carrier = {}, options = {}) {
+export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
   // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
   // Owner, 2026-11-17 (theme B): a Defend-stance target holding Block keeps at least 1 Poise against what the hit costs it (ApplyDefendPoiseFloor).

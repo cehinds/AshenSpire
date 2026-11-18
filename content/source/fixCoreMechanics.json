@@ -56,8 +56,7 @@
     "handCostDiscount": 1
   },
   "pierce": {
-    "blockBypassFraction": 0.2,
-    "poisePerStack": 5
+    "blockBypassFraction": 0.2
   },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,

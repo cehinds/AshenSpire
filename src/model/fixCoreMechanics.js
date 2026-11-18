@@ -81,8 +81,7 @@ export function FixCoreBrokenRules(ctx) {
 export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
-// Owner, 2026-11-18 (section 21): each Pierce stack also deals `poisePerStack` Poise damage BEFORE the hit resolves. The default 0 keeps a fight saved without the key as it was.
-export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2, poisePerStack: 0 });
+export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2 });
 export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(rules?.pierce || {}) });
 // Owner, 2026-11-14: attacks always connect and intents are always read. `accuracy.hitRoll: false` draws no d20 and makes Evade a
 // stack that cancels the next attack; `perception.roll: false` makes every intent read exact. A rules object without the key
