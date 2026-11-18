@@ -2,8 +2,9 @@ import { el as buildElement, eyebrow, statRow, button } from '../kit/index.js';
 import { OpenModal } from './modalShell.js';
 import { optionRowList } from './optionRowList.js';
 import { renderCard } from './card.js';
+import { openBoundCardInspection } from './cardInspection.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
-import { changeSummary, economyNode } from './smithPaneParts.js';
+import { deltaNode, economyNode } from './smithPaneParts.js';
 import {
     pushModalParent,
     dropModalParent,
@@ -18,6 +19,11 @@ const INSTANCE_ID_ATTRIBUTE = 'data-instance-id';
 const FOCUS_WITHOUT_SCROLL = Object.freeze({ preventScroll: true });
 const ANY_ROW_SELECTOR = `[${INSTANCE_ID_ATTRIBUTE}]`;
 const ENABLED_ROW_SELECTOR = `[${INSTANCE_ID_ATTRIBUTE}]:not([disabled])`;
+// The face the (i) reads: the upgraded card, else the current one.
+const INSPECT_FACE_SELECTORS = Object.freeze([
+    '[data-card-upgrade-face="after"] .upgrade-confirm-face-holder > *',
+    '[data-card-upgrade-face="before"] .upgrade-confirm-face-holder > *',
+]);
 const FACE_SIDES = Object.freeze([
     'before',
     'after',
@@ -42,6 +48,10 @@ const CLASS = Object.freeze({
     confirm: 'smith-confirm card-upgrade-confirm',
     back: 'smith-back',
     modal: 'option-choice smith-upgrade-modal card-upgrade-modal',
+    detailModal: 'smith-upgrade-modal card-upgrade-detail-modal',
+    detailConfirm: 'smith-confirm card-upgrade-detail-confirm',
+    detailBack: 'smith-back card-upgrade-detail-back',
+    inspect: 'card-upgrade-inspect',
     cost: 'confirmation-cost as-statrow flat',
 });
 const ARROW_STEP = Object.freeze({
@@ -104,14 +114,42 @@ function isRowSelected(model, row)
     );
 }
 
+// An added effect has no before: it reads "Also hits another enemy" (owner, 2026-11-17).
+function describeAddedEffects(change)
+{
+    const effects = change.after.charAt(0).toLowerCase() + change.after.slice(1);
+    return translate('cardUpgrade.change.alsoLine', { effects });
+}
+
 function describeChangeForScreenReader(change)
 {
-    return `${change.label} ${change.before} to ${change.after}`;
+    return change.adds
+        ? describeAddedEffects(change)
+        : `${change.label} ${change.before} to ${change.after}`;
 }
 
 function describeChange(change)
 {
-    return `${change.label} ${change.before} → ${change.after}`;
+    return change.adds
+        ? describeAddedEffects(change)
+        : `${change.label} ${change.before} → ${change.after}`;
+}
+
+// The value side of a change row: the delta, or for added effects the words alone (no "None →").
+function buildChangeValue(change)
+{
+    if (!change.adds)
+    {
+        return deltaNode(change.before, change.after);
+    }
+    return buildElement(
+        'span',
+        {
+            class: 'sp-v as-delta card-upgrade-gain',
+            dataset: { dir: 'up' },
+        },
+        buildElement('strong', { class: 'd-to', text: change.after }),
+    );
 }
 
 function readConfirmLabel(selected)
@@ -121,23 +159,48 @@ function readConfirmLabel(selected)
         : translate('smith.upgrade.confirm', { cost: selected.cost });
 }
 
-function buildConfirmButton()
+function buildConfirmButton(className = CLASS.confirm)
 {
     return button({
         label: translate('cardUpgrade.confirmIdle'),
         weight: 'primary',
-        className: CLASS.confirm,
+        className,
         disabled: true,
     });
 }
 
-function buildBackButton(backLabel)
+function buildBackButton(backLabel, className = CLASS.back)
 {
     return button({
         label: backLabel,
         role: 'exit',
-        className: CLASS.back,
+        className,
     });
+}
+
+function buildInspectButton(cardName)
+{
+    const label = translate('cardUpgrade.inspect', { name: cardName });
+    return buildElement('button', {
+        type: 'button',
+        class: CLASS.inspect,
+        text: 'i',
+        title: label,
+        'aria-label': label,
+    });
+}
+
+function findInspectFace(detailsElement)
+{
+    for (const selector of INSPECT_FACE_SELECTORS)
+    {
+        const face = detailsElement?.querySelector(selector);
+        if (face)
+        {
+            return face;
+        }
+    }
+    return null;
 }
 
 function buildStonesStatus()
@@ -209,7 +272,12 @@ function buildChangeRows(changes)
             class: CLASS.changeName,
             text: change.label,
         }),
-        values: changeSummary({ values: [change] }),
+        // The row's name already says the label, so the value is the delta alone (EFFECTS once, owner 2026-11-17).
+        values: buildElement(
+            'span',
+            { class: 'smith-fold-values' },
+            buildChangeValue(change),
+        ),
     }));
 }
 
@@ -281,6 +349,9 @@ export function MountCardUpgradeModal(
     let listHost = null;
     let detailsHost = null;
     let candidateList = null;
+    let detailShell = null;
+    let detailConfirmButton = null;
+    let detailInstanceId = null;
 
     const confirmButton = buildConfirmButton();
     const backButton = buildBackButton(backLabel);
@@ -294,6 +365,7 @@ export function MountCardUpgradeModal(
     bodyHost.append(listHost);
 
     renderModel(initialModel);
+    openDetailModal();
     queueMicrotask(markReturnedRowAsQuietFocus);
     return {
         update(model)
@@ -346,6 +418,7 @@ export function MountCardUpgradeModal(
             return;
         }
         closed = true;
+        detailShell?.close();
         if (!committing)
         {
             if (parentRecord)
@@ -356,23 +429,36 @@ export function MountCardUpgradeModal(
         }
     }
 
-    function buildCandidateRow(row, model)
+    // The upgrade and its price are two chips (owner, 2026-11-17), so on a phone the price wraps under the step
+    // instead of one long chip being cut off. A rank-up names its own step and is free, so it has one chip.
+    function readRowChips(row)
     {
-        const upgradeStatus = row.weaponBound
-            ? ''
-            : row.status || translate('cardUpgrade.row.status', {
-                from: row.levelFrom,
-                to: row.levelTo,
-                cost: row.costLabel,
-            });
+        if (row.weaponBound)
+        {
+            return [];
+        }
+        if (row.status)
+        {
+            return [row.status];
+        }
+        const upgradeStatus = translate('cardUpgrade.row.status', {
+            from: row.levelFrom,
+            to: row.levelTo,
+        });
+        return [
+            upgradeStatus,
+            row.costLabel,
+        ].filter(Boolean);
+    }
+
+    function buildCandidateRow(row)
+    {
         const rowClassName = appendClassWhen(
             `${CLASS.row} rarity-${row.rarity}`,
             row.disabled,
             CLASS.locked,
         );
-        const costs = [
-            upgradeStatus,
-        ].filter(Boolean);
+        const costs = readRowChips(row);
         return {
             id: row.instanceId,
             name: row.name,
@@ -384,7 +470,6 @@ export function MountCardUpgradeModal(
             chip: translate('cardUpgrade.row.copies', { n: row.copies }),
             artAsset: row.artAsset || null,
             artGlyph: row.artAsset ? null : row.artGlyph,
-            detail: isRowSelected(model, row) ? detailsHost : null,
         };
     }
 
@@ -664,6 +749,7 @@ export function MountCardUpgradeModal(
             return;
         }
         committing = true;
+        detailShell?.close({ liftNow: true });
         shell.close();
         let committed = false;
         try
@@ -725,6 +811,7 @@ export function MountCardUpgradeModal(
         }
         rowElement.dataset.upgradeState = readUpgradeState(row);
         rowElement.setAttribute('role', 'option');
+        rowElement.setAttribute('aria-haspopup', 'dialog');
         rowElement.setAttribute('aria-disabled', String(row.disabled));
         MarkSelected(
             rowElement,
@@ -747,7 +834,7 @@ export function MountCardUpgradeModal(
 
     function renderCandidateList(model, selectedInstanceId)
     {
-        const candidateRows = model.rows.map((row) => buildCandidateRow(row, model));
+        const candidateRows = model.rows.map((row) => buildCandidateRow(row));
         candidateList = optionRowList(candidateRows, {
             idAttr: INSTANCE_ID_ATTRIBUTE,
             selectedId: selectedInstanceId,
@@ -755,6 +842,10 @@ export function MountCardUpgradeModal(
             onSelect: (instanceId) =>
             {
                 onSelect(instanceId);
+                if (isSelectedInstance(instanceId))
+                {
+                    openDetailModal();
+                }
             },
         });
         for (const rowElement of candidateList.querySelectorAll(ANY_ROW_SELECTOR))
@@ -772,13 +863,117 @@ export function MountCardUpgradeModal(
 
     function updateConfirmButton(model, selected)
     {
-        confirmButton.disabled = !selected || !canCommitSelection(selected);
-        confirmButton.textContent = selected
+        const disabled = !selected || !canCommitSelection(selected);
+        const label = selected
             ? confirmLabel || readConfirmLabel(selected)
             : confirmLabel || translate('cardUpgrade.confirmIdle');
-        confirmButton.title = selected && confirmButton.disabled
+        const blockedTitle = selected && disabled
             ? readBlockedMessage(model)
             : '';
+        const commitButtons = [
+            confirmButton,
+            detailConfirmButton,
+        ].filter(Boolean);
+        for (const commitButton of commitButtons)
+        {
+            commitButton.disabled = disabled;
+            commitButton.textContent = label;
+            commitButton.title = blockedTitle;
+        }
+    }
+
+    function isSelectedInstance(instanceId)
+    {
+        const { selected } = currentModel;
+        if (!selected)
+        {
+            return false;
+        }
+        return selected.instanceId === instanceId
+            || Boolean(selected.instanceIds?.includes(instanceId));
+    }
+
+    function inspectSelectedFace(inspectButton)
+    {
+        const face = findInspectFace(detailsHost);
+        if (face)
+        {
+            openBoundCardInspection(face, inspectButton);
+        }
+    }
+
+    function handleDetailClose()
+    {
+        detailShell = null;
+        detailsHost = null;
+        detailConfirmButton = null;
+        detailInstanceId = null;
+    }
+
+    // Choosing a card opens its own modal (owner, 2026-11-17): before -> after, the options, an (i) that reads the
+    // whole card, Back to the list and the one Upgrade. Select, then Upgrade: still two clicks (#2817).
+    function openDetailModal()
+    {
+        const { selected } = currentModel;
+        if (closed || detailShell || !selected)
+        {
+            return;
+        }
+        const detailBackLabel = translate('common.back');
+        const detailBackButton = buildBackButton(detailBackLabel, CLASS.detailBack);
+        const inspectButton = buildInspectButton(selected.name);
+        const opener = candidateList?.querySelector(selectorForRow(selected.instanceId)) || returnFocus;
+        detailConfirmButton = buildConfirmButton(CLASS.detailConfirm);
+        detailConfirmButton.addEventListener('click', commitSelectedUpgrade);
+        detailInstanceId = selected.instanceId;
+        detailShell = OpenModal({
+            title: selected.name,
+            eyebrow: title,
+            size: 'md',
+            className: CLASS.detailModal,
+            host,
+            opener,
+            closeLabel: detailBackLabel,
+            headExtras: inspectButton,
+            secondary: [detailBackButton],
+            primary: detailConfirmButton,
+            bodyClassName: 'as-pane',
+            deferFocus: true,
+            initialFocus: () => (detailConfirmButton?.disabled ? detailBackButton : detailConfirmButton),
+            body(bodyElement)
+            {
+                detailsHost = buildElement('div', { class: CLASS.details });
+                bodyElement.append(detailsHost);
+            },
+            onClose: handleDetailClose,
+        });
+        const openedShell = detailShell;
+        detailBackButton.addEventListener('click', () => openedShell.close());
+        inspectButton.addEventListener('click', () => inspectSelectedFace(inspectButton));
+        markUiComponent(openedShell.panel, UI_COMPONENTS.smithUpgradeModal, 'detail');
+        renderDetails();
+        updateConfirmButton(currentModel, selected);
+    }
+
+    function syncDetailModal(selected)
+    {
+        if (!detailShell)
+        {
+            return;
+        }
+        if (!selected)
+        {
+            detailShell.close();
+            return;
+        }
+        // Another card chosen under an open modal: its title, (i) and faces are that card's, so open it afresh.
+        if (selected.instanceId !== detailInstanceId)
+        {
+            detailShell.close();
+            openDetailModal();
+            return;
+        }
+        renderDetailsIfSelected(selected);
     }
 
     function restoreRowFocus(focusedInstanceId)
@@ -800,14 +995,10 @@ export function MountCardUpgradeModal(
         const { selected } = model;
         const selectedInstanceId = resetChosenOptionFor(selected);
 
-        detailsHost = selected
-            ? buildElement('div', { class: CLASS.details })
-            : null;
-        renderDetailsIfSelected(selected);
-
         renderCandidateList(model, selectedInstanceId);
         stonesStatus.textContent = translate('cardUpgrade.stones', { n: model.stones });
         stonesStatus.hidden = model.purse === false;
+        syncDetailModal(selected);
         updateConfirmButton(model, selected);
         restoreRowFocus(focusedInstanceId);
     }
