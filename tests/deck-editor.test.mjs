@@ -897,7 +897,7 @@ test('DOM: under Play in deck order no sort chip is offered', async () => {
     assert.equal(sortChips(ordered).length, 0);
     ordered.close();
     const sorted = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
-    assert.equal(sortChips(sorted).length, 4);
+    assert.equal(sortChips(sorted).length, 5);
     sorted.close();
   });
 });

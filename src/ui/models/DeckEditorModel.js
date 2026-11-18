@@ -20,6 +20,7 @@ import {
   deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { resolveCard } from '../../model/registries.js';
 import { cardClassification } from '../../model/cardClassification.js';
 import { deckRules } from '../../content/deckRules.js';
@@ -32,7 +33,9 @@ import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 export const DECK_COST_BUCKETS = Object.freeze(['0', '1', '2', '3', '4', '5+', 'X']);
 /** Where a card came from, for the source filter and sort (SPEC §14.1 UX). */
 export const DECK_SOURCES = Object.freeze(['basic', 'art', 'technique', 'reward', 'item']);
-export const DECK_SORTS = Object.freeze(['cost', 'name', 'type', 'source']);
+// 'default' is the order the editor opens in: cards in the deck first, then the rest; within each, weapon arts first, then
+// total cost (Stamina + Mana) ascending, then name. A manual drag order (run.deckEditorOrder) overrides it until Sort is pressed.
+export const DECK_SORTS = Object.freeze(['default', 'cost', 'name', 'type', 'source']);
 /** The two panes, in the order LB/RB and `[`/`]` cycle them. */
 export const DECK_PANES = Object.freeze(['collection', 'deck']);
 
@@ -81,6 +84,38 @@ export function rankZeroLabelId(source, isSpell) {
   return source === 'basic' || !DECK_SOURCES.includes(source) ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
 }
 
+// A weapon art: the card a weapon grants (its instance id starts `weaponArt:`) or an extracted art (the extractable tag).
+function isWeaponArtCard(card, def) {
+  return String(card?.instanceId || '').startsWith('weaponArt:') || (def.tags || []).includes(ART_TAG);
+}
+
+/**
+ * The tags a row wears (owner, 2026-11-18): ART for a weapon art (granted by equipment or extracted), REWARD only for a card
+ * COLLECTED during the run. A card the run began with (run.starterCardIds, the opening deck's card ids) never is one.
+ */
+function tagsOf(registries, card, def, run, source) {
+  const art = isWeaponArtCard(card, def);
+  const starter = (run?.starterCardIds || []).includes(card.cardId);
+  return { artTag: art, rewardTag: !art && source === 'reward' && !starter };
+}
+
+// Stamina + Mana of the card's face: the "total cost" the default sort reads.
+function totalCostOf(registries, def) {
+  const pools = FaceCostProfile(registries, def);
+  return Number(pools.stamina ?? pools.action ?? 0) + Number(pools.mana || 0);
+}
+
+/**
+ * A manual drag order (run.deckEditorOrder.<list>, a list of row keys) overrides the default order: rows named in it come
+ * first in that order, any row it does not name (a card added since) keeps its default place after them.
+ */
+function applyManualOrder(rows, keys, keyOf) {
+  if (!Array.isArray(keys) || !keys.length) return rows;
+  const at = new Map(keys.map((key, index) => [key, index]));
+  const named = rows.filter((row) => at.has(keyOf(row))).sort((a, b) => at.get(keyOf(a)) - at.get(keyOf(b)));
+  return [...named, ...rows.filter((row) => !at.has(keyOf(row)))];
+}
+
 function typeLabel(type) {
   const id = `deckEditor.type.${type}`;
   // Every card type has a row (tests/deck-editor.test.mjs holds it); a type
@@ -90,6 +125,7 @@ function typeLabel(type) {
 
 function describe(registries, card, run) {
   const def = resolveCard(registries, card);
+  const source = sourceOf(card, def, run);
   return {
     ref: Object.freeze({ ...card, mods: card.mods ? Object.freeze([...card.mods]) : undefined }),
     cardId: card.cardId,
@@ -98,7 +134,9 @@ function describe(registries, card, run) {
     costBucket: costBucket(def.cost),
     type: def.type,
     cardCategory: cardClassification(def).cardCategory,
-    source: sourceOf(card, def, run),
+    source,
+    ...tagsOf(registries, card, def, run, source),
+    totalCost: totalCostOf(registries, def),
     upgraded: !!card.upgraded,
   };
 }
@@ -117,7 +155,7 @@ export function deckEditorView(view = {}) {
       source: Object.freeze([...(filters.source || [])]),
       upgraded: !!filters.upgraded,
     }),
-    sort: DECK_SORTS.includes(view.sort) ? view.sort : 'cost',
+    sort: DECK_SORTS.includes(view.sort) ? view.sort : 'default',
   });
 }
 
@@ -132,6 +170,7 @@ function passes(row, filters) {
 function sorter(sort) {
   const bucket = (row) => DECK_COST_BUCKETS.indexOf(row.costBucket);
   const keys = {
+    default: (a, b) => (b.artTag ? 1 : 0) - (a.artTag ? 1 : 0) || a.totalCost - b.totalCost || a.name.localeCompare(b.name),
     cost: (a, b) => bucket(a) - bucket(b) || (a.cost - b.cost) || a.name.localeCompare(b.name),
     name: (a, b) => a.name.localeCompare(b.name) || bucket(a) - bucket(b),
     type: (a, b) => String(a.type).localeCompare(String(b.type)) || a.name.localeCompare(b.name),
@@ -262,7 +301,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
       if (group) { group.instanceIds.push(row.instanceId); group.instanceId = row.instanceId; group.index = row.index; }
       else groups.set(key, { ...row, groupKey: key, instanceIds: [row.instanceId] });
     }
-    deckRows = [...groups.values()].sort(sorter(state.sort));
+    deckRows = applyManualOrder([...groups.values()].sort(sorter(state.sort)), run.deckEditorOrder?.deck, (row) => row.groupKey);
   } else deckRows = deckRows.map((row) => ({ ...row, groupKey: row.instanceId, instanceIds: [row.instanceId] }));
   deckRows = deckRows.map((row) => Object.freeze({
     ...row,
@@ -333,8 +372,10 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const basics = tiles.filter((tile) => tile.unlimited);
   const rest = tiles.filter((tile) => !tile.unlimited && passes(tile, state.filters)).sort(sorter(state.sort));
   // Cards in the deck are listed first, then the library (playtest 2026-11-17 item 45b); each half keeps its order.
-  const listed = [...basics.filter((tile) => passes(tile, state.filters)), ...rest];
-  const collection = [...listed.filter((tile) => tile.inDeck > 0), ...listed.filter((tile) => !(tile.inDeck > 0))].map((tile) => Object.freeze(tile));
+  const listedBasics = basics.filter((tile) => passes(tile, state.filters));
+  const listed = [...listedBasics, ...rest];
+  const defaultOrder = [...listed.filter((tile) => tile.inDeck > 0), ...listed.filter((tile) => !(tile.inDeck > 0))];
+  const collection = applyManualOrder(defaultOrder, run.deckEditorOrder?.collection, (tile) => tile.key).map((tile) => Object.freeze(tile));
 
   const typesPresent = [...new Set([...described.map(({ row }) => row.type), ...tiles.map((tile) => tile.type)])].sort();
   const chips = (ids, active, label) => Object.freeze(ids.map((id) => Object.freeze({ id, label: label(id), on: active.includes(id) })));
