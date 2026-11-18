@@ -1327,7 +1327,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    place it would land is outlined, and nothing selects text meanwhile. */
 .deck-editor-dragging { user-select: none; -webkit-user-select: none; }
 .deck-editor-item.drag-source { opacity: 0.45; }
-.deck-editor-pane.drop-target, .deck-editor-row.drop-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
+.deck-editor-pane.drop-target, .deck-editor-item.drop-target, .deck-editor-row.drop-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
 .deck-editor-footer { display: grid; gap: 0.4rem; min-width: 0; }
 .deck-editor-refusal { margin: 0; color: var(--danger); font-weight: 700; }
 .deck-editor-refusal[hidden] { display: none; }

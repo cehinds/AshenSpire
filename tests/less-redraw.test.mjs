@@ -92,3 +92,78 @@ test('Deck editor: adding a card keeps the lists, the panes and the cards it did
     editor.close?.();
   });
 });
+
+// ---- the deck editor's tags, default sort and manual order (owner, 2026-11-18) -------------------------------------
+const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
+const REG = createRegistries(contentBundle);
+const fresh = () => createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 1 });
+
+test('REWARD is only for cards collected during the run; a starter never has it; a weapon art has ART, not REWARD', () => {
+  const run = fresh();
+  assert.ok(run.starterCardIds.length > 0, 'the opening deck is recorded as the starters');
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const rows = [...model.deck, ...model.collection];
+  for (const row of rows.filter((r) => run.starterCardIds.includes(r.cardId))) assert.equal(row.rewardTag, false, `${row.cardId} is a starter`);
+  // A card the run picks up later: a class pool card that is not one of the starters.
+  const reward = REG.classes.get('reaver').cardPool.find((id) => !run.starterCardIds.includes(id) && !run.deck.some((c) => c.cardId === id)
+    && deckEditorModel({ registries: REG, run: { ...run, deck: [...run.deck, { instanceId: 'probe', cardId: id }] }, settings: {} }).deck.find((r) => r.cardId === id)?.source === 'reward');
+  assert.ok(reward, 'the class pool holds a card the run did not start with');
+  run.deck.push({ instanceId: 'collected1', cardId: reward, upgraded: false });
+  const withReward = deckEditorModel({ registries: REG, run, settings: {} });
+  const collected = [...withReward.deck, ...withReward.collection].find((r) => r.cardId === reward);
+  assert.equal(collected.source, 'reward');
+  assert.equal(collected.rewardTag, true, 'a card collected during the run is REWARD');
+  const arts = rows.filter((r) => r.artTag);
+  assert.ok(arts.length > 0, 'the weapon art granted by the weapon is tagged ART');
+  for (const art of arts) assert.equal(art.rewardTag, false);
+});
+
+test('the default order: in the deck first, weapon arts first, then total cost, then name; a manual order overrides it', () => {
+  const run = fresh();
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const rest = model.collection.filter((tile) => tile.source !== 'basic');
+  const split = rest.findIndex((tile) => !(tile.inDeck > 0));
+  assert.ok(rest.slice(0, split < 0 ? rest.length : split).every((tile) => tile.inDeck > 0), 'cards in the deck come first');
+  for (const group of [rest.filter((t) => t.inDeck > 0), rest.filter((t) => !(t.inDeck > 0))]) {
+    const keyed = group.map((t) => [t.artTag ? 0 : 1, t.totalCost, t.name]);
+    const sorted = [...keyed].sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2].localeCompare(b[2]));
+    assert.deepEqual(keyed, sorted, 'weapon arts, then total cost, then name');
+  }
+  const keys = model.collection.map((tile) => tile.key);
+  run.deckEditorOrder = { collection: [...keys].reverse() };
+  const manual = deckEditorModel({ registries: REG, run, settings: {} });
+  assert.deepEqual(manual.collection.map((tile) => tile.key), [...keys].reverse(), 'the manual order wins');
+});
+
+test('Deck editor: dragging a card onto another reorders the list, keeps the other nodes, persists on the run and Sort restores the default', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom((dom) => {
+    const run = fresh();
+    const changes = [];
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {}, dragHoldMs: 0, onOrderChange: (order) => changes.push(order) });
+    const root = editor.root;
+    const list = root.querySelector('[data-pane="collection"] .deck-editor-list');
+    const tiles = () => [...root.querySelectorAll('.deck-editor-tile')];
+    const [first, second, third] = tiles();
+    const before = tiles().map((tile) => tile.dataset.key);
+    document.elementFromPoint = () => third;
+    const fire = (node, type, y) => node.dispatchEvent(new dom.Event(type, { bubbles: true, pointerId: 3, pointerType: 'mouse', button: 0, clientX: 10, clientY: y }));
+    const main = first.querySelector('.deck-editor-main');
+    fire(main, 'pointerdown', 10);
+    fire(main, 'pointermove', 80);
+    fire(main, 'pointerup', 80);
+    document.elementFromPoint = null;
+    const after = tiles().map((tile) => tile.dataset.key);
+    assert.notDeepEqual(after, before, 'the drop changed the order');
+    assert.equal(after[2], before[0], 'the dragged card took the dropped-on place');
+    assert.equal(root.querySelector('[data-pane="collection"] .deck-editor-list'), list, 'the list node is the same node');
+    assert.ok(tiles().includes(second), 'a card the drag did not touch is the same node');
+    assert.deepEqual(run.deckEditorOrder.collection.slice(0, 3), after.slice(0, 3), 'the manual order is kept on the run');
+    assert.equal(changes.length, 1, 'the host is told, so it can save');
+    const sortChip = root.querySelector('[data-focus-key="sort:default"]');
+    sortChip.click();
+    assert.equal(run.deckEditorOrder, undefined, 'Sort clears the manual order');
+    assert.deepEqual(tiles().map((tile) => tile.dataset.key), before, 'and the default order is back');
+    editor.close?.();
+  });
+});

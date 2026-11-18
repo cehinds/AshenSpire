@@ -101,7 +101,7 @@ function patchKey(node) {
   return null;
 }
 
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, backLabel = '', dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, onOrderChange = null, focusCard = null, backLabel = '', dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -206,6 +206,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ];
     const sortChips = model.sorts.map((s) => chip(s.label, s.on, () => {
       view = deckEditorView({ ...view, sort: s.id });
+      // Choosing a sort (Sort restores the default) ends the manual drag order.
+      if (run.deckEditorOrder) { delete run.deckEditorOrder; onOrderChange?.(null); }
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
@@ -734,8 +736,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const payloadOf = (target) => {
     const main = target?.closest?.('.deck-editor-main');
     if (!main || !isInside(main, panel)) return null;
-    if (main.dataset.action === 'add' && model.collection.find(row => row.key === main.dataset.key)?.addable) return { kind: 'tile', key: main.dataset.key, source: main };
-    if (main.dataset.action === 'remove' && (model.deck.find(row => row.instanceId === main.dataset.instanceId)?.removable || model.ordered)) return { kind: 'row', key: main.dataset.instanceId, source: main };
+    // Any card can be dragged to a new place in its own list (a manual order); moving it to the other pane (add / remove)
+    // still needs the card to be addable / removable, as before.
+    const orderKey = main.dataset.selectionKey;
+    if (main.dataset.action === 'add') return { kind: 'tile', key: main.dataset.key, source: main, orderKey, movable: !!model.collection.find(row => row.key === main.dataset.key)?.addable };
+    if (main.dataset.action === 'remove') return { kind: 'row', key: main.dataset.instanceId, source: main, orderKey, movable: !!(model.deck.find(row => row.instanceId === main.dataset.instanceId)?.removable || model.ordered) };
     return null;
   };
   const clearMarks = () => {
@@ -746,6 +751,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (!hit || !isInside(hit, panel)) return null;
     const row = hit.closest?.('.deck-editor-row');
     if (kind === 'row' && model.ordered && row) return { kind: 'row', node: row, instanceId: row.dataset.instanceId };
+    // Over another card of the same list: the dragged card takes its place (the manual order).
+    const item = hit.closest?.('.deck-editor-item');
+    if (item && !model.ordered) {
+      const sameList = kind === 'tile' ? item.classList.contains('deck-editor-tile') : item.classList.contains('deck-editor-row');
+      const targetKey = item.querySelector?.('.deck-editor-main')?.dataset.selectionKey;
+      if (sameList && targetKey) return { kind: 'reorder', node: item, targetKey };
+    }
     const inspector = hit.closest?.('.deck-editor-inspector');
     if (inspector) return { kind: 'pane', node: inspector, pane: kind === 'tile' ? 'deck' : 'collection' };
     const paneNode = hit.closest?.('[data-pane]');
@@ -796,6 +808,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     setTimeout(() => { swallowClick = false; }, 0);
     const target = dropTargetAt(ev.clientX, ev.clientY, done.kind);
     if (!target) return;
+    if (target.kind === 'reorder') { reorder(done.kind === 'tile' ? 'collection' : 'deck', done.orderKey, target.targetKey); return; }
+    if (!done.movable) return;
     if (target.kind === 'row') {
       if (target.instanceId === done.key) return;
       session.moveTo(done.key, run.deck.findIndex((c) => c.instanceId === target.instanceId));
@@ -812,6 +826,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ev.stopImmediatePropagation?.();
     ev.preventDefault?.();
   }, true);
+
+  // The manual order (owner, 2026-11-18): the dragged card takes the place of the one it was dropped on, in the list as shown.
+  // It is kept on the run (run.deckEditorOrder) so it survives closing the editor and a save; Sort clears it.
+  function reorder(list, key, targetKey) {
+    if (!key || key === targetKey) return;
+    const shown = (list === 'collection' ? model.collection : model.deck).map(row => (list === 'collection' ? row.key : row.groupKey));
+    const from = shown.indexOf(key);
+    const to = shown.indexOf(targetKey);
+    if (from < 0 || to < 0) return;
+    const next = shown.filter(k => k !== key);
+    next.splice(next.indexOf(targetKey) + (from < to ? 1 : 0), 0, key);
+    run.deckEditorOrder = { ...(run.deckEditorOrder || {}), [list]: next };
+    onOrderChange?.(run.deckEditorOrder);
+    draw();
+  }
 
   function footer() {
     const cancel = button({ label: backLabel || t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
