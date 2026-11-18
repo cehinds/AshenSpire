@@ -4105,6 +4105,10 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    card's (i) keeps its place above the face on the top layer, over the note or the row above, never under them. */
 .reward-door .reward-choice-option:has(> .is-chosen) { position:relative; z-index:var(--layer-screen-chrome, 100); }
 .reward-door .reward-choice-face.is-chosen > .card-info-button { z-index:var(--layer-screen-chrome, 100); }
+/* The chosen card's (i) sits inside the card's own bounds (bottom-right, over the type banner's corner), so it never
+   covers the note above, the point button or the row above; a touch target of 48px comes from its ::before. */
+.reward-door .reward-choice-face.is-chosen > .card-info-button { --card-info-size:34px; top:auto; left:auto; right:5px; bottom:5px; transform:none; }
+.reward-door .reward-choice-face.is-chosen > .card-info-button::before { inset:-7px; }
 .reward-door .modal-body:has(.reward-choice-grid) { overflow-x:visible; }
 
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
