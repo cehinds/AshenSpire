@@ -283,3 +283,4 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - **Magic absorption (owner, open):** some Ward cards may absorb magic. The mechanic is not decided yet.
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
 - **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
+- **Magic Smash (owner):** a magic Smash deals far more Poise damage than a physical one (+100% versus +50%), because magic damage hits Ward first. Proposal: docs/balance/magic-smash-sweep-proposal-2026-11-18.md.
