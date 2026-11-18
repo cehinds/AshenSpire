@@ -84,6 +84,7 @@ export function validateSpec(spec) {
     const w = `scenes[${i}]`;
     if (!isStr(s?.name)) errs.push(`${w}: missing name`);
     if (!isStr(s?.url)) errs.push(`${w}: missing url`);
+    if (s?.seedStorage != null && (typeof s.seedStorage !== 'object' || Array.isArray(s.seedStorage) || Object.values(s.seedStorage).some((v) => typeof v !== 'string'))) errs.push(`${w}: seedStorage must be an object of string values`);
     if (s?.ready != null && !isStr(s.ready)) errs.push(`${w}: ready must be a selector string`);
     (s?.actions || []).forEach((a, j) => errs.push(...validateAction(a, `${w}.actions[${j}]`)));
     for (const group of ['success', 'failure']) {
@@ -228,6 +229,8 @@ export function sceneUrl(baseUrl, url = '') {
 
 async function runScene(browser, baseUrl, viewport, scene, shotPath) {
   const ctx = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, hasTouch: viewport.width < 600 });
+  // scene.seedStorage {key: string}: localStorage entries written once, before the game's first script runs.
+  if (scene.seedStorage) await ctx.addInitScript((seed) => { try { if (localStorage.getItem('__qa_seeded') == null) { for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v); localStorage.setItem('__qa_seeded', '1'); } } catch { /* blocked storage */ } }, scene.seedStorage);
   const page = await ctx.newPage();
   const consoleErrors = [];
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });

@@ -1,0 +1,27 @@
+{
+  "request": "Allow new builds to delete old saves. I start a new save each build anyways. This should be a json toggle. (Owner, 2026-11-18, owner-ruling section 11.) With the toggle ON, a run save written by another build is deleted on boot and the title says so; no Continue is offered.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 }
+  ],
+  "scenes": [
+    {
+      "name": "title-after-wipe",
+      "url": "?qa=savewipe",
+      "ready": "#app",
+      "actions": [ { "key": "Enter" }, { "wait": { "ms": 9000 } } ],
+      "settleMs": 2500,
+      "seedStorage": {
+        "sote_run_v1": "{\"schemaVersion\":1,\"class\":\"warrior\",\"actNumber\":1,\"floor\":3,\"seedString\":\"old\"}",
+        "sote_build_stamp_v1": "0.0.0.0+oldbuild"
+      },
+      "success": [
+        { "kind": "visible", "label": "Notice is on the title", "selector": ".save-wipe-notice" },
+        { "kind": "text", "label": "Notice says old saves were cleared", "selector": ".save-wipe-notice", "includes": "Saves from an older build were cleared." },
+        { "kind": "count", "label": "No Continue button", "selector": ".slot-continue", "eq": 0 }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Old save still offered as Continue", "selector": ".slot-continue" }
+      ]
+    }
+  ]
+}

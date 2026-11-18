@@ -18,6 +18,7 @@ opens your change in a real browser, compares it to the request and writes `repo
   - Run each scene at desktop 1280x800 and phone 390x844 at least.
   - Scenes reuse the `?shot=...` dev hooks (e.g. `?shot=combat&shotSeed=4`); `ready` is a selector to wait for, `actions` are `click`, `tap`, `hold {selector, ms}`, `key`, `wait {ms}`.
     A hold may add `position: {x: 0.5, y: 0.6}` to reproduce an overlap at a specific body point. Coordinates are fractions of the selected element's box, from 0 to 1; omitted means its center.
+  - `seedStorage` (optional, per scene): `{ "key": "string" }` localStorage entries written once before the game loads (e.g. a save stamped by another build; `docs/qa/acceptance.save-wipe.json`).
   - Check kinds: `visible`, `hidden`, `count {min,max,eq}`, `text {includes|matches}`, `within {selector, container}`, `noOverlap {a, b}`, `style {selector, prop, equals}`, `consoleErrors {max, ignore}`.
   - Worked example: `docs/qa/acceptance.example.json` (the mini-HUD request). On `dev` today its "HP and Poise bars are both present" check FAILS at both viewports, because the player mini HUD has one bar; that is the change the request asks for. Everything else passes.
 - The PR body section (pasted into every PR; also in `.github/pull_request_template.md`)
