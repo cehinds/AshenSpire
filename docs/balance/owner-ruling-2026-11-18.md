@@ -307,3 +307,5 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - Medium (mail): whenever you gain Counter stacks, gain 1 more. If you end your turn in Counter stance while holding Counter stacks, gain 1 more Counter (3 left becomes 4).
   - Light (leathers): whenever you gain Evade stacks, gain 1 more. If you end your turn in Defend stance while holding Evade stacks, gain 1 more Evade.
   - Holding no stacks gives nothing; the bonus only adds to stacks you have or are gaining.
+- **Armour type bonuses, clarified (owner):** "set bonus" meant the one armour piece you wear; there is one armour slot, so no multi-piece sets. The bonus comes from wearing that type: mail (medium) gives the Counter stack bonus, leathers (light) the Evade stack bonus, plate (heavy) Thorns 1, robes (unarmoured) +1 max MP.
+- **Poise break (owner):** a broken Poise applies **2 stacks** each of Staggered, Vulnerable, Weak and Frail (was 1), until the start of that character's next turn.
