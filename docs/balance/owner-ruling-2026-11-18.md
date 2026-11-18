@@ -284,3 +284,10 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
 - **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
 - **Magic Smash (owner):** a magic Smash deals far more Poise damage than a physical one (+100% versus +50%), because magic damage hits Ward first. Proposal: docs/balance/magic-smash-sweep-proposal-2026-11-18.md.
+
+## 21. Pierce deals Poise damage first (owner, 2026-11-18)
+- Each Pierce stack deals **5 Poise damage before the card's damage resolves**; Pierce no longer ignores Poise. The card's damage then routes as usual: Block, then Poise, then HP.
+- If that up-front Poise damage takes Poise to 0, the target is broken at once, and the break's Vulnerable (×1.25) applies to the same hit. Example: a 4-damage Pierce 1 attack on a target with 5 or less Poise breaks it first, then deals 5 (4 × 1.25), with no Poise left to absorb any of it.
+- Example: against 8 Poise, Pierce 1 strips 5 (leaving 3), then the 4 damage goes Block, then Poise, then HP.
+- Pierce's existing Block bypass stays as it is. *(reading: the ruling replaces "ignores Poise", not the Block bypass)*
+- Stone Skin still reduces Pierce damage by 1 per stack. Whether it also cuts Pierce's 5 Poise per stack is open.
