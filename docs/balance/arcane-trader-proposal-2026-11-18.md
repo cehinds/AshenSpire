@@ -1,4 +1,4 @@
-# Arcane Trader and scrolls, 2026-11-18 (proposal for owner approval)
+# Arcane Trader and scrolls, 2026-11-18 (approved by the owner)
 
 ## Shop prices for the super-rare map relics (owner: expensive)
 Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal and conversion relics cost more, and the price rises as the drop chance falls:
@@ -42,11 +42,13 @@ Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal 
 | Scroll of Unmaking | 120 | fight (Retain) | Remove all Ward and Block from one enemy |
 | Scroll of Haste | 110 | fight | Gain 2 SP and draw 2 cards |
 
-- **Price of a spell scroll:** 40 + 30 × the spell's cost (MP + SP); rare spells +50%.
-- **Where to buy:** the Arcane Trader always stocks 3 scrolls. **Regular traders also have a chance to stock 1** (proposed: 30% per visit). Scrolls also turn up as rare rewards.
+- **Price of a spell scroll:** 60 + 40 × the spell's cost (MP + SP); rare spells +50% (owner: pricier).
+- **Where to buy:** the Arcane Trader always stocks 3 scrolls. **Regular traders also have a 50% chance per visit to stock 1** (owner). Scrolls also turn up as rare rewards.
 
-## Open choices for the owner
-1. Approve the Arcane Trader stock and the scroll list, or name changes.
-2. Is "caster classes" Starseer and Herald, or Starseer only?
-3. (Answered: scrolls sit in the potions section, outside the potion limit.)
-4. Is a 30% chance for a regular trader to stock a scroll right?
+## Owner decisions (2026-11-18)
+1. The Arcane Trader stock and the 5 unique scrolls are approved.
+2. Caster classes (10% Arcane Trader chance) are Starseer and Herald; the others get 5%.
+3. Scrolls sit in the potions section, outside the potion limit.
+4. A regular trader stocks 1 scroll on 50% of visits.
+5. A spell scroll costs 60 + 40 × the spell's cost, and rare spells +50%.
+6. Build order: after feature/MapRouteSpread merges into dev, together with the map relics.
