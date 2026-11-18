@@ -365,5 +365,23 @@
       "min": 4,
       "max": 5
     }
+  },
+  {
+    "id": "a3_eliteAshSilk",
+    "enemies": [
+      "ashSilkWeaver",
+      "sootwingBat"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
   }
 ]

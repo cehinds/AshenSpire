@@ -8375,5 +8375,116 @@
         }
       ]
     }
+  },
+  {
+    "id": "ashSilkWeaver",
+    "name": "Ash-Silk_Weaver",
+    "displayName": "Ash-Silk Weaver",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 3,
+        "bonuses": [],
+        "total": 3
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "blightRod",
+            "name": "Blight_Rod",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 9,
+        "wisdom": 8,
+        "intelligence": 2,
+        "level": 15
+      },
+      "total": 59,
+      "formula": "10+10+5+9+8+2+15 = 59"
+    },
+    "pools": {
+      "hp": 59,
+      "sp": 3,
+      "mp": 3,
+      "ar": 1,
+      "dr": 3,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "blightRod",
+        "name": "Blight_Rod"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "ashSilkWeaver.venomFang",
+          "name": "Venom_Fang",
+          "copies": 1
+        },
+        {
+          "id": "ashSilkWeaver.silkSnare",
+          "name": "Silk_Snare",
+          "copies": 1
+        },
+        {
+          "id": "ashSilkWeaver.cocoonCrush",
+          "name": "Cocoon_Crush",
+          "copies": 1
+        },
+        {
+          "id": "ashSilkWeaver.ashSilkVolley",
+          "name": "Ash-Silk_Volley",
+          "copies": 1
+        },
+        {
+          "id": "ashSilkWeaver.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "ashSilkWeaver.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

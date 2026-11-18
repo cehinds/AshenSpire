@@ -6558,5 +6558,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "ashSilkWeaver",
+    "name": "Ash-Silk_Weaver",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "wisdom",
+      "intelligence",
+      "strength",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "ashSilkWeaver.venomFang",
+      "ashSilkWeaver.silkSnare",
+      "ashSilkWeaver.cocoonCrush",
+      "ashSilkWeaver.ashSilkVolley",
+      "ashSilkWeaver.advance",
+      "ashSilkWeaver.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "blightRod"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "ashSilkWeaver",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "ashSilkWeaver.silkSnare",
+      "poiseMax": 12,
+      "cardHints": {
+        "ashSilkWeaver.venomFang": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "venomFang",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.silkSnare": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "silkSnare",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.cocoonCrush": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "cocoonCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.ashSilkVolley": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ashSilkVolley",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "ashSilkWeaver.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
   }
 ]

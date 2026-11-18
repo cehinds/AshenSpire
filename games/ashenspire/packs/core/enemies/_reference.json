@@ -9,6 +9,10 @@
       "name": "Ash Revenant",
       "tier": "minion"
     },
+    "enemy:ashSilkWeaver": {
+      "name": "Ash-Silk Weaver",
+      "tier": "elite"
+    },
     "enemy:ashheartDragon": {
       "name": "The Ashheart Dragon",
       "tier": "boss"
@@ -3272,6 +3276,66 @@
       "usedBy": "enemy sheet"
     },
     "card:slagwingHeron.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.venomFang": {
+      "name": "Venom Fang",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.silkSnare": {
+      "name": "Silk Snare",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.cocoonCrush": {
+      "name": "Cocoon Crush",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.ashSilkVolley": {
+      "name": "Ash-Silk Volley",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ashSilkWeaver.retreat": {
       "name": "Retreat",
       "type": "skill",
       "cost": {

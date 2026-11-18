@@ -10,6 +10,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | --- | --- | --- |
 | enemy:alderMaskHarvester | Alder Mask Harvester | elite |
 | enemy:ashRevenant | Ash Revenant | minion |
+| enemy:ashSilkWeaver | Ash-Silk Weaver | elite |
 | enemy:ashheartDragon | The Ashheart Dragon | boss |
 | enemy:bellKeeper | The Bell Keeper | boss |
 | enemy:blackrushStork | Blackrush Stork | elite |
@@ -378,6 +379,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:slagwingHeron.heronWard | Heron Ward | skill | 1 | 0 | Gain {block} Block. |
 | card:slagwingHeron.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:slagwingHeron.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:ashSilkWeaver.venomFang | Venom Fang | attack | 1 | 0 | Deal {damage} damage. |
+| card:ashSilkWeaver.silkSnare | Silk Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
+| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:ashSilkWeaver.ashSilkVolley | Ash-Silk Volley | attack | 3 | 1 | Deal {damage} damage. |
+| card:ashSilkWeaver.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:ashSilkWeaver.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

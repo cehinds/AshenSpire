@@ -661,3 +661,7 @@
 "enemyMove","slagwingHeron","emberDive","attack","true","false","weapon","piercing","physical","smash","","","delivery:melee","",""
 "enemyMove","slagwingHeron","moltenBeak","attack","true","false","weapon","fire","physical","attack","","","delivery:melee","",""
 "enemyMove","slagwingHeron","heronWard","block","false","false","","","physical","defend","","","","",""
+"enemyMove","ashSilkWeaver","venomFang","attack","true","false","weapon","poison","physical","attack","","","delivery:melee","",""
+"enemyMove","ashSilkWeaver","silkSnare","debuff","false","false","","","spell","","frost","","","",""
+"enemyMove","ashSilkWeaver","cocoonCrush","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
+"enemyMove","ashSilkWeaver","ashSilkVolley","attack","true","false","spell","poison","spell","","decay","","delivery:projectile","",""

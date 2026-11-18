@@ -1251,5 +1251,82 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "ashSilkWeaver",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 5,
+      "intelligence": 4
+    },
+    "size": "large",
+    "name": "Ash-Silk Weaver",
+    "hp": [
+      126,
+      132
+    ],
+    "poiseMax": 24,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "venomFang": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "silkSnare": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 25,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      "cocoonCrush": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 16,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "ashSilkVolley": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 26,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "silkSnare",
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "stacks"
+      }
+    ]
   }
 ]
