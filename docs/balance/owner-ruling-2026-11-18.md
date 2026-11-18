@@ -229,8 +229,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 | Hammer | +1 Poise damage on attacks, Sweeps and Smashes. Smash inflicts 1 Vulnerable. |
 | Spear / Rapier / Bow | +1 Pierce. |
 | Rapier | +1 Counter stack at the end of the turn while in Defend or Counter stance. |
-| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. |
-| Sceptre | +1 to magic damage and magic stacks. Magic focus. |
+| Staff | Reach. Magic focus: −1 MP on spells while in Prepared stance. 1 Ward stack at the start of each turn. |
+| Sceptre | +1 to magic damage and magic stacks. Magic focus. 1 Ward stack at the start of each turn. |
 
 **Armour groups (new tag)**
 
@@ -257,7 +257,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - Whip: Reach; attacks remove 1 Retreat stack from the target.
   - Claws / Fists: Sweeps gain Multi-hit; attacks −1 SP and −1 damage.
   - Crossbow: Reach, +2 Pierce, Escalating.
-  - Tome (off-hand): the first spell each turn draws 1.
+  - Tome (off-hand): the first spell each turn draws 1; 2 Ward stacks at the start of each turn (owner, 2026-11-18).
   - Talisman (off-hand): +1 Ward at the start of each turn.
 - **Armour set bonuses** for a full set of one group: unarmoured +1 MP; light +1 Evade at turn start; medium +1 Counter at turn end; heavy Thorns 1.
 - **Type relics:** Whetstone Charm (Sword attacks +1), Quiver Strap (Bow Retreat stack +1), Anvil Sigil (Hammer Smash Vulnerable +1), Prayer Beads (robes: +1 Ward on a spell cast), Duelist's Ribbon (Rapier counter returns +2).
@@ -268,3 +268,24 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Axe type base:** an axe attack grants +1 STR until the end of the turn; Sweeps get +1. *(decided: the STR stacks with each axe attack that turn)*
 - **Twinblades** (and Moon Glaives) keep −1 damage per hit as their drawback.
 - **Resist (element):** take 25% less damage of that element.
+
+## 20. Force and Ward (owner, 2026-11-18)
+- **Force tag:** Force is a damage type and a tag, not a spell school. Any school can cast it; Alteration casts it most.
+  - A hit with the Force tag is **physical** damage, so it hits Block first, even when a spell deals it. Today Force is a 50% magic hybrid (`combatRules.damageTypes.force.magicShare` 0.5); that goes to 0.
+  - After Block, a Force hit sends **half** of the remaining damage to Poise, not the usual 25%. The other half goes to HP.
+  - No built-in Retreat on Force (owner withdrew it). Retreat stays its own tag.
+  - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
+- **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
+- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(owner: +5 per stack)*
+  - **Ward decay (owner):** Ward loses **1 stack** at the start of its invoker's next turn, not all of it. The max Poise from the lost stack leaves with it, and current Poise is clamped to the new max.
+  - **Ward cards (owner):** every card that grants Ward carries the **Reaction** tag (`trait:reaction`), so it can be played as a reaction. Each Ward card pays for it with one of: a higher cost, Exhaust, or sharing its budget with Block. *(per-card choice in the rules pass)*
+  - **Ward breaks (owner):** when Poise reaches 0, all Ward stacks are removed. No stack cap is needed; a tome's growing Ward is answered by Poise damage. Magic hits deal extra Poise damage, and Force sends half its damage to Poise, so magic and Force are the natural counters to Ward.
+  - **Magic absorption (owner, open):** some Ward cards may absorb magic. The mechanic is not decided yet.
+- **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
+- **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
+- **Magic Smash (owner):** a magic Smash deals far more Poise damage than a physical one (+100% versus +50%), because magic damage hits Ward first. Proposal: docs/balance/magic-smash-sweep-proposal-2026-11-18.md.
+
+## 21. Pierce and Stone Skin (owner, 2026-11-18; replaces the 5-Poise-per-stack draft)
+- **Pierce:** each Pierce stack ignores **1 point of Block**. Whatever passes Block still routes **Block, then Poise, then HP**. Pierce deals no extra Poise damage, so Ward stays effective against it.
+- **Stone Skin:** 1 Stone Skin stack cancels 1 Pierce stack, and both are spent. Example: Pierce 3 against Stone Skin 2 leaves Pierce 1, which ignores 1 Block. Pierce 3 against Stone Skin 4 strips all 3 Pierce and leaves 1 Stone Skin stack.
+- This replaces "Stone Skin reduces Pierce damage by 1 per stack" and the old "Pierce bypasses up to 2 Block".

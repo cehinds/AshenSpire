@@ -64,6 +64,7 @@ import { constantFormulaValue, describeFormula } from './formulas.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { cardIsMagical } from './attackCardDamage.js';
 import { ChannelWeight } from './damageChannels.js';
+import { ResolveCarrierDamageType } from './carrierDamageType.js';
 
 const freeze = (value) => Object.freeze(value);
 const HOSTILE_HP_LOSS = Object.freeze({
@@ -352,6 +353,16 @@ function faceAttributes(registries, rules) {
   if (!rules?.gameProfile || !Array.isArray(rules.deck) || !registries) return null;
   try { return gameProfileEffectiveAttributes(registries, rules); } catch { return null; }
 }
+/** The card's combat profile with an untyped damage type resolved from the face holder's wielded armament (run or combat loadout). */
+function faceDamageProfile(def, registries, rules) {
+  const profile = { ...(combatProfileFor(def) || {}), ...(def?.combatProfile || {}) };
+  const loadout = rules?.loadout;
+  if (!loadout || !registries) return profile;
+  const classId = rules.classId ?? (Array.isArray(rules.deck) ? rules.class : rules.player?.classId);
+  const carrier = { tags: def.cardTags ?? def.tags, attack: def.attack, damageSchool: def.damageSchool, sourceArmamentId: def.sourceArmamentId,
+    sourceHand: def.sourceHand, combatProfile: profile };
+  try { return ResolveCarrierDamageType(carrier, registries, loadout, classId).combatProfile; } catch { return profile; }
+}
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   // Owner, 2026-11-18: always-on gear (a Sword's +1, a Heavy set's Block) is in the baseline face; triggered gear is not (it colours in the fight).
@@ -368,12 +379,14 @@ export function staticCardTokens(def, registries = null, rules = null) {
   // Owner, 2026-11-18: `effects.physicalDamageMultiplier` cuts the physical share of the figure first (the receipt's physical-damage-scale stage), then the side scale.
   const faceEffects = holder ? configuredModule(holder, 'effects') : null;
   const physicalMultiplier = faceEffects?.physicalDamageMultiplier;
-  const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(combatProfileFor(def) || {}) || 0));
+  // Codex review on PR #2835: an untyped card takes its wielded armament's type before the split, as tacticalCarrier resolves it in combat
+  // (a Herald's Arcane Spark is Arcane, half magic), so the face and the receipt cut the same physical share.
+  const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
+  const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
   // physical damage adds STR, a finesse hit DEX, magic damage max(INT, WIS), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
   // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
-  const faceProfile = combatProfileFor(def) || {};
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
