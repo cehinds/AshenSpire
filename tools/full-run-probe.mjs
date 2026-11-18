@@ -565,7 +565,7 @@ if (argv.includes('--selftest')) {
     ['a reward whose level button is still refilling: wait', D({ rewardVeil: true, veil: true }), 'wait'],
     ['a face-only level chooser: the card radio', D({ rewardVeil: true, veil: true, chooserFace: true, rewardBack: true }), DOORS.chooserFace],
     ['a named level chooser: the name button', D({ rewardVeil: true, veil: true, chooserName: true, rewardBack: true }), DOORS.chooserName],
-    ['the level chooser after a pick: Confirm', D({ rewardVeil: true, veil: true, chooserFace: true, chooserName: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
+    ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserFace: true, chooserName: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
