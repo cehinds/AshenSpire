@@ -193,6 +193,7 @@ import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
 
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
@@ -2740,6 +2741,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
     if (!PlayConditionReachable(combat, def)) return 'Its play condition is not met.';
+    // A nonlethal HP cost may never kill: the engine refuses the play, so the hand says why first.
+    const hp = NonlethalHpRefusal(def, combat.player);
+    if (hp) return hp;
     return '';
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }

@@ -135,7 +135,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-17 (theme B, status and stance rules): armedWhileStacks, the Defend Poise floor, enemyBadgeStacks and the stance weaknesses move it; b9c055... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme A balance: base damage halved, single-stat ratings, stat-point gear, act levels, Smith prices); 73fdb0... is in PREVIOUS_RUNTIMES.
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:c569dee21009eb36ba8a7cc8b2437f843aae9c2c784d5ae4fcab36ebcffeed4f');
+  // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
+  // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

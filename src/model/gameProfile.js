@@ -4,7 +4,7 @@ import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '.
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { SUPPORTED_CORE } from './retiredProfile.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
-import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } from './cardUpgrade.js';
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
@@ -51,6 +51,8 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
+  // A ranked ability card keeps its grade numbers; only a drawback-removal step applies to it (review of #2819).
+  else if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance)) chosen = dataClone(ApplyDrawbackSteps(chosen, upgradeStepsOf(idOrInstance)));
   // Card ranks (SPEC 13.4o) when the profile turns them on: each rank past 1 adds 1 to the primary number, as Legacy's resolveCard does.
   if (typeof idOrInstance === 'object' && gameModule(subject,'progression')?.cardRanks === true && !Array.isArray(chosen.gradeProfiles) && cardRank(idOrInstance) > 1) {
     chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};

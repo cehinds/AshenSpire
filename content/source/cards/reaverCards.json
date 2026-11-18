@@ -354,7 +354,7 @@
     "cost": 1,
     "type": "skill",
     "flavor": "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn.",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "icon": "motion",
     "effects": [
       {
@@ -377,7 +377,7 @@
         "amount": 1
       }
     ],
-    "textTemplate": "Gain {evade} Evade. Prepare Melee Counter: return {damage} damage. Draw {draw} card.",
+    "textTemplate": "Gain {evade} Evade. Prepare Melee Counter: return {damage} damage. Draw {draw} card. Exhaust.",
     "upgrade": {
       "effects": [
         {

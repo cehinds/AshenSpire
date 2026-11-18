@@ -84,10 +84,11 @@ test('solo wrong-side, unknown and defeated targets reject without spending or c
 });
 
 test('solo explicit self and legacy omitted self/ally targets still play', () => {
-  for (const [cardId, targetId] of [['defend', 'player'], ['defend', undefined], ['rallyingBanner', undefined]]) {
+  // Owner 2026-11-17: with no ally mechanics, a solo ally card still plays, but its ally Block reaches no one.
+  for (const [cardId, targetId, block] of [['defend', 'player', true], ['defend', undefined, true], ['rallyingBanner', undefined, false]]) {
     const combat = makeCombat();
     dispatch(combat, { type: 'playCard', cardInstanceId: instance(combat.piles.hand, cardId), targetId });
-    assert.ok(combat.player.block > 0);
+    assert.equal(combat.player.block > 0, block, cardId);
   }
 });
 
