@@ -7527,5 +7527,146 @@
         }
       ]
     }
+  },
+  {
+    "id": "sixleggedHearse",
+    "name": "The_Sixlegged_Hearse",
+    "displayName": "The Sixlegged Hearse",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.hearseFrame",
+            "name": "Hearse_Frame",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.bastionHarness",
+            "name": "Bastion_Harness",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.hearseFrame",
+            "name": "Hearse_Frame",
+            "kind": "relic",
+            "amount": 3
+          }
+        ],
+        "total": 7
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 70,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 15
+      },
+      "total": 134,
+      "formula": "10+70+30+6+2+1+15 = 134"
+    },
+    "pools": {
+      "hp": 134,
+      "sp": 3,
+      "mp": 2,
+      "ar": 6,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness",
+        "name": "Bastion_Harness"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.hearseFrame",
+        "name": "Hearse_Frame"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "sixleggedHearse.legStomp",
+          "name": "Leg_Stomp",
+          "copies": 2
+        },
+        {
+          "id": "sixleggedHearse.hearseCharge",
+          "name": "Hearse_Charge",
+          "copies": 1
+        },
+        {
+          "id": "sixleggedHearse.pallTrample",
+          "name": "Pall_Trample",
+          "copies": 1
+        },
+        {
+          "id": "sixleggedHearse.coffinShield",
+          "name": "Coffin_Shield",
+          "copies": 2
+        },
+        {
+          "id": "sixleggedHearse.graveReek",
+          "name": "Grave_Reek",
+          "copies": 1
+        },
+        {
+          "id": "sixleggedHearse.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

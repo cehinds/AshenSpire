@@ -155,5 +155,15 @@
       "self.wisdom=+1"
     ],
     "text": "STR +2, WIS +1"
+  },
+  {
+    "id": "enemy.relic.hearseFrame",
+    "name": "Hearse_Frame",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.strength=+1",
+      "self.sp=-1"
+    ],
+    "text": "CON +3, STR +1, SP -1"
   }
 ]

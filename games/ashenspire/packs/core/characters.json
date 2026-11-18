@@ -5820,5 +5820,151 @@
         }
       ]
     }
+  },
+  {
+    "id": "sixleggedHearse",
+    "name": "The_Sixlegged_Hearse",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 4
+    },
+    "defaultDeck": [
+      "sixleggedHearse.legStomp",
+      "sixleggedHearse.legStomp",
+      "sixleggedHearse.hearseCharge",
+      "sixleggedHearse.pallTrample",
+      "sixleggedHearse.coffinShield",
+      "sixleggedHearse.coffinShield",
+      "sixleggedHearse.graveReek",
+      "sixleggedHearse.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.hearseFrame"
+      }
+    ],
+    "presentation": {
+      "art": "sixleggedHearse",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "sixleggedHearse.lastRites"
+      ],
+      "firstCard": "sixleggedHearse.hearseCharge",
+      "poiseMax": 17,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "sixleggedHearse.lastRites"
+          ]
+        }
+      ],
+      "cardHints": {
+        "sixleggedHearse.legStomp": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "legStomp",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.hearseCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hearseCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.pallTrample": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pallTrample",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.coffinShield": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "coffinShield",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.graveReek": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "graveReek",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.lastRites": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "lastRites",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

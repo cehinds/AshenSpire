@@ -1655,5 +1655,121 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "sixleggedHearse",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 7,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 3,
+      "intelligence": 3
+    },
+    "size": "large",
+    "name": "The Sixlegged Hearse",
+    "hp": [
+      185,
+      185
+    ],
+    "poiseMax": 34,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "legStomp": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "hearseCharge": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 20,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "pallTrample": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 13,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "coffinShield": {
+        "sp": 1,
+        "intent": "block",
+        "block": 8,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "graveReek": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ]
+      },
+      "lastRites": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 28,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "locked": true
+      }
+    },
+    "firstMove": "hearseCharge",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "unlockMoves": [
+          "lastRites"
+        ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage"
+      },
+      {
+        "to": "fire",
+        "effect": "damage"
+      }
+    ]
   }
 ]

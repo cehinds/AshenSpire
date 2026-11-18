@@ -49,6 +49,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:rimewheelPenitent | Rimewheel Penitent | elite |
 | enemy:saltChoirWalrus | Salt Choir Walrus | elite |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
+| enemy:sixleggedHearse | The Sixlegged Hearse | boss |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
@@ -332,6 +333,13 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:veiledJusticiar.veilGuard | Veil Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:veiledJusticiar.finalJudgement | Final Judgement | attack | 3 | 2 | Deal {damage} damage. |
 | card:veiledJusticiar.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:sixleggedHearse.legStomp | Leg Stomp | attack | 1 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:sixleggedHearse.pallTrample | Pall Trample | attack | 2 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.coffinShield | Coffin Shield | skill | 1 | 0 | Gain {block} Block. |
+| card:sixleggedHearse.graveReek | Grave Reek | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:sixleggedHearse.lastRites | Last Rites | attack | 3 | 1 | Deal {damage} damage. |
+| card:sixleggedHearse.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -406,3 +414,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
 | relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
+| relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |

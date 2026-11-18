@@ -165,6 +165,10 @@
       "name": "Silt-Crown Newt",
       "tier": "elite"
     },
+    "enemy:sixleggedHearse": {
+      "name": "The Sixlegged Hearse",
+      "tier": "boss"
+    },
     "enemy:stitchCrab": {
       "name": "Stitch Crab",
       "tier": "minion"
@@ -2862,6 +2866,76 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.legStomp": {
+      "name": "Leg Stomp",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.hearseCharge": {
+      "name": "Hearse Charge",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.pallTrample": {
+      "name": "Pall Trample",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.coffinShield": {
+      "name": "Coffin Shield",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.graveReek": {
+      "name": "Grave Reek",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.lastRites": {
+      "name": "Last Rites",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:sixleggedHearse.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3584,6 +3658,15 @@
       "modifiers": [
         "self.strength=+2",
         "self.wisdom=+1"
+      ]
+    },
+    "relic:enemy.relic.hearseFrame": {
+      "name": "Hearse Frame",
+      "text": "CON +3, STR +1, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.strength=+1",
+        "self.sp=-1"
       ]
     }
   }
