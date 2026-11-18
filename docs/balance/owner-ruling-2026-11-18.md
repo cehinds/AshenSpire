@@ -30,7 +30,7 @@ New tags:
 - **Drained:** each use lowers an attribute until the end of the fight. *(decided: the duration)*
 - **Escalating:** the card costs 1 more SP each time it is played this fight.
 - **Reckless:** you lose Poise. Fully breaking your own Poise is self-Broken (below).
-- **Bloodprice:** the card also costs HP.
+- **Self-damage (no tag, owner):** a card says "Take X damage" using the existing self-damage effect. It counts as a drawback.
 - **Wound:** adds a Wound card (the existing `wound`) to your discard pile.
 - **Staggered (self):** replaces the proposed "Overexert", "Winded" and self-Broken (owner). The player loses 1 SP next turn; an enemy loses its next action.
 
