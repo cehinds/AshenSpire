@@ -21,7 +21,11 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { withoutStanceBenefits } from './legacyStanceRules.mjs';
 import { previewCard, dispatch } from '../src/engine/combat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+// These suites measure what a smithed tier adds to a card's printed face. The Core player side scale (x0.7, floored; owner, 2026-11-18) hides a +1 tier behind
+// its rounding on most cards, so the author is pinned to 1 here, as the other suites that pin other rules' arithmetic do.
+const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
+author.modules = { ...author.modules, effects: { ...author.modules?.effects, playerDamageMultiplier: 1 } };
+const profile = resolveGameProfile(author);
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // The Core Reaver starting deck (#2199) holds its Smash as the weapon art, not core.smash; these tests measure a plain
 // Smash card's smithed face, so the fixture adds one copy as a reward pick would.

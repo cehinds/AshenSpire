@@ -45,6 +45,8 @@ test('bundled policy1 enemy reaction pays base at commit (after the player Advan
     return emit(ctx, type, event);
   };
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  // The knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it, so lend the Strike attack rating.
+  combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   assert.ok(observed.length, 'the actual bundled reaction was committed');
   // The player's own Strike paid its Advance first and committed distance 0, so the reaction owes none.

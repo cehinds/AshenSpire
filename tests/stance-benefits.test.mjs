@@ -95,7 +95,7 @@ import { applyAttackDamage, computeBlockGain, gainBlock } from '../src/engine/ac
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const OPEN = { skipRatingBonus: true };
 const carrierOf = (maneuver, camp = 'physical') => ({ ...OPEN, combatProfile: { camp, maneuver, range: 'melee' } });

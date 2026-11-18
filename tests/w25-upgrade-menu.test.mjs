@@ -19,7 +19,7 @@ const withSteps = (steps) => ({ upgraded: true, upgradeSteps: steps });
 
 // The `other`-target half hit is a rule about the card's base number; the Core base-damage halving (0.5, rounded up)
 // makes 6 and 3 both land as 3 + AR, so that one test pins baseDamageMultiplier 1 to keep the halves distinguishable.
-const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1 } } });
+const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const unscaledRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, unscaledProfile)), unscaledProfile);
 function fight(cards, { enemies = ['wanderingSoldier'], registries: reg = registries } = {}) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -79,7 +79,7 @@ test('a card is only offered what it lacks', () => {
 test('Block, draw, copy, shuffle and cull do what the card says', () => {
   let c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'block', n: 4 }])]);
   play(c, 'p');
-  assert.ok(c.player.block >= 4, `block ${c.player.block}`);
+  assert.ok(c.player.block >= Math.floor(4 * 0.7), `block ${c.player.block}`); // Core blockGainMultiplier 0.7 (owner, 2026-11-18)
   c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'draw', n: 1 }])]);
   play(c, 'p');
   assert.equal(c.piles.hand.length, 1, 'drew one card');

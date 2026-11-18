@@ -204,7 +204,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   const tokens = staticCardTokens(whirl, coreReg, coreRules);
   const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
     authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
-  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['4 damage to all', '3 Poise to all', 'Bleed 1 to all']);
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['2 damage to all', '3 Poise to all', 'Bleed 1 to all']);
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
   // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").
