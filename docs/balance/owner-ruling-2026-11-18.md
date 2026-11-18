@@ -16,9 +16,7 @@ This is the working spec for the 2026-11-18 pass. The owner gave the requests in
   - Insanity Exposed becomes Psychic Vulnerable.
   - The generic **Vulnerable** (+25% attack damage) stays separate.
 - **Ward and Barrier** merge into one tag, **Ward**.
-- **Player rows (owner):** the player gets a real front/back row. Advance steps to the front row; Retreat steps to the back row, which replaces the old "Advanced / not Advanced" state.
-  - Found: from the normal position Retreat did nothing, because the engine only cleared an Advance (SPEC 3322).
-  - Needs: new rules for enemy reach against a back-row player, and a SPEC rewrite.
+- **Retreat (owner, corrected):** the player has no row. Only enemies have front and back rows. A player's Retreat (core.retreat, and the Retreat part of backstep) moves the enemies back one row: every front-row enemy goes to the back row, its band +1. It also still ends the player's Advance. *(decided: all enemies, plus ending Advance)*
 - **Enemy push (owner):** Gale Push and Hit and Run ("Retreat one band") move the target to the back row, as enemy retreat moves already do.
 
 ## 1. Multipliers (player and enemy)
