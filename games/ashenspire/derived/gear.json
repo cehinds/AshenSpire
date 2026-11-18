@@ -132,7 +132,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -148,7 +148,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -191,7 +191,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -207,7 +207,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -246,7 +246,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -262,7 +262,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -421,7 +421,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -437,7 +437,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -535,7 +535,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -551,7 +551,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -810,7 +810,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -826,7 +826,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -867,7 +867,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -883,7 +883,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -982,7 +982,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -998,7 +998,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1039,7 +1039,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1055,7 +1055,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1100,7 +1100,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1116,7 +1116,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1159,7 +1159,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1175,7 +1175,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1216,7 +1216,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1232,7 +1232,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1275,7 +1275,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1291,7 +1291,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1334,7 +1334,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1350,7 +1350,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1571,7 +1571,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1587,7 +1587,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 0,
       "hp": 0,
       "mp": 0,
       "sp": 0,
