@@ -8486,5 +8486,157 @@
         }
       ]
     }
+  },
+  {
+    "id": "ferrumVotary",
+    "name": "Ferrum_Votary",
+    "displayName": "Ferrum Votary",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.ironVow",
+            "name": "Iron_Vow",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "kiteShield",
+            "name": "Kite_Shield",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "armor.bastionHarness",
+            "name": "Bastion_Harness",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.ironVow",
+            "name": "Iron_Vow",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 70,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 15
+      },
+      "total": 134,
+      "formula": "10+70+30+6+2+1+15 = 134"
+    },
+    "pools": {
+      "hp": 134,
+      "sp": 4,
+      "mp": 2,
+      "ar": 6,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "kiteShield",
+        "name": "Kite_Shield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness",
+        "name": "Bastion_Harness"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ironVow",
+        "name": "Iron_Vow"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "ferrumVotary.ironCensure",
+          "name": "Iron_Censure",
+          "copies": 1
+        },
+        {
+          "id": "ferrumVotary.voltaicPrayer",
+          "name": "Voltaic_Prayer",
+          "copies": 1
+        },
+        {
+          "id": "ferrumVotary.anvilBrand",
+          "name": "Anvil_Brand",
+          "copies": 1
+        },
+        {
+          "id": "ferrumVotary.ironLitany",
+          "name": "Iron_Litany",
+          "copies": 1
+        },
+        {
+          "id": "ferrumVotary.thunderOath",
+          "name": "Thunder_Oath",
+          "copies": 1
+        },
+        {
+          "id": "ferrumVotary.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

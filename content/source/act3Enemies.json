@@ -1328,5 +1328,84 @@
         "effect": "stacks"
       }
     ]
+  },
+  {
+    "id": "ferrumVotary",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 2
+    },
+    "size": "large",
+    "name": "Ferrum Votary",
+    "hp": [
+      132,
+      140
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "ironCensure": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 30,
+        "maxConsecutive": 2
+      },
+      "voltaicPrayer": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 30,
+        "maxConsecutive": 2
+      },
+      "anvilBrand": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "ironLitany": {
+        "sp": 2,
+        "intent": "block",
+        "block": 14,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "thunderOath": {
+        "sp": 1,
+        "intent": "buff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ]
+      }
+    },
+    "firstMove": "thunderOath",
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "magic",
+        "effect": "damage"
+      }
+    ]
   }
 ]

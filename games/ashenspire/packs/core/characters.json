@@ -6659,5 +6659,119 @@
         }
       ]
     }
+  },
+  {
+    "id": "ferrumVotary",
+    "name": "Ferrum_Votary",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "ferrumVotary.ironCensure",
+      "ferrumVotary.voltaicPrayer",
+      "ferrumVotary.anvilBrand",
+      "ferrumVotary.ironLitany",
+      "ferrumVotary.thunderOath",
+      "ferrumVotary.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "kiteShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ironVow"
+      }
+    ],
+    "presentation": {
+      "art": "ferrumVotary",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "ferrumVotary.thunderOath",
+      "poiseMax": 15,
+      "cardHints": {
+        "ferrumVotary.ironCensure": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "ironCensure",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.voltaicPrayer": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "voltaicPrayer",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.anvilBrand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "anvilBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.ironLitany": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ironLitany",
+          "coreSp": "card"
+        },
+        "ferrumVotary.thunderOath": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "thunderOath",
+          "coreSp": "card"
+        },
+        "ferrumVotary.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

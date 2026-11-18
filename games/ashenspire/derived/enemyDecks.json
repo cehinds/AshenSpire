@@ -7330,5 +7330,151 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "ferrumVotary",
+    "name": "Ferrum_Votary",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "ferrumVotary.ironCensure",
+        "name": "Iron_Censure",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "ironCensure",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "ferrumVotary.voltaicPrayer",
+        "name": "Voltaic_Prayer",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "voltaicPrayer",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "ferrumVotary.anvilBrand",
+        "name": "Anvil_Brand",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "anvilBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "ferrumVotary.ironLitany",
+        "name": "Iron_Litany",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ironLitany",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "ferrumVotary.thunderOath",
+        "name": "Thunder_Oath",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "thunderOath",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "ferrumVotary.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

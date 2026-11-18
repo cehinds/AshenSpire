@@ -89,6 +89,10 @@
       "name": "Fenwick Toad",
       "tier": "minion"
     },
+    "enemy:ferrumVotary": {
+      "name": "Ferrum Votary",
+      "tier": "elite"
+    },
     "enemy:furnaceSaint": {
       "name": "The Furnace Saint",
       "tier": "boss"
@@ -3344,6 +3348,66 @@
       },
       "text": "Fall back one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.ironCensure": {
+      "name": "Iron Censure",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.voltaicPrayer": {
+      "name": "Voltaic Prayer",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.anvilBrand": {
+      "name": "Anvil Brand",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.ironLitany": {
+      "name": "Iron Litany",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.thunderOath": {
+      "name": "Thunder Oath",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {strength} Strength to yourself.",
+      "usedBy": "enemy sheet"
+    },
+    "card:ferrumVotary.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -4087,6 +4151,14 @@
     },
     "relic:enemy.relic.kilnbackFurnace": {
       "name": "Kilnback Furnace",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.ironVow": {
+      "name": "Iron Vow",
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",

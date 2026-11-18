@@ -665,3 +665,8 @@
 "enemyMove","ashSilkWeaver","silkSnare","debuff","false","false","","","spell","","frost","","","",""
 "enemyMove","ashSilkWeaver","cocoonCrush","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "enemyMove","ashSilkWeaver","ashSilkVolley","attack","true","false","spell","poison","spell","","decay","","delivery:projectile","",""
+"enemyMove","ferrumVotary","ironCensure","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
+"enemyMove","ferrumVotary","voltaicPrayer","attack","true","false","spell","lightning","spell","","lightning","","delivery:projectile","",""
+"enemyMove","ferrumVotary","anvilBrand","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
+"enemyMove","ferrumVotary","ironLitany","block","false","false","","","physical","defend","","","","",""
+"enemyMove","ferrumVotary","thunderOath","buff","false","false","","","spell","","lightning","","","",""

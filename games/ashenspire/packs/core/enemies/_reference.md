@@ -30,6 +30,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:emberStarvedPilgrim | Ember-Starved Pilgrim | minion |
 | enemy:fellWarden | The Fell Warden | boss |
 | enemy:fenwickToad | Fenwick Toad | minion |
+| enemy:ferrumVotary | Ferrum Votary | elite |
 | enemy:furnaceSaint | The Furnace Saint | boss |
 | enemy:gildedKnight | Gilded Knight | minion |
 | enemy:glassRegent | The Glass Regent | boss |
@@ -385,6 +386,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:ashSilkWeaver.ashSilkVolley | Ash-Silk Volley | attack | 3 | 1 | Deal {damage} damage. |
 | card:ashSilkWeaver.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashSilkWeaver.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:ferrumVotary.ironCensure | Iron Censure | attack | 1 | 0 | Deal {damage} damage. |
+| card:ferrumVotary.voltaicPrayer | Voltaic Prayer | attack | 1 | 1 | Deal {damage} damage. |
+| card:ferrumVotary.anvilBrand | Anvil Brand | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:ferrumVotary.ironLitany | Iron Litany | skill | 2 | 0 | Gain {block} Block. |
+| card:ferrumVotary.thunderOath | Thunder Oath | power | 1 | 1 | Apply {strength} Strength to yourself. |
+| card:ferrumVotary.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -462,3 +469,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
+| relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
