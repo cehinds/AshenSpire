@@ -276,6 +276,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - No built-in Retreat on Force (owner withdrew it). Retreat stays its own tag.
   - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
 - **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
-- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(decided: +5 per stack, since the config already counts Ward in stacks of 5 Poise)*
+- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(owner: +5 per stack)*
+  - **Ward decays like Block** at the start of its owner's turn, and its max Poise leaves with it (current Poise is clamped to the new max). Without this, per-turn Ward from staves (1) and tomes (2) would pile up without limit. With it, a tome gives +10 Poise per turn and a staff +5. *(decided)*
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
 - **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
