@@ -268,3 +268,12 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Axe type base:** an axe attack grants +1 STR until the end of the turn; Sweeps get +1. *(decided: the STR stacks with each axe attack that turn)*
 - **Twinblades** (and Moon Glaives) keep −1 damage per hit as their drawback.
 - **Resist (element):** take 25% less damage of that element.
+
+## 20. Force and Ward (owner, 2026-11-18)
+- **Force tag:** Force is a damage type and a tag, not a spell school. Any school can cast it; Alteration casts it most.
+  - A hit with the Force tag is **physical** damage, so it hits Block first, even when a spell deals it. Today Force is a 50% magic hybrid (`combatRules.damageTypes.force.magicShare` 0.5); that goes to 0.
+  - After Block, a Force hit sends **half** of the remaining damage to Poise, not the usual 25%. The other half goes to HP.
+  - No built-in Retreat on Force (owner withdrew it). Retreat stays its own tag.
+  - The Force tag and its art use **green**, the Alteration family colour, not the lilac it has today.
+- **Gale Push** (the owner calls it "Gale Palm") carries the **Retreat** tag and the **Force** tag.
+- **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(decided: +5 per stack, since the config already counts Ward in stacks of 5 Poise)*
