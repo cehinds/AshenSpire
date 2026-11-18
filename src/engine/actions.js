@@ -2100,12 +2100,21 @@ export const OPCODE_HANDLERS = Object.freeze({
       // stance (tests/warriors-vow.test.mjs pins the throw).
       if (eff.choose && stanceId == null) throw new Error(`enterStance choose '${eff.choose}' needs a play choice; only a played card supplies one`);
       const def = ctx.registries.stances.get(stanceId);
-      if (ctx.player.stanceId === stanceId) return; // already in it: no-op (StS)
+      // Entering a stance by card is a real stance change: the Core combat stance follows the stance row's maneuver
+      // (the same setter a maneuver card uses), so the sprite, icon, benefits and matchups all read it.
+      const followCombatStance = () => {
+        if (!def.maneuver) return;
+        const carrier = { ...action.card, combatProfile: { ...action.card?.combatProfile, maneuver: def.maneuver, stanceTrigger: true,
+          range: action.card?.combatProfile?.range || 'melee', camp: action.card?.combatProfile?.camp || 'physical' } };
+        Matchups.setCombatStance(ctx, ctx.player, carrier);
+      };
+      if (ctx.player.stanceId === stanceId) { followCombatStance(); return; } // already in it: no registry change (StS)
       if (ctx.player.stanceId) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
       ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
+      followCombatStance();
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
