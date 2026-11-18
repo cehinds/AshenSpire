@@ -82,10 +82,15 @@ export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,c
   const sourceContact=(target,card,effect,id)=>Engagement.rangeSourceContact(ctx,source,target,card,effect,id);
   const maxEvents=combatRules.triggers.maxEvents;
   const maxDepth=combatRules.triggers.maxDepth;
-  const visit=(site,card,path=[])=>{
+  // An enemy dies at most once per causal chain: once `enemyDied` fired for a
+  // target on the way to a site, no descendant of that site can kill it again.
+  // Without this a randomEnemy rider on enemyDied (Carrion Talon) with one enemy
+  // left recurses damage -> enemyDied -> damage until the depth guard throws.
+  const visit=(site,card,path=[],died=[])=>{
     if(sites.length>maxEvents || edges.length>maxEvents || path.length>maxDepth) throw Rules.playRefusal('This action has an unbounded range-trigger envelope','range');
     const target=find(ctx,site.targetKey);
     for(const event of site.events) for(const hook of hooks) {
+      if(event.type==='enemyDied' && died.includes(site.targetKey))continue;
       if(hook.trigger.on!==event.type || gateSpent(ctx,hook) || !possible(hook.trigger.if,event,sourceKey,site.targetKey,card))continue;
       const prior=path.filter(key=>key===hook.key).length;
       const limit=hook.trigger.once ? 1 : hook.trigger.limitPerTurn;
@@ -104,7 +109,7 @@ export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,c
           if(contactId) contacts.push({contactId,targetKey,...delivery});
           const child={id:childId,targetKey,parentId:site.id,events:eventsFor(ctx,effect,childTarget),delivery};
           sites.push(child);edge.targets.push({targetKey,siteId:childId,contactId,batch:r*hits+h});
-          visit(child,{},[...path,hook.key]);
+          visit(child,{},[...path,hook.key],event.type==='enemyDied'?[...died,site.targetKey]:died);
         }
       }
     }
