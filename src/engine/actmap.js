@@ -157,7 +157,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // firstFloor (owner, 2026-10-18): depth 1 is forced to one authored node type, so a run can open on a fight. It must be a
   // real alternative (never rest or boss), an elite only where minimumThreatFloor allows depth 1, and depth 1 cannot also be a rest depth
   // (a rest floor is a single shared node, not a lane per type).
-  if (firstFloor !== null && (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
+  if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
   // maxBranches (owner, 2026-10-25): present means the act splits into 1..min(maxBranches, distinct bosses) branches after a shared
   // opening depth. Absent keeps the single-trunk map below, draw for draw, so older profiles and seeds roll the same maps.

@@ -17,7 +17,7 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fixture(stones = 0) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-upgrade-card' });
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.smithingStones = stones;
   return { run, visit };
