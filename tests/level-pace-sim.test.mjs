@@ -2,7 +2,7 @@
 // (docs/balance/owner-ruling-2026-11-18.md §14, docs/balance/level-pace-2026-11-18.md).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fightCurveFactor } from '../src/model/levelup.js';
+import { FightCurveFactor } from '../src/model/levelup.js';
 import { defaultRegistries, simulateRun, paceReport, percentile, bandCheck } from '../tools/level-pace-sim.mjs';
 
 const reg = defaultRegistries();
@@ -32,8 +32,8 @@ test('owner pace: end-of-act levels sit in the owner bands, floor 1 pays little,
   assert.ok(rep.max.acts[2].mean > rep.min.acts[2].mean, 'elite-heavy routes finish higher');
 });
 
-test('fightCurveFactor rises with floor and with act, and is neutral without a position', () => {
-  assert.equal(fightCurveFactor(reg, null), 1);
-  assert.ok(fightCurveFactor(reg, { floor: 1, floors: 10, act: 1 }) < fightCurveFactor(reg, { floor: 10, floors: 10, act: 1 }));
-  assert.ok(fightCurveFactor(reg, { floor: 5, floors: 10, act: 1 }) < fightCurveFactor(reg, { floor: 5, floors: 10, act: 3 }));
+test('FightCurveFactor rises with floor and with act, and is neutral without a position', () => {
+  assert.equal(FightCurveFactor(reg, null), 1);
+  assert.ok(FightCurveFactor(reg, { floor: 1, floors: 10, act: 1 }) < FightCurveFactor(reg, { floor: 10, floors: 10, act: 1 }));
+  assert.ok(FightCurveFactor(reg, { floor: 5, floors: 10, act: 1 }) < FightCurveFactor(reg, { floor: 5, floors: 10, act: 3 }));
 });

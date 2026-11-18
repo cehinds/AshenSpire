@@ -1,4 +1,4 @@
-import { channelLabel } from '../../model/damageChannels.js';
+import { ChannelLabel } from '../../model/damageChannels.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { logicalViewport } from '../viewViewport.js';
@@ -1353,7 +1353,7 @@ export function mountEquipment(host, {
       const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
-        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${channelLabel(row.receipt.rating.id)} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
+        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${ChannelLabel(row.receipt.rating.id)} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
       // A power face: the label, its gear bonus as the description, the value trailing as StatusText.
       const powerFace = face({

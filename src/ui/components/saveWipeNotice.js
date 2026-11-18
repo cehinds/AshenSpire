@@ -5,7 +5,7 @@
 export const SAVE_WIPE_NOTICE_TEXT = 'Saves from an older build were cleared.';
 
 /** Draws (or removes) the notice as the first child of the title root. */
-export function drawSaveWipeNotice(root, show) {
+export function DrawSaveWipeNotice(root, show) {
   if (!root || typeof root.querySelector !== 'function') return null;
   const existing = root.querySelector(':scope > .save-wipe-notice');
   if (!show) { existing?.remove(); return null; }

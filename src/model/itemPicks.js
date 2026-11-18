@@ -9,7 +9,7 @@
 import { gameContent } from './gameProfile.js';
 import { itemRefIdentity } from './itemUpgrades.js';
 import { ITEM_WEAPON_CATEGORIES, ITEM_PROPERTIES } from '../content/itemProperties.js';
-import { channelAttribute } from './damageChannels.js';
+import { ChannelAttribute } from './damageChannels.js';
 import { relics as RELICS } from '../content/relics.js';
 
 const own = (map, itemRef) => (map && typeof map === 'object' && Array.isArray(map[itemRef]) ? map[itemRef] : []);
@@ -86,8 +86,8 @@ export function ItemPropertyIds(run, itemRef) {
 /** The stat points an item's picks and properties add ({ ar, dr, pr, poise, ward, mp, strength... }), whoever wears it. */
 export function ItemStatBonus(run, itemRef) {
   const out = {};
-  // A pick or property from before the 2026-11-18 ruling may still name `ar`, `dr` or `pr`: it is the attribute now (channelAttribute).
-  const add = (stat, n) => { if (stat && Number.isFinite(n) && n) { const key = channelAttribute(stat); out[key] = (out[key] || 0) + n; } };
+  // A pick or property from before the 2026-11-18 ruling may still name `ar`, `dr` or `pr`: it is the attribute now (ChannelAttribute).
+  const add = (stat, n) => { if (stat && Number.isFinite(n) && n) { const key = ChannelAttribute(stat); out[key] = (out[key] || 0) + n; } };
   for (const pick of ItemPicks(run, itemRef)) if (pick.k === 'stat') add(pick.stat, pick.n);
   for (const id of ItemPropertyIds(run, itemRef)) {
     const row = ITEM_PROPERTIES.find((entry) => entry.id === id);

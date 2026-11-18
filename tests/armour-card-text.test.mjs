@@ -6,7 +6,7 @@ import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { equipmentCardModel, gearEffectText } from '../src/model/equipmentCard.js';
+import { equipmentCardModel, GearEffectText } from '../src/model/equipmentCard.js';
 
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))), loadGameProfileCatalog());
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -18,11 +18,11 @@ test('armour with attribute grants states the rating and spells out each attribu
 });
 
 test('armour with only a Poise value says just that', () => {
-  assert.equal(gearEffectText(reg, { poise: 3 }, { poise: 'Poise' }, 'Flavour.').text, '3 Poise.');
+  assert.equal(GearEffectText(reg, { poise: 3 }, { poise: 'Poise' }, 'Flavour.').text, '3 Poise.');
 });
 
 test('armour with no concrete effect shows its authored flavour, never rank or points', () => {
-  assert.equal(gearEffectText(reg, { poise: 0, dexterity: 0 }, {}, 'Plain cloth, plainly kept.').text, 'Plain cloth, plainly kept.');
+  assert.equal(GearEffectText(reg, { poise: 0, dexterity: 0 }, {}, 'Plain cloth, plainly kept.').text, 'Plain cloth, plainly kept.');
   for (const piece of reg.equipment.armour) {
     for (const label of equipmentCardModel(reg, piece).bonuses.map(b => b.label)) assert.doesNotMatch(label, /points|Rank \d/);
   }

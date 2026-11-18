@@ -1,4 +1,4 @@
-import { channelLabel } from './damageChannels.js';
+import { ChannelLabel } from './damageChannels.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
@@ -58,7 +58,7 @@ const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.to
  * hundred rows. One reader now, so the tab and its rows cannot disagree
  * (owner, 2026-09-21: "make them consistent with what I see with each other").
  */
-const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : channelLabel(id));
+const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : ChannelLabel(id));
 
 /**
  * phrase(id) → a key-derived label that reads like the ones beside it.

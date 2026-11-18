@@ -53,7 +53,7 @@ import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 import { MarkSelected } from '../selection.js';
-import { patchChildren } from '../keyedPatch.js';
+import { PatchChildren } from '../keyedPatch.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -911,7 +911,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     parts.push(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
     // Only what changed is replaced (owner, 2026-11-18): the lists and panes stay, so scroll position, focus and
     // the unchanged cards are not rebuilt by one add, remove or selection.
-    patchChildren(panel, parts, { keyOf: patchKey, isContainer: (key) => PATCH_CONTAINERS.has(key.split(':')[0]), ignoreAttributes: PATCH_IGNORED, opaqueAttributes: PATCH_OPAQUE });
+    PatchChildren(panel, parts, { keyOf: patchKey, isContainer: (key) => PATCH_CONTAINERS.has(key.split(':')[0]), ignoreAttributes: PATCH_IGNORED, opaqueAttributes: PATCH_OPAQUE });
     syncInert();
     restoreFocus();
   }

@@ -13,7 +13,7 @@ const GEAR_ATTRIBUTE_IDS = ['strength', 'dexterity', 'constitution', 'wisdom', '
  * shows its authored flavour line instead; the rank / points receipt is never the body (owner, 2026-11-18).
  * One formatter for every face that draws this card (reward door, shop, Armoury, inspection).
  */
-export function gearEffectText(registries, values, labels, flavor) {
+export function GearEffectText(registries, values, labels, flavor) {
   const entries = Object.entries(values || {}).filter(([, n]) => Number.isFinite(n) && n !== 0);
   const ratings = entries.filter(([id]) => !GEAR_ATTRIBUTE_IDS.includes(id)).map(([id, n]) => `${n} ${labels[id] || id}`);
   const grants = entries.filter(([id]) => GEAR_ATTRIBUTE_IDS.includes(id) && values[id] > 0)
@@ -63,7 +63,7 @@ export function equipmentCardModel(registries, piece) {
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
       id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped STR.`
         : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
-    const effect = gearEffectText(registries, receipt.values, labels, piece.blurb);
+    const effect = GearEffectText(registries, receipt.values, labels, piece.blurb);
     bonuses = armor || piece.kind === 'shield' ? [field(effect.text, effect.text, effect.explanation)] : [];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');

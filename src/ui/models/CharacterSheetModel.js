@@ -17,7 +17,7 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 // (ui/screens/characterSheet.js) words it through uiStrings rows, so the copy
 // stays a spreadsheet edit.
 
-import { perceptionEnabled } from '../../model/perception.js';
+import { PerceptionEnabled } from '../../model/perception.js';
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
 import {
   classSkillId, levelQueuesAttributePick, levelQueuesRankUp, linkedAttributes,
@@ -241,7 +241,7 @@ export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OF
   registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
-  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && perceptionEnabled(run.enemyKnowledgeRules) })
+  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && PerceptionEnabled(run.enemyKnowledgeRules) })
     .filter((t) => t.kind !== 'class' || t.id === ownTrackId)
     .sort((a, b) => (b.id === ownTrackId) - (a.id === ownTrackId))
     .map((t) => trackLadder(registries, run, t));

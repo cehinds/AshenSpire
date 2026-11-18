@@ -6,7 +6,7 @@ Measure with `node tools/level-pace-sim.mjs [seeds]` (zero-dep; walks the real a
 
 ## Rule
 
-`fight XP = (win + kills) x scale x (floor / floors)^floorExponent x act^actExponent`, then x the tier multiplier (`balanceXp.fightCurve`, `levelup.js fightCurveFactor`). `floors` is the act's boss floor.
+`fight XP = (win + kills) x scale x (floor / floors)^floorExponent x act^actExponent`, then x the tier multiplier (`balanceXp.fightCurve`, `levelup.js FightCurveFactor`). `floors` is the act's boss floor.
 
 ## Level at the end of each act (300 seeds; mean [p10 p50 p90])
 

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { createMemoryStorage, createSaveManager, RUN_KEY, META_KEY, runKey } from '../src/engine/save.js';
-import { applyBuildWipe, buildSaveId, BUILD_STAMP_KEY } from '../src/engine/buildWipe.js';
+import { ApplyBuildWipe, BuildSaveId, BUILD_STAMP_KEY } from '../src/engine/buildWipe.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
 function seeded(stamp) {
@@ -21,7 +21,7 @@ function seeded(stamp) {
 test('ON + different build: run saves cleared, settings kept, stamp rewritten', () => {
   const storage = seeded('0.7.4.1+aaaa');
   const metaBefore = storage.getItem(META_KEY);
-  const out = applyBuildWipe(storage, { enabled: true, buildId: '0.7.4.2+bbbb' });
+  const out = ApplyBuildWipe(storage, { enabled: true, buildId: '0.7.4.2+bbbb' });
   assert.deepEqual([out.cleared, out.slots], [true, 2]);
   assert.equal(storage.getItem(RUN_KEY), null);
   assert.equal(storage.getItem(runKey(2)), null);
@@ -32,32 +32,32 @@ test('ON + different build: run saves cleared, settings kept, stamp rewritten', 
 
 test('ON + unstamped saves from before this feature: cleared', () => {
   const storage = seeded(null);
-  assert.equal(applyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, true);
+  assert.equal(ApplyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, true);
   assert.equal(storage.getItem(RUN_KEY), null);
 });
 
 test('ON + same build: saves load untouched', () => {
   const storage = seeded('x');
-  assert.equal(applyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, false);
+  assert.equal(ApplyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, false);
   assert.notEqual(storage.getItem(RUN_KEY), null);
   assert.notEqual(storage.getItem(runKey(2)), null);
 });
 
 test('OFF: nothing deleted, stamp still written', () => {
   const storage = seeded('old');
-  assert.equal(applyBuildWipe(storage, { enabled: false, buildId: 'new' }).cleared, false);
+  assert.equal(ApplyBuildWipe(storage, { enabled: false, buildId: 'new' }).cleared, false);
   assert.notEqual(storage.getItem(RUN_KEY), null);
   assert.equal(storage.getItem(BUILD_STAMP_KEY), 'new');
 });
 
 test('ON + no run saves: nothing to clear, no notice', () => {
   const storage = createMemoryStorage();
-  assert.equal(applyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, false);
+  assert.equal(ApplyBuildWipe(storage, { enabled: true, buildId: 'x' }).cleared, false);
 });
 
-test('buildSaveId adds the source digest only when stamped', () => {
-  assert.equal(buildSaveId({ version: '0.7.4.165', source: 'UNSTAMPED' }), '0.7.4.165');
-  assert.equal(buildSaveId({ version: '0.7.4.165', source: 'abc' }), '0.7.4.165+abc');
+test('BuildSaveId adds the source digest only when stamped', () => {
+  assert.equal(BuildSaveId({ version: '0.7.4.165', source: 'UNSTAMPED' }), '0.7.4.165');
+  assert.equal(BuildSaveId({ version: '0.7.4.165', source: 'abc' }), '0.7.4.165+abc');
 });
 
 test('the toggle is a boolean in content/config and is OFF on release and main builds', () => {

@@ -1,7 +1,7 @@
 // src/engine/buildWipe.js — dev-only "new build clears old run saves" (owner, 2026-11-18).
 //
 // Toggle: content/config/ui/presentation/saves.json → behavior.discardOnNewBuild.
-// Identifier: buildSaveId() = BUILD_VERSION plus the source digest when the page
+// Identifier: BuildSaveId() = BUILD_VERSION plus the source digest when the page
 // was stamped. The digest changes with every built change, so it is the most
 // reliable "different build" signal; the ordinal alone moves only on a push to test.
 //
@@ -14,7 +14,7 @@ import { RUN_KEY } from './saveArchive.js';
 
 export const BUILD_STAMP_KEY = 'sote_build_stamp_v1';
 
-export function buildSaveId({ version, source }) {
+export function BuildSaveId({ version, source }) {
   return source && source !== 'UNSTAMPED' ? `${version}+${source}` : String(version);
 }
 
@@ -28,10 +28,10 @@ function runKeys(storage) {
 }
 
 /**
- * applyBuildWipe(storage, { enabled, buildId }) → { cleared: boolean, slots: number, previous: string|null }
+ * ApplyBuildWipe(storage, { enabled, buildId }) → { cleared: boolean, slots: number, previous: string|null }
  * Writes the current stamp afterwards, so saves written from here on carry it.
  */
-export function applyBuildWipe(storage, { enabled, buildId }) {
+export function ApplyBuildWipe(storage, { enabled, buildId }) {
   let previous = null;
   try { previous = storage.getItem(BUILD_STAMP_KEY); } catch { /* blocked storage */ }
   const keys = runKeys(storage);

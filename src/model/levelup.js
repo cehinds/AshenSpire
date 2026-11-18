@@ -83,12 +83,12 @@ export function xpToNext(registries, level) {
  * portion needs victory; a loss still pays its defeated-enemy level portion.
  */
 /**
- * fightCurveFactor(registries, { floor, floors, act }) → the polynomial the owner asked for
+ * FightCurveFactor(registries, { floor, floors, act }) → the polynomial the owner asked for
  * (2026-11-18): a fight's XP grows with its floor inside the act and again with the act.
  * `scale × (floor / floors)^floorExponent × act^actExponent` from balance.xp.fightCurve;
  * 1 when the fight's place is unknown (tools, tests) or the table is absent.
  */
-export function fightCurveFactor(registries, position) {
+export function FightCurveFactor(registries, position) {
   const c = awardTable(registries).fightCurve;
   const floor = position?.floor, floors = position?.floors, act = position?.act;
   if (!c || !(floor >= 1) || !(floors >= 1) || !(act >= 1)) return 1;
@@ -126,7 +126,7 @@ export function combatXpReceipt(registries, { victory = false, pool = 'normal', 
     subtotal = next;
   });
   // Owner 2026-11-18: the fight's place (floor in the act, act) scales the whole fight's XP, before the tier.
-  const curve = fightCurveFactor(registries, position);
+  const curve = FightCurveFactor(registries, position);
   const curved = Math.floor(subtotal * curve + 1e-9);
   if (curved !== subtotal) { rows.push({ kind: 'curve', multiplier: curve, amount: curved - subtotal }); subtotal = curved; }
   // Owner 2026-11-18: the door's tier (balance.xp.tierMultiplier) scales the whole fight's XP: elite x1.5, boss x2.

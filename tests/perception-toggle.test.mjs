@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 import { snapshotEnemyKnowledgeRules } from '../src/model/enemyKnowledgeRules.js';
 import { openRunEnemyKnowledge, openKnowledgeEncounter, reconcilePerception, enemyKnowledgeRunProblems } from '../src/model/enemyKnowledgeRun.js';
-import { perceptionEnabled, perceptionLevelFor } from '../src/model/perception.js';
+import { PerceptionEnabled, PerceptionLevelFor } from '../src/model/perception.js';
 import { skillTracks } from '../src/model/skills.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -22,7 +22,7 @@ const open = enabled => {
 
 test('the shipped content has Perception off', () => {
   assert.equal(enemyKnowledge.perception.enabled, false);
-  assert.equal(perceptionEnabled(snapshotEnemyKnowledgeRules()), false);
+  assert.equal(PerceptionEnabled(snapshotEnemyKnowledgeRules()), false);
 });
 
 test('enabled: false creates no Perception track and awards no XP', () => {
@@ -37,15 +37,15 @@ test('enabled: false creates no Perception track and awards no XP', () => {
 test('enabled: false gives no intent-read bonus even when a level is carried', () => {
   const off = rulesWith(false), on = rulesWith(true);
   const skills = { perception: { xp: 0, level: 4, pendingDrafts: 0 } };
-  assert.equal(perceptionLevelFor(off, skills), 0);
-  assert.equal(perceptionLevelFor(on, skills), 4);
+  assert.equal(PerceptionLevelFor(off, skills), 0);
+  assert.equal(PerceptionLevelFor(on, skills), 4);
   const attrs = { wisdom: 5, intelligence: 5 };
-  assert.equal(identificationChance(off, attrs, 1, perceptionLevelFor(off, skills)), identificationChance(off, attrs, 1, 0));
-  assert.ok(identificationChance(on, attrs, 1, perceptionLevelFor(on, skills)) > identificationChance(on, attrs, 1, 0));
+  assert.equal(identificationChance(off, attrs, 1, PerceptionLevelFor(off, skills)), identificationChance(off, attrs, 1, 0));
+  assert.ok(identificationChance(on, attrs, 1, PerceptionLevelFor(on, skills)) > identificationChance(on, attrs, 1, 0));
 });
 
 test('enabled: false hides the track from the skill lists; enabled: true lists it', () => {
-  const tracks = (enabled) => skillTracks({}, { includePerception: perceptionEnabled(rulesWith(enabled)) });
+  const tracks = (enabled) => skillTracks({}, { includePerception: PerceptionEnabled(rulesWith(enabled)) });
   assert.equal(tracks(false).some(track => track.id === 'perception'), false);
   assert.equal(tracks(true).some(track => track.id === 'perception'), true);
 });

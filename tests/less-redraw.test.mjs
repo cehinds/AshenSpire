@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { patchChildren } from '../src/ui/keyedPatch.js';
+import { PatchChildren } from '../src/ui/keyedPatch.js';
 import { setKeyBindings } from '../src/ui/input.js';
 import { withModalDom as withBaseDom } from './helpers/dom.mjs';
 
@@ -33,12 +33,12 @@ const item = (key, text) => {
   return node;
 };
 
-test('patchChildren keeps unchanged keyed nodes, replaces the changed one and inserts the new one', () => {
+test('PatchChildren keeps unchanged keyed nodes, replaces the changed one and inserts the new one', () => {
   withDom(() => {
     const parent = document.createElement('div');
     for (const [key, text] of [['a', 'A'], ['b', 'B'], ['c', 'C']]) parent.appendChild(item(key, text));
     const [a, b, c] = [...parent.children];
-    const stats = patchChildren(parent, [item('a', 'A'), item('b', 'B2'), item('n', 'N'), item('c', 'C')], { keyOf });
+    const stats = PatchChildren(parent, [item('a', 'A'), item('b', 'B2'), item('n', 'N'), item('c', 'C')], { keyOf });
     assert.deepEqual([...parent.children].map((node) => node.dataset.key), ['a', 'b', 'n', 'c']);
     assert.equal(parent.children[0], a, 'an unchanged node is the same node');
     assert.notEqual(parent.children[1], b, 'a changed node is replaced');
@@ -48,7 +48,7 @@ test('patchChildren keeps unchanged keyed nodes, replaces the changed one and in
   });
 });
 
-test('patchChildren drops removed nodes without touching the rest and keeps a container with changed contents', () => {
+test('PatchChildren drops removed nodes without touching the rest and keeps a container with changed contents', () => {
   withDom(() => {
     const parent = document.createElement('div');
     const list = document.createElement('div');
@@ -59,7 +59,7 @@ test('patchChildren drops removed nodes without touching the rest and keeps a co
     const nextList = document.createElement('div');
     nextList.classList.add('list');
     for (const key of ['a', 'c']) nextList.appendChild(item(key, key));
-    patchChildren(parent, [nextList], { keyOf, isContainer: (key) => key === 'list' });
+    PatchChildren(parent, [nextList], { keyOf, isContainer: (key) => key === 'list' });
     assert.equal(parent.children[0], list, 'the list container stays');
     assert.deepEqual([...list.children].map((node) => node.dataset.key), ['a', 'c']);
     assert.equal(list.children[0], a);

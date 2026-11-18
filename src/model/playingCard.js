@@ -62,7 +62,7 @@ import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { cardIsMagical } from './attackCardDamage.js';
-import { channelWeight } from './damageChannels.js';
+import { ChannelWeight } from './damageChannels.js';
 
 const freeze = (value) => Object.freeze(value);
 const HOSTILE_HP_LOSS = Object.freeze({
@@ -372,8 +372,8 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
   const damageStat = attributes ? (magicHit ? Math.max(attributes.intelligence || 0, attributes.wisdom || 0) : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
-  const damageBonus = damageStat * channelWeight(faceEffects, magicHit ? 'pr' : finesseHit ? 'dr' : 'ar');
-  const blockBonus = attributes ? (attributes.dexterity || 0) * channelWeight(faceEffects, 'dr') : 0;
+  const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : finesseHit ? 'dr' : 'ar');
+  const blockBonus = attributes ? (attributes.dexterity || 0) * ChannelWeight(faceEffects, 'dr') : 0;
   const blockMultiplier = faceEffects?.blockGainMultiplier;
   const sideScale = (value, scaled) => {
     if (!scaled || counterCard || !(value > 0)) return value;

@@ -4,7 +4,7 @@
 // influences small changes").
 //
 // A screen that rebuilds its whole tree on every click flashes, drops its scroll position and loses
-// focus. `patchChildren(parent, nextNodes, { keyOf, isContainer })` takes the freshly built nodes and
+// focus. `PatchChildren(parent, nextNodes, { keyOf, isContainer })` takes the freshly built nodes and
 // reconciles them against the children `parent` already holds:
 //   - a node whose key matches an old node and whose markup is identical keeps the OLD node (the new
 //     one is dropped), so it is neither removed nor re-inserted: scroll, focus and hover stay;
@@ -30,12 +30,12 @@ function attributeNames(node) {
  * @param {Set<string>} [opaque] a node carrying any of these attributes compares as its tag alone (its own loader owns its content)
  * @returns {string}
  */
-export function markupSignature(node, ignore, opaque = new Set()) {
+export function MarkupSignature(node, ignore, opaque = new Set()) {
   if (node.nodeType === 3) return node.nodeValue || '';
   if (typeof node.getAttributeNames !== 'function') return String(node.outerHTML);
   if (opaque.size && attributeNames(node).some((name) => opaque.has(name))) return `<${node.tagName} opaque>`;
   const attrs = attributeNames(node).filter((name) => !ignore.has(name)).sort().map((name) => `${name}=${node.getAttribute(name)}`).join(' ');
-  const kids = [...node.childNodes].map((child) => markupSignature(child, ignore, opaque)).join('');
+  const kids = [...node.childNodes].map((child) => MarkupSignature(child, ignore, opaque)).join('');
   return `<${node.tagName} ${attrs}>${kids}</${node.tagName}>`;
 }
 
@@ -44,7 +44,7 @@ export function markupSignature(node, ignore, opaque = new Set()) {
  * @param {any} target
  * @param {any} source
  */
-export function syncAttributes(target, source) {
+export function SyncAttributes(target, source) {
   const wanted = new Set(attributeNames(source));
   for (const name of attributeNames(target)) if (!wanted.has(name)) target.removeAttribute(name);
   for (const name of wanted) {
@@ -64,7 +64,7 @@ export function syncAttributes(target, source) {
  * @param {PatchOptions} options
  * @returns {{ kept: number, replaced: number, inserted: number }} counts, for tests and the probe
  */
-export function patchChildren(parent, nextNodes, options) {
+export function PatchChildren(parent, nextNodes, options) {
   const { keyOf, isContainer = () => false } = options;
   const ignore = new Set(options.ignoreAttributes || []);
   const opaque = new Set(options.opaqueAttributes || []);
@@ -84,10 +84,10 @@ export function patchChildren(parent, nextNodes, options) {
     else if (old[index] && !keyOf(old[index])) match = old[index];
     if (match && !taken.has(match)) {
       taken.add(match);
-      if (markupSignature(match, ignore, opaque) === markupSignature(next, ignore, opaque)) { stats.kept += 1; result.push(match); return; }
+      if (MarkupSignature(match, ignore, opaque) === MarkupSignature(next, ignore, opaque)) { stats.kept += 1; result.push(match); return; }
       if (key && isContainer(key) && match.tagName === next.tagName) {
-        syncAttributes(match, next);
-        patchChildren(match, [...next.children], options);
+        SyncAttributes(match, next);
+        PatchChildren(match, [...next.children], options);
         stats.kept += 1;
         result.push(match);
         return;

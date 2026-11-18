@@ -13,7 +13,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { computeBlockGain } from '../src/engine/actions.js';
 import { resolveDerivedStatRules, resolvedRuleRow, derivedStatIdsFor, deriveStat } from '../src/model/derivedStats.js';
-import { channelAttribute, channelLabel } from '../src/model/damageChannels.js';
+import { ChannelAttribute, ChannelLabel } from '../src/model/damageChannels.js';
 import { ItemStatBonus } from '../src/model/itemPicks.js';
 import { statProjection } from '../src/model/statProjection.js';
 import { progressionStats } from '../src/ui/models/ProgressionInspectionModel.js';
@@ -113,7 +113,7 @@ test('the stat table has no AR, DR or PR row, and nothing the sheet draws names 
   assert.deepEqual(rows.map(row => row.id).filter(id => ['ar', 'dr', 'pr'].includes(id)), []);
   const text = JSON.stringify([rows, statProjection(registries, run).derived]);
   assert.ok(!/\b(AR|DR|PR)\b|Attack Rating|Defense Rating|Potency Rating/.test(text), 'the sheet rows name no AR, DR or PR');
-  for (const id of ['ar', 'dr', 'pr']) assert.ok(!/^(AR|DR|PR)$/.test(channelLabel(id)));
+  for (const id of ['ar', 'dr', 'pr']) assert.ok(!/^(AR|DR|PR)$/.test(ChannelLabel(id)));
 });
 
 test('no player-facing card face or tag text names AR, DR or PR', async () => {
@@ -146,7 +146,7 @@ test('a save from before the ruling loads: old rating rows are ignored and old p
   // An Advanced edit saved against a retired row is dropped, not thrown on, by a ruleset-8 table.
   assert.doesNotThrow(() => resolveDerivedStatRules(JSON.parse(readFileSync(new URL('../content/source/derivedStatRules.json', import.meta.url), 'utf8')), { ...options, explicitOverride: { rules: { ar: { strength: 5 } } } }));
   // An item pick or property that granted `ar` / `dr` / `pr` stat points is the attribute now.
-  assert.deepEqual([channelAttribute('ar'), channelAttribute('dr'), channelAttribute('pr'), channelAttribute('poise')], ['strength', 'dexterity', 'intelligence', 'poise']);
+  assert.deepEqual([ChannelAttribute('ar'), ChannelAttribute('dr'), ChannelAttribute('pr'), ChannelAttribute('poise')], ['strength', 'dexterity', 'intelligence', 'poise']);
   const run = { itemUpgradePicks: { 'armament/straightSword': [{ id: 'ar', k: 'stat', stat: 'ar', n: 1 }, { id: 'dr', k: 'stat', stat: 'dr', n: 2 }] } };
   assert.deepEqual(ItemStatBonus(run, 'armament/straightSword'), { strength: 1, dexterity: 2 });
 });

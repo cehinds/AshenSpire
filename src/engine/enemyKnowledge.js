@@ -1,7 +1,7 @@
 // Authority-owned action reads and success receipts. No storage or UI.
 import { createRng } from './rng.js';
 import { rollKnowledgeRead, predictionCategory, PREDICTION_CHOICES, concealKnowledgeIntent } from '../model/enemyIntentKnowledge.js';
-import { advancePerception, perceptionLevelFor, perceptionEnabled, perceptionProblems, PERCEPTION_SKILL } from '../model/perception.js';
+import { advancePerception, PerceptionLevelFor, PerceptionEnabled, perceptionProblems, PERCEPTION_SKILL } from '../model/perception.js';
 import { emptyEnemyKnowledge, mergeEnemyKnowledge, enemyKnowledgeProblems, knowledgeKey } from '../model/enemyKnowledgeProfile.js';
 import { addKnowledgeCounterBonus, reconcilePerception } from '../model/enemyKnowledgeRun.js';
 import { enemyMasteryTarget, enemyKnowledgeRuleProblems } from '../model/enemyKnowledgeRules.js';
@@ -11,7 +11,7 @@ export function initializeCombatKnowledge(combat, { rules, encounter = null, ban
   const problems = enemyKnowledgeRuleProblems(rules);
   for (const profile of Object.values(profiles)) problems.push(...enemyKnowledgeProblems(profile));
   const living = observers(combat).filter(row => row.entity?.alive && row.connected);
-  for (const owner of living) if (perceptionEnabled(rules) && owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], rules.perception));
+  for (const owner of living) if (PerceptionEnabled(rules) && owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], rules.perception));
   if (typeof bankable !== 'boolean' || (bankable && (!encounter || !knowledgeKey(encounter.id)
     || !Array.isArray(encounter.enemyIds) || !encounter.enemyIds.length || encounter.enemyIds.some(id => !knowledgeKey(id))))) problems.push('Combat learning requires an accepted unique encounter');
   if (problems.length) throw new Error(problems.join('; '));
@@ -20,7 +20,7 @@ export function initializeCombatKnowledge(combat, { rules, encounter = null, ban
     nextSerial: 0, owners: {}, ...(combat.players instanceof Map ? { privateSeed,
       readCounters: { enemyIntentVisibility: 0, enemyIntentClue: 0 } } : {}) };
   for (const owner of living) {
-    if (owner.skills && perceptionEnabled(rules)) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
+    if (owner.skills && PerceptionEnabled(rules)) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
     combat.enemyKnowledge.owners[owner.id] = newKnowledgeOwner(combat.enemyKnowledge, profiles[owner.id]);
   }
   return combat.enemyKnowledge;
@@ -77,16 +77,16 @@ export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowle
   const state = combat.enemyKnowledge, owner = observerFor(combat, ownerId);
   if (!state || !knowledgeKey(ownerId) || !owner?.entity?.alive || !owner.connected || combat.result) throw new Error('Enemy knowledge observer is unavailable');
   const problems = enemyKnowledgeProblems(profile);
-  if (perceptionEnabled(state.rules) && owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], state.rules.perception));
+  if (PerceptionEnabled(state.rules) && owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], state.rules.perception));
   if (problems.length) throw new Error(problems.join('; '));
-  if (owner.skills && perceptionEnabled(state.rules)) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
+  if (owner.skills && PerceptionEnabled(state.rules)) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
   if (!Object.hasOwn(state.owners, ownerId)) state.owners[ownerId] = newKnowledgeOwner(state, profile);
   else state.owners[ownerId].knowledge = mergeEnemyKnowledge(profile, state.owners[ownerId].knowledge);
   const rng = Object.hasOwn(state, 'privateSeed') ? createRng(state.privateSeed, state.readCounters) : combat.rng;
   const selected = combat.enemies.filter(enemy => enemy.alive && enemy.knowledgeAction && !enemy.knowledgeAction.executed && !enemy.knowledgeAction.cancelled)
     .sort((a, b) => a.knowledgeAction.serial - b.knowledgeAction.serial);
   for (const enemy of selected) if (!Object.hasOwn(enemy.knowledgeAction.reads, ownerId)) {
-    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevelFor(state.rules, owner.skills) }, enemy.knowledgeAction.category, { ctx: combat, target: enemy });
+    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: PerceptionLevelFor(state.rules, owner.skills) }, enemy.knowledgeAction.category, { ctx: combat, target: enemy });
     announceRead(combat, ownerId, enemy, enemy.knowledgeAction.reads[ownerId], enemy.knowledgeAction.serial);
   }
   storeReadCounters(state, rng);
@@ -112,7 +112,7 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   const action = { serial: ++state.nextSerial, category, executed: false, reads: {} };
   for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) {
     if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = newKnowledgeOwner(state);
-    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevelFor(state.rules, owner.skills) }, category, { ctx: combat, target: enemy });
+    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: PerceptionLevelFor(state.rules, owner.skills) }, category, { ctx: combat, target: enemy });
     announceRead(combat, owner.id, enemy, action.reads[owner.id], action.serial);
   }
   storeReadCounters(state, rng);
@@ -159,7 +159,7 @@ function payPerception(combat, enemy, ownerId, reason) {
   const state = combat.enemyKnowledge;
   const read = enemy.knowledgeAction?.reads[ownerId];
   const owner = observerFor(combat, ownerId);
-  if (!perceptionEnabled(state.rules) || !read || read.visibility !== 'unknown' || read.credited || !owner?.skills || !state.owners[ownerId]) return false;
+  if (!PerceptionEnabled(state.rules) || !read || read.visibility !== 'unknown' || read.credited || !owner?.skills || !state.owners[ownerId]) return false;
   read.credited = true;
   owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
   const amount = state.rules.perception.correctPredictionXp;
