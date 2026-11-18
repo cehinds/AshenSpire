@@ -1,4 +1,4 @@
-# Build-variety relics, 2026-11-18 (proposal for owner approval)
+# Build-variety relics, 2026-11-18 (approved by the owner)
 
 Owner: add relics that use the game's many tags and effects, so more builds are viable. There are 79 relics today (69 in relics.json, 10 progression). Each relic below references existing tags only (owner principle: reference a tag, never re-bundle it). Each pushes one archetype, and most connect two tags so builds cross over. Before building, a worker checks these against the 79 existing relics' effects and drops duplicates.
 
@@ -60,7 +60,8 @@ Owner: add relics that use the game's many tags and effects, so more builds are 
 | Whirling Bangle | uncommon | Multi-hit attacks apply their status riders only on the first hit but deal +1 per hit | Multi-hit |
 | Awl of Piercing | uncommon | +1 Pierce on attacks that cost 0 | Dagger and Pierce |
 
-## Open choices for the owner
-1. Approve the list, or name relics to cut or add.
-2. Should any of these be class-themed (the 75% weighting) or open to all classes?
-3. Should the rarest (rare) ones get drop weights like the map relics, or use normal relic rarity?
+## Owner decisions (2026-11-18)
+1. All 33 relics are approved. A worker checks them against the 79 existing relics and drops duplicates before building; tuning comes later.
+2. Class-weighted: relics tagged to a class's builds appear 75% of the time for that class.
+3. Rare build relics use normal rare relic odds. Only the map removal and conversion relics are super rare.
+4. Build order: after PR #2835, chore/ForceWardRules and the gear passes merge, since many of these relics read Ward, Stone Skin, Force, Pierce and Retreat stacks.
