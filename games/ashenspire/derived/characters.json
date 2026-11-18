@@ -5451,5 +5451,116 @@
         }
       ]
     }
+  },
+  {
+    "id": "blackrushStork",
+    "name": "Blackrush_Stork",
+    "displayName": "Blackrush Stork",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "halberd",
+            "name": "Halberd",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 20,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 54,
+      "formula": "10+10+20+6+2+1+5 = 54"
+    },
+    "pools": {
+      "hp": 54,
+      "sp": 3,
+      "mp": 1,
+      "ar": 4,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "halberd",
+        "name": "Halberd"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "blackrushStork.beakJab",
+          "name": "Beak_Jab",
+          "copies": 1
+        },
+        {
+          "id": "blackrushStork.spearDive",
+          "name": "Spear_Dive",
+          "copies": 1
+        },
+        {
+          "id": "blackrushStork.blackrushSkewer",
+          "name": "Blackrush_Skewer",
+          "copies": 1
+        },
+        {
+          "id": "blackrushStork.wadeGuard",
+          "name": "Wade_Guard",
+          "copies": 1
+        },
+        {
+          "id": "blackrushStork.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "blackrushStork.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

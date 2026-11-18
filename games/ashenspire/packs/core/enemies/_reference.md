@@ -11,6 +11,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:ashRevenant | Ash Revenant | minion |
 | enemy:ashheartDragon | The Ashheart Dragon | boss |
 | enemy:bellKeeper | The Bell Keeper | boss |
+| enemy:blackrushStork | Blackrush Stork | elite |
 | enemy:blightHound | Blight Hound | minion |
 | enemy:blightedValkyrie | The Blighted Valkyrie | boss |
 | enemy:brackenTusker | Bracken Tusker | minion |
@@ -225,6 +226,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:wickerHind.wickerMend | Wicker Mend | power | 2 | 1 | Heal {heal} HP. |
 | card:wickerHind.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:wickerHind.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:blackrushStork.beakJab | Beak Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:blackrushStork.spearDive | Spear Dive | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:blackrushStork.blackrushSkewer | Blackrush Skewer | attack | 3 | 0 | Deal {damage} damage. |
+| card:blackrushStork.wadeGuard | Wade Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:blackrushStork.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:blackrushStork.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

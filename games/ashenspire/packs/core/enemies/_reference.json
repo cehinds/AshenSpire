@@ -13,6 +13,10 @@
       "name": "The Bell Keeper",
       "tier": "boss"
     },
+    "enemy:blackrushStork": {
+      "name": "Blackrush Stork",
+      "tier": "elite"
+    },
     "enemy:blightHound": {
       "name": "Blight Hound",
       "tier": "minion"
@@ -1880,6 +1884,66 @@
       "usedBy": "enemy sheet"
     },
     "card:wickerHind.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.beakJab": {
+      "name": "Beak Jab",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.spearDive": {
+      "name": "Spear Dive",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.blackrushSkewer": {
+      "name": "Blackrush Skewer",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.wadeGuard": {
+      "name": "Wade Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:blackrushStork.retreat": {
       "name": "Retreat",
       "type": "skill",
       "cost": {

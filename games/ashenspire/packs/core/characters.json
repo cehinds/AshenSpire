@@ -4075,5 +4075,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "blackrushStork",
+    "name": "Blackrush_Stork",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "blackrushStork.beakJab",
+      "blackrushStork.spearDive",
+      "blackrushStork.blackrushSkewer",
+      "blackrushStork.wadeGuard",
+      "blackrushStork.advance",
+      "blackrushStork.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "blackrushStork",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "blackrushStork.spearDive",
+      "poiseMax": 10,
+      "cardHints": {
+        "blackrushStork.beakJab": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "beakJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.spearDive": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "spearDive",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.blackrushSkewer": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "blackrushSkewer",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.wadeGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wadeGuard",
+          "coreSp": "card"
+        },
+        "blackrushStork.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "blackrushStork.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]
