@@ -4,8 +4,8 @@
   "artifactFormat": "ashen.build@1",
   "game": "ashenspire",
   "version": "2.0.0",
-  "hash": "sha256:3172d664df7cd5817f6076acb4d3bf40bf555193e17a0dd6380aa1ff9567b1d7",
-  "bytes": 2718600,
+  "hash": "sha256:38780bbbd625106ebd293b4e383f54e713378c906593a5c988c0eb634fa8db92",
+  "bytes": 2741268,
   "report": {
     "mechanics": 269,
     "portable": 15,

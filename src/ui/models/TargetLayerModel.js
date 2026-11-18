@@ -1,11 +1,10 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 
 // WGC4 target layer. One home for which combatants a pending command may be
-// aimed at: while a card or flask that needs an enemy is armed, every living
-// enemy is eligible and nothing else is. The engine still revalidates the
-// command; this only decides what the battlefield highlights.
-export function targetLayer({ armed, enemies = [] }) {
-  const eligibleIds = armed ? enemies.filter(enemy => enemy.alive).map(enemy => enemy.id) : [];
+// aimed at: a living enemy in the pending command's target plan. The engine
+// still revalidates the command; this decides what the battlefield highlights.
+export function targetLayer({ armed, enemies = [], legalIds = null }) {
+  const eligibleIds = armed ? enemies.filter(enemy => enemy.alive && (!legalIds || legalIds.includes(enemy.id))).map(enemy => enemy.id) : [];
   return Object.freeze({ active: eligibleIds.length > 0, eligibleIds: Object.freeze(eligibleIds) });
 }
 

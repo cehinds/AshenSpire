@@ -1139,6 +1139,10 @@ should appear in rewards. Notes:
   `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `playIf` (optional predicate) gates the play itself, read against the aimed
+  enemy (Lunging Thrust: `{ "p": "atRange", "range": "reach" }`). Conditions on
+  stance or status read `"snapshot": "beforePlay"` so the card's own stance change
+  or first hit cannot decide them (SPEC §3.6, §4.8b).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
   `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in
@@ -1282,7 +1286,7 @@ validation refusals and the dialogue model.
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
+| Predicates | `PREDICATES` | inStance (`of`, `snapshot`, `idle`), atRange, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
 | Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
