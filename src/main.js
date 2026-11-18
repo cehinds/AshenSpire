@@ -120,7 +120,10 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
-import { BUILD_VERSION } from './buildversion.js';
+import { BUILD_VERSION, SOURCE as BUILD_SOURCE } from './buildversion.js';
+import { applyBuildWipe, buildSaveId } from './engine/buildWipe.js';
+import { drawSaveWipeNotice } from './ui/components/saveWipeNotice.js';
+import { uiConfig } from './config/generated/ui.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
@@ -374,6 +377,8 @@ if (shotState === 'crisis') {
 // asking would make every run start fail.
 let persistentStorage = false;
 try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+// Dev toggle (content/config/ui/presentation/saves.json): a new build clears old run saves; settings are kept.
+const saveWipe = applyBuildWipe(bootStorage, { enabled: uiConfig.presentation.saves.behavior.discardOnNewBuild === true, buildId: buildSaveId({ version: BUILD_VERSION, source: BUILD_SOURCE }) });
 const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
@@ -1095,6 +1100,7 @@ function afterBootArt(fn) {
 // null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
 let artNoticeState = null;
 function drawArtNotice(root) {
+  drawSaveWipeNotice(root, saveWipe.cleared);
   if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
   mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
 }
