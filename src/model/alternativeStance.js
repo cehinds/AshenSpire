@@ -54,7 +54,7 @@ export function stanceForCard(card = {}) {
  * order after `played` (the cardPlayed receipt); the last `combatStanceChanged` for the player's seat wins. Other cards,
  * and a play that changed no stance, return the card untouched.
  */
-export function cardAsEnteredStance(card = {}, events = [], played = {}) {
+export function CardAsEnteredStance(card = {}, events = [], played = {}) {
   if (!card?.effects?.some?.(effect => effect.op === 'enterStance')) return card;
   const actor = played.playerId || played.sourceId || 'player';
   const after = events.slice(events.indexOf(played) + 1);
