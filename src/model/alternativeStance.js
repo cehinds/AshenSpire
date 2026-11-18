@@ -35,7 +35,7 @@ export function stanceForCard(card = {}) {
   // Player-only reviewed counter/sweep families; public enemy intent stays broad.
   if (profile.maneuver === 'counter') return 'counter';
   if (defensive.has(profile.maneuver)) return 'defensive';
-  if (profile.camp === 'spell') return 'casting';
+  if (profile.camp === 'spell' || profile.maneuver === 'casting') return 'casting';
   if (profile.maneuver === 'sweep') return 'sweep';
   // Owner (2026-10-12): smash holds its own painted wind-up, not the offensive frame.
   if (profile.maneuver === 'smash') return 'smash';

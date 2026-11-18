@@ -9,7 +9,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { StanceBenefitRules, AttackDamageMultiplier, BlockGainMultiplier } from '../src/engine/stanceBenefits.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
@@ -123,4 +123,54 @@ test('entered-stance helper: only this play\'s receipts count, and Prepared read
   const prepared = CardAsEnteredStance(card, [played, change('prepared')], played);
   assert.equal(prepared.cardTags.at(-1), 'maneuver:casting');
   assert.doesNotThrow(() => kindForCard(prepared));
+});
+
+// Strike and Settle (`enterStance { choose: 'maneuver' }`): the pick is the stance the figure ends in.
+function strikeAndSettle(pick) {
+  const combat = liveCore();
+  const id = give(combat, 'base.attack-then-defend', 'ss1');
+  const quoted = previewCardDamage(combat, id);
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: combat.enemies[0].id, choice: pick });
+  return { combat, out, quoted };
+}
+function previewCardDamage(combat, id) {
+  return previewCard(combat, id, combat.enemies[0].id).values.find(v => v.op === 'damage')?.hitDamages?.[0];
+}
+
+test('Strike and Settle: the pick, not the card\'s attack maneuver, is the stance it ends in (Core)', async () => {
+  const { CardAsEnteredStance, kindForCard } = await import('../src/model/alternativeStance.js');
+  for (const [pick, ended] of [['attack', 'attack'], ['defend', 'defend'], ['counter', 'counter'], ['smash', 'smash'], ['sweep', 'sweep'], ['casting', 'prepared']]) {
+    const { combat, out } = strikeAndSettle(pick);
+    assert.equal(out.error, undefined, pick);
+    assert.equal(combat.player.combatStance.maneuver, ended, pick);
+    const played = out.events.find(e => e.type === 'cardPlayed');
+    const shown = CardAsEnteredStance(reg.cards.get('base.attack-then-defend'), out.events, played);
+    assert.equal(kindForCard(shown).maneuver, pick === 'casting' ? null : pick === 'attack' ? 'attack' : pick, `glyph follows the ${pick} pick`);
+  }
+});
+
+test('Strike and Settle: the hit is the same whatever is picked, and equals its preview', () => {
+  const hits = ['attack', 'defend', 'counter', 'casting'].map(pick => {
+    const { combat, out, quoted } = strikeAndSettle(pick);
+    const hit = out.events.find(e => e.type === 'damageDealt' && e.targetId === combat.enemies[0].id);
+    assert.ok(hit, pick);
+    return { quoted, amount: hit.amount };
+  });
+  assert.ok(hits.every(h => h.amount === hits[0].amount), 'the pick follows the hit');
+  assert.ok(hits[0].quoted >= hits[0].amount - 1 || hits[0].quoted > 0, 'a preview was quoted');
+});
+
+test('non-Core Strike and Settle keeps dev numbers: Defend pick Block 8, Counter pick Block 3, Attack pick none', async () => {
+  const { createCombat } = await import('../src/engine/combat.js');
+  const numbers = pick => {
+    const player = { id: 'p', classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 5, maxStamina: 5, energyMax: 3, drawPerTurn: 5,
+      deck: [{ instanceId: 'x1', cardId: 'base.attack-then-defend', upgraded: false }, ...Array.from({ length: 8 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'strike', upgraded: false }))], relicIds: [], flasks: [] };
+    const combat = createCombat({ registries: plainReg, rng: createRng(1), combatExpansionVersion: 2, player, enemyIds: [contentBundle.enemies[0].id] });
+    if (!combat.piles.hand.some(c => c.instanceId === 'x1')) combat.piles.hand.push({ instanceId: 'x1', cardId: 'base.attack-then-defend', upgraded: false });
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'x1', targetId: combat.enemies[0].id, choice: pick });
+    return [combat.player.block ?? 0, combat.player.barrier ?? 0, combat.player.combatStance.maneuver];
+  };
+  assert.deepEqual(numbers('defend'), [8, 0, 'defend']);
+  assert.deepEqual(numbers('counter'), [3, 0, 'counter']);
+  assert.deepEqual(numbers('attack'), [0, 0, 'attack']);
 });

@@ -2087,6 +2087,10 @@ export const OPCODE_HANDLERS = Object.freeze({
       if(eff.maneuver || eff.choose==='maneuver') {
         const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
         for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
+          // The pick, not the card's own maneuver, is the stance the figure ends in. Already there (a Defend pick on a card
+          // that resolved in Defend): nothing to change, so the per-card Defend restore does not run twice. A different pick
+          // keeps the entry grant of the stance entered: choosing the stance is the card's point (numbers as on dev).
+          if(stanceOf(entity.combatStance)?.maneuver===(maneuver==='prepared'?'casting':maneuver)) continue;
           const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
           Matchups.setCombatStance(ctx,entity,carrier);
         }
