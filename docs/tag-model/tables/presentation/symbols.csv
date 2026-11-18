@@ -384,7 +384,7 @@ tag:damage:blunt,◇,(text glyph),,9FC3E8,"Tag node ""Blunt"" (parent damageType
 tag:damage:fire,◇,(text glyph),,9FC3E8,"Tag node ""Fire"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:damage:frost,◇,(text glyph),,9FC3E8,"Tag node ""Cold"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:damage:lightning,◇,(text glyph),,9FC3E8,"Tag node ""Lightning"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
-tag:damage:arcane,◇,(text glyph),,9FC3E8,"Tag node ""Force"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
+tag:damage:arcane,◇,(text glyph),,9BC8BE,"Tag node ""Force"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:damage:sacred,◇,(text glyph),,9FC3E8,"Tag node ""Holy"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:damage:decay,◇,(text glyph),,9FC3E8,"Tag node ""Necrotic"" (parent damageType)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:technique:heavy,◇,(text glyph),,9FC3E8,"Tag node ""Heavy"" (parent technique)",content/source/nodes.csv,tag,content/source/nodes.csv
@@ -638,7 +638,7 @@ tag:maneuver:smash,⚒,(text glyph),,DB9871,"Tag node ""Smash"" (parent maneuver
 tag:school:frost,❄,(text glyph),,A6D8EF,"Tag node ""Frost"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:school:fire,🔥,(text glyph),,E47C43,"Tag node ""Fire"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:school:lightning,ϟ,(text glyph),,E8D46A,"Tag node ""Lightning"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
-tag:school:force,✦,(text glyph),,B99DEC,"Tag node ""Force"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
+tag:school:force,✦,(text glyph),,9BC8BE,"Tag node ""Force"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:school:alteration,◇,(text glyph),,9BC8BE,"Tag node ""Alteration"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:school:illusion,◎,(text glyph),,C59BD7,"Tag node ""Illusion"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv
 tag:school:divine,✚,(text glyph),,F0D99A,"Tag node ""Divine"" (parent school)",content/source/nodes.csv,tag,content/source/nodes.csv

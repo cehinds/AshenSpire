@@ -7,7 +7,8 @@ export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', '
 // Presentation only: these palettes do not introduce damage schools or rules.
 export const CARD_ART_ELEMENTS = Object.freeze(Object.fromEntries(Object.entries({
   wind: { variant: 1, color: '#c8e3df', glow: '#81b5af', motif: 'wisps', filter: '' },
-  force: { variant: 4, color: '#b7baff', glow: '#777fe8', motif: 'rings', filter: 'hue-rotate(-28deg) saturate(.75)' },
+  // Force is green, the Alteration family (owner, 2026-11-18); it keeps its own rings motif.
+  force: { variant: 4, color: '#b2e6cf', glow: '#60b59e', motif: 'rings', filter: 'hue-rotate(27deg)' },
   fire: { variant: 2, color: '#ffc17e', glow: '#ee7237', motif: 'embers', filter: '' },
   lightning: { variant: 3, color: '#fff0a2', glow: '#ddbb4e', motif: 'bolts', filter: '' },
   earth: { variant: 5, color: '#d2b486', glow: '#a17e42', motif: 'shards', filter: 'hue-rotate(-65deg) saturate(.6)' },
