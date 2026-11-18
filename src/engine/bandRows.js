@@ -97,6 +97,15 @@ export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   return true;
 }
 
+/** PullEnemy(ctx, target): Gale Pull (owner 2026-11-18 section 22). Removes 1 Retreat stack from the target; with none left the target comes forward to the front row. No rows: nothing. */
+export function PullEnemy(ctx, target) {
+  if (!BandsActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;
+  spendRetreat(ctx, target, 1);
+  if (RetreatStacks(target) > 0) return true;
+  SetEnemyRow(ctx, target, 'front', 'pull');
+  return true;
+}
+
 /** SwapEnemyRows(ctx, target): the target and the nearest living enemy (by place in the fight) in the other row trade rows and ranks; with none there, the target alone crosses. */
 export function SwapEnemyRows(ctx, target) {
   if (!BandsActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;

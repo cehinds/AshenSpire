@@ -284,6 +284,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
       case 'swapRows': return frag('bonus', 'Swap rows with nearest foe');
+      case 'pullEnemy': return frag('bonus', 'Pull Retreat');
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();

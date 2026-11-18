@@ -99,6 +99,9 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
     : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
+  // Owner, 2026-11-18 section 22: Gale Pull carries the Pull tag; the rail says it removes a Retreat stack.
+  const pull = tags.find(tag => tag.id === 'pullRetreat');
+  if (pull && def.effects?.some(effect => effect?.op === 'pullEnemy') && !selected.some(row => row.id === 'pullRetreat') && selected.length < 5) selected.push(pull);
   const statuses = new Map();
   const add = (id, occurrence = null) => {
     if (!registries?.statuses?.has(id)) return;

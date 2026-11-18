@@ -1104,6 +1104,57 @@
     "exposureBuildupPerHit": 0
   },
   {
+    "id": "core.galePull",
+    "name": "Gale Pull",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "pullEnemy",
+        "target": "enemy"
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip",
+      "school:force",
+      "pullRetreat"
+    ],
+    "textTemplate": "Deal {damage} damage. Pull Retreat.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "pullEnemy",
+          "target": "enemy"
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
     "id": "core.hammerBlow",
     "name": "Hammer Blow",
     "class": "colorless",

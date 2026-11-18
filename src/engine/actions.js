@@ -2,7 +2,7 @@ import { ChannelWeight } from '../model/damageChannels.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
-import { SwapEnemyRows } from './bandRows.js';
+import { SwapEnemyRows, PullEnemy } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
@@ -1861,6 +1861,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     moveEngagement: (ctx, action, eff) => { Engagement.executeEngagementMovement(ctx, action); return; },
     swapRows: (ctx, action) => { SwapEnemyRows(ctx, action.target); return; }, // rows (W25-BANDS rule 7)
+    pullEnemy: (ctx, action) => { PullEnemy(ctx, action.target); return; }, // Gale Pull (owner 2026-11-18 section 22)
     dodgeRoll: (ctx, action, eff) => {
       if (configuredCombat(ctx)) {
         if (configuredModule(ctx, 'stances')?.include?.includes('defend')) action.source.combatStance = { maneuver: 'defend', camp: 'physical' };

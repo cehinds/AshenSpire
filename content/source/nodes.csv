@@ -45,6 +45,7 @@ property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property 
 blade,card,Blade,C9502E,⚔,,,,,Steel and edge: direct weapon work.
 bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
 retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts a free Retreat card in your hand each turn: step back out of the Advance."
+pullRetreat,card,Pull,7FA8C9,↪,,,,,"Removes a Retreat stack from its target; with none left the target comes forward to the front row."
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
 gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
