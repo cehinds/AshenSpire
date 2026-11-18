@@ -173,6 +173,7 @@ test('Open the Archive draws, restores Mana and exhausts (non-element: it clears
   combat.loadout.sets.rightHand[0] = 'greatsword';
   const card = combat.piles.hand[0]; card.cardId = 'core.openArchive';
   combat.player.elementFlux = 'fire';
+  combat.player.maxMana = Math.max(combat.player.maxMana, 10); // ruling 2026-11-18 §9: max MP is 1 + floor(WIS / 4), so give the restore room
   combat.player.mana = 4;
   const mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
