@@ -164,7 +164,9 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
-  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
+  // The push also ends the pusher's Advance: the combatEngagementMoved event it emits is a +1 band (the strips step back out), so the engine must agree
+  // when the target already stood in the back row and only the Advance held the pair closed.
+  if (bands > 0 && target?.kind === 'enemy') { SetAdvanced(ctx, source, false); SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
