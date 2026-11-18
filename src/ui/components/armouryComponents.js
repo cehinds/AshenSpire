@@ -1,6 +1,7 @@
 import { engravedIcon } from './engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { t } from '../strings.js';
+import { EQUIPPED_LABEL } from '../../model/inventoryPresentation.js';
 import { swapOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 // src/ui/components/armouryComponents.js — the Armoury's renderers, on the kit.
@@ -122,8 +123,8 @@ function fallbackOnError(well, glyphText) {
 export function renderInventoryItemCard(model) {
   const row = model.properties;
   const equipped = row.equippedLabels.length
-    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
-      ? 'Equipped'
+    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === EQUIPPED_LABEL
+      ? t('deckEditor.tag.equipped')
       : `Equipped: ${row.equippedLabels.join(' / ')}`)
     : '';
   const element = face({
