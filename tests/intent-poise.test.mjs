@@ -76,6 +76,16 @@ test('an attack that empties the player Poise is marked BREAK', () => {
   assert.equal(rows[0].forecast.breaks, true);
 });
 
+test('an attack which can miss warns that it may break Poise', () => {
+  const combat = fight([['wanderingSoldier', 'slash']], { poise: 3 });
+  combat.fixCoreRules.accuracy.hitRoll = true;
+  const shown = projectCombatIntent(combat, combat.enemies[0].id);
+  assert.ok(shown.projectedDamage.hitChance > 0 && shown.projectedDamage.hitChance < 1);
+  assert.equal(shown.projectedPoise.max, 3);
+  assert.equal(shown.projectedPoise.breaks, false);
+  assert.equal(shown.projectedPoise.mayBreak, true);
+});
+
 test('Block in front: the forecast spends Block first, as live does', () => {
   for (const block of [3, 10, 40]) expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash']], { block })), `Block ${block}`, { someLoss: block < 19 });
 });
@@ -167,21 +177,22 @@ function playMoves(combat) {
   return moves;
 }
 
-test('review #2825: a planned follow-up carries its Poise and BREAKS YOU (slash, then a planned slash, 10 Poise)', () => {
-  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash'], { poise: 10 });
+test('a planned follow-up carries the Poise it must spend to break the player', () => {
+  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash'], { poise: 6 });
   const head = projectCombatIntent(combat, enemy.id).projectedPoise;
   const follow = ProjectPlannedFollowUpDamage(combat, enemy.id, 0)?.poise;
   const live = playMoves(combat);
   assert.equal(live.length, 2, 'both moves play this turn');
   assert.ok(follow, 'the follow-up has a Poise forecast');
   assert.deepEqual([head.max, head.breaks], [live[0].lost, live[0].broke], 'the head: its own Poise, no break');
+  assert.equal(head.breaks, false, 'the lower base damage leaves Poise after the head');
   assert.deepEqual([follow.max, follow.breaks], [live[1].lost, live[1].broke], 'the follow-up: what is left, and the break it causes');
   assert.equal(follow.breaks, true, 'the plan breaks the player on the follow-up');
 });
 
 test('review #2825: the follow-up symbols show the follow-up Poise (SameStanceNumbers)', async () => {
   const { SameStanceNumbers } = await import('../src/ui/models/CombatIntentModel.js');
-  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash', 'slash'], { poise: 10 });
+  const { combat, enemy } = planFight(['wanderingSoldier', 'slash'], ['slash', 'slash'], { poise: 6 });
   const head = combatIntentPresentation(projectCombatIntent(combat, enemy.id)).parts[0];
   const symbols = SameStanceNumbers(head, [{ kind: 'action', icon: 'attack' }, { kind: 'action', icon: 'attack' }], i => ProjectPlannedFollowUpDamage(combat, enemy.id, i));
   assert.ok(symbols[0].poise, 'the first follow-up shows Poise');
@@ -203,15 +214,15 @@ test('review #2825: a Broken enemy whose plan still plays shows its follow-up Po
   assert.equal(symbol.poise?.value, price.poise.label);
 });
 
-test('review #2825: an unread attacker before this one makes the Poise a lower bound that may break', () => {
+test('an unread attacker before this one leaves the later Poise amount unknown', () => {
   const combat = fight([['wanderingSoldier', 'slash'], ['wanderingSoldier', 'slash']], { poise: 30 });
   const [first, second] = combat.enemies;
   delete first.actorIntentRevealed; delete first.intentRevealed;
   first.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'hidden' } } };
   const poise = projectCombatIntent(combat, second.id).projectedPoise;
-  assert.equal(poise.lowerBound, true);
-  assert.equal(poise.mayBreak, true, 'conservative: it may break');
-  assert.match(poise.label, /\+$/, 'labelled as at least');
+  assert.equal(poise.label, '?');
+  assert.equal(poise.breaks, false);
+  assert.equal(poise.mayBreak, true);
 });
 
 test('review #2825: a follow-up draws only its BREAKS YOU tag, which takes no width; a follow-up that breaks nothing draws no Poise', async () => {

@@ -113,7 +113,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
     const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
     if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
-    // An earlier attacker the player cannot read is not priced; its hits may still come first, so a later forecast is a lower bound (unreadBefore).
+    // An unread attacker can spend the player's Poise or change what protects it before this move.
     if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
     decayAtTurnStart(ctx, other);
     if (!broken) {
@@ -139,26 +139,25 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
  * own Poise and Ward damage at the player then drain it as live does (previewPoiseDrain, the same door applyMoveEffects uses for earlier moves).
  * { min, max, breaks, mayBreak } in whole Poise, or null when the player holds no Poise pool.
  */
-function PoiseBounds(ctx, source, move, carrier, prepared, connected, start) {
+function PoiseBounds(source, move, carrier, prepared, states, start, mostLanded, proposalChance) {
   if (!Number.isFinite(start)) return null;
+  if (prepared.unreadBefore && start > 0) return { min: null, max: null, breaks: false, mayBreak: true };
   const pools = (move.effects || []).filter(effect => PLAYER_POOL_OPS.has(effect?.op) && effect.target === 'player' && Number.isFinite(effect.amount));
-  const ends = connected.map(row => {
-    const target = structuredClone(row.target);
+  const outcomes = states.map(row => {
+    const target = pools.length ? structuredClone(row.target) : row.target;
     for (const effect of pools) Damage.previewPoiseDrain(prepared.previewCtx, row.attacker || source, { ...prepared, defender: target }, effect, carrier, effect.amount);
-    return Math.max(0, target.persistentPoise?.value ?? start);
+    const remaining = Math.max(0, target.persistentPoise?.value ?? start);
+    return { lost: Math.max(0, start - remaining), broke: start > 0 && remaining === 0, landed: row.landed };
   });
-  const lost = ends.map(end => Math.max(0, start - end));
-  const broken = ends.map(end => start > 0 && end === 0);
-  // An unread attacker before this one may already have spent Poise: the number is at least this much, and it may break (conservative).
-  const lowerBound = !!prepared.unreadBefore && start > 0 && !broken.every(Boolean);
-  return { min: Math.min(...lost), max: Math.max(...lost), breaks: broken.every(Boolean), mayBreak: broken.some(Boolean) || lowerBound,
-    ...(lowerBound ? { lowerBound: true } : {}) };
+  const lost = outcomes.filter(row => row.landed === mostLanded).map(row => row.lost);
+  return { min: Math.min(...lost), max: Math.max(...lost),
+    breaks: proposalChance === 1 && outcomes.every(row => row.broke), mayBreak: outcomes.some(row => row.broke) };
 }
 
-/** The Poise forecast with its label: "7", "5–7", or "7+" when an unread attacker before it makes it a lower bound. */
+/** The Poise forecast with its label: "7", "5–7", or "?" when an unread earlier move can change the amount. */
 function PoiseLabelled(poise) {
-  const label = poise.min === poise.max ? String(poise.max) : `${poise.min}–${poise.max}`;
-  return { ...poise, label: poise.lowerBound ? `${poise.max}+` : label };
+  const label = poise.max == null ? '?' : poise.min === poise.max ? String(poise.max) : `${poise.min}–${poise.max}`;
+  return { ...poise, label };
 }
 
 function damageBounds(combat, enemy, move, base, hits, neutral, action = null, own = null) {
@@ -221,7 +220,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
     const losses = connected.map(row => row.loss);
     const min = Math.min(...losses), max = Math.max(...losses);
     const expected = sum(states.map(row => row.loss * row.probability)) * proposalChance;
-    const poise = proposalChance === 0 ? null : PoiseBounds(ctx, source, move, carrier, prepared, connected, poiseStart);
+    const poise = neutral || proposalChance === 0 ? null : PoiseBounds(source, move, carrier, prepared, states, poiseStart, mostLanded, proposalChance);
     return { min: proposalChance === 0 ? 0 : min, max: proposalChance === 0 ? 0 : max, hitChance: sum(connected.map(row => row.probability)) * proposalChance, expected,
       ...(poise ? { poise } : {}) };
   } else if (ctx.combatExpansionVersion === 2) {
