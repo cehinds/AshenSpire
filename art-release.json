@@ -1,20 +1,20 @@
 {
   "schema": 2,
   "repo": "cehinds/AI-Art",
-  "tag": "ashenspire-hd-assets-v26",
-  "zip": "hd-assets-v26.zip",
-  "sha256": "9739aec653cf8f2db8aec26d2f40bb2315356330aecabba4279797c5b79a45fc",
+  "tag": "ashenspire-hd-assets-v27",
+  "zip": "hd-assets-v27.zip",
+  "sha256": "8fe009d40bff60e9814cd59c6a4de9bc1156c982e1dffaf6c30dbbe6b449b1af",
   "packs": {
     "high": {
-      "zip": "hd-assets-v26.zip",
-      "sha256": "9739aec653cf8f2db8aec26d2f40bb2315356330aecabba4279797c5b79a45fc"
+      "zip": "hd-assets-v27.zip",
+      "sha256": "8fe009d40bff60e9814cd59c6a4de9bc1156c982e1dffaf6c30dbbe6b449b1af"
     },
     "light": {
-      "zip": "light-assets-v26.zip",
-      "sha256": "fcc45de4f47902ee40a3c1e4e18266217b0c965a405b0a9bc3d0d60e683780f0"
+      "zip": "light-assets-v27.zip",
+      "sha256": "e7f7865fd6b33d9e3dd2847c7065f3c2fc0ec36ecdc4e9f2db473247614844e9"
     },
     "common": {
-      "zip": "common-assets-v26.zip",
+      "zip": "common-assets-v27.zip",
       "sha256": "5613734241eb347c0ffc949b05b718d3c474dffeb03cf6fd63c0fd466d7ce662"
     }
   }

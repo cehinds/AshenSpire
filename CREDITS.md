@@ -877,6 +877,10 @@ The 73 additional status/mineral cutouts reuse existing project proposal PNGs by
 
 ### Recipient impact, casting and reaction sprites (2026-11-18)
 
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/recipient-effects/` | Original OpenAI ImageGen pixel effects under human direction; [v27 provenance and SHA-256 catalog](https://github.com/cehinds/AI-Art/tree/ashenspire-hd-assets-v27/provenance/recipient-effects/v5) retain source PNGs, prompts and extraction records for all 35 strips. | Project-directed AI-generated artwork; no third-party artwork or license claimed. |
+
 Original pixel effects generated with OpenAI ImageGen under human direction.
 The 35 runtime strips use `assets/recipient-effects/v5/*.png` in both art tiers.
 [AI-Art PR #4](https://github.com/cehinds/AI-Art/pull/4) retains the original raw

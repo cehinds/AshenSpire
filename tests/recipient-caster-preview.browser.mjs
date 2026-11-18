@@ -1,4 +1,4 @@
-// Focused production-preview caster/recipient contract; requires staged effect art.
+// Production-preview contract: pinned/cache, explicit staged art, and forced fallback.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 // Same optional installed-tool seam as the other browser suites.
@@ -32,8 +32,26 @@ const cases=[
   {name:'enemy-player-spell',label:'Enemy → player spell',invoker:'enemy-1',recipient:'player',outcome:'hit'},
 ];
 try {
+  await page.goto(baseUrl+'/tools/recipient-effects-runtime-preview.html');
+  await page.waitForFunction(()=>window.recipientRuntimePreview);
+  await page.evaluate(()=>recipientRuntimePreview.configure({camp:'spell',action:'casting',school:'none'}));
+  assert.match(await page.locator('#case').textContent(),/pinned\/cache art via source server/);
+  let mode=await page.evaluate(()=>integrationQA.snapshot());
+  assert.ok(mode.effects.length>0);
+  assert.ok(mode.effects.every(effect=>effect.dataset.renderer==='art'),'default preview uses ready pinned cache art');
+  const pinned=mode.effects;
+  await page.evaluate(()=>recipientRuntimePreview.configure({fallback:true}));
+  mode=await page.evaluate(()=>integrationQA.snapshot());
+  assert.match(await page.locator('#case').textContent(),/static debug fallback/);
+  assert.ok(mode.effects.every(effect=>effect.dataset.renderer==='placeholder'),'Debug fallback stays static even after cache art loads');
+  const forced=mode.effects;
+  mode=await page.evaluate(()=>integrationQA.show(integrationQA.model.ResolveRecipientEffect({tags:['camp:spell']}),{art:false}));
+  assert.ok(mode.effects.length>0);
+  assert.ok(mode.effects.every(effect=>effect.dataset.renderer==='placeholder'),'art:false explicitly simulates absent art');
+  report.artModes={pinned,forced,explicitAbsent:mode.effects};
   await page.goto(baseUrl+'/tools/recipient-effects-runtime-preview.html?artRoot=/scratch/recipient-effects/integration-art/hd/');
   await page.waitForFunction(()=>window.recipientRuntimePreview);
+  assert.match(await page.locator('#case').textContent(),/explicit local staged art/);
   assert.equal(await page.locator('#invoker').inputValue(),'player');
   for(const item of cases){
     const state=await page.evaluate(async item=>recipientRuntimePreview.configure({invoker:item.invoker,recipient:item.recipient,outcome:item.outcome,camp:'spell',action:'casting',school:'none',range:'melee'}),item);
