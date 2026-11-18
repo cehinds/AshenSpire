@@ -303,3 +303,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
   - To keep heavy above medium, medium goes from +3 to **+1** and light from +1 to **0**. *(decided)*
   - Shields keep their +1 Poise.
   - Result: about 17 for that Reaver, close to 15; the rest is left for playtest.
+- **Light and medium full-set bonuses (owner):** these replace the free stacks.
+  - Medium (mail): whenever you gain Counter stacks, gain 1 more. If you end your turn in Counter stance while holding Counter stacks, gain 1 more Counter (3 left becomes 4).
+  - Light (leathers): whenever you gain Evade stacks, gain 1 more. If you end your turn in Defend stance while holding Evade stacks, gain 1 more Evade.
+  - Holding no stacks gives nothing; the bonus only adds to stacks you have or are gaining.
