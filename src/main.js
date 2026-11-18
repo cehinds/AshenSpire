@@ -2,7 +2,7 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, GameProfileArmamentOffer, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
@@ -2573,13 +2573,15 @@ function leaveRewardDoor(pending) {
     const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
     if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
       run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
-    } else if (rest.armamentReward && GameProfileArmamentOffer(registries, run, rng, { offerId: `${rest.offerId}:armament`, pool: rest.armamentReward })) {
-      // Armament reward (rewards.json armamentReward): an elite's chance, a boss's certainty, after the relic door.
-      run.gameProfilePendingReward = { ...rest, offerId: `${rest.offerId}:armament`, source: 'armament', armamentReward: '' };
-    } else if (rest.levelOffers > 0) {
-      const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
-      gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-      run.gameProfilePendingReward = { ...rest, offerId, source: 'level', levelOffers: rest.levelOffers - 1 };
+    } else {
+      // Armament reward (rewards.json armamentReward): an elite's chance, a boss's certainty, directly after the relic door, rolled once.
+      const step = ArmamentRewardStep(registries, run, rng, rest);
+      if (step.next) run.gameProfilePendingReward = step.next;
+      else if (step.rest.levelOffers > 0) {
+        const offerId = `${step.rest.offerId}:level:${step.rest.levelOffers}`;
+        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+        run.gameProfilePendingReward = { ...step.rest, offerId, source: 'level', levelOffers: step.rest.levelOffers - 1 };
+      }
     }
   });
   if (run.gameProfilePendingReward) return showGameProfileReward();

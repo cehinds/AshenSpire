@@ -300,6 +300,19 @@ export function ArmamentRewardRule(run, pool) {
   const rule = gameContent(run, 'rewards')?.armamentReward?.[pool];
   return rule && typeof rule === 'object' && pool !== 'normal' ? rule : null;
 }
+/**
+ * ArmamentRewardStep(registries, run, rng, rest) -> { next, rest }: the armament door that follows the relic step, rolled ONCE.
+ * `next` is the pending reward to show (an armament offer) or null; `rest` is the pending record to carry on with, its
+ * `armamentReward` flag spent either way, so a failed chance roll never re-rolls after a level door (offer ids differ).
+ */
+export function ArmamentRewardStep(registries, run, rng, rest) {
+  if (!rest.armamentReward) return { next: null, rest };
+  const offerId = `${rest.offerId}:armament`;
+  if (GameProfileArmamentOffer(registries, run, rng, { offerId, pool: rest.armamentReward })) {
+    return { next: { ...rest, offerId, source: 'armament', armamentReward: '' }, rest: { ...rest, armamentReward: '' } };
+  }
+  return { next: null, rest: { ...rest, armamentReward: '' } };
+}
 // Least-picked selection at each level (type, family, sub-kind): the candidates left are those whose group the offer has used
 // least, a random one of those groups wins ties, so weapons and armour, and different families, spread across the choices.
 function spreadPick(rng, candidates, chosen, levels) {
