@@ -11,6 +11,10 @@ const COUNTER = new Set(['melee', 'ranged', 'spell']);
 const RANGE = new Set(RANGES);
 const TARGETING = new Set(['single', 'area']);
 
+export function ScaleCardBaseDamage(base, multiplier) {
+  return Number.isFinite(multiplier) && multiplier !== 1 ? Math.max(0, Math.ceil(base * multiplier)) : base;
+}
+
 function identity(tags, prefix, allowed, name) {
   const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
   if (values.length > 1) throw new Error(`${name} carries conflicting ${prefix} tags`);

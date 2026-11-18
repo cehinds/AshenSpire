@@ -1475,14 +1475,15 @@ function resolveRawTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    // Owner 2026-11-17: there are no ally mechanics yet, so in a solo fight an ally effect reaches no one (it used to fall back to the
+    // player). A saved deck that still holds an ally card plays it safely: its ally part does nothing, its own parts still apply.
     case 'allAllies':
-      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [ctx.player].filter(p=>p?.alive);
+      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [];
     case 'ally': {
-      // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
-      // back to the source, so every ally card stays fully solo-valid.
+      // Co-op: the explicitly aimed living teammate. Solo, or no teammate picked: no one (owner, 2026-11-17).
       const t = action.target;
       if (t && t.kind === 'player' && t !== action.source && t.alive) return [t];
-      return [action.source].filter(Boolean);
+      return [];
     }
     default:
       throw new Error(`Unknown effect target '${targetSpec}'`);

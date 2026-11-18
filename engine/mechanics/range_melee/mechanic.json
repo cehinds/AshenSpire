@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "range",
   "label": "Melee",
-  "description": "At melee range: within arm's length.",
+  "description": "Hits the front row. A back-row target costs 1 more Stamina, and you Advance.",
   "attaches": [
     "card"
   ],

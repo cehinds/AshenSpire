@@ -22,7 +22,8 @@ function liveCore() {
   delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return combat;
 }
-function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
+// Amount 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so every hit below meets the layers as 10.
+function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 20 } = {}) {
   const combat = liveCore(), target = combat.enemies[0];
   Object.assign(target, { block, barrier, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;

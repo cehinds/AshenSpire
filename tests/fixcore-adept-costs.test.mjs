@@ -159,11 +159,17 @@ test('an older active reaction snapshot retains its accepted MP quote and old pa
 });
 
 test('Mana Surge keeps one SP cost, zero MP cost and its separate two-Mana restore', () => {
-  const ctx = native('herald');
-  ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
-  ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
-  ctx.player.stamina = 3; ctx.player.mana = 0;
-  assert.deepEqual(cardPlayCosts(ctx, 'surge'), { energy: 1, stamina: 1, mana: 0 });
-  dispatch(ctx, { type: 'playCard', cardInstanceId: 'surge' });
-  assert.equal(ctx.player.stamina, 2); assert.equal(ctx.player.mana, 2);
+  for (const maxMana of [1, 2]) {
+    const ctx = native('herald');
+    assert.equal(ctx.player.maxMana, 1, 'the fresh Herald has a one-Mana cap');
+    ctx.player.maxMana = maxMana;
+    ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
+    ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
+    ctx.player.stamina = 3; ctx.player.mana = 0;
+    assert.deepEqual(cardPlayCosts(ctx, 'surge'), { energy: 1, stamina: 1, mana: 0 });
+    const { events } = dispatch(ctx, { type: 'playCard', cardInstanceId: 'surge' });
+    assert.equal(ctx.player.stamina, 2);
+    assert.equal(events.find(event => event.type === 'manaRestored').amount, maxMana);
+    assert.equal(ctx.player.mana, maxMana);
+  }
 });

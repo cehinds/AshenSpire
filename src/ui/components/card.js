@@ -14,9 +14,8 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 import { CounterStackPercent } from '../models/CounterStackPercentModel.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
-// All numbers shown come from the engine: in combat, previewCard tokens
-// (live math, SPEC §3.13); outside combat, the card's own literal values via
-// computeTokenBindings. No math happens here.
+// The model supplies the displayed numbers. In combat it reads previewCard
+// tokens (SPEC §3.13). Static faces use the card definition and any supplied run rules.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType } from '../../model/playingCard.js';
@@ -263,7 +262,7 @@ export function renderCard(registries, ref, opts = {}) {
     // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
     // left. The output is byte-identical by construction: the model's bodies are
     // the ones that stood here.
-    rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
+    rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def, rules: opts.rules || null });
     combatProfile = combatProfileFor(def);
     combatTags = combatProfileTags(combatProfile, registries);
     expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2

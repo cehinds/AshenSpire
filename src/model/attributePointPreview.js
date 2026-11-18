@@ -19,10 +19,10 @@ import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
 import { t } from './strings.js';
 
-/** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +10 HP ties +1 Poise. */
-export const POOL_SCALE = 10;
+/** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +5 HP (one Core CON point since 2026-11-17) ties +1 Poise and HP leads. */
+export const POOL_SCALE = 5;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
-// Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+10 HP and +1 Poise both score 1, HP first).
+// Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+5 HP and +1 Poise both score 1, HP first).
 // WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
 export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
 const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'poise', 'ward']);
