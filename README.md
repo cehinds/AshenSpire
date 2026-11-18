@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — recipient impact effects
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/recipient-effects-integration/latest/) · [Exact source](https://github.com/cehinds/AshenSpire/commit/8f9c83460a4304c221e9ae0a610d6791f8bbd006) · [Build artifact](https://github.com/cehinds/AshenSpire/actions/runs/44390259958/artifacts/14467591066)
+
+Build **0.7.4.166 / 05ae2af4e2**, with v27 impact artwork: three-frame recipient effects, an expanding circle on the invoker, elemental overlays, Ward and actor afterimages. The public title loads; its exact bundle bytes match the locally tested game shown below. These are actual card-click combat captures, not a campaign playthrough. Public combat navigation was not completed because browser automation stalled on a cross-frame click; no gameplay failure is inferred. [Capture identity, scope and phone limitation](docs/preview/features/recipient-effects/V27-CAPTURES.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: bundled Smash contact and Poise reaction](docs/preview/features/recipient-effects/v27-phone.png) | ![Desktop: actual Ironbreaker contact on an enemy](docs/preview/features/recipient-effects/v27-desktop.png) | ![Wide: bundled recipient effects during a real attack](docs/preview/features/recipient-effects/v27-wide.png) | ![Tablet: real card combat with v27 recipient effects](docs/preview/features/recipient-effects/v27-tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
