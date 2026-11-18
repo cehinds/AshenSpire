@@ -101,7 +101,9 @@ check(R.gameProfile === undefined, 'unbound registries exercise the legacy conte
 const staff = contentBundle.equipment.armaments.find((piece) => piece.id === 'ashStaff');
 const expectedPr = (run) => Math.floor(run.attributes.dexterity * 0.25) + Math.floor(run.attributes.constitution * 0.5)
   + Math.floor(run.attributes.wisdom * 0.5) + Math.floor(run.attributes.intelligence * 0.75);
-const staffDamage = (run, base = 2) => base + expectedPr(run) + staff.attackRating;
+// Weapons carry no authored rating any more (owner 2026-11-18, STR/DEX/INT channels): the equipment base is 0.
+const STAFF_EQUIPMENT_BASE = 0;
+const staffDamage = (run, base = 2) => base + expectedPr(run) + STAFF_EQUIPMENT_BASE;
 const expected = {
   reaver: { rightHand: 'straightSword', leftHand: 'roundShield', signature: 'gorefireSlash' },
   starseer: { rightHand: 'ashStaff', leftHand: null, signature: 'starstonePebble' },
@@ -168,16 +170,16 @@ check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
 check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.rating?.id === 'pr'
   && attack.profileReceipt.rating.attributeValue === expectedPr(starseer)
-  && attack.profileReceipt.rating.equipmentBase === staff.attackRating
+  && attack.profileReceipt.rating.equipmentBase === STAFF_EQUIPMENT_BASE
   && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === staffDamage(starseer),
-  'Ash Staff receipt adds base, attribute PR, authored weapon rating and rarity', JSON.stringify(attack?.profileReceipt));
+  'Ash Staff receipt adds base, attribute PR, an equipment base of 0 and rarity', JSON.stringify(attack?.profileReceipt));
 check(magic?.effects.find((e) => e.op === 'damage')?.amount === 2,
   'resolved Ash Staff definition carries base plus rarity before runtime PR', JSON.stringify(magic?.effects));
 const standardSeer = createRunState({ seed: 2, classId: 'starseer', registries: R, attributeMode: 'standard' });
 const standardReceipt = standardSeer.deck.find((c) => c.equipmentRole === 'attack')?.profileReceipt;
 check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
   && standardReceipt.rating.attributeValue === expectedPr(standardSeer)
-  && standardReceipt.rating.equipmentBase === staff.attackRating
+  && standardReceipt.rating.equipmentBase === STAFF_EQUIPMENT_BASE
   && standardReceipt.rarityBonus === 0 && standardReceipt.value === staffDamage(standardSeer),
   'standard mode uses the same direct PR formula against its saved attributes', JSON.stringify(standardReceipt));
 
