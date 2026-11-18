@@ -148,7 +148,7 @@ test('retreat hold: a lone enemy sent back by Retreat shows the step forward (it
     const soldier = combat.enemies[0];
     play(combat, 'qa0');
     assert.equal(soldier.row, 'back');
-    assert.equal(soldier.rowHold, 1);
+    assert.equal(soldier.statuses.retreat?.stacks, 1);
     const shown = soldier.intent.moveId;
     if (soldier.intent.approachFor) { held++; assert.equal(shown, 'advance', `seed ${seed}: a held melee enemy shows the step forward`); }
     const before = combat.eventLog.filter(e => e.type === 'enemyMoveStarted').length;
