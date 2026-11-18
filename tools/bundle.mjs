@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } 
 import vm from 'node:vm';
 import { scanDynamicImports, commentRanges } from './dynamic-imports.mjs';
 import { cardCutoutAssets } from './card-cutout-assets.mjs';
+import { danglingLiteralAssets } from './literal-asset-references.mjs';
 
 import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
@@ -1320,21 +1321,8 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
 // It reads only `sources`, so it never needed to be down there.
 // ---------------------------------------------------------------------------
 {
-  const LITERAL = /['"`](assets\/[A-Za-z0-9_\-./]+\.[a-z0-9]{2,5})['"`]/g;
-  const dangling = [];
-  for (const [id, src] of sources) {
-    for (const line of src.split('\n')) {
-      const t = line.trim();
-      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue;
-      LITERAL.lastIndex = 0;
-      let m;
-      while ((m = LITERAL.exec(line)) !== null) {
-        // An id art-manifest.json lists (step 12: the manifest, not the tree,
-        // which leaves this repository at step 13).
-        if (!manifestIds().has(m[1])) dangling.push(`${id} → ${m[1]}`);
-      }
-    }
-  }
+  const recipientConfig = JSON.parse(readText(resolve(ROOT, 'content/config/ui/presentation/recipientEffects.json')));
+  const dangling = danglingLiteralAssets(sources, manifestIds(), recipientConfig);
   if (dangling.length) {
     fail(
       'literal asset reference(s) point at files that do not exist:\n    ' +
@@ -1452,7 +1440,7 @@ if (EXTERNAL_ART) {
   console.log('  NOT CHECKED HERE : that the pinned packs and every object they list are beside the HTML — node tools/verify-external.mjs');
 }
 
-console.log('  literal refs     : all resolve');
+console.log('  literal refs     : required references resolve; declared optional recipient art may use fallback');
 console.log('  output           : ' + idOf(OUT_PATH));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
 

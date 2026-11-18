@@ -1,15 +1,5 @@
 # Credits & Asset Licenses
 
-## Recipient impact sprites (2026-11-18)
-
-The three-frame recipient effect sprites were generated with the built-in
-OpenAI ImageGen tool under human direction. No third-party artwork was used
-and no third-party licence is asserted. The local art intake package preserves
-raw transparent PNGs, exact prompts, source hashes, HD/light atlases and strips;
-see [Recipient impact sprites](docs/RECIPIENT-EFFECTS.md). Its debug SVG marks
-are authored code bundled with the game. Art publication and release pinning
-remain separate from this local implementation.
-
 ## Mineral component proposals (2026-10-18)
 
 The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
@@ -887,13 +877,12 @@ The 73 additional status/mineral cutouts reuse existing project proposal PNGs by
 
 ### Recipient impact, casting and reaction sprites (2026-11-18)
 
-Original OpenAI image-generated pixel effects, reviewed in the local
-`scratch/recipient-effects/front-on-v4`, `composed-v5`, and `overlay-v6` source
-packages. The 35 runtime strips stage as `assets/recipient-effects/v5/*.png` in
-both art tiers. Original raw PNGs, exact generation prompts, extraction records
-and SHA-256 hashes are preserved in the explicit intake package's
-`provenance/recipient-effects/v5/` tree and `recipient-effects-catalog.json`.
-The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md) documents the source and
-export command. No third-party artwork or license is claimed; no published
-art-release URL exists yet. Ward and Evade reuse each affected actor's existing
-artwork and attribution rather than the demonstration silhouette sprite.
+Original pixel effects generated with OpenAI ImageGen under human direction.
+The 35 runtime strips use `assets/recipient-effects/v5/*.png` in both art tiers.
+[AI-Art PR #4](https://github.com/cehinds/AI-Art/pull/4) retains the original raw
+PNGs, exact generation prompts, extraction scripts and SHA-256 catalog under
+`provenance/recipient-effects/v5/`. The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md)
+documents local export and preview. No third-party artwork or license is claimed;
+art publication and release pinning are separate. Debug SVG marks are authored
+game code. Ward and Evade reuse each affected actor's existing artwork and
+attribution rather than the demonstration silhouette sprite.

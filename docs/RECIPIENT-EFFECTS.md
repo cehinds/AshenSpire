@@ -47,7 +47,7 @@ python tools/recipient-effects-export.py --source-root scratch/recipient-effects
 
 The tool requires Pillow. It reads the authoritative atlas, validates all source strips before writing, stages `hd/assets/recipient-effects/v5/` and `light/assets/recipient-effects/v5/`, and preserves original raw PNGs, prompt JSONs and extraction manifests under `provenance/recipient-effects/v5/`. Inputs are selected from `overlay-v6/strips`, `composed-v5/additions/strips`, then `front-on-v4/strips`. It writes `recipient-effects-catalog.json` with schema version 1: each `entries[shape]` records asset ID, grid, frame/image dimensions, source path, SHA-256 and both tier paths; `provenance` records source paths and hashes. `--check` is read-only and fails on any missing/stale output or manifest.
 
-The output is local intake staging, not a published art release. No other project's art checkout is used. An appropriate `cehinds/AI-Art` checkout on its AshenSpire branch is needed for a separately authorized intake/release. No pin or checksum is invented; the existing `art-release.json` and `art-manifest.json` remain unchanged until a verified art release exists. Without that art bundle, the static debug fallback remains available.
+The output is local intake staging, not a published art release. [AI-Art PR #4](https://github.com/cehinds/AI-Art/pull/4) prepares the AshenSpire intake; it has not released these sprites. No pin or checksum is invented; the existing `art-release.json` and `art-manifest.json` remain unchanged until a verified art release exists. Without that art bundle, the static debug fallback remains available.
 
 ## Local runtime preview
 
@@ -57,7 +57,9 @@ The spell circle belongs to the invoker and is always a self effect, regardless 
 
 The default page deliberately uses the static fallback for the unpublished new effect IDs. To apply the local intake package without modifying a pin, open `/tools/recipient-effects-runtime-preview.html?artRoot=../scratch/recipient-effects/integration-art/hd/`. This explicit authoring option maps only the new catalog IDs to the supplied directory through the same asset-map resolver. It does not publish or register those files. Remove the query or check Debug fallback to compare the art-absent case. Existing actor/background artwork is read from the normal source server's art resolution.
 
-`tools/recipient-effects-catalog.schema.json` describes the machine-readable intake catalog and is copied beside it. The exporter enforces source grid, dimensions, transparency, versioned IDs and byte identity without requiring a schema-validator dependency. The existing bundler discovers all files in the selected art tier's `assets/` tree, so the versioned directory needs no hardcoded bundler exception. Its published-manifest checks still apply; the staging package must not be presented as a release-pinned build.
+`tools/recipient-effects-catalog.schema.json` describes the machine-readable intake catalog and is copied beside it. The exporter enforces source grid, dimensions, transparency, versioned IDs and byte identity without requiring a schema-validator dependency. The existing bundler discovers all files in the selected art tier's `assets/` tree; the staging package must not be presented as a release-pinned build.
+
+Each authoritative `behavior.atlas` row explicitly declares `optional: true`: these sprites have a built-in static fallback and are not required to build against an older art release. `tools/literal-asset-references.mjs` allows absence only at that row's exact generated `asset` property in `src/config/generated/ui.js`, after validating its versioned shape/path, grid, and agreement with the authored JSON. It does not exempt another reference to the same path, another module, unrelated configuration, unknown IDs, or required entries. All other missing literal assets remain build errors. This changes neither manifest verification nor runtime loading: absent or failed art still uses the single static action/target placeholder, and available art follows the normal pack resolver.
 
 ## Verification and local evidence
 
@@ -66,6 +68,7 @@ node --test tests/recipient-effects.test.mjs tests/recipient-effect-events.test.
 node tests/recipient-effects.browser.mjs
 node tests/recipient-caster-preview.browser.mjs
 node tools/config-build.mjs --check
+node --test tests/literal-asset-references.test.mjs tests/build-identity.test.mjs
 python tools/recipient-effects-export.py --source-root scratch/recipient-effects --output-root scratch/recipient-effects/integration-art --check
 ```
 

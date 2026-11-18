@@ -31,211 +31,246 @@
         "asset": "assets/recipient-effects/v5/slash.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "multi-slash": {
         "asset": "assets/recipient-effects/v5/multi-slash.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "smash": {
         "asset": "assets/recipient-effects/v5/smash.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "thrust": {
         "asset": "assets/recipient-effects/v5/thrust.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "sweep": {
         "asset": "assets/recipient-effects/v5/sweep.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "counter": {
         "asset": "assets/recipient-effects/v5/counter.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "spell": {
         "asset": "assets/recipient-effects/v5/spell.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "skill": {
         "asset": "assets/recipient-effects/v5/skill.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "ward": {
         "asset": "assets/recipient-effects/v5/ward.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "buff": {
         "asset": "assets/recipient-effects/v5/buff.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "debuff": {
         "asset": "assets/recipient-effects/v5/debuff.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "heal": {
         "asset": "assets/recipient-effects/v5/heal.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "fire": {
         "asset": "assets/recipient-effects/v5/fire.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "frost": {
         "asset": "assets/recipient-effects/v5/frost.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "lightning": {
         "asset": "assets/recipient-effects/v5/lightning.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "earth": {
         "asset": "assets/recipient-effects/v5/earth.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "status": {
         "asset": "assets/recipient-effects/v5/status.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "force": {
         "asset": "assets/recipient-effects/v5/force.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "illusion": {
         "asset": "assets/recipient-effects/v5/illusion.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "decay": {
         "asset": "assets/recipient-effects/v5/decay.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "spell-circle": {
         "asset": "assets/recipient-effects/v5/spell-circle.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "block": {
         "asset": "assets/recipient-effects/v5/block.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "evade": {
         "asset": "assets/recipient-effects/v5/evade.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "retreat": {
         "asset": "assets/recipient-effects/v5/retreat.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "advance": {
         "asset": "assets/recipient-effects/v5/advance.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "block-hit": {
         "asset": "assets/recipient-effects/v5/block-hit.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "poise-hit": {
         "asset": "assets/recipient-effects/v5/poise-hit.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "block-break": {
         "asset": "assets/recipient-effects/v5/block-break.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "poise-break": {
         "asset": "assets/recipient-effects/v5/poise-break.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "status-apply": {
         "asset": "assets/recipient-effects/v5/status-apply.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "status-tick": {
         "asset": "assets/recipient-effects/v5/status-tick.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "status-clear": {
         "asset": "assets/recipient-effects/v5/status-clear.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "heal-plus": {
         "asset": "assets/recipient-effects/v5/heal-plus.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "bleed-drops": {
         "asset": "assets/recipient-effects/v5/bleed-drops.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       },
       "status-resist": {
         "asset": "assets/recipient-effects/v5/status-resist.png",
         "columns": 3,
         "rows": 1,
-        "row": 0
+        "row": 0,
+        "optional": true
       }
     },
     "anchors": {
