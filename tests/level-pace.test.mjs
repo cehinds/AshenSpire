@@ -126,7 +126,7 @@ test('§15.2: the cap is a generated Progression row with a note', () => {
 // the door says how much the cap threw away.
 test('§15.2: the spoils receipt says how much XP the level cap discarded', async () => {
   const { combatXpGains, rewardProgress } = await import('../src/model/rewardprogress.js');
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { MountRewards } = await import('../src/ui/screens/reward.js');
   const { rewardDom } = await import('./helpers/dom.mjs');
   const reg = withCap(1);
   const run = { class: 'reaver', cinders: 0, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: emptyLevel(), skills: {} };
@@ -147,7 +147,7 @@ test('§15.2: the spoils receipt says how much XP the level cap discarded', asyn
   try {
     const app = document.createElement('main');
     document.body.append(app);
-    mountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
+    MountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
     const row = app.querySelector('.reward-progress-row');
     const text = (cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
     assert.equal(text('rp-gain'), 'Gained: 345 xp', 'Character uses the same gained-XP receipt row as other tracks');

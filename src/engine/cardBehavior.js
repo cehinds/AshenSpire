@@ -9,7 +9,8 @@ export function projectCardBehavior(ctx, instance, def) {
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (def.costGrowth) {
-    const growth=def.costGrowth, plays=ctx.player.abilityRiders?.cardUsesCombat?.[instance.cardId] || 0;
+    // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
+    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=def.costGrowth;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;
@@ -17,6 +18,26 @@ export function projectCardBehavior(ctx, instance, def) {
     result={...result,cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
   }
   return result;
+}
+/** Whether a card's `playIf` holds with `target` aimed. A card without one is always allowed. */
+export function PlayConditionMet(ctx, def, target=null, source=ctx.player) {
+  return !def?.playIf || Triggers.evalPredicate(ctx,def.playIf,{source,owner:source,target,card:def});
+}
+/** Living enemy targets in board order whose play condition holds. */
+export function PlayConditionEnemies(ctx, def, source = ctx.player) {
+  return (ctx.enemies || []).filter(enemy => enemy.alive && PlayConditionMet(ctx, def, enemy, source));
+}
+/** Restrict the enemy destinations a card's targeting plan offers. */
+export function PlayConditionTargetPlan(ctx, def, plan) {
+  if (!def?.playIf || plan.mode !== 'enemy') return plan;
+  const eligible = new Set(PlayConditionEnemies(ctx, def).map(enemy => enemy.id));
+  return { ...plan, legalIds: plan.legalIds.filter(id => eligible.has(id)) };
+}
+/** Whether some living enemy could be aimed so that the card's `playIf` holds (the hand's playable check). */
+export function PlayConditionReachable(ctx, def, source=ctx.player) {
+  if (!def?.playIf) return true;
+  if (ctx.enemies?.some(enemy => enemy.alive)) return PlayConditionEnemies(ctx, def, source).length > 0;
+  return PlayConditionMet(ctx, def, null, source);
 }
 export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;

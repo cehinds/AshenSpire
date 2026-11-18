@@ -24,7 +24,7 @@ const DECKS = {
   reaver: { 'core.strike': 2, 'core.defend': 3, 'core.counter': 1, 'core.smash': 1, 'core.sweep': 1, 'core.ironbreaker': 1, 'core.rallyingRoar': 1, 'greatswordSunderingHew': 1 },
   rogue: { 'core.strike': 2, 'core.defend': 2, 'core.counter': 1, 'core.evade': 1, 'core.smash': 1, 'core.sweep': 1, 'core.feint': 1, 'core.venomedEdge': 1, 'twinFang': 1 },
   starseer: { 'core.cantrip': 2, 'core.starseerSpecial': 1, 'core.astralBolt': 1, 'base.ethereal': 3, 'core.smash': 1, 'core.sweep': 1, 'core.manaSurge': 1, blightTouch: 1 },
-  herald: { 'base.paid-resource-variant': 2, 'base.ethereal': 2, 'base.exhaust': 1, 'core.smash': 1, 'core.sweep': 1, 'core.smite': 1, 'core.sanctifiedWard': 1, 'core.manaSurge': 1, blightTouch: 1 },
+  herald: { 'core.cantrip': 2, 'base.ethereal': 2, 'base.exhaust': 1, 'core.smash': 1, 'core.sweep': 1, 'core.smite': 1, 'core.sanctifiedWard': 1, 'core.manaSurge': 1, blightTouch: 1 },
 };
 
 for (const [classId, expected] of Object.entries(DECKS)) {
@@ -72,7 +72,7 @@ for (const [classId, expected] of Object.entries(DECKS)) {
 test('Core editor offers only collected definitions under the matching Adept (legacy unlimited rules, owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
   const expected = { reaver: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep'],
-    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'], starseer: ['core.cantrip'], herald: [] };
+    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'], starseer: ['core.cantrip'], herald: ['core.cantrip'] };
   for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(startLegacy(id)), expected[id]);
 });
 

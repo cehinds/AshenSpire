@@ -27,7 +27,7 @@
 /* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
    width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
-  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: -50% 0 !important; justify-content: center !important;
+  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: calc(-50% + var(--intent-nudge, 0px)) 0 !important; justify-content: center !important;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > .meters {
   width: 100% !important; min-width: 0 !important;
@@ -152,11 +152,32 @@
    and its count shows without selecting the enemy (owner, 2026-11-14). The player's own tray keeps the one-row fit. */
 :root .combat[data-target-hud='true'] .combatant:not(.player) > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
   flex-wrap: wrap; height: auto; min-height: var(--mh-badge); overflow: visible; row-gap: var(--mh-gap);
-  /* Room for five or six icons a line: wider than the bar where the bar is narrow (a phone), growing leftwards so the right edge stays put. */
-  --mh-status-w: max(var(--mh-bar-w), calc(var(--mh-badge) * 1.3 * 6)); width: var(--mh-status-w); max-width: none; margin-inline-start: calc(var(--mh-bar-w) - var(--mh-status-w)) !important;
-  justify-content: flex-end;
+  /* The row starts on the bar's left edge, in line with the HP and Poise bars (playtest 2026-11-17: it grew leftwards past the
+     Block shield on a phone), and runs on under the HP number, so a narrow bar still holds several icons a line. */
+  width: calc(var(--mh-bar-w) + var(--mh-value-w)); max-width: none; margin-inline-start: 0 !important;
+  justify-content: flex-start;
 }
 :root .combat[data-target-hud='true'] .combatant:not(.player) > .target-hud-overhead-meters .combat-health-badges > .statuses {
   flex: 1 1 100%; flex-wrap: wrap; height: auto; min-height: var(--mh-badge); row-gap: var(--mh-gap);
 }
 :root .combat[data-target-hud='true'] .combatant:not(.player) > .target-hud-overhead-meters .combat-health-badges > .statuses:not(:has(.status-icon)) { display: none !important; }
+
+/* Playtest 2026-11-17: the intent is one row with room for five actions. A wrapped second row grew upward out of the
+   fixed-height intent and its top was cut off on a phone, so the row never wraps; it tightens its gaps instead. */
+:root .combat .combatant .intent .intent-compact,
+:root .combat .combatant .intent .intent-actions,
+:root .combat .combatant .intent .intent-followups { flex-wrap: nowrap !important; max-width: none !important; }
+:root .combat .combatant .intent .intent-actions:has(> :nth-child(4)) { gap: calc(2px / var(--ui-zoom, 1)); }
+
+/* The player's HUD beside the figure (owner, 2026-11-17): right of the body at the height battlefieldStage.js sets
+   (--combat-player-hud-left, --combat-mini-hud-top), as wide as the room it is given (--combat-player-hud-width), with
+   taller bars and larger numbers than the enemies' mini HUD; the badges keep the shared size. The intent row stays above the bars and the
+   Block shield left of them, as in every mini HUD. */
+:root .combat[data-target-hud='true'] .combatant.player[data-hud-beside='true'] > .target-hud-overhead-meters {
+  --mh-bar-h: calc(var(--hud-mini-bar-height, 10px) * 1.6);
+  --mh-value-size: 16px;
+  --mh-w: var(--combat-player-hud-width, 200px);
+  --mh-bar-w: calc(var(--mh-w) - var(--mh-shield-w) - var(--mh-gap) * 2 - var(--mh-value-w));
+  left: var(--combat-player-hud-left, 0px) !important;
+  width: var(--mh-w) !important;
+}

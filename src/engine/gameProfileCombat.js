@@ -3,6 +3,7 @@ import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtr
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { ScaleCardBaseDamage } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -17,7 +18,7 @@ import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
-import { AttackDamageMultiplier, PoiseLossAdjust } from './stanceBenefits.js';
+import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
 import { FluxMultiplier } from './elementFlux.js';
 import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
 
@@ -81,13 +82,14 @@ function reflectApplies(target, source, carrier, profile) {
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
   // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
+  // Owner, 2026-11-17 (theme B): a Defend-stance target holding Block keeps at least 1 Poise against what the hit costs it (ApplyDefendPoiseFloor).
   const view = ElementProtectionView(ctx, source, target, carrier);
-  if (!view) return ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise);
+  if (!view) return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise));
   const real = target.persistentPoise.value;
   target.persistentPoise.value = view.value;
   let receipt;
   try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
-  return ElementReceiptFinish(ctx, carrier, receipt, view, { value: real });
+  return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real }));
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const effects = configuredModule(ctx, 'effects');
@@ -99,7 +101,13 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
   const flatReturn = modern && carrier.counterReturnAttack;
-  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
+  // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or
+  // PR adds. A return computed from damage already dealt (a Counter return, a reflected hit, a proposal's reactive return such as
+  // base.reflect's 50%) is final damage and is not scaled again (#2820 review).
+  const authoredBase = base, baseMultiplier = carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : effects?.baseDamageMultiplier;
+  base = ScaleCardBaseDamage(base, baseMultiplier);
+  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:authoredBase,stage:'offense',operation:'set'}];
+  if (base !== authoredBase) sources.push({id:'base-damage-scale',label:'Base damage scale',amount:base-authoredBase,requested:authoredBase,effective:base,stage:'offense',operation:'multiply',multiplier:baseMultiplier});
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
   const whole = value => modern ? Math.max(0, Math.floor(value)) : value;
@@ -143,6 +151,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   raw = transition('element-flux','Elemental flux',raw,raw*fluxMultiplier,'offense',fluxMultiplier);
   const splashMultiplier = flatReturn ? 1 : carrier.stanceSplash > 0 && carrier.stanceSplash < 1 ? carrier.stanceSplash : 1;
   raw = transition('sweep-splash','Sweep splash',raw,raw*splashMultiplier,'offense',splashMultiplier);
+  // Owner, 2026-11-17 (theme B): the target's stance weakness, Prepared x1.25 from melee and Idle x1.25 from everything.
+  // An un-aimed face (no target) names no stance, so it takes no weakness.
+  const weaknessMultiplier = flatReturn || !target ? 1 : StanceWeaknessMultiplier(ctx,carrier,defending,profile,target);
+  raw = transition('stance-weakness','Stance weakness',raw,raw*weaknessMultiplier,'offense',weaknessMultiplier);
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
@@ -166,7 +178,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
-  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  const matchupMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
+  // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
+  const advantageMultiplier = matchupMultiplier > 1 && weaknessMultiplier > 1 ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier : matchupMultiplier;
   let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   // Owner, 2026-11-03: the number shown ahead of a hit is the raw hit, changed only by stances and statuses (attacker Strength/Weak, defender

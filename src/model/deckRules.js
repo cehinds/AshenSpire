@@ -1,5 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_, ItemUnlimitedCardIds } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -21,8 +21,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
-import { ItemUnlimitedKinds, ItemMinDeckDelta } from './itemProperties.js';
-import { basicCardKind } from './basicCardRule.js';
+import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_, ReducedDeckMinimum } from './deckMinimumRules.js';
 
 const D = deckRules.defaults;
 
@@ -67,8 +66,12 @@ export function deckEditBounds(settings, minDelta = 0) {
   }
   const bounds = readBounds(settings);
   // A deck-size item property (W25 step 6) lowers the minimum, never below 0.
-  return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
+  return { ...bounds, min: ReducedDeckMinimum(bounds.min, minDelta), problem: '' };
 }
+
+/** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
+export const LevelMinDeckDelta = LevelMinDeckDelta_;
+export const DeckMinDelta = DeckMinDelta_;
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings, minDelta = 0) {
@@ -111,11 +114,9 @@ export function basicCardIds(run) {
  */
 export function unlimitedCardIds(run) {
   const base = policyUnlimitedCardIds(run);
-  // An item property can also open one more kind of card: every Basic card or every cantrip (W25 step 6).
-  const kinds = run ? ItemUnlimitedKinds(run) : [];
-  if (!kinds.length) return base;
-  const extra = (gameContent(run, 'cards') || []).filter((card) => kinds.includes(basicCardKind(run, card))).map((card) => card.id);
-  return [...new Set([...base, ...extra])];
+  // A held relic or item property opens the collected own-class Basic cards or cantrips (ItemUnlimitedCardIds).
+  const extra = ItemUnlimitedCardIds(run);
+  return extra.length ? [...new Set([...base, ...extra])] : base;
 }
 function policyUnlimitedCardIds(run) {
   if (hasCollectedCardPolicy(run)) return basicCardIds(run);
@@ -374,7 +375,7 @@ export function cancelDeckEdit(run, snapshot) {
 
 /** Commit a validated editor draft without touching current combat piles. */
 export function commitDeckEditDraft(registries, run, edited, settings = {}) {
-  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, ItemMinDeckDelta(run));
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, DeckMinDelta(run));
   if (refusal) throw new Error(refusal);
   if (hasCollectedCardPolicy(run) && edited.collectedCardIds !== undefined
     && (!Array.isArray(edited.collectedCardIds) || JSON.stringify([...edited.collectedCardIds].sort()) !== JSON.stringify(knownCollectedCardIds(run).sort()))) throw new Error('Deck editing cannot modify collection knowledge');

@@ -11,7 +11,7 @@
     "naming": "node check.mjs naming",
     "format": "node check.mjs format --write",
     "inventory": "node check.mjs inventory",
-    "types": "tsc --project tsconfig.json",
+    "types": "tsc --project tsconfig.json && tsc --project tsconfig.contracts.json",
     "selftest": "node --test selftest.mjs"
   },
   "linkcheckExports": {

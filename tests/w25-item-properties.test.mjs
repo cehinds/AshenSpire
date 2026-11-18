@@ -111,7 +111,8 @@ test('resist halves and immune negates damage of one type; other types are untou
   };
   const plain = hit(newRun(), 'fire');
   assert.ok(plain > 0);
-  assert.equal(hit(newRun({ [armor]: ['resistFire'] }), 'fire'), Math.floor(plain / 2));
+  // `raw` is the unfloored chain, so resist is exactly half (the stance-less player is Idle and takes x1.25, theme B 2026-11-17, so `plain` need not be whole).
+  assert.equal(hit(newRun({ [armor]: ['resistFire'] }), 'fire'), plain / 2);
   assert.equal(hit(newRun({ [armor]: ['immuneFire'] }), 'fire'), 0);
   assert.equal(hit(newRun({ [armor]: ['immuneFire'] }), 'frost'), hit(newRun(), 'frost'));
 });
@@ -147,6 +148,8 @@ test('stat properties reach the receipts: +5 max Poise and +1 attribute', () => 
 test('deck rules: minimum deck size drops by 2; unlimited Basics and cantrips open the editor', () => {
   const settings = { deckMinSize: 12, deckMaxSize: 40 };
   const run = newRun({ [RELIC]: ['smallerDeck', 'unlimitedCantrips'] });
+  // Unlimited copies open only a collected definition (review of #2815, SPEC §14.1).
+  if (Array.isArray(run.collectedCardIds)) run.collectedCardIds = [...new Set([...run.collectedCardIds, 'core.cantrip'])];
   assert.equal(deckEditBounds(settings).min, 12);
   assert.equal(deckEditBounds(settings, 2).min, 10);
   assert.match(deckEditRefusal(11, settings), /at least 12/);

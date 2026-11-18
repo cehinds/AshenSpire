@@ -16,6 +16,20 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
+// Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
+// Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.
+// Current profiles, events and snapshots change by design; RNG counters and the historical scenario are unchanged.
+// Recaptured 2026-11-17 (theme C, on theme B: the card changes move the default profile hash and the tooltip wording moves the runtime hash, so only the profile, runtime, snapshot, stored and loaded hashes moved).
+// The conditional cards in Core's pack change only current profile, snapshot and save hashes. Events, RNG, continuations and the historical profile are unchanged.
+// Recaptured 2026-11-17 after the trader inventory changes landed: only the profile, snapshot and save hashes changed.
+// Recaptured 2026-11-17 a third time (theme D's runs carry classLevelBonusVersion, so a new run's save moves: only the stored and loaded hashes changed).
+// Recaptured 2026-11-17 again (playtest theme D added five relics to Core's reward allow list, which moved the profile hash and so only the snapshot, stored and loaded hashes; every events, rng and continuation hash is unchanged)
+// Recaptured 2026-11-17 (theme A balance: base damage halved, single-stat ratings, SP and MP at 3 points, stat-point gear, act levels for elites and bosses): the
+// three current-profile scenarios change their events and continuations by design; the historical scenario is unchanged.
+// Recaptured 2026-11-17 (theme B status and stance rules: Counter decay keeps it armed, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses): the
+// three current-profile scenarios change their events and continuations by design; the historical scenario changes only its snapshot, stored and loaded hashes (its events,
+// rng and continuation are identical, so a save from before keeps its rules).
 // Recaptured 2026-11-15 (ci-fixes added the core.retreat and core.upsetRanks resource variants, which moved the profile hash and so only the snapshot, stored and loaded hashes; with those entries reverted and the config regenerated the earlier values return). Earlier: (W25-BANDS merge with batch 5: the fights are made without `bands`, so every events, rng and continuation hash equals dev's; only the profile, runtime, snapshot, stored and loaded hashes moved). Earlier note (Wave 2 batch 5, the Counter-stack rule moved the runtime hash): only the profile hash and the snapshot, stored and loaded hashes moved
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));

@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `99d2a6f43734dd153326dc3da96b482a6fb78f7c`
+- Source commit: `6d04a268a2609350e6ac97f1a89275c9b0d8f01c`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,18 +21,18 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 323 |
+| Domain models and contracts | `src/model/` | 329 |
 | Headless simulation/services | `src/engine/` | 82 |
 | Application lifecycle and action services | `src/services/` | 5 |
 | Screen presenters/hosts | `src/ui/screens/` | 26 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 132 |
-| DOM components and observer adapters | `src/ui/components/` | 160 |
-| Code-side content adapters | `src/content/` | 274 |
+| Component models and behavior records | `src/ui/models/` | 134 |
+| DOM components and observer adapters | `src/ui/components/` | 165 |
+| Code-side content adapters | `src/content/` | 275 |
 | Authoritative JSON/CSV content | `content/source/` | 137 |
 | Transport | `src/net/` | 0 |
-| Tests | `tests/` | 1273 |
-| Architecture/tooling | `tools/` | 856 |
+| Tests | `tests/` | 1304 |
+| Architecture/tooling | `tools/` | 858 |
 
 ## Current implementation signals
 
@@ -52,8 +52,8 @@
 
 ## File-shape summary
 
-Tracked files: **5988**.
-Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 39, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 2, `.html` 21, `.js` 1170, `.json` 2256, `.md` 546, `.mjs` 1694, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 103, `.ps1` 8, `.py` 30, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
+Tracked files: **6056**.
+Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 39, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 2, `.html` 21, `.js` 1191, `.json` 2269, `.md` 549, `.mjs` 1725, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 103, `.ps1` 8, `.py` 30, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

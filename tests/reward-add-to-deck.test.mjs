@@ -73,7 +73,7 @@ test('add to deck refuses non-card rewards', () => {
 
 // ---- review step UI ----------------------------------------------------------
 import { rewardDom } from './helpers/dom.mjs';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 
 async function withDom(fn) {
   const dom = { customElements: { define() {}, get: () => true }, HTMLElement: class {}, ...rewardDom() };
@@ -89,7 +89,7 @@ function mount(extra = {}) {
   const app = document.createElement('main'); document.body.append(app);
   const offer = { id: 'ui', options: [{ kind: 'combatCards', id: 'core.strike' }], taken: [], claimed: null, takeCount: 1 };
   const calls = [];
-  mountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
+  MountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
     onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
     onAddToDeck(i) { calls.push('add'); offer.taken.push(i); offer.claimed = i; },
     addRefusal: () => '', onEditDeck: (i, back) => { calls.push('edit'); back(); },
@@ -167,7 +167,7 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
       const app = document.createElement('main'); document.body.append(app);
       const offer = { id: `eq-${kind}-${gate}`, options: [{ kind, id: ids[kind] }], taken: [], claimed: null, takeCount: 1 };
       const calls = [];
-      mountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
+      MountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
         canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });

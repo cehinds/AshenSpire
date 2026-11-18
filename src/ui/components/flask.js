@@ -3,9 +3,10 @@ import { renderCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { imageHintAttrs } from '../imageHints.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement, matchAction, actionLabel } from '../input.js';
+import { RovingList } from '../selection.js';
 import { el, popover, row as kitRow, keycap, titleS, subtitle, artWell, prose, button } from '../kit/index.js';
 import { potionInspectionView } from '../models/PotionInspectionModel.js';
 
@@ -105,7 +106,7 @@ export function openFlaskInspectModal({ def, charges = null, use = null, opener 
     : null;
   if (act && !view.action.enabled) { act.disabled = true; act.title = view.action.reason; }
 
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'md',
     className: 'flask-inspect-modal',
     eyebrow: 'Flask',
@@ -292,12 +293,6 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
     group.appendChild(button);
     buttons.push(button);
   }
-  const move = (delta) => {
-    const at = Math.max(0, buttons.indexOf(document.activeElement));
-    const next = buttons[(at + delta + buttons.length) % buttons.length];
-    next.focus();
-    focusElement(next);
-  };
   root.addEventListener('keydown', (ev) => {
     // ONE BINDING, ASKED THE WAY EVERY OTHER SURFACE ASKS IT. `matchAction` is
     // the same question combat asks for End Turn, so a rebound Inspect works
@@ -318,19 +313,15 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
       ev.stopPropagation();
       close({ cancelled: true, restoreFocus: true });
     }
-    else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') { ev.preventDefault(); move(1); }
-    else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') { ev.preventDefault(); move(-1); }
-    else if (ev.key === 'Home') {
-      ev.preventDefault();
-      const first = buttons[0];
-      first?.focus();
-      focusElement(first);
-    } else if (ev.key === 'End') {
-      ev.preventDefault();
-      const last = buttons.at(-1);
-      last?.focus();
-      focusElement(last);
-    }
+  });
+  RovingList(root, {
+    items: () => buttons,
+    startIndex: 0,
+    hasHomeEnd: true,
+    onMove: (next) => {
+      next.focus();
+      focusElement(next);
+    },
   });
   window.addEventListener('keydown', onGlobalCancel);
   document.addEventListener('click', onDocumentClick, true);

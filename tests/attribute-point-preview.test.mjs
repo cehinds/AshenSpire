@@ -14,12 +14,13 @@ const build = (mutate = null) => {
   return { registries, run };
 };
 
+// Owner, 2026-11-17: one CON point is +5 HP (HP = 30 + 5 x (CON + level)); pools rank at delta / 5, so +5 HP ties +1 Poise and HP leads.
 test('Core 2 largest per-point gains read from the live formulas', () => {
   const { registries, run } = build();
   const text = (id) => largestAttributeGain(registries, run, id)?.text;
   assert.equal(text('strength'), '+1 AR');
   assert.equal(text('dexterity'), '+1 DR');
-  assert.equal(text('constitution'), '+10 HP');
+  assert.equal(text('constitution'), '+5 HP');
   assert.equal(text('wisdom'), '+1 Perception');
   assert.equal(text('intelligence'), '+1 PR');
 });
@@ -27,9 +28,9 @@ test('Core 2 largest per-point gains read from the live formulas', () => {
 test('the full list names every non-zero gain and skips Ward while Core switches it off', () => {
   const { registries, run } = build();
   const con = attributePointGains(registries, run, 'constitution');
-  assert.ok(con.some(g => g.statId === 'hp' && g.delta === 10));
+  assert.ok(con.some(g => g.statId === 'hp' && g.delta === 5));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
-  assert.match(attributeGainSummary(con), /^\+10 HP, /);
+  assert.match(attributeGainSummary(con), /^\+5 HP, /);
   assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
   assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
 });
@@ -43,28 +44,26 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
   assert.equal(largestAttributeGain(registries, run, 'constitution').text, '+20 HP');
 });
 
-import { withKitDom } from './helpers/dom.mjs';
 import { withModalDom } from './helpers/dom.mjs';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 
-test('the Victory receipt shows the largest gain on every attribute row, with all gains in the title', () => {
+test('the Victory receipt opens the Level up modal, which shows the largest gain on every attribute row', () => {
   const { registries, run } = build();
   run.level.unspentPoints = 1;
-  withKitDom(({ document }) => {
-    document.documentElement ??= document.body;
+  withModalDom(() => {
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries, run, receiptOnly: true, onDone() {}, onPersist() {},
+    MountRewards(app, { registries, run, receiptOnly: true, onDone() {}, onPersist() {},
       onAllocateStat: id => allocateAttributePoint(registries, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    const chips = [...app.querySelectorAll('.reward-stat-row .reward-stat-gain')];
-    assert.equal(chips.length, 5);
-    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
-    const hp = chips.find(c => c.textContent === '+10 HP');
-    assert.match(hp.getAttribute('title'), /^\+10 HP, /);
+    assert.equal(app.querySelector('.reward-stat-allocation'), null, 'no inline panel (owner, 2026-11-17)');
+    app.querySelector('#reward-stat-points').click();
+    const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
+    assert.ok(chips.length >= 5, 'one gain span per attribute row');
+    assert.ok(chips.map(c => c.textContent).includes('+5 HP'));
   });
 });
 
@@ -76,27 +75,28 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
     sheet.panel.querySelector('.progression-points').click();
     const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
     assert.ok(chips.length >= 5, 'one gain span per attribute row');
-    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
+    assert.ok(chips.map(c => c.textContent).includes('+5 HP'));
     sheet.close();
   });
   const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
-  assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+10 HP');
+  assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+5 HP');
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
 
-test('a blight attribute bonus moves the threshold: the preview matches what allocateAttributePoint changes', () => {
+test('a blight INT bonus moves the Mana threshold in both the preview and allocation', () => {
   const { registries, run } = build((r) => {
-    r.ashenBlight = { milestones: [{ path: 'survivor', tier: 1 }] };
-    r.attributes.constitution = 1;
+    r.attributes.intelligence = 2;
     r.level.unspentPoints = 1;
   });
-  const stamina = () => run.maxStamina;
-  const predicted = attributePointGains(registries, run, 'constitution').find(g => g.statId === 'stamina')?.delta ?? 0;
+  const manaGain = () => attributePointGains(registries, run, 'intelligence').find(g => g.statId === 'mana')?.delta ?? 0;
+  assert.equal(manaGain(), 0, 'INT 2 to 3 alone does not increase Mana');
+  run.ashenBlight = { milestones: [{ path: 'spell', tier: 1 }] };
+  const predicted = manaGain();
   rederivePools(registries, run, 'test'); // the milestone was injected after birth: settle its one-off bonus first
-  const before = stamina();
-  allocateAttributePoint(registries, run, 'constitution');
-  assert.equal(stamina() - before, predicted, 'preview equals the real allocation');
-  assert.equal(predicted, 0, 'the +1 CON bonus makes floor(0.5 x CON) cross no threshold at CON 1 -> 2');
+  const before = run.maxMana;
+  allocateAttributePoint(registries, run, 'intelligence');
+  assert.equal(run.maxMana - before, predicted, 'preview equals the real allocation');
+  assert.equal(predicted, 1, 'the bonus moves effective INT from 3 to 4 when the point is spent');
 });
 
 test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {

@@ -349,7 +349,7 @@
     "name": "Crown of Stitches",
     "rarity": "boss",
     "icon": "relic",
-    "textTemplate": "Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.",
+    "textTemplate": "Begin each combat with {strength} Strength and {frail} Frail. New limbs are heavy.",
     "flavor": "It fits. That is the worst part."
   },
   {
@@ -579,5 +579,60 @@
     },
     "textTemplate": "Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.",
     "flavor": "The crown accepts your future earnings. It never asks what you will eat."
+  },
+  {
+    "id": "basicTraining",
+    "name": "Basic Training",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "properties": [
+      "unlimitedBasics"
+    ],
+    "textTemplate": "Deck editing adds any number of Basic martial cards (unranked).",
+    "flavor": "Drilled until the motion forgets it was ever learned."
+  },
+  {
+    "id": "graduate",
+    "name": "Graduate",
+    "rarity": "uncommon",
+    "icon": "mana",
+    "properties": [
+      "unlimitedCantrips"
+    ],
+    "textTemplate": "Deck editing adds any number of cantrips (unranked spells).",
+    "flavor": "The seal on the scroll is cracked from being shown so often."
+  },
+  {
+    "id": "threadbareSatchel",
+    "name": "Threadbare Satchel",
+    "rarity": "common",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "It holds less than it used to. So do you."
+  },
+  {
+    "id": "asceticsCord",
+    "name": "Ascetic's Cord",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "Knotted once for every thing given up."
+  },
+  {
+    "id": "pruningHook",
+    "name": "Pruning Hook",
+    "rarity": "rare",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "Cut back the weak growth, and the rest bears fruit."
   }
 ]

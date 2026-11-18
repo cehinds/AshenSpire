@@ -12,9 +12,9 @@ import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCa
 import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
-import { mountEquipCompareModal } from '../components/equipCompareModal.js';
+import { MountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
-import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
+import { OpenSlotChoiceModal, OpenEquipConfirmModal } from '../components/armouryEquipModals.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { ItemPropertyChips, ItemPropertyDetail, ItemPropertyCounts } from '../components/itemProperties.js';
 import { ArmouryItemRef, ItemPropertyLines } from '../../model/itemPropertyLines.js';
@@ -696,7 +696,7 @@ export function mountEquipment(host, {
   // screen opened: a deck already under the floor on arrival may still leave.
   const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
   const leave = () => {
-    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
+    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith, settings: meta.settings || {} });
     if (refusal) { notice = refusal; draw(); return; }
     close();
   };
@@ -871,13 +871,13 @@ export function mountEquipment(host, {
     if (!next || (currentId && !current)) return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
     if (!current) {
       // An EMPTY position: confirm with the item's card (Inventory equip flow, owner 2026-11-05).
-      openEquipConfirmModal({
+      OpenEquipConfirmModal({
         registries, item: next, name: next.name, slotLabel: `${slot.label} · ${setIndex + 1}`, opener,
         onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); }, onBack,
       });
       return true;
     }
-    mountEquipCompareModal(wrap, {
+    MountEquipCompareModal(wrap, {
       registries,
       title: t('armoury.compare.replaceTitle', { slot: slot.label }),
       current: { item: current, name: current.name },
@@ -916,7 +916,7 @@ export function mountEquipment(host, {
       requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener, onBack });
     };
     if (open.length === 1) { proceed(open[0]); return; }
-    const chooseSlot = () => openSlotChoiceModal({
+    const chooseSlot = () => OpenSlotChoiceModal({
       opener,
       options: choices.map(({ slot, position, id }) => ({
         id, label: `${slot.label} · ${position.index + 1}`,

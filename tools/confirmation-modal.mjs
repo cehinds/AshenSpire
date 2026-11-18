@@ -35,7 +35,7 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'Load silently bypasses the shared confirmation',
         file: 'src/main.js',
-        find: '  openConfirmationModal({',
+        find: '  OpenConfirmationModal({',
         replace: '  void ({ // confirmation-modal selftest plant',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE)-LOAD/,
       },
@@ -56,8 +56,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'cancelling commits the destructive callback',
         file: 'src/ui/components/confirmationModal.js',
-        find: '  const cancel = () => {\n    if (closed) return;\n    close();\n    onCancel();\n  };',
-        replace: '  const cancel = () => {\n    if (closed) return;\n    close();\n    onConfirm?.(); // confirmation-modal selftest plant\n    onCancel();\n  };',
+        find: '        close();\n        onCancel();\n    };',
+        replace: '        close();\n        onConfirm?.(); // confirmation-modal selftest plant\n        onCancel();\n    };',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE)-CANCEL-NO-MUTATION/,
       },
       {

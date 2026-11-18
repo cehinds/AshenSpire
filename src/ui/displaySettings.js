@@ -32,7 +32,7 @@ import { configureTooltipSettings } from './components/tooltip.js';
 import { setQuickNav } from './components/quicknav.js';
 import { settingOn, settingsRow, resolveTapSize, showSettingsNotice, clearSettingsNotice, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './screens/settings.js';
 import { applyWireframeChoices } from './wireframeChoices.js';
-import { restampModalWireframes } from './components/modalShell.js';
+import { RestampModalWireframes } from './components/modalShell.js';
 import { restampWorkspaceFrames } from './components/w1Workspace.js';
 import { replanCategoryNavs } from './kit/categoryNav.js';
 
@@ -629,7 +629,7 @@ export function applyDisplaySettings(settings) {
   // this function for a second reason: nothing below it can be skipped by a
   // throw from a door that is already on screen.
   applyWireframeChoices(settings);
-  restampModalWireframes(document);
+  RestampModalWireframes(document);
   restampWorkspaceFrames(document);
   replanCategoryNavs();
 }

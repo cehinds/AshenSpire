@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { createRunState } from '../src/model/state.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { bindCardInspection, openBoundCardInspection } from '../src/ui/components/cardInspection.js';
 import { cardDetailHtml, relicText } from '../src/ui/components/card.js';
@@ -64,7 +64,7 @@ function mount(kind, id, extra = {}) {
   const run = { class: 'reaver', deck: [], sideboard: [], cinders: 17, xp: 21, skills: { blade: { level: 2, xp: 9 } } };
   const offer = { id: `${kind}-inspection`, options: [{ kind, id }, { kind: 'combatCards', id: 'scholarsInsight' }], taken: [], claimed: null, takeCount: 1 };
   const calls = [];
-  mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
     onTake() { calls.push('take'); throw new Error('save refused'); },
     onContinue() { calls.push('continue'); }, ...extra,
   });
@@ -154,7 +154,7 @@ test('Right-click reads an unchosen or already taken reward without choosing it'
     const taken = mount('weapons', weapon.id);
     taken.offer.taken.push(0);
     // Rebuild against the taken option using the same production renderer.
-    mountGameProfileOffers(taken.app, { registries, run: taken.run, offer: taken.offer, title: 'Rewards', onTake() { throw new Error('must not claim'); }, onContinue() {} });
+    MountGameProfileOffers(taken.app, { registries, run: taken.run, offer: taken.offer, title: 'Rewards', onTake() { throw new Error('must not claim'); }, onContinue() {} });
     assert.equal(taken.app.querySelector('.reward-pick').disabled, true);
     rightClick(taken.app);
     assert.ok(document.querySelector('.card-inspection-modal'));
@@ -230,92 +230,36 @@ test('pending claims block inspection and failed saves and exits restore the rev
   });
 });
 
-// The rank-up chooser: both stages must reach the same reading without crossing its save door.
-const normalRun = () => ({ class: 'reaver', attributes: {}, cinders: 19, xp: 27, deck: [], sideboard: [], flasks: [], relics: [], feats: [], coreTags: [], loadout: { storage: [] }, skills: {} });
-const normalCases = [
-  { kind: 'skillRankUp', legacy: true, rewards: { skillRankUps: [{ skillId: 'item:blade', level: 2, claimOrdinal: 0 }] }, pick: 0 },
-];
-
-for (const sample of normalCases) test(`normal ${sample.kind} inspection survives review, Back and a refused save`, () => {
+// A skill rank-up opens the shared card-upgrade picker (playtest 2026-11-17 item 45a; its old review stage is gone, item
+// 36). Its save door still holds: a refused save raises nothing and leaves the row open, and the retry lands once.
+test('a skill rank-up from the card-upgrade picker survives a refused save and lands once on retry', () => {
   withInspectionDom(() => {
     document.body.classList.add('reduced-motion');
-    const source = sample.legacy ? legacyRegistries : registries;
-    const run = sample.legacy ? createRunState({ seed: 21, classId: 'reaver', registries: source }) : normalRun();
-    if (sample.legacy) {
-      run.skills['item:blade'] = { level: 2, xp: 0, pendingDrafts: 0, pendingRankUps: 1 };
-      run.deck = [{ instanceId: 'inspect-rend', cardId: 'gorefireSlash', upgraded: false }];
-    } else if (sample.kind === 'skillDraft') run.skills['item:blade'] = { level: 1, xp: 0, pendingDrafts: 1 };
+    const run = createRunState({ seed: 21, classId: 'reaver', registries: legacyRegistries });
+    run.skills['item:blade'] = { level: 2, xp: 0, pendingDrafts: 0, pendingRankUps: 1 };
+    run.deck = [{ instanceId: 'inspect-rend', cardId: 'gorefireSlash', upgraded: false }];
     const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
     const checkpoint = { states: {} };
-    let inspect, strip, refuse = true, writes = 0, dones = 0;
-    mountRewards(app, { registries: source, run, rewards: sample.rewards, checkpoint, onDone() { dones++; },
-      onPersist() {
-        writes++;
-        assert.equal(inspect.disabled, true, 'commit blocks Inspect');
-        assert.equal(strip.inert, true, 'commit blocks face Information');
-        inspect.dispatchEvent(new Event('click', { bubbles: true }));
-        assert.equal(document.querySelector('.card-inspection-modal'), null);
-        return !refuse;
-      },
-    });
-    app.querySelector(`[data-kind="${sample.kind}"]`).click();
-    inspect = app.querySelector('#reward-inspect');
-    strip = app.querySelector('.reward-row');
-    assert.ok(inspect); assert.equal(inspect.disabled, true);
-    app.querySelectorAll('.reward-pick')[sample.pick].click();
-    const selectedId = app.querySelector('.reward-selected').dataset.pickId;
-    const before = structuredClone({ run, checkpoint });
-    const inspectAndReturn = () => {
-      assert.equal(inspect.disabled, false);
-      const label = app.querySelector('#reward-card-confirm').textContent;
-      inspect.click();
-      const dialog = document.querySelector('.card-inspection-modal');
-      assert.ok(dialog);
-      assert.equal(dialog.querySelector('.card-inspection-act'), null, 'reading offers no Choose or claim action');
-      assert.ok(dialog.querySelector('[data-level="inspect"]'), 'the full authoritative face is rendered');
-      if (sample.kind === 'relic') assert.ok(reading(dialog).includes(relicText(relic, source)));
-      else {
-        assert.ok(dialog.querySelector('.playing-card-details').inspectionMarkup.length > 100);
-        if (sample.kind === 'skillRankUp') assert.match(dialog.querySelector('.card').getAttribute('aria-label'), /rank 2$/);
-        if (sample.kind === 'skillDraft') assert.match(dialog.querySelector('.card').getAttribute('aria-label'), /rank 5$/);
-      }
-      dialog.querySelector('.modal-close').click();
-      assert.equal(document.activeElement, inspect);
-      assert.equal(app.querySelector('#reward-card-confirm').textContent, label);
-      assert.equal(app.querySelector('.reward-selected').dataset.pickId, selectedId);
-      rightClick(app.querySelector('.reward-selected'));
-      const information = document.querySelector('.card-inspection-modal');
-      assert.ok(information, 'shared Information also stays available during review');
-      assert.equal(information.querySelector('.card-inspection-act'), null);
-      information.querySelector('.modal-close').click();
-      assert.equal(app.querySelector('#reward-card-confirm').textContent, label);
-      assert.equal(app.querySelector('.reward-selected').dataset.pickId, selectedId);
-      assert.deepEqual({ run, checkpoint }, before, 'reading preserves XP, skill ledgers, decks and claims');
-      assert.equal(dones, 0);
+    let refuse = true, writes = 0;
+    MountRewards(app, { registries: legacyRegistries, run, checkpoint, onDone() {},
+      rewards: { skillRankUps: [{ skillId: 'item:blade', level: 2, claimOrdinal: 0 }] },
+      onPersist() { writes++; return !refuse; } });
+    const pickAndConfirm = () => {
+      app.querySelector('[data-kind="skillRankUp"]').click();
+      document.querySelector('.card-upgrade-row[data-instance-id="inspect-rend"]').click();
+      assert.ok(document.querySelector('.card-upgrade-faces'), 'the before and after faces show under the chosen card');
+      document.querySelector('.card-upgrade-confirm').click();
     };
-    inspectAndReturn();
-    let confirm = app.querySelector('#reward-card-confirm');
-    confirm.click();
-    assert.equal(confirm.textContent, 'Continue');
-    for (const radio of strip.querySelectorAll('button.reward-pick')) assert.equal(radio.disabled, true);
-    inspectAndReturn();
-    // A queued click on another face cannot change the reviewed selection.
-    const otherFace = [...strip.querySelectorAll('.reward-choice-face')].find(face => face.dataset.pickId !== selectedId);
-    otherFace?.click();
-    assert.equal(app.querySelector('.reward-selected').dataset.pickId, selectedId);
-    confirm.click();
-    assert.equal(writes, 1); assert.equal(confirm.disabled, false);
-    assert.equal(strip.inert, false);
-    inspectAndReturn();
-    app.querySelector('#reward-back').click();
-    inspect = app.querySelector('#reward-inspect'); strip = app.querySelector('.reward-row');
-    confirm = app.querySelector('#reward-card-confirm');
-    assert.equal(confirm.textContent, 'Confirm');
-    inspectAndReturn();
-    confirm.click(); refuse = false; confirm.click();
+    pickAndConfirm();
+    assert.equal(writes, 1);
+    assert.equal(run.deck[0].rank, undefined, 'a refused save raises nothing');
+    assert.equal(app.querySelector('[data-kind="skillRankUp"]').dataset.state, 'pending', 'and the row stays open');
+    refuse = false;
+    pickAndConfirm();
     assert.equal(writes, 2);
+    assert.equal(run.deck[0].rank, 2);
     assert.equal(Object.values(checkpoint.states).filter(state => state === 'taken').length, 1);
-    assert.equal(document.querySelector('.card-inspection-modal'), null, 'successful claim leaves no orphan inspection');
+    assert.equal(document.querySelector('.card-upgrade-modal'), null, 'the picker closed on the commit');
   });
 });
 

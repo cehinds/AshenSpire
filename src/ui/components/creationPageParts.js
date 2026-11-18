@@ -7,6 +7,7 @@ import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { CREATION_FEAT_ART } from './creationFeatArt.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { MarkSelected } from '../selection.js';
 import { SplitAfter } from '../../model/splitAfter.js';
 
 const MATERIAL = 'assets/player-polish/materials/soot-leather-material.webp';
@@ -166,9 +167,8 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     node.dataset.featGroup = currentGroup;
     for (const [tileKey, tile] of tiles) {
       const selected = tileKey === key;
-      tile.classList.toggle('chosen', selected);
+      MarkSelected(tile, selected, { className: 'chosen' });
       tile.dataset.inspected = String(selected);
-      tile.setAttribute('aria-pressed', String(selected));
     }
     detailBody.replaceChildren(
       creationFeatEmblem(row.id),
@@ -228,11 +228,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
       button.addEventListener('click', () => {
         currentGroup = group.id;
         node.dataset.featGroup = currentGroup;
-        for (const peer of filters.querySelectorAll('button')) {
-          const selected = peer.dataset.featGroup === currentGroup;
-          peer.classList.toggle('on', selected);
-          peer.setAttribute('aria-pressed', String(selected));
-        }
+        MarkSelected(filters.querySelectorAll('button'), peer => peer.dataset.featGroup === currentGroup, { className: 'on' });
         renderTiles();
         const candidate = group.rows.find(row => keyOf(row, group) === inspectedKey) || group.rows[0];
         if (candidate) inspect(keyOf(candidate, group));
@@ -300,12 +296,7 @@ export function createCreationStepNavigation({ steps = [], currentId = null, onS
     return labels.currentStep?.(step, index, entries.length) || `${index + 1} / ${entries.length} · ${step?.label || ''}`;
   };
   const update = id => {
-    for (const item of items) {
-      const selected = item.dataset.creationStep === id;
-      item.classList.toggle('on', selected);
-      item.setAttribute('aria-selected', String(selected));
-      if (selected) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
-    }
+    MarkSelected(items, item => item.dataset.creationStep === id, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'step' });
     nav.sync();
   };
   const nav = categoryNav({ items, ariaLabel: labels.title || '', face: currentLabel,

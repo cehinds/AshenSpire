@@ -14,7 +14,7 @@
 // Typeface, size, spacing and slant are the player's (Advanced → Text & lore);
 // the stylesheet reads them from <html> (models/LoreTypeModel.js).
 
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { loreParts } from '../models/LoreTypeModel.js';
 import { t } from '../strings.js';
 
@@ -33,7 +33,7 @@ export function openLoreModal({ text, title = '', eyebrow = 'Lore', opener = doc
   content.append(paragraph(identity, 'lore-identity'));
   for (const part of body) content.append(paragraph(part, 'lore-history'));
   if (closing) content.append(paragraph(closing, 'lore-closing'));
-  return openModal({ size: 'sm', className: 'lore-modal', eyebrow, title, opener, body: content });
+  return OpenModal({ size: 'sm', className: 'lore-modal', eyebrow, title, opener, body: content });
 }
 
 /**

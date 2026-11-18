@@ -20,10 +20,13 @@ function liveCore() {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   delete combat.player.combatStance;
+  // The targets here hold no stance (Idle); this suite isolates the Poise/Block order from the Idle stance weakness (theme B, 2026-11-17).
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return combat;
 }
 // `legacy`: a fight saved before the 2026-11-15 ruling, whose rules carry no `ward.routing` (the Poise-first Ward routing).
-function hit(carrier, { block = 0, poise = 0, ward = 1, amount = 10, legacy = false } = {}) {
+// Amount 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so every hit below meets the layers as 10.
+function hit(carrier, { block = 0, poise = 0, ward = 1, amount = 20, legacy = false } = {}) {
   const combat = liveCore(), target = combat.enemies[0];
   if (legacy) { const { routing, ...wardRules } = combat.fixCoreRules.ward; combat.fixCoreRules = { ...combat.fixCoreRules, ward: wardRules }; }
   Object.assign(target, { block, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: ward ? { ward: { stacks: ward } } : {} });
@@ -89,7 +92,8 @@ test('Ward (block first): Poise emptied mid-hit reports a Poise break when the h
   delete target.combatStance; delete target.weaknesses;
   target.hp = target.maxHp = 100;
   const start = combat.eventLog.length;
-  A.applyAttackDamage(combat, combat.player, target, 10, [], { ...physical, skipRatingBonus: true });
+  // 20 halves to 10 (Core base-damage scale), as in hit() above.
+  A.applyAttackDamage(combat, combat.player, target, 20, [], { ...physical, skipRatingBonus: true });
   assert.equal(target.persistentPoise.value, 0, 'Poise is empty');
   assert.ok(combat.eventLog.slice(start).some(e => e.type === 'poiseBroken' && e.targetId === target.id), 'a Poise break is reported');
   assert.equal(100 - target.hp, 4, '10 - 2 Block - 4 Poise');
@@ -187,7 +191,8 @@ test('a live warded hit under legacy routing reports wardRouted, Poise, Block an
   delete target.combatStance; delete target.weaknesses;
   target.hp = target.maxHp = 100;
   const start = combat.eventLog.length;
-  A.applyAttackDamage(combat, combat.player, target, 10, [], { ...physical, skipRatingBonus: true });
+  // 20 halves to 10 (Core base-damage scale), as in hit() above.
+  A.applyAttackDamage(combat, combat.player, target, 20, [], { ...physical, skipRatingBonus: true });
   const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === target.id);
   assert.ok(hit, 'a damageDealt event');
   assert.equal(hit.wardRouted, true);
@@ -225,7 +230,8 @@ test('Ward (block first): the quote equals the hit that lands (shown = dealt)', 
   delete target.combatStance; delete target.weaknesses;
   target.hp = target.maxHp = 100;
   const start = combat.eventLog.length;
-  A.applyAttackDamage(combat, combat.player, target, 10, [], carrier);
+  // 20 halves to 10 (Core base-damage scale), as in hit() above.
+  A.applyAttackDamage(combat, combat.player, target, 20, [], carrier);
   const dealt = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === target.id);
   assert.equal(dealt.wardBlockFirst, true);
   assert.equal(dealt.blocked, quote.blocked, 'Block');

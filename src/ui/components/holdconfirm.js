@@ -126,7 +126,7 @@ import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { dlog } from '../debuglog.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
@@ -1123,7 +1123,7 @@ export function beatArmer(meta, registries) {
       const authoredDetail = authored(detailHtml);
       const authoredMessage = authored(message);
       const policy = authored(policyAction);
-      openConfirmationModal({
+      OpenConfirmationModal({
         title: authoredQuestion || `Confirm ${current.of}`,
         target: authored(target) || '',
         message: authoredMessage || (authoredQuestion

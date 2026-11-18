@@ -5,7 +5,7 @@ import { uiIconId, uiIconText, uiIconGlyph } from '../src/content/uiIcons.js';
 import { sigilChoiceButton, characterSigilPreview, classChoiceCard, classUnfold, selectionSectionFace } from '../src/ui/components/creationCards.js';
 import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -63,7 +63,7 @@ test('the mounted skill rank-up offer uses the named progression icon', () => wi
   const app = document.createElement('main'); document.body.append(app);
   const run = createRunState({ registries, classId: 'reaver', seed: 21 });
   run.skills['item:blade'] = { level: 1, xp: 0, pendingDrafts: 0 };
-  mountRewards(app, { registries, run, checkpoint: { states: {} },
+  MountRewards(app, { registries, run, checkpoint: { states: {} },
     rewards: { skillRankUps: [{ skillId: 'item:blade', level: 1 }] },
     onDone() {}, onPersist: () => true, saves });
   expectArt(app.querySelector('[data-kind="skillRankUp"] .glyph'), 'progression');

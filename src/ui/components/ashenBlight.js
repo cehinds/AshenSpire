@@ -2,6 +2,7 @@ import { t } from '../strings.js';
 import { ashenBlightFeatChoices, ashenBlightFeat } from '../../content/ashenBlight.js';
 import { openModal, button, el } from '../kit/index.js';
 import { esc } from './tooltip.js';
+import { CreateBusyLock, GuardOnce } from '../pressable.js';
 
 export function ashenBlightBarHtml(owner, { compact = false } = {}) {
   if (owner?.combatExpansionVersion !== 2) return '';
@@ -39,7 +40,7 @@ export function ashenBlightFeatHtml(feat) {
 export function openAshenBlightMilestone({ threshold, onChoose, onClosed, opener = document.activeElement }) {
   const choices = ashenBlightFeatChoices(threshold);
   if (!choices.length) throw new Error('Unknown Ashen Blight milestone');
-  let busy = false;
+  const choiceLock = CreateBusyLock();
   const later = button({ label: 'Choose later', role: 'exit', attrs: { 'data-focusable': 'true' } });
   const shell = openModal({
     size: 'md', className: 'ashen-blight-choice', opener,
@@ -51,20 +52,18 @@ export function openAshenBlightMilestone({ threshold, onChoose, onClosed, opener
       for (const feat of choices) {
         const row = el('div', { class: 'ashen-blight-choice-row' }); row.innerHTML = ashenBlightFeatHtml(feat);
         const pick = button({ label: t('common.chooseNamed', { name: feat.name }), weight: 'primary', attrs: { 'data-focusable': 'true', 'data-blight-path': feat.path } });
-        pick.addEventListener('click', async () => {
-          if (busy) return; busy = true; pick.disabled = true;
+        GuardOnce(pick, async () => {
           try {
             const result = await onChoose({ threshold, path: feat.path });
             if (result === false || result?.ok === false) { status.textContent = result?.error || 'The choice could not be saved. Please try again.'; return; }
             shell.close();
           } catch (error) { status.textContent = error?.message || 'The choice could not be saved. Please try again.'; }
-          finally { busy = false; pick.disabled = false; }
-        });
+        }, { lock: choiceLock });
         row.appendChild(pick); host.appendChild(row);
       }
       host.appendChild(status);
     }, onClose: () => onClosed?.(),
   });
-  later.addEventListener('click', () => { if (!busy) shell.close(); });
+  later.addEventListener('click', () => { if (!choiceLock.IsBusy()) shell.close(); });
   return shell;
 }

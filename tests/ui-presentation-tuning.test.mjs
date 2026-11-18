@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -64,81 +64,111 @@ function compileVariant({ holdMs, movementTolerancePx })
     return result.config;
 }
 
-function makeClock()
+function createListenerTarget()
 {
-    let now = 0;
-    let nextId = 0;
-    const jobs = new Map();
+    const listeners = [];
     return {
-        setTimeout(callback, delay)
+        addEventListener: (type, handler) => listeners.push({ type, handler }),
+        removeEventListener: (type, handler) =>
         {
-            jobs.set(++nextId, { callback, at: now + delay });
-            return nextId;
+            const at = listeners.findIndex((entry) => entry.type === type && entry.handler === handler);
+            if (at >= 0) listeners.splice(at, 1);
         },
-        clearTimeout(id) { jobs.delete(id); },
-        advanceTo(target)
+        fire(type, event)
         {
-            while (true)
-            {
-                const due = [...jobs].sort((a, b) => a[1].at - b[1].at)[0];
-                if (!due || due[1].at > target) break;
-                now = due[1].at;
-                jobs.delete(due[0]);
-                due[1].callback();
-            }
-            now = target;
+            for (const entry of listeners.filter((item) => item.type === type)) entry.handler(event);
         },
     };
 }
+
+const pageWindow = createListenerTarget();
+const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+globalThis.window = pageWindow;
+after(() =>
+{
+    if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow);
+    else delete globalThis.window;
+});
+const { ArmLongPress } = await import('../src/ui/pressable.js');
 
 function extract(name, uiConfig, bindings)
 {
     return runInNewContext(`${extractFunction(name)}\n${name}`, { ...bindings, uiConfig });
 }
 
-function inspectionHarness(uiConfig)
+function inspectionHarness(uiConfig, { selected = null, modalShown = false } = {})
 {
-    const clock = makeClock();
-    const handlers = new Map();
     const opened = [];
     const box = {
+        ...createListenerTarget(),
         dataset: { eid: 'e1' }, isConnected: true,
-        addEventListener: (name, handler) => handlers.set(name, handler),
         matches: () => false,
     };
     const wire = extract('wireCombatantContext', uiConfig, {
-        ...clock, configuredArt: true, combat: {}, selected: null, selectedFlask: null,
+        ArmLongPress, configuredArt: true, combat: {}, selected, selectedFlask: null, selfArm: null,
+        modalOpen: () => modalShown,
         selectedCombatantId: null, refreshCombatantContext() {}, selectCombatant() {},
         getEntity: () => ({ id: 'e1', kind: 'enemy' }),
         combatantSubject: (kind, entity) => ({ kind, id: entity.id }),
         openCombatantDoor: (subject) => opened.push(subject.id),
     });
     wire(box, 'Wandering Soldier');
-    const send = (type, event = {}) => handlers.get(type)(event);
-    return { ...clock, box, opened, send };
+    const pointer = { pointerId: 1, currentTarget: box };
+    const press = (event) => box.fire('pointerdown', { ...pointer, button: 0, clientX: 0, clientY: 0, ...event });
+    const move = (event) => pageWindow.fire('pointermove', { ...pointer, ...event });
+    const release = () => pageWindow.fire('pointerup', pointer);
+    return { box, opened, press, move, release };
 }
 
-test('combat inspection uses generated hold and pointer tolerance values', () =>
+test('combat inspection uses generated hold and pointer tolerance values', (t) =>
 {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     const uiConfig = compileVariant({ holdMs: 450, movementTolerancePx: 12 });
     const held = inspectionHarness(uiConfig);
-    held.send('pointerdown', { button: 0, clientX: 0, clientY: 0 });
-    held.advanceTo(449);
+    held.press();
+    t.mock.timers.tick(449);
     assert.deepEqual(held.opened, []);
-    held.advanceTo(450);
+    t.mock.timers.tick(1);
     assert.deepEqual(held.opened, ['e1']);
+    held.release();
 
     const withinSlop = inspectionHarness(uiConfig);
-    withinSlop.send('pointerdown', { button: 0, clientX: 0, clientY: 0 });
-    withinSlop.advanceTo(100);
-    withinSlop.send('pointermove', { clientX: 12, clientY: 0 });
-    withinSlop.advanceTo(450);
+    withinSlop.press();
+    t.mock.timers.tick(100);
+    withinSlop.move({ clientX: 12, clientY: 0 });
+    t.mock.timers.tick(350);
     assert.deepEqual(withinSlop.opened, ['e1'], 'movement exactly at configured slop keeps the hold armed');
+    withinSlop.release();
 
     const pastSlop = inspectionHarness(uiConfig);
-    pastSlop.send('pointerdown', { button: 0, clientX: 0, clientY: 0 });
-    pastSlop.advanceTo(100);
-    pastSlop.send('pointermove', { clientX: 12.01, clientY: 0 });
-    pastSlop.advanceTo(450);
+    pastSlop.press();
+    t.mock.timers.tick(100);
+    pastSlop.move({ clientX: 12.01, clientY: 0 });
+    t.mock.timers.tick(350);
     assert.deepEqual(pastSlop.opened, [], 'movement beyond configured slop cancels inspection');
+    pastSlop.release();
+});
+
+// Playtest 2026-11-17: a phone's long-press raises the context menu (and its pointercancel) before the hold fires,
+// so the menu itself reads the fighter, and a right-click does the same with a mouse.
+test('a context menu on a combatant opens its reading unless a card is armed or a reading is open', () =>
+{
+    const uiConfig = compileVariant({ holdMs: 450, movementTolerancePx: 12 });
+    const menu = () => { const event = { prevented: false, preventDefault() { this.prevented = true; } }; return event; };
+
+    const idle = inspectionHarness(uiConfig);
+    const idleEvent = menu();
+    idle.box.fire('contextmenu', idleEvent);
+    assert.deepEqual(idle.opened, ['e1']);
+    assert.equal(idleEvent.prevented, true, 'the browser menu never shows over a fighter');
+
+    const armed = inspectionHarness(uiConfig, { selected: 'card-1' });
+    const armedEvent = menu();
+    armed.box.fire('contextmenu', armedEvent);
+    assert.deepEqual(armed.opened, [], 'an armed card keeps right-click as cancel targeting');
+    assert.equal(armedEvent.prevented, false);
+
+    const alreadyOpen = inspectionHarness(uiConfig, { modalShown: true });
+    alreadyOpen.box.fire('contextmenu', menu());
+    assert.deepEqual(alreadyOpen.opened, [], 'a reading already open is not opened twice');
 });

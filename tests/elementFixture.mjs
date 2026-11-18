@@ -13,7 +13,7 @@ export const reg = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 export const ATTRIBUTES = { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 };
 
 /** A fight with `enemies` plain enemies (500 HP, no Block, Poise `poise`), the player with `attributes`. */
-export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false } = {}) {
+export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false } = {}) {
   const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
   for (const enemy of combat.enemies) {
@@ -24,6 +24,9 @@ export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingS
   Object.assign(combat.player.attributes, attributes);
   combat.player.energy = 9; combat.player.mana = 9;
   if (legacy) delete combat.fixCoreRules.elements;
+  // The plain enemies hold no stance, so they are Idle; the Idle stance weakness (theme B, 2026-11-17) has its own suite (stance-status-rules) and
+  // stays out of the element numbers here unless a test asks for it.
+  if (!stanceWeakness) delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   // A fight saved before `statusCaps: "none"` (owner 2026-11-15) keeps every old hold cap; `legacy` fights predate it too.
   if (legacy || oldCaps) delete combat.fixCoreRules.statusCaps;
   return { combat, player: combat.player, enemies: combat.enemies, enemy: combat.enemies[0] };

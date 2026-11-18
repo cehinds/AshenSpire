@@ -68,7 +68,7 @@ should exist; today neither checks the other.
 
 | # | SPEC (at 70d35e2) | Claim | Verdict | Artifact | Falsifying command |
 |---|---|---|---|---|---|
-| W1 | §3.2:115 | `reward.js` handles "card reward, chest, boss reward" | **shipped** | one `mountRewards` mounts combat, treasure (`TREASURE`), and boss (`<BOSS> FALLS`) payloads (`main.js:853-1040`) | `grep -n "mountRewards" src/main.js` |
+| W1 | §3.2:115 | `reward.js` handles "card reward, chest, boss reward" | **shipped** | one `MountRewards` mounts combat, treasure (`TREASURE`), and boss (`<BOSS> FALLS`) payloads (`main.js:853-1040`) | `grep -n "MountRewards" src/main.js` |
 | W2 | §3.3:154 | `chooseReward(choice)` intent | **cut** | callback (`onDone`), not an engine intent; only co-op has a `chooseReward` message and it is a net protocol, not the engine set | `grep -rn "chooseReward" src/` → co-op send only |
 | W3 | §3.4:177 | run-level opcodes: `addRunes`, `addCardToDeck`, `removeCardFromDeck`, `upgradeCard`, `addRelic`, `addFlask`, `loseMaxHpPct`, `startCombat` | **shipped** (one rename: `addCinders`) | `src/engine/actions.js:454-517` — the full case list | `grep -n "case 'add" src/engine/actions.js` |
 | W4 | §3.8:259 | reward system = rarity rolls + pity/decay counters in `encounters.js`; knobs in `balance.js` | **shipped** | `rollRuneReward` / `rollCardRewardIds` / `rollFlaskDrop` / `rollRelicReward` (`encounters.js:44-122`); `balance.rewards` | `node tests/run-node.mjs` — test 18 |

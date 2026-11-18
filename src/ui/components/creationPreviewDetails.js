@@ -1,7 +1,7 @@
 // The compact class preview's detail doors. The row owns its meaning and
 // calculation; this component only orders them for reading.
 import { el, eyebrow, statPair } from '../kit/index.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { t } from '../strings.js';
 import { focusElement } from '../input.js';
 
@@ -15,7 +15,7 @@ export function focusCreationClassPreview(card) {
 
 export function openCreationStatDetail(entry, opener) {
   const title = entry.inspectionLabel || entry.label || entry.faceLabel;
-  return openModal({
+  return OpenModal({
     size: 'sm', className: 'cc-preview-detail-modal', title, eyebrow: t('creation.preview.statEyebrow'), opener,
     body: el('div', { class: 'as-stack cc-preview-detail-body' }, [
       el('p', { class: 'cc-preview-detail-definition', text: entry.sense }),
@@ -29,7 +29,7 @@ export function openCreationStatDetail(entry, opener) {
 }
 
 export function openCreationRelicDetail(relic, description, opener) {
-  return openModal({
+  return OpenModal({
     size: 'sm', className: 'cc-preview-detail-modal', title: relic.name, eyebrow: t('creation.preview.relicEyebrow'), opener,
     body: el('div', { class: 'as-stack cc-preview-detail-body' }, [
       el('p', { class: 'cc-preview-detail-definition', text: description }),

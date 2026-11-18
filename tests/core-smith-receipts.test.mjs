@@ -12,7 +12,7 @@ import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
-import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
@@ -38,9 +38,17 @@ const fight = (run) => {
   combat.enemies[0].combatStance = { maneuver: 'neutral', camp: 'physical', range: 'melee' };
   return combat;
 };
+// Owner, 2026-11-17 (gear `statPoints`): a Smith tier adds attribute points by the item's weights, never AR or DR. The
+// greatsword's first tier adds CON (no card number moves) and its second adds STR (so AR): the card-row tests smith
+// it from tier 1 to tier 2.
+const GS = 'armament/greatsword';
+const pastFirstTier = (run) => { run.itemUpgradeLevels = { ...(run.itemUpgradeLevels || {}), [GS]: 1 }; return run; };
 const cardsOf = (combat) => [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard];
 const liveDamage = (run, cardId) => {
   const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);
+  // The dummy holds no stance, so it is Idle and takes x1.25 (theme B), which can turn the face's +1 into +2 after the floor; this test is about the
+  // Smith receipt, so the target takes the hit at face value.
+  if (combat.fixCoreRules?.stanceBenefits?.neutral) delete combat.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
   combat.piles.hand = [card, ...combat.piles.hand.filter((row) => row !== card)];
   combat.player.stamina = combat.player.maxStamina = 99; combat.player.mana = combat.player.maxMana = 99; combat.player.energy = 99;
   const hp = combat.enemies[0].hp;
@@ -49,25 +57,25 @@ const liveDamage = (run, cardId) => {
   return hp - combat.enemies[0].hp;
 };
 
-test('Core weapon tier: receipt names AR and each card it changes, and a played card gains exactly that', () => {
-  const run = fresh(); visit(run);
+test('Core weapon tier: receipt names the attribute and each card it changes, and a played card gains exactly that', () => {
+  const run = pastFirstTier(fresh()); visit(run);
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
   assert.ok(candidate.core);
-  assert.deepEqual(candidate.changes.map((row) => [row.label, row.after - row.before]), [['AR', 1]]);
+  assert.deepEqual(candidate.changes.map((row) => [row.label, row.after - row.before]), [['STR', 1]]);
   const receipt = commitGameProfileRest(reg, run, 'smith', { itemRef: 'armament/greatsword' });
   const smith = receipt.smith || receipt;
   const saved = run.lastSmithingReceipt;
-  assert.equal(saved.changes[0].label, 'AR');
+  assert.equal(saved.changes[0].label, 'STR');
   const cards = saved.changes.filter((row) => row.kind === 'card' && row.op === 'damage');
   assert.ok(cards.length, 'at least one deck card changes damage');
-  assert.ok(cards.every((row) => row.after === row.before + 1), 'AR weight 1: +1 damage per card');
+  assert.ok(cards.every((row) => row.after === row.before + 1), 'STR +1 is AR +1 at weight 1: +1 damage per card');
   assert.ok(smith);
   // The receipt is the printed face: a fight's card face shows exactly before/after (levels reset for before).
   const face = (cardId) => { const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);
     const entry = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'damage'); return entry.faceValue ?? entry.value; };
   const shown = new Map(cards.map((row) => [row.cardId, face(row.cardId)]));
   const played = new Map(cards.map((row) => [row.cardId, liveDamage(run, row.cardId)]));
-  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 0 };
+  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 1 };
   for (const row of cards) {
     assert.equal(shown.get(row.cardId), row.after, row.cardId);
     assert.equal(face(row.cardId), row.before, row.cardId);
@@ -80,15 +88,19 @@ test('Core weapon tier: receipt names AR and each card it changes, and a played 
   assert.ok(cards.some((row) => played.get(row.cardId) - liveDamage(run, row.cardId) === row.after - row.before), 'at least one played card moved by the full receipt amount');
 });
 
+const NIGHTVEIL = 'armor/rogue/nightveil';
+const freshRogue = () => createRunState({ seed: 73, classId: 'rogue', registries: reg, runId: 'unique-run', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner, 2026-11-17 (gear `statPoints`): the armour has no budget; its row is the item's point total (attributes + Poise),
+// and only a tier that adds DEX moves Defend (DR = DEX). The Rogue's Nightveil Coat's first tier (rank 1 -> 2) adds DEX 1 -> 2.
 test('Core armor tier: receipt shows the budget point and the block it adds to Defend', () => {
-  const run = fresh(); run.loadout.sets.armor[0] = 'vigil'; visit(run);
-  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
+  const run = freshRogue(); run.loadout.sets.armor[0] = 'nightveil'; visit(run);
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === NIGHTVEIL);
   assert.ok(candidate?.core);
   const budget = candidate.changes.find((row) => row.kind === 'budget');
   assert.deepEqual([budget.before, budget.after], [3, 4]);
-  commitGameProfileRest(reg, run, 'smith', { itemRef: 'armor/reaver/vigil' });
-  const gear = gameProfileEquipmentReceipt(reg, run).sources.find((row) => row.sourceId === 'armor/reaver/vigil');
-  assert.equal(gear.resolved.budget, budget.after);
+  commitGameProfileRest(reg, run, 'smith', { itemRef: NIGHTVEIL });
+  const gear = gameProfileEquipmentReceipt(reg, run).sources.find((row) => row.sourceId === NIGHTVEIL);
+  assert.equal(Object.values(gear.resolved.points).reduce((sum, n) => sum + n, 0) + gear.resolved.tagCost, budget.after);
   const block = run.lastSmithingReceipt.changes.find((row) => row.kind === 'card' && row.op === 'block' && row.cardId === 'core.defend');
   assert.ok(block && block.after > block.before);
   const defend = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend'); return previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'block').value; };
@@ -112,7 +124,9 @@ test('Smith item summaries expose actual tier deltas for weapons, shields and ar
     assert.deepEqual(item.intrinsicChanges, candidate.changes.filter(row => row.before !== row.after), ref);
     assert.ok(Object.isFrozen(item.intrinsicChanges));
   }
-  assert.ok(model.properties.candidates.find(row => row.itemRef === 'armor/reaver/vigil').intrinsicChanges.some(row => row.label === 'DR'));
+  // Owner, 2026-11-17 (gear `statPoints`): the armour's tier is an attribute point (CON here), never DR.
+  const vigil = model.properties.candidates.find(row => row.itemRef === 'armor/reaver/vigil').intrinsicChanges;
+  assert.ok(vigil.some(row => ['CON', 'DEX'].includes(row.label)) && !vigil.some(row => row.label === 'DR'), JSON.stringify(vigil));
 });
 
 test('the item\'s upgrade modal lists the calculated item and card deltas, as before and after', () => withKitDom(dom => {
@@ -128,7 +142,7 @@ test('the item\'s upgrade modal lists the calculated item and card deltas, as be
     const rows = details.querySelectorAll('.confirmation-change-list .sr-name');
     assert.equal(rows.length, model.properties.selected.affectedRows.length + 1);
     assert.equal(details.querySelectorAll('.confirmation-change-list .as-statpair').length >= model.properties.selected.intrinsicChanges.length, true, 'every change is a before to after pair');
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));
@@ -153,7 +167,7 @@ test('Core shield tier adds a stat point; receipts never carry legacy +3 card ro
 
 
 test('copies of one card with different faces are previewed separately; co-op receipt counts the cards', () => {
-  const run = fresh(); visit(run);
+  const run = pastFirstTier(fresh()); visit(run);
   const smash = run.deck.find((card) => card.cardId === 'core.smash');
   run.deck.push({ ...smash, instanceId: 'smash-variant', upgraded: true });
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
@@ -165,7 +179,7 @@ test('copies of one card with different faces are previewed separately; co-op re
 });
 
 test('a Core card row carries its own copy (upgrades, rank), so the modal faces keep them', () => {
-  const run = fresh(); visit(run);
+  const run = pastFirstTier(fresh()); visit(run);
   const smash = run.deck.find((card) => card.cardId === 'core.smash');
   run.deck.push({ ...smash, instanceId: 'smash-up', upgraded: true, upgradeSteps: [{ k: 'dmg', n: 2 }] });
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
@@ -179,23 +193,27 @@ test('a Core card row carries its own copy (upgrades, rank), so the modal faces 
   assert.ok(shown.some((row) => row.cardReference?.upgraded === true), 'the modal row keeps the copy');
 });
 
-test('a rank-2 Core shield may spend the tier point in its authored points (validator matches the resolver)', async () => {
+test('Core statPoints gear: no pool cap at any rank, and an authored DR point grants nothing (validator matches the resolver)', async () => {
   const { loadGameProfileCatalog } = await import('../tools/game-config.mjs');
   const { resolveGameAuthor, resolveGearItem } = await import('../engine/kernel/gameConfig.js');
   const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
-  const build = (rank) => {
+  // Owner, 2026-11-17: Core gear grants attribute points and a Poise value, never AR or DR, and no longer spends a pool.
+  const build = (rank, points) => {
     const catalog = loadGameProfileCatalog();
     const shield = catalog.packs['ashen.core-content@2.0.0'].content.gear.find((item) => item.kind === 'shield');
-    const max = Object.values(resolveGearItem(shield, resolveGameAuthor(author, loadGameProfileCatalog()).modules.gear).points).reduce((a, b) => a + b, 0);
-    shield.rank = rank; shield.points = { dr: max + 1 };
+    shield.rank = rank; shield.points = points;
     return () => resolveGameAuthor(author, catalog);
   };
-  assert.doesNotThrow(build(2));
-  assert.throws(build(1), /exceed the pool/);
+  for (const rank of [1, 2]) assert.doesNotThrow(build(rank, { dr: 9 }));
+  const profile = build(1, { dr: 9 })();
+  const shield = profile.content.gear.find((item) => item.kind === 'shield');
+  const resolved = resolveGearItem(shield, profile.modules.gear);
+  assert.equal(resolved.values.dr, 0, 'an authored DR point grants no DR');
+  assert.equal(resolved.values.ar, 0);
 });
 
 test('card rows record the printed face number, not the number against the first enemy', () => {
-  const run = fresh(); visit(run);
+  const run = pastFirstTier(fresh()); visit(run);
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
   const smash = candidate.coreCardRows.find((row) => row.cardId === 'core.smash' && row.op === 'damage');
   const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === 'core.smash');
@@ -206,7 +224,7 @@ test('card rows record the printed face number, not the number against the first
 test('opening the rest runs no card simulation; the real commit adds the chosen item\'s card rows once', async () => {
   const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
   const { coreCardSimulationCount } = await import('../src/model/smithingCore.js');
-  const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
+  const run = pastFirstTier(fresh()); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
   const visitState = visit(run);
   const before = coreCardSimulationCount();
   const model = gameProfileRestModel(reg, run, visitState);
@@ -224,9 +242,11 @@ test('opening the rest runs no card simulation; the real commit adds the chosen 
   assert.equal(copies, 2, 'affectedCards counts every changed copy');
 });
 
-test('an armor tier always raises DR, and Defend block preview equals the played block', async () => {
+// Owner, 2026-11-17 (gear `statPoints`): an armour tier adds attribute points, never DR; a tier that adds DEX raises DR
+// (DR = DEX). The Rogue's Nightveil Coat's first tier (rank 1 -> 2) adds DEX 1 -> 2.
+test('an armor tier that adds DEX raises DR, and Defend block preview equals the played block', async () => {
   const { gameProfileRatingReceipt } = await import('../src/model/gameProfileRun.js');
-  const run = fresh(); run.loadout.sets.armor[0] = 'vigil'; visit(run);
+  const run = freshRogue(); run.loadout.sets.armor[0] = 'nightveil'; visit(run);
   const dr = gameProfileRatingReceipt(reg, run).totals.dr;
   const defendBlock = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend');
     const shown = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'block').value;
@@ -235,11 +255,12 @@ test('an armor tier always raises DR, and Defend block preview equals the played
     assert.equal(combat.player.block - had, shown, 'preview equals live'); return shown; };
   // This test pins the DR -> Block arithmetic, so it plays the pre-benefit rules (Defend's +50% is tests/stance-benefits.test.mjs).
   const was = defendBlock(withoutStanceBenefits(fight(run)));
-  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
-  assert.deepEqual(candidate.changes.filter((row) => row.label === 'DR').map((row) => row.after - row.before), [2]);
-  commitGameProfileRest(reg, run, 'smith', { itemRef: 'armor/reaver/vigil' });
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === NIGHTVEIL);
+  assert.deepEqual(candidate.changes.filter((row) => row.label === 'DR'), [], 'the item itself grants no DR');
+  assert.deepEqual(candidate.changes.filter((row) => row.label === 'DEX').map((row) => row.after - row.before), [1]);
+  commitGameProfileRest(reg, run, 'smith', { itemRef: NIGHTVEIL });
   const after = gameProfileRatingReceipt(reg, run).totals.dr;
-  assert.equal(after, dr + 2);
+  assert.equal(after, dr + 1);
   const weight = run.gameProfile.modules.defenses?.defenseRatingWeight ?? 1;
   const now = defendBlock(withoutStanceBenefits(fight(run)));
   assert.ok(now > was);
@@ -260,7 +281,8 @@ test('Core receipts keep the authored requirement and Poise threshold deltas a t
 
 test('Core run: a Sleeping Smith card-upgrade reward upgrades a Core item and its live cards change', async () => {
   const { executeAction } = await import('../src/engine/actions.js');
-  const run = fresh();
+  // Only a tier that moves a live card is a candidate: the greatsword's first tier is CON, its second STR.
+  const run = pastFirstTier(fresh());
   const before = JSON.stringify(run.itemUpgradeLevels || {});
   const emitted = [];
   executeAction({ registries: reg, run, rng: { float: () => 0.5, pick: (_s, list) => list[0] }, emit: (name, payload) => emitted.push([name, payload]) },
@@ -273,7 +295,7 @@ test('Core run: a Sleeping Smith card-upgrade reward upgrades a Core item and it
 });
 
 test('a Core Smith plan keeps its card rows through JSON (co-op snapshot), and the client model shows them', () => {
-  const run = fresh(); visit(run);
+  const run = pastFirstTier(fresh()); visit(run);
   const plan = smithingPlan(reg, run);
   const live = plan.candidates.find((row) => row.itemRef === 'armament/greatsword');
   assert.ok(live.coreCardRows.length, 'the host has card rows for the greatsword');
@@ -299,12 +321,14 @@ test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nic
   const nick = (playsEver) => {
     const run = fresh();
     run.deck.push({ ...createCardInstance('core.whetstoneNick', false, () => `nick-${playsEver}`), ...(playsEver ? { playsEver } : {}) });
-    const row = coreSmithingCards(reg, run, 'armament/greatsword', 0, 1).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
+    const row = coreSmithingCards(reg, run, 'armament/greatsword', 1, 2).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
     assert.ok(row, 'the Smith lists Whetstone Nick among the cards the tier changes');
     return row;
   };
   const fresh0 = nick(0), honed = nick(8);
-  // Nick is an Attack card: its face carries Attack's +20% (stance benefit, Wave 2.5), so base 2 shows as 2 and base 2 + 8 plays as 12 (floor 1.2 x 10).
-  assert.equal(honed.before - fresh0.before, 10, 'before: base 2 + 8 plays, not the fresh base');
-  assert.equal(honed.after - fresh0.after, 10, 'after: the same 8 plays');
+  // Nick is an Attack card: its face carries Attack's +20% (stance benefit, Wave 2.5) and the Core base-damage scale 0.5
+  // (rounded up): base 2 scales to 1 and base 2 + 8 plays to 5, so at AR 5 the faces are floor(1.2 x 6) = 7 and
+  // floor(1.2 x 10) = 12, and at AR 6 they are 8 and 13.
+  assert.equal(honed.before - fresh0.before, 5, 'before: base 2 + 8 plays, not the fresh base');
+  assert.equal(honed.after - fresh0.after, 5, 'after: the same 8 plays');
 });

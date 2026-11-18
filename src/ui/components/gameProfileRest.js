@@ -1,4 +1,5 @@
 import { t } from '../strings.js';
+import { ActivateOnKey } from '../selection.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { restServicesAll, restServiceUsed, RestChoiceMode } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
@@ -8,11 +9,11 @@ import { esc } from './tooltip.js';
 import { engravedIconHtml } from './engravedIcon.js';
 import { recoveryLedgerHtml } from './recoveryLedger.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
-import { renderStatAllocationCard } from './statAllocationCard.js';
+import { RenderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
-import { mountCardUpgradeModal } from './cardUpgradeModal.js';
+import { MountCardUpgradeModal } from './cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { gameProfileRestModel, gameProfileSmithModel } from '../models/GameProfileRestModel.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
@@ -55,10 +56,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     choices.firstChild.append(markUiComponent(deck, UI.shrineOptionCard, 'deck'));
     const open = () => invoke(() => deckEditor.onOpen());
     deck.addEventListener('click', open);
-    deck.addEventListener('keydown', event => {
-      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
-      event.preventDefault(); open();
-    });
+    ActivateOnKey(deck, open, { canActivate: event => !event.defaultPrevented });
   }
 
   // The recovery ledger is projected from the final transaction, including
@@ -110,7 +108,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     screen.inert = true;
     const makeModel = () => cardUpgradeModel(registries, run, selected,
       { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
-    const modal = mountCardUpgradeModal(app, makeModel(), {
+    const modal = MountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
       parent: shrineParent('#upgrade-card-opt'),
       decisionConsequence: t(pick ? 'gameProfile.rest.upgradeCardDecisionPick' : 'gameProfile.rest.upgradeCardDecision'),
@@ -150,7 +148,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       if (allocation) allocation.update(spec);
       else {
         screen.inert = true;
-        allocation = renderStatAllocationCard(app, spec);
+        allocation = RenderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.stat-allocation-card').append(previews);
       }
@@ -168,15 +166,12 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       if (service.id === 'levelUp') return openLevel();
       if (service.id === 'upgradeCard') return openUpgradeCard();
       if (gameModule(run, 'cards')) return onStrategize();
-      openConfirmationModal({ title: service.title, message: t(pick ? 'gameProfile.rest.chooseOneRest' : 'gameProfile.rest.chooseOne'),
+      OpenConfirmationModal({ title: service.title, message: t(pick ? 'gameProfile.rest.chooseOneRest' : 'gameProfile.rest.chooseOne'),
         detailsHtml: recoveryHtml(service.preview), confirmLabel: service.title,
         returnFocusElement: option, onConfirm: onStrategize,
       });
     });
     option.addEventListener('click', open);
-    option.addEventListener('keydown', event => {
-      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
-      event.preventDefault(); open();
-    });
+    ActivateOnKey(option, open, { canActivate: event => !event.defaultPrevented });
   }
 }

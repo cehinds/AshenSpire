@@ -11,7 +11,7 @@ import { commitCardUpgrade, planCardUpgrade } from '../src/model/cardUpgradeServ
 import { upgradeChoiceCount } from '../src/model/cardUpgradeLimits.js';
 import { upgradePreviewHtml } from '../src/ui/components/card.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
-import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 
 // The picker is the list; a chosen card's own modal is the shared confirmation modal, in the document body.
 const modalOf = dom => dom.document.querySelector('.confirmation-modal');
@@ -137,7 +137,7 @@ test('a procedural step the template does not mention (an added status) still sh
 
 test('the picker omits capped cards and draws available cards with their upgrade cost', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 1;
     const capped = strike(run);
@@ -145,23 +145,21 @@ test('the picker omits capped cards and draws available cards with their upgrade
     const fresh = run.deck.find(c => c.cardId === 'core.defend');
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const model = cardUpgradeModel(registries, run, fresh.instanceId);
-    const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const rowOf = id => host.querySelector(`.card-upgrade-row[data-instance-id="${id}"]`);
     assert.equal(rowOf(capped.instanceId), null);
     assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
     assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview'), null, 'the list has no in-picker preview');
     assert.equal(modalOf(dom), null, 'selecting a card opens no confirmation by itself');
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    assert.match(modalOf(dom).querySelector('.confirmation-confirm').textContent, /Upgrade \(0\)/, 'the primary opens the confirmation that offers the upgrade');
-    closeConfirmationModal();
+    assert.match(host.querySelector('.card-upgrade-confirm').textContent, /Upgrade \(0\)/, 'the primary names the upgrade it commits');
     door.close();
   });
 });
 
 test('picker updates disable unaffordable upgrades, reorder rows, and use the current selection rules', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 1;
     const paid = strike(run);
@@ -169,12 +167,12 @@ test('picker updates disable unaffordable upgrades, reorder rows, and use the cu
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const selected = [];
     let commits = 0;
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, paid.instanceId), {
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, paid.instanceId), {
       registries, meta: {}, onSelect: id => selected.push(id), onBack() {}, onConfirm() { commits += 1; },
     });
     const rows = () => [...host.querySelectorAll('.card-upgrade-row')];
     const paidRow = () => rows().find(row => row.dataset.instanceId === paid.instanceId);
-    closeConfirmationModal();
+    CloseConfirmationModal();
     paidRow().click();
     assert.deepEqual(selected, [paid.instanceId]);
 
@@ -195,14 +193,14 @@ test('picker updates disable unaffordable upgrades, reorder rows, and use the cu
     assert.equal(paidRow().getAttribute('aria-disabled'), 'false');
     paidRow().click();
     assert.deepEqual(selected, [paid.instanceId, paid.instanceId]);
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   });
 });
 
 test('picker updates remove an exhausted upgrade and clear its selection', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 50;
     const card = strike(run);
@@ -217,12 +215,12 @@ test('picker updates remove an exhausted upgrade and clear its selection', async
     const model = cardUpgradeModel(registries, run, card.instanceId);
     assert.equal(model.canConfirm, true);
     const host = dom.document.createElement('main'); dom.document.body.append(host);
-    const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     commitCardUpgrade(run, registries, model.selected.plan);
     door.update(cardUpgradeModel(registries, run, card.instanceId));
     assert.equal(host.querySelector(`.card-upgrade-row[data-instance-id="${card.instanceId}"]`), null);
     assert.equal(host.querySelector('.card-upgrade-preview'), null);
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   });
 });
@@ -249,15 +247,15 @@ test('the preview shows the card\'s main lines only: no Entry bonus line, no rec
   assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
 });
 
-test('the picker is the reaction modal\'s design: option rows, the detail under the selected row, Back and one primary', async () => {
+test('the picker is the reaction modal\'s design: option rows, a chosen card opens its own modal, Back and one primary', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 1;
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     let door;
     const pick = id => door.update(cardUpgradeModel(registries, run, id));
-    door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: pick, onBack() {}, onConfirm() {} });
+    door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: pick, onBack() {}, onConfirm() {} });
     const rows = () => [...host.querySelectorAll('.card-upgrade-row')];
     assert.ok(host.querySelector('.card-upgrade-modal.option-choice'), 'it wears the reaction modal\'s look');
     assert.ok(rows().length >= 2 && rows().every(row => row.classList.contains('option-row')), 'every card is an optionRowList row');
@@ -266,37 +264,45 @@ test('the picker is the reaction modal\'s design: option rows, the detail under 
     const upgrade = host.querySelector('.card-upgrade-confirm');
     assert.ok(upgrade, 'one primary Upgrade button');
     assert.equal(upgrade.disabled, true, 'disabled until a card is selected');
-    assert.equal(host.querySelector('.option-row-detail'), null, 'nothing chosen: no detail');
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'nothing chosen: no card modal');
+    assert.equal(host.querySelector('.option-row-detail'), null, 'and nothing opens inline');
     assert.equal(modalOf(dom), null, 'nothing chosen: no confirmation');
+    // Click 1: choosing a card opens its own modal (owner, 2026-11-17), not a detail under the row.
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).click();
-    assert.equal(modalOf(dom), null, 'a tapped card only selects it');
+    assert.equal(modalOf(dom), null, 'a tapped card opens no second confirmation');
     assert.equal(host.querySelectorAll('.card-upgrade-row.selected').length, 1, 'exactly one row is outlined');
     assert.equal(host.querySelector('.card-upgrade-row.selected').getAttribute('aria-selected'), 'true');
     assert.equal(host.querySelector('.card-upgrade-confirm').disabled, false, 'the primary enables');
-    const detail = host.querySelector('.option-row-detail');
-    assert.ok(detail, 'the before -> after faces open under the selected row');
-    assert.ok(detail.previousSibling === host.querySelector('.card-upgrade-row.selected') || detail.parentNode.children[detail.parentNode.children.indexOf(detail) - 1] === host.querySelector('.card-upgrade-row.selected'), 'directly under it');
-    assert.ok(detail.querySelector('.upgrade-confirm-faces, .card-upgrade-faces'), 'both faces are in the detail');
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    assert.ok(modalOf(dom), 'the primary opens the permanent-change confirmation');
-    modalOf(dom).querySelector('.confirmation-cancel').click();
-    assert.equal(modalOf(dom), null, 'Back closes the confirmation with no change');
-    assert.ok(host.querySelector('.card-upgrade-modal'), 'and the list stays');
-    closeConfirmationModal();
-    door.close();
+    assert.equal(host.querySelector('.option-row-detail'), null, 'nothing expands inline');
+    const card = host.querySelector('.card-upgrade-detail-modal');
+    assert.ok(card, 'the chosen card\'s modal opens');
+    assert.ok(card.querySelector('.upgrade-confirm-faces, .card-upgrade-faces'), 'with the before and after faces');
+    assert.ok(card.querySelector('.card-upgrade-inspect'), 'and an (i) that reads the whole card');
+    const commit = card.querySelector('.card-upgrade-detail-confirm');
+    assert.equal(commit.disabled, false, 'its Upgrade is live');
+    // Back returns to the list with the choice kept; choosing again reopens the modal.
+    card.querySelector('.card-upgrade-detail-back').click();
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'Back closes the card\'s modal');
+    assert.ok(host.querySelector('.card-upgrade-modal'), 'and leaves the picker open');
+    host.querySelector('.card-upgrade-row.selected').click();
+    // Click 2: the modal's Upgrade commits at once.
+    host.querySelector('.card-upgrade-detail-confirm').dispatchEvent(new dom.Event('click', { detail: 0 }));
+    assert.equal(modalOf(dom), null, 'Confirm commits at once: no second confirmation (playtest 2026-11-17 item 36)');
+    assert.equal(host.querySelector('.card-upgrade-detail-modal'), null, 'the card\'s modal closes on the commit');
+    assert.equal(host.querySelector('.card-upgrade-modal'), null, 'and so does the picker');
   });
 });
 
 test('the desk lists a blocked card dimmed and disabled, and choosing it does nothing', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 0;
     const paid = strike(run);
     paid.upgraded = true; paid.upgradeSteps = [{ k: 'authored' }];
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const picks = [];
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: id => picks.push(id), onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: id => picks.push(id), onBack() {}, onConfirm() {} });
     const blocked = [...host.querySelectorAll('.card-upgrade-row')].filter(r => r.getAttribute('aria-disabled') === 'true');
     assert.ok(blocked.length, 'a paid upgrade with no stones is listed');
     assert.ok(blocked.every(r => r.className.includes('locked')), 'and dimmed');
@@ -376,19 +382,18 @@ test('rows carry levels, tags, art and the changed face numbers', () => {
 
 test('the card\'s modal is the shared body: cost, then the before and after faces, then the stat rows under them', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 0;
     const card = strike(run);
     card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
     const host = dom.document.createElement('main'); dom.document.body.append(host);
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-    const body = modalOf(dom).querySelector('.confirmation-details');
-    const kids = [...body.firstElementChild.children].map(n => n.className.split(' ')[0]);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    // One click commits (playtest 2026-11-17 item 36), so the shared body is the detail under the selected row.
+    const body = host.querySelector('.card-upgrade-modal-details');
+    const kids = [...body.children].map(n => n.className.split(' ')[0]);
     assert.deepEqual([kids[0], kids[1], kids.at(-1)].filter(Boolean).slice(0, 2), ['confirmation-cost', 'card-upgrade-faces'], 'cost first, then the faces');
     assert.ok(kids.indexOf('card-upgrade-faces') < kids.indexOf('confirmation-change-list'), 'the stat rows are under the faces');
-    closeConfirmationModal();
     door.close();
   });
 });
@@ -416,12 +421,12 @@ test('blacksmith rows list 2 options for a Basic card and 3 for a ranked one; th
 
 test('the choice dialog shows every option and highlights the picked one', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async dom => {
     const run = newRun(); run.smithingStones = 3;
     const card = strike(run);
     const host = dom.document.createElement('main'); dom.document.body.append(host);
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     // The choice sits under the selected row (owner, 2026-11-14), not in the confirmation.
     const options = [...host.querySelectorAll('.card-upgrade-option')];
     assert.equal(options.length, 2);
@@ -430,19 +435,19 @@ test('the choice dialog shows every option and highlights the picked one', async
     const after = [...host.querySelectorAll('.card-upgrade-option')];
     assert.deepEqual(after.map(o => o.getAttribute('aria-checked')), ['false', 'true']);
     assert.ok(after[1].classList.contains('selected'));
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   });
 });
 
 test('clicking or tapping an option\'s card face picks that option (the face does not swallow the click)', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async dom => {
     const run = newRun(); run.smithingStones = 3;
     const card = strike(run);
     const host = dom.document.createElement('main'); dom.document.body.append(host);
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const options = () => host.querySelectorAll('.card-upgrade-option');
     const checked = () => [...options()].map(o => o.getAttribute('aria-checked'));
     for (const pointerType of ['mouse', 'touch']) {
@@ -453,7 +458,7 @@ test('clicking or tapping an option\'s card face picks that option (the face doe
       face(1).click();
       assert.deepEqual(checked(), ['false', 'true'], `${pointerType}: a face click moved the selection`);
     }
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   });
 });
@@ -469,7 +474,7 @@ test('a chosen option commits exactly that step', () => {
 
 test('Confirm with a picked option hands the picked step to onConfirm, and a shrunken list clamps the pick', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async dom => {
     const run = newRun(); run.smithingStones = 3;
     const card = strike(run);
@@ -477,13 +482,12 @@ test('Confirm with a picked option hands the picked step to onConfirm, and a shr
     let confirmed = null;
     const model = () => cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true });
     const row = model().selected;
-    const door = mountCardUpgradeModal(host, model(), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm: (id, plan) => { confirmed = { id, plan }; } });
+    const door = MountCardUpgradeModal(host, model(), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm: (id, plan) => { confirmed = { id, plan }; } });
     const priorTimeout = globalThis.setTimeout;
     globalThis.setTimeout = () => 0; // committing arms the confirmation door's input shield; it must not outlive the fixture
     try {
       [...host.querySelectorAll('.card-upgrade-option')][1].click();
-      host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
-      dom.document.querySelector('.confirmation-modal .confirmation-confirm').click();
+      host.querySelector('.card-upgrade-confirm').click(); // one click commits: no second confirmation
     } finally { globalThis.setTimeout = priorTimeout; }
     assert.ok(confirmed, 'onConfirm ran');
     assert.equal(confirmed.id, card.instanceId);
@@ -495,24 +499,24 @@ test('Confirm with a picked option hands the picked step to onConfirm, and a shr
 
 test('a pick past the end of a shrunken option list is clamped and still highlights an option', async () => {
   const { withKitDom } = await import('./helpers/dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async dom => {
     const run = newRun(); run.smithingStones = 3;
     const card = strike(run);
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const full = cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true });
-    const door = mountCardUpgradeModal(host, full, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, full, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const options = () => [...host.querySelectorAll('.card-upgrade-option')];
     options()[1].click();
     const shrunk = { ...full, selected: { ...full.selected, options: full.selected.options.slice(0, 1) } };
     door.update({ ...shrunk, rows: [shrunk.selected] });
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.update(full);
     door.update({ ...full });
     assert.ok(door, 'a redraw after a shrunken list does not throw');
     // Read the clamped pick off the options under the selected row.
     assert.deepEqual(options().map(o => o.getAttribute('aria-checked')).filter(v => v === 'true').length, 1, 'exactly one option is highlighted');
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   });
 });
@@ -529,4 +533,132 @@ test('narrow option row: the face column fits its card and the changes list wrap
   assert.match(face, /width:\s*auto/);
   assert.match(face, /padding:\s*1rem 0 0 1rem/, 'room for the cost medallion that hangs outside the card corner');
   assert.match(block.match(/\.card-upgrade-option-changes \{([^}]*)\}/)?.[1] || '', /flex:\s*1 1 7rem/);
+});
+
+test('the picker lists deck cards first, then the library, and marks each deck card (playtest 2026-11-17 item 45b)', async () => {
+  const run = newRun(); run.smithingStones = 3;
+  run.sideboard.push({ instanceId: 'lib:defend', cardId: 'core.defend' });
+  const rows = cardUpgradeModel(registries, run).rows;
+  const flags = rows.map((row) => row.inDeck);
+  assert.ok(flags.includes(false), 'a library card is listed');
+  assert.ok(flags.slice(flags.indexOf(false)).every((flag) => !flag), 'no deck card after the first library card');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const shown = [...host.querySelectorAll('.card-upgrade-row')];
+    assert.ok(shown.filter((row) => row.dataset.inDeck === 'true').every((row) => row.querySelector('.in-deck-badge')), 'every deck row wears the marker');
+    assert.equal(host.querySelector('.card-upgrade-row[data-instance-id="lib:defend"] .in-deck-badge'), null, 'a library row does not');
+    door.close();
+  });
+});
+
+// Owner screenshot 2026-11-17: the EFFECTS row read "EFFECTS EFFECTS draw → addCard, draw" (the label twice, op names).
+test('the EFFECTS row reads like card text, in the card\'s order, with amounts summed', async () => {
+  const { UpgradeEffectWords } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
+  const plain = registries.cards.get('core.strike');
+  const after = (step) => UpgradeEffectWords(registries, applyUpgradeSteps(plain, [step]));
+  assert.equal(UpgradeEffectWords(registries, plain), 'None');
+  assert.equal(after({ k: 'fx', fx: 'copy' }), 'Adds a copy');
+  assert.equal(after({ k: 'fx', fx: 'cull' }), 'Exhausts 1, Draws 2');
+  assert.equal(after({ k: 'fx', fx: 'shuffle' }), 'Shuffles discard into draw');
+  const drawThenCopy = { id: 'x', effects: [{ op: 'draw', amount: 1 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
+  assert.equal(UpgradeEffectWords(registries, drawThenCopy), 'Draws 1, Adds a copy');
+  const boosts = { id: 'x', effects: [{ op: 'changeAttribute', attribute: 'strength', amount: 2, thisTurn: true }, { op: 'damage', target: 'otherEnemy', amount: 3 }], runAttributeBonus: { dexterity: 1 } };
+  assert.equal(UpgradeEffectWords(registries, boosts), '+2 STR this turn, Hits another enemy, +1 DEX for the run');
+  for (const words of [UpgradeEffectWords(registries, drawThenCopy), UpgradeEffectWords(registries, boosts)]) {
+    assert.doesNotMatch(words, /addCard|changeAttribute|otherEnemy|shuffleDiscardIntoDraw/, 'no internal names');
+  }
+});
+
+// Owner screenshot 2026-11-17 (the option modal): "EFFECTS None → Hit another enemy" should read "Also hits another enemy".
+test('an upgrade that adds effects says only what it adds: ALSO, no "None →"', async () => {
+  const { UpgradeEffectGain, cardUpgradeChanges } = await import('../src/ui/models/CardUpgradeModel.js');
+  const plain = { id: 'x', effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
+  const other = { ...plain, effects: [...plain.effects, { op: 'damage', target: 'otherEnemy', amount: 3 }] };
+  assert.equal(UpgradeEffectGain(registries, plain, other), 'Hits another enemy');
+  const drawOne = { id: 'x', effects: [{ op: 'draw', amount: 1 }] };
+  const drawTwoCopy = { id: 'x', effects: [{ op: 'draw', amount: 2 }, { op: 'addCard', card: 'x', count: 1, pile: 'discard' }] };
+  assert.equal(UpgradeEffectGain(registries, drawOne, drawTwoCopy), 'Draws 1, Adds a copy', 'a raised count reads as the extra');
+  assert.equal(UpgradeEffectGain(registries, drawOne, drawOne), '', 'nothing added: nothing to say');
+  assert.equal(UpgradeEffectGain(registries, drawTwoCopy, drawOne), null, 'a loss needs a before and after');
+  const changes = cardUpgradeChanges(registries, plain, other);
+  const also = changes.find(change => change.adds);
+  assert.equal(also?.label, 'ALSO');
+  assert.equal(also.after, 'Hits another enemy');
+  assert.equal(changes.some(change => change.label === 'EFFECTS'), false, 'no EFFECTS row beside it');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    // The first option is given an added effect, so its line and the change row can be read.
+    const model = cardUpgradeModel(registries, run, strike(run).instanceId, { blacksmith: true });
+    const options = model.selected.options.map((option, index) => (index === 0 ? { ...option, changes } : option));
+    const door = MountCardUpgradeModal(host, { ...model, selected: { ...model.selected, options } }, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const lines = [...host.querySelectorAll('.card-upgrade-option')[0].querySelectorAll('.card-upgrade-option-changes li')].map(li => li.textContent);
+    assert.ok(lines.includes('Also hits another enemy'), `the option says what it adds: ${lines.join(' | ')}`);
+    for (const line of lines) assert.doesNotMatch(line, /EFFECTS|None →/, `"${line}" names no EFFECTS and no None`);
+    const row = host.querySelector('.confirmation-change-list .card-upgrade-gain .d-to');
+    assert.equal(row?.textContent, 'Hits another enemy', 'the change row shows the added words alone');
+    door.close();
+  });
+});
+
+test('each change row in the card\'s modal names its label once', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const rows = [...host.querySelectorAll('.confirmation-change-list .as-statrow')];
+    assert.ok(rows.length >= 1, 'the upgrade lists its changes');
+    for (const row of rows) {
+      const label = row.querySelector('.sr-name').textContent;
+      assert.ok(label, 'the row names its change');
+      assert.equal(row.querySelector('.sr-vals .sp-k'), null, `${label}: the value carries no second label`);
+      assert.ok(row.querySelector('.sr-vals .as-delta'), `${label}: the value is the before -> after delta`);
+    }
+    door.close();
+  });
+});
+
+// Owner screenshot 2026-11-17 (390px): "0 → 1 upgrade · No charge" was one chip and "In deck" was cut to "In de".
+test('a row\'s step and price are separate chips that may wrap, so a phone row is never cut', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const chips = [...host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).querySelectorAll('.co-chip')].map(chip => chip.textContent);
+    assert.deepEqual(chips, ['0 → 1 upgrade', 'No charge']);
+    door.close();
+  });
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const chipRule = css.match(/\.card-upgrade-modal \.option-row \.co-chip \{([^}]*)\}/)?.[1] || '';
+  assert.match(chipRule, /white-space:\s*normal/, 'a chip wraps rather than overflowing its row');
+  assert.match(css, /\.card-upgrade-modal \.option-row \.co-costs \{[^}]*flex-wrap:\s*wrap/, 'the chips wrap onto a second line');
+});
+
+test('choosing another card under an open card modal reopens it for that card', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const defend = run.deck.find(c => c.cardId === 'core.defend');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, strike(run).instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const titles = () => [...host.querySelectorAll('.card-upgrade-detail-modal .modal-head-id h2')].map(h => h.textContent);
+    assert.deepEqual(titles(), ['Strike']);
+    door.update(cardUpgradeModel(registries, run, defend.instanceId));
+    assert.deepEqual(titles(), ['Defend'], 'one modal, now titled for the new card');
+    door.update(cardUpgradeModel(registries, run, null));
+    assert.deepEqual(titles(), [], 'no selection: the card modal closes');
+    door.close();
+  });
 });

@@ -214,17 +214,17 @@ function graceRefillAppliedHtml(settings, r) {
   const n = counts[kind];
   const rejected = bad.find((b) => b.kind === kind);
   const lead = rejected
-    ? `<b>${esc(rejected.stored)}</b> is not one of these — using ${rejected.used}. `
+    ? `<b>${esc(rejected.stored)}</b> is not one of these. Using ${rejected.used}. `
     : '';
   // Asked of the content array rather than the registry: this module is UI and
   // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
   // shared with the plan and with boot validation.
   const entry = firstFlaskOfKind(flasks, kind);
   if (!entry) {
-    return `${lead}<b>NOT BINDING</b> — nothing declares kind “${esc(kind)}”, so a grace restores none. `
+    return `${lead}<b>NOT BINDING</b>: nothing declares kind “${esc(kind)}”, so a grace restores none. `
       + `Declared so it works the day something does.`;
   }
-  if (n === 0) return `${lead}Off — a grace tops up no ${esc(kindLabel(kind))} flasks.`;
+  if (n === 0) return `${lead}Off. A grace tops up no ${esc(kindLabel(kind))} flasks.`;
   return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
 }
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { rewardDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 
 // editorWhere 'noncombat' is the pre-rest Core, whose deck edits happen at the Armoury (the shipped Core edits at rest sites); the other profiles still rest at Strategize.
@@ -22,7 +22,7 @@ function rewardNote(profileId, options, { editorWhere, servicesPerVisit, editorE
     if (servicesPerVisit) policy.content.rests.servicesPerVisit = servicesPerVisit;
     const run = { class: 'reaver', gameProfile: policy, cinders: 0, deck: [] };
     const offer = { id: `note-${profileId}`, options: options.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
-    mountGameProfileOffers(app, { registries, run, offer, title: 'Reward', settings, onTake() {}, onContinue() {} });
+    MountGameProfileOffers(app, { registries, run, offer, title: 'Reward', settings, onTake() {}, onContinue() {} });
     const text = app.querySelector('.reward-note').textContent;
     app.remove();
     return text;

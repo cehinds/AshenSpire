@@ -21,7 +21,7 @@ import {
   wireframeChoice, wireframeChoices, wireframeChoiceSpec,
   resolveModalRung, resolveFooterSize, resolveCategoryNavMode, resolveWorkspaceSpec, resolveSceneConfig,
 } from '../src/ui/models/WireframeChoiceModel.js';
-import { MODAL_SIZES, BUTTON_ROW_SIZES, restampModalWireframes } from '../src/ui/components/modalShell.js';
+import { MODAL_SIZES, BUTTON_ROW_SIZES, RestampModalWireframes } from '../src/ui/components/modalShell.js';
 import { CATEGORY_NAV_MODES } from '../src/ui/models/CategoryNavModel.js';
 import { workspaceFrameVars } from '../src/ui/models/WorkspaceModel.js';
 import { sceneLayers } from '../src/ui/models/SceneLayerModel.js';
@@ -174,27 +174,27 @@ test('doors already open take the new answer, from what they asked for, however 
   const doc = stubDocument([panel, foot]);
 
   applyWireframeChoices({ wireframeModalWidth: 'wide', wireframeModalFooter: 'fill' }, doc.documentElement);
-  assert.equal(restampModalWireframes(doc), 2);
+  assert.equal(RestampModalWireframes(doc), 2);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['xl', 'fill']);
 
   // Twice in a row is the same answer, not a second step: the AUTHORED rung is
   // what is re-resolved, so the door cannot walk off the end of the ladder.
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.equal(panel.dataset.size, 'xl');
 
   applyWireframeChoices({ wireframeModalWidth: 'narrow' }, doc.documentElement);
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['md', 'short'], 'and back down from lg, not from xl');
 
   applyWireframeChoices({}, doc.documentElement);
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['lg', 'short'], 'as designed restores exactly what the door asked for');
 });
 
 // ---- the findings a review found, kept from coming back ---------------------
 
 test('no door writes its own rung: every modal goes through the one stamp', () => {
-  // Review, 2026-09-20: the width choice moved only the doors openModal built,
+  // Review, 2026-09-20: the width choice moved only the doors OpenModal built,
   // so the Armoury, the Smith, the confirmation and every page door disagreed
   // with the rest of the game. The stamp is now the only writer, and this is
   // the falsifier for that — a new door that types `data-size` on its panel
@@ -217,7 +217,7 @@ test('no door writes its own rung: every modal goes through the one stamp', () =
   // list on 2026-11-02: they stand in the deck editor's full-bleed desk, which is not a `.modal`.)
   for (const rel of ['src/ui/components/armouryComponents.js',
     'src/ui/components/confirmationModal.js', 'src/ui/kit/index.js']) {
-    assert.match(read(rel), /stampModalSize\(/, `${rel} stamps its rung`);
+    assert.match(read(rel), /\b[sS]tampModalSize\(/, `${rel} stamps its rung`);
   }
 });
 

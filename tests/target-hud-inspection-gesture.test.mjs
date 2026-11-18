@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { uiConfig } from '../src/config/generated/ui.js';
 
 // Execute the shipped gesture handlers and teardown with a deterministic clock.
 // No substitute activation handler or reimplementation decides suppression.
@@ -32,7 +33,7 @@ function fixture({ armed = true } = {}) {
     click() { click(null, 0); },
   };
   const scope = {
-    document, window, entries: new Map([['e1', { inspect: () => reads.push(time) }]]), eligible: armed ? ['e1'] : [],
+    uiConfig, document, window, entries: new Map([['e1', { inspect: () => reads.push(time) }]]), eligible: armed ? ['e1'] : [],
     canInspect: () => ready, onActivate: id => plays.push(id), hideTooltip() {}, performance: { now: () => time },
     setTimeout(fn) { const id = ++serial; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
     gestures: new AbortController(), disposed: false, dwell: { dispose() {} }, raf: null, cancelAnimationFrame() {},

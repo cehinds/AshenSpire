@@ -55,20 +55,32 @@ test('discard choice: rows toggle up to the count, the primary enables at exactl
     rows[2].click();
     assert.equal(commit.disabled, true, 'one of two is not enough');
     rows[0].click(); rows[1].click();
-    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'false', 'true'], 'a third pick over the count is ignored');
+    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'true', 'false'], 'a third pick over the count swaps out the earliest');
     assert.equal(commit.disabled, false);
-    assert.deepEqual(rows[2].querySelectorAll('.co-order').map((node) => node.textContent), ['1'], 'an ordered pick shows its position');
+    assert.deepEqual(rows[1].querySelectorAll('.co-order').map((node) => node.textContent), ['2'], 'an ordered pick shows its position');
     commit.click();
-    assert.deepEqual(answers, [['c3', 'c1']]);
+    assert.deepEqual(answers, [['c1', 'c2']]);
+  } finally { restore(); }
+});
+
+test('discard choice: a count of 0 opens with the primary disabled until a row is tapped', async () => {
+  const { document, restore } = installDom();
+  try {
+    const { openDiscardChoiceModal } = await import('../src/ui/components/discardChoiceModal.js');
+    const shell = openDiscardChoiceModal({ count: 0, onChoose: () => {}, cards: [{ instanceId: 'c1', name: 'Strike' }] });
+    const [commit] = buttons(document, 'Discard 0');
+    assert.equal(commit.disabled, true, 'starts disabled, as before the shared choice modal');
+    shell.body.querySelectorAll('[data-discard-id]')[0].click();
+    assert.equal(commit.disabled, false, 'a tap with nothing to pick enables it');
   } finally { restore(); }
 });
 
 test('slot choice: rows, a locked position is a disabled row, Choose commits the selected id after closing', async () => {
   const { document, restore } = installDom();
   try {
-    const { openSlotChoiceModal } = await import('../src/ui/components/armouryEquipModals.js');
+    const { OpenSlotChoiceModal } = await import('../src/ui/components/armouryEquipModals.js');
     const chosen = [];
-    const shell = openSlotChoiceModal({ opener: null, onChoose: (id) => chosen.push(id),
+    const shell = OpenSlotChoiceModal({ opener: null, onChoose: (id) => chosen.push(id),
       options: [{ id: 'main:0', label: 'Main hand · 1', sub: 'Active · Empty' }, { id: 'main:1', label: 'Main hand · 2', sub: 'Reserve', disabled: true, hint: 'Unlocks at 3' }, { id: 'off:0', label: 'Off hand · 1', sub: 'Active · Empty' }] });
     const rows = shell.body.querySelectorAll('[data-slot-option]');
     assert.ok(rows.every((row) => row.classes.has('option-row')));

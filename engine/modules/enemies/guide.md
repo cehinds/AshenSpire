@@ -16,6 +16,9 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
 | `statRules` | Per-stat rows in the player's derived-stat shape (`src/content/derivedStats.js`): attribute weights and `perLevel`, each term floored on its own. HP = 10 + per point CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 + 5 per level above 1 (owner 2026-10-17); SP/MP use the player's rows; AR = STR, DR = DEX, hand + INT. |
 | `levelFrom` | Which level the build checks against (`levelProfile.min` by default). |
+| `effectiveLevelByAct` | Optional, by tier: the level that tier fights at in Act 1, 2, 3, … (the last entry holds past the table). Core (owner 2026-11-17): `elite` [2, 4, 6], `boss` [4, 6, 8]; a tier without a row (minions) keeps its own level. The budget, SP, MP, AR and DR follow that level. Applies only to fights `createRunCombat` levels. |
+| `effectiveLevelHp` | With `effectiveLevelByAct`: the act-levelled enemy's HP is the `statRules.hp` row at that level instead of its authored range (Core: true). Custom Climb `hpMult` still scales it. |
+| `hpScaleByTier` | Optional, by tier: a multiplier on the enemy's HP after it is set (the level HP under `effectiveLevelHp`, else the rolled authored range), rounded, at least 1. Core (#2820 review): minion 0.55, elite 0.6, boss 0.65. |
 | `tiers.<tier>.pools` | Base before attributes and level: HP 10 every tier; SP 2 (minion) / 3 (elite, boss); MP 1 every tier. |
 | `tiers.<tier>.attributeBudget` | Legacy tier budget, no longer read by Core (owner 2026-11-07, SPEC §17). An enemy's budget is the player's starting budget (6) + `progression.attributePointsPerLevel` (1) × (level − 1), i.e. 5 + level, whatever the tier; every attribute starts at 1 (`characters.attributeFill.floor`). An authored `attributePoints` wins. |
 | `tiers.<tier>.spRange` | Optional. Allowed derived SP; build fails outside it. Unset by default. |

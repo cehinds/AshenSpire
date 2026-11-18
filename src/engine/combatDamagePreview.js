@@ -11,6 +11,7 @@ import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { ElementPreviewBreak } from './elementIdentity.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
@@ -87,7 +88,10 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
   } else return 0;
-  const spent = Math.min(poise.value, Math.max(0, Math.floor(amount)));
+  // Live poiseDamage and Ward-off wardDamage carry their card into drainFixCorePoise, so the card's Defend floor applies here too, and no card reads as physical
+  // (theme B, 2026-11-17).
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0)));
+  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount)));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   if (poise.value === 0) previewPoiseBreak(ctx, defender);
@@ -99,6 +103,8 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
+  // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
+  defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
   // A reflected hit spends one Reflect stack, as live does (SPEC §17).
   if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }

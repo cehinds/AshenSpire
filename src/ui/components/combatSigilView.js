@@ -24,7 +24,7 @@ export function sigilExplanationHtml(identity) {
     const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
     const id = kind === 'mirror' && rawId ? mirrorSigil(rawId).id : rawId;
     const mark = kind === 'mirror' && rawId ? mirrorSigil(rawId).mark : Object.hasOwn(catalog, id) ? catalog[id] : null;
-    return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b> — ${esc(mark.help)}</span></div>` : '';
+    return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b>: ${esc(mark.help)}</span></div>` : '';
   }).join('')}</div>`;
 }
 

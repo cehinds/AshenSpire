@@ -14,7 +14,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
-import { allocateAttributePoint } from '../src/model/levelup.js';
+import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
@@ -30,7 +30,7 @@ import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skil
 import { awardLevelXp, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { withModalDom } from './helpers/dom.mjs';
 import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
@@ -42,6 +42,9 @@ function live(classId = 'reaver') {
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A second, different group must not gain XP merely by being equipped.
   run.loadout.sets.leftHand[0] = 'roundShield';
+  // Owner, 2026-11-17 (gear `statPoints`): the Round Shield grants CON +1, so the pools re-derive (max HP 50 -> 55) as an
+  // equip would, and a save of this run then loads.
+  rederivePools(reg, run, 'test');
   const combat = createRunCombat({ registries: reg, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   return { run, combat };
 }
@@ -74,7 +77,8 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
-  assert.equal(hit.amount, 9, 'attribution does not scope or change the existing damage rating');
+  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8 incoming, x0.75 Poise protection = 6.
+  assert.equal(hit.amount, 6, 'attribution does not scope or change the existing damage rating');
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
@@ -495,7 +499,7 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let continues = 0, refuse = true;
-    mountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
+    MountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
       onDone() {
         // Reentrant activation during a screen transition cannot acknowledge twice.
         app.querySelector('#reward-continue').click();
@@ -532,7 +536,7 @@ test('Core Victory receipt draws the Character bar alone and Continue still work
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let done = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
       rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'item:blade': 5, 'class:reaver': 9 } }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
     assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
@@ -544,17 +548,21 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
   const { run } = live();
   run.level.unspentPoints = 2;
   const strength = run.attributes.strength, hp = run.hp;
-  withKitDom(({ document }) => {
+  withModalDom(() => {
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let saves = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
       onAllocateStat: id => allocateAttributePoint(reg, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    const add = app.querySelector('.reward-stat-row .reward-stat-add');
-    assert.ok(add, 'the receipt offers the allocation section');
-    app.querySelectorAll('.reward-stat-row')[0].querySelector('.reward-stat-add').click();
+    assert.equal(app.querySelector('.reward-stat-allocation'), null, 'no inline allocation panel');
+    const open = app.querySelector('#reward-stat-points');
+    assert.ok(open, 'the receipt offers the level-up button');
+    open.click();
+    assert.ok(document.querySelector('.cc-stat-modal'), 'the level-up modal opens');
+    document.querySelector('[data-stat-id="strength"][data-stat-action="increase"]').click();
+    document.querySelector('[data-stat-done]').click();
     assert.equal(run.level.unspentPoints, 1);
     assert.equal(saves, 1);
     assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
@@ -566,9 +574,9 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    assert.equal(app.querySelector('.reward-stat-allocation'), null);
+    assert.equal(app.querySelector('#reward-stat-points'), null);
   });
 });
 
@@ -602,10 +610,10 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const rollRuneReward = () => 0;
     const showFinishedRun = () => { throw Error('ordinary victory must not finish the run'); };
     const showMap = () => {}, advanceAct = () => {};
-    const mountRewards = (_app, model) => receipts.push(model);
+    const MountRewards = (_app, model) => receipts.push(model);
     const mountGameProfileLevelUp = () => { throw Error('small award must not cross levels'); };
     const deckDoors = () => ({});
-    const mountGameProfileOffers = (_app, model) => offers.push(model);
+    const MountGameProfileOffers = (_app, model) => offers.push(model);
     const transactReward = (_run, _offerId, change) => { change(); persist(); }, deckEditBounds = () => ({ max: 30 });
     ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}

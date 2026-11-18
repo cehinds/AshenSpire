@@ -1,115 +1,312 @@
 import { intentDamageRead } from '../models/CombatIntentModel.js';
-import { openModal, button, el } from '../kit/index.js';
+import { el } from '../kit/index.js';
 import { t } from '../strings.js';
-import { optionRowList, markOptionRows } from './optionRowList.js';
-import { playingCardArt } from '../cardArtwork.js';
+import { OpenChoiceModal } from './choiceModal.js';
+import { SummarizeOrNull, PlayingCardArtworkOrNull } from './choiceRowSources.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
-// `stack` is the already-committed entries of this root, top first, each
-// { name }. Empty or absent is the version 1 modal, unchanged; with entries,
-// the list shows above the options and Back reads Resolve (it still answers null).
-// The committed entries of one root's stack, top first. The engine pushes onto
-// the end and resolves the last pushed first, so the top is the last entry.
-export function committedReactionStack(reactionStack, groupKey) {
-  if (!reactionStack || reactionStack.groupKey !== groupKey) return [];
-  return [...(reactionStack.entries || [])].reverse();
+const REACTION_KIND = 'reactionChoice';
+const RESOLVE_LABEL_KEY = 'combat.reaction.resolve';
+const INCOMING_DAMAGE_CLASS = 'reaction-incoming-damage';
+const SKIP_COST_CLASS = 'reaction-skip-cost';
+const STACK_LABEL_CLASS = 'reaction-stack-label';
+const STACK_LIST_CLASS = 'reaction-stack';
+
+const ENEMY_SIDE = 'enemy';
+const COUNT_PREFIX = '×';
+const FALLBACK_KEY_PREFIX = 'fallback:';
+
+function toTitleWords(identifier)
+{
+    const spacedWords = String(identifier || '').replace(
+        /([a-z])([A-Z])/g,
+        '$1 $2',
+    );
+    return spacedWords.replace(
+        /^./,
+        (firstLetter) => firstLetter.toUpperCase(),
+    );
 }
 
-// What one stack entry is called in the list: the card for a player entry, or for an
-// enemy entry (docs/combat-card-traits-contract.md, "Enemy reactions") the enemy and its
-// reaction move, e.g. "Gilded Knight: Gilded Guard".
-const words = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
-export function reactionStackEntryName(entry, registries) {
-  if (entry?.side === 'enemy') {
-    const enemy = registries?.enemies?.get(entry.enemyId);
-    const move = enemy?.moves?.[entry.moveId]?.name || words(entry.moveId);
-    return enemy?.name ? `${enemy.name}: ${move}` : move;
-  }
-  return registries?.cards?.get(entry?.cardId)?.name || entry?.cardId || '';
+function buildOptionKey({ option, row, fallback: isFallback }, index)
+{
+    if (isFallback)
+    {
+        return `${FALLBACK_KEY_PREFIX}${index}`;
+    }
+
+    return JSON.stringify([
+        option.cardId,
+        row.name,
+        row.costs || [],
+        (row.line || []).map((part) => [
+            part.label,
+            part.value,
+        ]),
+        row.text ?? null,
+        row.html ?? null,
+        option.choiceName ?? null,
+        option.play?.upcastTier ?? null,
+        option.play?.rangeRoute ?? null,
+        option.play?.targetId ?? null,
+        option.sourceId ?? null,
+    ]);
 }
 
-// The card instances a seat already stacked (enemy entries hold no card). With ownerId, only
-// that seat's: instance ids are unique per seat only (co-op runs each start at rc1).
-export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reactionStack?.entries || [])
-  .filter(entry => entry.side !== 'enemy' && (ownerId == null || entry.ownerId === ownerId)).map(entry => entry.cardInstanceId));
+function withCountChip({ row, count })
+{
+    if (count <= 1)
+    {
+        return row;
+    }
 
-// `summarize(option)` returns the row summary (summarizeCardOption with the caller's readers: the
-// engine in solo, the seat snapshot in co-op); without it a row shows the name and costs only.
-// The art a row shows: the card face's own resolver (reviewed, simple, official, then outline art),
-// so Core cards without extended art still get an image. Null when nothing resolves.
-export function reactionOptionArtwork(option, registries = null) {
-  if (!option?.cardId) return null;
-  try {
-    return playingCardArt({ cardId: option.cardId }, { definition: registries?.cards?.get?.(option.cardId), registries }) || null;
-  } catch { return null; }
-}
-export const reactionOptionArt = (option, registries = null) => reactionOptionArtwork(option, registries)?.path || null;
-
-// Two hand instances that read as the same option (same card, same grade, same numbers, same play)
-// show once, with a count. Options carry no upgrade field, so the grade is read off the summary the
-// caller built from the live instance: its name and rendered numbers differ between Counter and
-// Counter+. The first instance stays the option that is played; the model's options are untouched.
-// A row built without a summary (none given, or it threw) has only a name and costs, which cannot tell
-// Counter from Counter+ (options carry no grade field), so such rows are never collapsed.
-const optionKey = ({ option, row, fallback }, index) => fallback ? `fallback:${index}` : JSON.stringify([option.cardId, row.name, row.costs || [], (row.line || []).map(part => [part.label, part.value]),
-  row.text ?? null, row.html ?? null, option.choiceName ?? null, option.play?.upcastTier ?? null, option.play?.rangeRoute ?? null, option.play?.targetId ?? null, option.sourceId ?? null]);
-export function collapseIdenticalOptions(entries) {
-  const groups = new Map();
-  for (const entry of entries) {
-    const key = optionKey(entry, entries.indexOf(entry));
-    const group = groups.get(key);
-    if (group) group.count += 1; else groups.set(key, { row: entry.row, count: 1 });
-  }
-  return [...groups.values()].map(({ row, count }) => (count > 1 ? { ...row, count: `\u00d7${count}` } : row));
+    return {
+        ...row,
+        count: `${COUNT_PREFIX}${count}`,
+    };
 }
 
-export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null, registries = null }) {
-  const stacked = Array.isArray(stack) && stack.length > 0;
-  let selected = null;
-  let settled = false;
-  let dismissed = false;
-  const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
-  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), role: 'exit' });
-  let bodyHost = null;
-  const shell = openModal({
-    title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
-    className: 'reaction-choice', deferFocus: true,
-    initialFocus: () => bodyHost?.querySelector('[data-reaction-option]') || null,
-    closeLabel: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), secondary: [decline], primary: play,
-    body(host) {
-      bodyHost = host;
-      const incoming = intentDamageRead(pending.intentPreview);
-      // Owner, 2026-11-14: the incoming action reads as the HP the player will lose, and each option as the HP lost after it.
-      // That one line is also the price of Skip, so the separate skip-cost line shows only when the HP figure is unknown.
-      if (Number.isFinite(pending.incomingHp)) host.append(el('p', { class: 'reaction-incoming-damage', text: t('combat.reaction.loseHp', { amount: pending.incomingHp }) }));
-      else if (incoming) {
-        host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
-        if (!stacked) host.append(el('p', { class: 'reaction-skip-cost', text: t('combat.reaction.skipCost', { amount: incoming.label }) }));
-      }
-      if (stacked) {
-        host.append(el('p', { className: 'reaction-stack-label', text: t('combat.reaction.stack') }));
-        const list = el('ol', { className: 'reaction-stack', 'data-reaction-stack': String(stack.length) });
-        for (const entry of stack) list.append(el('li', { text: String(entry.name), 'data-reaction-stack-entry': '' }));
-        host.append(list);
-      }
-      const summaries = collapseIdenticalOptions(pending.options.map(option => {
-        let summary = null;
-        try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        const base = summary || summarizeCardOption(null, null, option);
-        const result = Number.isFinite(option.incomingHp) ? [t('combat.reaction.loseHp', { amount: option.incomingHp })] : [];
-        return { option, fallback: !summary, row: { ...base, costs: [...(base.costs || []), ...result], id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
-      }));
-      const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
-        selected = id;
-        row?.focus?.({ preventScroll: true });
-        markOptionRows(grid, 'data-reaction-option', [id]);
-        play.disabled = false;
-      } });
-      host.append(grid);
-    },
-    onClose() { onClosed?.(); if (!dismissed) onAnswer({ offerId: pending.id, optionId: settled ? selected : null }); },
-  });
-  play.addEventListener('click', () => { if (!selected) return; settled = true; shell.close(); });
-  decline.addEventListener('click', () => shell.close());
-  return { ...shell, dismiss() { dismissed = true; shell.close(); } };
+export function committedReactionStack(reactionStack, groupKey)
+{
+    if (
+        !reactionStack
+        || reactionStack.groupKey !== groupKey
+    )
+    {
+        return [];
+    }
+
+    return [...(reactionStack.entries || [])].reverse();
+}
+
+export function reactionStackEntryName(entry, registries)
+{
+    if (entry?.side === ENEMY_SIDE)
+    {
+        const enemy = registries?.enemies?.get(entry.enemyId);
+        const moveName = enemy?.moves?.[entry.moveId]?.name || toTitleWords(entry.moveId);
+        return enemy?.name
+            ? `${enemy.name}: ${moveName}`
+            : moveName;
+    }
+
+    return registries?.cards?.get(entry?.cardId)?.name || entry?.cardId || '';
+}
+
+function isStackedCardOf(entry, ownerId)
+{
+    return (
+        entry.side !== ENEMY_SIDE
+        && (
+            ownerId == null
+            || entry.ownerId === ownerId
+        )
+    );
+}
+
+export const stackedCardIds = (reactionStack, ownerId = null) =>
+    new Set(
+        (reactionStack?.entries || [])
+            .filter((entry) => isStackedCardOf(entry, ownerId))
+            .map((entry) => entry.cardInstanceId),
+    );
+
+export function reactionOptionArtwork(option, registries = null)
+{
+    if (!option?.cardId)
+    {
+        return null;
+    }
+
+    return PlayingCardArtworkOrNull(
+        option.cardId,
+        registries?.cards?.get?.(option.cardId),
+        registries,
+    );
+}
+
+export const reactionOptionArt = (option, registries = null) =>
+    reactionOptionArtwork(option, registries)?.path || null;
+
+export function collapseIdenticalOptions(entries)
+{
+    const groups = new Map();
+
+    for (const entry of entries)
+    {
+        const optionKey = buildOptionKey(entry, entries.indexOf(entry));
+        const group = groups.get(optionKey);
+
+        if (group)
+        {
+            group.count += 1;
+        }
+        else
+        {
+            groups.set(optionKey, {
+                row: entry.row,
+                count: 1,
+            });
+        }
+    }
+
+    return [...groups.values()].map(withCountChip);
+}
+
+function renderIncomingDamage(host, pending, isStacked)
+{
+    if (Number.isFinite(pending.incomingHp))
+    {
+        const loseHpLine = el('p', {
+            class: INCOMING_DAMAGE_CLASS,
+            text: t('combat.reaction.loseHp', { amount: pending.incomingHp }),
+        });
+        host.append(loseHpLine);
+        return;
+    }
+
+    const incoming = intentDamageRead(pending.intentPreview);
+
+    if (!incoming)
+    {
+        return;
+    }
+
+    const incomingLine = el('p', {
+        class: INCOMING_DAMAGE_CLASS,
+        text: `${incoming.label} · ${incoming.summary}`,
+    });
+    host.append(incomingLine);
+
+    if (!isStacked)
+    {
+        const skipCostLine = el('p', {
+            class: SKIP_COST_CLASS,
+            text: t('combat.reaction.skipCost', { amount: incoming.label }),
+        });
+        host.append(skipCostLine);
+    }
+}
+
+function renderCommittedStack(host, stack)
+{
+    const stackLabel = el('p', {
+        className: STACK_LABEL_CLASS,
+        text: t('combat.reaction.stack'),
+    });
+    const stackList = el('ol', {
+        className: STACK_LIST_CLASS,
+        'data-reaction-stack': String(stack.length),
+    });
+
+    for (const entry of stack)
+    {
+        const stackEntry = el('li', {
+            text: String(entry.name),
+            'data-reaction-stack-entry': '',
+        });
+        stackList.append(stackEntry);
+    }
+
+    host.append(
+        stackLabel,
+        stackList,
+    );
+}
+
+function buildReactionEntry(option, summarize, registries)
+{
+    const summary = SummarizeOrNull(option, summarize);
+    const baseRow = summary || summarizeCardOption(
+        null,
+        null,
+        option,
+    );
+    const hpAfterReaction = Number.isFinite(option.incomingHp)
+        ? [t('combat.reaction.loseHp', { amount: option.incomingHp })]
+        : [];
+    const row = {
+        ...baseRow,
+        costs: [
+            ...(baseRow.costs || []),
+            ...hpAfterReaction,
+        ],
+        id: option.id,
+        artAsset: reactionOptionArt(option, registries),
+        artComposition: reactionOptionArtwork(option, registries),
+        chip: t('combat.reactions.label'),
+    };
+    return {
+        option,
+        fallback: !summary,
+        row,
+    };
+}
+
+export function openReactionChoiceModal({
+    pending,
+    onAnswer,
+    onClosed,
+    stack = [],
+    summarize = null,
+    registries = null,
+})
+{
+    const isStacked = Array.isArray(stack) && stack.length > 0;
+    const resolveLabel = isStacked
+        ? t(RESOLVE_LABEL_KEY)
+        : undefined;
+    let isDismissed = false;
+
+    function renderReactionIntro(host)
+    {
+        renderIncomingDamage(
+            host,
+            pending,
+            isStacked,
+        );
+
+        if (isStacked)
+        {
+            renderCommittedStack(host, stack);
+        }
+    }
+
+    function answer(optionId)
+    {
+        if (!isDismissed)
+        {
+            onAnswer({
+                offerId: pending.id,
+                optionId,
+            });
+        }
+    }
+
+    const reactionEntries = pending.options.map((option) =>
+        buildReactionEntry(
+            option,
+            summarize,
+            registries,
+        )
+    );
+    const shell = OpenChoiceModal({
+        kind: REACTION_KIND,
+        rows: collapseIdenticalOptions(reactionEntries),
+        eyebrow: t('combat.reaction.eyebrow'),
+        title: t('combat.reaction.title'),
+        cancelLabel: resolveLabel,
+        renderBeforeList: renderReactionIntro,
+        onClosed,
+        onCommit: answer,
+        onCancelled: () => answer(null),
+    });
+    return {
+        ...shell,
+        dismiss()
+        {
+            isDismissed = true;
+            shell.close();
+        },
+    };
 }

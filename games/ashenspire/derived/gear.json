@@ -10,8 +10,8 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 2,
-      "dr": 1,
+      "ar": 0,
+      "dr": 0,
       "poise": 1,
       "hp": 0,
       "mp": 0,
@@ -19,15 +19,15 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 2,
-      "dr": 2,
+      "ar": 0,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -35,7 +35,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -43,8 +43,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -58,9 +64,11 @@
       "heavy",
       "stagger"
     ],
-    "setPoints": {},
+    "setPoints": {
+      "strength": 3
+    },
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 2,
       "hp": 0,
@@ -69,14 +77,14 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 3,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 6,
       "hp": 0,
@@ -85,7 +93,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 3,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -96,8 +104,14 @@
       "strike.poise=+3"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -111,35 +125,38 @@
       "flurry",
       "throw"
     ],
-    "setPoints": {},
+    "setPoints": {
+      "dexterity": 1,
+      "strength": 1
+    },
     "points": {
-      "ar": 2,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
-      "dexterity": 0,
+      "strength": 1,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 2,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
-      "dexterity": 0,
+      "strength": 1,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -148,8 +165,14 @@
       "strike.hits=+1"
     ],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -166,9 +189,9 @@
       "dexterity": 1
     },
     "points": {
-      "ar": 3,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -182,9 +205,9 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 3,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -199,8 +222,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -215,9 +244,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -231,9 +260,9 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -250,8 +279,14 @@
       "strike.bleed=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -268,7 +303,7 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 2,
       "hp": 0,
@@ -284,7 +319,7 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 6,
       "hp": 0,
@@ -304,8 +339,14 @@
       "strike.poise=+3"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -320,9 +361,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -336,9 +377,9 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 9,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -355,8 +396,14 @@
       "strike.poise=+3"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -372,9 +419,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -388,9 +435,9 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -408,8 +455,14 @@
       "self.maxStamina=+1"
     ],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -424,32 +477,32 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 3,
+      "ar": 0,
       "dr": 0,
-      "poise": 2,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 3,
+      "ar": 0,
       "dr": 0,
-      "poise": 6,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -459,8 +512,14 @@
       "strike.cost=+1"
     ],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -474,9 +533,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
-      "dr": 3,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -484,15 +543,15 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
-      "dr": 6,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -500,15 +559,21 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -523,7 +588,7 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 2,
+      "dr": 0,
       "poise": 2,
       "hp": 0,
       "mp": 0,
@@ -533,13 +598,13 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 0,
+      "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 4,
+      "dr": 0,
       "poise": 6,
       "hp": 0,
       "mp": 0,
@@ -549,14 +614,20 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 0,
+      "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -573,23 +644,7 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
-      "hp": 0,
-      "mp": 0,
-      "sp": 0,
-      "ward": 0,
-      "evasion": 0,
-      "precision": 0,
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 3,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "values": {
-      "ar": 0,
-      "dr": 2,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -597,16 +652,38 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
-      "constitution": 3,
+      "constitution": 2,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 9,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 2,
       "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -621,7 +698,7 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 3,
+      "dr": 0,
       "poise": 1,
       "hp": 0,
       "mp": 0,
@@ -631,13 +708,13 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 0,
+      "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 6,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -647,14 +724,20 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 0,
+      "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -668,8 +751,8 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
-      "dr": 1,
+      "ar": 0,
+      "dr": 0,
       "poise": 1,
       "hp": 0,
       "mp": 0,
@@ -684,8 +767,8 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
+      "ar": 0,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -701,8 +784,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -720,8 +809,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -736,8 +825,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -754,8 +843,14 @@
       "self.regen=+1"
     ],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -770,9 +865,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -783,12 +878,12 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 0
+      "intelligence": 1
     },
     "values": {
-      "ar": 1,
-      "dr": 4,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -799,14 +894,20 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 0
+      "intelligence": 1
     },
     "modifiers": [
       "strike.burn=+2"
     ],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -822,8 +923,8 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -838,8 +939,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -856,8 +957,14 @@
       "strike.poise=+3"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -873,9 +980,9 @@
       "intelligence": 1
     },
     "points": {
-      "ar": 2,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -889,9 +996,9 @@
       "intelligence": 1
     },
     "values": {
-      "ar": 2,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -906,8 +1013,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -924,9 +1037,9 @@
       "intelligence": 1
     },
     "points": {
-      "ar": 1,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -940,9 +1053,9 @@
       "intelligence": 2
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -959,8 +1072,14 @@
       "strike.frost=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -975,12 +1094,13 @@
       "retreat"
     ],
     "setPoints": {
-      "intelligence": 1
+      "intelligence": 2,
+      "wisdom": 1
     },
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -994,9 +1114,9 @@
       "intelligence": 2
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1013,8 +1133,14 @@
       "strike.blight=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1031,9 +1157,9 @@
       "intelligence": 1
     },
     "points": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1043,13 +1169,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 3
+      "wisdom": 0,
+      "intelligence": 2
     },
     "values": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1059,13 +1185,19 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 3
+      "wisdom": 0,
+      "intelligence": 2
     },
     "modifiers": [],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -1082,9 +1214,9 @@
       "intelligence": 1
     },
     "points": {
-      "ar": 1,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1094,13 +1226,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 2
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1110,15 +1242,21 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 2
     },
     "modifiers": [
       "self.regen=+1"
     ],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -1135,9 +1273,9 @@
       "wisdom": 1
     },
     "points": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1151,9 +1289,9 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1170,8 +1308,14 @@
       "strike.blight=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1188,9 +1332,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1204,9 +1348,9 @@
       "intelligence": 1
     },
     "values": {
-      "ar": 2,
+      "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1224,8 +1368,14 @@
       "strike.bleed=+2"
     ],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -1245,14 +1395,14 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -1261,14 +1411,14 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 9,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -1279,8 +1429,14 @@
       "strike.insanity=+2"
     ],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -1295,7 +1451,7 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 1,
       "hp": 0,
@@ -1311,7 +1467,7 @@
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
       "poise": 3,
       "hp": 0,
@@ -1330,8 +1486,14 @@
       "strike.frost=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1347,9 +1509,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 1,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1358,14 +1520,14 @@
       "precision": 0,
       "strength": 2,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
+      "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1374,7 +1536,7 @@
       "precision": 0,
       "strength": 2,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1383,8 +1545,14 @@
       "strike.burn=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1401,9 +1569,9 @@
       "wisdom": 1
     },
     "points": {
-      "ar": 1,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1414,12 +1582,12 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 2,
-      "intelligence": 1
+      "intelligence": 0
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1430,14 +1598,20 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 2,
-      "intelligence": 1
+      "intelligence": 0
     },
     "modifiers": [
       "strike.blight=+2"
     ],
     "pool": {
-      "min": 6,
-      "max": 6
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
     }
   },
   {
@@ -1455,8 +1629,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1471,8 +1645,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1487,8 +1661,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -1505,8 +1685,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1514,15 +1694,15 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1530,15 +1710,21 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1556,8 +1742,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 0,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1572,8 +1758,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1588,8 +1774,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1607,8 +1799,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1623,8 +1815,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1641,8 +1833,14 @@
       "strike.damage=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1659,8 +1857,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1675,8 +1873,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1691,8 +1889,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -1709,8 +1913,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1720,13 +1924,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 1
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1736,13 +1940,19 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 1
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1758,9 +1968,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1770,13 +1980,13 @@
       "strength": 0,
       "dexterity": 1,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1786,7 +1996,7 @@
       "strength": 0,
       "dexterity": 1,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "modifiers": [
@@ -1794,8 +2004,14 @@
       "strike.damage=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1813,8 +2029,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1829,8 +2045,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1847,8 +2063,14 @@
       "defend.block=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1865,8 +2087,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1876,13 +2098,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1892,13 +2114,19 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -1914,8 +2142,8 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 0,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1926,12 +2154,12 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 1
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1942,14 +2170,20 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 1
     },
     "modifiers": [
       "strike.blight=+2"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -1968,7 +2202,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -1984,7 +2218,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2001,8 +2235,14 @@
       "self.regen=+1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2020,8 +2260,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2031,13 +2271,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 1,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2047,13 +2287,19 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 1,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 0
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2069,7 +2315,7 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 1,
+      "dr": 0,
       "poise": 1,
       "hp": 0,
       "mp": 0,
@@ -2078,14 +2324,14 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 2,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -2094,7 +2340,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 0,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2103,8 +2349,14 @@
       "self.maxStamina=+1"
     ],
     "pool": {
-      "min": 4,
-      "max": 4
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
     }
   },
   {
@@ -2121,15 +2373,15 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -2137,15 +2389,15 @@
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -2153,8 +2405,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2170,9 +2428,9 @@
     ],
     "setPoints": {},
     "points": {
-      "ar": 1,
-      "dr": 1,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2180,15 +2438,15 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 2,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
-      "ar": 1,
-      "dr": 2,
-      "poise": 0,
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2196,7 +2454,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 2,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2206,8 +2464,14 @@
       "strike.damage=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2224,8 +2488,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 0,
+      "dr": 0,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2240,8 +2504,8 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 0,
+      "dr": 0,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2256,8 +2520,14 @@
     },
     "modifiers": [],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2275,8 +2545,8 @@
     },
     "points": {
       "ar": 0,
-      "dr": 2,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2285,14 +2555,14 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 2,
       "wisdom": 0,
       "intelligence": 0
     },
     "values": {
       "ar": 0,
-      "dr": 4,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2301,7 +2571,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 2,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -2309,8 +2579,14 @@
       "self.maxStamina=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2327,8 +2603,8 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 1,
-      "poise": 1,
+      "dr": 0,
+      "poise": 2,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2338,13 +2614,13 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 1
     },
     "values": {
       "ar": 0,
-      "dr": 2,
-      "poise": 3,
+      "dr": 0,
+      "poise": 6,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -2354,7 +2630,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 0,
+      "wisdom": 1,
       "intelligence": 1
     },
     "modifiers": [
@@ -2362,8 +2638,14 @@
       "defend.block=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   },
   {
@@ -2380,7 +2662,7 @@
     "setPoints": {},
     "points": {
       "ar": 0,
-      "dr": 1,
+      "dr": 0,
       "poise": 1,
       "hp": 0,
       "mp": 0,
@@ -2388,7 +2670,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -2396,7 +2678,7 @@
     },
     "values": {
       "ar": 0,
-      "dr": 2,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -2404,7 +2686,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -2415,8 +2697,14 @@
       "strike.damage=-1"
     ],
     "pool": {
-      "min": 5,
-      "max": 5
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
     }
   }
 ]

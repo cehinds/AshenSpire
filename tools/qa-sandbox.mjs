@@ -290,7 +290,7 @@ export async function main(argv) {
       worktree = join(tmpRoot, 'tree');
       execFileSync('git', ['worktree', 'add', '--detach', worktree, opts.base], { cwd: ROOT, stdio: 'pipe' });
       // the art packs live in the untracked .art-cache; share it so the base tree draws the same art
-      if (existsSync(join(ROOT, '.art-cache'))) symlinkSync(join(ROOT, '.art-cache'), join(worktree, '.art-cache'));
+      if (existsSync(join(ROOT, '.art-cache'))) symlinkSync(join(ROOT, '.art-cache'), join(worktree, '.art-cache'), 'junction');
       before = await serve({ root: worktree, port: 0, open: false, quiet: true, host: '127.0.0.1' });
     }
     after = await serve({ root: ROOT, port: 0, open: false, quiet: true, host: '127.0.0.1' });

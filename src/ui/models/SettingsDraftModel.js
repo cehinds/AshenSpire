@@ -391,7 +391,7 @@ export function TypedNumberRefusal(row, raw)
     const used = ResolveNumberRow({ [row.key]: raw }, row);
     return `${row.label}: ${
         JSON.stringify(typed)
-    } is outside ${row.min}\u2013${row.max} and was refused.`
+    } is outside ${row.min} to ${row.max} and was refused.`
         + `${row.boundsNote ? ` ${row.boundsNote}` : ''}`
         + ` The value in use is ${used}; every other setting you changed is still applied.`;
 }

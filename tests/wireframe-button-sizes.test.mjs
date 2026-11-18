@@ -108,7 +108,7 @@ test('kit.css reads every token the model writes, and writes no preset the model
 
 test('real consumers: the shared footer and a choice row resolve through the model', () => {
   const shell = read('src/ui/components/modalShell.js');
-  assert.match(shell, /planButtonGroup\(\{ kind: 'footer'/);
+  assert.match(shell, /planButtonGroup\(\{\s*kind: 'footer'/);
   assert.match(shell, /button\.dataset\.buttonSize = plan\.size/);
   const kit = read('src/ui/kit/index.js');
   assert.match(kit, /export function choiceRow\(/);

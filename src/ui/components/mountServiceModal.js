@@ -27,9 +27,10 @@ import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
 import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { el, prose, flavour, button } from '../kit/index.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
+import { MarkSelected } from '../selection.js';
 
 export function mountMountServiceModal(host, initialModel, {
   registries,
@@ -65,7 +66,7 @@ export function mountMountServiceModal(host, initialModel, {
   const count = el('p', { class: 'smith-pane-status as-flavor', role: 'status', dataset: { mountCount: '' } });
   const consequence = el('p', { class: 'as-flavor smith-consequence', id: 'mount-modal-consequence' });
   const listHost = el('div', { class: 'mount-service-list', role: 'listbox', 'aria-label': t('smith.items.mount') });
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'md',
     className: 'option-choice smith-upgrade-modal mount-service-modal',
     title: p0.title,
@@ -102,10 +103,8 @@ export function mountMountServiceModal(host, initialModel, {
   /** After the list is built: the engraved where-pill (worn or carried) and the row's reading, as the rail row wore them. */
   function dressItemRow(rowEl, item, selected) {
     rowEl.dataset.itemRef = item.itemRef;
-    rowEl.classList.toggle('selected', selected);
-    rowEl.classList.toggle('is-chosen', selected);
     rowEl.setAttribute('role', 'option');
-    rowEl.setAttribute('aria-selected', String(selected));
+    MarkSelected(rowEl, selected, { className: ['selected', 'is-chosen'], ariaAttribute: 'aria-selected' });
     rowEl.append(el('span', { class: 'as-pill smith-weapon-count', role: 'img', 'aria-label': item.whereLabel }, engravedIcon(item.equipped ? 'attack' : 'block') || item.whereLabel));
     rowEl.setAttribute('aria-label', `${item.name}, ${item.whereLabel}, ${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}, costs ${item.cost} Smithing Stone. Select to choose a mount.`);
     markUiComponent(rowEl, UI.mountCandidateCard, selected ? 'selected' : 'available');

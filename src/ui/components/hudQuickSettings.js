@@ -9,6 +9,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { uiComponentAttrs } from './uiComponents.js';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
 import { musicQuickSettingsPlan } from '../models/HudQuickSettingsModel.js';
+import { MarkSelected } from '../selection.js';
 import { esc } from './tooltip.js';
 
 let releaseActiveStack = null;
@@ -74,8 +75,7 @@ function syncFullscreen(stack) {
   if (!button) return;
   const capability = fullscreenCapability();
   const active = isFullscreen();
-  button.classList.toggle('on', active);
-  button.setAttribute('aria-pressed', String(active));
+  MarkSelected(button, active, { className: 'on' });
   const label = capability.supported
     ? (active ? 'Exit fullscreen' : 'Enter fullscreen')
     : 'Fullscreen unavailable in this browser';
@@ -94,8 +94,7 @@ function syncMusic(stack, settings) {
   const button = stack.querySelector('[data-hud-quick-action="music"]');
   if (!button) return;
   const plan = musicQuickSettingsPlan(settings);
-  button.classList.toggle('on', plan.active);
-  button.setAttribute('aria-pressed', String(plan.active));
+  MarkSelected(button, plan.active, { className: 'on' });
   button.setAttribute('aria-label', plan.label);
   button.title = plan.label;
   button.replaceChildren(engravedIcon('audio') || t('settings.row.muteAudio'));

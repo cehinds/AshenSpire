@@ -1,5 +1,5 @@
 import { logicalViewport } from '../viewViewport.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
@@ -320,7 +320,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   // W1o: the header close is the way out. The footer holds only applicable
   // actions — one fills it — and a read-only door has no footer at all, not a
   // redundant Back beside the close it duplicates.
-  const shell = openModal({ title, size: 'lg',
+  const shell = OpenModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
@@ -345,13 +345,6 @@ export function openCardInspection({ title, card, details, opener, actions = nul
       commit();
     });
   }
-  shell.panel.addEventListener('keydown', event => {
-    if (event.key !== 'Tab') return;
-    const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
-    const first = targets[0], last = targets.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-  });
   return shell;
 }
 

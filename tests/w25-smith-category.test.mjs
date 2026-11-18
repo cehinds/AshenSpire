@@ -113,11 +113,15 @@ test('a change refused for a short purse keeps both purses; an old save loads an
   assert.equal(ItemCategory(old, GS), 'greatsword');
 });
 
-test('a magic weapon\'s old tier bonus moves to magic damage, and back, when its category changes', () => {
+// Owner, 2026-11-17 (gear `statPoints`): a Smith tier is attribute points on the item, never AR or PR, so a category
+// change moves no tier bonus between AR and magic damage; the ratings read the same either side of the change.
+test('a weapon\'s tier bonus stays attribute points, not AR or magic damage, when its category changes', () => {
   const run = smithRun();
+  const untiered = gameProfileRatingReceipt(registries, run).totals;
   run.itemUpgradeLevels = { [GS]: 2 };
   const martial = gameProfileRatingReceipt(registries, run).totals;
   run.itemCategories = { [GS]: 'staff' };
   const magic = gameProfileRatingReceipt(registries, run).totals;
-  assert.ok(magic.pr > martial.pr, 'PR rises with the tier once the weapon is magic');
+  assert.ok(martial.ar > untiered.ar, 'the tier raises the greatsword STR, so AR');
+  assert.deepEqual([magic.ar, magic.pr], [martial.ar, martial.pr], 'a category change moves no tier bonus');
 });
