@@ -2,8 +2,8 @@ import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
-import { playRecipientEffectLayers, clearRecipientEffects } from './recipientEffectSprites.js';
-import { recipientEffectForEvent } from '../model/recipientEffects.js';
+import { PlayRecipientEffectLayers, ClearRecipientEffects } from './recipientEffectSprites.js';
+import { RecipientEffectForEvent } from '../model/recipientEffects.js';
 import { effectsOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
@@ -1268,7 +1268,7 @@ export function playTimeline(events, ctx, done) {
     handle?.pauseForSkip();
     // Keep the screen busy through pointer release, so the same click cannot
     // activate a newly rendered card after it skipped this action.
-    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); clearRecipientEffects(ctx.layer);
+    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); ClearRecipientEffects(ctx.layer);
   };
   const release = () => {
     if (!isCurrent()) { handle?.cancel(); return; }
@@ -1436,7 +1436,7 @@ export function playTimeline(events, ctx, done) {
       const current = isCurrent();
       if (current) for (const beat of beats) cue(beat, false);
       const mount = ctx.combatEl ?? globalThis.document;
-      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); clearRecipientEffects(ctx.layer);
+      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); ClearRecipientEffects(ctx.layer);
       for (const sprite of mount?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
       if (current) ctx.onFlush?.();
     },
@@ -1577,14 +1577,14 @@ function visualPartsFor(e, beatKind, opts) {
     const original = base?.reaction;
     base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
   }
-  const recipient = e.recipientEffect || recipientEffectForEvent({}, e);
+  const recipient = e.recipientEffect || RecipientEffectForEvent({}, e);
   const recipes = e.recipientEffects || (recipient ? [recipient] : []);
   const effect = recipes.length ? { targetId: e.recipientTargetId || e.targetId }
     : Array.isArray(e.recipientEffects) ? null : combatEffectForEvent(e);
   if (!effect) return base;
   const playEffect = ctx => {
     if (recipes.length) {
-      playRecipientEffectLayers(ctx.layer, recipes, { anchorFor: ctx.anchorFor,
+      PlayRecipientEffectLayers(ctx.layer, recipes, { anchorFor: ctx.anchorFor,
         sourceId: e.recipientSourceId || e.sourcePlayerId || e.sourceId,
         targetId: e.recipientTargetId || e.targetId });
     } else {

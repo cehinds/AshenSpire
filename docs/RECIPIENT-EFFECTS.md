@@ -32,9 +32,9 @@ MP/Mana uses blue-violet (`mana` palette), distinct from SP/Stamina and AP. Ever
 
 ## Atlas and availability
 
-`src/content/recipientEffectAtlas.js` exposes `recipientEffectAtlasEntry(shape)`, returning `{asset,path,columns,rows,row}`, or `null` for an unknown shape. Every runtime ID is `assets/recipient-effects/v5/<shape>.png`: three columns, one row, 256×256 per frame. The versioned path cannot accidentally select the earlier four-row atlas.
+`src/content/recipientEffectAtlas.js` exposes `RecipientEffectAtlasEntry(shape)`, returning `{asset,path,columns,rows,row}`, or `null` for an unknown shape. Every runtime ID is `assets/recipient-effects/v5/<shape>.png`: three columns, one row, 256×256 per frame. The versioned path cannot accidentally select the earlier four-row atlas.
 
-`recipientEffectArtAvailable(shape, resolveAsset)` checks whether the supplied asset resolver maps the ID to an inline/pack/high-resolution URL. A bare development path is not proof that a file exists. In explicit source/art-authoring mode the renderer can load that path and fall back on failure. The existing `assetUrl()` seam remains responsible for runtime pack/tier resolution.
+`RecipientEffectArtAvailable(shape, resolveAsset)` checks whether the supplied asset resolver maps the ID to an inline/pack/high-resolution URL. A bare development path is not proof that a file exists. In explicit source/art-authoring mode the renderer can load that path and fall back on failure. The existing `assetUrl()` seam remains responsible for runtime pack/tier resolution.
 
 ## Explicit art export and provenance
 

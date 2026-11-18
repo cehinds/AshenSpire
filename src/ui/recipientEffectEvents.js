@@ -1,7 +1,7 @@
 import { combatEffectReceipt } from '../model/combatEffectEvents.js';
-import { recipientEffectsForEvent, recipientWindupFor, recipientStatusPolarity, resolveRecipientEffect, recipientDeliveryFor } from '../model/recipientEffects.js';
+import { RecipientEffectsForEvent, RecipientWindupFor, RecipientStatusPolarity, ResolveRecipientEffect, RecipientDeliveryFor } from '../model/recipientEffects.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../content/recipientEffectSettings.js';
-import { prewarmRecipientEffect } from './recipientEffectSprites.js';
+import { PrewarmRecipientEffect } from './recipientEffectSprites.js';
 import { BUFF_STATUS_IDS } from './buffFeedback.js';
 
 const MARKERS = new Set(['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered']);
@@ -19,7 +19,7 @@ function matchingGrants(action, event) {
 }
 
 /** One state per mounted fight, never a global dedup cache or engine state. */
-export function createRecipientEffectState() {
+export function CreateRecipientEffectState() {
   return { serial: 0, actions: new Map(), contacts: new Map(), roots: new Map(), current: null, wardColors: new Map() };
 }
 
@@ -35,7 +35,7 @@ function rootContactKey(event) {
 
 // Presentation-only annotations. Definitions select appearance; engine receipts
 // select outcomes. State survives paused reaction dispatches and nested counters.
-export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove, resolveStatus, resolveTelegraphTargets, state = createRecipientEffectState() } = {}) {
+export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove, resolveStatus, resolveTelegraphTargets, state = CreateRecipientEffectState() } = {}) {
   let segment = 0;
   const annotated = events.map(raw => {
     const event = combatEffectReceipt(raw);
@@ -82,11 +82,11 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     const definition = context?.definition || {};
     const sourceId = owner || context?.sourceId || null;
     if (owner && context) state.current = context;
-    const polarity = event.status ? BUFF_STATUS_IDS.includes(event.status) ? 'positive' : recipientStatusPolarity(resolveStatus?.(event.status)) : 'neutral';
+    const polarity = event.status ? BUFF_STATUS_IDS.includes(event.status) ? 'positive' : RecipientStatusPolarity(resolveStatus?.(event.status)) : 'neutral';
     const normalized = { ...event, sourceId,
       ...(event.type === 'energyGained' && !event.targetId ? { targetId: event.playerId || sourceId } : {}),
       ...(polarity !== 'neutral' && !event.polarity ? { polarity, beneficial: polarity === 'positive' } : {}) };
-    let layers = recipientEffectsForEvent(definition, normalized).map(layer => ({ ...layer, actionKey: context?.key || null }));
+    let layers = RecipientEffectsForEvent(definition, normalized).map(layer => ({ ...layer, actionKey: context?.key || null }));
     // Ward remembers the protected actor's own granted tint, not the attacker's.
     for (const layer of layers) if (layer.shape === 'ward') {
       if (layer.treatment === 'gain') state.wardColors.set(layer.targetId, { color: layer.color, palette: layer.palette });
@@ -94,18 +94,18 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     }
     let windup = null;
     if (marker && !marker.windupShown) {
-      windup = recipientWindupFor(marker.definition, normalized);
+      windup = RecipientWindupFor(marker.definition, normalized);
       marker.windupShown = true;
     }
     let approach = null;
     if (marker && event.type === 'combatContactPrepared') {
       const targetIds = [...new Set((resolveTelegraphTargets?.(event) || [event.targetId]).filter(Boolean))];
       if (targetIds.length) {
-        const base = resolveRecipientEffect(marker.definition, normalized);
+        const base = ResolveRecipientEffect(marker.definition, normalized);
         approach = { ...base, impactShape: base.shape, shape: null, phase: 'delivery', mount: 'target',
-          sourceId, targetIds, claimsDamage: false, delivery: recipientDeliveryFor(marker.definition, normalized) };
+          sourceId, targetIds, claimsDamage: false, delivery: RecipientDeliveryFor(marker.definition, normalized) };
         (marker.preparedDeliveries ||= new Set()).add(marker.contactIndex || 0);
-        prewarmRecipientEffect({ ...approach, shape: approach.impactShape });
+        PrewarmRecipientEffect({ ...approach, shape: approach.impactShape });
       }
     }
     if (context?.preparedDeliveries?.has(context.contactIndex || 0)) layers = layers.map(layer => ({ ...layer, delivery: null }));
@@ -190,7 +190,7 @@ export function decorateRecipientEffects(events, { resolveCard, resolveEnemyMove
   }
   return annotated.map(({ result }) => {
     result.recipientEffect = result.recipientEffects[0] || null;
-    for (const layer of [...result.recipientEffects, result.recipientWindup].filter(Boolean)) prewarmRecipientEffect(layer);
+    for (const layer of [...result.recipientEffects, result.recipientWindup].filter(Boolean)) PrewarmRecipientEffect(layer);
     return result;
   });
 }

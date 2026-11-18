@@ -58,8 +58,8 @@ import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEffectPlan } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
-import { decorateRecipientEffects, createRecipientEffectState } from '../recipientEffectEvents.js';
-import { playRecipientEffectLayers } from '../recipientEffectSprites.js';
+import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
+import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -413,7 +413,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
-  const recipientVisualState = createRecipientEffectState();
+  const recipientVisualState = CreateRecipientEffectState();
   let appliedVisualEvents = new Set();
   function applyVisualEvents(events) {
     for (const event of events) {
@@ -505,7 +505,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const withRecipientWindup = animation => {
         const impactMs = animation?.impactMs ?? (animation?.totalMs || 0) * COMBAT_TIMING.windupFraction;
         const circles = impactMs > 0 ? windup.map(effect => ({ ...effect, durationMs: Math.min(effect.durationMs, impactMs) })) : [];
-        const cancelRecipientWindup = playRecipientEffectLayers(fxCtx.layer, circles, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
+        const cancelRecipientWindup = PlayRecipientEffectLayers(fxCtx.layer, circles, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
         // Sprite frame-hold floors must not keep a short circle past contact.
         // This only removes presentation; it never adds a timeline wait.
         const circleDeadline = circles.length ? setTimeout(cancelRecipientWindup, impactMs) : null;
@@ -518,7 +518,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return { ...effect, phase: 'delivery', impactShape: effect.impactShape || effect.shape, shape: null, durationMs, delayMs: Math.max(0, impactMs - durationMs),
             delivery: { ...effect.delivery, durationMs } };
         });
-        const cancelDelivery = playRecipientEffectLayers(fxCtx.layer, deliveries, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
+        const cancelDelivery = PlayRecipientEffectLayers(fxCtx.layer, deliveries, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
         return { ...animation, cancel() {
           stopCircle(); cancelDelivery(); animation?.cancel?.();
         } };
@@ -3603,7 +3603,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     try {
-      events = decorateRecipientEffects(events, {
+      events = DecorateRecipientEffects(events, {
         state: recipientVisualState,
         resolveStatus: id => registries.statuses.get(id),
         // Solo enemy action queues explicitly aim at combat.player. Co-op

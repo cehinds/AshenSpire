@@ -60,7 +60,7 @@ function targetTypeOf(action, event, profile, tags) {
 }
 
 /** Pure visual recipe; also accepts a synthetic receipt for the preview gallery. */
-export function resolveRecipientEffect(action = {}, event = {}) {
+export function ResolveRecipientEffect(action = {}, event = {}) {
   action ??= {}; event ??= {};
   const tags = tagIds(action), legacy = tags.map(tag => tag.replace(/^fx:/, ''));
   const profile = action.combatProfile || {};
@@ -123,7 +123,7 @@ export function resolveRecipientEffect(action = {}, event = {}) {
 }
 
 /** Receipts only: attempted/missed/resisted actions never manufacture a hit. */
-export function recipientEffectForEvent(action = {}, event = {}) {
+export function RecipientEffectForEvent(action = {}, event = {}) {
   if (!targetOf(event)) return null;
   let accepted = false;
   switch (event.type) {
@@ -138,14 +138,14 @@ export function recipientEffectForEvent(action = {}, event = {}) {
     // responsible for the damage flash, so do not animate the proc twice here.
     default: return null;
   }
-  return accepted ? resolveRecipientEffect(action, event) : null;
+  return accepted ? ResolveRecipientEffect(action, event) : null;
 }
 
 const texture = palette => ['fire', 'frost', 'lightning', 'earth', 'force', 'illusion', 'decay'].includes(palette) ? palette : null;
 const num = value => Math.max(0, Number(value) || 0);
 
 /** Read authored metadata conservatively: an unknown status stays neutral. */
-export function recipientStatusPolarity(definition = {}) {
+export function RecipientStatusPolarity(definition = {}) {
   if (definition.beneficial === true || definition.polarity === 'positive') return 'positive';
   if (definition.beneficial === false || definition.polarity === 'negative') return 'negative';
   const modifiers = definition.modifiers || {};
@@ -162,7 +162,7 @@ export function recipientStatusPolarity(definition = {}) {
 }
 
 function layerFor(action, event, shape, options = {}) {
-  const base = resolveRecipientEffect(action, event);
+  const base = ResolveRecipientEffect(action, event);
   return { ...base, shape, phase: 'contact', mount: 'target', delayMs: 0,
     sourceId: sourceOf(action, event) || null, targetId: targetOf(event), targetIds: [targetOf(event)].filter(Boolean),
     durationMs: SETTINGS.motion.clipMs, opacity: SETTINGS.layering.opacity.primary,
@@ -170,13 +170,13 @@ function layerFor(action, event, shape, options = {}) {
 }
 
 /** The circle is presentation windup; it never schedules or delays engine work. */
-export function recipientWindupFor(action = {}, event = {}) {
+export function RecipientWindupFor(action = {}, event = {}) {
   // Casting identity belongs to the invoker, independently of the eventual
   // damage/status recipient (and independently of an attribute buff's hue).
   const sourceId = sourceOf(action, event);
   const invoker = { ...event, type: 'recipientWindup', sourceId,
     targetId: sourceId, targetPlayerId: sourceId, playerId: undefined, status: undefined };
-  const base = resolveRecipientEffect(action, invoker);
+  const base = ResolveRecipientEffect(action, invoker);
   if (base.camp !== 'spell') return null;
   return layerFor(action, invoker, 'spell-circle', {
     mount: 'actor', phase: 'windup', targetType: 'self', overlay: null,
@@ -185,8 +185,8 @@ export function recipientWindupFor(action = {}, event = {}) {
 }
 
 /** Delivery styles are separate from flat recipient sprites. Legacy ranged is Reach. */
-export function recipientDeliveryFor(action = {}, event = {}) {
-  const base = resolveRecipientEffect(action, event);
+export function RecipientDeliveryFor(action = {}, event = {}) {
+  const base = ResolveRecipientEffect(action, event);
   const reach = base.range === 'reach';
   return { mode: reach ? 'reach-extension' : 'melee-contact',
     style: base.camp === 'spell' ? reach ? 'spell-link' : 'magic-contact' : reach ? 'weapon-extension' : 'weapon-contact',
@@ -200,7 +200,7 @@ export function recipientDeliveryFor(action = {}, event = {}) {
  * The event decorator pairs related receipts and groups Sweeps without mutating
  * these engine receipts or changing their resolution order.
  */
-export function recipientEffectsForEvent(action = {}, event = {}) {
+export function RecipientEffectsForEvent(action = {}, event = {}) {
   const type = event.type;
   if (type === 'statusApplied' && Number.isFinite(event.total) && Number.isFinite(event.previousTotal)
     && event.total <= event.previousTotal) return [];
@@ -208,7 +208,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   const targetId = targetOf(event) || (['combatAdvancedChanged', 'implicitAdvance'].includes(type) ? sourceOf(action, event) : null);
   if (!targetId) return [];
   event = { ...event, targetId };
-  const base = resolveRecipientEffect(action, event);
+  const base = ResolveRecipientEffect(action, event);
   const clip = (shape, options) => layerFor(action, event, shape, options);
   const reaction = (shape, options = {}) => clip(shape, { phase: 'reaction', delayMs: SETTINGS.motion.reactionLeadMs,
     color: PALETTES.physical, palette: 'physical', overlay: null, ...options });
@@ -220,11 +220,11 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   })];
   if (type === 'damageDealt') {
     if (event.evaded) return [reaction('evade', { delayMs: 0, silhouette: 'evade', treatment: 'avoid' })];
-    if (!recipientEffectForEvent(action, event)) return [];
+    if (!RecipientEffectForEvent(action, event)) return [];
     const hp = event.hpRemoved ?? event.hpLoss ?? event.damageReceipt?.hpLoss ?? Math.max(0, num(event.amount) - num(event.blocked));
     const impact = clip(base.shape, { claimsDamage: positive(hp), treatment: positive(hp) ? 'impact' : 'protected-contact',
       opacity: positive(hp) ? SETTINGS.layering.opacity.primary : SETTINGS.layering.opacity.protectedContact,
-      delivery: recipientDeliveryFor(action, event) });
+      delivery: RecipientDeliveryFor(action, event) });
     const clips = [impact];
     if (positive(event.blocked)) clips.push(reaction('block-hit'));
     if ([event.poiseAbsorbed, event.poiseMitigated].some(positive)) clips.push(reaction('poise-hit'));
@@ -267,7 +267,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   if (type === 'healed' && positive(event.amount)) {
     // A separate secondary layer starts on the primary's last frame. The
     // decorator reuses a preceding actual contact when the same action has one.
-    const primary = resolveRecipientEffect(action, { ...event, type: 'supportPrimary' });
+    const primary = ResolveRecipientEffect(action, { ...event, type: 'supportPrimary' });
     return [clip(primary.camp === 'spell' ? 'spell' : 'skill', { ...primary, shape: primary.camp === 'spell' ? 'spell' : 'skill',
       targetType: base.targetType, phase: 'status', claimsDamage: false, treatment: 'support' }),
     clip('heal-plus', { phase: 'status', palette: 'healing', color: PALETTES.healing, overlay: null,
@@ -286,7 +286,7 @@ export function recipientEffectsForEvent(action = {}, event = {}) {
   else if (type === 'statusExpired' || (type === 'statusRemoved' && positive(event.amount))) lifecycle = 'clear';
   if (!lifecycle) return [];
   const status = event.status || (event.triggeredBy?.kind === 'status' ? event.triggeredBy.id : String(event.cause).split(':')[1]);
-  const resolved = resolveRecipientEffect(action, { ...event, type: 'statusApplied', status });
+  const resolved = ResolveRecipientEffect(action, { ...event, type: 'statusApplied', status });
   const palette = STATUS_PALETTES[status] || resolved.palette;
   const blood = BLOOD_STATUSES.includes(status);
   const clear = ['clear', 'resist'].includes(lifecycle);

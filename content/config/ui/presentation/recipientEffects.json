@@ -1,7 +1,7 @@
 {
   "behavior": {
     "frameCount": 3,
-    "atlasVersion": "v5",
+    "atlasId": "v5",
     "palettes": {
       "physical": "#E3E7ED",
       "magic": "#4169E1",

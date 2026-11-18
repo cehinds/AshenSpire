@@ -65,8 +65,8 @@
   <details><summary>Debug fallback contract</summary><p>Exactly one frame for each stance/action and recipient layout. It deliberately ignores element, school, attribute and status. The same fallback works when art is absent from a build or a sprite image fails to load.</p></details>
 </main>
 <script type="module">
-import { resolveRecipientEffect } from '../src/model/recipientEffects.js';
-import { playRecipientEffect, clearRecipientEffects, prewarmRecipientEffect, recipientPlaceholderSvg, recipientAtlas, recipientEffectView } from '../src/ui/recipientEffectSprites.js';
+import { ResolveRecipientEffect } from '../src/model/recipientEffects.js';
+import { PlayRecipientEffect, ClearRecipientEffects, PrewarmRecipientEffect, RecipientPlaceholderSvg, RecipientAtlas, RecipientEffectView } from '../src/ui/recipientEffectSprites.js';
 const $=id=>document.getElementById(id), layer=$('effect-layer');
 const artRoot=new URL('../scratch/recipient-effects/art-package/hd/',location.href);
 const resolveAsset=id=>new URL(id,artRoot).href;
@@ -84,23 +84,23 @@ function inputs(){
   const operation=s.effect==='damage'?{op:'damage',amount:8,target}:s.effect==='ward'?{op:'gainWard',amount:5,target}:s.effect==='heal'?{op:'heal',amount:5,target}:{op:'applyStatus',status:s.effect,stacks:2,target};
   const action={type:s.action==='skill'?'skill':'attack',cardTags:[`maneuver:${s.action==='spell'?'casting':s.action}`,`camp:${s.action==='spell'?'spell':'physical'}`,`range:${s.range}`,`targeting:${s.target==='aoe'?'area':'single'}`,...(s.school==='none'?[]:[`school:${s.school}`])],combatProfile:{maneuver:s.action==='spell'?'casting':s.action,camp:s.action==='spell'?'spell':'physical',range:s.range,damageType:s.impactStyle,...(s.school==='none'?{}:{school:s.school})},effects:[operation]};
   const event={type:s.effect==='damage'?'damageDealt':s.effect==='ward'?'meterGuardGained':s.effect==='heal'?'healed':'statusApplied',sourceId,targetId,amount:8,stacks:2,status:s.effect,...(s.effect==='ward'?{meter:'ward'}:{})};
-  return {action,event,recipe:resolveRecipientEffect(action,event),selection:s};
+  return {action,event,recipe:ResolveRecipientEffect(action,event),selection:s};
 }
 function bounds(node){const b=node.getBoundingClientRect(),p=layer.getBoundingClientRect();return{left:b.left-p.left,top:b.top-p.top,width:b.width,height:b.height}}
-function clear(){playVersion++;clearRecipientEffects(layer)}
+function clear(){playVersion++;ClearRecipientEffects(layer)}
 async function play(options={}){
   clear();const version=playVersion,current=inputs(),s=current.selection;
   const source=options.resolveAsset??resolveAsset,forcePlaceholder=options.forcePlaceholder??$('placeholder').checked;
-  if(!forcePlaceholder)await prewarmRecipientEffect(current.recipe,{resolveAsset:source});
+  if(!forcePlaceholder)await PrewarmRecipientEffect(current.recipe,{resolveAsset:source});
   if(version!==playVersion)return current.recipe;
   const targets=s.target==='aoe'&&s.side!=='player'?['enemy-1','enemy-2','enemy-3']:[current.event.targetId];
-  for(const id of targets)playRecipientEffect(layer,bounds($(id)),current.recipe,{sourceBox:bounds($(current.event.sourceId)),targetFacing:$(id).dataset.facing,duration:options.duration??650,resolveAsset:source,forcePlaceholder,...(options.frame==null?{}:{frame:options.frame})});
+  for(const id of targets)PlayRecipientEffect(layer,bounds($(id)),current.recipe,{sourceBox:bounds($(current.event.sourceId)),targetFacing:$(id).dataset.facing,duration:options.duration??650,resolveAsset:source,forcePlaceholder,...(options.frame==null?{}:{frame:options.frame})});
   return current.recipe;
 }
-function viewFor(recipe){const {event}=inputs();return recipientEffectView(recipe,{box:bounds($(event.targetId)),sourceBox:bounds($(event.sourceId)),targetFacing:$(event.targetId).dataset.facing})}
+function viewFor(recipe){const {event}=inputs();return RecipientEffectView(recipe,{box:bounds($(event.targetId)),sourceBox:bounds($(event.sourceId)),targetFacing:$(event.targetId).dataset.facing})}
 async function drawFrame(canvas,recipe,index,placeholder){
   const context=canvas.getContext('2d');context.clearRect(0,0,256,256);
-  if(placeholder){let svg=recipientPlaceholderSvg(recipe.action,recipe.targetType);const source=svg.startsWith('data:')?svg:`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;context.drawImage(await load(source),0,0,256,256);return'placeholder'}
+  if(placeholder){let svg=RecipientPlaceholderSvg(recipe.action,recipe.targetType);const source=svg.startsWith('data:')?svg:`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;context.drawImage(await load(source),0,0,256,256);return'placeholder'}
   const view=viewFor(recipe);
   async function plane(shape,projection,tint){const [sheet,row]=atlasRows[shape]||atlasRows.spell,image=await load(resolveAsset(`assets/recipient-effects/${sheet}.png`));const tile=document.createElement('canvas');tile.width=tile.height=256;const c=tile.getContext('2d');c.drawImage(image,index*image.width/3,row*image.height/4,image.width/3,image.height/4,0,0,256,256);if(tint){c.globalCompositeOperation='source-atop';c.fillStyle=recipe.color||'#fff';c.fillRect(0,0,256,256)}context.save();context.translate(128,128);context.rotate(projection.rotation*Math.PI/180);context.scale(projection.scaleX,projection.scaleY);context.drawImage(tile,-128,-128);context.restore()}
   await plane(recipe.shape,view.base,true);
@@ -122,7 +122,7 @@ function stopLoop(){clearInterval(loopTimer);loopTimer=null;$('loop').textConten
 $('loop').onclick=()=>{if(loopTimer)stopLoop();else{play();loopTimer=setInterval(play,1200);$('loop').textContent='Stop loop';$('loop').setAttribute('aria-pressed','true')}};
 const presets={fire:{action:'spell',target:'target',school:'fire',effect:'damage',side:'enemy'},sweep:{action:'sweep',target:'aoe',school:'fire',effect:'damage',side:'enemy'},ward:{action:'defend',target:'self',school:'alteration',effect:'ward',side:'player'},buff:{action:'skill',target:'self',school:'none',effect:'strength',side:'player'},enemy:{action:'spell',target:'target',school:'frost',effect:'damage',side:'player'}};
 document.querySelectorAll('[data-preset]').forEach(button=>button.onclick=()=>{for(const[key,value]of Object.entries(presets[button.dataset.preset]))$(key).value=value;update();play()});
-window.recipientPreview={play,update,inputs,resolveAsset,layer,render:playRecipientEffect,clear,stopLoop,recipientAtlas,recipientPlaceholderSvg,viewFor};
+window.recipientPreview={play,update,inputs,resolveAsset,layer,render:PlayRecipientEffect,clear,stopLoop,RecipientAtlas,RecipientPlaceholderSvg,viewFor};
 await update();document.body.dataset.ready='true';
 </script>
 </html>

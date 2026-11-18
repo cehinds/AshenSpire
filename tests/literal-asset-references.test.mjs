@@ -5,7 +5,7 @@ import { danglingLiteralAssets } from '../tools/literal-asset-references.mjs';
 
 const asset = 'assets/recipient-effects/v5/slash.png';
 const row = { asset, columns: 3, rows: 1, row: 0, optional: true };
-const config = { behavior: { atlasVersion: 'v5', atlas: { slash: row } } };
+const config = { behavior: { atlasId: 'v5', atlas: { slash: row } } };
 const generated = (recipient = config, extra = {}) =>
   `export const uiConfig = deepFreeze(${JSON.stringify({ presentation: { recipientEffects: recipient }, ...extra })});\n`;
 const scan = (source, authored = config, id = 'src/config/generated/ui.js', manifest = new Set()) =>

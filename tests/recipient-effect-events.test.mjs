@@ -9,8 +9,8 @@ import { applyStatus, removeStatus } from '../src/engine/statuses.js';
 import { applyStatusPressure } from '../src/engine/combatStatusControl.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { recipientEffectsForEvent, recipientWindupFor, recipientDeliveryFor, recipientStatusPolarity } from '../src/model/recipientEffects.js';
-import { decorateRecipientEffects, createRecipientEffectState } from '../src/ui/recipientEffectEvents.js';
+import { RecipientEffectsForEvent, RecipientWindupFor, RecipientDeliveryFor, RecipientStatusPolarity } from '../src/model/recipientEffects.js';
+import { DecorateRecipientEffects, CreateRecipientEffectState } from '../src/ui/recipientEffectEvents.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../src/content/recipientEffectSettings.js';
 import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 
@@ -33,7 +33,7 @@ function fixture(expansion = false) {
     primeAccuracyRolls(combat);
   }
   combat.eventLog.length = 0;
-  const decorate = (action = physical) => decorateRecipientEffects([marker, ...combat.eventLog], {
+  const decorate = (action = physical) => DecorateRecipientEffects([marker, ...combat.eventLog], {
     resolveCard: () => action, resolveStatus: id => registries.statuses.get(id),
   });
   return { combat, enemy, decorate };
@@ -41,13 +41,13 @@ function fixture(expansion = false) {
 
 test('JSON owns neutral magic, spell-circle opacity, and only melee/reach delivery', () => {
   const spell = { sourceId: 'player', tags: ['camp:spell', 'range:ranged'] };
-  assert.equal(recipientWindupFor(spell).color, '#4169E1');
-  assert.equal(recipientWindupFor(spell).opacity, SETTINGS.layering.opacity.spellCircle);
-  assert.equal(recipientWindupFor(physical), null);
-  assert.equal(recipientDeliveryFor(spell).mode, 'reach-extension');
-  assert.equal(recipientDeliveryFor(physical).mode, 'melee-contact');
-  assert.equal(recipientEffectsForEvent({ tags: ['camp:physical', 'school:frost', 'damage:fire'] }, hit)[0].overlay, 'fire');
-  assert.equal(recipientEffectsForEvent({ tags: ['camp:physical', 'school:frost', 'damage:fire'] }, hit)[0].shape, 'slash');
+  assert.equal(RecipientWindupFor(spell).color, '#4169E1');
+  assert.equal(RecipientWindupFor(spell).opacity, SETTINGS.layering.opacity.spellCircle);
+  assert.equal(RecipientWindupFor(physical), null);
+  assert.equal(RecipientDeliveryFor(spell).mode, 'reach-extension');
+  assert.equal(RecipientDeliveryFor(physical).mode, 'melee-contact');
+  assert.equal(RecipientEffectsForEvent({ tags: ['camp:physical', 'school:frost', 'damage:fire'] }, hit)[0].overlay, 'fire');
+  assert.equal(RecipientEffectsForEvent({ tags: ['camp:physical', 'school:frost', 'damage:fire'] }, hit)[0].shape, 'slash');
 });
 
 test('real Block damage receipts compose one incoming contact plus distinct break', () => {
@@ -91,7 +91,7 @@ test('real healing, Mana and Stamina restoration are positive receipts, never co
     assert.equal(layer.anchor, 'card-bottom'); assert.equal(layer.sizing, 'card');
   }
   for (const type of ['staminaRecovered', 'manaRestored', 'staminaSpent', 'manaSpent']) {
-    assert.deepEqual(recipientEffectsForEvent(fire, { type, amount: 0, targetId: 'player' }), []);
+    assert.deepEqual(RecipientEffectsForEvent(fire, { type, amount: 0, targetId: 'player' }), []);
   }
 });
 
@@ -121,20 +121,20 @@ test('real Ward status resistance renders Ward silhouette and resistance without
 
 test('successful evade has ghosts only; an Evade grant or range miss is not a dodge', () => {
   for (const event of [{ type: 'attackMissed', missReason: 'evaded' }, { type: 'combatAvoidanceResolved', avoided: true }, { type: 'damageDealt', evaded: true, amount: 4 }]) {
-    const layers = recipientEffectsForEvent(fire, { ...event, targetId: 'player' });
+    const layers = RecipientEffectsForEvent(fire, { ...event, targetId: 'player' });
     assert.deepEqual(layers.map(layer => layer.shape), ['evade']);
     assert.equal(layers[0].claimsDamage, false);
   }
-  assert.deepEqual(recipientEffectsForEvent(fire, { type: 'attackMissed', missReason: 'range', targetId: 'player' }), []);
-  assert.ok(!recipientEffectsForEvent(fire, { type: 'statusApplied', status: 'evade', stacks: 1, targetId: 'player' }).some(layer => layer.shape === 'evade'));
+  assert.deepEqual(RecipientEffectsForEvent(fire, { type: 'attackMissed', missReason: 'range', targetId: 'player' }), []);
+  assert.ok(!RecipientEffectsForEvent(fire, { type: 'statusApplied', status: 'evade', stacks: 1, targetId: 'player' }).some(layer => layer.shape === 'evade'));
 });
 
 test('nested counters and continuation dispatches retain source definitions and normalized co-op seats', () => {
-  const state = createRecipientEffectState();
+  const state = CreateRecipientEffectState();
   const options = { state, resolveCard: () => physical, resolveEnemyMove: () => fire };
-  const first = decorateRecipientEffects([{ type: 'combatContactPrepared', sourceId: 'mage', enemyId: 'mageDef', moveId: 'bolt', contactKey: 'g1' }], options);
+  const first = DecorateRecipientEffects([{ type: 'combatContactPrepared', sourceId: 'mage', enemyId: 'mageDef', moveId: 'bolt', contactKey: 'g1' }], options);
   assert.ok(first[0].recipientWindup);
-  const next = decorateRecipientEffects([
+  const next = DecorateRecipientEffects([
     { type: 'combatCounterTriggered', sourceKind: 'player', sourceId: 'player', sourcePlayerId: 'seat-b', cardId: 'counter' },
     { ...hit, sourcePlayerId: 'seat-b', targetId: 'mage' },
     { type: 'persistentWardChanged', targetId: 'mage', restored: 3 },
@@ -151,12 +151,12 @@ test('nested counters and continuation dispatches retain source definitions and 
 });
 
 test('Sweep is one unchanged group sprite per action; a repeated action is not deduplicated', () => {
-  const state = createRecipientEffectState();
+  const state = CreateRecipientEffectState();
   const action = { tags: ['camp:physical', 'maneuver:sweep', 'targeting:area'] };
   const options = { state, resolveCard: () => action };
   const events = [marker, hit, { ...hit, targetId: 'e2' }, { ...hit, targetId: 'e3', evaded: true }];
   for (let repeat = 0; repeat < 2; repeat++) {
-    const layers = flatten(decorateRecipientEffects(events, options));
+    const layers = flatten(DecorateRecipientEffects(events, options));
     const sweeps = layers.filter(layer => layer.shape === 'sweep');
     assert.equal(sweeps.length, 1); assert.equal(sweeps[0].mount, 'group');
     assert.deepEqual(sweeps[0].targetIds, ['e1', 'e2']);
@@ -165,24 +165,24 @@ test('Sweep is one unchanged group sprite per action; a repeated action is not d
 
 test('actual heal/bleed secondaries overlap primary last frame, never tag-only or across boundaries', () => {
   const bleed = { type: 'statusApplied', targetId: 'e1', sourceId: 'player', status: 'bleed', stacks: 2 };
-  const out = decorateRecipientEffects([marker, hit, bleed], { resolveCard: () => fire });
+  const out = DecorateRecipientEffects([marker, hit, bleed], { resolveCard: () => fire });
   assert.deepEqual(out[1].recipientEffects.map(layer => layer.shape), ['spell', 'bleed-drops']);
   assert.equal(out[1].recipientEffects[1].delayMs, out[1].recipientEffects[0].durationMs * 2 / 3);
   assert.equal(out[1].recipientEffects[1].color, SETTINGS.behavior.palettes.blood);
   assert.deepEqual(out[2].recipientEffects, []);
-  assert.ok(!recipientEffectsForEvent({ tags: ['bleed'] }, hit).some(layer => layer.shape === 'bleed-drops'));
+  assert.ok(!RecipientEffectsForEvent({ tags: ['bleed'] }, hit).some(layer => layer.shape === 'bleed-drops'));
   for (const events of [[hit, { type: 'healed', targetId: 'e1', amount: 2 }], [marker, hit, { type: 'playerTurnEnd' }, { type: 'healed', targetId: 'e1', amount: 2 }]]) {
-    const rows = decorateRecipientEffects(events, { resolveCard: () => physical });
+    const rows = DecorateRecipientEffects(events, { resolveCard: () => physical });
     assert.equal(rows.find(row => row.type === 'damageDealt').recipientEffects.length, 1);
     assert.ok(rows.at(-1).recipientEffects.some(layer => layer.shape === 'heal-plus'));
   }
 });
 
 test('authored beneficial modifiers include other stats; unknown or negative metadata never invents a buff', () => {
-  assert.equal(recipientStatusPolarity({ modifiers: { accuracyAdd: 2 } }), 'positive');
-  assert.equal(recipientStatusPolarity({ modifiers: { damageTakenMult: 1.5 } }), 'negative');
-  assert.equal(recipientStatusPolarity({ modifiers: { unknownField: 4 } }), 'neutral');
-  const rows = decorateRecipientEffects([
+  assert.equal(RecipientStatusPolarity({ modifiers: { accuracyAdd: 2 } }), 'positive');
+  assert.equal(RecipientStatusPolarity({ modifiers: { damageTakenMult: 1.5 } }), 'negative');
+  assert.equal(RecipientStatusPolarity({ modifiers: { unknownField: 4 } }), 'neutral');
+  const rows = DecorateRecipientEffects([
     { type: 'statusApplied', targetId: 'player', status: 'customAccuracy', stacks: 1 },
     { type: 'statusApplied', targetId: 'player', status: 'wisdom', stacks: 1 },
     { type: 'statusApplied', targetId: 'player', status: 'customCurse', stacks: 1 },
@@ -203,7 +203,7 @@ test('actual allied MP/SP restoration receipts name target seat, retain amounts,
   assert.equal(ally.mana, 5); assert.equal(ally.stamina, 5);
   const receipts = combat.eventLog.filter(event => ['manaRestored', 'staminaRecovered'].includes(event.type));
   assert.deepEqual(receipts.map(event => [event.targetId, event.targetPlayerId, event.amount]), [['player', 'seat-b', 3], ['player', 'seat-b', 3]]);
-  const rows = decorateRecipientEffects([{ ...marker, playerId: 'seat-a' }, ...receipts], { resolveCard: () => action });
+  const rows = DecorateRecipientEffects([{ ...marker, playerId: 'seat-a' }, ...receipts], { resolveCard: () => action });
   for (const row of rows.slice(1)) {
     assert.equal(row.recipientTargetId, 'seat-b'); assert.equal(row.recipientSourceId, 'seat-a');
     assert.equal(row.recipientEffect.targetType, 'target');
@@ -233,12 +233,12 @@ test('refresh/capped status applications and bookkeeping have no positive gain a
     { status: 'strength', previousTotal: 4, total: 4 },
     { status: 'prepared', previousTotal: 1, total: 1 },
     { status: 'stanceShifted', previousTotal: 0, total: 1 },
-  ]) assert.deepEqual(recipientEffectsForEvent(fire, { type: 'statusApplied', targetId: 'player', stacks: 1, ...event }), []);
+  ]) assert.deepEqual(RecipientEffectsForEvent(fire, { type: 'statusApplied', targetId: 'player', stacks: 1, ...event }), []);
 });
 
 test('a later contact break does not erase an earlier hit reaction', () => {
-  const state = createRecipientEffectState();
-  const rows = decorateRecipientEffects([
+  const state = CreateRecipientEffectState();
+  const rows = DecorateRecipientEffects([
     { type: 'combatHitStarted', sourceId: 'mage', enemyId: 'mageDef', moveId: 'bolt', contactKey: 'g1', contactIndex: 0 },
     { ...hit, sourceId: 'mage', targetId: 'player', blocked: 2 },
     { type: 'combatHitStarted', sourceId: 'mage', enemyId: 'mageDef', moveId: 'bolt', contactKey: 'g1', contactIndex: 1 },
@@ -254,16 +254,16 @@ test('mixed AoE damage and support receipts keep self, ally, and group targeting
     { op: 'restoreMana', target: 'self' }, { op: 'restoreStamina', target: 'self' },
     { op: 'gainEnergy', target: 'self' }, { op: 'gainPoise', target: 'self' },
   ] };
-  assert.equal(recipientEffectsForEvent(action, { ...hit, sourceId: 'seat-a' })[0].targetType, 'aoe');
+  assert.equal(RecipientEffectsForEvent(action, { ...hit, sourceId: 'seat-a' })[0].targetType, 'aoe');
   for (const type of ['healed', 'manaRestored', 'staminaRecovered', 'energyGained', 'persistentPoiseChanged']) {
-    const layers = recipientEffectsForEvent(action, { type, sourceId: 'seat-a', targetId: 'seat-a', amount: 3, restored: 3 });
+    const layers = RecipientEffectsForEvent(action, { type, sourceId: 'seat-a', targetId: 'seat-a', amount: 3, restored: 3 });
     assert.ok(layers.length, type);
     assert.ok(layers.every(layer => layer.targetType === 'self'), type);
   }
   const allyAction = { ...action, effects: action.effects.map(effect => ['restoreMana', 'restoreStamina'].includes(effect.op)
     ? { ...effect, target: 'ally' } : effect) };
   for (const type of ['manaRestored', 'staminaRecovered']) {
-    const layers = recipientEffectsForEvent(allyAction, { type, sourceId: 'player', sourcePlayerId: 'seat-a',
+    const layers = RecipientEffectsForEvent(allyAction, { type, sourceId: 'player', sourcePlayerId: 'seat-a',
       targetId: 'player', targetPlayerId: 'seat-b', amount: 3 });
     assert.equal(layers[0].targetType, 'target');
     assert.equal(layers[0].targetId, 'seat-b');
@@ -272,15 +272,15 @@ test('mixed AoE damage and support receipts keep self, ally, and group targeting
 
 test('canonical Skill classification gets its own impact unless an explicit maneuver overrides it', () => {
   const skill = { tags: ['camp:physical', 'classification.skill'] };
-  assert.equal(recipientEffectsForEvent(skill, hit)[0].shape, 'skill');
-  assert.equal(recipientEffectsForEvent({ ...skill, tags: [...skill.tags, 'maneuver:smash'] }, hit)[0].shape, 'smash');
+  assert.equal(RecipientEffectsForEvent(skill, hit)[0].shape, 'skill');
+  assert.equal(RecipientEffectsForEvent({ ...skill, tags: [...skill.tags, 'maneuver:smash'] }, hit)[0].shape, 'smash');
 });
 
 test('prepared Reach telegraph carries only delivery, with no duplicate delivery or invented impact on evade', () => {
-  const state = createRecipientEffectState();
+  const state = CreateRecipientEffectState();
   const options = { state, resolveEnemyMove: () => ({ ...fire, range: 'reach' }), resolveTelegraphTargets: () => ['seat-b'] };
   const start = { type: 'combatContactPrepared', sourceId: 'mage', enemyId: 'mageDef', moveId: 'bolt', contactKey: 'telegraph', contactIndex: 0 };
-  const telegraph = decorateRecipientEffects([start], options)[0];
+  const telegraph = DecorateRecipientEffects([start], options)[0];
   assert.equal(telegraph.recipientDelivery.phase, 'delivery');
   assert.equal(telegraph.recipientDelivery.shape, null);
   assert.equal(telegraph.recipientDelivery.impactShape, 'spell');
@@ -288,10 +288,10 @@ test('prepared Reach telegraph carries only delivery, with no duplicate delivery
   assert.deepEqual(telegraph.recipientDelivery.targetIds, ['seat-b']);
   assert.deepEqual(telegraph.recipientEffects, []);
   const continuation = { ...start, type: 'combatHitStarted', contactPrepared: true };
-  const rows = decorateRecipientEffects([continuation, { ...hit, sourceId: 'mage', targetId: 'seat-b' }], options);
+  const rows = DecorateRecipientEffects([continuation, { ...hit, sourceId: 'mage', targetId: 'seat-b' }], options);
   assert.equal(rows[0].recipientDelivery, undefined);
   assert.equal(rows[1].recipientEffect.delivery, null);
-  const miss = decorateRecipientEffects([continuation, { type: 'attackMissed', sourceId: 'mage', targetId: 'seat-b', missReason: 'evaded' }], options);
+  const miss = DecorateRecipientEffects([continuation, { type: 'attackMissed', sourceId: 'mage', targetId: 'seat-b', missReason: 'evaded' }], options);
   assert.deepEqual(flatten(miss).map(layer => layer.shape), ['evade']);
 });
 
@@ -310,7 +310,7 @@ test('an annotated miss suppresses old projectile/impact sprites while retaining
         return node;
       };
       const layer = dom.document.createElement('div');
-      const events = decorateRecipientEffects([marker, { type: 'attackMissed', sourceId: 'player', targetId: 'e1', missReason: 'range' }], { resolveCard: () => fire });
+      const events = DecorateRecipientEffects([marker, { type: 'attackMissed', sourceId: 'player', targetId: 'e1', missReason: 'range' }], { resolveCard: () => fire });
       assert.ok(events.every(event => Array.isArray(event.recipientEffects)));
       assert.ok(events.every(event => !event.recipientEffect));
       const cancel = playCombatEffectPlan(layer, { left: 0, top: 0, width: 50, height: 80 },
@@ -332,16 +332,16 @@ test('an annotated miss suppresses old projectile/impact sprites while retaining
 test('actual enemy marker schema uses expanded nested Reach profile over raw move tags', () => {
   const registries = createRegistries(contentBundle);
   const move = registries.enemies.get('valkyrieShade').moves.bloodFeather;
-  const state = createRecipientEffectState();
+  const state = CreateRecipientEffectState();
   const options = { state, resolveEnemyMove: () => move, resolveTelegraphTargets: () => ['player'] };
   const profile = { camp: 'physical', maneuver: 'ranged', damageType: 'piercing', range: 'reach', targeting: 'single', projectile: true };
   const telegraph = { type: 'combatContactPrepared', sourceId: 'e1', enemyId: 'valkyrieShade', moveId: 'bloodFeather',
     kind: 'attack', contactKey: 'actual-enemy', contactIndex: 0, actionPreview: { profile } };
-  const out = decorateRecipientEffects([telegraph], options);
+  const out = DecorateRecipientEffects([telegraph], options);
   assert.equal(out[0].recipientDelivery.range, 'reach');
   assert.equal(out[0].recipientDelivery.delivery.mode, 'reach-extension');
   assert.equal(out[0].recipientDelivery.impactShape, 'thrust');
-  const continued = decorateRecipientEffects([{ ...telegraph, type: 'enemyMoveStarted', contactPrepared: true,
+  const continued = DecorateRecipientEffects([{ ...telegraph, type: 'enemyMoveStarted', contactPrepared: true,
     intentPreview: { combatProfile: profile } }, { ...hit, sourceId: 'e1', targetId: 'player' }], options);
   assert.equal(continued[1].recipientEffect.range, 'reach');
   assert.equal(continued[1].recipientEffect.delivery, null, 'the telegraphed approach is not repeated at contact');
@@ -361,7 +361,7 @@ test('all four player/enemy spell flows circle the invoker and independently tar
     const start = sourceId === 'player' ? { ...marker, targetId }
       : { type: 'enemyMoveStarted', sourceId, enemyId: 'mage', moveId: support ? 'enchant' : 'bolt', kind: support ? 'buff' : 'attack',
         actionPreview: { profile: { camp: 'spell', maneuver: 'casting', school: 'fire', range: 'reach' } } };
-    const rows = decorateRecipientEffects([start, ...combat.eventLog], { resolveCard: () => action, resolveEnemyMove: () => action });
+    const rows = DecorateRecipientEffects([start, ...combat.eventLog], { resolveCard: () => action, resolveEnemyMove: () => action });
     const circle = rows[0].recipientWindup;
     assert.equal(circle.shape, 'spell-circle', `${sourceId}→${targetId}`);
     assert.equal(circle.targetType, 'self');
@@ -381,15 +381,15 @@ test('co-op recipient aliases and attribute colors cannot redirect or recolor th
   const spell = { tags: ['camp:spell', 'school:fire', 'classification.skill'] };
   const receipt = { type: 'statusApplied', sourceId: 'player', sourcePlayerId: 'seat-a', targetId: 'player',
     targetPlayerId: 'seat-b', playerId: 'seat-b', status: 'dexterity', stacks: 2 };
-  const circle = recipientWindupFor(spell, receipt);
+  const circle = RecipientWindupFor(spell, receipt);
   assert.deepEqual(circle.targetIds, ['seat-a']);
   assert.equal(circle.targetId, 'seat-a'); assert.equal(circle.sourceId, 'seat-a');
   assert.equal(circle.palette, 'fire', 'the cast keeps its school; the buff keeps its own stat tint');
-  const buff = recipientEffectsForEvent(spell, receipt)[0];
+  const buff = RecipientEffectsForEvent(spell, receipt)[0];
   assert.equal(buff.targetId, 'seat-b'); assert.equal(buff.palette, 'dexterity');
-  const rawPlayer = recipientWindupFor(spell, { sourceId: 'player', targetId: 'player', playerId: 'seat-b' });
+  const rawPlayer = RecipientWindupFor(spell, { sourceId: 'player', targetId: 'player', playerId: 'seat-b' });
   assert.equal(rawPlayer.targetId, 'player', 'a recipient playerId alias is never a source identifier');
-  const rows = decorateRecipientEffects([
+  const rows = DecorateRecipientEffects([
     { ...marker, sourceId: 'player', sourcePlayerId: 'seat-a', playerId: 'seat-a', targetId: 'player', targetPlayerId: 'seat-b' }, receipt,
   ], { resolveCard: () => spell });
   assert.deepEqual(rows[0].recipientWindup.targetIds, ['seat-a']);
@@ -444,8 +444,8 @@ test('real per-hit root keys retain one Sweep/circle across batches and isolate 
     if (event.type === 'combatContactPrepared' && event.contactIndex > 0) chunks.push([]);
     chunks.at(-1).push(event);
   }
-  const state = createRecipientEffectState();
-  const results = chunks.flatMap(chunk => decorateRecipientEffects(chunk, { state,
+  const state = CreateRecipientEffectState();
+  const results = chunks.flatMap(chunk => DecorateRecipientEffects(chunk, { state,
     resolveEnemyMove: event => registries.enemies.get(event.enemyId).moves[event.moveId],
     resolveTelegraphTargets: () => ['player'], resolveStatus: id => registries.statuses.get(id),
   }));
