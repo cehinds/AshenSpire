@@ -13,8 +13,8 @@ How it works, using existing tags only (the owner's principle: reference a tag, 
 |---|---|---|---|---|
 | **Fire** | Burn on hit; Spread (60% to an adjacent enemy); ignores some Poise | **Frost** (melts: also removes Chill); Poison (burns off Venom) | **Earth** (smothered) | Strong vs **Prepared** (casters in robes); Spread is blocked by **Defend** |
 | **Frost** | Chill (references Weak); 3 Chill = Frozen (references Staggered); Brittle (references Vulnerable) | **Lightning** (grounds the charge) | **Fire** | Strong vs **Attack** and **Smash** stance (slows the aggressor) |
-| **Lightning** | Shock (references Staggered chance and Lightning-Vulnerable); Chain (50% to a second enemy) | **Earth**; metal targets (medium or heavy armour, shields) | **Frost** | Strong vs **Defend** (arcs through Block: ignores 2 Block) |
-| **Earth** | Slowed (2nd stack references Staggered); +1 Poise damage | **Fire** (smothers) | **Lightning** | Strong vs **Evade** (Evade stacks don't dodge Earth) |
+| **Lightning** | Shock (references Staggered chance and Lightning-Vulnerable); Chain (50% to a second enemy); **Pierce** built in (owner), except against Block from Earth sources, which Stone Skin reduces | **Earth**; metal targets (medium or heavy armour, shields) | **Frost** | Strong vs **Defend** (arcs through Block: ignores 2 Block) |
+| **Earth** | Slowed (2nd stack references Staggered); +1 Poise damage; Earth Defend cards grant **Stone Skin** (owner: each stack reduces Pierce damage by 1; most Earth Defend cards give 3+ stacks) | **Fire** (smothers) | **Lightning** | Strong vs **Evade** (Evade stacks don't dodge Earth) |
 
 The wheel runs **Fire > Frost > Lightning > Earth > Fire**: each element beats the next and loses to the one before. Two flavour extras sit on top: Fire also beats Poison, and Lightning also beats metal armour.
 
@@ -41,6 +41,12 @@ The wheel runs **Fire > Frost > Lightning > Earth > Fire**: each element beats t
 | **Slashing** | Bleed on HP loss | Unarmoured and light armour | Heavy armour (−25%) | Sweeps get +1 target |
 | **Piercing** | Pierce (bypasses up to 2 Block) | Medium armour (mail gaps); Retreat-stacked targets in Reach | Shields (Kite, Tower) | Strong vs **Defend** |
 | **Blunt** | +Poise damage; Smash Vulnerable (hammers) | Heavy armour and shields | Unarmoured (−25%, nothing to crush) | Strong vs **Counter** (breaks the stance) |
+
+## Stone Skin (new tag, owner 2026-11-18)
+- Each stack reduces Pierce damage by 1, from Lightning's built-in Pierce or any Pierce source.
+- Most Earth Defend cards grant 3 or more stacks.
+- Lightning's built-in Pierce does not bypass Block that came from an Earth source.
+- Stone Skin decays like Block, at the start of its owner's turn. *(decided)*
 
 ## Open choices for the owner
 1. Keep the flavour extras (Fire vs Poison, Lightning vs metal), or use the strict wheel only?
