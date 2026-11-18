@@ -1,0 +1,31 @@
+{
+  "request": "Retreat hold (owner ruling 2026-11-18, section 12): an enemy sent back by Retreat or a push stays in the back row through its next turn. After that the normal 'empty front row pulls the back row forward' rule applies.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "lone-enemy-retreat-then-end-turn",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.retreat,core.retreat",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card[data-card-id=\"core.retreat\"]" },
+        { "wait": { "ms": 1600 } },
+        { "click": ".hand .card[data-card-id=\"core.retreat\"]" },
+        { "wait": { "ms": 900 } },
+        { "click": "button.end-turn" },
+        { "wait": { "ms": 2500 } }
+      ],
+      "success": [
+        { "kind": "count", "label": "exactly one enemy is drawn", "selector": ".enemy-row .combatant", "eq": 1 },
+        { "kind": "visible", "label": "after Retreat and end turn the lone enemy is still drawn in the back row", "selector": ".enemy-row .combatant[data-band-row=\"back\"]" },
+        { "kind": "consoleErrors", "label": "no console errors", "max": 0, "ignore": ["404", "navigator.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "the lone enemy was pulled to the front row at the enemy phase start", "selector": ".enemy-row .combatant[data-band-row=\"front\"]" }
+      ]
+    }
+  ]
+}
