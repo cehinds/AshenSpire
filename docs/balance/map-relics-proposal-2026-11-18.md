@@ -31,6 +31,21 @@ Owner request: relics that change how the map is travelled, which nodes come nex
 | Pilgrim's Compass | uncommon | The middle rest of each act sits 1 depth closer to you; the 2–5 gap rule still holds. |
 | Fateweaver Coin | rare | At each fork, see the two outcomes of an unknown (?) node and pick which it becomes. |
 
+## Removal and conversion relics (owner, 2026-11-18)
+Owner rule: each relic acts on **one fixed node type**. No relic lets the player choose the type; each type has its own relic. Every one is used once per act from the map and affects the next depth's choices. None of them touches the pre-boss rest or the boss. A conversion to rest overrides the 2–5 rest gap rule.
+
+| Relic | Rarity | Effect on the next depth |
+|---|---|---|
+| Smoke Bomb | common | Removes the normal combat nodes (their paths go to the remaining nodes on that depth; at least one node always stays) |
+| Ward of Passage | uncommon | Removes the elite nodes |
+| Bounty Writ | uncommon | Every node becomes an elite |
+| Merchant's Bell | uncommon | Every node becomes a trader |
+| Forge Ember | uncommon | Every node becomes a blacksmith |
+| Mystery Map | uncommon | Every node becomes an unknown (?) |
+| Hearthstone | rare | Every node becomes a rest |
+
+**Conflict to settle:** the approved Fateweaver Coin lets the player pick which of two outcomes an unknown node becomes, which breaks the "never choose the type" rule. Proposed replacement: **Fateweaver Coin (rare): unknown (?) nodes never roll a normal combat.**
+
 ## Teleport Scroll (card)
 
 - **Type:** a card in the deck, Exhaust, 1 SP. Teleport Scrolls appear as rare card rewards and in trader stock.
