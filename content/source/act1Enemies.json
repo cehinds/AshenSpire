@@ -802,5 +802,241 @@
         "effect": "stacks"
       }
     ]
+  },
+  {
+    "id": "brackenTusker",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "size": "medium",
+    "name": "Bracken Tusker",
+    "hp": [
+      28,
+      33
+    ],
+    "poiseMax": 11,
+    "levelProfile": {
+      "min": 2,
+      "max": 4
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "gore": {
+        "intent": "attack",
+        "damage": 10,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "bristle": {
+        "intent": "block",
+        "block": 7,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "trample": {
+        "intent": "attack",
+        "sp": 2,
+        "damage": 12,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "damage"
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      }
+    ]
+  },
+  {
+    "id": "fenwickToad",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
+    "size": "small",
+    "name": "Fenwick Toad",
+    "hp": [
+      16,
+      20
+    ],
+    "poiseMax": 6,
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "tongueLash": {
+        "intent": "attack",
+        "damage": 5,
+        "weight": 40
+      },
+      "bileSpit": {
+        "intent": "debuff",
+        "damage": 3,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ]
+      },
+      "puffUp": {
+        "intent": "block",
+        "block": 6,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "stacks"
+      }
+    ]
+  },
+  {
+    "id": "reedpipePoacher",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 5,
+      "constitution": 1,
+      "wisdom": 3,
+      "intelligence": 3
+    },
+    "size": "medium",
+    "name": "Reedpipe Poacher",
+    "hp": [
+      14,
+      18
+    ],
+    "poiseMax": 5,
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "dart": {
+        "intent": "attack",
+        "damage": 4,
+        "weight": 55
+      },
+      "snare": {
+        "intent": "debuff",
+        "weight": 25,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 2
+          }
+        ]
+      }
+    },
+    "weaknesses": [
+      {
+        "to": "slashing",
+        "effect": "damage"
+      },
+      {
+        "to": "blunt",
+        "effect": "damage"
+      }
+    ]
+  },
+  {
+    "id": "wickerTitheman",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 4,
+      "intelligence": 3
+    },
+    "size": "medium",
+    "name": "Wicker Titheman",
+    "hp": [
+      22,
+      27
+    ],
+    "poiseMax": 9,
+    "levelProfile": {
+      "min": 2,
+      "max": 4
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "tithe": {
+        "intent": "attack",
+        "damage": 7,
+        "weight": 45,
+        "maxConsecutive": 2,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      "bindingStraw": {
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      "kindleWard": {
+        "intent": "block",
+        "block": 7,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "stacks"
+      }
+    ]
   }
 ]

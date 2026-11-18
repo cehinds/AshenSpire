@@ -90,6 +90,59 @@
     }
   },
   {
+    "id": "brackenCharge",
+    "enemies": [
+      "brackenTusker"
+    ],
+    "weight": 20,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
+    "id": "bogAmbush",
+    "enemies": [
+      "fenwickToad",
+      "reedpipePoacher"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
+    "id": "titheRound",
+    "enemies": [
+      "wickerTitheman",
+      "wanderingSoldier"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
     "id": "eliteWyrm",
     "enemies": [
       "wyrmAspirant"

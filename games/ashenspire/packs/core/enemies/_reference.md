@@ -13,6 +13,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:bellKeeper | The Bell Keeper | boss |
 | enemy:blightHound | Blight Hound | minion |
 | enemy:blightedValkyrie | The Blighted Valkyrie | boss |
+| enemy:brackenTusker | Bracken Tusker | minion |
 | enemy:briarHermit | Briar Hermit | minion |
 | enemy:chainScavenger | Chain Scavenger | minion |
 | enemy:charredColossus | Charred Colossus | minion |
@@ -23,6 +24,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:eclipseCantor | Eclipse Cantor | minion |
 | enemy:emberStarvedPilgrim | Ember-Starved Pilgrim | minion |
 | enemy:fellWarden | The Fell Warden | boss |
+| enemy:fenwickToad | Fenwick Toad | minion |
 | enemy:furnaceSaint | The Furnace Saint | boss |
 | enemy:gildedKnight | Gilded Knight | minion |
 | enemy:glassRegent | The Glass Regent | boss |
@@ -33,12 +35,14 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
+| enemy:reedpipePoacher | Reedpipe Poacher | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
 | enemy:thornMatriarch | The Thorn Matriarch | boss |
 | enemy:valkyrieShade | Valkyrie Shade | minion |
 | enemy:wanderingSoldier | Wandering Soldier | minion |
+| enemy:wickerTitheman | Wicker Titheman | minion |
 | enemy:wyrmAspirant | Wyrm Aspirant | elite |
 | enemy:wyrmLord | Wyrm Lord | elite |
 
@@ -192,6 +196,22 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:hollowAstronomer.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashheartDragon.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashheartDragon.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:brackenTusker.gore | Gore | attack | 1 | 0 | Deal {damage} damage. |
+| card:brackenTusker.bristle | Bristle | skill | 1 | 0 | Gain {block} Block. |
+| card:brackenTusker.trample | Trample | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:brackenTusker.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:fenwickToad.tongueLash | Tongue Lash | attack | 1 | 0 | Deal {damage} damage. |
+| card:fenwickToad.bileSpit | Bile Spit | attack | 1 | 0 | Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:fenwickToad.puffUp | Puff Up | skill | 1 | 0 | Gain {block} Block. |
+| card:fenwickToad.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:reedpipePoacher.dart | Dart | attack | 1 | 0 | Deal {damage} damage. |
+| card:reedpipePoacher.snare | Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. |
+| card:reedpipePoacher.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:reedpipePoacher.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:wickerTitheman.tithe | Tithe | attack | 1 | 0 | Deal {damage} damage. Heal {heal} HP. |
+| card:wickerTitheman.bindingStraw | Binding Straw | power | 1 | 1 | Apply {weak} Weak to the enemy. |
+| card:wickerTitheman.kindleWard | Kindle Ward | skill | 1 | 0 | Gain {block} Block. |
+| card:wickerTitheman.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

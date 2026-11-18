@@ -4790,5 +4790,423 @@
         }
       ]
     }
+  },
+  {
+    "id": "brackenTusker",
+    "name": "Bracken_Tusker",
+    "displayName": "Bracken Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 59,
+      "formula": "10+20+15+6+2+1+5 = 59"
+    },
+    "pools": {
+      "hp": 59,
+      "sp": 2,
+      "mp": 1,
+      "ar": 3,
+      "dr": 2,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "brackenTusker.gore",
+          "name": "Gore",
+          "copies": 2
+        },
+        {
+          "id": "brackenTusker.bristle",
+          "name": "Bristle",
+          "copies": 1
+        },
+        {
+          "id": "brackenTusker.trample",
+          "name": "Trample",
+          "copies": 1
+        },
+        {
+          "id": "brackenTusker.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "fenwickToad",
+    "name": "Fenwick_Toad",
+    "displayName": "Fenwick Toad",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 10,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 0
+      },
+      "total": 49,
+      "formula": "10+20+10+6+2+1+0 = 49"
+    },
+    "pools": {
+      "hp": 49,
+      "sp": 2,
+      "mp": 1,
+      "ar": 2,
+      "dr": 2,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "fenwickToad.tongueLash",
+          "name": "Tongue_Lash",
+          "copies": 2
+        },
+        {
+          "id": "fenwickToad.bileSpit",
+          "name": "Bile_Spit",
+          "copies": 1
+        },
+        {
+          "id": "fenwickToad.puffUp",
+          "name": "Puff_Up",
+          "copies": 1
+        },
+        {
+          "id": "fenwickToad.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "reedpipePoacher",
+    "name": "Reedpipe_Poacher",
+    "displayName": "Reedpipe Poacher",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 0
+      },
+      "total": 35,
+      "formula": "10+10+5+6+2+2+0 = 35"
+    },
+    "pools": {
+      "hp": 35,
+      "sp": 2,
+      "mp": 1,
+      "ar": 1,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "reedpipePoacher.dart",
+          "name": "Dart",
+          "copies": 2
+        },
+        {
+          "id": "reedpipePoacher.snare",
+          "name": "Snare",
+          "copies": 1
+        },
+        {
+          "id": "reedpipePoacher.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "reedpipePoacher.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "wickerTitheman",
+    "name": "Wicker_Titheman",
+    "displayName": "Wicker Titheman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 4,
+        "intelligence": 3,
+        "level": 5
+      },
+      "total": 40,
+      "formula": "10+10+5+3+4+3+5 = 40"
+    },
+    "pools": {
+      "hp": 40,
+      "sp": 2,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "wickerTitheman.tithe",
+          "name": "Tithe",
+          "copies": 2
+        },
+        {
+          "id": "wickerTitheman.bindingStraw",
+          "name": "Binding_Straw",
+          "copies": 1
+        },
+        {
+          "id": "wickerTitheman.kindleWard",
+          "name": "Kindle_Ward",
+          "copies": 1
+        },
+        {
+          "id": "wickerTitheman.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

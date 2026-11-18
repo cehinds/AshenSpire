@@ -21,6 +21,10 @@
       "name": "The Blighted Valkyrie",
       "tier": "boss"
     },
+    "enemy:brackenTusker": {
+      "name": "Bracken Tusker",
+      "tier": "minion"
+    },
     "enemy:briarHermit": {
       "name": "Briar Hermit",
       "tier": "minion"
@@ -60,6 +64,10 @@
     "enemy:fellWarden": {
       "name": "The Fell Warden",
       "tier": "boss"
+    },
+    "enemy:fenwickToad": {
+      "name": "Fenwick Toad",
+      "tier": "minion"
     },
     "enemy:furnaceSaint": {
       "name": "The Furnace Saint",
@@ -101,6 +109,10 @@
       "name": "Mirror Scribe",
       "tier": "minion"
     },
+    "enemy:reedpipePoacher": {
+      "name": "Reedpipe Poacher",
+      "tier": "minion"
+    },
     "enemy:stitchCrab": {
       "name": "Stitch Crab",
       "tier": "minion"
@@ -123,6 +135,10 @@
     },
     "enemy:wanderingSoldier": {
       "name": "Wandering Soldier",
+      "tier": "minion"
+    },
+    "enemy:wickerTitheman": {
+      "name": "Wicker Titheman",
       "tier": "minion"
     },
     "enemy:wyrmAspirant": {
@@ -1593,6 +1609,166 @@
         "mana": 0
       },
       "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:brackenTusker.gore": {
+      "name": "Gore",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:brackenTusker.bristle": {
+      "name": "Bristle",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:brackenTusker.trample": {
+      "name": "Trample",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:brackenTusker.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:fenwickToad.tongueLash": {
+      "name": "Tongue Lash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:fenwickToad.bileSpit": {
+      "name": "Bile Spit",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:fenwickToad.puffUp": {
+      "name": "Puff Up",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:fenwickToad.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:reedpipePoacher.dart": {
+      "name": "Dart",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:reedpipePoacher.snare": {
+      "name": "Snare",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {frost} Frost to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:reedpipePoacher.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:reedpipePoacher.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:wickerTitheman.tithe": {
+      "name": "Tithe",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Heal {heal} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:wickerTitheman.bindingStraw": {
+      "name": "Binding Straw",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:wickerTitheman.kindleWard": {
+      "name": "Kindle Ward",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:wickerTitheman.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
       "usedBy": "enemy sheet"
     }
   },

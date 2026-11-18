@@ -3536,5 +3536,322 @@
       ]
     },
     "spFloor": 2
+  },
+  {
+    "id": "brackenTusker",
+    "name": "Bracken_Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 4
+    },
+    "defaultDeck": [
+      "brackenTusker.gore",
+      "brackenTusker.gore",
+      "brackenTusker.bristle",
+      "brackenTusker.trample",
+      "brackenTusker.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "brackenTusker",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 6,
+      "cardHints": {
+        "brackenTusker.gore": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "gore"
+        },
+        "brackenTusker.bristle": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bristle"
+        },
+        "brackenTusker.trample": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "trample"
+        },
+        "brackenTusker.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "fenwickToad",
+    "name": "Fenwick_Toad",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "defaultDeck": [
+      "fenwickToad.tongueLash",
+      "fenwickToad.tongueLash",
+      "fenwickToad.bileSpit",
+      "fenwickToad.puffUp",
+      "fenwickToad.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "fenwickToad",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 3,
+      "cardHints": {
+        "fenwickToad.tongueLash": {
+          "aiWeight": 40,
+          "costSource": "authored",
+          "legacyMove": "tongueLash",
+          "coreOffense": "card"
+        },
+        "fenwickToad.bileSpit": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bileSpit"
+        },
+        "fenwickToad.puffUp": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "puffUp"
+        },
+        "fenwickToad.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "reedpipePoacher",
+    "name": "Reedpipe_Poacher",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "wisdom",
+      "intelligence",
+      "strength",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "defaultDeck": [
+      "reedpipePoacher.dart",
+      "reedpipePoacher.dart",
+      "reedpipePoacher.snare",
+      "reedpipePoacher.advance",
+      "reedpipePoacher.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "reedpipePoacher",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 2,
+      "cardHints": {
+        "reedpipePoacher.dart": {
+          "aiWeight": 55,
+          "costSource": "authored",
+          "legacyMove": "dart",
+          "coreOffense": "card"
+        },
+        "reedpipePoacher.snare": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "snare"
+        },
+        "reedpipePoacher.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "reedpipePoacher.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "slashing",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wickerTitheman",
+    "name": "Wicker_Titheman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 4
+    },
+    "defaultDeck": [
+      "wickerTitheman.tithe",
+      "wickerTitheman.tithe",
+      "wickerTitheman.bindingStraw",
+      "wickerTitheman.kindleWard",
+      "wickerTitheman.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "wickerTitheman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 4,
+      "cardHints": {
+        "wickerTitheman.tithe": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "tithe"
+        },
+        "wickerTitheman.bindingStraw": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bindingStraw"
+        },
+        "wickerTitheman.kindleWard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "kindleWard"
+        },
+        "wickerTitheman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
   }
 ]
