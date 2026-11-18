@@ -147,7 +147,7 @@ test('detailed HUD selection coalesces its board fit without losing legacy synch
   }
 });
 
-// Playtest 2026-11-17 (item 33, waiting on a SPEC ruling): a drop fraction would set the player's HUD halfway to the head.
+// SPEC (owner, 2026-11-17, item 33): the player's HUD sits halfway between its place above the head and the head.
 test('a drop fraction lowers the rack that share of the way toward the head', async () => {
   const { targetBodyHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
   const { uiConfig: config } = await import('../src/config/generated/ui.js');
@@ -158,5 +158,29 @@ test('a drop fraction lowers the rack that share of the way toward the head', as
   assert.equal(halfway.miniTop, (210 + 300) / 2, 'halfway from the old top to the head');
   assert.equal(halfway.selectedTop - above.selectedTop, 45, 'the selected intent moves with it');
   const drop = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction;
-  assert.equal(drop, 0, 'SPEC: the player HUD keeps its 10 px gap above the art until the owner approves item 33');
+  assert.equal(drop, .5, 'SPEC: the player HUD is lowered halfway from its 10 px gap above the art toward the art top');
+});
+
+// SPEC (owner, 2026-11-17): the player's HUD stands beside the figure, right of its drawn art, at a readable width.
+test('the player HUD beside the figure takes the room to the field edge, within its bounds', async () => {
+  const { PlayerHudBeside } = await import('../src/ui/models/TargetHudModel.js');
+  const { uiConfig: config } = await import('../src/config/generated/ui.js');
+  const hud = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerHud;
+  assert.equal(hud.placement, 'beside');
+  const body = { top: 300, headY: 300, bottom: 500, left: 0, right: 170 }, frame = { top: 100, left: 40 };
+  const phone = PlayerHudBeside({ body, frame, fieldRight: 390, gap: 10, topFraction: 0.15, maxWidth: 320, minWidth: 150, margin: 8 });
+  assert.equal(phone.left, 140, 'gap right of the art, in the frame\'s local px');
+  assert.equal(phone.top, 230, 'topFraction of the body below the head');
+  assert.equal(phone.width, 390 - 8 - 180, 'the room to the field edge');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 1280, maxWidth: 320 }).width, 320, 'capped at maxWidth');
+  assert.equal(phone.side, 'right');
+  // Codex on #2824: the rightmost lane leaves no room on the right, so the HUD stands left of the art; with no room
+  // on either side it is null and the HUD stays above the head.
+  const rightLane = { top: 300, headY: 300, bottom: 500, left: 220, right: 380 };
+  const left = PlayerHudBeside({ body: rightLane, frame: { top: 100, left: 260 }, fieldLeft: 0, fieldRight: 390, gap: 10, minWidth: 150, maxWidth: 320, margin: 8 });
+  assert.equal(left.side, 'left');
+  assert.equal(left.width, 220 - 10 - 8, 'the room to the left field edge');
+  assert.equal(left.left, 8 - 260, 'its right edge gap left of the art, its left edge on the margin');
+  assert.equal(PlayerHudBeside({ body: { ...rightLane, left: 100 }, frame, fieldLeft: 0, fieldRight: 390, minWidth: 150 }), null, 'no side has room');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 390, zoom: 2 }).left, 70, 'local px take the zoom');
 });
