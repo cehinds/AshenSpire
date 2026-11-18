@@ -1187,5 +1187,69 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "slagwingHeron",
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 2
+    },
+    "size": "large",
+    "name": "Slagwing Heron",
+    "hp": [
+      126,
+      134
+    ],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "slagJab": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "emberDive": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 19,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "moltenBeak": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 28,
+        "weight": 15,
+        "maxConsecutive": 1
+      },
+      "heronWard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "emberDive",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

@@ -657,3 +657,7 @@
 "enemyMove","kilnbackTerrapin","emberVolley","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
 "enemyMove","kilnbackTerrapin","siegePlate","block","false","false","","","physical","defend","","","","",""
 "enemyMove","kilnbackTerrapin","bunkerGuard","block","false","false","","","physical","defend","","","","",""
+"enemyMove","slagwingHeron","slagJab","attack","true","false","weapon","piercing","physical","attack","","","delivery:melee","",""
+"enemyMove","slagwingHeron","emberDive","attack","true","false","weapon","piercing","physical","smash","","","delivery:melee","",""
+"enemyMove","slagwingHeron","moltenBeak","attack","true","false","weapon","fire","physical","attack","","","delivery:melee","",""
+"enemyMove","slagwingHeron","heronWard","block","false","false","","","physical","defend","","","","",""

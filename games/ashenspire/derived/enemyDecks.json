@@ -7037,5 +7037,148 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "slagwingHeron",
+    "name": "Slagwing_Heron",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "slagwingHeron.slagJab",
+        "name": "Slag_Jab",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagwingHeron.emberDive",
+        "name": "Ember_Dive",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 19
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberDive",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagwingHeron.moltenBeak",
+        "name": "Molten_Beak",
+        "copies": 1,
+        "sp": 3,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 28
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenBeak",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagwingHeron.heronWard",
+        "name": "Heron_Ward",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "heronWard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagwingHeron.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "slagwingHeron.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

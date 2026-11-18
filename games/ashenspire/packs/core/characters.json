@@ -6457,5 +6457,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "slagwingHeron",
+    "name": "Slagwing_Heron",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "slagwingHeron.slagJab",
+      "slagwingHeron.emberDive",
+      "slagwingHeron.moltenBeak",
+      "slagwingHeron.heronWard",
+      "slagwingHeron.advance",
+      "slagwingHeron.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "slagwingHeron",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "slagwingHeron.emberDive",
+      "poiseMax": 13,
+      "cardHints": {
+        "slagwingHeron.slagJab": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.emberDive": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberDive",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.moltenBeak": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenBeak",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.heronWard": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "heronWard",
+          "coreSp": "card"
+        },
+        "slagwingHeron.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "slagwingHeron.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

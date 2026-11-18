@@ -8264,5 +8264,116 @@
         }
       ]
     }
+  },
+  {
+    "id": "slagwingHeron",
+    "name": "Slagwing_Heron",
+    "displayName": "Slagwing Heron",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "halberd",
+            "name": "Halberd",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 3,
+        "bonuses": [],
+        "total": 3
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 20,
+        "dexterity": 9,
+        "wisdom": 4,
+        "intelligence": 1,
+        "level": 15
+      },
+      "total": 69,
+      "formula": "10+10+20+9+4+1+15 = 69"
+    },
+    "pools": {
+      "hp": 69,
+      "sp": 3,
+      "mp": 2,
+      "ar": 4,
+      "dr": 3,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "halberd",
+        "name": "Halberd"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "slagwingHeron.slagJab",
+          "name": "Slag_Jab",
+          "copies": 1
+        },
+        {
+          "id": "slagwingHeron.emberDive",
+          "name": "Ember_Dive",
+          "copies": 1
+        },
+        {
+          "id": "slagwingHeron.moltenBeak",
+          "name": "Molten_Beak",
+          "copies": 1
+        },
+        {
+          "id": "slagwingHeron.heronWard",
+          "name": "Heron_Ward",
+          "copies": 1
+        },
+        {
+          "id": "slagwingHeron.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "slagwingHeron.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

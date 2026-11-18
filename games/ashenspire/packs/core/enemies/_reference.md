@@ -54,6 +54,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:sixleggedHearse | The Sixlegged Hearse | boss |
 | enemy:slagtongImp | Slagtong Imp | minion |
+| enemy:slagwingHeron | Slagwing Heron | elite |
 | enemy:sootwingBat | Sootwing Bat | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
@@ -371,6 +372,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
 | card:kilnbackTerrapin.bunkerGuard | Bunker Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:kilnbackTerrapin.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagwingHeron.slagJab | Slag Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.emberDive | Ember Dive | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:slagwingHeron.moltenBeak | Molten Beak | attack | 3 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.heronWard | Heron Ward | skill | 1 | 0 | Gain {block} Block. |
+| card:slagwingHeron.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagwingHeron.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

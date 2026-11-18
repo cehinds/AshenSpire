@@ -185,6 +185,10 @@
       "name": "Slagtong Imp",
       "tier": "minion"
     },
+    "enemy:slagwingHeron": {
+      "name": "Slagwing Heron",
+      "tier": "elite"
+    },
     "enemy:sootwingBat": {
       "name": "Sootwing Bat",
       "tier": "minion"
@@ -3215,6 +3219,66 @@
         "mana": 0
       },
       "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.slagJab": {
+      "name": "Slag Jab",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.emberDive": {
+      "name": "Ember Dive",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.moltenBeak": {
+      "name": "Molten Beak",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.heronWard": {
+      "name": "Heron Ward",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagwingHeron.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
       "usedBy": "enemy sheet"
     }
   },
