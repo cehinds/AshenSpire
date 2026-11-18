@@ -20,7 +20,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // EQUIPMENT (owner, 2026-11-17, gear `statPoints`: gear and Smith tiers grant attribute points and Poise, never AR, DR or PR, so a
 // weapon's STR, a shield's or armor's DEX, a staff's INT and armor/shield Poise reach the ratings through the rows above). Every source is raised on its own, in a fresh
 // Core run, and the card value must move by the configured weight, in the preview and in live combat alike.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const N = 3;
 

@@ -52,6 +52,11 @@
       "minimum": 0,
       "maximum": 10
     },
+    "physicalDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
     "blockGainMultiplier": {
       "type": "number",
       "minimum": 0,

@@ -16,7 +16,11 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-18 for the physical cut on top of the ratings removal (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the three current-profile scenarios' events and continuations move by design;
+// the historical scenario's events, RNG and continuation are identical and only its snapshot, stored and loaded hashes moved (the new effects setting's module default joins the profile).
 // Recaptured 2026-11-18 (AR, DR and PR removed; hand, SP and MP per four points): the runtime hash and the current-profile scenarios moved by design.
+// Recaptured 2026-11-18 for the second cut (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the new setting joins the profile, so the profile, snapshot and save hashes move,
+// and the three current-profile scenarios' events and continuations move by design; the historical scenario is unchanged.
 // Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
 // Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
 // Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.
