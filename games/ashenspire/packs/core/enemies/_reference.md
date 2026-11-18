@@ -55,6 +55,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:thornMatriarch | The Thorn Matriarch | boss |
 | enemy:tollgateHookman | Tollgate Hookman | minion |
 | enemy:valkyrieShade | Valkyrie Shade | minion |
+| enemy:veiledJusticiar | The Veiled Justiciar | boss |
 | enemy:wanderingSoldier | Wandering Soldier | minion |
 | enemy:waxsealBailiff | Waxseal Bailiff | minion |
 | enemy:wickerHind | Wicker Hind | elite |
@@ -324,6 +325,13 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:rimewheelPenitent.rimeOffering | Rime Offering | power | 1 | 1 | Apply {strength} Strength to yourself. Lose {loseHp} HP. |
 | card:rimewheelPenitent.frostGuard | Frost Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:rimewheelPenitent.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:veiledJusticiar.verdictStrike | Verdict Strike | attack | 1 | 0 | Deal {damage} damage. |
+| card:veiledJusticiar.gavelFall | Gavel Fall | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:veiledJusticiar.righteousLight | Righteous Light | attack | 2 | 1 | Deal {damage} damage. |
+| card:veiledJusticiar.sentenceRead | Sentence Read | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
+| card:veiledJusticiar.veilGuard | Veil Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:veiledJusticiar.finalJudgement | Final Judgement | attack | 3 | 2 | Deal {damage} damage. |
+| card:veiledJusticiar.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -397,3 +405,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
 | relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
+| relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |

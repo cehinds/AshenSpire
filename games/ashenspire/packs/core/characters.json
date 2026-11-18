@@ -5669,5 +5669,156 @@
         }
       ]
     }
+  },
+  {
+    "id": "veiledJusticiar",
+    "name": "The_Veiled_Justiciar",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 4
+    },
+    "defaultDeck": [
+      "veiledJusticiar.verdictStrike",
+      "veiledJusticiar.verdictStrike",
+      "veiledJusticiar.gavelFall",
+      "veiledJusticiar.righteousLight",
+      "veiledJusticiar.sentenceRead",
+      "veiledJusticiar.veilGuard",
+      "veiledJusticiar.veilGuard",
+      "veiledJusticiar.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gildedOathsworn"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.judgeSeal"
+      }
+    ],
+    "presentation": {
+      "art": "veiledJusticiar",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "veiledJusticiar.finalJudgement"
+      ],
+      "firstCard": "veiledJusticiar.sentenceRead",
+      "poiseMax": 15,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "veiledJusticiar.finalJudgement"
+          ]
+        }
+      ],
+      "cardHints": {
+        "veiledJusticiar.verdictStrike": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "verdictStrike",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.gavelFall": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "gavelFall",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.righteousLight": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "righteousLight",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.sentenceRead": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sentenceRead",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.veilGuard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilGuard",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.finalJudgement": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "finalJudgement",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

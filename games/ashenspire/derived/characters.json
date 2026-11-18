@@ -7361,5 +7361,171 @@
         }
       ]
     }
+  },
+  {
+    "id": "veiledJusticiar",
+    "name": "The_Veiled_Justiciar",
+    "displayName": "The Veiled Justiciar",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 4,
+    "attributePoints": 9,
+    "attributes": {
+      "strength": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 3
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "armor.gildedOathsworn",
+            "name": "Gilded_Oathsworn",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.judgeSeal",
+            "name": "Judge_Seal",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 10
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.gildedOathsworn",
+            "name": "Gilded_Oathsworn",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "enemy.relic.judgeSeal",
+            "name": "Judge_Seal",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 50,
+        "dexterity": 9,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 15
+      },
+      "total": 111,
+      "formula": "10+20+50+9+6+1+15 = 111"
+    },
+    "pools": {
+      "hp": 111,
+      "sp": 3,
+      "mp": 3,
+      "ar": 10,
+      "dr": 3,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gildedOathsworn",
+        "name": "Gilded_Oathsworn"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.judgeSeal",
+        "name": "Judge_Seal"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "veiledJusticiar.verdictStrike",
+          "name": "Verdict_Strike",
+          "copies": 2
+        },
+        {
+          "id": "veiledJusticiar.gavelFall",
+          "name": "Gavel_Fall",
+          "copies": 1
+        },
+        {
+          "id": "veiledJusticiar.righteousLight",
+          "name": "Righteous_Light",
+          "copies": 1
+        },
+        {
+          "id": "veiledJusticiar.sentenceRead",
+          "name": "Sentence_Read",
+          "copies": 1
+        },
+        {
+          "id": "veiledJusticiar.veilGuard",
+          "name": "Veil_Guard",
+          "copies": 2
+        },
+        {
+          "id": "veiledJusticiar.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

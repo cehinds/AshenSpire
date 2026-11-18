@@ -1538,5 +1538,122 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "veiledJusticiar",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 7,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 3,
+      "intelligence": 3
+    },
+    "size": "large",
+    "name": "The Veiled Justiciar",
+    "hp": [
+      190,
+      190
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "verdictStrike": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "gavelFall": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 20,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "righteousLight": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "sentenceRead": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ]
+      },
+      "veilGuard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 8,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "finalJudgement": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 30,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "locked": true
+      }
+    },
+    "firstMove": "sentenceRead",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "unlockMoves": [
+          "finalJudgement"
+        ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      },
+      {
+        "to": "magic",
+        "effect": "damage"
+      }
+    ]
   }
 ]

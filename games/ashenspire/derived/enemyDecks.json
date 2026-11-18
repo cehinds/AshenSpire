@@ -6090,5 +6090,162 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "veiledJusticiar",
+    "name": "The_Veiled_Justiciar",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "veiledJusticiar.verdictStrike",
+        "name": "Verdict_Strike",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "verdictStrike",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "veiledJusticiar.gavelFall",
+        "name": "Gavel_Fall",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "gavelFall",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "veiledJusticiar.righteousLight",
+        "name": "Righteous_Light",
+        "copies": 1,
+        "sp": 2,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "righteousLight",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "veiledJusticiar.sentenceRead",
+        "name": "Sentence_Read",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sentenceRead",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "veiledJusticiar.veilGuard",
+        "name": "Veil_Guard",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "veiledJusticiar.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "veiledJusticiar.finalJudgement",
+        "name": "Final_Judgement"
+      }
+    ]
   }
 ]

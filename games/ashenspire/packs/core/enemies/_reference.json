@@ -189,6 +189,10 @@
       "name": "Valkyrie Shade",
       "tier": "minion"
     },
+    "enemy:veiledJusticiar": {
+      "name": "The Veiled Justiciar",
+      "tier": "boss"
+    },
     "enemy:wanderingSoldier": {
       "name": "Wandering Soldier",
       "tier": "minion"
@@ -2788,6 +2792,76 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.verdictStrike": {
+      "name": "Verdict Strike",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.gavelFall": {
+      "name": "Gavel Fall",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.righteousLight": {
+      "name": "Righteous Light",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.sentenceRead": {
+      "name": "Sentence Read",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.veilGuard": {
+      "name": "Veil Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.finalJudgement": {
+      "name": "Final Judgement",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 2
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:veiledJusticiar.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3502,6 +3576,14 @@
       "modifiers": [
         "self.constitution=+3",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.judgeSeal": {
+      "name": "Judge Seal",
+      "text": "STR +2, WIS +1",
+      "modifiers": [
+        "self.strength=+2",
+        "self.wisdom=+1"
       ]
     }
   }
