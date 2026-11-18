@@ -37,6 +37,7 @@ import { serve } from './serve.mjs';
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
 import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
+import { STEP_ARRIVAL_GUARD_MS } from '../src/ui/stepArrivalGuard.js';
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -648,6 +649,8 @@ async function main() {
     // ?shot= harness uses); everything else stays at the shipped defaults.
     await evalIn(`(() => { const s = document.querySelector('#seed-input'); if (!s) return null; s.value = ${JSON.stringify(seed)}; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
     await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
+    // Review can be ready while its forward-press guard is still active.
+    await wait(STEP_ARRIVAL_GUARD_MS);
     await clickSel('#cz-start', 'BEGIN THE CLIMB');
     // A new climb opens on the opening sequence before its map; Skip opening.
     await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
