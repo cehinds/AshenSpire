@@ -3,6 +3,7 @@ import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemStatBonus } from './itemPicks.js';
 import { ClassLevelAttributeBonus } from './classLevelBonus.js';
+import { GearIdOf } from './gearIds.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
@@ -15,7 +16,10 @@ export function gameProfileEquipmentReceipt(registries, run) {
     const id = sets[run.loadout.active?.[slot] || 0];
     if (!id) continue;
     const armor = slot === 'armor';
-    const item = catalog.find(item => (item.source?.id || item.id) === id && (item.kind === 'armor') === armor && (!item.classes || item.classes.includes(run.class)));
+    // A class's starting outfit row (`default`) names its gear item in the outfit's `gearId` column (owner, 2026-11-18), so the
+    // starting armour adds the Poise and attribute points the item carries.
+    const gearId = armor ? GearIdOf((registries?.equipment?.armour || []).find(row => row.classId === run.class && row.id === id)) || id : id;
+    const item = catalog.find(item => (item.source?.id || item.id) === gearId && (item.kind === 'armor') === armor && (!item.classes || item.classes.includes(run.class)));
     if (!item) continue;
     const sourceId = armor ? `armor/${run.class}/${id}` : `armament/${id}`;
     const tier = run.itemUpgradeLevels?.[sourceId] || 0;

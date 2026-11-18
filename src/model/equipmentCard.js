@@ -1,6 +1,7 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { parseMod } from './loadout.js';
+import { GearIdOf } from './gearIds.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
@@ -53,7 +54,7 @@ export function equipmentCardModel(registries, piece) {
   });
   const configuredGear = gameModule(registries,'gear');
   const item = configuredGear?.armorBudget && (gameContent(registries,'gear') || []).find(row =>
-    (row.source?.id || row.id) === piece.id && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
+    (row.source?.id || row.id) === GearIdOf(piece) && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
     const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'STR',dr:'DEX',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};

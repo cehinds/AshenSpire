@@ -9,6 +9,7 @@ import {
 import { resolveUpgradedEquipment } from '../itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../../framework/deck.js';
 import { profileById } from './shape.js';
+import { GearIdOf } from '../gearIds.js';
 import { WeaponCardPackageModel, handSource } from './weaponPackages.js';
 import { grantSourceFor, startingDeckSettings, boundGrantCardIds } from './grantSources.js';
 import { equippedPieces } from './equipped.js';
@@ -175,7 +176,7 @@ function configuredGearGrantInstances(registries, run) {
   const out = [];
   for (const piece of equippedPieces(registries, run.loadout, run.class)) {
     const armor = piece.kind === 'armor';
-    const row = rows.find((candidate) => (candidate.source?.id || candidate.id) === piece.id
+    const row = rows.find((candidate) => (candidate.source?.id || candidate.id) === GearIdOf(piece)
       && (candidate.kind === 'armor') === armor
       && (!candidate.classes || candidate.classes.includes(run.class)));
     if (!row) continue;
