@@ -144,6 +144,8 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     if (source.row === 'back') { SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
+  // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
+  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
