@@ -18,6 +18,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
 // Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.
 // Current profiles, events and snapshots change by design; RNG counters and the historical scenario are unchanged.
+// The conditional cards in Core's pack change only current profile, snapshot and save hashes. Events, RNG, continuations and the historical profile are unchanged.
 // Recaptured 2026-11-17 after the trader inventory changes landed: only the profile, snapshot and save hashes changed.
 // Recaptured 2026-11-17 a third time (theme D's runs carry classLevelBonusVersion, so a new run's save moves: only the stored and loaded hashes changed).
 // Recaptured 2026-11-17 again (playtest theme D added five relics to Core's reward allow list, which moved the profile hash and so only the snapshot, stored and loaded hashes; every events, rng and continuation hash is unchanged)

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
+import { combatCardSummary, playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_CHARACTERS } from '../src/model/cardFaceProjection.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
@@ -152,6 +152,14 @@ test('a face never hides a cost clause', () => {
     const face = faces(card.id).join(' ');
     if (COST.test(authored)) assert.match(face, COST, `${card.id}: ${authored} => ${face}`);
   }
+});
+
+test('Shared Sacrifice shows what allies pay before its Block payoff', () => {
+  const def = defOf('base.drain-allies');
+  const clauses = project(def).clauses;
+  assert.equal(clauses[0].kind, 'cost');
+  assert.equal(plain(clauses[0].html), 'All allies lose 3 HP');
+  assert.match(combatCardSummary(def, null, reg), /^All allies lose 3 HP\. Gain 12 Block\.$/);
 });
 
 test('stance entry details do not spend the ordinary effect budget', () => {
