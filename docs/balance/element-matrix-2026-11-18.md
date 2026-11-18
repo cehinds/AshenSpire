@@ -31,7 +31,7 @@ The wheel runs **Fire > Frost > Lightning > Earth > Fire**: each element beats t
 | Element | Built-in tags | Strong against | Weak against | Stance interplay |
 |---|---|---|---|---|
 | **Poison** | Venom (HP over time, bodily) | Living, unarmoured targets (robes) | Undead and constructs (immune); Fire burns it off | — |
-| **Force** | Poise damage ×1.5; Push (Retreat stack on a crit or Smash) | Shields and heavy armour (ignores 2 Block) | Evade (whiffs) | Strong vs **Defend** |
+| **Force** (tag, not a school; green; Alteration casts it most) | Physical damage, so it hits Block first, even from a spell; after Block, half of the damage goes to Poise instead of 25%; no built-in Retreat (owner) | Shields and heavy armour (ignores 2 Block) | Evade (whiffs) | Strong vs **Defend** |
 | **Arcane (Magic)** | 50% magic share; Ward-first rules | Ward and Barrier (strips 1 Ward per hit) | Magic Vulnerable targets take more; the Resist Magic tag | Strong vs **Prepared** |
 
 ## Physical damage types
@@ -39,13 +39,13 @@ The wheel runs **Fire > Frost > Lightning > Earth > Fire**: each element beats t
 | Type | Built-in tags | Strong against | Weak against | Stance interplay |
 |---|---|---|---|---|
 | **Slashing** | Bleed on HP loss | Unarmoured and light armour | Heavy armour (−25%) | Sweeps get +1 target |
-| **Piercing** | Pierce (bypasses up to 2 Block) | Medium armour (mail gaps); Retreat-stacked targets in Reach | Shields (Kite, Tower) | Strong vs **Defend** |
+| **Piercing** | Pierce (each stack ignores 1 Block) | Medium armour (mail gaps); Retreat-stacked targets in Reach | Shields (Kite, Tower) | Strong vs **Defend** |
 | **Blunt** | +Poise damage; Smash Vulnerable (hammers) | Heavy armour and shields | Unarmoured (−25%, nothing to crush) | Strong vs **Counter** (breaks the stance) |
 
 ## Stone Skin (new tag, owner 2026-11-18)
-- Each stack reduces Pierce damage by 1, from Lightning's built-in Pierce or any Pierce source.
+- 1 Stone Skin stack cancels 1 Pierce stack (from Lightning's built-in Pierce or any Pierce source), and both are spent. Pierce 3 vs Stone Skin 2 leaves Pierce 1; Pierce 3 vs Stone Skin 4 leaves Stone Skin 1.
+- Pierce: each stack ignores 1 Block; the rest routes Block, then Poise, then HP (ruling §21).
 - Most Earth Defend cards grant 3 or more stacks.
-- Lightning's built-in Pierce does not bypass Block that came from an Earth source.
 - Stone Skin decays like Block, at the start of its owner's turn. *(decided)*
 
 ## Open choices for the owner
