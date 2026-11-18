@@ -3650,7 +3650,7 @@
     "defaultGear": [
       {
         "key": "mainHand",
-        "id": "dagger"
+        "id": "blightRod"
       }
     ],
     "defaultRelics": [],
@@ -3660,25 +3660,30 @@
       "artFaces": "left"
     },
     "enemy": {
+      "firstCard": "fenwickToad.bileSpit",
       "poiseMax": 3,
       "cardHints": {
         "fenwickToad.tongueLash": {
           "aiWeight": 40,
           "costSource": "authored",
           "legacyMove": "tongueLash",
-          "coreOffense": "card"
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "fenwickToad.bileSpit": {
           "aiWeight": 35,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "bileSpit"
+          "costSource": "authored",
+          "legacyMove": "bileSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "fenwickToad.puffUp": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "puffUp"
+          "costSource": "authored",
+          "legacyMove": "puffUp",
+          "coreSp": "card"
         },
         "fenwickToad.advance": {
           "aiWeight": 0,

@@ -30,7 +30,7 @@
   "equipment": [
     {
       "slot": "mainHand",
-      "ref": "gear:dagger"
+      "ref": "gear:blightRod"
     }
   ],
   "relics": [],
@@ -47,19 +47,23 @@
       "aiWeight": 40,
       "costSource": "authored",
       "legacyMove": "tongueLash",
-      "coreOffense": "card"
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:fenwickToad.bileSpit": {
       "aiWeight": 35,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "bileSpit"
+      "costSource": "authored",
+      "legacyMove": "bileSpit",
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:fenwickToad.puffUp": {
       "aiWeight": 25,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "puffUp"
+      "costSource": "authored",
+      "legacyMove": "puffUp",
+      "coreSp": "card"
     },
     "card:fenwickToad.advance": {
       "aiWeight": 0,
@@ -68,6 +72,7 @@
     }
   },
   "behaviour": {
+    "firstCard": "card:fenwickToad.bileSpit",
     "startingRange": "reach",
     "rangeClosingMove": "advance",
     "rangeRoutePolicy": "advance",
@@ -101,12 +106,12 @@
       "enemy"
     ],
     "enemy": [
+      "firstCard",
       "poiseMax",
       "cardHints",
       "startingRange",
       "rangeClosingMove",
       "rangeRoutePolicy",
-      "rangeRetreatMove",
       "weaknesses"
     ]
   }

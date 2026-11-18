@@ -885,13 +885,15 @@
     "artFaces": "left",
     "moves": {
       "tongueLash": {
+        "sp": 1,
         "intent": "attack",
-        "damage": 5,
+        "damage": 6,
         "weight": 40
       },
       "bileSpit": {
-        "intent": "debuff",
-        "damage": 3,
+        "sp": 1,
+        "intent": "attack",
+        "damage": 5,
         "weight": 35,
         "maxConsecutive": 1,
         "effects": [
@@ -904,12 +906,14 @@
         ]
       },
       "puffUp": {
+        "sp": 1,
         "intent": "block",
         "block": 6,
         "weight": 25,
         "maxConsecutive": 1
       }
     },
+    "firstMove": "bileSpit",
     "weaknesses": [
       {
         "to": "fire",

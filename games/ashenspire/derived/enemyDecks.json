@@ -3499,14 +3499,15 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5
+            "amount": 6
           }
         ],
         "hints": {
           "aiWeight": 40,
           "costSource": "authored",
           "legacyMove": "tongueLash",
-          "coreOffense": "card"
+          "coreOffense": "card",
+          "coreSp": "card"
         }
       },
       {
@@ -3520,7 +3521,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3
+            "amount": 5
           },
           {
             "op": "applyStatus",
@@ -3532,8 +3533,10 @@
         "hints": {
           "aiWeight": 35,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "bileSpit"
+          "costSource": "authored",
+          "legacyMove": "bileSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
         }
       },
       {
@@ -3553,8 +3556,9 @@
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "puffUp"
+          "costSource": "authored",
+          "legacyMove": "puffUp",
+          "coreSp": "card"
         }
       },
       {

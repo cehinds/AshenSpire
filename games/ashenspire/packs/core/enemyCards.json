@@ -4283,7 +4283,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 6
       }
     ],
     "tags": [
@@ -4311,7 +4311,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 5
       },
       {
         "op": "applyStatus",

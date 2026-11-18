@@ -4907,27 +4907,13 @@
     "attributes": {
       "strength": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "dagger",
-            "name": "Dagger",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 2
+        "bonuses": [],
+        "total": 1
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "dagger",
-            "name": "Dagger",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 2
+        "bonuses": [],
+        "total": 1
       },
       "constitution": {
         "own": 2,
@@ -4936,8 +4922,15 @@
       },
       "wisdom": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "blightRod",
+            "name": "Blight_Rod",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 3
       },
       "intelligence": {
         "own": 1,
@@ -4949,28 +4942,28 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 10,
-        "dexterity": 6,
-        "wisdom": 2,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 6,
         "intelligence": 1,
         "level": 0
       },
-      "total": 49,
-      "formula": "10+20+10+6+2+1+0 = 49"
+      "total": 45,
+      "formula": "10+20+5+3+6+1+0 = 45"
     },
     "pools": {
-      "hp": 49,
+      "hp": 45,
       "sp": 2,
-      "mp": 1,
-      "ar": 2,
-      "dr": 2,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "dagger",
-        "name": "Dagger"
+        "id": "blightRod",
+        "name": "Blight_Rod"
       }
     ],
     "relics": [],

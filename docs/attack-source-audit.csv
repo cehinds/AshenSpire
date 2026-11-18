@@ -476,7 +476,7 @@
 "enemyMove","brackenTusker","bristle","block","false","false","","","physical","defend","","","","",""
 "enemyMove","brackenTusker","trample","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "enemyMove","fenwickToad","tongueLash","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
-"enemyMove","fenwickToad","bileSpit","debuff","true","false","weapon","blunt","physical","attack","","","delivery:projectile","",""
+"enemyMove","fenwickToad","bileSpit","attack","true","false","weapon","poison","physical","attack","","","delivery:projectile","",""
 "enemyMove","fenwickToad","puffUp","block","false","false","","","physical","defend","","","","",""
 "enemyMove","reedpipePoacher","dart","attack","true","false","weapon","piercing","physical","attack","","","delivery:projectile","",""
 "enemyMove","reedpipePoacher","snare","debuff","false","false","","","physical","","","","","",""
