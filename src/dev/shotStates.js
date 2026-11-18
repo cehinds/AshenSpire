@@ -55,6 +55,11 @@ export function createShotStates(ctx) {
     const shotClass = shotParams.get('shotClass');
     newRun({ classId: ctx.getRegistries().classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
     const run = ctx.getRun();
+    // `?shotDeckAdd=<cardId>[,<cardId>]` — in-memory QA fixture: known cards join the deck (e.g. a spell with a Mana
+    // badge for the card-upgrade picker). An unknown id is ignored.
+    for (const cardId of (shotParams.get('shotDeckAdd') || '').split(',').filter(Boolean)) {
+      if (ctx.getRegistries().cards.has(cardId)) run.deck.push({ instanceId: `shot:${cardId}`, cardId });
+    }
     // In-memory QA fixture: earned attribute points. Feats come from actual claims.
     if (shotParams.get('shotProgression') === '1') {
       awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), 1), { pointsPerLevel: 2 });

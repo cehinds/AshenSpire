@@ -244,8 +244,9 @@ test('composed party feet stand inside their strip, not on its edge, at every pr
 test('the grid rises above the hand so the lowest party cell holds its feet above the hand top', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const [width, height, handTop] = [390, 488.36, 431];
+  // The hand-strip lift is the stage's 'none' drawing; 'handTop' (the default) places the lead by the cards instead (stage-extent.test.mjs).
   const run = top => alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
-    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop: top });
+    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop: top, stageExtent: { mode: 'none' } });
   const low = plan => plan.visualCells.filter(cell => cell.side === 'player').reduce((a, b) => b.box.top > a.box.top ? b : a);
   const before = low(run(null)).box, after = low(run(handTop)).box;
   assert.ok(before.top + before.height * (1 - grid.footInCellFraction) > handTop, 'without the hand the cell\'s feet would stand under it');

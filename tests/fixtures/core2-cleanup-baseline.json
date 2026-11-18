@@ -6,12 +6,12 @@
   "scenarios": {
     "paid reaction": {
       "profile": {
-        "hash": "sha256:bb01f733492af6e712aaf42e760d5dbdd694b13f64433474f4a2ae8e170eb37c",
+        "hash": "sha256:aeac5dee4d4d6fe0524cb5ddbee7f57c35003929de20e538db56de570b0b5c53",
         "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "de304d6d433f0d553217d36f2269a1b4b49228ccd4d6836865ad7dc40cf29381",
+        "snapshot": "02179f8a1535cc5bfd87729f9daee704125a64fbeffee7b87182edfbb95969e5",
         "events": "5ff1e30596ad200b44c0e0bb4f7a01cd953408b6aa097590133b365cdbe4be3b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -36,7 +36,7 @@
         }
       },
       "pending": {
-        "snapshot": "93b8b3677e84ab2e6161ab8cc0ab193281301797642cd5c48a3c7b0119b39512",
+        "snapshot": "411d7747c59848123e2284c048ff4f01f7e72071ae260027825a6b4bbbb16b3d",
         "events": "c74a28599de7c19fc9c3e72885d9adf79bd0da26e5235cb334e9903f18830698",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -48,11 +48,11 @@
         }
       },
       "save": {
-        "stored": "a4150d7f48b9382eea7e41f68781b38bd3301da01e6e68968451c306b7d47409",
-        "loaded": "28798b73e8c570156c6a2fad4354cf0442aa095b921124ac51c87afebdbd4108"
+        "stored": "b2b4d509ccde0131134e7dd3caef707138470f3887bab5c1e81bc6251c0b0696",
+        "loaded": "726c2edba2ef2cd18a425b9d2403c824c482f4ac87569d12ec38fadce62d54db"
       },
       "restored": {
-        "snapshot": "93b8b3677e84ab2e6161ab8cc0ab193281301797642cd5c48a3c7b0119b39512",
+        "snapshot": "411d7747c59848123e2284c048ff4f01f7e72071ae260027825a6b4bbbb16b3d",
         "events": "0ae983628d3c10769579fd7353a862e3b4cdf84e13522b859a5e1aa6b24e8eac",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -64,7 +64,7 @@
         }
       },
       "live": {
-        "snapshot": "8e2c2e3e52db94c1ef66e442013c9d34623a6bea71929098153b6d36360f4db3",
+        "snapshot": "17f1e0ed9a8d4d032994fb790bd8b6650edfce38c3487a5e6c32e56033b7af4d",
         "events": "b51fd504e247f197b32d5610e77eff1d96a72ecbf043587b2e512c67232be70a",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -77,7 +77,7 @@
         "continuation": "e7ebccf62a453bc8316b5e656eabb0887c842cb378807cf26c2160439eda7724"
       },
       "afterRestore": {
-        "snapshot": "8e2c2e3e52db94c1ef66e442013c9d34623a6bea71929098153b6d36360f4db3",
+        "snapshot": "17f1e0ed9a8d4d032994fb790bd8b6650edfce38c3487a5e6c32e56033b7af4d",
         "events": "429e84a15669b0bc22da699e78a0c3d2b487a809b3ae82a60e98bac59b5e5ff6",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -92,12 +92,12 @@
     },
     "paid delayed charge": {
       "profile": {
-        "hash": "sha256:bb01f733492af6e712aaf42e760d5dbdd694b13f64433474f4a2ae8e170eb37c",
+        "hash": "sha256:aeac5dee4d4d6fe0524cb5ddbee7f57c35003929de20e538db56de570b0b5c53",
         "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "63736687c437db46f4aa273ed639da55420d26d4aba9d55819831a46e321d04b",
+        "snapshot": "ed12c667a7ad2e224f92d2cfe3313833fa3481b3ec83cb1916a4b23bdc5f1ceb",
         "events": "a8ce397e9dddcd42003b9d8aafef5dc7212cca909f052e30a3f89fd6607a868e",
         "rng": {
           "hash": "6c0f0fdb9eb81cb667534c8d4c460ed2fd542e05becef8cdea5846c74a0813ca",
@@ -113,7 +113,7 @@
         "totalSp": 2
       },
       "pending": {
-        "snapshot": "96cbaf5b47d79e630889eb471cf653cf5151da463f0c395108977f5974aca8b9",
+        "snapshot": "c96bd65f031af613fbd130b99e1e52a63a0ee397b84e9ea1973c0eca8f2a5a4c",
         "events": "725407694cb3701390f0e3f5d928cdfbbeaf563b3338c3bd13f87758ef6bff3b",
         "rng": {
           "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
@@ -124,11 +124,11 @@
         }
       },
       "save": {
-        "stored": "9b5b3c8d5ac0a7984fe89f8b1ae57a1c5358a7898f46890db9d3e21657e1a652",
-        "loaded": "3531418f253a829279e5571fa88ea2ae2bf62443963d856f64de59fa708f8a17"
+        "stored": "d47cd219112647c44f5151a67fb7e91d98c62a6ed8b70a68ca486599e1a109df",
+        "loaded": "1b4800a9bac51c51c1bcc472e3260f0be6bc358628a71607789b19180eff6796"
       },
       "restored": {
-        "snapshot": "96cbaf5b47d79e630889eb471cf653cf5151da463f0c395108977f5974aca8b9",
+        "snapshot": "c96bd65f031af613fbd130b99e1e52a63a0ee397b84e9ea1973c0eca8f2a5a4c",
         "events": "725407694cb3701390f0e3f5d928cdfbbeaf563b3338c3bd13f87758ef6bff3b",
         "rng": {
           "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
@@ -139,7 +139,7 @@
         }
       },
       "live": {
-        "snapshot": "5b5f6ae406afbbfe1985959ef5b48e585032a8f1e8cab17d2b006ea1837d08fa",
+        "snapshot": "c8dc96c7be11668dd4a103c0de96ec8ab892923324d2446dce07883b7098d3bb",
         "events": "47acd97f891edc1ab2056fd2504964176a12fbeb391adbf90447b4564a19551f",
         "rng": {
           "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
@@ -152,7 +152,7 @@
         "continuation": "2a06043a8045bc40c88c526b70edc7ec70e9a695ef408d8cbbc575edcc353a43"
       },
       "afterRestore": {
-        "snapshot": "5b5f6ae406afbbfe1985959ef5b48e585032a8f1e8cab17d2b006ea1837d08fa",
+        "snapshot": "c8dc96c7be11668dd4a103c0de96ec8ab892923324d2446dce07883b7098d3bb",
         "events": "47acd97f891edc1ab2056fd2504964176a12fbeb391adbf90447b4564a19551f",
         "rng": {
           "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
@@ -167,12 +167,12 @@
     },
     "ordered enemy plan": {
       "profile": {
-        "hash": "sha256:bb01f733492af6e712aaf42e760d5dbdd694b13f64433474f4a2ae8e170eb37c",
+        "hash": "sha256:aeac5dee4d4d6fe0524cb5ddbee7f57c35003929de20e538db56de570b0b5c53",
         "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "f7402fc79c39ee30ef7b7fde13b1079bba574315110a9e3a2974f3630cab9c6b",
+        "snapshot": "0e06980d5607d6c1a2d6fdf96c9cf413275f872599fd89c6917605894551afbc",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -198,7 +198,7 @@
         ]
       ],
       "pending": {
-        "snapshot": "f7402fc79c39ee30ef7b7fde13b1079bba574315110a9e3a2974f3630cab9c6b",
+        "snapshot": "0e06980d5607d6c1a2d6fdf96c9cf413275f872599fd89c6917605894551afbc",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -210,11 +210,11 @@
         }
       },
       "save": {
-        "stored": "fc9c626d21b850a74566b44c503751ce89a7315da3f4f6e86453a945f1d04f2e",
-        "loaded": "76e6fb99a5af71a5a756dce059f35e2ca8a9c1326be5474ac9f1c8131237ea1e"
+        "stored": "5ef455e845e8f9638d2415ee3bbe1947b3d6841b8211b2b21e2a91fadbdfaa16",
+        "loaded": "6a93897e276e8963eba732991326147d589f6df64350279c040d37b740dbb9ce"
       },
       "restored": {
-        "snapshot": "f7402fc79c39ee30ef7b7fde13b1079bba574315110a9e3a2974f3630cab9c6b",
+        "snapshot": "0e06980d5607d6c1a2d6fdf96c9cf413275f872599fd89c6917605894551afbc",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -226,7 +226,7 @@
         }
       },
       "live": {
-        "snapshot": "e29ca7c987645a97cc59ac8b47f20681f4754329e6af21e048d8baae1f2d75f8",
+        "snapshot": "8b7e41d7409082f97604ec7c8267cc640d1569244e3ac0f4b06235dcacad8bf8",
         "events": "08a5e75c27d277722a58468c3044d58859202d77f9cf41f7b5f21a74876d2350",
         "rng": {
           "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",
@@ -239,7 +239,7 @@
         "continuation": "467137899191f380b85b96c6531d6c45eace98b903416b7e1fe1f61b98de5cbb"
       },
       "afterRestore": {
-        "snapshot": "e29ca7c987645a97cc59ac8b47f20681f4754329e6af21e048d8baae1f2d75f8",
+        "snapshot": "8b7e41d7409082f97604ec7c8267cc640d1569244e3ac0f4b06235dcacad8bf8",
         "events": "08a5e75c27d277722a58468c3044d58859202d77f9cf41f7b5f21a74876d2350",
         "rng": {
           "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",
@@ -338,5 +338,5 @@
       }
     }
   },
-  "recapture": "Re-captured 2026-11-14 for the three current-profile scenarios only, after the 11-card Core starter decks (shuffle counters and event/snapshot hashes move with the deck). Old content (7b6ac01016) reproduced the previous capture exactly; historical action policy is unchanged. Re-captured again 2026-11-14 for exact hits and intents (accuracy.hitRoll, perception.roll): the same three scenarios built with those keys absent (withLegacyDefaults in tests/legacyHitRules.mjs) reproduced the previous capture on every behavioural field; only profile.hash, profile.runtimeHash and the snapshot digests that embed them moved. The historical action policy scenario moved too, because a fight made from an old profile (which carries no fixCoreRules block) takes the current default rules; with the keys absent it reproduces the previous capture exactly. Re-captured 2026-11-14 for shown = dealt (W2-F): card faces, intents and reaction prompts carry the HP lost instead of the raw hit, and an offensive stance grants no Precision while accuracy.hitRoll is false. Verified on the previous engine (1f0a16daee): with the display fields (intentPreview, incomingHp, hitDamages, totalDamage, projectedDamage, hpLossBounds, the card preview values) and every Precision status, receipt and key removed, the paid delayed charge, ordered enemy plan and historical action policy scenarios reproduce the previous capture on every field; paid reaction differs only in the attackHit accuracy/need numbers that one Precision stack moves. HP, RNG counters and the damage sequence are identical. Re-captured 2026-11-14 for the W25-B Core content ruling (Backstep 2 SP, Jab as a reaction, doubled spell damage, shortbow at Reach, ward.poisePerStack): with every one of those changes undone (the non-test files at 7f0037a270) the capture reproduces exactly; with them applied every event, RNG and continuation hash is identical and only profile.hash, profile.runtimeHash, the snapshot digests and the run hashes that embed the profile pin and the fight's rules (fixCoreRules.ward.poisePerStack) moved. Re-captured 2026-11-14 for batch 1 (Broken, the attacker-side card face, planned follow-ups): with `poise.breakRule` removed from the fight's rules (poise: { drain: 'prevented' }) every events and continuation hash of all four scenarios reproduces the previous capture exactly, so the Broken rule is what moved the paid delayed charge and ordered enemy plan event streams; paid reaction's events were already identical. Its card preview hash moved only because the face is now the attacker-side number (faceValue/hitDamages/totalDamage 9 -> 12, the old value is the per-target quote) and the preview row gained perTargetPoise; verified by dumping the preview values on origin/dev and on this tree and diffing them. Every other moved field is profile.hash, profile.runtimeHash or a snapshot / run digest that embeds the profile pin and the fight's rules (fixCoreRules.poise.breakRule, brokenDamageMultiplier). RNG counters are identical in all four. Re-captured 2026-11-14 for the batch 1 fix pass's last runtime-hash move (0fa919c485, after the previous capture) and the review fixes after it (Broken keeps Poise empty on a Ward/Barrier gain, the upgrade's otherEnemy target, thisTurn boost clearing): only profile.hash, profile.runtimeHash and the snapshot and save stored/loaded digests that embed the profile pin moved; every events, continuation and RNG value of all four scenarios is identical to the previous capture, which is the proof that no behaviour moved. Re-captured 2026-11-15 for the ops.json row that registers changeAttribute (B2-FIX-2): it moves games/ashenspire/game.lock.json, so only profile.hash, profile.runtimeHash and the snapshot and save stored/loaded digests that embed the profile pin moved; every events, continuation and RNG value of all four scenarios is identical to the previous capture (verified by diffing the recomputed scenarios against the fixture field by field)."
+  "recapture": "Re-captured 2026-11-14 for the three current-profile scenarios only, after the 11-card Core starter decks (shuffle counters and event/snapshot hashes move with the deck). Old content (7b6ac01016) reproduced the previous capture exactly; historical action policy is unchanged. Re-captured again 2026-11-14 for exact hits and intents (accuracy.hitRoll, perception.roll): the same three scenarios built with those keys absent (withLegacyDefaults in tests/legacyHitRules.mjs) reproduced the previous capture on every behavioural field; only profile.hash, profile.runtimeHash and the snapshot digests that embed them moved. The historical action policy scenario moved too, because a fight made from an old profile (which carries no fixCoreRules block) takes the current default rules; with the keys absent it reproduces the previous capture exactly. Re-captured 2026-11-14 for shown = dealt (W2-F): card faces, intents and reaction prompts carry the HP lost instead of the raw hit, and an offensive stance grants no Precision while accuracy.hitRoll is false. Verified on the previous engine (1f0a16daee): with the display fields (intentPreview, incomingHp, hitDamages, totalDamage, projectedDamage, hpLossBounds, the card preview values) and every Precision status, receipt and key removed, the paid delayed charge, ordered enemy plan and historical action policy scenarios reproduce the previous capture on every field; paid reaction differs only in the attackHit accuracy/need numbers that one Precision stack moves. HP, RNG counters and the damage sequence are identical. Re-captured 2026-11-14 for the W25-B Core content ruling (Backstep 2 SP, Jab as a reaction, doubled spell damage, shortbow at Reach, ward.poisePerStack): with every one of those changes undone (the non-test files at 7f0037a270) the capture reproduces exactly; with them applied every event, RNG and continuation hash is identical and only profile.hash, profile.runtimeHash, the snapshot digests and the run hashes that embed the profile pin and the fight's rules (fixCoreRules.ward.poisePerStack) moved. Re-captured 2026-11-14 for batch 1 (Broken, the attacker-side card face, planned follow-ups): with `poise.breakRule` removed from the fight's rules (poise: { drain: 'prevented' }) every events and continuation hash of all four scenarios reproduces the previous capture exactly, so the Broken rule is what moved the paid delayed charge and ordered enemy plan event streams; paid reaction's events were already identical. Its card preview hash moved only because the face is now the attacker-side number (faceValue/hitDamages/totalDamage 9 -> 12, the old value is the per-target quote) and the preview row gained perTargetPoise; verified by dumping the preview values on origin/dev and on this tree and diffing them. Every other moved field is profile.hash, profile.runtimeHash or a snapshot / run digest that embeds the profile pin and the fight's rules (fixCoreRules.poise.breakRule, brokenDamageMultiplier). RNG counters are identical in all four. Re-captured 2026-11-14 for the batch 1 fix pass's last runtime-hash move (0fa919c485, after the previous capture) and the review fixes after it (Broken keeps Poise empty on a Ward/Barrier gain, the upgrade's otherEnemy target, thisTurn boost clearing): only profile.hash, profile.runtimeHash and the snapshot and save stored/loaded digests that embed the profile pin moved; every events, continuation and RNG value of all four scenarios is identical to the previous capture, which is the proof that no behaviour moved. Re-captured 2026-11-15 for the ops.json row that registers changeAttribute (B2-FIX-2): it moves games/ashenspire/game.lock.json, so only profile.hash, profile.runtimeHash and the snapshot and save stored/loaded digests that embed the profile pin moved; every events, continuation and RNG value of all four scenarios is identical to the previous capture (verified by diffing the recomputed scenarios against the fixture field by field). Re-captured 2026-11-18 for Event Copy on the current balance rules. Only the three current profile hashes and their snapshot and save hashes moved. Runtime hashes, events, RNG, continuations and the complete historical scenario are identical."
 }

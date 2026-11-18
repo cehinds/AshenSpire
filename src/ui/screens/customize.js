@@ -1,4 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
+import { CreateStepArrivalGuard } from '../stepArrivalGuard.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
@@ -404,6 +405,7 @@ export function mountCustomize(app, {
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
+  const stepArrival = CreateStepArrivalGuard();
   const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
   if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
@@ -1219,7 +1221,7 @@ export function mountCustomize(app, {
           // Hew — is the named card behind the fold.
           const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
           const summary = preview.cards.length
-            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+            ? t('creation.startingCards.adds', { count: preview.total, plural: preview.total === 1 ? '' : 's' })
               + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
             : 'Adds no combat cards with the other hand as it stands';
           const fold = el('details', { class: 'cc-starting-fold' });
@@ -1484,7 +1486,7 @@ export function mountCustomize(app, {
     ]);
     if (!inspection) {
       bindCardInspection(card, {
-        title: `${name} — ${cls.name}`,
+        title: `${name} (${cls.name})`,
         identity: 'creation-character-summary',
         open: opener => {
           const explained = resources.filter((entry) => entry.explanation);
@@ -1496,7 +1498,7 @@ export function mountCustomize(app, {
             ])),
           ]);
           return openCardInspection({
-            title: `${name} — ${cls.name}`,
+            title: `${name} (${cls.name})`,
             card: characterSummaryCard(run, projection, true),
             details,
             opener,
@@ -2031,8 +2033,9 @@ export function mountCustomize(app, {
       const to = creationStep(categories, current, 1);
       return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
     }));
-    next.addEventListener('click', () => {
+    next.addEventListener('click', (event) => {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
+      stepArrival.arrived(event.timeStamp);
       advanceFrom(current);
     });
     refreshCreationNavigation();
@@ -2063,9 +2066,10 @@ export function mountCustomize(app, {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
   });
-  back.addEventListener('click', () => {
+  back.addEventListener('click', (event) => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     if (plan.back === 'leave') return onBack();
+    stepArrival.arrived(event.timeStamp);
     activate(plan.previous);
     queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
   });
@@ -2074,7 +2078,9 @@ export function mountCustomize(app, {
     close.addEventListener('click', onBack);
   }
   let startPending = false;
-  start.addEventListener('click', async () => {
+  start.addEventListener('click', async (event) => {
+    // Review rendering can delay delivery of the second press. Compare when the presses happened.
+    if (!stepArrival.allows(event.timeStamp)) return;
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
     try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),

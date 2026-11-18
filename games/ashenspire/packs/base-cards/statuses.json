@@ -193,7 +193,7 @@
       "icon": "target",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5\u201395%. Area actions bypass Veil."
+      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped between 5% and 95%. Area actions bypass Veil."
     },
     {
       "id": "base.retain-block",

@@ -2456,7 +2456,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             nm.classList.add('nm-inspect');
             nm.setAttribute('role', 'button');
             nm.tabIndex = 0;
-            nm.setAttribute('aria-label', `${def.name} — the full read`);
+            nm.setAttribute('aria-label', `${def.name}: the full read`);
           }
           const openThisRead = (event) => {
             event.stopPropagation();
