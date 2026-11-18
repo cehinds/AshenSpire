@@ -1,4 +1,4 @@
-# Map relics and the Teleport Scroll, 2026-11-18 (proposal for owner approval)
+# Map relics and the Teleport Scroll, 2026-11-18 (approved by the owner)
 
 Owner request: relics that change how the map is travelled, which nodes come next or appear, and the map fog, plus Teleport Scroll cards. This builds on feature/MapRouteSpread (11 depths, V-spread branches, rest gaps of 2–5).
 
@@ -39,8 +39,9 @@ Owner request: relics that change how the map is travelled, which nodes come nex
 - **On the map (open):** should it also be usable outside a fight, to hop lanes?
 - **After use (open):** is the card spent, removed from the deck for the run, or does it only Exhaust for that fight?
 
-## Open choices for the owner
-1. Approve the relic list, or name which to cut or add.
-2. Teleport Scroll after use: removed from the deck, or Exhaust only (back next fight)?
-3. Teleport Scroll on the map, outside a fight: allowed, or battle only?
-4. Can a teleport cross into another boss branch? (Proposed: no, own branch only, so the V rule holds.)
+## Owner decisions (2026-11-18)
+1. All 14 relics are approved; tuning comes later.
+2. A Teleport Scroll is **removed from the deck** after use (one escape per scroll).
+3. The scroll works **on the map too**: outside a fight it hops to a node on the same depth or 1 depth ahead.
+4. A teleport (scroll or traversal relic) **may enter any branch, but only before the pre-boss rest depth**. The pre-boss rest and its boss stay reachable only from their own branch, so the "no other boss visible from the pre-boss rest" rule still holds. The node picker shows the eligible nodes in other branches only while you are choosing.
+5. Order: build after feature/MapRouteSpread merges into dev.
