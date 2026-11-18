@@ -125,3 +125,9 @@ Existing effects that count as drawbacks:
 ## 11. Saves across builds (owner, 2026-11-18)
 - A JSON toggle (default **on** for development) lets a new build delete old saves rather than migrate them. The owner starts a new save each build.
 - Set the toggle **off** before any public release, so saves are kept.
+
+## 12. Follow-ups (owner, 2026-11-18)
+- **Retreat hold:** an enemy sent back by Retreat or a push stays in the back row through its next turn. After that the normal "empty front row pulls the back row forward" rule applies.
+- **Perception:** disabled for now through its JSON toggle (no track, XP or intent bonus). If it is re-enabled later, it rolls once per enemy per fight, and the roll sets the **percent chance of seeing each intent** that fight.
+- **Hand base:** 5 + floor(INT/4), not 4. Base 4 would leave a starting character with 4 cards, against the owner's 5–6 target. *(decided, to confirm)*
+- **Armaments to re-tune** (ratings used to tell these pairs apart): greatsword vs warhammer, halberd vs warhammer, buckler vs kite shield, buckler vs round shield, round shield vs kite shield, Dusk Chime vs Blight Rod.
