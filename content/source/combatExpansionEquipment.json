@@ -440,6 +440,24 @@
       "traits": {
         "conductive": true
       }
+    },
+    "pike": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "frost": 1
+      }
+    },
+    "scythe": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "reapersCrescent": {
+      "traits": {
+        "conductive": true
+      }
     }
   },
   "enemies": {

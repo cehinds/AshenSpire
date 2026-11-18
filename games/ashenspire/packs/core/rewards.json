@@ -29,7 +29,10 @@
         "flamberge",
         "rapier",
         "estoc",
-        "duelistsFoil"
+        "duelistsFoil",
+        "pike",
+        "scythe",
+        "reapersCrescent"
       ]
     },
     "shields": {

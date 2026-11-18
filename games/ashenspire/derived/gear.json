@@ -3213,5 +3213,170 @@
         "max": 5
       }
     }
+  },
+  {
+    "id": "pike",
+    "name": "Pike",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "spear",
+      "retreat"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
+    }
+  },
+  {
+    "id": "scythe",
+    "name": "Scythe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "polearm",
+      "retreat"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  },
+  {
+    "id": "reapersCrescent",
+    "name": "Reapers_Crescent",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "polearm",
+      "retreat"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
+    }
   }
 ]

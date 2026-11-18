@@ -1095,5 +1095,59 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "pike",
+    "name": "Pike",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "spear",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "pike"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "scythe",
+    "name": "Scythe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "polearm",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "scythe"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "reapersCrescent",
+    "name": "Reapers_Crescent",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "polearm",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "reapersCrescent"
+    },
+    "material": "metal",
+    "range": "reach"
   }
 ]

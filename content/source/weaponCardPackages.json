@@ -701,5 +701,62 @@
         "artCardId": "progression-breaker-s-toll"
       }
     }
+  },
+  {
+    "weaponId": "pike",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "impale"
+      ],
+      "learnableArts": [
+        "kickOff",
+        "wardingLunge"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "impale"
+      }
+    }
+  },
+  {
+    "weaponId": "scythe",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "crimsonCleave"
+      ],
+      "learnableArts": [
+        "hewingArc",
+        "ironSkin"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "crimsonCleave"
+      }
+    }
+  },
+  {
+    "weaponId": "reapersCrescent",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "bloodhuntersStrike"
+      ],
+      "learnableArts": [
+        "sweepingBlow",
+        "hemorrhage"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "bloodhuntersStrike"
+      }
+    }
   }
 ]

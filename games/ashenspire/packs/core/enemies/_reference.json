@@ -3723,6 +3723,39 @@
         "stagger"
       ],
       "range": "melee"
+    },
+    "gear:pike": {
+      "name": "Pike",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "spear",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:scythe": {
+      "name": "Scythe",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "polearm",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:reapersCrescent": {
+      "name": "Reapers Crescent",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "polearm",
+        "retreat"
+      ],
+      "range": "reach"
     }
   },
   "relics": {

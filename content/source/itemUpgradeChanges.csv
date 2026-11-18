@@ -197,3 +197,14 @@ armament/zweihander,1,upgrade:cost:smithing-stone,1
 armament/zweihander,1,card:attack:effect:damage,3
 armament/zweihander,1,card:guard:effect:block,3
 armament/zweihander,1,card:technique:effect:block,2
+armament/pike,1,upgrade:cost:smithing-stone,1
+armament/pike,1,card:attack:effect:damage,3
+armament/pike,1,card:guard:effect:block,3
+armament/scythe,1,upgrade:cost:smithing-stone,1
+armament/scythe,1,card:attack:effect:damage,3
+armament/scythe,1,card:guard:effect:block,3
+armament/scythe,1,card:technique:effect:block,2
+armament/reapersCrescent,1,upgrade:cost:smithing-stone,1
+armament/reapersCrescent,1,card:attack:effect:damage,3
+armament/reapersCrescent,1,card:guard:effect:block,3
+armament/reapersCrescent,1,card:technique:effect:block,2

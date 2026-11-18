@@ -413,6 +413,9 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
 | gear:ashenClaymore | Ashen Claymore | rightHand | weapon | uncommon | greatsword, heavy, stagger |
 | gear:zweihander | Zweihander | rightHand | weapon | rare | greatsword, heavy, stagger |
+| gear:pike | Pike | rightHand | weapon | common | spear, retreat |
+| gear:scythe | Scythe | rightHand | weapon | uncommon | polearm, retreat |
+| gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm, retreat |
 
 ## Relics (relic:)
 
