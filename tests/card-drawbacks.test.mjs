@@ -316,6 +316,8 @@ test('a ranked ability card is offered only drawback-removal steps, and drop-Exh
     for (const pile of Object.values(combat.piles)) pile.length = 0;
     for (let i = 0; i < 6; i += 1) combat.piles.draw.push({ instanceId: `d${i}`, cardId: 'core.defend', upgraded: false });
     combat.piles.hand.push({ instanceId: 'plain', cardId, upgraded: false }, { instanceId: 'eased', cardId, upgraded: true, upgradeSteps: [{ k: 'fx', fx: 'unexhaust' }] });
+    // Core's 70% enemy HP tiers (owner, 2026-11-18) leave a 12-HP soldier these damage cards can kill mid-test; keep it standing.
+    Object.assign(combat.enemies[0], { hp: 500, maxHp: 500 });
     combat.player.stamina = combat.player.maxStamina = 40;
     combat.player.mana = combat.player.maxMana = 40;
     for (const id of ['plain', 'eased']) {
