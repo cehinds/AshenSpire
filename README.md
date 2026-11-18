@@ -1,5 +1,19 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Concept enemy art and rarity banners
+
+[Download the verified test build](https://github.com/cehinds/AshenSpire/actions/runs/44412553193/artifacts/14477284208)
+
+Combat cards show rarity on the cost-banner trim. A dormant catalog identifies 32 enemy sprite concepts for later integration.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile banner trim](docs/preview/features/concept-enemy-art/mobile.png) | ![Desktop banner trim](docs/preview/features/concept-enemy-art/desktop.png) | ![Wide banner trim](docs/preview/features/concept-enemy-art/wide.png) | ![Tablet banner trim](docs/preview/features/concept-enemy-art/tablet.png) |
+
+[Capture details](docs/preview/features/concept-enemy-art/capture.md)
+<!-- feature-preview:end -->
+
 
 
 
