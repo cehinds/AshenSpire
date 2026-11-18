@@ -708,16 +708,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "impale"
+        "twinPrick"
       ],
       "learnableArts": [
-        "kickOff",
-        "wardingLunge"
+        "impale",
+        "kickOff"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "impale"
+        "artCardId": "twinPrick"
       }
     }
   },
