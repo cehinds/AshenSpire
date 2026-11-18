@@ -101,7 +101,8 @@ function SpellPoiseFinish(ctx, source, target, carrier, receipt) {
   const m = SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
   if (!(m > 1)) return receipt;
   const net = Math.max(0, (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0) - (receipt.poiseSpared || 0));
-  const left = Math.max(0, Math.floor(target?.persistentPoise?.value || 0) - net);
+  // A Defend target's Poise floor (receipt.defendPoiseFloor) still holds against the extra.
+  const left = Math.max(0, Math.floor(target?.persistentPoise?.value || 0) - net - (receipt.defendPoiseFloor || 0));
   const extra = Math.max(0, Math.min(Math.floor((m - 1) * net), left));
   if (extra > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
   return receipt;
