@@ -2295,6 +2295,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
+    position: { floor: run.floor, floors: Math.max(0, ...Object.values(run.mapGraph?.nodes || {}).map((n) => n.floor || 0)), act: run.actNumber },
     characterMultiplier: configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1,
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
