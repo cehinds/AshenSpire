@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { bandsFight, pairOf } from './helpers/bands-fight.mjs';
-import { ElementPushPull } from '../src/engine/elementIdentity.js';
+import { SetEnemyRow } from '../src/engine/bandRows.js';
 
 // Owner, 2026-11-18: Force no longer pushes by itself. The push is the Retreat tag's moveEngagement: Gale Push carries it, Battering Gale does not.
 const galeFight = (opts = {}) => {
@@ -35,24 +35,13 @@ test('a Force card with no Retreat tag (Battering Gale) leaves the hit enemy in 
   assert.equal(combat.rangeState.engagements[pairOf(front.id)], 0, 'still in melee');
 });
 
-test('a pull brings a back-row enemy to the front row; a push of a back-row enemy changes nothing', () => {
-  const combat = galeFight();
-  const [, back] = combat.enemies;
-  assert.equal(back.row, 'back');
-  ElementPushPull(combat, combat.player, back, { tags: ['school:force'] });
-  assert.equal(back.row, 'back');
-  ElementPushPull(combat, combat.player, back, { tags: ['school:force', 'pull'] });
-  assert.equal(back.row, 'front');
-  assert.equal(combat.rangeState.engagements[pairOf(back.id)], 0, 'pulled into melee');
-});
-
-test('a pulled enemy keeps its planned reach move: it still fires on its turn', () => {
+test('an enemy moved to the front keeps its planned reach move: it still fires on its turn', () => {
   const combat = bandsFight({ enemyIds: ['graveWisp', 'wanderingSoldier'] });
   const wisp = combat.enemies[0];
   assert.equal(wisp.row, 'back');
   const planned = wisp.intent?.moveId;
   assert.equal(wisp.intent.kind, 'attack');
-  ElementPushPull(combat, combat.player, wisp, { tags: ['pull'] });
+  SetEnemyRow(combat, wisp, 'front', 'test'); // Force no longer pulls (owner 2026-11-18); any row move keeps the planned intent
   assert.equal(wisp.row, 'front');
   assert.equal(wisp.intent.moveId, planned, 'the intent is kept');
   combat.enemies[1].skipNextTurn = true; // only the pulled enemy acts

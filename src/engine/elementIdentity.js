@@ -11,8 +11,7 @@
 // Headless: no document, window or timers.
 import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
 import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
-import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
-import { BandsActive, SetEnemyRow } from './bandRows.js';
+import { BandsActive } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
 
@@ -177,26 +176,9 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
     Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
-  // Force no longer pushes by itself (owner, 2026-11-18); only a card that says pull still pulls. A push is the Retreat tag's moveEngagement.
-  if (element === 'force' && target.alive && !carrier?.elementChain && cardPulls(carrier)) ElementPushPull(ctx, source, target, carrier);
+  // Force has no built-in push or pull (owner, 2026-11-18): Retreat is its own tag, a moveEngagement effect.
 }
 
-const cardPulls = carrier => (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
-
-/** Force: a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
-export function ElementPushPull(ctx, source, target, carrier) {
-  if (!ctx.rangeState?.policy?.enabled || !source || !target) return;
-  const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
-  if (!sourceKey || !targetKey) return;
-  const pull = (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
-  const band = engagementBand(ctx.rangeState, sourceKey, targetKey);
-  if (pull ? band === 1 : band === 0) {
-    ctx.rangeState = movedEngagementState(ctx.rangeState, sourceKey, targetKey, pull ? -1 : 1);
-    ctx.emit?.('combatEngagementMoved', { sourceId: source.id, targetId: target.id, bands: pull ? -1 : 1, reason: 'force' });
-  }
-  // Rows (W25-BANDS rule 6): a push sends a front enemy to the back row, a pull brings a back enemy to the front. The row move sets its own pair bands.
-  if (BandsActive(ctx) && target.kind === 'enemy' && target.alive) SetEnemyRow(ctx, target, pull ? 'front' : 'back', 'force');
-}
 
 /**
  * A Poise break of `target` by `attacker`. One entry point, so the Poise-break rule can call it too. `hit` is the hit that
