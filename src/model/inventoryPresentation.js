@@ -4,7 +4,7 @@
 
 import { ownership, slotHand } from './loadout.js';
 import { learnedClassIds } from './classLibraryState.js';
-/** The stored label a plainly equipped inventory row carries; the card face reads its words from uiStrings (deckEditor.tag.equipped). */
+/** The stored label a plainly equipped inventory row carries; the card face reads its words from uiStrings (deckEditor.tag.equipped) when `equippedPlain` is set. */
 export const EQUIPPED_LABEL = 'Equipped';
 
 const ARMAMENT_CATEGORIES = Object.freeze({
@@ -40,7 +40,7 @@ function countedRows(ids, registry, category, { equipped = false } = {}) {
       name: item.name,
       category,
       count,
-      equippedLabels: equipped ? [EQUIPPED_LABEL] : [],
+      equippedLabels: equipped ? [EQUIPPED_LABEL] : [], equippedPlain: !!equipped,
       item,
     };
   }).filter(Boolean);
