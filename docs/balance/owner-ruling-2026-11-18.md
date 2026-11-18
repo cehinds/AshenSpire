@@ -173,3 +173,6 @@ Existing effects that count as drawbacks:
   - Greatsword 6 → 2, Halberd 6 → 2, Warhammer 9 → 3, Cinder Axe 6 → 2, Parry Dagger 6 → 2, Wyrmhorn Staff 9 → 3, Battleaxe stays 1.
   - Weapons at 0 (Straight Sword, Frost Spear, daggers and so on) stay at 0.
   - Shields and armour are not weapons and keep their Poise. *(decided)*
+- **Equipment for every class (owner):** every weapon and armour piece can be found, equipped and used by any class, with no class restriction left.
+  - When a reward, shop or armament offer picks an item, each pick comes from the player's class-themed items 75% of the time and from the whole pool 25% of the time.
+  - Each pick rolls separately; a class with no themed item left falls back to the whole pool. *(decided)*
