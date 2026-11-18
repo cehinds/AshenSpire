@@ -244,3 +244,24 @@ test('staves and sceptres grant 1 Ward and tomes 2 at the start of each turn, by
   dispatch(world.combat, { type: 'endTurn' });
   assert.ok((world.combat.player.statuses.ward?.stacks || 0) >= 1, `the next turn start applied Ward (had ${before})`);
 });
+
+// Owner, 2026-11-18 (ruling 15): always-on gear is part of the baseline face (black); a triggered effect that changes a number turns it green.
+import { cardFaceLines } from '../src/model/cardFaceText.js';
+const faceClasses = (world, cardId) => {
+  const id = addCard(world, cardId);
+  const preview = previewCard(world.combat, id, world.enemy.id);
+  const line = cardFaceLines(registries.cards.get(cardId), preview, registries, null).find(row => row.kind === 'damage');
+  return [...line.html.matchAll(/<span class="(val[^"]*)">(\d+)<\/span>/g)].map(match => `${match[1].replace('val', '').trim() || 'black'}:${match[2]}`);
+};
+test('the face baseline holds always-on gear only; a first-attack trigger turns the number green', () => {
+  const world = build({ right: 'dagger' });
+  const rules = world.combat.player.itemProps.cardRules;
+  rules.push({ selector: 'anyAttack', arg: null, conds: [{ name: 'first', arg: 'fight' }], stat: 'damage', amount: 8, mode: 'add', source: 'handCrossbow' });
+  const faceRules = previewCard(world.combat, addCard(world, 'core.strike'), world.enemy.id).faceRules;
+  assert.ok(faceRules.gearRules.length && faceRules.gearRules.every(rule => !GearRuleTriggered(rule)), 'triggered rules are not in the baseline');
+  assert.ok(!faceRules.gearRules.some(rule => rule.source === 'handCrossbow'));
+  const lit = faceClasses(world, 'core.strike');
+  assert.ok(lit.some(entry => entry.startsWith('up')), `a first-attack bonus is a triggered effect: ${lit}`);
+  const calm = build({ right: 'dagger' });
+  assert.ok(faceClasses(calm, 'core.sweep').every(entry => entry.startsWith('black')), 'with nothing triggered the face is black');
+});

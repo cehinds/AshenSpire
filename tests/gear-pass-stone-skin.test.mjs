@@ -42,17 +42,32 @@ test('Block an Earth card laid is not bypassed by a built-in Pierce', () => {
   assert.ok(profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed > 0);
 });
 
-test('each Stone Skin stack cuts the bypass of any Pierce source by 1, to a floor of 0', () => {
+// Owner, 2026-11-18 (ruling 21): 1 Stone Skin stack cancels 1 Pierce stack and both are spent.
+const piercing = stacks => ({ tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], gear: { pierce: stacks } });
+function spend(skin, pierce) {
+  const { combat, enemy, player } = world();
+  enemy.block = 50;
+  if (skin) applyStatus(combat, enemy, 'stoneHide', skin, enemy);
+  const quoted = profileDamageReceipt(combat, player, enemy, 40, piercing(pierce));
+  assert.equal(enemy.statuses.stoneHide?.stacks || 0, skin, 'a quote spends nothing');
+  applyAttackDamage(combat, player, enemy, 40, piercing(pierce).tags, piercing(pierce));
+  return { bypass: quoted.pierceBypassed, left: enemy.statuses.stoneHide?.stacks || 0 };
+}
+
+test('Pierce 3 against Stone Skin 2 leaves Pierce 1 and no Stone Skin', () => {
+  assert.deepEqual(spend(2, 3), { bypass: 1, left: 0 });
+});
+
+test('Pierce 3 against Stone Skin 4 leaves no Pierce and 1 Stone Skin', () => {
+  assert.deepEqual(spend(4, 3), { bypass: 0, left: 1 });
+});
+
+test('with no Stone Skin the whole Pierce passes and nothing is spent; a tagged or Lightning hit meets Stone Skin the same way', () => {
+  assert.deepEqual(spend(0, 3), { bypass: 3, left: 0 });
   const { combat, enemy, player } = world();
   const open = profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed;
-  assert.ok(open >= 2);
   applyStatus(combat, enemy, 'stoneHide', 1, enemy);
   assert.equal(profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed, open - 1);
-  const tagged = { tags: ['camp:physical', 'maneuver:attack', 'classification.attack', 'pierce'] };
-  const t0 = PierceBypass(combat, { ...enemy, statuses: {} }, {}, tagged, 40, 40);
-  assert.equal(PierceBypass(combat, enemy, {}, tagged, 40, 40), Math.max(0, t0 - 1));
-  applyStatus(combat, enemy, 'stoneHide', 50, enemy);
-  assert.equal(profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed, 0);
 });
 
 test('preview equals play: the quoted HP loss is what the hit then costs', () => {

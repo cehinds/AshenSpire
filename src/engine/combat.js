@@ -1,4 +1,5 @@
 import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp } from './gearHooks.js';
+import { GearRuleTriggered } from '../model/gearEffects.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
@@ -2533,7 +2534,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     // The rules a face outside combat would read for this player: the profile pin and the always-on attributes (no fight boosts). A live number is
     // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
-    ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes } } : {}),
+    ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes, gearRules: (combat.player?.itemProps?.cardRules || []).filter(rule => !GearRuleTriggered(rule)), gearState: { weaponType: combat.player?.itemProps?.mainWeaponType } } } : {}),
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),

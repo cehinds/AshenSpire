@@ -434,6 +434,9 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   const hpBefore = target.hp;
   target.hp -= receipt.hpLoss;
+  // Stone Skin spent against the Pierce this hit carried (the quote spends nothing; the landed hit does).
+  const skinStatus = receipt.skinSpent > 0 ? fixCorePierceRules(fixCoreRules(ctx, target)).skinStatus : null;
+  if (skinStatus) statuses.removeStatus(ctx, target, skinStatus, { amount: receipt.skinSpent, reason: 'consumed' });
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),

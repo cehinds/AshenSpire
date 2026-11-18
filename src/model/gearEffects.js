@@ -228,6 +228,16 @@ export function GearHitRiders(rules, carrier, target, state = {}) {
   return { applies, removes };
 }
 
+/**
+ * GearAlwaysOn(registries, run) -> { rules, state }: the card rules a face outside combat reads (owner, 2026-11-18, ruling 15). Always-on gear is part of the
+ * baseline face and prints black; a triggered rule (stance, first play, target) only exists in the fight, where it colours the number it changes.
+ */
+export function GearAlwaysOn(registries, run) {
+  if (!run?.loadout || !registries) return { rules: [], state: {} };
+  const summary = GearSummary(registries, run.loadout, run.class);
+  return { rules: summary.cardRules.filter(rule => !GearRuleTriggered(rule)), state: { weaponType: summary.mainWeaponType } };
+}
+
 // ---- text, generated from the data ---------------------------------------------------------------------------------------------------------------
 
 const humanize = id => String(id).replace(/([a-z\d])([A-Z])/g, '$1 $2').toLowerCase();

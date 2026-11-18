@@ -38,7 +38,7 @@ export function isPierceHit(profile, carrier) {
  * hit too, except that it does not bypass Block laid by an Earth card (pierce.earthSource): that part stays soaked. Each Stone Skin stack
  * (pierce.skinStatus) cuts the bypass by 1, whatever the Pierce source. A reaction carries no Pierce.
  */
-export function PierceBypass(ctx, target, profile, carrier, total, blockSoak) {
+export function PierceBypass(ctx, target, profile, carrier, total, blockSoak, out = null) {
   if (carrier?.combatReaction) return 0;
   const rules = fixCorePierceRules(fixCoreRules(ctx, target));
   // Gear: +N Pierce passes N more Block per hit (Stone Skin still cuts it); Ignore N Block passes N Block regardless.
@@ -50,8 +50,12 @@ export function PierceBypass(ctx, target, profile, carrier, total, blockSoak) {
   let bypass = tagged || builtIn ? Math.floor(rules.blockBypassFraction * total) : 0;
   if (!tagged && builtIn && rules.earthSource) bypass = Math.min(bypass, Math.max(0, blockSoak - Math.min(target?.earthBlock || 0, target?.block || 0)));
   bypass += flatPierce;
+  // Owner, 2026-11-18 (ruling 21): each Stone Skin stack cancels one Pierce stack and both are spent (Pierce 3 vs Stone Skin 2 leaves Pierce 1 and no Stone Skin;
+  // Pierce 3 vs Stone Skin 4 leaves no Pierce and 1 Stone Skin). `out.spent` is what the landed hit takes off the target.
   const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
-  return Math.max(0, bypass - skin) + ignored;
+  const spent = Math.min(bypass, skin);
+  if (out) out.spent = spent;
+  return bypass - spent + ignored;
 }
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
@@ -152,6 +156,7 @@ export function SideDamageMultiplier(effects, source) {
   return Number.isFinite(value) && value >= 0 ? value : 1;
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
+  const pierceOut = { spent: 0 };
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
@@ -305,7 +310,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
     blockSpent = blockSoak;
-    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak);
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     const afterBlock = total - blocked;
@@ -323,7 +328,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
     blockSpent = blockSoak;
-    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak);
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
@@ -350,7 +355,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = PierceBypass(ctx, target, profile, carrier, physical + magical, blockSpent);
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, physical + magical, blockSpent, pierceOut);
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
@@ -415,7 +420,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  return { raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
+  return { skinSpent: pierceOut.spent, raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
