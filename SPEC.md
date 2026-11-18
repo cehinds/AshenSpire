@@ -454,6 +454,10 @@ Events are emitted by executed actions. Closed list: `EVENTS` in `src/model/sche
 
 Two schemas, one home each (never restated as values): `RUN_SCHEMA_VERSION` in `src/model/state.js`, `META_SCHEMA_VERSION` in `src/engine/save.js`.
 
+#### Dev toggle: a new build clears old run saves (owner, 2026-11-18)
+
+`content/config/ui/presentation/saves.json` `behavior.discardOnNewBuild` (dev default `true`). When on, boot compares the build id stored in `sote_build_stamp_v1` with this build's id (`BUILD_VERSION`, plus `+<source digest>` once the build is stamped; `src/engine/buildWipe.js`). If they differ, or run saves exist with no stamp, every run slot key (`sote_run_v1`, `sote_run_v1_s2`, ...) is deleted instead of loaded or migrated and the title shows "Saves from an older build were cleared." Kept: the profile (settings, unlocks, history), its backup and the archive drawer. When off, nothing is deleted and the migration path below is unchanged; the stamp is still written. It MUST be `false` before any public release; `tests/save-wipe.test.mjs` fails when it is `true` on the `release` or `main` branch.
+
 #### The run
 
 Key `sote_run_v1`; **three slots, one run each** (`SLOTS`, `save.js`). The persisted field list is data: `RUN_SHAPE` in `model/state.js`, checked by `validateRunShape()`; a floor, not a whitelist (unlisted keys pass through). Instances by id only (§3.3).
