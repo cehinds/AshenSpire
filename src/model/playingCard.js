@@ -285,7 +285,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
-        if (effect.target === 'self') { text = effect.bands < 0 ? 'Advance' : 'Retreat'; break; }
+        if (effect.target === 'self') { text = effect.bands < 0 ? 'Advance' : 'Retreat: front-row foes step back'; break; }
         const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
         break;

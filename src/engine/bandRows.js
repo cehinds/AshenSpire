@@ -154,6 +154,14 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
   return false;
 }
 
+/** PlayerRetreat(ctx, entity): the player's Retreat (owner 2026-11-18): the Advance ends if there is one, and every living front-row enemy steps back (band +1). Works Advanced or not. */
+export function PlayerRetreat(ctx, entity) {
+  if (!BandsActive(ctx)) return false;
+  SetAdvanced(ctx, entity, false);
+  for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'front') SetEnemyRow(ctx, enemy, 'back', 'retreat');
+  return true;
+}
+
 const pieceTags = piece => [...(piece?.tags || []), ...(piece?.propertyTags || [])];
 /** HoldsRetreatWeapon(ctx, entity): true when a wielded weapon carries the rules' retreat tag. */
 export function HoldsRetreatWeapon(ctx, entity = ctx.player) {
