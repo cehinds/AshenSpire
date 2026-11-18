@@ -128,5 +128,14 @@
       "self.wisdom=+1"
     ],
     "text": "CON +2, WIS +1"
+  },
+  {
+    "id": "enemy.relic.inkVeil",
+    "name": "Ink_Veil",
+    "modifiers": [
+      "self.wisdom=+2",
+      "self.intelligence=+1"
+    ],
+    "text": "WIS +2, INT +1"
   }
 ]

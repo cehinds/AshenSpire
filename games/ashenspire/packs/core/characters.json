@@ -5261,5 +5261,110 @@
         }
       ]
     }
+  },
+  {
+    "id": "inkveilNautilus",
+    "name": "Inkveil_Nautilus",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "inkveilNautilus.inkJet",
+      "inkveilNautilus.veilCloud",
+      "inkveilNautilus.inkstorm",
+      "inkveilNautilus.shellGuard",
+      "inkveilNautilus.advance",
+      "inkveilNautilus.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "wyrmhornStaff"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.inkVeil"
+      }
+    ],
+    "presentation": {
+      "art": "inkveilNautilus",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "inkveilNautilus.veilCloud",
+      "poiseMax": 11,
+      "cardHints": {
+        "inkveilNautilus.inkJet": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "inkJet",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.veilCloud": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilCloud",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.inkstorm": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "inkstorm",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.shellGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellGuard",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "inkveilNautilus.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "magic",
+          "effect": "mana"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

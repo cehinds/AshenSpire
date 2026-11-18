@@ -1224,5 +1224,82 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "inkveilNautilus",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 5,
+      "intelligence": 4
+    },
+    "size": "large",
+    "name": "Inkveil Nautilus",
+    "hp": [
+      82,
+      88
+    ],
+    "poiseMax": 22,
+    "levelProfile": {
+      "min": 10,
+      "max": 11
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "inkJet": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "veilCloud": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 25,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 2
+          }
+        ]
+      },
+      "inkstorm": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 26,
+        "weight": 15,
+        "maxConsecutive": 1
+      },
+      "shellGuard": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "veilCloud",
+    "weaknesses": [
+      {
+        "to": "magic",
+        "effect": "mana"
+      },
+      {
+        "to": "piercing",
+        "effect": "damage"
+      }
+    ]
   }
 ]

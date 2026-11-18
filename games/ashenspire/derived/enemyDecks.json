@@ -5542,5 +5542,149 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "inkveilNautilus",
+    "name": "Inkveil_Nautilus",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "inkveilNautilus.inkJet",
+        "name": "Ink_Jet",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "inkJet",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "inkveilNautilus.veilCloud",
+        "name": "Veil_Cloud",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "insanity",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilCloud",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "inkveilNautilus.inkstorm",
+        "name": "Inkstorm",
+        "copies": 1,
+        "sp": 3,
+        "mp": 2,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 26
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "inkstorm",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "inkveilNautilus.shellGuard",
+        "name": "Shell_Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "inkveilNautilus.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "inkveilNautilus.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

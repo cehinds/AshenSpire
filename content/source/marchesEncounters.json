@@ -314,5 +314,23 @@
       "min": 3,
       "max": 4
     }
+  },
+  {
+    "id": "a2_eliteInkveil",
+    "enemies": [
+      "inkveilNautilus",
+      "mirrorScribe"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "marches",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
   }
 ]

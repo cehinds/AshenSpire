@@ -34,6 +34,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:graveWisp | Grave Wisp | minion |
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
+| enemy:inkveilNautilus | Inkveil Nautilus | elite |
 | enemy:knellcapSentinel | Knellcap Sentinel | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
 | enemy:livingArmor | Living Armour | minion |
@@ -298,6 +299,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
 | card:pallidOathCamel.pilgrimBurden | Pilgrim Burden | attack | 3 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:inkveilNautilus.inkJet | Ink Jet | attack | 1 | 1 | Deal {damage} damage. |
+| card:inkveilNautilus.veilCloud | Veil Cloud | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {insanity} Insanity to the enemy. |
+| card:inkveilNautilus.inkstorm | Inkstorm | attack | 3 | 2 | Deal {damage} damage. |
+| card:inkveilNautilus.shellGuard | Shell Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:inkveilNautilus.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:inkveilNautilus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 
@@ -369,3 +376,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
+| relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |

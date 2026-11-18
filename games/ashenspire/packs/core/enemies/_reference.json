@@ -105,6 +105,10 @@
       "name": "Husk Brute",
       "tier": "minion"
     },
+    "enemy:inkveilNautilus": {
+      "name": "Inkveil Nautilus",
+      "tier": "elite"
+    },
     "enemy:knellcapSentinel": {
       "name": "Knellcap Sentinel",
       "tier": "minion"
@@ -2552,6 +2556,66 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.inkJet": {
+      "name": "Ink Jet",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.veilCloud": {
+      "name": "Veil Cloud",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {insanity} Insanity to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.inkstorm": {
+      "name": "Inkstorm",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 2
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.shellGuard": {
+      "name": "Shell Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:inkveilNautilus.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3250,6 +3314,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.wisdom=+1"
+      ]
+    },
+    "relic:enemy.relic.inkVeil": {
+      "name": "Ink Veil",
+      "text": "WIS +2, INT +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.intelligence=+1"
       ]
     }
   }
