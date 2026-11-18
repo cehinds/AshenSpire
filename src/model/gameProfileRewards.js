@@ -12,6 +12,7 @@ import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
+import { carriedIds } from './loadout/ownership.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -285,6 +286,70 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   }
   if (!options.length) return null;
   const offer = { id: offerId, source: 'elite', options, takeCount: 1, taken: [], claimed: null };
+  (run.gameProfileRewardOffers ||= {})[offerId] = offer;
+  return offer;
+}
+/**
+ * ArmamentRewardRule(run, pool) -> the authored { chancePct, min, max } for a won fight of this pool (rewards.json
+ * `armamentReward.elite|boss`), or null when the profile has none for it (normal fights never drop one).
+ */
+export function ArmamentRewardRule(run, pool) {
+  const rule = gameContent(run, 'rewards')?.armamentReward?.[pool];
+  return rule && typeof rule === 'object' && pool !== 'normal' ? rule : null;
+}
+// Least-picked selection at each level (type, family, sub-kind): the candidates left are those whose group the offer has used
+// least, a random one of those groups wins ties, so weapons and armour, and different families, spread across the choices.
+function spreadPick(rng, candidates, chosen, levels) {
+  let rows = candidates;
+  for (const level of levels) {
+    const used = key => chosen.filter(row => level(row) === key).length;
+    const keys = [...new Set(rows.map(level))];
+    const fewest = Math.min(...keys.map(used));
+    const key = rng.pick('cardRewards', keys.filter(value => used(value) === fewest));
+    rows = rows.filter(row => level(row) === key);
+  }
+  return rng.pick('cardRewards', rows);
+}
+/**
+ * GameProfileArmamentOffer(registries, run, rng, { offerId, pool }) -> the armament choice a won elite (chancePct) or boss
+ * (guaranteed) lays out after its other spoils (owner 2026-11-18). A weapon or armour piece per choice, min..max of them,
+ * every one unowned (storage, equipped sets, bought armour) and from the same authored eligibility groups as the shop; the choices
+ * spread over weapon/armour and over weapon families and armour groups before repeating one. Rolled once per offerId on the reward
+ * stream and saved on the run like any offer, so a reload shows the same door. Returns null (nothing stored) when the profile has no
+ * rule for the pool, the chance roll fails, or nothing eligible is left. Claiming is the ordinary claimGameProfileReward.
+ */
+export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool = 'elite' } = {}) {
+  if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
+  if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
+  const rule = ArmamentRewardRule(run, pool);
+  if (!rule || !gameModule(run, 'equipment')) return null;
+  const chance = Number.isFinite(rule.chancePct) ? rule.chancePct : 100;
+  if (chance <= 0 || (chance < 100 && rng.int('cardRewards', 1, 100) > chance)) return null;
+  const rules = gameContent(run, 'rewards'), available = pools(registries, run);
+  const owned = new Set([...carriedIds(run.loadout), ...(run.loadout?.boughtArmour || []).map(row => row?.id)]);
+  const armourGroupOf = new Map();
+  for (const groupId of rules.eligibility?.armor?.groups || []) for (const member of rules.equipmentGroups?.[groupId]?.members || []) armourGroupOf.set(member, groupId);
+  const storageFull = (run.loadout?.storage || []).length >= (registries.balance.equipment?.storageSlots ?? 8);
+  const candidates = [];
+  if (!storageFull) for (const id of available.weapons) {
+    const row = (registries.equipment.armaments || []).find(item => item.id === id);
+    if (row && !owned.has(id)) candidates.push({ kind: 'weapons', id, type: 'weapon', family: `weapon:${row.kind || ''}`, sub: row.geom || id });
+  }
+  for (const id of available.armor) {
+    if (owned.has(id)) continue;
+    candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
+  }
+  const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
+  const wanted = min === max ? min : rng.int('cardRewards', min, max);
+  const chosen = [];
+  let left = candidates;
+  while (chosen.length < wanted && left.length) {
+    const pick = spreadPick(rng, left, chosen, [row => row.type, row => row.family, row => row.sub]);
+    chosen.push(pick);
+    left = left.filter(row => row !== pick);
+  }
+  if (!chosen.length) return null;
+  const offer = { id: offerId, source: 'armament', options: chosen.map(({ kind, id }) => ({ kind, id })), takeCount: 1, taken: [], claimed: null };
   (run.gameProfileRewardOffers ||= {})[offerId] = offer;
   return offer;
 }

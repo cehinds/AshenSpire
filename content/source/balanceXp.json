@@ -10,6 +10,14 @@
   },
   "killLevelMultiplier": 0.2,
   "combatPowerMultiplier": 0.2,
+  "tierMultiplier": {
+    "normal": 1,
+    "elite": 1.5,
+    "boss": 2,
+    "$note": {
+      "{kind}": "Multiplier on the whole fight's character XP (win plus kills) when {pool} is fought. Owner 2026-11-18: an elite pays half again, a boss pays double."
+    }
+  },
   "quest": 125,
   "$note": {
     "combatWin": "Base XP multiplied by the total combat power of defeated enemies and the combat-power multiplier after a win.",

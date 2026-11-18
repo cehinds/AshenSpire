@@ -110,6 +110,10 @@ export function combatXpReceipt(registries, { victory = false, pool = 'normal', 
     rows.push({ kind: 'enemy', enemyId: enemy.enemyId || null, name: definition?.name || `Enemy ${index + 1}`, level, amount: next - subtotal });
     subtotal = next;
   });
+  // Owner 2026-11-18: the door's tier (balance.xp.tierMultiplier) scales the whole fight's XP: elite x1.5, boss x2.
+  const tier = Number.isFinite(t.tierMultiplier?.[pool]) && t.tierMultiplier[pool] >= 0 ? t.tierMultiplier[pool] : 1;
+  const tiered = Math.floor(subtotal * tier + 1e-9);
+  if (tiered !== subtotal) { rows.push({ kind: 'tier', pool, multiplier: tier, amount: tiered - subtotal }); subtotal = tiered; }
   const multiplier = Number.isFinite(characterMultiplier) && characterMultiplier >= 0 ? characterMultiplier : 1;
   const total = Math.floor(subtotal * multiplier);
   if (total !== subtotal) rows.push({ kind: 'bonus', amount: total - subtotal });

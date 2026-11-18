@@ -19,6 +19,7 @@ import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
 import { gameModule } from './../model/gameProfile.js';
+import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
@@ -28,7 +29,7 @@ export function createShotStates(ctx) {
   const {
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
-    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
     showSettings, showStartupGate, showCustomize,
   } = ctx;
 
@@ -393,6 +394,15 @@ export function createShotStates(ctx) {
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
       // attribute point waiting, paid through the production XP ledger, so its level-up modal can be reached.
+      // `?shotArmament=boss` (or `elite`, only when its chance roll lands for the seed) — the won fight's armament reward door itself,
+      // built by the production offer and mounted by the production door, so its choices, claim and Armoury hand-off can be photographed.
+      const armamentPool = shotParams.get('shotArmament');
+      if (['elite', 'boss'].includes(armamentPool)) {
+        const offerId = `${run.actNumber}:${run.mapNodeId}:combat:armament`;
+        if (!GameProfileArmamentOffer(ctx.getRegistries(), run, ctx.getRng(), { offerId, pool: armamentPool })) throw new Error(`No armament reward for a ${armamentPool} on this seed.`);
+        run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
+        persist(); return showGameProfileReward();
+      }
       const victory = shotParams.get('shotVictory') === 'points';
       if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
         pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });

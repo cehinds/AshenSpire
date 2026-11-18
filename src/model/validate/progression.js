@@ -32,10 +32,17 @@ export function progressionProblems(b, err, ctx) {
     const xp = b.balance.xp;
     if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, combatPowerMultiplier, kill, killLevelMultiplier, quest }');
     else {
-      for (const key of Object.keys(xp)) if (!['combatWin', 'combatPowerMultiplier', 'kill', 'killLevelMultiplier', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of Object.keys(xp)) if (!['combatWin', 'combatPowerMultiplier', 'kill', 'killLevelMultiplier', 'tierMultiplier', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
       for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
       if (!(Number.isFinite(xp.killLevelMultiplier) && xp.killLevelMultiplier >= 0)) err('balance.xp.killLevelMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.killLevelMultiplier)}`);
       if (!(Number.isFinite(xp.combatPowerMultiplier) && xp.combatPowerMultiplier >= 0)) err('balance.xp.combatPowerMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.combatPowerMultiplier)}`);
+      if (xp.tierMultiplier !== undefined) {
+        if (!xp.tierMultiplier || typeof xp.tierMultiplier !== 'object' || Array.isArray(xp.tierMultiplier)) err('balance.xp.tierMultiplier', 'must be an object { normal, elite, boss }');
+        else for (const key of Object.keys(xp.tierMultiplier)) {
+          if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.tierMultiplier.${key}`, 'Unknown field');
+          else if (!(Number.isFinite(xp.tierMultiplier[key]) && xp.tierMultiplier[key] >= 0)) err(`balance.xp.tierMultiplier.${key}`, `must be a non-negative number, got ${JSON.stringify(xp.tierMultiplier[key])}`);
+        }
+      }
       if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
       else {
         for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
