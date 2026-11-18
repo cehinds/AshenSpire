@@ -424,6 +424,11 @@ export function createShotStates(ctx) {
       // does not (it enters aim mode, which is already a second beat), so the
       // pose carries one of each and the check sees both cells of the row.
       run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
+      // `?shotDeck=<id>,<id>,…` — STAND WITH THESE CARDS. The fight deals from exactly
+      // these registered cards (unknown ids are dropped), so a sandbox check can show
+      // new cards in a real hand. Memory-only like every shot lever.
+      const shotDeck = (shotParams.get('shotDeck') || '').split(',').filter(id => ctx.getRegistries().cards.has(id));
+      if (shotDeck.length) run.deck = shotDeck.map((cardId, index) => ({ instanceId: `shot${index + 1}`, cardId, upgraded: false }));
       const g = run.mapGraph;
       // A seeded start can resolve to an event. This fixture promises combat,
       // so select an actual fight and enter through the production fight door.

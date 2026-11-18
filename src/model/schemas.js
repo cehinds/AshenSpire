@@ -255,6 +255,8 @@ export const PREDICATES = Object.freeze([
   'cardTargetsAllEnemies',
   'resourcePaid',
   'inStance',
+  // The engagement band between the owner and `of` (default the target): melee, reach or ranged.
+  'atRange',
   'hasStatus',
   'hasBlock',
   'hpBelowPct',
@@ -902,6 +904,8 @@ export const SCHEMAS = Object.freeze({
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
+    // The card can be played only while this holds, read against the aimed (or first living) enemy (SPEC §3.6).
+    playIf: opt({k:'predicate'}),
     targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
