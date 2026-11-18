@@ -169,3 +169,7 @@ Existing effects that count as drawbacks:
   - The comparison is against the same card's out-of-combat face.
   - Always-on attribute and equipment bonuses stay black. An equipment, relic or card effect that **triggers** during combat (for example "first attack each fight +3" or a per-turn Block signature) turns the numbers it changes green or red for as long as it applies.
 - **XP tiers (owner):** elites ×3 so elite-heavy runs reach about level 8 by the end of act 3; bosses stay ×1.5, so no fight gives more than 2 levels.
+- **Weapon Poise cut (owner):** every weapon that adds Poise adds max(its current Poise / 3, 1).
+  - Greatsword 6 → 2, Halberd 6 → 2, Warhammer 9 → 3, Cinder Axe 6 → 2, Parry Dagger 6 → 2, Wyrmhorn Staff 9 → 3, Battleaxe stays 1.
+  - Weapons at 0 (Straight Sword, Frost Spear, daggers and so on) stay at 0.
+  - Shields and armour are not weapons and keep their Poise. *(decided)*
