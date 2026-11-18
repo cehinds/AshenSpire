@@ -113,6 +113,10 @@
       "name": "Reedpipe Poacher",
       "tier": "minion"
     },
+    "enemy:siltCrownNewt": {
+      "name": "Silt-Crown Newt",
+      "tier": "elite"
+    },
     "enemy:stitchCrab": {
       "name": "Stitch Crab",
       "tier": "minion"
@@ -1770,6 +1774,56 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:siltCrownNewt.mireSpit": {
+      "name": "Mire Spit",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:siltCrownNewt.tailCrush": {
+      "name": "Tail Crush",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:siltCrownNewt.drowningCoil": {
+      "name": "Drowning Coil",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Apply {frail} Frail to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:siltCrownNewt.siltShroud": {
+      "name": "Silt Shroud",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:siltCrownNewt.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -2419,6 +2473,14 @@
       "modifiers": [
         "self.wisdom=+1",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.siltCrown": {
+      "name": "Silt Crown",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
       ]
     }
   }

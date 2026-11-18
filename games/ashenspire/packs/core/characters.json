@@ -3876,5 +3876,103 @@
         }
       ]
     }
+  },
+  {
+    "id": "siltCrownNewt",
+    "name": "Silt-Crown_Newt",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "siltCrownNewt.mireSpit",
+      "siltCrownNewt.mireSpit",
+      "siltCrownNewt.tailCrush",
+      "siltCrownNewt.drowningCoil",
+      "siltCrownNewt.siltShroud",
+      "siltCrownNewt.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "blightRod"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.siltCrown"
+      }
+    ],
+    "presentation": {
+      "art": "siltCrownNewt",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 12,
+      "cardHints": {
+        "siltCrownNewt.mireSpit": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "mireSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.tailCrush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "tailCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.drowningCoil": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "drowningCoil",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.siltShroud": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siltShroud",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

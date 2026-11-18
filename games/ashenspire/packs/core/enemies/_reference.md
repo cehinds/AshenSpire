@@ -36,6 +36,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
+| enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
@@ -212,6 +213,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:wickerTitheman.bindingStraw | Binding Straw | power | 1 | 1 | Apply {weak} Weak to the enemy. |
 | card:wickerTitheman.kindleWard | Kindle Ward | skill | 1 | 0 | Gain {block} Block. |
 | card:wickerTitheman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:siltCrownNewt.mireSpit | Mire Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:siltCrownNewt.tailCrush | Tail Crush | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:siltCrownNewt.drowningCoil | Drowning Coil | attack | 3 | 0 | Deal {damage} damage. Apply {frail} Frail to the enemy. |
+| card:siltCrownNewt.siltShroud | Silt Shroud | skill | 1 | 0 | Gain {block} Block. |
+| card:siltCrownNewt.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -277,3 +283,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.emberBrand | Ember Brand | SP -1 |
 | relic:enemy.relic.abyssalCrown | Abyssal Crown | CON +2, WIS +2, INT +1 |
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
+| relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
