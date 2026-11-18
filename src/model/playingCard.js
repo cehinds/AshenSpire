@@ -344,6 +344,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
   const baseDamageMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
+  // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
+  const playerMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.playerDamageMultiplier : undefined;
+  const sideScale = (value, scaled) => scaled && Number.isFinite(playerMultiplier) && playerMultiplier !== 1 && value > 0 ? Math.max(playerMultiplier > 0 ? 1 : 0, Math.floor(value * playerMultiplier)) : value;
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {
@@ -359,7 +362,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
     // Owner, 2026-11-15: Barrier stacks are printed as the Poise they give.
     const barrierScale = effect.op === 'gainBarrier' || (effect.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(registries) : 1;
     const damageScale = effect.op === 'damage' && binding.field === 'amount' ? baseDamageMultiplier : undefined;
-    if (typeof value === 'number') tokens[binding.token] = ScaleCardBaseDamage(value * barrierScale, damageScale);
+    if (typeof value === 'number') tokens[binding.token] = sideScale(ScaleCardBaseDamage(value * barrierScale, damageScale), effect.op === 'damage' && binding.field === 'amount');
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
       // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.
@@ -367,7 +370,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
         && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
         ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def, raw.per ?? 1) : undefined;
       const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
-      if (authored !== undefined) tokens[binding.token] = typeof authored === 'number' ? ScaleCardBaseDamage(authored, damageScale) : authored;
+      if (authored !== undefined) tokens[binding.token] = typeof authored === 'number' ? sideScale(ScaleCardBaseDamage(authored, damageScale), effect.op === 'damage' && binding.field === 'amount') : authored;
       // Weapon-scaled attacks have a static authored multiplier even though
       // their resolved damage depends on the equipped weapon. Keep that
       // multiplier visible on non-combat faces without guessing a damage

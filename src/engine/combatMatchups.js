@@ -26,6 +26,9 @@ import * as Ratings from './combatRatings.js';
 /** Caps a Counter Block grant at the amount the defender can still hold. */
 export function CounterBlockGrant(ctx, entity, amount)
 {
+    // Owner, 2026-11-18: `effects.blockGainMultiplier` scales a Counter's Block grant like every other Block gain (computeBlockGain).
+    const scale = configuredModule(ctx, 'effects')?.blockGainMultiplier;
+    if (Number.isFinite(scale) && scale >= 0 && scale !== 1) amount = Math.floor(amount * scale);
     const cap = getCap(ctx, entity, 'blockCap');
     return cap == null ? amount : Math.max(0, Math.min(amount, cap - (entity.block || 0)));
 }
