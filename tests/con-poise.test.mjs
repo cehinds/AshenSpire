@@ -10,6 +10,8 @@ import { allocateAttributePoint } from '../src/model/levelup.js';
 import { attributePointGains, attributeGainSummary } from '../src/model/attributePointPreview.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { creationBrief } from '../src/model/creationBrief.js';
+import { gameModule, gameContent } from '../src/model/gameProfile.js';
+import { resolveGearItem } from '../engine/kernel/gameConfig.js';
 
 // Owner, 2026-11-18: "con should also increase poise by 1 point each level with HP." Each Constitution point is +5 HP (Core 2,
 // owner 2026-11-17) and +1 maximum Poise. The Poise term is the derived `poise` row (base 1, Constitution 1), read once through the
@@ -20,10 +22,11 @@ const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } 
 const mk = (classId) => createRunState({ registries: reg, classId, seed: 511, profileMeta: meta });
 const fightPoise = (run) => createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.persistentPoise.max;
 
-// Measured at level 1 on origin/feature/awesome-lovelace-pqf8ts before this change: the rule was already live.
-const LEVEL_ONE_POISE = { reaver: 8, starseer: 5, rogue: 8, herald: 5 };
+// Measured at level 1. Before the 2026-11-18 gear rule: reaver 8, starseer 5, rogue 8, herald 5 (every item floored at 1 Poise point).
+// After: a non-defensive one-hander (staff, dagger) adds 0, the Greatsword still adds its 6, and the starting armour is not a catalogue item.
+const LEVEL_ONE_POISE = { reaver: 8, starseer: 2, rogue: 2, herald: 2 };
 
-test('level-1 Poise per class is 1 + CON + the worn armour/gear Poise', () => {
+test('level-1 Poise per class is 1 + CON + the Poise the worn gear adds', () => {
   for (const [classId, expected] of Object.entries(LEVEL_ONE_POISE)) {
     const run = mk(classId);
     assert.equal(fightPoise(run), expected, `${classId} opens a fight at ${expected} Poise`);
@@ -63,4 +66,14 @@ test('the CON attribute card names +5 HP and +1 Poise per point', () => {
   const run = mk('reaver');
   const con = creationBrief(reg, run).stats.find((s) => s.id === 'constitution');
   assert.equal(con.face.summary, '+5 HP per pt · +1 Poise per pt');
+});
+
+// Owner, 2026-11-18: max Poise = 1 + CON + other Poise bonuses. Guarding gear (armour, shields, defensive two-handers) adds its Poise;
+// a one-hander that is not defensive adds 0 unless it authors some.
+test('gear adds Poise only when its ratings weights name Poise', () => {
+  const run = mk('reaver');
+  const settings = gameModule(run, 'gear');
+  const points = (id) => resolveGearItem(gameContent(run, 'gear').find((i) => i.id === id), settings, {}).points.poise;
+  for (const id of ['dagger', 'shortbow', 'katana', 'twinblade', 'ashStaff', 'boneSceptre', 'lantern', 'torch', 'buckler']) assert.equal(points(id), 0, `${id} adds no Poise`);
+  for (const id of ['greatsword', 'halberd', 'warhammer', 'kiteShield', 'towerShield', 'roundShield', 'armor.wayfarerPlate', 'armor.gutterLeathers']) assert.ok(points(id) >= 1, `${id} adds Poise`);
 });
