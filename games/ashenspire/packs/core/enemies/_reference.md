@@ -46,6 +46,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
 | enemy:thornMatriarch | The Thorn Matriarch | boss |
+| enemy:tollgateHookman | Tollgate Hookman | minion |
 | enemy:valkyrieShade | Valkyrie Shade | minion |
 | enemy:wanderingSoldier | Wandering Soldier | minion |
 | enemy:wickerHind | Wicker Hind | elite |
@@ -268,6 +269,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:quarryRam.quarryCharge | Quarry Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:quarryRam.stonyStand | Stony Stand | skill | 1 | 0 | Gain {block} Block. |
 | card:quarryRam.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:tollgateHookman.tollJab | Toll Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:tollgateHookman.hookHaul | Hook Haul | attack | 1 | 0 | Deal {damage} damage. Close one band. |
+| card:tollgateHookman.gateBar | Gate Bar | skill | 1 | 0 | Gain {block} Block. |
+| card:tollgateHookman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:tollgateHookman.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

@@ -153,6 +153,10 @@
       "name": "The Thorn Matriarch",
       "tier": "boss"
     },
+    "enemy:tollgateHookman": {
+      "name": "Tollgate Hookman",
+      "tier": "minion"
+    },
     "enemy:valkyrieShade": {
       "name": "Valkyrie Shade",
       "tier": "minion"
@@ -2281,6 +2285,56 @@
         "mana": 0
       },
       "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:tollgateHookman.tollJab": {
+      "name": "Toll Jab",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:tollgateHookman.hookHaul": {
+      "name": "Hook Haul",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:tollgateHookman.gateBar": {
+      "name": "Gate Bar",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:tollgateHookman.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:tollgateHookman.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
       "usedBy": "enemy sheet"
     }
   },

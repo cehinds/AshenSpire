@@ -872,5 +872,70 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "tollgateHookman",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "size": "medium",
+    "name": "Tollgate Hookman",
+    "hp": [
+      34,
+      38
+    ],
+    "poiseMax": 12,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "tollJab": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "hookHaul": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 6,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "player",
+            "bands": -1
+          }
+        ]
+      },
+      "gateBar": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "hookHaul",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "lightning",
+        "effect": "damage"
+      }
+    ]
   }
 ]

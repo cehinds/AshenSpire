@@ -6235,5 +6235,111 @@
         }
       ]
     }
+  },
+  {
+    "id": "tollgateHookman",
+    "name": "Tollgate_Hookman",
+    "displayName": "Tollgate Hookman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "halberd",
+            "name": "Halberd",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 20,
+        "dexterity": 3,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 61,
+      "formula": "10+20+20+3+2+1+5 = 61"
+    },
+    "pools": {
+      "hp": 61,
+      "sp": 2,
+      "mp": 1,
+      "ar": 4,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "halberd",
+        "name": "Halberd"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "tollgateHookman.tollJab",
+          "name": "Toll_Jab",
+          "copies": 1
+        },
+        {
+          "id": "tollgateHookman.hookHaul",
+          "name": "Hook_Haul",
+          "copies": 1
+        },
+        {
+          "id": "tollgateHookman.gateBar",
+          "name": "Gate_Bar",
+          "copies": 1
+        },
+        {
+          "id": "tollgateHookman.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "tollgateHookman.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

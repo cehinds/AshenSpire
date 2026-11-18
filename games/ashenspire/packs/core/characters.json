@@ -4776,5 +4776,97 @@
         }
       ]
     }
+  },
+  {
+    "id": "tollgateHookman",
+    "name": "Tollgate_Hookman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "tollgateHookman.tollJab",
+      "tollgateHookman.hookHaul",
+      "tollgateHookman.gateBar",
+      "tollgateHookman.advance",
+      "tollgateHookman.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "tollgateHookman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "tollgateHookman.hookHaul",
+      "poiseMax": 6,
+      "cardHints": {
+        "tollgateHookman.tollJab": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "tollJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "tollgateHookman.hookHaul": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hookHaul",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "tollgateHookman.gateBar": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "gateBar",
+          "coreSp": "card"
+        },
+        "tollgateHookman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "tollgateHookman.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]
