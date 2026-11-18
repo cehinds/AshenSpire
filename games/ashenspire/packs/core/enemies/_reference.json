@@ -73,6 +73,10 @@
       "name": "Court Surgeon",
       "tier": "minion"
     },
+    "enemy:crucibleNewt": {
+      "name": "The Crucible Newt",
+      "tier": "boss"
+    },
     "enemy:eclipseCantor": {
       "name": "Eclipse Cantor",
       "tier": "minion"
@@ -3408,6 +3412,76 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.moltenBite": {
+      "name": "Molten Bite",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.crucibleTail": {
+      "name": "Crucible Tail",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.slagBreath": {
+      "name": "Slag Breath",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.emberSpit": {
+      "name": "Ember Spit",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.moltenHide": {
+      "name": "Molten Hide",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.meltdown": {
+      "name": "Meltdown",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:crucibleNewt.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -4162,6 +4236,14 @@
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.crucibleHeart": {
+      "name": "Crucible Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
         "self.strength=+1"
       ]
     }

@@ -400,5 +400,22 @@
       "min": 4,
       "max": 5
     }
+  },
+  {
+    "id": "a3_bossCrucibleNewt",
+    "enemies": [
+      "crucibleNewt"
+    ],
+    "weight": 1,
+    "pool": "boss",
+    "seat": "reach",
+    "floorBand": {
+      "min": 6,
+      "max": 6
+    },
+    "targetBand": {
+      "min": 5,
+      "max": 5
+    }
   }
 ]

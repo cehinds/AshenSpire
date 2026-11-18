@@ -192,5 +192,14 @@
       "self.strength=+1"
     ],
     "text": "CON +2, STR +1"
+  },
+  {
+    "id": "enemy.relic.crucibleHeart",
+    "name": "Crucible_Heart",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.strength=+1"
+    ],
+    "text": "CON +3, STR +1"
   }
 ]

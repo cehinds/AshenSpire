@@ -8638,5 +8638,135 @@
         }
       ]
     }
+  },
+  {
+    "id": "crucibleNewt",
+    "name": "The_Crucible_Newt",
+    "displayName": "The Crucible Newt",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 5,
+    "attributePoints": 10,
+    "attributes": {
+      "strength": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.crucibleHeart",
+            "name": "Crucible_Heart",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 3,
+        "bonuses": [
+          {
+            "source": "enemy.relic.crucibleHeart",
+            "name": "Crucible_Heart",
+            "kind": "relic",
+            "amount": 3
+          }
+        ],
+        "total": 6
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 60,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 20
+      },
+      "total": 129,
+      "formula": "10+60+30+6+2+1+20 = 129"
+    },
+    "pools": {
+      "hp": 129,
+      "sp": 4,
+      "mp": 2,
+      "ar": 6,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.crucibleHeart",
+        "name": "Crucible_Heart"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "crucibleNewt.moltenBite",
+          "name": "Molten_Bite",
+          "copies": 2
+        },
+        {
+          "id": "crucibleNewt.crucibleTail",
+          "name": "Crucible_Tail",
+          "copies": 1
+        },
+        {
+          "id": "crucibleNewt.slagBreath",
+          "name": "Slag_Breath",
+          "copies": 1
+        },
+        {
+          "id": "crucibleNewt.emberSpit",
+          "name": "Ember_Spit",
+          "copies": 1
+        },
+        {
+          "id": "crucibleNewt.moltenHide",
+          "name": "Molten_Hide",
+          "copies": 2
+        },
+        {
+          "id": "crucibleNewt.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

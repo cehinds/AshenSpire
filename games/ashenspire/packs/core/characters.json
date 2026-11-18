@@ -6773,5 +6773,149 @@
         }
       ]
     }
+  },
+  {
+    "id": "crucibleNewt",
+    "name": "The_Crucible_Newt",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 5,
+      "max": 5
+    },
+    "defaultDeck": [
+      "crucibleNewt.moltenBite",
+      "crucibleNewt.moltenBite",
+      "crucibleNewt.crucibleTail",
+      "crucibleNewt.slagBreath",
+      "crucibleNewt.emberSpit",
+      "crucibleNewt.moltenHide",
+      "crucibleNewt.moltenHide",
+      "crucibleNewt.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.crucibleHeart"
+      }
+    ],
+    "presentation": {
+      "art": "crucibleNewt",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "crucibleNewt.meltdown"
+      ],
+      "firstCard": "crucibleNewt.crucibleTail",
+      "poiseMax": 20,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "crucibleNewt.meltdown"
+          ]
+        }
+      ],
+      "cardHints": {
+        "crucibleNewt.moltenBite": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "moltenBite",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.crucibleTail": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "crucibleTail",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.slagBreath": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "slagBreath",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.emberSpit": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.moltenHide": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenHide",
+          "coreSp": "card"
+        },
+        "crucibleNewt.meltdown": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "meltdown",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

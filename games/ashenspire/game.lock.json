@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:64b02779a4364265521f32d57f9b04f169a0af2a0f1f4328aafb8fca7efeb3d7",
+      "hash": "sha256:fffdcfe80381d6c1b0e94b8d25d05e3fe0dd5c2dfb21a286add7c3caeeef42f7",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -640,7 +640,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d563b9ab1d2da96ad28c7bae72d506fcd38bf16903529f361cc870cb576213fa"
+          "hash": "sha256:de0423c3dfeccae4da93582c5e4f90ea110efa0c6797d5b60495bcefa66d096f"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -652,13 +652,13 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:258f6c51247f57680c4fb9634b05602aee9a992c1bc77b551ca5fd6a0b92144a"
+          "hash": "sha256:9717661cd73a9414ceaa86c55c2be5042447d28e4569824cad29065e6d87bbab"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:2ec6fbd5c1a6ae3d7c37bcf390c1762be3963e505c20141501116351de905feb"
+          "hash": "sha256:210e2dcff5d15b5ca7c45c217b219361de218e89966141ac0d4df4992845ee63"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8"
     },
     "core": {
-      "hash": "sha256:64b02779a4364265521f32d57f9b04f169a0af2a0f1f4328aafb8fca7efeb3d7",
+      "hash": "sha256:fffdcfe80381d6c1b0e94b8d25d05e3fe0dd5c2dfb21a286add7c3caeeef42f7",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1364,7 +1364,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d563b9ab1d2da96ad28c7bae72d506fcd38bf16903529f361cc870cb576213fa"
+          "hash": "sha256:de0423c3dfeccae4da93582c5e4f90ea110efa0c6797d5b60495bcefa66d096f"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -1376,13 +1376,13 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:258f6c51247f57680c4fb9634b05602aee9a992c1bc77b551ca5fd6a0b92144a"
+          "hash": "sha256:9717661cd73a9414ceaa86c55c2be5042447d28e4569824cad29065e6d87bbab"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:2ec6fbd5c1a6ae3d7c37bcf390c1762be3963e505c20141501116351de905feb"
+          "hash": "sha256:210e2dcff5d15b5ca7c45c217b219361de218e89966141ac0d4df4992845ee63"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",

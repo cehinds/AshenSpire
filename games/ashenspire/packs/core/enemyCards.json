@@ -8951,5 +8951,202 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "crucibleNewt.moltenBite",
+    "name": "Molten_Bite",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "crucibleNewt.crucibleTail",
+    "name": "Crucible_Tail",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "smash",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 20
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 10
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "crucibleNewt.slagBreath",
+    "name": "Slag_Breath",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 13
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "crucibleNewt.emberSpit",
+    "name": "Ember_Spit",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "crucibleNewt.moltenHide",
+    "name": "Molten_Hide",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "defend",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block."
+  },
+  {
+    "id": "crucibleNewt.meltdown",
+    "name": "Meltdown",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 3,
+    "staminaCost": 3,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 30
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "crucibleNewt.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
   }
 ]

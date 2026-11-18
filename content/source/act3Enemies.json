@@ -1407,5 +1407,109 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "crucibleNewt",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 7,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 3,
+      "intelligence": 3
+    },
+    "size": "large",
+    "name": "The Crucible Newt",
+    "hp": [
+      250,
+      250
+    ],
+    "poiseMax": 40,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "moltenBite": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "crucibleTail": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 20,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "slagBreath": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 13,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "emberSpit": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "moltenHide": {
+        "sp": 1,
+        "intent": "block",
+        "block": 8,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "meltdown": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 30,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "locked": true
+      }
+    },
+    "firstMove": "crucibleTail",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "unlockMoves": [
+          "meltdown"
+        ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

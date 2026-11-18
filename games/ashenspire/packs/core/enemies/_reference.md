@@ -26,6 +26,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:courtDuelist | Duelist of the Court | elite |
 | enemy:courtMarionette | Court Marionette | minion |
 | enemy:courtSurgeon | Court Surgeon | minion |
+| enemy:crucibleNewt | The Crucible Newt | boss |
 | enemy:eclipseCantor | Eclipse Cantor | minion |
 | enemy:emberStarvedPilgrim | Ember-Starved Pilgrim | minion |
 | enemy:fellWarden | The Fell Warden | boss |
@@ -392,6 +393,13 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:ferrumVotary.ironLitany | Iron Litany | skill | 2 | 0 | Gain {block} Block. |
 | card:ferrumVotary.thunderOath | Thunder Oath | power | 1 | 1 | Apply {strength} Strength to yourself. |
 | card:ferrumVotary.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:crucibleNewt.moltenBite | Molten Bite | attack | 1 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.crucibleTail | Crucible Tail | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:crucibleNewt.slagBreath | Slag Breath | attack | 2 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.emberSpit | Ember Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:crucibleNewt.moltenHide | Molten Hide | skill | 1 | 0 | Gain {block} Block. |
+| card:crucibleNewt.meltdown | Meltdown | attack | 3 | 1 | Deal {damage} damage. |
+| card:crucibleNewt.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -470,3 +478,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
 | relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
+| relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |

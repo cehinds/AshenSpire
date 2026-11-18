@@ -7476,5 +7476,156 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "crucibleNewt",
+    "name": "The_Crucible_Newt",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "crucibleNewt.moltenBite",
+        "name": "Molten_Bite",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "moltenBite",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "crucibleNewt.crucibleTail",
+        "name": "Crucible_Tail",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "crucibleTail",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "crucibleNewt.slagBreath",
+        "name": "Slag_Breath",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 13
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "slagBreath",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "crucibleNewt.emberSpit",
+        "name": "Ember_Spit",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "crucibleNewt.moltenHide",
+        "name": "Molten_Hide",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenHide",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "crucibleNewt.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "crucibleNewt.meltdown",
+        "name": "Meltdown"
+      }
+    ]
   }
 ]
