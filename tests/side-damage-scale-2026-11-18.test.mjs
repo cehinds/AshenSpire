@@ -9,7 +9,7 @@ import * as Profile from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { computeBlockGain } from '../src/engine/actions.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { playingCardDefinition } from '../src/model/playingCard.js';
@@ -146,4 +146,21 @@ test('a static card face shows the player side scale', () => {
   assert.equal(line(strike), '2 damage', 'ceil(6 x 0.5) = 3, then floor(3 x 0.7) = 2');
   const ranked = playingCardDefinition(shippedWorld.registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
   assert.equal(line(ranked), '2 damage', 'rank 2: ceil(7 x 0.5) = 4, floor(4 x 0.7) = 2');
+});
+
+test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the preview quotes the played total', () => {
+  const quote = world => {
+    const combat = begin(world, { classId: 'starseer' });
+    combat.piles.hand.push({ instanceId: 'ward', cardId: 'core.wardingGlance' });
+    const row = previewCard(combat, 'ward').values.find(value => value.op === 'block');
+    return { value: row.value, combat };
+  };
+  const scaled = quote(shippedWorld), plain = quote(variant(NEUTRAL));
+  assert.ok(plain.value >= 2);
+  assert.ok(scaled.value < plain.value && scaled.value >= Math.floor(plain.value * 0.7) && scaled.value <= Math.floor((plain.value + 1) * 0.7), `${plain.value} -> ${scaled.value}`);
+  const { combat } = scaled;
+  const had = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'ward' });
+  const now = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
+  assert.equal(now - had, scaled.value, 'the quote equals the Block and Ward the card gave');
 });

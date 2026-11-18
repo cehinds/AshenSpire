@@ -1016,8 +1016,9 @@ export function computeSpellDefenseGain(ctx, entity, base, card = null) {
   const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
   const nominalBlock = parts.block + bonus.block;
   const nominalWard = parts.ward + bonus.ward;
+  // Owner, 2026-11-18: a spell's Block and Ward split takes `effects.blockGainMultiplier` on its total, as every other configured Block gain does.
   const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
-    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+    * statuses.getMult(ctx, entity, 'blockGainedMult') * (configuredCombat(ctx) ? BlockGainScale(ctx) : 1)));
   if (!(total > 0)) return { block: 0, ward: 0 };
   // A negative Block add may exceed the base, but must still reduce ratings.
   // Allocate the final total over the remaining nominal portions in that case.
