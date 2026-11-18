@@ -107,7 +107,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Blacksmith prices) moves it again; 73fdb0... is now in PREVIOUS_RUNTIMES.
 // The #2820 review (tier HP scale in combat creation, reactive returns kept out of the base scale) moves it again; fa12ec... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
+// Registry stance rows name their combat maneuver (stances.json, 2026-11-18, #2843) and the Prepared mechanic text follows; 0a9ca3... stays in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
