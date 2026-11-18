@@ -4,7 +4,7 @@ import { auditCardEffectContracts } from '../tools/combat-audit/card-effect-cont
 
 for (const mode of ['native', 'bundled']) test(`focused authored card-effect contracts: ${mode}`, async () => {
   const report = await auditCardEffectContracts({ mode });
-  assert.equal(report.inventory.cards, 376);
+  assert.equal(report.inventory.cards, 395); // +19 theme G conditional and self-buff cards (playtest 2026-11-17)
   assert.equal(report.inventory.classes, 4);
   assert.equal(report.failures.length, 0);
   const counter = report.contracts.find(row => row.op === 'poiseDamage');
