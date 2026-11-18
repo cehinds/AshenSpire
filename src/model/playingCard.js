@@ -346,7 +346,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const baseDamageMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.baseDamageMultiplier : undefined;
   // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
   const playerMultiplier = rules?.gameProfile ? configuredModule(rules, 'effects')?.playerDamageMultiplier : undefined;
-  const sideScale = (value, scaled) => scaled && Number.isFinite(playerMultiplier) && playerMultiplier !== 1 && value > 0 ? Math.max(playerMultiplier > 0 ? 1 : 0, Math.floor(value * playerMultiplier)) : value;
+  // A Counter's damage is its armed base: its return is final damage and takes no side scale (the receipt's flat-return rule).
+  const counterCard = combatProfileFor(def)?.maneuver === 'counter';
+  const sideScale = (value, scaled) => scaled && !counterCard && Number.isFinite(playerMultiplier) && playerMultiplier !== 1 && value > 0 ? Math.max(playerMultiplier > 0 ? 1 : 0, Math.floor(value * playerMultiplier)) : value;
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {
