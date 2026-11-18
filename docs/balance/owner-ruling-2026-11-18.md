@@ -91,3 +91,26 @@ Existing effects that count as drawbacks:
 - A tap only selects. Inspection opens from the (i), the Inspect button, right-click or long-press.
 - A long-press, or right-click on desktop, on an enemy opens its inspector with its active effects.
 - Small changes (upgrading a card, deck edits, equips, shop picks) patch only the affected nodes. No full redraw: scroll position and focus are kept.
+
+## 8. Armament perks replace ratings (owner, 2026-11-18)
+- All 47 weapons and armour pieces lose their AR/DR/PR: `attackRating` and `defenseRating` in weapons.csv and outfits.csv, and `points.dr` in gear.json. In their place each carries perks. It lands in the same playtest build as the ×0.7 cut (owner).
+- **Perk budget by rarity:** common gets 1 small perk; uncommon 2 small or 1 big; rare 1 big + 1 small.
+- **Small perks:**
+  - +1 STR, DEX, CON, WIS or INT;
+  - +1 damage on the weapon's own type of card;
+  - a stance perk: Defend +2 Block, Smash +2 Poise damage, Counter starts with 1 stack, or Sweep +1 to each extra target;
+  - +1 element damage on that element's cards;
+  - +3 Poise, +1 Ward, or half damage from one element;
+  - +5 max HP.
+- **Big perks:**
+  - +1 max SP or +1 max MP (at most one per item);
+  - a relic-like effect: start each fight with 4 Block, first attack each fight +3, or heal 3 after a won fight;
+  - a tag from the approved list: the weapon art gains Innate, Defend cards gain Retain, or start each fight with 1 Reflect.
+- **Drawback perks** give budget back: Encumbered (−1 SP on your first turn), Escalating on the weapon art, or +1 cost on a card type.
+- **Guardrails:**
+  - Flat perks cap per type across all gear: +3 per weapon type and +3 per element.
+  - No stacking percentage boosts.
+  - SP and MP are always big perks.
+- The existing `mods` column (for example `defend.block=+2`) is the perk vocabulary. Perks are authored there.
+- **Attributes:** STR→AR and DEX→DR stay at 1 per point. **PR = max(INT, WIS)** (owner).
+- All before and after numbers are measured with `tools/card-budget-report.mjs`.
