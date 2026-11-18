@@ -46,7 +46,7 @@ How each item reads: **type base** (owner ruling §18) **+ one second bonus of i
 | ★ Scythe | uncommon | Sweeps apply 1 Bleed to each target |
 | ★ Reaper's Crescent | rare | A kill with a Sweep restores 3 HP |
 
-**Hammers.** Base: +1 Poise damage on attacks, Sweeps and Smashes; Smash inflicts 1 Vulnerable.
+**Hammers.** Base: +1 Poise damage on attacks, Sweeps and Smashes; Smash inflicts 1 Vulnerable and 1 Retreat stack (owner).
 
 | Item | Rarity | Second bonus |
 |---|---|---|

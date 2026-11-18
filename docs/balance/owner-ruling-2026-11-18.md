@@ -289,3 +289,5 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Pierce:** each Pierce stack ignores **1 point of Block**. Whatever passes Block still routes **Block, then Poise, then HP**. Pierce deals no extra Poise damage, so Ward stays effective against it.
 - **Stone Skin:** 1 Stone Skin stack cancels 1 Pierce stack, and both are spent. Example: Pierce 3 against Stone Skin 2 leaves Pierce 1, which ignores 1 Block. Pierce 3 against Stone Skin 4 strips all 3 Pierce and leaves 1 Stone Skin stack.
 - This replaces "Stone Skin reduces Pierce damage by 1 per stack" and the old "Pierce bypasses up to 2 Block".
+- **Gale Push (owner):** it carries an explicit **inflict Retreat** tag (it gives the target a Retreat stack), shown on the face beside Force.
+- **Hammers (owner):** a hammer Smash also inflicts **1 Retreat stack** on its target. This is part of the hammer type base, alongside +1 Poise damage and Smash Vulnerable.
