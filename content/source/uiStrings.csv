@@ -43,8 +43,8 @@ combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
 combat.protection.poiseBonusAria,,"Poise {value} of {max}, plus {bonus} bonus","{bonus} Poise above the maximum. Bonus Poise is taken first and fades 5 per turn.",Poise {value}/{max} +{bonus}
-combat.protection.counter,,Counter,"Counter {stacks} · each hit it answers returns {stackPercent}% of the hit per stack and uses up 1 · −{decay} per turn",Counter
-combat.protection.counterEnemy,,Counter,"Counter {stacks} · its Counter answers your next covered hit, which uses up 1 · −{decay} per turn",Counter
+combat.protection.counter,,Counter,"Counter {stacks} · each hit it answers returns {stackPercent}% of the hit per stack and uses up 1 · −{decay} at the start of your turn",Counter
+combat.protection.counterEnemy,,Counter,"Counter {stacks} · its Counter answers your next covered hit, which uses up 1 · −{decay} at the start of its turn",Counter
 combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}% of it back at the attacker; every reflected hit costs one stack. Stacks last until the fight ends.",Reflect
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
