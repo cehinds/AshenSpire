@@ -60,7 +60,7 @@ test('a Reach hit (a spell) needs no Advance on either side', () => {
   assert.equal(stacks(both.combat.player), 1, 'no Advance, no stack spent');
 });
 
-test('a player stack beyond the first is not another Advance: still +1 SP', () => {
+test('the ruling counts sides, not stacks: a player holding 2 stacks closes one side, +1 SP (the Advance spends one stack)', () => {
   assert.equal(play('core.strike', { player: 2 }).paid, base + 1);
 });
 
