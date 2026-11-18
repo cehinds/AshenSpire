@@ -19,7 +19,7 @@
   "poise": {
     "drain": "prevented",
     "breakRule": "broken",
-    "brokenDamageMultiplier": 1.5,
+    "brokenDamageMultiplier": 1,
     "breakStatusStacks": 2
   },
   "staggered": {

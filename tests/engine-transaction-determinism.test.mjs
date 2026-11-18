@@ -232,10 +232,10 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
     assert.deepEqual(digest(play(withoutThemeBRules(() => fight(setup)), 5)), expected);
   });
 }
-// Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 212 and 195 -> 227); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
+// Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 212 and 195 -> 227; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'd378d7370d1d01de', state: '61693edaeb8e215a', events: 212, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f6507a1054b9d9da', state: 'dc4ab262dfbea7b6', events: 227, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'dfa0f981204d76f0', state: '5e1a1d0983839003', events: 212, turn: 6 }],
+  [[4242, 'reaver'], { log: 'bf8e894297eefd4d', state: 'f0b8751ca19eb346', events: 227, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

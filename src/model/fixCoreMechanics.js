@@ -359,7 +359,9 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
   // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
   const broken = FixCoreBrokenRules(ctx);
-  const spends = broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
+  // Owner, 2026-11-18 (3a): a break no longer multiplies damage; it applies Staggered, Vulnerable, Weak and Frail stacks instead.
+  const brokenByStatuses = broken && broken.damageMultiplier === 1 && broken.statusStacks > 0;
+  const spends = brokenByStatuses ? tFull('poise.broken.statuses', { stacks: broken.statusStacks }) : broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
     : 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
