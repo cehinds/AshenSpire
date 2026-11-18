@@ -18,6 +18,26 @@ export function projectCardBehavior(ctx, instance, def) {
   }
   return result;
 }
+/** Whether a card's `playIf` holds with `target` aimed. A card without one is always allowed. */
+export function PlayConditionMet(ctx, def, target=null, source=ctx.player) {
+  return !def?.playIf || Triggers.evalPredicate(ctx,def.playIf,{source,owner:source,target,card:def});
+}
+/** Living enemy targets in board order whose play condition holds. */
+export function PlayConditionEnemies(ctx, def, source = ctx.player) {
+  return (ctx.enemies || []).filter(enemy => enemy.alive && PlayConditionMet(ctx, def, enemy, source));
+}
+/** Restrict the enemy destinations a card's targeting plan offers. */
+export function PlayConditionTargetPlan(ctx, def, plan) {
+  if (!def?.playIf || plan.mode !== 'enemy') return plan;
+  const eligible = new Set(PlayConditionEnemies(ctx, def).map(enemy => enemy.id));
+  return { ...plan, legalIds: plan.legalIds.filter(id => eligible.has(id)) };
+}
+/** Whether some living enemy could be aimed so that the card's `playIf` holds (the hand's playable check). */
+export function PlayConditionReachable(ctx, def, source=ctx.player) {
+  if (!def?.playIf) return true;
+  if (ctx.enemies?.some(enemy => enemy.alive)) return PlayConditionEnemies(ctx, def, source).length > 0;
+  return PlayConditionMet(ctx, def, null, source);
+}
 export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;
   const meta={energySpent:paid.energy || 0,manaSpent:paid.mana || 0,staminaSpent:paid.stamina || 0};

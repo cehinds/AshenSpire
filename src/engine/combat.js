@@ -17,7 +17,7 @@ import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
-import { selectCardVariant } from './cardBehavior.js';
+import { selectCardVariant, PlayConditionEnemies, PlayConditionMet } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
@@ -1800,9 +1800,11 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     target = findEntity(combat, targetId);
     if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
   } else if (needsEnemyTarget(def) || chargedEnemyTarget) {
-    target = combat.enemies.find((e) => e.alive) || null;
+    // An unaimed card with a play condition takes the first living enemy that meets it.
+    target = (def.playIf && PlayConditionEnemies(combat, def)[0]) || combat.enemies.find(e => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');
   }
+  if (!PlayConditionMet(combat, def, target)) throw F.playRefusal(`'${def.name}' cannot be played now`, 'unplayable');
 
   // WHAT THE CARD IS comes from its kind tag (model/tree.js cardKind), never
   // from `def.type` — every reader downstream (the attack counter, the
@@ -1833,7 +1835,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const before = { ...R.beforeAbilityPlay(combat, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(combat, def, p, target, before);
   if (combat.combatExpansionVersion === 2) {
-    const check = playCosts(preparingPreview(combat, inst, def, targetId), def);
+    const check = playCosts(preparingPreview(combat, inst, def, def.playIf ? target?.id : targetId), def);
     if (p.energy < check.energy) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'stamina', need: check.energy, have: p.energy });
     if (p.mana < check.mana) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'mana', need: check.mana, have: p.mana });
     const payment = Blight.payAshenBlight(combat, p, { amount: def.ashenBlightCost || 0, receiptId: `${combat.combatKey}:${p.combatOwnerCycle}:${p.counters.cardsPlayedThisCombat + 1}:${inst.instanceId}`, combatKey: combat.combatKey });
@@ -2114,7 +2116,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
         enemy.intent = { kind: 'unknown', moveId: null };
         delete enemy.combatStance;
-        // Its stance is unknown, not Idle: the preview prices no stance weakness for it (theme B; live pays the real stance's).
+        // Its stance is unknown, not Idle: the preview prices no stance weakness for it (theme B; live pays the real stance's),
+        // and a stance condition reads it as no stance at all (engine/triggers.js entityInStance).
         enemy.combatStanceUnknown = true;
         delete enemy.combatCounter;
         delete enemy.pendingMove;
@@ -2130,6 +2133,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
   let def = resolveCombatCard(combat, inst, { upcastRanks });
+  if (targetId == null && def.playIf && needsEnemyTarget(def)) targetId = PlayConditionEnemies(combat, def)[0]?.id;
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
