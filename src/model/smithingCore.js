@@ -53,8 +53,9 @@ function itemAtTier(run, item, level, itemRef) {
   const bonus = upgradeTierBonus(gameModule(run, 'equipment'), level);
   const resolved = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + bonus });
   const values = { ...resolved.values };
-  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does.
-  if (item.kind !== 'armor' && item.kind !== 'shield') {
+  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does; under `statPoints`
+  // (owner, 2026-11-17) the tier is attribute points the resolver already counted.
+  if (item.kind !== 'armor' && item.kind !== 'shield' && !settings.statPoints) {
     const gain = bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
     values.ar += gain;
     // A magic weapon's tier also raises its spells (gameProfileRatingReceipt): PR rises with AR.

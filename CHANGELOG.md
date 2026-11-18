@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-18
+
+- **Smaller numbers** ([#2820](https://github.com/cehinds/AshenSpire/pull/2820), `0.7.4.148`). Base damage is halved. Attack rating now comes from STR alone, defence from DEX alone, and magic resistance from your higher of INT and WIS. Your health is 30 plus 5 for each point of CON and each level. Armour and weapons give stat points and Poise instead of ratings. Each extra Action or Mana point costs 3 stat points. Elites and bosses are cut back to the strength of their act. Blacksmith upgrades start at about 50 cinders and cost more with rank and with each earlier upgrade.
+
 ## 2026-11-17
 
 - **Card drawbacks and clearer text** ([#2819](https://github.com/cehinds/AshenSpire/pull/2819), `0.7.4.148`). Cheap Evade cards now Exhaust, Hold Block costs more each time you play the same copy in a fight, and the strongest cheap attacks cost HP. Upgrades can ease those drawbacks. Pebble Throw now hits at Reach, cards that need allies are out of the pools, and card text and tooltips are shorter.

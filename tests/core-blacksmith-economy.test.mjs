@@ -209,34 +209,35 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   assert.equal(commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }) !== undefined, true);
   assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
   // W25: the Blacksmith's work is a pick of rolled options, priced by the item's upgrade number (2 fixed tiers held,
-  // so this is upgrade 3: 1 stone and 85 cinders), and it leaves the fixed tier ladder alone.
+  // so this is upgrade 3: 1 stone and 120 cinders, owner 2026-11-17), and it leaves the fixed tier ladder alone.
   const smith = smithRun(coreOut, { stones: 4, cinders: 400 });
   smith.itemUpgradeLevels = { 'armament/greatsword': 2 };
   const plan = blacksmithUpgradePlan(coreOut, smith, 'armament/greatsword');
-  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 85]);
+  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 120]);
   commitBlacksmithUpgrade(coreOut, smith, plan);
   assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 2);
   assert.equal(smith.itemUpgradePicks['armament/greatsword'].length, 1);
 });
 
-test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 40 cinders', () => {
-  const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+// Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade (Strike, rank 1): 50, then 85, then 120.
+test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 85 cinders', () => {
+  const run = smithRun(coreOut, { stones: 0, cinders: 155 });
   run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
-  assert.equal(run.cinders, 60);
+  assert.equal(run.cinders, 105);
   // Rest pricing disables the row (1 stone, none held); the Blacksmith's quote enables it.
   const restRow = cardUpgradeModel(coreOut, run).rows.find((r) => r.instanceId === card.instanceId);
   assert.equal(restRow.disabled, true);
   const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
   const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
   const row = model.rows.find((r) => r.instanceId === card.instanceId);
-  assert.deepEqual([row.disabled, row.cost, row.costLabel], [false, 0, '40 cinders']);
+  assert.deepEqual([row.disabled, row.cost, row.costLabel], [false, 0, '85 cinders']);
   assert.equal(model.canConfirm, true);
   // The modal's confirm hands the row's plan to the screen, which commits it.
   const receipt = commitUpgradeArt(coreOut, run, { ...upgradeArtPlan(coreOut, run, card.instanceId), cardQuote: model.selected.plan });
   assert.deepEqual([receipt.n, receipt.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 20]);
-  // 20 cinders cannot pay 40: the row is disabled with the cinder reason.
+  // 20 cinders cannot pay the third upgrade's 120: the row is disabled with the cinder reason.
   const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote }).rows.find((r) => r.instanceId === card.instanceId);
   assert.equal(poor.disabled, true);
   assert.match(poor.blockedReason, /cinders/i);
@@ -302,7 +303,8 @@ test('armament purchase: a rack piece the run has since acquired is refused and 
 });
 
 test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
-  const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  // The second Blacksmith upgrade of this Strike costs 85 cinders (50 + 35 per earlier upgrade, owner 2026-11-17).
+  const run = smithRun(coreOut, { stones: 0, cinders: 200 });
   run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
@@ -310,12 +312,12 @@ test('picker: under a cinder quote the selected row, confirm and blockers read c
   // The card is past its free allowance and no stones are held: the service's own code is 'stones', the Blacksmith's verdict is ok.
   const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
   assert.equal(model.selected.plan.code, 'stones');
-  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [40, 0, false, true]);
+  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [85, 0, false, true]);
   assert.deepEqual([model.canConfirm, model.blockedReasons.length], [true, 0]);
   // Cinders short: blocked with the cinder reason, and the stone purse is not named as the blocker.
   run.cinders = 10;
   const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
-  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 40]);
+  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 85]);
   assert.match(poor.blockedReasons[0], /cinders/i);
   // Rest path unchanged: no quote, the stone code decides, no cinders.
   const rest = cardUpgradeModel(coreOut, run, card.instanceId);
