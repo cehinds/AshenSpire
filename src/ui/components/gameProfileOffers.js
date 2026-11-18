@@ -1395,13 +1395,14 @@ function mountCardPickDoor(appRoot, doorArgs)
             }, (error) =>
             {
                 setBusy(false);
-                isRankUpDeclined = true;
                 if (error?.message)
                 {
+                    // A failed claim (the save was rolled back) leaves the rank-up open, so Continue can retry it.
                     statusLine.textContent = error.message;
                     return;
                 }
                 // The picker was closed without a card: the rank-up is declined and the chain goes on.
+                isRankUpDeclined = true;
                 finish();
             });
     }
