@@ -34,6 +34,6 @@ test('back-row enemies stay back (a lone back-row foe)', () => {
 test('the Retreat card text says foes step back', () => {
   const combat = bandsFight({ hand: ['core.retreat'] });
   const card = combat.registries.cards.get('core.retreat');
-  assert.match(JSON.stringify(cardFaceLines(card, null, combat.registries)), /front-row foes step back/);
+  assert.match(JSON.stringify(cardFaceLines(card, null, combat.registries)), /Retreat foes/);
   assert.ok(previewCard(combat, 'qa0'));
 });

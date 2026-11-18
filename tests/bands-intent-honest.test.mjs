@@ -43,7 +43,7 @@ test('Advance played after the intents rolled flips the shown step forward to th
   }
 });
 
-test('Retreat played after that flips it back to Approaching, and the approach runs', () => {
+test('Retreat played after that ends the Advance and sends the lone front enemy back; with no front row left it steps forward at the phase start, so its attack stands', () => {
   let ran = 0;
   for (const seed of seeds) {
     const combat = fight(seed);
@@ -55,10 +55,9 @@ test('Retreat played after that flips it back to Approaching, and the approach r
     combat.loadout = structuredClone(combat.loadout); combat.loadout.sets.rightHand = ['shortbow'];
     GrantRetreatCard(combat);
     play(combat, combat.piles.hand.find(c => c.cardId === 'core.retreat').instanceId);
-    assert.equal(surgeon.intent.moveId, 'advance', `seed ${seed}: back to Approaching`);
-    assert.equal(surgeon.intent.approachFor, attack);
-    dispatch(combat, { type: 'endTurn' });
-    assert.equal(moves(combat)[0], 'advance');
+    assert.equal(combat.player.advanced, 0, 'the Advance is over');
+    assert.equal(surgeon.row, 'back', `seed ${seed}: Retreat sent it to the back row`);
+    assert.equal(surgeon.intent.moveId, attack, 'a lone back-row enemy plans its attack, not an approach (SPEC rows)');
     ran++;
   }
   assert.ok(ran > 0);

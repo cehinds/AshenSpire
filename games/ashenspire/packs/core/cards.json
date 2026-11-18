@@ -420,7 +420,7 @@
       "maneuver:defend",
       "classification.skill"
     ],
-    "textTemplate": "Retreat: front-row foes step back."
+    "textTemplate": "Retreat foes."
   },
   {
     "id": "core.upsetRanks",
@@ -544,10 +544,10 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade. Retreat: front-row foes step back. Become Prepared. Exhaust.",
+    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust.",
     "upgrade": {
       "keywords": [],
-      "textTemplate": "Gain {evade} Evade. Retreat: front-row foes step back. Become Prepared.",
+      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",
       "effects": [
         {
           "op": "applyStatus",
