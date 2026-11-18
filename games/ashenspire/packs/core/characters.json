@@ -4535,11 +4535,11 @@
       "tier.boss"
     ],
     "attributePriority": [
+      "strength",
       "wisdom",
       "intelligence",
-      "constitution",
-      "strength",
-      "dexterity"
+      "dexterity",
+      "constitution"
     ],
     "levelProfile": {
       "min": 3,
