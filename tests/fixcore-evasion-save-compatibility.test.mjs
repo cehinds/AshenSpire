@@ -93,6 +93,14 @@ test('a run saved on dev before the 2026-10-25 combat retune (runtime 73ef24...)
   assert.throws(() => validateGameProfileSnapshot(other), /unsupported runtime artifact/);
 });
 
+test('a profile saved under the previous build\'s runtime (before #2843) still validates', () => {
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
+  digest(saved);
+  assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
+  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7'), saved.lock.runtimeHash);
+});
+
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
   const tampered=priorRuntimeEnvelope();tampered.modules.cards.handBase++;
   assert.throws(()=>validateGameProfileSnapshot(tampered),/digest mismatch/);
