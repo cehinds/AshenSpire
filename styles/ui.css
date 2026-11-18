@@ -1592,6 +1592,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card > .deck-editor-costs { position: absolute; top: .5rem; right: .5rem; z-index: 3; }
 .deck-editor .deck-editor-reading .card:has(.deck-editor-costs) > .cname { padding-inline: 1rem calc(var(--deck-row-costs) + 1rem); }
 .deck-editor .deck-editor-count { grid-column: -2; grid-row: 2; align-self: center; justify-self: end; font-size: max(1.2rem, var(--deck-min-text)); }
+/* The tag group (owner, 2026-11-18): EQUIPPED (green), REWARD and ART (red), right-justified above the cost numbers. */
+.deck-editor .deck-editor-main { position: relative; }
+.deck-editor .deck-editor-rank[hidden] { display: none !important; }
+.deck-editor .deck-editor-tags { position: absolute; top: 2px; right: .6rem; z-index: 2; display: flex; justify-content: flex-end; gap: .25rem; pointer-events: none; }
+.deck-editor .deck-editor-tag { padding: 0 .35rem; border: 1px solid; border-radius: var(--r-1, 3px); font-size: max(.62rem, calc(10px / var(--ui-zoom, 1))); font-weight: 700; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; white-space: nowrap; }
+.deck-editor .deck-editor-tag.equipped { background: #1f4d2b; border-color: #5fbf7a; color: #c9f5d4; }
+.deck-editor .deck-editor-tag.reward { background: #3a3320; border-color: #c9a24a; color: #f0ddba; }
+.deck-editor .deck-editor-tag.art { background: #5a1e1e; border-color: #d65a5a; color: #ffd3d0; }
+.deck-editor .deck-editor-main:has(> .deck-editor-tags) > .deck-editor-costs { align-self: end; margin-top: 1rem; }
 /* A library tile's count lives in its － count ＋ stepper, so the badge goes. */
 .deck-editor .deck-editor-tile .deck-editor-count { display: none; }
 .deck-editor .deck-editor-meta { grid-column: 3; grid-row: 2; align-self: end; font-size: max(1.1rem, var(--deck-min-text)); white-space: normal; line-height: 1.25; max-height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }

@@ -493,9 +493,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const rank = Number.isInteger(ranked) ? ranked
       : (MANEUVER_STANCES.includes(stanceKey(row)) || stanceKey(row) === 'spell' ? 0 : null);
     if (!Number.isInteger(rank)) return null;
+    const spell = combatProfileFor(def).camp === 'spell';
+    // A rank 0 reward card no longer wears "Reward" over its image: the REWARD tag beside EQUIPPED says it (owner, 2026-11-18).
     const text = rank > 0 ? t('deckEditor.rank', { rank })
-      : t(rankZeroLabelId(row.source, combatProfileFor(def).camp === 'spell'));
-    return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
+      : t(rankZeroLabelId(row.source, spell));
+    // Hidden, not removed: the model still reads the badge, and the REWARD tag is the one the player sees.
+    return el('span', { class: 'deck-editor-rank', dataset: { rank }, hidden: rank === 0 && !spell && row.source === 'reward', text });
   };
   // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides
   // which cards show one; the hand's chip reads the same rule.
@@ -512,6 +515,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);
+  // EQUIPPED (green: the card is in the deck), REWARD (a card collected during the run, never a starter) and ART (a weapon
+  // art, in red), right-justified above the count. Deck rows are all in the deck, so they carry no EQUIPPED.
+  const tagsNode = (row, equipped) => {
+    const tags = [
+      equipped ? ['equipped', t('deckEditor.tag.equipped')] : null,
+      row.rewardTag ? ['reward', t('deckEditor.tag.reward')] : null,
+      row.artTag ? ['art', t('deckEditor.tag.art')] : null,
+    ].filter(Boolean);
+    if (!tags.length) return null;
+    return el('span', { class: 'deck-editor-tags' }, tags.map(([kind, text]) => el('span', { class: `deck-editor-tag ${kind}`, dataset: { tag: kind }, text })));
+  };
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
     illustrated ? artwork(row) : null,
     el('span', { class: 'deck-editor-grip', 'aria-hidden': 'true', text: '⠿' }),
@@ -524,6 +538,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ].filter(Boolean)),
     row.equipmentEligible === false ? el('span', { class: 'deck-editor-meta', text: t('deckEditor.equipmentNotFound') }) : null,
     el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }),
+    tagsNode(row, !grouped && row.inDeck > 0),
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
     el('span', { class: 'deck-editor-count', title: extra, text: t('deckEditor.count', { count: grouped ? row.count : row.inDeck || 0 }) }),
   ].filter(Boolean);
@@ -598,7 +613,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false', inDeck: tile.inDeck > 0 ? 'true' : 'false' },
-      }, [tile.inDeck > 0 ? el('span', { class: 'in-deck-badge', text: t('cardUpgrade.row.inDeck') }) : null, main, el('div', { class: 'deck-editor-actions' }, [
+      }, [main, el('div', { class: 'deck-editor-actions' }, [
         minus, (() => {
           const count = stepperCount(tile);
           return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });
