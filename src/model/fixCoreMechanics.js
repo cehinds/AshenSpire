@@ -80,7 +80,9 @@ export function FixCoreBrokenRules(ctx) {
 export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
-export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2 });
+// Owner, 2026-11-18: `builtInElements` carry Pierce without a tag (Lightning); `skinStatus` is the status whose stacks each cut a Pierce hit's bypass by 1 (Stone Skin);
+// `earthSource` marks Block laid by a card of that school, which a built-in Pierce does not bypass.
+export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2, builtInElements: [], skinStatus: null, earthSource: null });
 export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(rules?.pierce || {}) });
 // Owner, 2026-11-14: attacks always connect and intents are always read. `accuracy.hitRoll: false` draws no d20 and makes Evade a
 // stack that cancels the next attack; `perception.roll: false` makes every intent read exact. A rules object without the key
@@ -208,7 +210,7 @@ export function validateFixCoreRules(rules) {
   const pr = rules.ratings;
   if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
-  fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
+  fractions('pierce', rules.pierce && Object.fromEntries(Object.entries(rules.pierce).filter(([key]) => key === 'blockBypassFraction')), ['blockBypassFraction']);
   validateStanceBenefits(rules.stanceBenefits);
   validateSpellCosts(rules.spellCosts);
   validateElementFlux(rules.elementFlux);

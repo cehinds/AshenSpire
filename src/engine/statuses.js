@@ -400,6 +400,9 @@ export function decayAtTurnStart(ctx, entity) {
       const temporary = Math.max(0, inst.stacks - (inst.persistentStacks || 0));
       const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
       if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
+    } else if (def.decay === 'ownerTurnStart') {
+      // Gone entirely at the start of its owner's turn, like Block (Stone Skin).
+      removeStatus(ctx, entity, id, { reason: 'ownerTurnStart' });
     } else if (def.decay === 'perTurnEnd' || id === 'evade') {
       removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {

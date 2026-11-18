@@ -1423,5 +1423,14 @@
     "stackMode": "unique",
     "decay": "none",
     "tooltip": "Knocked back: it must Advance (pay its Advance cost) before its next melee move."
+  },
+  {
+    "id": "stoneHide",
+    "name": "Stone Skin",
+    "icon": "armour",
+    "tint": "#8a7b5c",
+    "stackMode": "add",
+    "decay": "ownerTurnStart",
+    "tooltip": "Each stack reduces Pierce damage by 1, from any Pierce source. Gone at the start of its owner's turn, like Block."
   }
 ]

@@ -1726,6 +1726,15 @@
       ]
     },
     {
+      "id": "status.stoneHide",
+      "tag": "status.stoneHide",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.stoneskin",
       "tag": "status.stoneskin",
       "family": "status",

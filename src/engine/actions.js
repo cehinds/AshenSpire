@@ -6,7 +6,7 @@ import { SwapEnemyRows } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, fixCorePierceRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -1114,6 +1114,9 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
     Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
   }
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
+  // Block laid by an Earth card is not bypassed by a built-in Pierce (owner, 2026-11-18); it is read as min(earthBlock, block).
+  const earth = fixCoreEnabled(ctx) ? fixCorePierceRules(fixCoreRules(ctx, entity)).earthSource : null;
+  if (amt > 0 && earth && (card?.tags || card?.authoredTags || []).includes(`school:${earth}`)) entity.earthBlock = Math.min((entity.earthBlock || 0) + amt, entity.block);
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
     // A guard no card raised names what did (a Defend stance's turn-start protection), for the log.

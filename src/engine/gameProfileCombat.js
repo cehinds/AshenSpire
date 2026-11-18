@@ -31,6 +31,24 @@ export function isPierceHit(profile, carrier) {
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
+/**
+ * PierceBypass(ctx, target, profile, carrier, total, blockSoak) -> how much of the Block this hit meets it passes through (owner, 2026-11-18).
+ * A tagged Pierce hit passes floor(blockBypassFraction x damage). A built-in element (Lightning, fixCoreMechanics pierce.builtInElements) is a Pierce
+ * hit too, except that it does not bypass Block laid by an Earth card (pierce.earthSource): that part stays soaked. Each Stone Skin stack
+ * (pierce.skinStatus) cuts the bypass by 1, whatever the Pierce source. A reaction carries no Pierce.
+ */
+export function PierceBypass(ctx, target, profile, carrier, total, blockSoak) {
+  if (carrier?.combatReaction) return 0;
+  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  const tagged = isPierceHit(profile, carrier);
+  const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
+  const builtIn = (rules.builtInElements || []).some(element => tags.includes(`school:${element}`) || canonicalDamageType(profile?.damageType) === element || carrier?.damageType === element);
+  if (!tagged && !builtIn) return 0;
+  let bypass = Math.floor(rules.blockBypassFraction * total);
+  if (!tagged && builtIn && rules.earthSource) bypass = Math.min(bypass, Math.max(0, blockSoak - Math.min(target?.earthBlock || 0, target?.block || 0)));
+  const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
+  return Math.max(0, bypass - skin);
+}
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
@@ -277,7 +295,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     const afterBlock = total - blocked;
@@ -295,7 +313,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, total, blockSoak);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
@@ -322,7 +340,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
+    const bypassAmount = PierceBypass(ctx, target, profile, carrier, physical + magical, blockSpent);
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;

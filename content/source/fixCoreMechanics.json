@@ -54,7 +54,10 @@
     "handCostDiscount": 1
   },
   "pierce": {
-    "blockBypassFraction": 0.2
+    "blockBypassFraction": 0.2,
+    "builtInElements": ["lightning"],
+    "skinStatus": "stoneHide",
+    "earthSource": "earth"
   },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,

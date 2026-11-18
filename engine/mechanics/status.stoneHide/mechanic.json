@@ -1,0 +1,26 @@
+{
+  "id": "status.stoneHide",
+  "tag": "status.stoneHide",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Stone Skin",
+  "description": "Each stack reduces Pierce damage by 1, from any Pierce source. Gone at the start of its owner's turn, like Block.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.stoneHide"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

@@ -1014,7 +1014,7 @@ export const SCHEMAS = Object.freeze({
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
-    decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
+    decay: union(en('none', 'perTurnEnd', 'ownerTurnStart', 'onConsume'), obj({ duration: int })),
     instancePresentation: opt(obj({
       valueToken: en(...STATUS_VALUE_TOKENS),
       durationToken: en(...STATUS_DURATION_TOKENS),

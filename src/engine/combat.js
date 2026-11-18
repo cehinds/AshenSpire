@@ -541,6 +541,7 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
   reconcileWardBlock(p);
+  if (p.earthBlock) p.earthBlock = Math.min(p.earthBlock, p.block);
   // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
   // retainBlock-style modifier keeps them.
   clearMeterGuards(p);
@@ -673,6 +674,7 @@ function enemyTurnStart(combat) {
   for (const e of combat.enemies) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
+    if (e.earthBlock) e.earthBlock = Math.min(e.earthBlock, e.block);
     reconcileWardBlock(e);
     clearMeterGuards(e);
     ExpireCombatCounterAtTurnStart(combat, e);
