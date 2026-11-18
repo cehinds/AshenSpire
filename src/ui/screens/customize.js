@@ -2033,9 +2033,9 @@ export function mountCustomize(app, {
       const to = creationStep(categories, current, 1);
       return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
     }));
-    next.addEventListener('click', () => {
+    next.addEventListener('click', (event) => {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
-      stepArrival.arrived();
+      stepArrival.arrived(event.timeStamp);
       advanceFrom(current);
     });
     refreshCreationNavigation();
@@ -2066,10 +2066,10 @@ export function mountCustomize(app, {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
   });
-  back.addEventListener('click', () => {
+  back.addEventListener('click', (event) => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     if (plan.back === 'leave') return onBack();
-    stepArrival.arrived();
+    stepArrival.arrived(event.timeStamp);
     activate(plan.previous);
     queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
   });
@@ -2078,9 +2078,9 @@ export function mountCustomize(app, {
     close.addEventListener('click', onBack);
   }
   let startPending = false;
-  start.addEventListener('click', async () => {
-    // A press that just changed the step (Customise, Next, Back) is not also a Begin (item 38: Review was skipped).
-    if (!stepArrival.allows()) return;
+  start.addEventListener('click', async (event) => {
+    // Review rendering can delay delivery of the second press. Compare when the presses happened.
+    if (!stepArrival.allows(event.timeStamp)) return;
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
     try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),

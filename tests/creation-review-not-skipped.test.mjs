@@ -19,12 +19,21 @@ test('a forward press inside the window after a step change is ignored, and allo
   assert.equal(guard.allows(), true, 'a deliberate Begin a moment later acts');
 });
 
+test('a second tap queued during Review rendering is timed from when the input occurred', () => {
+  let handledAt = 1005;
+  const guard = CreateStepArrivalGuard({ now: () => handledAt });
+  guard.arrived(1000);
+  handledAt = 1573;
+  assert.equal(guard.allows(1252), false, 'rendering delayed delivery beyond the window');
+  assert.equal(guard.allows(1450), true, 'an input outside the window still begins');
+});
+
 test('character creation wires the guard: Next and Back mark arrival, Begin checks it first', () => {
   const src = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
-  const next = src.match(/next\.addEventListener\('click', \(\) => \{[\s\S]*?\n {4}\}\);/)?.[0] || '';
-  assert.match(next, /stepArrival\.arrived\(\);\s*advanceFrom\(current\)/, 'Customise / Next marks the step change');
-  const back = src.match(/back\.addEventListener\('click', \(\) => \{[\s\S]*?\n {2}\}\);/)?.[0] || '';
-  assert.match(back, /stepArrival\.arrived\(\);\s*activate\(plan\.previous\)/, 'Back marks the step change');
-  const start = src.match(/start\.addEventListener\('click', async \(\) => \{[\s\S]*?if \(startPending/)?.[0] || '';
-  assert.match(start, /if \(!stepArrival\.allows\(\)\) return;/, 'Begin refuses a press that arrived with the step');
+  const next = src.match(/next\.addEventListener\('click', \(event\) => \{[\s\S]*?\n {4}\}\);/)?.[0] || '';
+  assert.match(next, /stepArrival\.arrived\(event\.timeStamp\);\s*advanceFrom\(current\)/, 'Customise / Next records the step-changing input time');
+  const back = src.match(/back\.addEventListener\('click', \(event\) => \{[\s\S]*?\n {2}\}\);/)?.[0] || '';
+  assert.match(back, /stepArrival\.arrived\(event\.timeStamp\);\s*activate\(plan\.previous\)/, 'Back records the step-changing input time');
+  const start = src.match(/start\.addEventListener\('click', async \(event\) => \{[\s\S]*?if \(startPending/)?.[0] || '';
+  assert.match(start, /if \(!stepArrival\.allows\(event\.timeStamp\)\) return;/, 'Begin checks when its input took place');
 });

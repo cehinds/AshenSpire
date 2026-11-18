@@ -7,13 +7,13 @@
 // that arrive within the window after it.
 export const STEP_ARRIVAL_GUARD_MS = 450;
 
-/** CreateStepArrivalGuard({ now, windowMs }) → { arrived(), allows() }. `now` defaults to performance.now. */
+/** Use input event timestamps when available so queued presses keep their original spacing. */
 export function CreateStepArrivalGuard({ now = () => performance.now(), windowMs = STEP_ARRIVAL_GUARD_MS } = {}) {
   let arrivedAt = -Infinity;
   return {
     /** A press just changed the step. */
-    arrived() { arrivedAt = now(); },
+    arrived(pressedAt = now()) { arrivedAt = pressedAt; },
     /** May a forward press act now? */
-    allows() { return now() - arrivedAt >= windowMs; },
+    allows(pressedAt = now()) { return pressedAt - arrivedAt >= windowMs; },
   };
 }
