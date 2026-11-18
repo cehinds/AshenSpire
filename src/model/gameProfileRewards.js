@@ -247,14 +247,17 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
+/** Owner 2026-11-18: a "Rank up a card" option is its own step after the card pick, never one of the card picks, so it counts
+ * as a bonus pick whether or not the saved offer flagged it (an older saved offer lists it without `bonus`). */
+export const IsBonusOption = option => !!option && (option.bonus === true || option.kind === RANK_UP_OPTION.kind);
 /**
  * OfferPicksLeft(offer) -> how many picks the player may still make. A bonus option (a rank-up that came beside the card pick,
  * rewards.json rankUp.bonusPickPct) is one extra pick on top of takeCount; every other option shares takeCount. An offer
  * without a bonus option counts exactly as before.
  */
 export function OfferPicksLeft(offer) {
-  const bonus = offer.options.filter(option => option.bonus), plain = offer.options.length - bonus.length;
-  const plainTaken = offer.taken.filter(at => !offer.options[at]?.bonus).length, bonusTaken = offer.taken.length - plainTaken;
+  const bonus = offer.options.filter(IsBonusOption), plain = offer.options.length - bonus.length;
+  const plainTaken = offer.taken.filter(at => !IsBonusOption(offer.options[at])).length, bonusTaken = offer.taken.length - plainTaken;
   return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
 }
 export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
@@ -293,7 +296,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if(!option.bonus&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!row.bonus),taken:offer.taken.filter(at=>!offer.options[at]?.bonus)})<1)throw new Error('Reward offer is missing or already claimed');
+  if(!IsBonusOption(option)&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!IsBonusOption(row)),taken:offer.taken.filter(at=>!IsBonusOption(offer.options[at]))})<1)throw new Error('Reward offer is missing or already claimed');
   if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   let raised=null;
