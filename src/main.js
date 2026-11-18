@@ -2,7 +2,7 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, GameProfileArmamentOffer, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
@@ -2337,7 +2337,7 @@ async function onCombatEnd(result, combat, enc) {
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic, armamentReward: ArmamentRewardRule(run, enc.pool) ? enc.pool : '' });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -2493,12 +2493,12 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, pool = 'normal' } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, armamentReward = '', pool = 'normal' } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}), ...(armamentReward ? { armamentReward } : {}) };
   persistOrWarn(); return showGameProfileReward();
 }
 
@@ -2564,6 +2564,9 @@ function leaveRewardDoor(pending) {
     const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
     if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
       run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
+    } else if (rest.armamentReward && GameProfileArmamentOffer(registries, run, rng, { offerId: `${rest.offerId}:armament`, pool: rest.armamentReward })) {
+      // Armament reward (rewards.json armamentReward): an elite's chance, a boss's certainty, after the relic door.
+      run.gameProfilePendingReward = { ...rest, offerId: `${rest.offerId}:armament`, source: 'armament', armamentReward: '' };
     } else if (rest.levelOffers > 0) {
       const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
       gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
@@ -2597,7 +2600,7 @@ function mountGameProfileOfferDoor(pending, { combined }) {
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
   }) : null;
   MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
-    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : pending.source === 'armament' ? 'Armament reward' : 'Victory rewards',
     // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
     onTake: index => (offer.options[index]?.kind === 'rankUps'
       ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
@@ -2941,7 +2944,7 @@ function showFirstScreenNow(createShotStates) {
   const shotStates = shotState ? createShotStates({
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
-    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
     showSettings, showStartupGate, showCustomize,
     getRun: () => run, getRng: () => rng, getRegistries: () => registries,
     setActiveMeta: (value) => { activeMeta = value; },
