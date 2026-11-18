@@ -12,7 +12,7 @@ export const coopCards = [
     id: 'rallyingBanner', name: 'Rallying Banner', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
     keywords: [], icon: 'combat',
     effects: [{ op: 'block', target: 'ally', amount: 10 }],
-    textTemplate: 'An ally gains {block} Block.',
+    textTemplate: 'An ally gains {block} Block. With no allies, nothing happens.',
     upgrade: { effects: [{ op: 'block', target: 'ally', amount: 14 }] },
     flavor: "Blank rag upon a pole.\n\nPlanted where climbers who meet upon the road may find one another. The Forsaken never had banners, for a banner bears a name. The corrupted come to them too.\n\nA rag on a pole. Find it. Stand by it.",
   },
@@ -20,8 +20,8 @@ export const coopCards = [
     id: 'sharedFlame', name: 'Shared Flame', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
     keywords: ['exhaust'], icon: 'health',
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
-    textTemplate: 'An ally heals {heal} HP. Exhaust.',
-    faceTemplate: ['Ally heals {heal} HP.'],
+    textTemplate: 'An ally heals {heal} HP. With no allies, nothing happens. Exhaust.',
+    faceTemplate: ['No allies: no effect.'],
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
     flavor: "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire.",
   },
@@ -32,7 +32,7 @@ export const coopCards = [
       { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 2 },
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
     ],
-    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2} Strength. Exhaust.',
+    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2} Strength. With no allies, only yours applies. Exhaust.',
     upgrade: {
       effects: [
         { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 3 },

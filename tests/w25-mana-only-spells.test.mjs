@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { fight, profile, reg } from './elementFixture.mjs';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { resolveCard } from '../src/model/registries.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
@@ -134,9 +134,14 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 // ---- Pools: each card reaches its own class ----
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
+  const stockHerald = live('herald', 1);
+  assert.equal(stockHerald.maxMana, 1);
+  assert.ok(!gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the stock Herald cannot pay its printed 2 MP');
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
+    // Give each class enough Mana for every printed price to isolate class eligibility.
+    run.maxMana = 2;
     for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);
   }
   for (const [id, want] of Object.entries(NEW)) {

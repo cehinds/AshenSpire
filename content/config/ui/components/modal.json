@@ -25,7 +25,12 @@
       "showNameButton": true
     },
     "reward": {
-      "extends": "choice"
+      "extends": "choice",
+      "showNameButton": false,
+      "gridGapPx": 6,
+      "gridGapPhonePx": 4,
+      "gridPadTopPx": 16,
+      "gridRowGapPx": 24
     },
     "cardUpgrade": {
       "extends": "choice"
@@ -80,6 +85,7 @@
       "className": "option-choice discard-choice",
       "idAttribute": "data-discard-id",
       "selection": "multi",
+      "atLimit": "swapOldest",
       "hasCancelButton": false,
       "closeLabelKey": "combat.discard.later"
     },

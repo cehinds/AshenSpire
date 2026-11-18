@@ -91,7 +91,7 @@ test('Hold Block keeps all remaining protection for exactly its displayed number
       // or capping it at the nominal six printed on the unmodified card.
       const expectedBlock=combat.player.block;
       assert.ok(expectedBlock>=initialBlock+6*plays);
-      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block\. Retain Block for 1 turn\./);
+      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block; keep it 1 turn\. Costs 1 more Stamina each play/);
       for(let turn=0;turn<plays;turn++){
         for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
         dispatch(combat,{type:'endTurn'});
@@ -145,7 +145,8 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   const selected=new Set();
   for(let seed=1;seed<=200;seed++)for(const id of rollCardRewardIds(legacy,createRng(seed),{classId:'reaver',pool:'normal'}))if(id.startsWith('base.'))selected.add(id);
   assert.ok(selected.size>30,`${selected.size} base rewards actually drawn`);
-  for(const id of pack.groups['base.current-rewards'].members)assert.ok(legacy.classes.get('reaver').cardPool.includes(id),id);
+  // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
+  for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
   assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
 });

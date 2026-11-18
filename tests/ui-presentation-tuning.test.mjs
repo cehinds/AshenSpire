@@ -96,7 +96,7 @@ function extract(name, uiConfig, bindings)
     return runInNewContext(`${extractFunction(name)}\n${name}`, { ...bindings, uiConfig });
 }
 
-function inspectionHarness(uiConfig)
+function inspectionHarness(uiConfig, { selected = null, modalShown = false } = {})
 {
     const opened = [];
     const box = {
@@ -105,7 +105,8 @@ function inspectionHarness(uiConfig)
         matches: () => false,
     };
     const wire = extract('wireCombatantContext', uiConfig, {
-        ArmLongPress, configuredArt: true, combat: {}, selected: null, selectedFlask: null,
+        ArmLongPress, configuredArt: true, combat: {}, selected, selectedFlask: null, selfArm: null,
+        modalOpen: () => modalShown,
         selectedCombatantId: null, refreshCombatantContext() {}, selectCombatant() {},
         getEntity: () => ({ id: 'e1', kind: 'enemy' }),
         combatantSubject: (kind, entity) => ({ kind, id: entity.id }),
@@ -146,4 +147,28 @@ test('combat inspection uses generated hold and pointer tolerance values', (t) =
     t.mock.timers.tick(350);
     assert.deepEqual(pastSlop.opened, [], 'movement beyond configured slop cancels inspection');
     pastSlop.release();
+});
+
+// Playtest 2026-11-17: a phone's long-press raises the context menu (and its pointercancel) before the hold fires,
+// so the menu itself reads the fighter, and a right-click does the same with a mouse.
+test('a context menu on a combatant opens its reading unless a card is armed or a reading is open', () =>
+{
+    const uiConfig = compileVariant({ holdMs: 450, movementTolerancePx: 12 });
+    const menu = () => { const event = { prevented: false, preventDefault() { this.prevented = true; } }; return event; };
+
+    const idle = inspectionHarness(uiConfig);
+    const idleEvent = menu();
+    idle.box.fire('contextmenu', idleEvent);
+    assert.deepEqual(idle.opened, ['e1']);
+    assert.equal(idleEvent.prevented, true, 'the browser menu never shows over a fighter');
+
+    const armed = inspectionHarness(uiConfig, { selected: 'card-1' });
+    const armedEvent = menu();
+    armed.box.fire('contextmenu', armedEvent);
+    assert.deepEqual(armed.opened, [], 'an armed card keeps right-click as cancel targeting');
+    assert.equal(armedEvent.prevented, false);
+
+    const alreadyOpen = inspectionHarness(uiConfig, { modalShown: true });
+    alreadyOpen.box.fire('contextmenu', menu());
+    assert.deepEqual(alreadyOpen.opened, [], 'a reading already open is not opened twice');
 });

@@ -48,6 +48,8 @@ import { stickTooltip, watchHeldTriggers } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 import { keycap, pill } from '../kit/index.js';
 import { layoutMetrics } from '../layoutMetrics.js';
+// The discard animation's own end removes a leaving card; this only covers a run with no animation (effects off).
+const DISCARD_OUT_FALLBACK_MS = 700;
 
 // Whether this browser lays out CSS `zoom` at all (hand.js reads card widths
 // against it). Asked once; the answer does not change while the page lives.
@@ -370,8 +372,28 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     quieted.add(el);
     el.style.setProperty('transition', 'none');
   }
-  function renderCards({ cards = [] }) {
+  // The turn-start refresh (playtest 2026-11-17): a card that leaves keeps its element for one discard animation,
+  // marked and out of input, then goes; the new hand's cards arrive after it. Reduced motion removes it at once.
+  const discarding = new Set();
+  function discardOut(el) {
+    discarding.add(el);
+    // Last in the strip and out of handEls: the new hand's fan, keys and slots count only the cards that stay.
+    // Its own placement variables keep it where it was while it drops away.
+    handEl.appendChild(el);
+    el.dataset.discarding = '';
+    el.inert = true;
+    el.setAttribute('aria-hidden', 'true');
+    el.classList.remove('selected', 'card-drawn');
+    let gone = false;
+    const remove = () => { if (gone) return; gone = true; discarding.delete(el); el.remove(); };
+    el.addEventListener('animationend', event => { if (event.target === el) remove(); });
+    setTimeout(remove, DISCARD_OUT_FALLBACK_MS);
+  }
+  function renderCards({ cards = [], turnRefresh = null }) {
     lastRender = { cards };
+    const refresh = turnRefresh && animateArrival && !reducedMotionRequested() ? turnRefresh : null;
+    // A card discarded and drawn again this turn is a new arrival: its old face leaves with the rest.
+    if (refresh) for (const id of refresh.drawnIds) previousCards.delete(id);
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
     const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
     cards = presentationOrder.map(id => entries.get(id));
@@ -388,13 +410,15 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // plan (and its forced layout) is the one already applied.
     let reshaped = !fanApplied || n0 !== cards.length;
     let rebuilt = 0;
-    for (const [id, record] of renderedCards) if (!reuseCards || !wanted.has(id)) {
-      record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
+    for (const [id, record] of renderedCards) if (!reuseCards || !wanted.has(id) || refresh?.drawnIds.has(id)) {
+      record.release?.();
+      if (refresh && record.el.isConnected) discardOut(record.el); else record.el.remove();
+      renderedCards.delete(id); reshaped = true;
     }
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
     fanMeasurement = null;
-    if (!renderedCards.size) handEl.replaceChildren();
+    if (!renderedCards.size) handEl.replaceChildren(...discarding);
     handEls = [];
     handFan = [];
     const n = cards.length;
@@ -497,8 +521,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
         el.classList.add('card-drawn');
+        if (refresh) el.classList.add('card-drawn-after-discard');
         el.addEventListener('animationend', event => {
-          if (event.target === el) el.classList.remove('card-drawn');
+          if (event.target === el) el.classList.remove('card-drawn', 'card-drawn-after-discard');
         });
       }
       if (entry.selected) el.classList.add('selected');
@@ -555,8 +580,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // The overlap arm: record what this render made, then reconcile. Inert —
     // including the observer re-point — unless the layout word is 'overlap';
     // in 'paging' the loop above was the whole render, unchanged.
-    handEls = [...handEl.children];
+    handEls = [...handEl.children].filter((el) => !discarding.has(el));
     handFan = handEls.map((el) => el.style.transform);
+    // A turn-start refresh is a new hand, not a play: no slot of the old fan is held for it.
+    if (refresh) appliedHand = null;
     // Re-observing an unchanged card requests a fresh initial size delivery,
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();

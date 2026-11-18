@@ -10,6 +10,8 @@ import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
 import { t } from '../strings.js';
+import { rankUpCandidates } from '../../model/skills.js';
+import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
 
 const freeze = (value) => Object.freeze(value);
 // Completed cards leave the picker. A card that upgrades with its weapon stays listed, disabled, with its reason.
@@ -66,6 +68,9 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.effects'), extras(before), extras(after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
+  // A rising cost (costGrowth) and the steady step that stops it (review of #2819: the picker named no change for it).
+  const rising = (def) => (def?.costGrowth?.stamina > 0 ? t('cardUpgrade.value.risingCost', { n: def.costGrowth.stamina }) : t('cardUpgrade.value.steadyCost'));
+  push(t('cardUpgrade.change.risingCost'), rising(before), rising(after));
   const from = statusStacks(before), to = statusStacks(after);
   if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
   return freeze(out);
@@ -141,7 +146,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (let i = 0; i < rows.length; i += 1) rows[i] = freeze({ ...rows[i], instanceIds: freeze(rows[i].instanceIds) });
   // Stable sorting keeps deck order within each group. An existing selection
   // can keep its preview after a purse/service change, with Confirm disabled.
-  rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
+  // Deck cards come first, then the library (playtest 2026-11-17 item 45b); within each, an available row before a blocked one.
+  rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck) || Number(a.disabled) - Number(b.disabled));
   const selected = rows.find((row) => row.instanceIds.includes(selectedInstanceId)) || null;
   const affordable = !!selected && selected.ok;
   return freeze({
@@ -149,5 +155,43 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     canConfirm: affordable && !blockedReason,
     blockedReasons: freeze(selected && !selected.ok ? [selected.blockedReason] : blockedReason ? [blockedReason] : []),
     faces: selected && selected.plan.before && selected.plan.after ? freeze({ before: selected.plan.before, after: selected.plan.after }) : null,
+  });
+}
+
+/**
+ * RankUpUpgradeModel(registries, run, skillId, selectedInstanceId, { faceOf }) — a usage skill's rank-up (SPEC 13.4o)
+ * in the card-upgrade picker's shape (playtest 2026-11-17 item 45a: every card upgrade uses the Blacksmith's option
+ * modal). Rows are the cards that can rise, deck first; a chosen card's options are its rank-up bonus picks
+ * (rankUpBonus.js), or the plain rise when it has none. Free: `purse` is false, so the picker shows no price.
+ * `faceOf(instance)` resolves an instance to the face the game draws (the reward screen's own resolver).
+ */
+export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId = null, { faceOf } = {}) {
+  const rows = rankUpCandidates(registries, run, skillId).map((instance) => {
+    const inDeck = (run.deck || []).includes(instance);
+    const base = registries.cards.get(instance.cardId);
+    const rank = cardRank(instance);
+    const before = faceOf(instance);
+    const raised = faceOf({ ...instance, rank: rank + 1 });
+    const bonus = rankUpBonusOptions(registries, run, instance);
+    const options = (bonus.length ? bonus.map((option) => ({ step: option.step, after: faceOf(option.after) })) : [{ step: null, after: raised }])
+      .map((option, index) => freeze({ index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, before, option.after) }));
+    return freeze({
+      instanceId: instance.instanceId, instanceIds: freeze([instance.instanceId]), copies: 1, inDeck, cardId: instance.cardId,
+      name: before?.name || base?.name || instance.cardId, rarity: base?.rarity || 'common', rank,
+      // A lone bonus is no choice, so the picker commits the plan itself: it carries that option's step and face.
+      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
+      costLabel: t('cardUpgrade.free'), blockedReason: '', levelFrom: rank, levelTo: rank + 1,
+      status: t('cardUpgrade.row.rankStatus', { from: rank, to: rank + 1 }),
+      changes: options[0].changes, options: freeze(options), nextDiffers: false,
+      tags: cardTags(registries, before || base, base?.rarity || 'common'),
+      artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (before || base)?.icon || 'skill',
+    });
+  });
+  rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck));
+  const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
+  return freeze({
+    rows: freeze(rows), selected, stones: 0, affordable: !!selected, canConfirm: !!selected, purse: false,
+    blockedReasons: freeze([]),
+    faces: selected ? freeze({ before: selected.plan.before, after: selected.options[0].after }) : null,
   });
 }

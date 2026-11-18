@@ -15,9 +15,8 @@
 // copies a card may have and what the bounds are all come from
 // model/deckRules.js; this file only says them in the editor's shape.
 
-import { ItemMinDeckDelta } from '../../model/itemProperties.js';
 import {
-  addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
+  addBasicCard, beginDeckEdit, DeckMinDelta, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
   deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
@@ -216,7 +215,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const deck = run.deck || [];
   const sideboard = run.sideboard || [];
   const count = deck.length;
-  const minDelta = ItemMinDeckDelta(run);
+  const minDelta = DeckMinDelta(run);
   const bounds = deckEditBounds(settings, minDelta);
   const refusal = deckEditRefusal(count, settings, minDelta);
   const maxText = bounds.max === Infinity ? t('deckEditor.unlimited') : String(bounds.max);
@@ -333,7 +332,9 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   }
   const basics = tiles.filter((tile) => tile.unlimited);
   const rest = tiles.filter((tile) => !tile.unlimited && passes(tile, state.filters)).sort(sorter(state.sort));
-  const collection = [...basics.filter((tile) => passes(tile, state.filters)), ...rest].map((tile) => Object.freeze(tile));
+  // Cards in the deck are listed first, then the library (playtest 2026-11-17 item 45b); each half keeps its order.
+  const listed = [...basics.filter((tile) => passes(tile, state.filters)), ...rest];
+  const collection = [...listed.filter((tile) => tile.inDeck > 0), ...listed.filter((tile) => !(tile.inDeck > 0))].map((tile) => Object.freeze(tile));
 
   const typesPresent = [...new Set([...described.map(({ row }) => row.type), ...tiles.map((tile) => tile.type)])].sort();
   const chips = (ids, active, label) => Object.freeze(ids.map((id) => Object.freeze({ id, label: label(id), on: active.includes(id) })));
@@ -472,7 +473,7 @@ export function openDeckEdit(registries, run, settings = {}) {
     },
     confirm() {
       live();
-      const refusal = deckEditRefusal(run.deck.length, settings, ItemMinDeckDelta(run));
+      const refusal = deckEditRefusal(run.deck.length, settings, DeckMinDelta(run));
       if (refusal) return { ok: false, refusal };
       closed = true;
       history.length = 0;

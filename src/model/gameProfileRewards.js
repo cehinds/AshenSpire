@@ -1,5 +1,6 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
+import { ConfiguredTraderCategories } from './gameProfileShopKind.js';
 import { syncZones } from './state.js';
 import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
@@ -381,15 +382,18 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');
   const rules=gameContent(run,'shops');
-  const categories=gameContent(run,'rewards').categories;
+  const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
+  // W25-R rank-up shelf, decided first: it is one of the trader's dock options, so the shelves below make room for it.
+  const rankUpShelf=fresh&&ShopStocksRankUp(registries,run,shopId);
+  // Each trader offers 3-6 options in all (playtest 2026-11-17 item 42; gameProfileShopKind.js).
+  const categories=ConfiguredTraderCategories(run,shopId,gameContent(run,'rewards').categories,{rankUpShelf});
   const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
   const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
-  const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
   // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
   // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
-  if(fresh&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)&&ShopStocksRankUp(registries,run,shopId)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
+  if(rankUpShelf&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);

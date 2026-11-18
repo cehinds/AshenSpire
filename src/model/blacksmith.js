@@ -25,12 +25,13 @@ import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
 import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
+import { upgradeCount } from './cardUpgrade.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
 import { SmithUpgradeSlots } from './smithUpgrade.js';
 import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
 import { ITEM_SMITH } from '../content/itemProperties.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
-import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice } from './blacksmithConfig.js';
+import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice, CardUpgradePrice } from './blacksmithConfig.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 /** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
@@ -236,7 +237,8 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
   // The blacksmith takes its stone discount off the service's price (Free stays free; 1 stone becomes 0).
   const due = verdict ? Math.max(0, (verdict.cost ?? 0) - blacksmithStoneDiscount(run)) : 0;
   const payable = !!verdict && (verdict.ok || (verdict.code === 'stones' && stones(run) >= due));
-  const cost = blacksmithRules(run) ? cinders(blacksmithPrices(run).cardUpgrade, priceMult) : 0;
+  const cost = blacksmithRules(run) && card
+    ? cinders(CardUpgradePrice(run, { upgrades: upgradeCount(card), rank: InstanceRank(card) }), priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!card) reason = say('shop.refuse.gone');

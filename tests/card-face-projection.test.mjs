@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
+import { combatCardSummary, playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_CHARACTERS } from '../src/model/cardFaceProjection.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
+import { roomyFloor } from '../src/ui/components/illustratedCardFitter.js';
 import { tokenRe } from '../src/model/validate.js';
 
 const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
@@ -153,6 +154,14 @@ test('a face never hides a cost clause', () => {
   }
 });
 
+test('Shared Sacrifice shows what allies pay before its Block payoff', () => {
+  const def = defOf('base.drain-allies');
+  const clauses = project(def).clauses;
+  assert.equal(clauses[0].kind, 'cost');
+  assert.equal(plain(clauses[0].html), 'All allies lose 3 HP');
+  assert.match(combatCardSummary(def, null, reg), /^All allies lose 3 HP\. Gain 12 Block\.$/);
+});
+
 test('stance entry details do not spend the ordinary effect budget', () => {
   const projection = cardFaceProjection({}, { lines: [
     { kind: 'damage', html: 'Inflict 8 damage' },
@@ -178,7 +187,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   assert.ok(cards.length >= 62, 'every Core card is checked');
   for (const card of cards) for (const upgraded of [false, true]) {
     const def = playingCardDefinition(coreReg, { cardId: card.id, upgraded }, { rules: coreRules });
-    const tokens = staticCardTokens(def);
+    const tokens = staticCardTokens(def, coreReg, coreRules);
     const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
     const lines = cardFaceLines(def, null, coreReg, coreRules, { stanceEntry: false });
     const projection = cardFaceProjection(def, { lines, authoredHtml, registries: coreReg, effects: def.effects });
@@ -192,10 +201,10 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   }
   // Whirlwind's three area figures (damage, Poise, Bleed) are three short clauses; the long readings stay in Information.
   const whirl = playingCardDefinition(coreReg, { cardId: 'core.whirlwind' }, { rules: coreRules });
-  const tokens = staticCardTokens(whirl);
+  const tokens = staticCardTokens(whirl, coreReg, coreRules);
   const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
     authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
-  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all', 'Bleed 1 to all']);
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['4 damage to all', '3 Poise to all', 'Bleed 1 to all']);
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
   // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").
@@ -247,6 +256,14 @@ const projectRoomy = (def) => {
 test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 13 px (Wave 2 sizes: was 10)', () => {
   assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 13]);
   assert.equal(FACE_BUDGET.clauses, 5);
+});
+
+test('the roomy fitting floor allows the same 2pt reduction as other phone rules text', () => {
+  const phoneShrinkPx = 2 * 4 / 3;
+  const phoneFloor = FACE_BUDGET.minPx - phoneShrinkPx;
+  const phoneMaximum = 10.4222; // Rite of Cinders in a 152px phone reward face.
+  assert.equal(roomyFloor(phoneMaximum, phoneFloor, 1, phoneShrinkPx), phoneFloor);
+  assert.equal(roomyFloor(16, 13, 1), 13);
 });
 
 test('a long-rules card carries a roomy projection with its conditional rider; a one-liner is unchanged', () => {

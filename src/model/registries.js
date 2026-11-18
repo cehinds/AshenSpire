@@ -1,7 +1,7 @@
 import { applyBaseManaPolicy } from './cardManaPolicy.js';
 import { cardRank, primaryEffectIndex, rankBonus, rankedEffects } from './cardRank.js';
 export { cardRank, primaryEffectIndex, rankBonus };
-import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature, ApplyDrawbackSteps } from './cardUpgrade.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -684,6 +684,8 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
   if (upgradeCount(instanceOrRef) && !usesAbilityGrade) result = mergeUpgrade(result, upgradeStepsOf(instanceOrRef));
+  // A ranked ability card's grade owns its numbers; only a drawback-removal step applies to it (review of #2819).
+  else if (upgradeCount(instanceOrRef)) result = deepFreeze(ApplyDrawbackSteps(result, upgradeStepsOf(instanceOrRef)));
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
   result = applyBaseManaPolicy(registries, result);
