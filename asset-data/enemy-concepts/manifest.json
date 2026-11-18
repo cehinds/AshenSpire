@@ -1,0 +1,401 @@
+{
+  "schema": "ashenspire/enemy-concepts/v1",
+  "source": {
+    "repository": "cehinds/AI-Art",
+    "integrationBranch": "ashenspire",
+    "gallery": "pose-studio/enemy-expansion-2026-11-18/index.html",
+    "manifests": {
+      "normals": "pose-studio/enemy-expansion-2026-11-18/normals/manifest.json",
+      "elites": "pose-studio/enemy-expansion-2026-11-18/elites/manifest.json",
+      "bosses": "pose-studio/enemy-expansion-2026-11-18/bosses/manifest.json",
+      "previous": "pose-studio/enemy-designs-2026-11-18/manifest.json"
+    }
+  },
+  "facing": "screen-left",
+  "runtimePrefix": "assets/",
+  "tiers": {
+    "high": {
+      "checkoutPrefix": "hd/assets/",
+      "archivePrefix": "assets/",
+      "canvas": [512, 512],
+      "footAnchor": [256, 480]
+    },
+    "light": {
+      "checkoutPrefix": "light/assets/",
+      "archivePrefix": "assets-mobile/",
+      "canvas": [256, 256],
+      "footAnchor": [128, 240]
+    }
+  },
+  "frames": {
+    "idle": "idle.webp",
+    "stance": {
+      "smash": "stance-smash.webp",
+      "attack": "stance-attack.webp",
+      "counter": "stance-counter.webp",
+      "sweep": "stance-sweep.webp",
+      "defend": "stance-defend.webp",
+      "preparing": "stance-preparing.webp"
+    },
+    "clips": {
+      "attack": ["attack-01.webp", "attack-02.webp"],
+      "react": ["react-01.webp", "react-02.webp"],
+      "defend": ["defend-01.webp", "defend-02.webp"]
+    },
+    "downed": "downed.webp"
+  },
+  "entries": [
+    {
+      "id": "brackenTusker",
+      "name": "Bracken Tusker",
+      "role": "normal",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/brackenTusker",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "fenwickToad",
+      "name": "Fenwick Toad",
+      "role": "normal",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/fenwickToad",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "reedpipePoacher",
+      "name": "Reedpipe Poacher",
+      "role": "normal",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/reedpipePoacher",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "wickerTitheman",
+      "name": "Wicker Titheman",
+      "role": "normal",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/wickerTitheman",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "quarryRam",
+      "name": "Quarry Ram",
+      "role": "normal",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/quarryRam",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "tollgateHookman",
+      "name": "Tollgate Hookman",
+      "role": "normal",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/tollgateHookman",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "waxsealBailiff",
+      "name": "Waxseal Bailiff",
+      "role": "normal",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/waxsealBailiff",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "kilnshellTortoise",
+      "name": "Kilnshell Tortoise",
+      "role": "normal",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/kilnshellTortoise",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "slagtongImp",
+      "name": "Slagtong Imp",
+      "role": "normal",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/slagtongImp",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "sootwingBat",
+      "name": "Sootwing Bat",
+      "role": "normal",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/sootwingBat",
+      "sourceManifest": "normals"
+    },
+    {
+      "id": "siltCrownNewt",
+      "name": "Silt-Crown Newt",
+      "role": "elite",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/siltCrownNewt",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "wickerHind",
+      "name": "Wicker Hind",
+      "role": "elite",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/wickerHind",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "blackrushStork",
+      "name": "Blackrush Stork",
+      "role": "elite",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/blackrushStork",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "pearlbackSnail",
+      "name": "Pearlback Snail",
+      "role": "elite",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/pearlbackSnail",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "alderMaskHarvester",
+      "name": "Alder Mask Harvester",
+      "role": "elite",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/alderMaskHarvester",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "pallidOathCamel",
+      "name": "Pallid Oath Camel",
+      "role": "elite",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/pallidOathCamel",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "inkveilNautilus",
+      "name": "Inkveil Nautilus",
+      "role": "elite",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/inkveilNautilus",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "mirrorFanAbbess",
+      "name": "Mirror-Fan Abbess",
+      "role": "elite",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/mirrorFanAbbess",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "saltChoirWalrus",
+      "name": "Salt Choir Walrus",
+      "role": "elite",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/saltChoirWalrus",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "rimewheelPenitent",
+      "name": "Rimewheel Penitent",
+      "role": "elite",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/rimewheelPenitent",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "brassThroatIbex",
+      "name": "Brass-Throat Ibex",
+      "role": "elite",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/brassThroatIbex",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "kilnbackTerrapin",
+      "name": "Kilnback Terrapin",
+      "role": "elite",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/kilnbackTerrapin",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "slagwingHeron",
+      "name": "Slagwing Heron",
+      "role": "elite",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/slagwingHeron",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "ashSilkWeaver",
+      "name": "Ash-Silk Weaver",
+      "role": "elite",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/ashSilkWeaver",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "ferrumVotary",
+      "name": "Ferrum Votary",
+      "role": "elite",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/ferrumVotary",
+      "sourceManifest": "elites"
+    },
+    {
+      "id": "woundwoodTusker",
+      "name": "Woundwood Tusker",
+      "role": "boss",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/woundwoodTusker",
+      "sourceManifest": "bosses"
+    },
+    {
+      "id": "mireProcessional",
+      "name": "Mire Processional",
+      "role": "boss",
+      "seat": "weald",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/mireProcessional",
+      "sourceManifest": "bosses"
+    },
+    {
+      "id": "veiledJusticiar",
+      "name": "Veiled Justiciar",
+      "role": "boss",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/veiledJusticiar",
+      "sourceManifest": "bosses"
+    },
+    {
+      "id": "sixleggedHearse",
+      "name": "Sixlegged Hearse",
+      "role": "boss",
+      "seat": "marches",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/sixleggedHearse",
+      "sourceManifest": "bosses"
+    },
+    {
+      "id": "crucibleNewt",
+      "name": "Crucible Newt",
+      "role": "boss",
+      "seat": "reach",
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/crucibleNewt",
+      "sourceManifest": "bosses"
+    },
+    {
+      "id": "carrionHeadsman",
+      "name": "Carrion Headsman",
+      "role": null,
+      "seat": null,
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/carrionHeadsman",
+      "sourceManifest": "previous"
+    },
+    {
+      "id": "knellcapSentinel",
+      "name": "Knellcap Sentinel",
+      "role": null,
+      "seat": null,
+      "tags": ["concept"],
+      "status": "concept",
+      "enabled": false,
+      "artRoot": "assets/enemy-poses/expansion/knellcapSentinel",
+      "sourceManifest": "previous"
+    }
+  ]
+}
