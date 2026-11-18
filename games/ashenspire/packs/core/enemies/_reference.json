@@ -113,6 +113,10 @@
       "name": "The Marrow Organist",
       "tier": "boss"
     },
+    "enemy:mireProcessional": {
+      "name": "The Mire Processional",
+      "tier": "boss"
+    },
     "enemy:mirrorScribe": {
       "name": "Mirror Scribe",
       "tier": "minion"
@@ -2143,6 +2147,96 @@
         "mana": 0
       },
       "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.pallLash": {
+      "name": "Pall Lash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.bogCandle": {
+      "name": "Bog Candle",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.graveMurk": {
+      "name": "Grave Murk",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.pallBearers": {
+      "name": "Pall Bearers",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.mournersChorus": {
+      "name": "Mourners' Chorus",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.wakeVeil": {
+      "name": "Wake Veil",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.finalRequiem": {
+      "name": "Final Requiem",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 2
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:mireProcessional.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
       "usedBy": "enemy sheet"
     }
   },

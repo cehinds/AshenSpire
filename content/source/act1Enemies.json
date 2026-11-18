@@ -1515,5 +1515,127 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "mireProcessional",
+    "attributes": {
+      "strength": 4,
+      "dexterity": 2,
+      "constitution": 1,
+      "wisdom": 5,
+      "intelligence": 5
+    },
+    "size": "large",
+    "name": "The Mire Processional",
+    "hp": [
+      112,
+      112
+    ],
+    "poiseMax": 24,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "pallLash": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "bogCandle": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 8,
+        "weight": 30,
+        "maxConsecutive": 2
+      },
+      "graveMurk": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ]
+      },
+      "pallBearers": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 18,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "mournersChorus": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 13,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "wakeVeil": {
+        "sp": 1,
+        "intent": "block",
+        "block": 8,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "finalRequiem": {
+        "sp": 3,
+        "intent": "attack",
+        "damage": 28,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "locked": true
+      }
+    },
+    "firstMove": "graveMurk",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 45,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "unlockMoves": [
+          "finalRequiem"
+        ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage"
+      },
+      {
+        "to": "fire",
+        "effect": "damage"
+      }
+    ]
   }
 ]

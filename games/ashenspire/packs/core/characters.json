@@ -4521,5 +4521,165 @@
         }
       ]
     }
+  },
+  {
+    "id": "mireProcessional",
+    "name": "The_Mire_Processional",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 3
+    },
+    "defaultDeck": [
+      "mireProcessional.pallLash",
+      "mireProcessional.bogCandle",
+      "mireProcessional.graveMurk",
+      "mireProcessional.pallBearers",
+      "mireProcessional.mournersChorus",
+      "mireProcessional.wakeVeil",
+      "mireProcessional.advance",
+      "mireProcessional.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre"
+      },
+      {
+        "key": "offHand",
+        "id": "lantern"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "mireProcessional",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "mireProcessional.finalRequiem"
+      ],
+      "firstCard": "mireProcessional.graveMurk",
+      "poiseMax": 12,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 45,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "mireProcessional.finalRequiem"
+          ]
+        }
+      ],
+      "cardHints": {
+        "mireProcessional.pallLash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "pallLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.bogCandle": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "bogCandle",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.graveMurk": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "graveMurk",
+          "coreSp": "card"
+        },
+        "mireProcessional.pallBearers": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pallBearers",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.mournersChorus": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "mournersChorus",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.wakeVeil": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wakeVeil",
+          "coreSp": "card"
+        },
+        "mireProcessional.finalRequiem": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "finalRequiem",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "mireProcessional.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

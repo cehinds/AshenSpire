@@ -5940,5 +5940,161 @@
         }
       ]
     }
+  },
+  {
+    "id": "mireProcessional",
+    "name": "The_Mire_Processional",
+    "displayName": "The Mire Processional",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "lantern",
+            "name": "Lantern",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "armor.ossuaryWeave",
+            "name": "Ossuary_Weave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 5
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "armor.ossuaryWeave",
+            "name": "Ossuary_Weave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 5
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 10,
+        "intelligence": 5,
+        "level": 10
+      },
+      "total": 63,
+      "formula": "10+20+5+3+10+5+10 = 63"
+    },
+    "pools": {
+      "hp": 63,
+      "sp": 5,
+      "mp": 3,
+      "ar": 1,
+      "dr": 1,
+      "hand": 9
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre",
+        "name": "Bone_Sceptre"
+      },
+      {
+        "key": "offHand",
+        "id": "lantern",
+        "name": "Lantern"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave",
+        "name": "Ossuary_Weave"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "mireProcessional.pallLash",
+          "name": "Pall_Lash",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.bogCandle",
+          "name": "Bog_Candle",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.graveMurk",
+          "name": "Grave_Murk",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.pallBearers",
+          "name": "Pall_Bearers",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.mournersChorus",
+          "name": "Mourners'_Chorus",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.wakeVeil",
+          "name": "Wake_Veil",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "mireProcessional.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

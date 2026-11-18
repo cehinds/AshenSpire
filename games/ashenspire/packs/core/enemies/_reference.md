@@ -36,6 +36,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:lanternMoth | Lantern Moth | minion |
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
+| enemy:mireProcessional | The Mire Processional | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:pearlbackSnail | Pearlback Snail | elite |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
@@ -253,6 +254,15 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
 | card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:mireProcessional.pallLash | Pall Lash | attack | 1 | 0 | Deal {damage} damage. |
+| card:mireProcessional.bogCandle | Bog Candle | attack | 1 | 1 | Deal {damage} damage. |
+| card:mireProcessional.graveMurk | Grave Murk | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:mireProcessional.pallBearers | Pall Bearers | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:mireProcessional.mournersChorus | Mourners' Chorus | attack | 2 | 0 | Deal {damage} damage. |
+| card:mireProcessional.wakeVeil | Wake Veil | skill | 1 | 0 | Gain {block} Block. |
+| card:mireProcessional.finalRequiem | Final Requiem | attack | 3 | 2 | Deal {damage} damage. |
+| card:mireProcessional.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:mireProcessional.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 
