@@ -406,6 +406,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:armor.waywatcherCoat | Waywatcher Coat | armor | armor | uncommon | leathers, light, unwieldy |
 | gear:kris | Kris | rightHand | weapon | uncommon | dagger, flurry, bleed |
 | gear:stiletto | Stiletto | rightHand | weapon | rare | dagger, flurry |
+| gear:broadsword | Broadsword | rightHand | weapon | uncommon | sword |
+| gear:flamberge | Flamberge | rightHand | weapon | rare | sword, burn |
+| gear:rapier | Rapier | rightHand | weapon | common | sword |
+| gear:estoc | Estoc | rightHand | weapon | uncommon | sword |
+| gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
 
 ## Relics (relic:)
 

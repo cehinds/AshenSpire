@@ -402,6 +402,34 @@
       "traits": {
         "conductive": true
       }
+    },
+    "broadsword": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "flamberge": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "fire": 1
+      }
+    },
+    "rapier": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "estoc": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "duelistsFoil": {
+      "traits": {
+        "conductive": true
+      }
     }
   },
   "enemies": {

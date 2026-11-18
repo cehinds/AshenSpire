@@ -24,7 +24,12 @@
         "cinderAxe",
         "frostSpear",
         "halberd",
-        "warhammer"
+        "warhammer",
+        "broadsword",
+        "flamberge",
+        "rapier",
+        "estoc",
+        "duelistsFoil"
       ]
     },
     "shields": {

@@ -3648,6 +3648,57 @@
         "flurry"
       ],
       "range": "melee"
+    },
+    "gear:broadsword": {
+      "name": "Broadsword",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:flamberge": {
+      "name": "Flamberge",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "sword",
+        "burn"
+      ],
+      "range": "melee"
+    },
+    "gear:rapier": {
+      "name": "Rapier",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:estoc": {
+      "name": "Estoc",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:duelistsFoil": {
+      "name": "Duelists Foil",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
     }
   },
   "relics": {

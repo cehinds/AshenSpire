@@ -3,7 +3,12 @@
     "weaponGroups": {
       "sword": [
         "straightSword",
-        "katana"
+        "katana",
+        "broadsword",
+        "flamberge",
+        "rapier",
+        "estoc",
+        "duelistsFoil"
       ],
       "greatsword": [
         "greatsword"

@@ -537,16 +537,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "twinFang"
+        "viperStrike"
       ],
       "learnableArts": [
-        "serratedShiv",
-        "cheapShot"
+        "garrote",
+        "aspDart"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "twinFang"
+        "artCardId": "viperStrike"
       }
     }
   },
@@ -556,16 +556,111 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "twinFang"
+        "assassinate"
       ],
       "learnableArts": [
-        "serratedShiv",
-        "cheapShot"
+        "sap",
+        "deathblow"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "twinFang"
+        "artCardId": "assassinate"
+      }
+    }
+  },
+  {
+    "weaponId": "broadsword",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "sweepingBlow"
+      ],
+      "learnableArts": [
+        "cleavingBlow",
+        "hewingArc"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "sweepingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "flamberge",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "flameToBlade"
+      ],
+      "learnableArts": [
+        "progression-ember-hew",
+        "honedEdge"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "flameToBlade"
+      }
+    }
+  },
+  {
+    "weaponId": "rapier",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "riposte"
+      ],
+      "learnableArts": [
+        "quickCut",
+        "coupDeGrace"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "riposte"
+      }
+    }
+  },
+  {
+    "weaponId": "estoc",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "thousandCutsRogue"
+      ],
+      "learnableArts": [
+        "bladeDanceRogue",
+        "garrote"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "thousandCutsRogue"
+      }
+    }
+  },
+  {
+    "weaponId": "duelistsFoil",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "executionWindow"
+      ],
+      "learnableArts": [
+        "rondelParry",
+        "bindingParry"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "executionWindow"
       }
     }
   }

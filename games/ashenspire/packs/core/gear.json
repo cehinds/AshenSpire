@@ -971,5 +971,91 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "broadsword",
+    "name": "Broadsword",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "broadsword"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "flamberge",
+    "name": "Flamberge",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "sword",
+      "burn"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "flamberge"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "rapier",
+    "name": "Rapier",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "rapier"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "estoc",
+    "name": "Estoc",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "estoc"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "duelistsFoil",
+    "name": "Duelists_Foil",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "duelistsFoil"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]
