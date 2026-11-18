@@ -112,7 +112,7 @@ test('equipment inspection exposes converted values and armor budget', async () 
   const armor=reg.equipment.armour.find(piece=>piece.classId==='reaver' && piece.id==='wayfarerPlate');
   assert.ok(armor);
   const model=equipmentCardModel(reg,resolveUpgradedEquipment(reg,`armor/reaver/${armor.id}`,1));
-  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
+  assert.ok(model.bonuses.every(row=>!/points|Rank \d/.test(row.label)));assert.ok(model.bonuses.some(row=>/Poise/.test(row.label)));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
 test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {

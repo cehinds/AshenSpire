@@ -6,6 +6,29 @@ import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
 import { affinityTags } from '../engine/elementRules.js';
 
+const GEAR_ATTRIBUTE_IDS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+/**
+ * What a resolved armour or shield piece provides, as a short sentence: its rating values first ("3 Poise."), then
+ * its attribute grants spelled out ("Gain 1 Dexterity and 1 Constitution."). A piece with nothing concrete to state
+ * shows its authored flavour line instead; the rank / points receipt is never the body (owner, 2026-11-18).
+ * One formatter for every face that draws this card (reward door, shop, Armoury, inspection).
+ */
+export function gearEffectText(registries, values, labels, flavor) {
+  const entries = Object.entries(values || {}).filter(([, n]) => Number.isFinite(n) && n !== 0);
+  const ratings = entries.filter(([id]) => !GEAR_ATTRIBUTE_IDS.includes(id)).map(([id, n]) => `${n} ${labels[id] || id}`);
+  const grants = entries.filter(([id]) => GEAR_ATTRIBUTE_IDS.includes(id) && values[id] > 0)
+    .map(([id, n]) => `${n} ${registries.attributes?.get?.(id)?.label || id[0].toUpperCase() + id.slice(1)}`);
+  const sentences = [];
+  if (ratings.length) sentences.push(`${ratings.join(', ')}.`);
+  if (grants.length) sentences.push(`Gain ${grants.length > 1 ? `${grants.slice(0, -1).join(', ')} and ${grants[grants.length - 1]}` : grants[0]}.`);
+  if (!sentences.length) {
+    const text = flavor || 'No flavor text authored.';
+    return { text, explanation: text };
+  }
+  const text = sentences.join(' ');
+  return { text, explanation: `Granted while equipped. ${text}` };
+}
+
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
   const armor = piece.kind === 'armor';
@@ -40,11 +63,8 @@ export function equipmentCardModel(registries, piece) {
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
       id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
         : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
-    const points = receipt.budget ?? Object.values(receipt.points).reduce((sum,n)=>sum+n,0) + receipt.tagCost;
-    const perRank = configuredGear.armorBudget.perRank ?? 0;
-    bonuses = armor || piece.kind === 'shield' ? [field(`Rank ${receipt.rank} · ${points} points`,points,
-      armor ? `Armour budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`
-        : `Stat points: ${points} (${perRank} more per Smith tier).`)] : [];
+    const effect = gearEffectText(registries, receipt.values, labels, piece.blurb);
+    bonuses = armor || piece.kind === 'shield' ? [field(effect.text, effect.text, effect.explanation)] : [];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
