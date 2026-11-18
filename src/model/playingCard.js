@@ -144,7 +144,7 @@ export function combatCardType(def) {
  * static tokens. Every card-face text model reads through this one context.
  */
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules);
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -345,6 +345,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
 // `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
 /** The run's effective attributes for a face outside combat: `rules` is the run (it has a deck and a profile pin); a combat or no run reads none. */
 function faceAttributes(registries, rules) {
+  if (rules?.faceAttributes) return rules.faceAttributes;
   if (!rules?.gameProfile || !Array.isArray(rules.deck) || !registries) return null;
   try { return gameProfileEffectiveAttributes(registries, rules); } catch { return null; }
 }
@@ -482,7 +483,9 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
 
 export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
-  const base = staticCardTokens(def, registries, rules);
+  // Owner, 2026-11-18: the colour baseline is the same card's face outside combat (always-on attributes and gear included), so a live number is
+  // green or red only when something in the fight raised or lowered it.
+  const base = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
