@@ -2342,6 +2342,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!existing) box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
+      // Self-and-all (owner 2026-11-18 section 22): the player is a legal target of a card that affects them and every enemy.
+      else if (selected && pendingTargetPlan().legalIds.includes(combat.player.id)) playCard(selected, combat.player.id);
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
     if (!existing) box.addEventListener('click', event => {
@@ -3062,14 +3064,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
-      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
+      const playerLegal = targetPlan.legalIds.includes(combat.player.id); // self-and-all: the player is a drop target too
+      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer && !playerLegal;
       if (wrongSide) return { legal: false, enemies: [], flick };
       if (dragTargetMode === 'single') {
         const enemy = directLegal ? directEnemy : flick ? nearestEnemy(point.x, point.y, targetPlan.legalIds) : null;
         return { legal: !!enemy, enemies: enemy ? [enemy] : [], targetId: enemy?.dataset.eid, flick };
       }
       if (dragTargetMode === 'all') {
-        const enemies = flick || directEnemy ? enemyElsFor(targetPlan.legalIds) : [];
+        const enemies = flick || directEnemy || (directPlayer && playerLegal) ? enemyElsFor(targetPlan.legalIds) : [];
         return { legal: enemies.length > 0, enemies, flick };
       }
       return { legal: flick || !!directPlayer, enemies: [], flick };
