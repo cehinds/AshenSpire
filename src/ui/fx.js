@@ -2,6 +2,8 @@ import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
+import { playRecipientEffectLayers, clearRecipientEffects } from './recipientEffectSprites.js';
+import { recipientEffectForEvent } from '../model/recipientEffects.js';
 import { effectsOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
@@ -1266,7 +1268,7 @@ export function playTimeline(events, ctx, done) {
     handle?.pauseForSkip();
     // Keep the screen busy through pointer release, so the same click cannot
     // activate a newly rendered card after it skipped this action.
-    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); clearRecipientEffects(ctx.layer);
   };
   const release = () => {
     if (!isCurrent()) { handle?.cancel(); return; }
@@ -1434,7 +1436,7 @@ export function playTimeline(events, ctx, done) {
       const current = isCurrent();
       if (current) for (const beat of beats) cue(beat, false);
       const mount = ctx.combatEl ?? globalThis.document;
-      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); clearRecipientEffects(ctx.layer);
       for (const sprite of mount?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
       if (current) ctx.onFlush?.();
     },
@@ -1575,11 +1577,20 @@ function visualPartsFor(e, beatKind, opts) {
     const original = base?.reaction;
     base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
   }
-  const effect = combatEffectForEvent(e);
+  const recipient = e.recipientEffect || recipientEffectForEvent({}, e);
+  const recipes = e.recipientEffects || (recipient ? [recipient] : []);
+  const effect = recipes.length ? { targetId: e.recipientTargetId || e.targetId }
+    : Array.isArray(e.recipientEffects) ? null : combatEffectForEvent(e);
   if (!effect) return base;
-  const playEffect = (ctx) => {
-    const anchor = ctx.anchorFor(effect.targetId);
-    if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+  const playEffect = ctx => {
+    if (recipes.length) {
+      playRecipientEffectLayers(ctx.layer, recipes, { anchorFor: ctx.anchorFor,
+        sourceId: e.recipientSourceId || e.sourcePlayerId || e.sourceId,
+        targetId: e.recipientTargetId || e.targetId });
+    } else {
+      const anchor = ctx.anchorFor(effect.targetId);
+      if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+    }
   };
   // SPEC §7.4 (sequential): the Stagger wobble is the defender's reaction, not
   // the impact frame, so its break sprite plays with that reaction and takes no
@@ -1764,7 +1775,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Block') ? 'Block' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
-          if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
+          if (beatKind === 'attack' && !e.recipientEffect && !Array.isArray(e.recipientEffects)) spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         },
         reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
@@ -1855,8 +1866,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         ? {
             reaction: (ctx) => {
               if (!sequential) sfx.play('heal');
-              const anchor = ctx.anchorFor(e.targetId);
-              if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
+              // The receipt-local sprite is played by visualPartsFor at contact.
             },
             numbers: (ctx) => {
               floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal', undefined, sequential ? { onSpawn: () => sfx.play('heal') } : undefined);

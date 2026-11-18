@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Recipient impact sprites (2026-11-18)
+
+The three-frame recipient effect sprites were generated with the built-in
+OpenAI ImageGen tool under human direction. No third-party artwork was used
+and no third-party licence is asserted. The local art intake package preserves
+raw transparent PNGs, exact prompts, source hashes, HD/light atlases and strips;
+see [Recipient impact sprites](docs/RECIPIENT-EFFECTS.md). Its debug SVG marks
+are authored code bundled with the game. Art publication and release pinning
+remain separate from this local implementation.
+
 ## Mineral component proposals (2026-10-18)
 
 The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
@@ -874,3 +884,16 @@ backgrounds and effects remain separate components.
 ### Reviewed card-art cutouts (2026-10-30)
 
 The 73 additional status/mineral cutouts reuse existing project proposal PNGs byte-for-byte. Source URLs, SHA-256 hashes and original component labels are recorded in `asset-data/card-art/reviewed-library.json` and [AI-Art provenance](https://github.com/cehinds/AI-Art/blob/ashenspire-hd-assets-v25/provenance/AshenSpire/reviewed-card-cutouts.json). Existing authorship and unresolved provenance remain unchanged; reuse does not establish a new license.
+
+### Recipient impact, casting and reaction sprites (2026-11-18)
+
+Original OpenAI image-generated pixel effects, reviewed in the local
+`scratch/recipient-effects/front-on-v4`, `composed-v5`, and `overlay-v6` source
+packages. The 35 runtime strips stage as `assets/recipient-effects/v5/*.png` in
+both art tiers. Original raw PNGs, exact generation prompts, extraction records
+and SHA-256 hashes are preserved in the explicit intake package's
+`provenance/recipient-effects/v5/` tree and `recipient-effects-catalog.json`.
+The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md) documents the source and
+export command. No third-party artwork or license is claimed; no published
+art-release URL exists yet. Ward and Evade reuse each affected actor's existing
+artwork and attribution rather than the demonstration silhouette sprite.

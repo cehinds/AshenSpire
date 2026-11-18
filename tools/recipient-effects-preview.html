@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" data-effects="on">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recipient effects · AshenSpire</title>
+<style>
+  :root { color-scheme:dark; font:15px/1.45 system-ui,sans-serif; background:#101619; color:#e8edea }
+  * { box-sizing:border-box } body { margin:0 } main { max-width:1200px; margin:auto; padding:28px }
+  h1 { font-size:30px; margin:4px 0 8px } h2 { font-size:18px; margin:0 0 15px } p { color:#aab9b2; margin:6px 0 18px }
+  .eyebrow { color:#b9d59d; text-transform:uppercase; letter-spacing:.15em; font-size:11px }
+  .layout { display:grid; grid-template-columns:250px 1fr; gap:18px; margin:24px 0 }
+  .panel { background:#192226; border:1px solid #34433f; border-radius:12px; padding:20px; min-width:0 }
+  label { display:block; margin:0 0 12px; color:#b9c5bf; font-size:13px }
+  select,button { font:inherit; color:inherit; background:#24332f; border:1px solid #4c6558; border-radius:6px; padding:9px 12px }
+  select { display:block; width:100%; margin-top:5px } button { cursor:pointer } button:hover { background:#344c3e } button.primary { background:#aace8d; color:#152016; border-color:#aace8d }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px } .check { display:flex; align-items:center; gap:8px; margin:16px 0 }
+  .battlefield { position:relative; height:360px; overflow:hidden; background:linear-gradient(#111b2480,#111b2440),url('../assets/bg/bg_act1.webp') center/cover,#1e2523; border:1px solid #35453e; border-radius:8px }
+  .battlefield::before { content:'';position:absolute;left:-20%;right:-20%;bottom:-25%;height:80%;transform:perspective(450px) rotateX(55deg);background:repeating-linear-gradient(0deg,transparent 0 39px,#d9c89955 40px 41px),repeating-linear-gradient(90deg,transparent 0 79px,#d9c89933 80px 81px);border:1px solid #d9c89955;pointer-events:none }
+  .actor { position:absolute;width:76px;height:120px;color:#ecdfc3;font-size:11px;text-align:center;z-index:1;filter:drop-shadow(0 4px 3px #0008) }
+  .actor svg { display:block;width:100%;height:100%;overflow:visible }.actor span { position:absolute;top:100%;left:-30%;width:160%;text-shadow:0 1px 3px #000 }
+  #player { left:14%;bottom:13%;width:100px;height:150px }
+  #enemy-1 { left:45%;top:14% } #enemy-2 { left:65%;top:9%;width:66px;height:104px } #enemy-3 { left:82%;top:17%;width:70px;height:110px }
+  .enemies { display:contents } #effect-layer { position:absolute; inset:0; pointer-events:none; z-index:2 }
+  .camera-note { position:absolute;left:12px;bottom:9px;font-size:10px;color:#e5ddc9;background:#101614b0;padding:3px 6px;border-radius:3px }
+  .caption { min-height:44px; margin:14px 0 0; font-size:13px } code { color:#c4dba9 }
+  .strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 }
+  .tile { background:repeating-conic-gradient(#202a2e 0% 25%,#1b2428 0% 50%) 0 / 20px 20px; border:1px solid #3a4943; border-radius:8px; text-align:center; overflow:hidden }
+  .tile canvas { display:block; width:100%; height:auto } .tile small { display:block; padding:5px; background:#17211d; color:#aebfb2 }
+  .library { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px }.library a { color:#c1dba8; text-decoration:none }.library img { width:100%; display:block; background:repeating-conic-gradient(#263137 0% 25%,#202a2e 0% 50%) 0 / 24px 24px; border-radius:8px; border:1px solid #3a4943; margin-top:8px }
+  details { margin:20px 0;color:#b9c5bf } summary { cursor:pointer } .presets { display:flex;flex-wrap:wrap;gap:8px;margin-top:12px }.presets button { font-size:12px }
+  @media(max-width:650px) { main { padding:16px } h1 { font-size:25px }.layout { grid-template-columns:1fr }.panel{padding:14px}.battlefield { height:280px }#player{left:9%;width:76px;height:120px}#enemy-1{left:41%;width:51px;height:85px}#enemy-2{left:62%;width:45px;height:76px}#enemy-3{left:79%;width:48px;height:80px}.actor span{font-size:9px}.library{grid-template-columns:repeat(2,minmax(0,1fr))} }
+</style>
+<main>
+  <div class="eyebrow">AshenSpire · local art review</div>
+  <h1>Recipient impact sprites</h1>
+  <p>Three-frame impacts in the combat camera: rear-view player in the foreground, front-view enemies farther away.</p>
+  <div class="layout">
+    <form class="panel" id="controls" onsubmit="return false">
+      <h2>Effect recipe</h2>
+      <label>Stance / action<select id="action"><option value="attack">Attack</option><option value="smash">Smash</option><option value="sweep">Sweep</option><option value="counter">Counter</option><option value="defend">Defend</option><option value="skill">Skill</option><option value="spell" selected>Spell</option></select></label>
+      <label>Recipient layout<select id="target"><option value="target" selected>Target</option><option value="self">Self</option><option value="aoe">Area</option></select></label>
+      <label>Target side<select id="side"><option value="enemy">Enemy</option><option value="player">Player</option></select></label>
+      <label>Element / school<select id="school"><option value="none">None</option><option value="fire" selected>Fire</option><option value="frost">Frost</option><option value="lightning">Lightning</option><option value="force">Force</option><option value="alteration">Alteration</option><option value="illusion">Illusion</option><option value="divine">Divine</option><option value="decay">Decay</option><option value="earth">Earth</option></select></label>
+      <label>Effect<select id="effect"><option value="damage">Damage</option><option value="ward">Ward</option><option value="heal">Heal</option><option value="strength">STR buff</option><option value="dexterity">DEX buff</option><option value="intelligence">INT buff</option><option value="weak">Weak debuff</option><option value="burn">Burn status</option></select></label>
+      <label>Reach<select id="range"><option value="melee">Melee</option><option value="reach">Reach</option><option value="ranged">Ranged</option></select></label>
+      <label>Physical impact<select id="impactStyle"><option value="slashing">Slash</option><option value="piercing">Thrust</option><option value="blunt">Blunt</option></select></label>
+      <label class="check"><input type="checkbox" id="placeholder"> Force debug placeholder</label>
+      <div class="actions"><button class="primary" id="play">Play impact</button><button id="loop" aria-pressed="false">Loop</button></div>
+    </form>
+    <section class="panel">
+      <h2>On the recipient</h2>
+      <div class="battlefield" id="battlefield">
+        <div class="actor" id="player" data-facing="back"><span>Player · rear view</span></div>
+        <div class="enemies"><div class="actor enemy" id="enemy-1" data-facing="front"><span>Enemy · front</span></div><div class="actor enemy" id="enemy-2" data-facing="front"><span>Enemy · front</span></div><div class="actor enemy" id="enemy-3" data-facing="front"><span>Enemy · front</span></div></div>
+        <div id="effect-layer"></div>
+        <div class="camera-note">Camera behind player · effects stay on the recipient</div>
+      </div>
+      <p class="caption" id="recipe-description" aria-live="polite">Loading recipe…</p>
+      <div class="strip" id="frames"></div>
+      <p id="art-state">Art loads from the staged local art package. Missing art uses one static stance/action × target-type placeholder.</p>
+      <div class="presets"><button data-preset="fire">Fire blast</button><button data-preset="sweep">Fire sweep</button><button data-preset="ward">Alteration Ward</button><button data-preset="buff">STR buff</button><button data-preset="enemy">Enemy → player</button></div>
+    </section>
+  </div>
+  <section class="panel"><h2>PNG sprite sheets</h2><p>Each row is one effect; columns are onset, impact and fade. Click a sheet to open or save its PNG.</p><div class="library" id="library"></div></section>
+  <details><summary>Debug fallback contract</summary><p>Exactly one frame for each stance/action and recipient layout. It deliberately ignores element, school, attribute and status. The same fallback works when art is absent from a build or a sprite image fails to load.</p></details>
+</main>
+<script type="module">
+import { resolveRecipientEffect } from '../src/model/recipientEffects.js';
+import { playRecipientEffect, clearRecipientEffects, prewarmRecipientEffect, recipientPlaceholderSvg, recipientAtlas, recipientEffectView } from '../src/ui/recipientEffectSprites.js';
+const $=id=>document.getElementById(id), layer=$('effect-layer');
+const artRoot=new URL('../scratch/recipient-effects/art-package/hd/',location.href);
+const resolveAsset=id=>new URL(id,artRoot).href;
+const atlasRows={slash:['physical',0],thrust:['physical',1],smash:['physical',2],sweep:['physical',3],spell:['utility',0],skill:['utility',1],ward:['utility',2],buff:['utility',3],debuff:['status',0],heal:['status',1],status:['status',2],counter:['status',3],fire:['elements',0],frost:['elements',1],lightning:['elements',2],earth:['elements',3]};
+const images=new Map();let renderVersion=0,playVersion=0,loopTimer=null;
+for(const actor of document.querySelectorAll('.actor')){
+  const rear=actor.dataset.facing==='back';
+  actor.insertAdjacentHTML('afterbegin',`<svg viewBox="0 0 100 150" aria-hidden="true"><ellipse cx="50" cy="142" rx="36" ry="7" fill="#080b0b88"/><path d="M32 100L29 140H43L48 105L54 140H69L65 100" fill="#3b3832"/><path d="M25 47Q50 32 75 47L83 95L69 101L63 65H37L30 101L17 95Z" fill="${rear?'#4f6066':'#968a6b'}"/><ellipse cx="50" cy="25" rx="17" ry="20" fill="#b49b7b"/>${rear?'<path d="M33 9Q52 1 67 13L65 34H35Z" fill="#3c3730"/><path d="M28 48Q51 35 72 48L82 129Q49 144 17 128Z" fill="#994b40"/><path d="M45 49L32 132M60 49L67 133" stroke="#c36c53" stroke-width="3"/>':'<path d="M32 16Q51 2 68 17L65 23H35Z" fill="#444c4c"/><path d="M40 24h5m10 0h5M44 36Q50 39 56 36" stroke="#27231f" stroke-width="3"/><path d="M33 49L50 59L67 49L68 99H32Z" fill="#68807b"/><path d="M50 60V95M34 76H66" stroke="#a7b7a4" stroke-width="3"/>'}</svg>`);
+}
+function load(src){if(!images.has(src))images.set(src,new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=src}));return images.get(src)}
+function selected(){return Object.fromEntries(['action','target','side','school','effect','range','impactStyle'].map(key=>[key,$(key).value]))}
+function inputs(){
+  const s=selected(),targetId=s.side==='player'?'player':'enemy-1',sourceId=s.target==='self'?targetId:s.side==='player'?'enemy-1':'player';
+  const target=s.target==='self'?'self':s.target==='aoe'?'allEnemies':'enemy';
+  const operation=s.effect==='damage'?{op:'damage',amount:8,target}:s.effect==='ward'?{op:'gainWard',amount:5,target}:s.effect==='heal'?{op:'heal',amount:5,target}:{op:'applyStatus',status:s.effect,stacks:2,target};
+  const action={type:s.action==='skill'?'skill':'attack',cardTags:[`maneuver:${s.action==='spell'?'casting':s.action}`,`camp:${s.action==='spell'?'spell':'physical'}`,`range:${s.range}`,`targeting:${s.target==='aoe'?'area':'single'}`,...(s.school==='none'?[]:[`school:${s.school}`])],combatProfile:{maneuver:s.action==='spell'?'casting':s.action,camp:s.action==='spell'?'spell':'physical',range:s.range,damageType:s.impactStyle,...(s.school==='none'?{}:{school:s.school})},effects:[operation]};
+  const event={type:s.effect==='damage'?'damageDealt':s.effect==='ward'?'meterGuardGained':s.effect==='heal'?'healed':'statusApplied',sourceId,targetId,amount:8,stacks:2,status:s.effect,...(s.effect==='ward'?{meter:'ward'}:{})};
+  return {action,event,recipe:resolveRecipientEffect(action,event),selection:s};
+}
+function bounds(node){const b=node.getBoundingClientRect(),p=layer.getBoundingClientRect();return{left:b.left-p.left,top:b.top-p.top,width:b.width,height:b.height}}
+function clear(){playVersion++;clearRecipientEffects(layer)}
+async function play(options={}){
+  clear();const version=playVersion,current=inputs(),s=current.selection;
+  const source=options.resolveAsset??resolveAsset,forcePlaceholder=options.forcePlaceholder??$('placeholder').checked;
+  if(!forcePlaceholder)await prewarmRecipientEffect(current.recipe,{resolveAsset:source});
+  if(version!==playVersion)return current.recipe;
+  const targets=s.target==='aoe'&&s.side!=='player'?['enemy-1','enemy-2','enemy-3']:[current.event.targetId];
+  for(const id of targets)playRecipientEffect(layer,bounds($(id)),current.recipe,{sourceBox:bounds($(current.event.sourceId)),targetFacing:$(id).dataset.facing,duration:options.duration??650,resolveAsset:source,forcePlaceholder,...(options.frame==null?{}:{frame:options.frame})});
+  return current.recipe;
+}
+function viewFor(recipe){const {event}=inputs();return recipientEffectView(recipe,{box:bounds($(event.targetId)),sourceBox:bounds($(event.sourceId)),targetFacing:$(event.targetId).dataset.facing})}
+async function drawFrame(canvas,recipe,index,placeholder){
+  const context=canvas.getContext('2d');context.clearRect(0,0,256,256);
+  if(placeholder){let svg=recipientPlaceholderSvg(recipe.action,recipe.targetType);const source=svg.startsWith('data:')?svg:`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;context.drawImage(await load(source),0,0,256,256);return'placeholder'}
+  const view=viewFor(recipe);
+  async function plane(shape,projection,tint){const [sheet,row]=atlasRows[shape]||atlasRows.spell,image=await load(resolveAsset(`assets/recipient-effects/${sheet}.png`));const tile=document.createElement('canvas');tile.width=tile.height=256;const c=tile.getContext('2d');c.drawImage(image,index*image.width/3,row*image.height/4,image.width/3,image.height/4,0,0,256,256);if(tint){c.globalCompositeOperation='source-atop';c.fillStyle=recipe.color||'#fff';c.fillRect(0,0,256,256)}context.save();context.translate(128,128);context.rotate(projection.rotation*Math.PI/180);context.scale(projection.scaleX,projection.scaleY);context.drawImage(tile,-128,-128);context.restore()}
+  await plane(recipe.shape,view.base,true);
+  if(recipe.targetType==='aoe'&&recipe.polarity==='impact'&&recipe.shape!=='sweep')await plane('sweep',view.sweep,true);
+  if(recipe.overlay&&atlasRows[recipe.overlay])await plane(recipe.overlay,view.overlay,false);
+  return'art';
+}
+async function update(){
+  const version=++renderVersion,{recipe}=inputs(),forced=$('placeholder').checked;
+  $('recipe-description').textContent=`${inputs().selection.side==='player'?'Player / rear':'Enemy / front'} · ${recipe.action} · ${recipe.targetType} · ${recipe.shape} · ${recipe.palette} · ${recipe.range}`;
+  const count=forced?1:3;$('frames').replaceChildren();
+  const canvases=Array.from({length:count},(_,index)=>{const tile=document.createElement('div');tile.className='tile';const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const label=document.createElement('small');label.textContent=forced?'Static debug frame':`${index+1} · ${['Onset','Impact','Fade'][index]}`;tile.append(canvas,label);$('frames').append(tile);return canvas});
+  try{await Promise.all(canvases.map((canvas,index)=>drawFrame(canvas,recipe,index,forced)));if(version===renderVersion)$('art-state').textContent=forced?'Static debug placeholder: stance/action × target type only.':'Staged PNG art · three frames · transparent background.'}
+  catch{if(version!==renderVersion)return;$('frames').replaceChildren(canvases[0].parentElement);canvases[0].nextElementSibling.textContent='Static debug frame';await drawFrame(canvases[0],recipe,0,true);$('art-state').textContent='Art is unavailable. Showing the bundled static debug placeholder.'}
+}
+for(const [name,label]of [['physical','Physical impacts'],['utility','Magic, skill, Ward, buff'],['status','Debuff, heal, status, counter'],['elements','Element overlays']]){const link=document.createElement('a');link.href=resolveAsset(`assets/recipient-effects/${name}.png`);link.target='_blank';link.rel='noopener';link.textContent=label;const image=document.createElement('img');image.src=link.href;image.alt=label+' — three frames per row';image.loading='lazy';link.append(image);$('library').append(link)}
+$('controls').addEventListener('change',()=>{update();play()});$('play').onclick=()=>play();
+function stopLoop(){clearInterval(loopTimer);loopTimer=null;$('loop').textContent='Loop';$('loop').setAttribute('aria-pressed','false')}
+$('loop').onclick=()=>{if(loopTimer)stopLoop();else{play();loopTimer=setInterval(play,1200);$('loop').textContent='Stop loop';$('loop').setAttribute('aria-pressed','true')}};
+const presets={fire:{action:'spell',target:'target',school:'fire',effect:'damage',side:'enemy'},sweep:{action:'sweep',target:'aoe',school:'fire',effect:'damage',side:'enemy'},ward:{action:'defend',target:'self',school:'alteration',effect:'ward',side:'player'},buff:{action:'skill',target:'self',school:'none',effect:'strength',side:'player'},enemy:{action:'spell',target:'target',school:'frost',effect:'damage',side:'player'}};
+document.querySelectorAll('[data-preset]').forEach(button=>button.onclick=()=>{for(const[key,value]of Object.entries(presets[button.dataset.preset]))$(key).value=value;update();play()});
+window.recipientPreview={play,update,inputs,resolveAsset,layer,render:playRecipientEffect,clear,stopLoop,recipientAtlas,recipientPlaceholderSvg,viewFor};
+await update();document.body.dataset.ready='true';
+</script>
+</html>
