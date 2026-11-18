@@ -151,6 +151,14 @@ Existing effects that count as drawbacks:
   - every player reaches at least **level 4**.
 - Paths differ: some offer several elites, others only 1–2.
 - Measured today (every fight won, the new elite ×1.5 / boss ×2): about level 2 / 3 / 4 at the end of acts 1 / 2 / 3.
+- **Revised (owner):** XP per fight follows a **polynomial curve** that grows from floor 1 to the boss within an act, and between acts. The first enemy of act 1 gives little XP.
+  - Targets at the end of each act: act 1 → **level 2–3**, act 2 → **4–6**, act 3 → **6–8**.
+  - Elites and bosses pay more, but most growth comes from the floor/act curve, not a large elite multiplier.
+
+## 15. Card faces outside combat (owner, 2026-11-18)
+- Card faces in the deck, rewards, shop and upgrade picker include the character's current attribute bonus: STR on physical damage, DEX on Block, and max(INT, WIS) on magic damage.
+- They go through the same multipliers as combat, so the face matches a neutral-stance hit.
+- Stance bonuses, enemy defences and statuses show only in combat.
 - **Starting armours** (owner): map the four `default` outfit rows to their gear items (Wayfarer Plate, Nightweave, Rite Vestments, Gutter Leathers), so starting armour adds its Poise and attribute points.
 - **One-handed Poise** (owner): the Straight Sword and Frost Spear add 0 Poise. The Battleaxe adds **+1** Poise.
 - **Signature Block timing** (owner): Block granted at the end of a turn lasts until the start of its holder's next turn.
