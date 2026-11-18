@@ -43,7 +43,7 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   // The card's 9 Block, scaled by blockGainMultiplier 0.7 to 6, become 6 stacks. The scaled base 2 + floor(0.6 x 3) = 3, Poise floor(0.5 x 3) = 1.
   assert.equal(returned.hp, 3);
   assert.equal(returned.poise, 1);
-  assert.equal(returned.block, 0, "the Counter Block grant of 1 takes blockGainMultiplier 0.7 and floors to 0");
+  assert.equal(returned.block, 0, "the Counter Block grant is a share of the scaled 3-damage hit (floor(0.25 x 3) = 0) and takes no blockGainMultiplier");
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 

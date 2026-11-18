@@ -52,9 +52,9 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   // Owner, 2026-11-14: the forecast is the HP lost per hit, the Counter stance and its Block included (what the Counter owner-cycle
   // budget changes); the damageDealt events below are the same numbers. The Core base-damage scale halves the Slash's 20 to 10 a
   // contact; the Counter stance cuts it to 7, and an unspent Counter's Block takes one more off the first hit (owner, 2026-11-17).
-  // Owner, 2026-11-18: the enemy side scale takes the 10 to 7 first and the Counter stance cuts that to 5; the unspent Counter's Block grant is
-  // scaled by blockGainMultiplier too (floored), so it no longer takes a point off the first hit.
-  const expected = [5, 5, 5];
+  // Owner, 2026-11-18: the enemy side scale takes the 10 to 7 and the Counter stance cuts that to 5; an unspent Counter's Block (a share of the scaled hit,
+  // not scaled again) takes one more off the first hit.
+  const expected = spent ? [5, 5, 5] : [4, 5, 5];
   assert.deepEqual(Array.from(forecast.hitDamages), expected);
   assert.equal(forecast.totalDamage, expected.reduce((a, b) => a + b, 0));
   assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');

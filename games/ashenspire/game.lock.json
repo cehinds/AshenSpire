@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:54565957a46c66f28e6d78259d440fef456a91470d33aa3f29c255b627575d55",
+      "hash": "sha256:431ce710014f3b13b7e9e5b788e272e7d8edd81f8a8ab1bc71ff5ffa9b6ac604",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -214,7 +214,7 @@
           "path": "engine/modules/effects/settings.schema.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:e4e3bb46be7616631bc00a858f0197830ec50dca168bbef16a38ea6dfdfbc07b"
+          "hash": "sha256:2ea341a165eedb0b32a46f4ecdc4014da60d8226bb4cc3d422448d4bb86b673b"
         },
         {
           "path": "engine/modules/enemies/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8"
     },
     "core": {
-      "hash": "sha256:54565957a46c66f28e6d78259d440fef456a91470d33aa3f29c255b627575d55",
+      "hash": "sha256:431ce710014f3b13b7e9e5b788e272e7d8edd81f8a8ab1bc71ff5ffa9b6ac604",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -938,7 +938,7 @@
           "path": "engine/modules/effects/settings.schema.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:e4e3bb46be7616631bc00a858f0197830ec50dca168bbef16a38ea6dfdfbc07b"
+          "hash": "sha256:2ea341a165eedb0b32a46f4ecdc4014da60d8226bb4cc3d422448d4bb86b673b"
         },
         {
           "path": "engine/modules/enemies/defaults.json",
