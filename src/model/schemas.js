@@ -903,6 +903,8 @@ export const SCHEMAS = Object.freeze({
     playLimit:opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
+    upgradeMenu: opt(arr(str)),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
     // The card can be played only while this holds, read against the aimed (or first living) enemy (SPEC §3.6).
     playIf: opt({k:'predicate'}),
@@ -935,8 +937,11 @@ export const SCHEMAS = Object.freeze({
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
+        faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
+        // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
+        costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
       })
     ),
     icon: opt(str),
