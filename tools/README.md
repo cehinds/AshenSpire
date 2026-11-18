@@ -166,6 +166,8 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `launch.mjs` | launch — the one-click launcher. | wf sync-dev-to-alternative-dev, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
 | `layered-art.mjs` | (no header comment) | tests display-art-cache, layered-art-pack; tools asset-pack, buildversion, bundle +1 |
 | `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
+| `literal-asset-references.mjs` | Checks missing literal assets; only exact, explicitly optional generated recipient atlas properties may use the static fallback. | tools bundle; tests literal-asset-references; docs RECIPIENT-EFFECTS |
+| `recipient-effects-export.py` | Validates and stages approved three-frame PNG strips, tier copies, source hashes and provenance for art intake. | docs RECIPIENT-EFFECTS |
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
 | `linkcheck.mjs` | linkcheck — every named import in the tree resolves to a real | wf dev-preview; tests linkcheck-batch-sharing, run-node-lanes, run-node +1; tools gatelist; docs DEVELOPER.md; other src/ui/screens/rest.js |
 | `local-checks.mjs` | Shared finite local QA payload. Run in an owned background worker when needed. | tests local-checks-snapshot; docs docs/local-background-checks.md |
