@@ -66,3 +66,20 @@ export function ConfiguredTraderOffersSmith(run, shopId) {
   if (!Number.isInteger(chance) || chance <= 0) return false;
   return upgradeStepRng(run.seed, `trader-smith:${shopId}`, 0)() * 100 < Math.min(100, chance);
 }
+
+/**
+ * ConfiguredTraderDock(run, kinds, { smith }) → { kinds, smith }: the dock a trader shows, held to the 3-6 options
+ * rule with Sell counted. A stock rolled since item 42 already fits and comes back whole; a stock saved before it
+ * (every shelf stocked) keeps the always-stocked shelves, then the others in stock order while there is room, and
+ * offers its Blacksmith only when a place is left. Shelves left off stay in the saved stock, unshown.
+ */
+export function ConfiguredTraderDock(run, kinds, { smith = false } = {}) {
+  const rules = traderRules(run);
+  const unique = [...new Set(kinds)];
+  if (!rules) return { kinds: unique, smith };
+  const max = Number.isInteger(rules.maxCategories) ? rules.maxCategories : unique.length + 1 + (smith ? 1 : 0);
+  const room = Math.max(0, max - 1);
+  const always = unique.filter((kind) => (rules.always || []).includes(kind));
+  const shown = new Set([...always, ...unique.filter((kind) => !always.includes(kind))].slice(0, Math.max(room, always.length)));
+  return { kinds: unique.filter((kind) => shown.has(kind)), smith: smith && shown.size + 1 < max };
+}

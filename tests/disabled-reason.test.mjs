@@ -81,7 +81,9 @@ test('titleMenu: a disabled entry with a reason wears it as text', async () => {
   });
 });
 
-test('event screen: Continue before a response is taken says why, as text', async () => {
+// Owner, 2026-11-17: the event screen shows no disabled Continue and no "Choose a response first." hint; Continue
+// appears, enabled, once a response is taken.
+test('event screen: Continue is absent until a response is taken, so no refusal is shown', async () => {
   const { mountEvent } = await import('../src/ui/screens/event.js');
   withKitDom((dom) => {
     const app = dom.document.createElement('main');
@@ -89,10 +91,9 @@ test('event screen: Continue before a response is taken says why, as text', asyn
     const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
     mountEvent(app, { registries: REG, run, meta: { settings: {} }, rng: createRng(3), eventId: 'abandonedCart', onDone() {} });
     const cont = app.querySelector('#event-continue');
-    assert.equal(cont.disabled, true);
-    const note = noteOf(cont);
-    assert.ok(shows(note), 'the reason is shown');
-    assert.match(note.textContent, /response/i);
+    assert.equal(cont.hidden, true, 'Continue is not shown before a response');
+    assert.equal(cont.closest('.modal-foot').hidden, true, 'and its foot takes no room');
+    assert.equal(app.querySelector('.as-reasonnote'), null, 'no refusal hint stands in its place');
   });
 });
 
