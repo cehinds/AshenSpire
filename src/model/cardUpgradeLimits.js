@@ -87,8 +87,8 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
 
 /**
  * nextUpgradeOptions(run, instance, base, registries, count) → up to `count` distinct steps the next upgrade could
- * add, [] when the card is maxed. A first upgrade of a card with an upgrade block lists `authored` (the card's
- * designed upgrade) first, then one rolled alternative when count > 1; otherwise the seeded roll's options.
+ * add, [] when the card is maxed. A first upgrade with an upgrade block and no ability grade lists `authored`
+ * first, then one rolled alternative when count > 1. Otherwise the seeded roll supplies the options.
  * The first entry is always what nextUpgradeStep returns. Stateless.
  * `scale` (> 1) makes the amounts bigger, `salt` gives the roll its own stream and `noAuthored` skips the card's
  * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js).
@@ -100,7 +100,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
   const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
   const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, salt ? `${instance.instanceId}#${salt}` : instance.instanceId, applied.length), limits, n);
-  const authored = applied.length === 0 && base.upgrade && !noAuthored;
+  const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same

@@ -37,8 +37,10 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
   test(`bundled authored ${enemyId}/${moveId} keeps per-hit amounts through previews, execution and floats`, () => {
     const { combat, enemy, move } = fixture(enemyId, moveId);
     const view = previewIntent(combat, enemy.id);
-    assert.deepEqual(Array.from(view.hitDamages), Array(move.hits).fill(move.damage));
-    assert.equal(view.totalDamage, move.damage * move.hits);
+    // Core scales an enemy move's base damage too (effects.baseDamageMultiplier, rounded up; owner, 2026-11-17).
+    const perHit = Math.ceil(move.damage * (profile.modules.effects.baseDamageMultiplier ?? 1));
+    assert.deepEqual(Array.from(view.hitDamages), Array(move.hits).fill(perHit));
+    assert.equal(view.totalDamage, perHit * move.hits);
     assert.equal(view.damageReceipt.totalDamage, view.totalDamage);
     dispatch(combat, { type: 'setReactions', enabled: false });
     const before = combat.eventLog.length;

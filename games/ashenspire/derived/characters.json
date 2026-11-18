@@ -20,10 +20,10 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -50,20 +50,20 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 3,
         "wisdom": 2,
         "intelligence": 1,
         "level": 0
       },
-      "total": 46,
-      "formula": "10+10+20+3+2+1+0 = 46"
+      "total": 51,
+      "formula": "10+10+25+3+2+1+0 = 51"
     },
     "pools": {
-      "hp": 46,
+      "hp": 51,
       "sp": 3,
       "mp": 0,
-      "ar": 4,
+      "ar": 5,
       "dr": 1,
       "hand": 5
     },
@@ -266,13 +266,39 @@
     "attributes": {
       "strength": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 4
       },
       "constitution": {
         "own": 1,
@@ -294,21 +320,21 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 5,
-        "dexterity": 6,
+        "strength": 15,
+        "dexterity": 12,
         "wisdom": 2,
         "intelligence": 1,
         "level": 0
       },
-      "total": 34,
-      "formula": "10+10+5+6+2+1+0 = 34"
+      "total": 50,
+      "formula": "10+10+15+12+2+1+0 = 50"
     },
     "pools": {
-      "hp": 34,
-      "sp": 3,
+      "hp": 50,
+      "sp": 4,
       "mp": 1,
-      "ar": 1,
-      "dr": 2,
+      "ar": 3,
+      "dr": 4,
       "hand": 5
     },
     "gear": [
@@ -516,18 +542,31 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 1,
@@ -563,21 +602,21 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
-        "dexterity": 3,
+        "strength": 25,
+        "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 0
       },
-      "total": 64,
-      "formula": "10+30+20+3+0+1+0 = 64"
+      "total": 72,
+      "formula": "10+30+25+6+0+1+0 = 72"
     },
     "pools": {
-      "hp": 64,
+      "hp": 72,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
-      "dr": 1,
+      "ar": 5,
+      "dr": 2,
       "hand": 3
     },
     "gear": [
@@ -637,13 +676,19 @@
         "own": 1,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 4
       },
       "dexterity": {
         "own": 2,
@@ -684,20 +729,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 15,
+        "strength": 20,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 0
       },
-      "total": 62,
-      "formula": "10+30+15+6+0+1+0 = 62"
+      "total": 67,
+      "formula": "10+30+20+6+0+1+0 = 67"
     },
     "pools": {
-      "hp": 62,
+      "hp": 67,
       "sp": 1,
       "mp": 1,
-      "ar": 3,
+      "ar": 4,
       "dr": 2,
       "hand": 3
     },
@@ -753,18 +798,31 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 1,
@@ -800,21 +858,21 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
-        "dexterity": 3,
+        "strength": 25,
+        "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 0
       },
-      "total": 64,
-      "formula": "10+30+20+3+0+1+0 = 64"
+      "total": 72,
+      "formula": "10+30+25+6+0+1+0 = 72"
     },
     "pools": {
-      "hp": 64,
+      "hp": 72,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
-      "dr": 1,
+      "ar": 5,
+      "dr": 2,
       "hand": 3
     },
     "gear": [
@@ -978,10 +1036,10 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -1015,20 +1073,20 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 3,
         "wisdom": 6,
         "intelligence": 1,
         "level": 5
       },
-      "total": 55,
-      "formula": "10+10+20+3+6+1+5 = 55"
+      "total": 60,
+      "formula": "10+10+25+3+6+1+5 = 60"
     },
     "pools": {
-      "hp": 55,
+      "hp": 60,
       "sp": 3,
       "mp": 2,
-      "ar": 4,
+      "ar": 5,
       "dr": 1,
       "hand": 4
     },
@@ -1096,7 +1154,7 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           },
           {
             "source": "parryDagger",
@@ -1111,7 +1169,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 8
       },
       "dexterity": {
         "own": 2,
@@ -1121,9 +1179,15 @@
             "name": "Parrying_Dagger",
             "kind": "gear",
             "amount": 1
+          },
+          {
+            "source": "armor.gutterLeathers",
+            "name": "Gutter_Leathers",
+            "kind": "gear",
+            "amount": 1
           }
         ],
-        "total": 3
+        "total": 4
       },
       "constitution": {
         "own": 2,
@@ -1145,21 +1209,21 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 35,
-        "dexterity": 9,
+        "strength": 40,
+        "dexterity": 12,
         "wisdom": 2,
         "intelligence": 1,
         "level": 10
       },
-      "total": 87,
-      "formula": "10+20+35+9+2+1+10 = 87"
+      "total": 95,
+      "formula": "10+20+40+12+2+1+10 = 95"
     },
     "pools": {
-      "hp": 87,
-      "sp": 3,
-      "mp": 1,
-      "ar": 7,
-      "dr": 3,
+      "hp": 95,
+      "sp": 4,
+      "mp": 2,
+      "ar": 8,
+      "dr": 4,
       "hand": 5
     },
     "gear": [
@@ -1330,13 +1394,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -1377,20 +1447,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 3,
         "wisdom": 0,
         "intelligence": 1,
         "level": 0
       },
-      "total": 64,
-      "formula": "10+30+20+3+0+1+0 = 64"
+      "total": 69,
+      "formula": "10+30+25+3+0+1+0 = 69"
     },
     "pools": {
-      "hp": 64,
+      "hp": 69,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
+      "ar": 5,
       "dr": 1,
       "hand": 3
     },
@@ -1449,13 +1519,27 @@
     "attributes": {
       "strength": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 1,
@@ -1477,21 +1561,21 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 10,
-        "dexterity": 3,
+        "strength": 15,
+        "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 0
       },
-      "total": 36,
-      "formula": "10+10+10+3+2+1+0 = 36"
+      "total": 44,
+      "formula": "10+10+15+6+2+1+0 = 44"
     },
     "pools": {
-      "hp": 36,
+      "hp": 44,
       "sp": 2,
       "mp": 1,
-      "ar": 2,
-      "dr": 1,
+      "ar": 3,
+      "dr": 2,
       "hand": 3
     },
     "gear": [
@@ -1584,15 +1668,8 @@
       },
       "constitution": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 2
+        "bonuses": [],
+        "total": 1
       },
       "wisdom": {
         "own": 2,
@@ -1615,18 +1692,18 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
+        "constitution": 10,
         "strength": 35,
         "dexterity": 9,
         "wisdom": 6,
         "intelligence": 1,
         "level": 10
       },
-      "total": 91,
-      "formula": "10+20+35+9+6+1+10 = 91"
+      "total": 81,
+      "formula": "10+10+35+9+6+1+10 = 81"
     },
     "pools": {
-      "hp": 91,
+      "hp": 81,
       "sp": 3,
       "mp": 2,
       "ar": 7,
@@ -1734,15 +1811,8 @@
       },
       "constitution": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 2
+        "bonuses": [],
+        "total": 1
       },
       "wisdom": {
         "own": 2,
@@ -1765,18 +1835,18 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
+        "constitution": 10,
         "strength": 35,
         "dexterity": 6,
         "wisdom": 6,
         "intelligence": 2,
         "level": 10
       },
-      "total": 89,
-      "formula": "10+20+35+6+6+2+10 = 89"
+      "total": 79,
+      "formula": "10+10+35+6+6+2+10 = 79"
     },
     "pools": {
-      "hp": 89,
+      "hp": 79,
       "sp": 3,
       "mp": 2,
       "ar": 7,
@@ -1848,8 +1918,15 @@
     "attributes": {
       "strength": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "dexterity": {
         "own": 2,
@@ -1876,20 +1953,20 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 10,
+        "strength": 15,
         "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 44,
-      "formula": "10+10+10+6+2+1+5 = 44"
+      "total": 49,
+      "formula": "10+10+15+6+2+1+5 = 49"
     },
     "pools": {
-      "hp": 44,
+      "hp": 49,
       "sp": 2,
       "mp": 1,
-      "ar": 2,
+      "ar": 3,
       "dr": 2,
       "hand": 3
     },
@@ -2055,13 +2132,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -2102,20 +2185,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 5
       },
-      "total": 72,
-      "formula": "10+30+20+6+0+1+5 = 72"
+      "total": 77,
+      "formula": "10+30+25+6+0+1+5 = 77"
     },
     "pools": {
-      "hp": 72,
+      "hp": 77,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 3
     },
@@ -2171,18 +2254,31 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 1,
@@ -2218,21 +2314,21 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
-        "dexterity": 6,
+        "strength": 25,
+        "dexterity": 9,
         "wisdom": 0,
         "intelligence": 1,
         "level": 5
       },
-      "total": 72,
-      "formula": "10+30+20+6+0+1+5 = 72"
+      "total": 80,
+      "formula": "10+30+25+9+0+1+5 = 80"
     },
     "pools": {
-      "hp": 72,
+      "hp": 80,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
-      "dr": 2,
+      "ar": 5,
+      "dr": 3,
       "hand": 3
     },
     "gear": [
@@ -2287,13 +2383,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -2334,20 +2436,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 5
       },
-      "total": 72,
-      "formula": "10+30+20+6+0+1+5 = 72"
+      "total": 77,
+      "formula": "10+30+25+6+0+1+5 = 77"
     },
     "pools": {
-      "hp": 72,
+      "hp": 77,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 3
     },
@@ -2416,10 +2518,10 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -2453,20 +2555,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 10
       },
-      "total": 79,
-      "formula": "10+30+20+6+2+1+10 = 79"
+      "total": 84,
+      "formula": "10+30+25+6+2+1+10 = 84"
     },
     "pools": {
-      "hp": 79,
+      "hp": 84,
       "sp": 3,
       "mp": 1,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 4
     },
@@ -2539,13 +2641,7 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
-          },
-          {
-            "source": "towerShield",
-            "name": "Tower_Shield",
-            "kind": "gear",
-            "amount": 1
+            "amount": 3
           },
           {
             "source": "enemy.relic.ashenCore",
@@ -2568,7 +2664,7 @@
             "source": "towerShield",
             "name": "Tower_Shield",
             "kind": "gear",
-            "amount": 3
+            "amount": 2
           },
           {
             "source": "armor.wayfarerPlate",
@@ -2583,7 +2679,7 @@
             "amount": 2
           }
         ],
-        "total": 8
+        "total": 7
       },
       "wisdom": {
         "own": 1,
@@ -2606,20 +2702,20 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 80,
+        "constitution": 70,
         "strength": 40,
         "dexterity": 6,
         "wisdom": 4,
         "intelligence": 1,
         "level": 15
       },
-      "total": 156,
-      "formula": "10+80+40+6+4+1+15 = 156"
+      "total": 146,
+      "formula": "10+70+40+6+4+1+15 = 146"
     },
     "pools": {
-      "hp": 156,
+      "hp": 146,
       "sp": 3,
-      "mp": 5,
+      "mp": 4,
       "ar": 8,
       "dr": 2,
       "hand": 5
@@ -2797,18 +2893,31 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 1,
@@ -2844,21 +2953,21 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 20,
-        "dexterity": 6,
+        "strength": 25,
+        "dexterity": 9,
         "wisdom": 0,
         "intelligence": 1,
         "level": 5
       },
-      "total": 72,
-      "formula": "10+30+20+6+0+1+5 = 72"
+      "total": 80,
+      "formula": "10+30+25+9+0+1+5 = 80"
     },
     "pools": {
-      "hp": 72,
+      "hp": 80,
       "sp": 1,
       "mp": 1,
-      "ar": 4,
-      "dr": 2,
+      "ar": 5,
+      "dr": 3,
       "hand": 3
     },
     "gear": [
@@ -2921,7 +3030,7 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           },
           {
             "source": "parryDagger",
@@ -2936,7 +3045,7 @@
             "amount": 1
           }
         ],
-        "total": 7
+        "total": 8
       },
       "dexterity": {
         "own": 1,
@@ -2984,20 +3093,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 35,
+        "strength": 40,
         "dexterity": 6,
         "wisdom": 6,
         "intelligence": 2,
         "level": 15
       },
-      "total": 104,
-      "formula": "10+30+35+6+6+2+15 = 104"
+      "total": 109,
+      "formula": "10+30+40+6+6+2+15 = 109"
     },
     "pools": {
-      "hp": 104,
+      "hp": 109,
       "sp": 3,
-      "mp": 2,
-      "ar": 7,
+      "mp": 3,
+      "ar": 8,
       "dr": 2,
       "hand": 6
     },
@@ -3071,7 +3180,7 @@
             "source": "greatsword",
             "name": "Greatsword",
             "kind": "gear",
-            "amount": 2
+            "amount": 3
           },
           {
             "source": "parryDagger",
@@ -3086,7 +3195,7 @@
             "amount": 1
           }
         ],
-        "total": 7
+        "total": 8
       },
       "dexterity": {
         "own": 1,
@@ -3134,20 +3243,20 @@
       "terms": {
         "base": 10,
         "constitution": 30,
-        "strength": 35,
+        "strength": 40,
         "dexterity": 6,
         "wisdom": 6,
         "intelligence": 2,
         "level": 15
       },
-      "total": 104,
-      "formula": "10+30+35+6+6+2+15 = 104"
+      "total": 109,
+      "formula": "10+30+40+6+6+2+15 = 109"
     },
     "pools": {
-      "hp": 104,
+      "hp": 109,
       "sp": 3,
-      "mp": 2,
-      "ar": 7,
+      "mp": 3,
+      "ar": 8,
       "dr": 2,
       "hand": 6
     },
@@ -3223,18 +3332,31 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 2,
@@ -3270,21 +3392,21 @@
       "terms": {
         "base": 10,
         "constitution": 40,
-        "strength": 20,
-        "dexterity": 6,
+        "strength": 25,
+        "dexterity": 9,
         "wisdom": 0,
         "intelligence": 1,
         "level": 10
       },
-      "total": 87,
-      "formula": "10+40+20+6+0+1+10 = 87"
+      "total": 95,
+      "formula": "10+40+25+9+0+1+10 = 95"
     },
     "pools": {
-      "hp": 87,
+      "hp": 95,
       "sp": 1,
       "mp": 2,
-      "ar": 4,
-      "dr": 2,
+      "ar": 5,
+      "dr": 3,
       "hand": 3
     },
     "gear": [
@@ -3339,13 +3461,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -3386,20 +3514,20 @@
       "terms": {
         "base": 10,
         "constitution": 40,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 10
       },
-      "total": 87,
-      "formula": "10+40+20+6+0+1+10 = 87"
+      "total": 92,
+      "formula": "10+40+25+6+0+1+10 = 92"
     },
     "pools": {
-      "hp": 87,
+      "hp": 92,
       "sp": 1,
       "mp": 2,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 3
     },
@@ -3455,13 +3583,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -3502,20 +3636,20 @@
       "terms": {
         "base": 10,
         "constitution": 40,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 10
       },
-      "total": 87,
-      "formula": "10+40+20+6+0+1+10 = 87"
+      "total": 92,
+      "formula": "10+40+25+6+0+1+10 = 92"
     },
     "pools": {
-      "hp": 87,
+      "hp": 92,
       "sp": 1,
       "mp": 2,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 3
     },
@@ -3571,13 +3705,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "battleaxe",
+            "name": "Battleaxe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.ashenBlightCore",
             "name": "Ashen_Blight_Core",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -3618,20 +3758,20 @@
       "terms": {
         "base": 10,
         "constitution": 40,
-        "strength": 20,
+        "strength": 25,
         "dexterity": 6,
         "wisdom": 0,
         "intelligence": 1,
         "level": 10
       },
-      "total": 87,
-      "formula": "10+40+20+6+0+1+10 = 87"
+      "total": 92,
+      "formula": "10+40+25+6+0+1+10 = 92"
     },
     "pools": {
-      "hp": 87,
+      "hp": 92,
       "sp": 1,
       "mp": 2,
-      "ar": 4,
+      "ar": 5,
       "dr": 2,
       "hand": 3
     },
@@ -3715,12 +3855,6 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 1
-          },
-          {
             "source": "armor.wayfarerPlate",
             "name": "Wayfarer_Plate",
             "kind": "gear",
@@ -3733,7 +3867,7 @@
             "amount": 2
           }
         ],
-        "total": 6
+        "total": 5
       },
       "wisdom": {
         "own": 2,
@@ -3756,18 +3890,18 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 60,
+        "constitution": 50,
         "strength": 30,
         "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 15
       },
-      "total": 124,
-      "formula": "10+60+30+6+2+1+15 = 124"
+      "total": 114,
+      "formula": "10+50+30+6+2+1+15 = 114"
     },
     "pools": {
-      "hp": 124,
+      "hp": 114,
       "sp": 3,
       "mp": 2,
       "ar": 6,
@@ -4000,13 +4134,27 @@
     "attributes": {
       "strength": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "dagger",
+            "name": "Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 2,
@@ -4028,21 +4176,21 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 10,
-        "dexterity": 6,
+        "strength": 15,
+        "dexterity": 9,
         "wisdom": 2,
         "intelligence": 1,
         "level": 10
       },
-      "total": 59,
-      "formula": "10+20+10+6+2+1+10 = 59"
+      "total": 67,
+      "formula": "10+20+15+9+2+1+10 = 67"
     },
     "pools": {
-      "hp": 59,
+      "hp": 67,
       "sp": 2,
       "mp": 1,
-      "ar": 2,
-      "dr": 2,
+      "ar": 3,
+      "dr": 3,
       "hand": 3
     },
     "gear": [
@@ -4208,19 +4356,13 @@
             "amount": 2
           },
           {
-            "source": "towerShield",
-            "name": "Tower_Shield",
-            "kind": "gear",
-            "amount": 1
-          },
-          {
             "source": "enemy.relic.titanHeart",
             "name": "Titan_Heart",
             "kind": "relic",
             "amount": 1
           }
         ],
-        "total": 7
+        "total": 6
       },
       "dexterity": {
         "own": 3,
@@ -4231,16 +4373,10 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 1
-          },
-          {
             "source": "towerShield",
             "name": "Tower_Shield",
             "kind": "gear",
-            "amount": 3
+            "amount": 2
           },
           {
             "source": "armor.wayfarerPlate",
@@ -4255,7 +4391,7 @@
             "amount": 2
           }
         ],
-        "total": 9
+        "total": 7
       },
       "wisdom": {
         "own": 1,
@@ -4271,21 +4407,21 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 90,
-        "strength": 35,
+        "constitution": 70,
+        "strength": 30,
         "dexterity": 9,
         "wisdom": 2,
         "intelligence": 1,
         "level": 20
       },
-      "total": 167,
-      "formula": "10+90+35+9+2+1+20 = 167"
+      "total": 142,
+      "formula": "10+70+30+9+2+1+20 = 142"
     },
     "pools": {
-      "hp": 167,
-      "sp": 3,
-      "mp": 3,
-      "ar": 7,
+      "hp": 142,
+      "sp": 2,
+      "mp": 2,
+      "ar": 6,
       "dr": 3,
       "hand": 5
     },
@@ -4397,19 +4533,13 @@
         "own": 1,
         "bonuses": [
           {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 1
-          },
-          {
             "source": "enemy.relic.titanHeart",
             "name": "Titan_Heart",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 3
       },
       "wisdom": {
         "own": 3,
@@ -4432,20 +4562,20 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 40,
+        "constitution": 30,
         "strength": 35,
         "dexterity": 6,
         "wisdom": 8,
         "intelligence": 2,
         "level": 20
       },
-      "total": 121,
-      "formula": "10+40+35+6+8+2+20 = 121"
+      "total": 111,
+      "formula": "10+30+35+6+8+2+20 = 111"
     },
     "pools": {
-      "hp": 121,
+      "hp": 111,
       "sp": 3,
-      "mp": 4,
+      "mp": 3,
       "ar": 7,
       "dr": 2,
       "hand": 6
