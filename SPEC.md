@@ -296,12 +296,15 @@ Basic-profile base values (data): guard profiles (`unarmedGuard` = 1, `ratingId`
 
 Relics, powers, statuses, stances, mounted properties and enemy boss phases hook the engine through one declarative form, wired by `triggers.js` at combat start. Trigger fields: `on` (event from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`. Enemy `phases` take `{ on: 'hpBelowPct', pct, once, do, unlockMoves }`.
 
-**Predicates** (closed; combine with `all / any / not`): `inStance {stance}`, `hasStatus {of, status, atLeast?}`, `hasBlock {of}`, `hpBelowPct {of, pct}`, `firstCardThisTurn`, `firstAttackThisCombat`, `cardTypeIs {type}`, `everyNthCardThisCombat {n}`, `random {pct}` (named stream).
+**Predicates** (closed; combine with `all / any / not`): `inStance {stance, of?, snapshot?}`, `atRange {range, of?}`, `hasStatus {of, status, atLeast?}`, `hasBlock {of}`, `hpBelowPct {of, pct}`, `firstCardThisTurn`, `firstAttackThisCombat`, `cardTypeIs {type}`, `everyNthCardThisCombat {n}`, `random {pct}` (named stream).
 - `cardTagIs {tag}`: the contextual card's `tags` ∪ the snapshot's `derivedTags`, or the event's `cardTags` ∪ `derivedTags` (§13.4c).
 - Event-payload gates: `eventIsAttack`, `hpDamagePositive`, `eventSourceIsOwner`, `eventTargetIsOwner`, `eventStatusIs {status}`.
   - `healPositive`: a `healed` event that healed something (`applyHeal` emits amount 0 at full HP).
   - `manaPositive`: a `manaRestored` event that restored something (`restoreMana` emits amount 0 at full Mana).
 - Progression gates `skillLevelAtLeast {skill, level}`, `classLevelAtLeast {level}` read the skill/class ledger of plan phase 4 and are **false until that ledger exists** (a branch gated on them is inert).
+- `inStance` reads the player unless `of` names another entity (`self`, `owner`, `player`, `target`, `enemy`). `stance` is a class stance id, a combat stance (`attack`, `smash`, `sweep`, `counter`, `defend`, `casting`, `staggered`; `prepared` and `defense` are aliases of `casting` and `defend`), or `idle`: no combat stance at all (the `neutral` placeholder counts as none). `snapshot: 'beforePlay'` reads the entity as it stood before the card was played, so a card's own stance change or its first hit cannot decide its condition.
+- `atRange {range}` is true when the engagement band between the owner and `of` (default the target) is exactly `melee`, `reach` or `ranged` (§17 Range). A fight without range mechanics (no range state, or range turned off) has no distance: every pair is melee. No target: false.
+- A card's optional `playIf` (a predicate) gates the play itself: read against the aimed enemy, or, unaimed, the first living enemy that meets it; a play that fails it is refused (`unplayable`), and the hand shows the card as unplayable while no living enemy could meet it.
 
 **Property mounts — the one path a property reaches combat** (`src/engine/properties.js`)
 - A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`. `mountProperties` resolves its property tags to rules (kept only if its `requires` are on the same carrier and its `excludes` are not) into `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`; `unmountProperties` deletes it.
@@ -1042,6 +1045,42 @@ Reaction prompts, the combat log and enemy-action presentation. Detailed contrac
 - A seat may answer one incoming root with several Reaction cards: each choice is pushed without payment and the seat is offered again until it passes, runs out of options or reaches the depth cap. The stack resolves last played first, the paused action last.
 - An uncommitted entry that can no longer be played fizzles (`combatReactionFizzled`) and pays nothing. Entries carry a side; opted-in enemy moves react too, on the player's turn and to player reactions.
 - **Core 2 enemy-side entries** pay their quoted SP when enqueued, before effects; an unaffordable enemy reaction is refused. The payment receipt stays with the entry through resolution and save/resume (no second charge). A committed enemy reaction that later fizzles is not refunded.
+
+### 4.8b Conditional payoff and self-buff cards (playtest 2026-11-17, theme G)
+
+Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward and shop pools offer them by class through the shared cards named in its content pack. The older rules' class pools omit them. Reach-only cards are available only when the run allows Reach. Numbers are on the halved base-damage scale (theme A).
+
+- **Self-buffs** grant statuses to the player only (never an ally). Each strong one carries a penalty its upgrade eases:
+
+  | Card | Class | Cost | Effect | Penalty → upgrade |
+  |---|---|---|---|---|
+  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP |
+  | Iron Hide | Reaver | 1 SP | 2 Dexterity | +1 SP each play (max +2) → base 0 SP |
+  | Hearth Vigil | Herald | 1 SP, 2 MP | 4 Regen | 2 MP → 1 MP |
+  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal → removed |
+  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP |
+  | Starlit Skin | Starseer | 1 SP, 1 MP | 5 Block, 1 Stoneskin | Exhaust → removed |
+  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal → removed |
+
+- **Conditional payoffs** (base / upgraded; stance and status conditions read `snapshot: 'beforePlay'`):
+
+  | Card | Class | Camp | Condition | Payoff |
+  |---|---|---|---|---|
+  | Opening Cut | Reaver | martial | target Idle | 3 (4) damage; the target loses 3 (4) HP |
+  | Break Focus | Rogue | martial | target in Prepared | 3 (4) damage; the target loses 2 (3) HP |
+  | Unguarded Bolt | Starseer | spell | target Idle | 3 (4) damage; the target loses 2 (3) HP |
+  | Hold the Line | Reaver | martial | you in Defense | 3 (4) damage, 5 (7) Block |
+  | Sanctified Guard | Herald | spell | you in Defense | 4 (5) Block, +4 (6) |
+  | Focused Star | Starseer | spell | you in Prepared | 3 (4) damage, +3 (4) |
+  | Pyre Brand | Herald | spell | target Burning | 3 (4) damage, +4 (5) |
+  | Dirty Strike | Rogue | martial | target Weak | 3 (4) damage, +3 (4) |
+  | Rime Lance | Starseer | spell | target has Frost | 4 (5) damage, 1 (2) Vulnerable |
+  | Lunging Thrust | Reaver | martial, Reach | playable only at Reach | 6 (8) damage |
+  | Distant Star | Starseer | spell | playable only at Reach | 5 (7) damage, 1 Weak |
+  | Close Quarters | Rogue | martial, Reach | target at Melee | 3 (4) damage, +3 (4) |
+
+- **No double-dip with the stance weakness** (owner, 2026-11-17, #2816 review). Idle (×1.25 from every hit) and Prepared (×1.25 from melee) already pay against a matching target, so the stance payoffs add a flat HP loss (not damage, so no rating or weakness scales it, and no Vulnerable). Like every `loseHp`, it ignores Block, Ward and Barrier (§4.2); the rules text says "ignoring Block", and every text path reads it as "Target loses N HP (ignores Block)", never as a cost the player pays ("Pay N HP" stays for HP the card's owner loses). Against a matching target the whole play lands at 1.5–2× the same card's hit on a target in an ordinary stance: Opening Cut 12 vs 7 (1.71×), Break Focus 14 vs 7 (2.00×), Unguarded Bolt 12 vs 7 (1.71×); upgraded 15 vs 9, 16 vs 9, 15 vs 9 (reference reaver, rogue and starseer against a Wandering Soldier).
+- *Falsify:* `tests/conditional-cards.test.mjs` (each condition true and false) and `tests/conditional-card-play.test.mjs` (each card played for real, both sides of its condition; reach-only cards refused at Melee).
 
 #### Notes and history
 
