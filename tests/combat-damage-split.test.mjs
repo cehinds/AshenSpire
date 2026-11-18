@@ -280,11 +280,11 @@ const v2Carrier = (id, extra = {}) => {
 };
 const hitOf = r => r.damage[0];
 
-test('starstonePebble in v2 (force) splits 50:50: five magic, five blunt', () => {
+test('starstonePebble in v2 (force) is all physical (owner 2026-11-18): ten blunt, no magic, Ward untouched', () => {
   const r = strike(v2Carrier('starstonePebble'), 10, { ward: 10 });
   const d = hitOf(r);
-  assert.equal(d.magicAmount, 5);
-  assert.equal(d.physicalAmount, 5);
+  assert.equal(d.magicAmount, 0);
+  assert.equal(d.physicalAmount, 10);
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
@@ -376,7 +376,7 @@ test('entwiningRoots (alteration, blunt) is all physical', () => {
 test('magicShareOf precedence: a listed school below 1 decides at any reach; a melee spell without a magic school takes the Melee share', () => {
   const config = resolveCombatRatings({}, contentBundle);
   const spell = { camp: 'spell', maneuver: 'casting' };
-  assert.equal(magicShareOf({ ...spell, school: 'force', damageType: 'arcane', reach: 'contact' }, config), 0.5, 'force splits at melee reach');
+  assert.equal(magicShareOf({ ...spell, school: 'force', damageType: 'arcane', reach: 'contact' }, config), 0, 'force is physical at melee reach (owner 2026-11-18)');
   assert.equal(magicShareOf({ ...spell, school: 'alteration', damageType: 'piercing', reach: 'contact' }, config), 0, 'alteration is all physical at melee reach');
   assert.equal(magicShareOf({ ...spell, school: 'alteration', damageType: 'piercing', reach: 'near' }, config), 0, 'alteration is all physical at near reach');
   assert.equal(magicShareOf({ ...spell, school: 'lightning', damageType: 'slashing', reach: 'contact' }, config), 1, 'a magic-only school spell with a physical tag is all magic');
@@ -397,7 +397,7 @@ test('damage components define the split: magic weight over total, an explicit m
   assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'fire', weight: 1 }, { type: 'decay', weight: 1 }] }, config), 1, 'all-magic components deal only magic');
   assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }, { type: 'piercing', weight: 3 }] }, config), 0, 'all-physical components deal only physical');
   assert.equal(magicShareOf({ ...ruinous, magicShare: 0.9 }, config), 0.9, 'an explicit magicShare outranks the components');
-  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }] }, config), 0.5, 'a single component is no split list: the force school decides');
+  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }] }, config), 0, 'a single component is no split list: the force school decides (physical)');
 });
 
 // A hit that lists its components (#1914) routes each part by them: magic types meet Barrier and Ward,
@@ -467,13 +467,13 @@ function faceOf(cards, cardId, ratingValue) {
   return { value, parts: splitOf(preview.resolvedDefinition, combatProfileFor(preview.resolvedDefinition), value.faceValue, null, value) };
 }
 
-test('a spell face with a +4 Power splits as its committed hit: the card base by share, the Power all magic', () => {
+test('a Force spell face with a +4 Power is all physical like its committed hit (owner 2026-11-18): the card base and the Power both land as blunt', () => {
   const face = faceOf({}, 'starstonePebble', 4);
   assert.equal(face.value.splitBase, 6, 'the card base is 6');
   assert.equal(face.value.faceValue, 10, 'the face is the base plus the Power');
   const committed = hitOf(strike({ ...v2Carrier('starstonePebble'), skipRatingBonus: false, ratingValue: 4 }, face.value.splitBase, { ward: 20 }));
-  assert.deepEqual([face.parts.magic, face.parts.physical], [committed.magicAmount, committed.physicalAmount]);
-  assert.deepEqual([face.parts.magic, face.parts.physical], [7, 3]);
+  assert.equal(face.parts, null, 'an all-physical face names no split');
+  assert.deepEqual([committed.magicAmount, committed.physicalAmount], [0, 10]);
 });
 
 test('a technique face with a +4 Attack splits as its committed hit: the Technique share of its base, the Attack all physical', () => {

@@ -70,7 +70,7 @@ import { gameProfileServiceActive, withGameProfileService } from '../model/gameP
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { ratingValue, isMagicalAttack, ratingDamageMultiplier, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit, schoolOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -640,9 +640,11 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
   // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
   // Arcane is negated whole.
+  // A Force-school hit with no component list is Force whole (owner, 2026-11-18: Force is physical, so its parts are Blunt, not Arcane): every part is negated.
+  const wholeForce = receipt.profiles.map(profile => schoolOf(profile) === 'force' && !componentPartsOf(profile));
   receipt.forceImmuneAmounts = hits.map(() => 0);
   for (let p = parts.length - 1; p >= 0; p--) {
-    if (!receipt.silencedImmune[parts[p].index] || parts[p].type !== 'arcane') continue;
+    if (!receipt.silencedImmune[parts[p].index] || (parts[p].type !== 'arcane' && !wholeForce[parts[p].index])) continue;
     receipt.forceImmuneAmounts[parts[p].index] += parts[p].amount;
     parts.splice(p, 1);
   }

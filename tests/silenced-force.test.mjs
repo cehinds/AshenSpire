@@ -90,16 +90,16 @@ test('a non-damage Force effect on a Silenced enemy spends 1 stack', () => {
   assert.equal(getStacks(enemy, 'silenced'), 1);
 });
 
-test('a split Force hit into Silenced: the Arcane half is immune, the Blunt half lands, one stack per hit, preview equals commit', () => {
+test('a Force-school hit is all Force (owner 2026-11-18: physical, no Arcane half): Silenced negates each whole hit, one stack per hit, preview equals commit', () => {
   const { combat, enemy } = setup('starSlicer', 2);
   const shown = previewCard(combat, 'c', enemy.id).values.find(row => row.op === 'damage');
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
   const hits = out.events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.deepEqual(hits.map(e => e.forceImmune), [2, 2], 'each 4 hit loses its 2 Arcane');
-  assert.deepEqual(hits.map(e => e.amount), [2, 2], 'its 2 Blunt lands');
+  assert.deepEqual(hits.map(e => !!e.immune), [true, true], 'both 4 hits are negated whole');
+  assert.deepEqual(hits.map(e => e.amount), [0, 0]);
   assert.equal(getStacks(enemy, 'silenced'), 0);
-  assert.equal(before - enemy.hp, 4);
+  assert.equal(before - enemy.hp, 0);
   assert.equal(shown.totalDamage, before - enemy.hp, 'preview equals commit');
 });
 

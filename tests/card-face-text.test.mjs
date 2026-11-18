@@ -100,8 +100,8 @@ test('Unplayable leads the keywords instead of being dropped', () => {
 });
 
 test('a boosted split hit colours both parts', () => {
-  const id = 'cometFragment';
-  assert.match(text(id)[0], /^Inflict \d+ \w+, \d+ \w+ damage/, 'Comet Fragment splits its hit');
+  const id = 'viperStrike'; // Force is all physical now (owner 2026-11-18), so a Blunt and Poison card stands in for the split
+  assert.match(text(id)[0], /^Inflict \d+ \w+, \d+ \w+ damage/, 'Viper Strike splits its hit');
   const def = card(id), index = def.effects.findIndex(e => e.op === 'damage');
   const values = []; values[index] = { op: 'damage', value: def.effects[index].amount * 3, hits: 1 };
   const [first] = cardFaceLines(def, { values }, reg);
@@ -156,7 +156,10 @@ test('a boosted split guard colours both its Block and Ward parts', () => {
 });
 
 test('equal repeated hits that split name both parts and the hit count', () => {
-  assert.match(text('starShower')[0], /^Inflict \d+ \w+, \d+ \w+ damage ×3$/);
+  const def = card('viperStrike'); // Star Shower no longer splits: Force is all physical (owner 2026-11-18)
+  const repeated = { ...def, effects: def.effects.map(effect => (effect.op === 'damage' ? { ...effect, hits: 3 } : effect)) };
+  const [first] = cardFaceLines(repeated, null, reg).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.match(first, /^Inflict \d+ \w+, \d+ \w+ damage ×3$/);
 });
 
 test('a charge-added buildup row from the live preview reaches the face, aligned with its value', () => {
