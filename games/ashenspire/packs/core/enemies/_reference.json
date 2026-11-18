@@ -161,6 +161,10 @@
       "name": "Wicker Titheman",
       "tier": "minion"
     },
+    "enemy:woundwoodTusker": {
+      "name": "Woundwood Tusker",
+      "tier": "boss"
+    },
     "enemy:wyrmAspirant": {
       "name": "Wyrm Aspirant",
       "tier": "elite"
@@ -2062,6 +2066,76 @@
       "usedBy": "enemy sheet"
     },
     "card:alderMaskHarvester.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.woundGore": {
+      "name": "Wound Gore",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.timberCharge": {
+      "name": "Timber Charge",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.rootPlow": {
+      "name": "Root Plow",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.barkHide": {
+      "name": "Bark Hide",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.scarSnort": {
+      "name": "Scar Snort",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.woundwoodRampage": {
+      "name": "Woundwood Rampage",
+      "type": "attack",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:woundwoodTusker.advance": {
       "name": "Advance",
       "type": "skill",
       "cost": {

@@ -4457,5 +4457,162 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "woundwoodTusker",
+    "name": "Woundwood_Tusker",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "woundwoodTusker.woundGore",
+        "name": "Wound_Gore",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "woundGore",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "woundwoodTusker.timberCharge",
+        "name": "Timber_Charge",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "timberCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "woundwoodTusker.rootPlow",
+        "name": "Root_Plow",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 13
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rootPlow",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "woundwoodTusker.barkHide",
+        "name": "Bark_Hide",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "barkHide",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "woundwoodTusker.scarSnort",
+        "name": "Scar_Snort",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "scarSnort",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "woundwoodTusker.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "woundwoodTusker.woundwoodRampage",
+        "name": "Woundwood_Rampage"
+      }
+    ]
   }
 ]

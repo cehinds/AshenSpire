@@ -4383,5 +4383,143 @@
         }
       ]
     }
+  },
+  {
+    "id": "woundwoodTusker",
+    "name": "Woundwood_Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 3
+    },
+    "defaultDeck": [
+      "woundwoodTusker.woundGore",
+      "woundwoodTusker.woundGore",
+      "woundwoodTusker.timberCharge",
+      "woundwoodTusker.rootPlow",
+      "woundwoodTusker.barkHide",
+      "woundwoodTusker.barkHide",
+      "woundwoodTusker.scarSnort",
+      "woundwoodTusker.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "woundwoodTusker",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "woundwoodTusker.woundwoodRampage"
+      ],
+      "firstCard": "woundwoodTusker.timberCharge",
+      "poiseMax": 15,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "woundwoodTusker.woundwoodRampage"
+          ]
+        }
+      ],
+      "cardHints": {
+        "woundwoodTusker.woundGore": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "woundGore",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.timberCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "timberCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.rootPlow": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rootPlow",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.barkHide": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "barkHide",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.scarSnort": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "scarSnort",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.woundwoodRampage": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "woundwoodRampage",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

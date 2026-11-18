@@ -48,6 +48,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:wanderingSoldier | Wandering Soldier | minion |
 | enemy:wickerHind | Wicker Hind | elite |
 | enemy:wickerTitheman | Wicker Titheman | minion |
+| enemy:woundwoodTusker | Woundwood Tusker | boss |
 | enemy:wyrmAspirant | Wyrm Aspirant | elite |
 | enemy:wyrmLord | Wyrm Lord | elite |
 
@@ -245,6 +246,13 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:alderMaskHarvester.soulReap | Soul Reap | attack | 3 | 1 | Deal {damage} damage. |
 | card:alderMaskHarvester.alderVeil | Alder Veil | skill | 1 | 0 | Gain {block} Block. |
 | card:alderMaskHarvester.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:woundwoodTusker.woundGore | Wound Gore | attack | 1 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.timberCharge | Timber Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:woundwoodTusker.rootPlow | Root Plow | attack | 2 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.barkHide | Bark Hide | skill | 1 | 0 | Gain {block} Block. |
+| card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
+| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

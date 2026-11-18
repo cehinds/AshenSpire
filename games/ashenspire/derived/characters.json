@@ -5829,5 +5829,116 @@
         }
       ]
     }
+  },
+  {
+    "id": "woundwoodTusker",
+    "name": "Woundwood_Tusker",
+    "displayName": "Woundwood Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 20,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 10
+      },
+      "total": 69,
+      "formula": "10+20+20+6+2+1+10 = 69"
+    },
+    "pools": {
+      "hp": 69,
+      "sp": 3,
+      "mp": 1,
+      "ar": 4,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "woundwoodTusker.woundGore",
+          "name": "Wound_Gore",
+          "copies": 2
+        },
+        {
+          "id": "woundwoodTusker.timberCharge",
+          "name": "Timber_Charge",
+          "copies": 1
+        },
+        {
+          "id": "woundwoodTusker.rootPlow",
+          "name": "Root_Plow",
+          "copies": 1
+        },
+        {
+          "id": "woundwoodTusker.barkHide",
+          "name": "Bark_Hide",
+          "copies": 2
+        },
+        {
+          "id": "woundwoodTusker.scarSnort",
+          "name": "Scar_Snort",
+          "copies": 1
+        },
+        {
+          "id": "woundwoodTusker.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]
