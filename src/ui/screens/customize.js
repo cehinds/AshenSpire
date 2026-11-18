@@ -77,6 +77,8 @@ import { mountDeckEditor } from './deckEditor.js';
 import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
+import { ApplyStartingDeckChoice, StartingPoolCounts, StartingPoolIds } from '../../model/startingDeckChoice.js';
+import { OpenStartingCardsChooser } from '../components/startingCardsChooser.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { IsPopoverOpen } from '../popoverPolyfill.js';
 import { ColorMix } from '../colorMixCompat.js';
@@ -609,11 +611,14 @@ export function mountCustomize(app, {
 
   // Core 2's review step opens the deck editor on the starting deck; the edit is kept per class and sent with Begin.
   let deckEdit = null;
+  // Core's starting-card choice (owner, 2026-11-17): { classId, counts }, kept per class and sent with Begin.
+  let startingCards = null;
   function previewRun() {
     if (fixedCreation) {
       const base = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
       // A deck edited from the review step rides on top of the class's starting deck (owner, 2026-11-06).
       if (deckEdit?.classId === state.classId) cancelDeckEdit(base, deckEdit.snapshot);
+      if (startingCards?.classId === state.classId) ApplyStartingDeckChoice(base, startingCards.counts, meta.settings || {});
       return base;
     }
     // Validate the live allocation independently of weapon requirements.
@@ -1867,12 +1872,29 @@ export function mountCustomize(app, {
     applyColumns();
   }
 
+  function openStartingCards() {
+    const draft = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
+    const counts = startingCards?.classId === state.classId ? startingCards.counts : StartingPoolCounts(draft);
+    OpenStartingCardsChooser({ registries, run: draft, counts, settings: meta.settings || {},
+      opener: $('#cz-review-edit [data-creation-edit="startingCards"]'),
+      onDone: (chosen) => {
+        startingCards = { classId: state.classId, counts: chosen };
+        // The deck editor's snapshot was taken on the old starting cards; the new choice replaces it.
+        deckEdit = null;
+        fillSummary($('#cz-review-summary'));
+        focusElement($('#cz-review-edit [data-creation-edit="startingCards"]'));
+      },
+    });
+  }
+
   function openCreationDeckEditor() {
     const draft = previewRun();
     mountDeckEditor(document.body, {
       registries, run: draft, settings: meta.settings || {},
       onDone: () => {
         deckEdit = { classId: state.classId, snapshot: beginDeckEdit(draft) };
+        // The editor's snapshot already holds the chosen starting cards; it replaces the choice.
+        startingCards = null;
         fillSummary($('#cz-review-summary'));
         focusElement($('#cz-review-edit [data-creation-edit="deck"]'));
       },
@@ -1946,17 +1968,28 @@ export function mountCustomize(app, {
         if (fixedCreation && category === 'class') {
           // Core 2: the review's class button is the deck door; the class itself is changed on the Class step, not from here.
           // It follows the same gate as the Armory's deck door: the profile's editor and the deck-editing setting.
-          if (!armouryOpensDeckEditor(previewRun(), meta.settings || {})) return null;
-          const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
-          editDeck.dataset.creationEdit = 'deck';
-          editDeck.addEventListener('click', openCreationDeckEditor);
-          return editDeck;
+          // Core's starting-card chooser (owner, 2026-11-17) sits beside it whenever the profile has a pool.
+          const preview = previewRun();
+          const doors = [];
+          if (StartingPoolIds(preview).length) {
+            const choose = button({ label: t('creation.startingCards.button'), weight: 'secondary' });
+            choose.dataset.creationEdit = 'startingCards';
+            choose.addEventListener('click', openStartingCards);
+            doors.push(choose);
+          }
+          if (armouryOpensDeckEditor(preview, meta.settings || {})) {
+            const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
+            editDeck.dataset.creationEdit = 'deck';
+            editDeck.addEventListener('click', openCreationDeckEditor);
+            doors.push(editDeck);
+          }
+          return doors.length ? doors : null;
         }
         const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }).filter(Boolean));
+      }).flat().filter(Boolean));
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
@@ -2044,7 +2077,8 @@ export function mountCustomize(app, {
   start.addEventListener('click', async () => {
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
-    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}) } : {
+    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),
+      ...(startingCards?.classId === state.classId ? { startingCards: { ...startingCards.counts } } : {}) } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },

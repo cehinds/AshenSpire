@@ -110,20 +110,21 @@ test('Precision affects hit chance but never per-hit damage or live damage on a 
   const after = profileDamageReceipt(ctx, ctx.player, target, 5, card);
   assert.equal(after.raw, before.raw); assert.equal(after.amount, before.amount);
   primeAccuracyRolls(ctx); applyAttackDamage(ctx, ctx.player, target, 5, [], card);
-  assert.equal(100 - target.hp, 5);
+  assert.equal(100 - target.hp, 3); // base 5 halved by the Core base-damage scale, rounded up
 });
 
 test('Core Precision stacks and the Precision technique tag bypass neither Block nor Poise', () => {
   const attack = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', damageType: 'slashing' } };
+  // Base 24 is halved by the Core 0.5 base-damage scale to 12, so the hit gets past Block 6 and reaches Poise.
   const resolve = (stacks, tagged) => {
     const ctx = live(), target = ctx.enemies[0];
     Object.assign(target, { block: 6, persistentPoise: { value: 8, max: 8 } });
     target.ratings.poise = 8;
     if (stacks) applyStatus(ctx, ctx.player, 'precision', stacks, ctx.player);
     const card = { ...attack, ...(tagged ? { tags: ['precision'], authoredTags: ['precision'] } : {}) };
-    const tactical = previewTacticalAction(ctx, ctx.player, target, card, [{ amount: 12 }]);
+    const tactical = previewTacticalAction(ctx, ctx.player, target, card, [{ amount: 24 }]);
     assert.equal(tactical.guardBypass || 0, 0);
-    primeAccuracyRolls(ctx); applyAttackDamage(ctx, ctx.player, target, 12, card.tags || [], card);
+    primeAccuracyRolls(ctx); applyAttackDamage(ctx, ctx.player, target, 24, card.tags || [], card);
     const receipt = ctx.eventLog.filter(event => event.type === 'damageDealt').at(-1);
     return { blocked: receipt.blocked, hpLoss: receipt.hpLoss, poiseAbsorbed: receipt.poiseAbsorbed,
       block: target.block, poise: target.persistentPoise.value };

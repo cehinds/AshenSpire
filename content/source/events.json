@@ -474,7 +474,7 @@
         "resultText": "You pocket the card before you can think better of it."
       },
       {
-        "label": "Burn the pack (gain 25 cinders, burn the card)",
+        "label": "Burn the pack (gain 25 cinders)",
         "effects": [
           {
             "op": "addCinders",

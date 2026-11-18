@@ -383,8 +383,16 @@ export function createShotStates(ctx) {
       // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
+      // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
+      if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
-      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal' });
+      // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
+      // attribute point waiting, paid through the production XP ledger, so its level-up modal can be reached.
+      const victory = shotParams.get('shotVictory') === 'points';
+      if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
+        pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
+      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
+        ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
       // four POOL doors (which sit above the shot branches, right after newRun,
@@ -411,6 +419,11 @@ export function createShotStates(ctx) {
       // does not (it enters aim mode, which is already a second beat), so the
       // pose carries one of each and the check sees both cells of the row.
       run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
+      // `?shotDeck=<id>,<id>,…` — STAND WITH THESE CARDS. The fight deals from exactly
+      // these registered cards (unknown ids are dropped), so a sandbox check can show
+      // new cards in a real hand. Memory-only like every shot lever.
+      const shotDeck = (shotParams.get('shotDeck') || '').split(',').filter(id => ctx.getRegistries().cards.has(id));
+      if (shotDeck.length) run.deck = shotDeck.map((cardId, index) => ({ instanceId: `shot${index + 1}`, cardId, upgraded: false }));
       const g = run.mapGraph;
       // A seeded start can resolve to an event. This fixture promises combat,
       // so select an actual fight and enter through the production fight door.

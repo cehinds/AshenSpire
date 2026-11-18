@@ -13,6 +13,9 @@ const gearSettings = profile.modules.gear;
 const { gear, enemies, enemyCards } = profile.content;
 const RATINGS = ['ar', 'dr', 'poise'], ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const total = (p, keys) => keys.reduce((s, k) => s + p[k], 0);
+// Owner, 2026-11-17: Core gear resolves through `statPoints` (attribute points and Poise; tests/balance-stats-2026-11-17.test.mjs).
+// The pool resolver below still serves every profile without it, so these pool tests read Core's settings minus `statPoints`.
+const { statPoints: _coreStatPoints, ...poolSettings } = gearSettings;
 
 test('one pool by default: common 4, +1 per tier; split stays available', () => {
   assert.equal(gearSettings.pools, 'merged');
@@ -21,7 +24,7 @@ test('one pool by default: common 4, +1 per tier; split stays available', () => 
 });
 
 test('most commons give only AR/DR/Poise; a few carry one set attribute', () => {
-  const commons = gear.filter(i => i.rarity === 'common').map(i => [i, resolveGearItem(i, gearSettings)]);
+  const commons = gear.filter(i => i.rarity === 'common').map(i => [i, resolveGearItem(i, poolSettings)]);
   const withAttr = commons.filter(([, r]) => total(r.points, ATTRS) > 0);
   assert.ok(withAttr.length < commons.length / 2, 'most commons are ratings only');
   for (const [item, r] of withAttr) assert.equal(total(r.points, ATTRS), total(item.points || {}, ATTRS.filter(a => item.points?.[a])), item.id);
@@ -29,7 +32,7 @@ test('most commons give only AR/DR/Poise; a few carry one set attribute', () => 
 
 test('every item spends exactly its pool, minus tag costs, within 3 attributes', () => {
   for (const mode of ['split', 'merged']) for (const item of gear) {
-    const s = { ...gearSettings, pools: mode }, r = resolveGearItem(item, s);
+    const s = { ...poolSettings, pools: mode }, r = resolveGearItem(item, s);
     const R = s.poolSizes.ratings[item.rarity].max, B = s.poolSizes.bonus[item.rarity].max;
     const spent = total(r.points, RATINGS) + total(r.points, ATTRS) + r.tagCost;
     const armorBudget = item.kind === 'armor' ? s.armorBudget.baseline : null;
@@ -40,21 +43,21 @@ test('every item spends exactly its pool, minus tag costs, within 3 attributes',
 });
 
 test('a greatsword favours STR, AR and poise through its gear-type tag', () => {
-  const gs = resolveGearItem(gear.find(i => i.id === 'greatsword'), { ...gearSettings, pools: 'split' }).points;
+  const gs = resolveGearItem(gear.find(i => i.id === 'greatsword'), { ...poolSettings, pools: 'split' }).points;
   assert.ok(gs.strength >= Math.max(gs.dexterity, gs.wisdom, gs.intelligence));
   assert.ok(gs.ar > 0 && gs.poise > 0 && gs.dr === 0);
 });
 
 test('points an item sets are kept; only the rest is filled', () => {
   const item = { id: 't', slot: 'rightHand', kind: 'weapon', rarity: 'uncommon', tags: ['greatsword'], points: { intelligence: 3 } };
-  const r = resolveGearItem(item, { ...gearSettings, pools: 'split' });
+  const r = resolveGearItem(item, { ...poolSettings, pools: 'split' });
   assert.equal(r.points.intelligence, 3);
   assert.equal(total(r.points, ATTRS), 4);
 });
 
 test('pool size changes re-flow unset points automatically', () => {
   const item = gear.find(i => i.id === 'dagger');
-  const bigger = mergeGameSettings(gearSettings, { poolSizes: { merged: { common: { min: 6, max: 6 } } } });
+  const bigger = mergeGameSettings(poolSettings, { poolSizes: { merged: { common: { min: 6, max: 6 } } } });
   const r = resolveGearItem(item, bigger);
   assert.equal(total(r.points, RATINGS) + total(r.points, ATTRS) + r.tagCost, 6);
 });

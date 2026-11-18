@@ -27,7 +27,9 @@
       "heavy",
       "stagger"
     ],
-    "points": {},
+    "points": {
+      "strength": 3
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "greatsword"
@@ -46,7 +48,10 @@
       "flurry",
       "throw"
     ],
-    "points": {},
+    "points": {
+      "dexterity": 1,
+      "strength": 1
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "dagger"
@@ -358,7 +363,8 @@
       "retreat"
     ],
     "points": {
-      "intelligence": 1
+      "intelligence": 2,
+      "wisdom": 1
     },
     "source": {
       "file": "content/source/weapons.csv",

@@ -6,6 +6,10 @@ import {FACE_BUDGET} from '../../model/cardFaceBudget.js';
 // Tunables live in content/config/ui/components/card.json (components.rulesFace.rulesText).
 const FACE_TEXT=uiConfig.components.card.components?.rulesFace?.rulesText||{};
 const RULES_MIN_PX=Number(FACE_TEXT.minPx)||6;
+// On a phone (playtest 2026-11-17 item 39) card rules text runs phoneShrinkPt (CSS points, 4/3 px each) smaller and
+// shows in full: no two-line glance budget, the rules fill their bay instead.
+const PHONE_SHRINK_PX=(Number(FACE_TEXT.phoneShrinkPt)||0)*4/3;
+const isPhoneLayout=()=>typeof document!=='undefined'&&document.documentElement?.dataset?.formFactor==='mobile';
 const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
 const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
@@ -45,10 +49,11 @@ export function showReading(text,reading){
   text.dataset.faceReading='roomy';
   return true;
 }
-// The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
-// FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
-export function roomyFloor(high,low,zoom){
-  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+// The roomy reading uses the configured floor with the same phone reduction as the compact reading.
+// A face whose full size is already below that keeps its full size as the floor.
+export function roomyFloor(high,low,zoom,phoneShrink=0){
+  const minimumOnScreen=FACE_BUDGET.minPx-phoneShrink;
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(minimumOnScreen/zoom,high)));
 }
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
@@ -74,7 +79,7 @@ function fitSignature(face, width) {
   const { fontSize, zoom } = layoutMetrics();
   const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
     .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
-  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+  return [width, fontEpoch, fontSize, zoom, isPhoneLayout() ? 'phone' : '', face.className, face.parentElement?.className, face.dataset.designWidth,
     face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
     face.textContent, texts.join(',')].join('\u0001');
 }
@@ -136,6 +141,8 @@ export function fitIllustratedCards(cards) {
   const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
   const texts=[],skipped=new Set();
   const { zoom } = layoutMetrics();
+  const phone=isPhoneLayout();
+  const phoneShrink=phone?PHONE_SHRINK_PX:0;
   faces.forEach((face,i)=>{
     if(!widths[i])return;
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
@@ -157,7 +164,7 @@ export function fitIllustratedCards(cards) {
       // A glance face shows its rules in one or two rendered lines; the font
       // shrinks (to the readable floor) to get there. Rules that still need more
       // keep their real words (owner 2026-11-02: no Inspect replacement text).
-      if(row.compact&&!bounded)row.lines=GLANCE_LINES;
+      if(row.compact&&!bounded&&!phone)row.lines=GLANCE_LINES;
       if(bounded){
         for(const clause of clauses)clause.style.display='';
       }
@@ -187,8 +194,8 @@ export function fitIllustratedCards(cards) {
       // Rules shrink until they fit their box, down to the configured on-screen
       // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
       // and then overflow the parchment on a phone-sized card (owner 2026-11-04).
-      row.low=rules?RULES_MIN_PX/zoom:Number(text.dataset.minFont)*scale;
-      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
+      row.low=rules?Math.max(1,RULES_MIN_PX-phoneShrink)/zoom:Number(text.dataset.minFont)*scale;
+      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale-(rules?phoneShrink/zoom:0));
       texts.push(row);
     }
   });
@@ -210,7 +217,7 @@ export function fitIllustratedCards(cards) {
   // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
   const roomyRows=texts.filter(row=>row.hasRoomy);
   for(const row of roomyRows){
-    row.floor=roomyFloor(row.high,row.low,zoom);
+    row.floor=roomyFloor(row.high,row.low,zoom,phoneShrink);
     showReading(row.text,'roomy');
     Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
   }

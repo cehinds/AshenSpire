@@ -24,8 +24,8 @@ function fixture() {
   return { combat, enemy };
 }
 
-// Owner, 2026-11-14 (supersedes 2026-11-03): the intent shows the HP the player will lose (7, 9 and 12 here: Block 3 and Poise 8 are spent
-// hit by hit), the same as damageDealt.hpLoss, and refreshes as the player's Block, Poise and Counter grants change.
+// Owner, 2026-11-14 (supersedes 2026-11-03): the intent shows the HP the player will lose (6, 8 and 8 here: Slash's 5 halved by the Core
+// base-damage scale to 3, + AR 8 = 11 a hit; Block 3 and Poise 8 are spent hit by hit), the same as damageDealt.hpLoss, and refreshes as the player's Block, Poise and Counter grants change.
 test('committed full-action and each contact carry the HP lost, hit by hit', () => {
   const { combat, enemy } = fixture(); primeAccuracyRolls(combat, { count: 3 });
   const start = combat.eventLog.length;
@@ -33,11 +33,11 @@ test('committed full-action and each contact carry the HP lost, hit by hit', () 
   const revealed = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted');
   assert.ok(revealed.intentPreview);
   assert.equal(revealed.intent.damage, 5, 'raw compatibility intent stays authored');
-  assert.deepEqual(revealed.intentPreview.hitDamages, [7, 9, 12]);
-  assert.equal(revealed.intentPreview.totalDamage, 28);
+  assert.deepEqual(revealed.intentPreview.hitDamages, [6, 8, 8]);
+  assert.equal(revealed.intentPreview.totalDamage, 22);
   const shown = combatIntentPresentation(revealed.intentPreview);
-  assert.equal(shown.parts[0].value, '7+9+12');
-  assert.match(shown.parts[0].summary, /Total.*28 damage/);
+  assert.equal(shown.parts[0].value, '6+8+8');
+  assert.match(shown.parts[0].summary, /Total.*22 damage/);
   for (let hit = 0; hit < 3; hit++) {
     const before = combat.eventLog.length;
     dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -45,7 +45,7 @@ test('committed full-action and each contact carry the HP lost, hit by hit', () 
     const begun = events.find(e => ['enemyMoveStarted', 'combatHitStarted'].includes(e.type));
     const damage = events.find(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
     assert.equal(begun.intentPreview.damage, damage.hpLoss, 'the contact shows the HP it costs');
-    assert.equal(damage.hpLoss, [7, 9, 12][hit], 'Block and Poise cut the early hits');
+    assert.equal(damage.hpLoss, [6, 8, 8][hit], 'Block and Poise cut the early hits');
     assert.equal(begun.intentPreview.hits, 1);
     assert.equal(begun.intentPreview.contactIndex, hit);
     assert.equal(begun.intentPreview.contactCount, 3);
@@ -54,7 +54,7 @@ test('committed full-action and each contact carry the HP lost, hit by hit', () 
     assert.equal(combatIntentPresentation(begun.intentPreview).parts[0].value, projected.label);
     assert.match(combatIntentPresentation(begun.intentPreview).parts[0].summary, new RegExp(`Hit ${hit + 1}/3`));
   }
-  assert.equal(combat.player.hp, 72);
+  assert.equal(combat.player.hp, 78);
 });
 
 test('a freshly paid Counter refreshes only the imminent contact after its defensive grants', () => {

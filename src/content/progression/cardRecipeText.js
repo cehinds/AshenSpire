@@ -38,7 +38,8 @@ function predicateText(p) {
     case 'hasStatus': return `If ${p.of === 'allEnemies' ? 'any living enemy has' : p.of === 'self' ? 'you have' : 'the target has'} ${p.status}`;
     case 'hpBelowPct': return `If ${p.of === 'target' ? 'the target is' : 'you are'} at or below half HP`;
     case 'firstCardThisTurn': return 'If this is your first card this turn';
-    case 'inStance': return `While in ${p.stance}`;
+    case 'inStance': return `${['target', 'enemy'].includes(p.of) ? 'While the target is in' : 'While in'} ${p.stance}`;
+    case 'atRange': return `If the target is at ${p.range}`;
     case 'not': return `Unless (${predicateText(p.pred)})`;
     case 'all': return p.preds.map(predicateText).join(' and ');
     case 'any': return p.preds.map(predicateText).join(' or ');

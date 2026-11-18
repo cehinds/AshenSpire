@@ -10,7 +10,9 @@ const ids = registries.cards.all().filter((c) => c.id.startsWith('core.')).map((
 // Ramp upgrades act from the second play, and Hexmark's contest fails in the single-play harness: a single play cannot show them.
 const RAMP = new Set(['core.flick', 'core.brace', 'core.temperedEdge', 'core.hexmark']);
 // Menu steps whose effect is not in the single play (end of turn, start of the next fight, a trait): tests/w25-upgrade-menu.test.mjs proves each in the engine.
-const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction']);
+// Dropping Ethereal acts at the end of a turn the card stays in hand, and stopping a rising cost acts from the second play:
+// tests/card-cost-balance.test.mjs proves both in the engine.
+const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady']);
 // A run-long `attr` step (+1 INT/WIS) changes no single play: it acts when the deck loads into a fight. tests/w25-live-stats-run-bonus.test.mjs
 // ('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight') proves it there.
 const isDeferred = (step) => (step.k === 'fx' && DEFERRED.has(step.fx)) || step.k === 'attr';
@@ -99,7 +101,9 @@ function spellDamage(itemTier) {
   dispatch(combat, { type: 'playCard', cardInstanceId: 'p1', targetId: combat.enemies[0].id });
   return combat.eventLog.slice(start).find((e) => e.type === 'damageDealt').amount;
 }
+// Owner, 2026-11-17 (gear `statPoints`): a tier adds an attribute point split by the sceptre's weights, not PR, so a
+// tier whose point lands on the lower of INT/WIS leaves PR = max(INT, WIS) alone; the ladder still raises the spell.
 test('a magic weapon tier raises spell damage', () => {
   const amounts = [0, 1, 2, 3].map(spellDamage);
-  assert.ok(amounts[1] > amounts[0] && amounts[3] > amounts[1], amounts.join(','));
+  assert.ok(amounts.every((amount, i) => i === 0 || amount >= amounts[i - 1]) && amounts[3] > amounts[0], amounts.join(','));
 });

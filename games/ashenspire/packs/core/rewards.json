@@ -159,7 +159,10 @@
     "playableOnly": true,
     "excludeCardIds": [
       "core.guidingWhisper",
-      "base.evade"
+      "base.evade",
+      "base.buff-ally",
+      "base.drain-allies",
+      "base.guard-allies"
     ],
     "weapons": {
       "groups": [
@@ -221,7 +224,12 @@
         "emberIdol",
         "forsakenWarflag",
         "wrathCoil",
-        "brimmingGourd"
+        "brimmingGourd",
+        "basicTraining",
+        "graduate",
+        "threadbareSatchel",
+        "asceticsCord",
+        "pruningHook"
       ],
       "pools": [
         "core2"

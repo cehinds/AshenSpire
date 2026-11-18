@@ -32,6 +32,11 @@
       "minimum": 0,
       "maximum": 100
     },
+    "baseDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
     "fixCoreVersion": {
       "type": "integer",
       "enum": [

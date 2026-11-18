@@ -17,7 +17,7 @@ import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
-import { selectCardVariant } from './cardBehavior.js';
+import { selectCardVariant, PlayConditionEnemies, PlayConditionMet } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
@@ -36,7 +36,7 @@ import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
 import { CounterPreviewAgainst } from './combatCounterPreview.js';
-import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
+import { tacticalCarrier, AuthoredCounterHp, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, ExpireCombatCounterAtTurnStart, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
 import { NeutralExtraDraw, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
@@ -361,14 +361,19 @@ export function createCombat({
     if (fixCoreEnabled(combat)) {
       combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
       combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
-      for (const enemy of combat.enemies) {
+      for (const [index, enemy] of combat.enemies.entries()) {
         const definition = registries.enemies.get(enemy.enemyId);
         enemy.attributes = { ...(definition.attributes || {}) };
         enemy.baseEvasionBonus = definition.baseEvasionBonus || definition.evasionBonus || 0;
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
-        Object.assign(enemy, gameProfileEnemyRatings(combat,enemy) || {});
+        const { effectiveMaxHp, hpScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
+        Object.assign(enemy, ratings);
+        // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
+        if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
+        // Then its tier's HP scale (enemies.hpScaleByTier), on the level HP or the rolled range alike.
+        if (Number.isFinite(hpScale) && hpScale !== 1) enemy.hp = enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hpScale));
       }
     }
   }
@@ -1800,9 +1805,11 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     target = findEntity(combat, targetId);
     if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
   } else if (needsEnemyTarget(def) || chargedEnemyTarget) {
-    target = combat.enemies.find((e) => e.alive) || null;
+    // An unaimed card with a play condition takes the first living enemy that meets it.
+    target = (def.playIf && PlayConditionEnemies(combat, def)[0]) || combat.enemies.find(e => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');
   }
+  if (!PlayConditionMet(combat, def, target)) throw F.playRefusal(`'${def.name}' cannot be played now`, 'unplayable');
 
   // WHAT THE CARD IS comes from its kind tag (model/tree.js cardKind), never
   // from `def.type` — every reader downstream (the attack counter, the
@@ -1833,7 +1840,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const before = { ...R.beforeAbilityPlay(combat, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(combat, def, p, target, before);
   if (combat.combatExpansionVersion === 2) {
-    const check = playCosts(preparingPreview(combat, inst, def, targetId), def);
+    const check = playCosts(preparingPreview(combat, inst, def, def.playIf ? target?.id : targetId), def);
     if (p.energy < check.energy) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'stamina', need: check.energy, have: p.energy });
     if (p.mana < check.mana) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'mana', need: check.mana, have: p.mana });
     const payment = Blight.payAshenBlight(combat, p, { amount: def.ashenBlightCost || 0, receiptId: `${combat.combatKey}:${p.combatOwnerCycle}:${p.counters.cardsPlayedThisCombat + 1}:${inst.instanceId}`, combatKey: combat.combatKey });
@@ -2114,6 +2121,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
         enemy.intent = { kind: 'unknown', moveId: null };
         delete enemy.combatStance;
+        // Its stance is unknown, not Idle: the preview prices no stance weakness for it (theme B; live pays the real stance's),
+        // and a stance condition reads it as no stance at all (engine/triggers.js entityInStance).
+        enemy.combatStanceUnknown = true;
         delete enemy.combatCounter;
         delete enemy.pendingMove;
       }
@@ -2128,6 +2138,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
   let def = resolveCombatCard(combat, inst, { upcastRanks });
+  if (targetId == null && def.playIf && needsEnemyTarget(def)) targetId = PlayConditionEnemies(combat, def)[0]?.id;
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
@@ -2209,9 +2220,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const coreCounterCard = configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter';
   let coreCounterRead;
   // The card's own damage: what the armed Counter holds as its base return (live: payload.hp), plus any charged bonus.
-  const counterBaseHp = resolvedTarget => chargedEffects.reduce((sum, effect) => sum + (effect.op === 'damage'
-    ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, { energySpent: shownCost })?.total || 0 : 0), 0)
-    + Math.max(0, charges.damage + charges.damageEffect);
+  const counterBaseHp = resolvedTarget => {
+    const meta = { energySpent: shownCost };
+    const authored = AuthoredCounterHp(combat, p, resolvedTarget, action.card, meta);
+    const base = authored ? authored.base + authored.rating : chargedEffects.reduce((sum, effect) => sum + (effect.op === 'damage'
+      ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, meta)?.total || 0 : 0), 0);
+    return base + Math.max(0, charges.damage + charges.damageEffect);
+  };
   const coreCounterReturnRead = () => {
     if (coreCounterRead !== undefined) return coreCounterRead;
     const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];

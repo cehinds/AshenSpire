@@ -208,7 +208,8 @@ test('an equipped run never splits a role basic: its upgrade comes from the sour
   const edit = openDeckEdit(REG, run, {});
   edit.remove(strike.instanceId);
   const model = deckEditorModel({ registries: REG, run, settings: {} });
-  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key), ['basic:attack', 'basic:guard'],
+  // Sorted: the collection lists deck cards first (playtest 2026-11-17 item 45b), and this asks only which tiles exist.
+  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key).sort(), ['basic:attack', 'basic:guard'],
     'stampDeck restamps every attack copy from its weapon, so there is no kept variant to choose');
   assert.equal(edit.add('basic:attack').ok, true);
   const slots = [...run.deck, ...run.sideboard].map((c) => c.equipmentAttackSlotId).filter(Boolean);
@@ -1698,4 +1699,13 @@ test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, 
     editor.root.querySelector('#deck-editor-done').click();
     assert.equal(saved, 1);
   });
+});
+
+test('the collection lists cards in the deck first, then the library (playtest 2026-11-17 item 45b)', () => {
+  const run = freshRun();
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const inDeck = model.collection.map((tile) => tile.inDeck > 0);
+  const firstLibrary = inDeck.indexOf(false);
+  assert.ok(inDeck.includes(true), 'the fresh deck has collection tiles');
+  if (firstLibrary >= 0) assert.ok(inDeck.slice(firstLibrary).every((flag) => !flag), 'no deck card after the first library card');
 });
