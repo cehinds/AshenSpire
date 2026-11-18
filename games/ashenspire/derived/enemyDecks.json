@@ -6521,5 +6521,121 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "slagtongImp",
+    "name": "Slagtong_Imp",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "slagtongImp.slagSpit",
+        "name": "Slag_Spit",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagtongImp.tongueBrand",
+        "name": "Tongue_Brand",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "tongueBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagtongImp.cinderCackle",
+        "name": "Cinder_Cackle",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "cinderCackle",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "slagtongImp.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "slagtongImp.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

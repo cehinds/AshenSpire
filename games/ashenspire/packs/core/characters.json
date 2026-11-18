@@ -6062,5 +6062,97 @@
         }
       ]
     }
+  },
+  {
+    "id": "slagtongImp",
+    "name": "Slagtong_Imp",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "slagtongImp.slagSpit",
+      "slagtongImp.tongueBrand",
+      "slagtongImp.cinderCackle",
+      "slagtongImp.advance",
+      "slagtongImp.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "emberlightSceptre"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "slagtongImp",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "slagtongImp.cinderCackle",
+      "poiseMax": 4,
+      "cardHints": {
+        "slagtongImp.slagSpit": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagtongImp.tongueBrand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "tongueBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagtongImp.cinderCackle": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "cinderCackle",
+          "coreSp": "card"
+        },
+        "slagtongImp.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "slagtongImp.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

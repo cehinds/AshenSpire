@@ -241,5 +241,23 @@
       "min": 3,
       "max": 4
     }
+  },
+  {
+    "id": "a3_slagImps",
+    "enemies": [
+      "slagtongImp",
+      "cinderMantis"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
   }
 ]

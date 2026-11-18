@@ -173,6 +173,10 @@
       "name": "The Sixlegged Hearse",
       "tier": "boss"
     },
+    "enemy:slagtongImp": {
+      "name": "Slagtong Imp",
+      "tier": "minion"
+    },
     "enemy:stitchCrab": {
       "name": "Stitch Crab",
       "tier": "minion"
@@ -2989,6 +2993,56 @@
         "mana": 0
       },
       "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagtongImp.slagSpit": {
+      "name": "Slag Spit",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagtongImp.tongueBrand": {
+      "name": "Tongue Brand",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagtongImp.cinderCackle": {
+      "name": "Cinder Cackle",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {weak} Weak to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagtongImp.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:slagtongImp.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
       "usedBy": "enemy sheet"
     }
   },

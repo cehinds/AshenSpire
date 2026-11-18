@@ -51,6 +51,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:saltChoirWalrus | Salt Choir Walrus | elite |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:sixleggedHearse | The Sixlegged Hearse | boss |
+| enemy:slagtongImp | Slagtong Imp | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
@@ -346,6 +347,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:kilnshellTortoise.shellTuck | Shell Tuck | skill | 1 | 0 | Gain {block} Block. |
 | card:kilnshellTortoise.kilnPlate | Kiln Plate | skill | 2 | 0 | Gain {block} Block. |
 | card:kilnshellTortoise.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagtongImp.slagSpit | Slag Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:slagtongImp.tongueBrand | Tongue Brand | attack | 1 | 0 | Deal {damage} damage. |
+| card:slagtongImp.cinderCackle | Cinder Cackle | power | 1 | 1 | Apply {weak} Weak to the enemy. |
+| card:slagtongImp.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagtongImp.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 

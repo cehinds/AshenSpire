@@ -7786,5 +7786,111 @@
         }
       ]
     }
+  },
+  {
+    "id": "slagtongImp",
+    "name": "Slagtong_Imp",
+    "displayName": "Slagtong Imp",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "emberlightSceptre",
+            "name": "Emberlight_Sceptre",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 4,
+        "intelligence": 4,
+        "level": 10
+      },
+      "total": 56,
+      "formula": "10+20+5+3+4+4+10 = 56"
+    },
+    "pools": {
+      "hp": 56,
+      "sp": 2,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 6
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "emberlightSceptre",
+        "name": "Emberlight_Sceptre"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "slagtongImp.slagSpit",
+          "name": "Slag_Spit",
+          "copies": 1
+        },
+        {
+          "id": "slagtongImp.tongueBrand",
+          "name": "Tongue_Brand",
+          "copies": 1
+        },
+        {
+          "id": "slagtongImp.cinderCackle",
+          "name": "Cinder_Cackle",
+          "copies": 1
+        },
+        {
+          "id": "slagtongImp.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "slagtongImp.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

@@ -7852,5 +7852,138 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "slagtongImp.slagSpit",
+    "name": "Slag_Spit",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 7
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "slagtongImp.tongueBrand",
+    "name": "Tongue_Brand",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "slagtongImp.cinderCackle",
+    "name": "Cinder_Cackle",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "power",
+    "icon": "casting",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "maneuver:casting",
+      "classification.power"
+    ],
+    "textTemplate": "Apply {weak} Weak to the enemy."
+  },
+  {
+    "id": "slagtongImp.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
+  },
+  {
+    "id": "slagtongImp.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   }
 ]

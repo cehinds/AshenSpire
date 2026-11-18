@@ -913,5 +913,69 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "slagtongImp",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 5,
+      "intelligence": 4
+    },
+    "size": "small",
+    "name": "Slagtong Imp",
+    "hp": [
+      28,
+      32
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "slagSpit": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "tongueBrand": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 6,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "cinderCackle": {
+        "sp": 1,
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      }
+    },
+    "firstMove": "cinderCackle",
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "damage"
+      }
+    ]
   }
 ]

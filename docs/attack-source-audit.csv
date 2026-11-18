@@ -643,3 +643,6 @@
 "enemyMove","kilnshellTortoise","kilnBreath","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
 "enemyMove","kilnshellTortoise","shellTuck","block","false","false","","","physical","defend","","","","",""
 "enemyMove","kilnshellTortoise","kilnPlate","block","false","false","","","physical","defend","","","","",""
+"enemyMove","slagtongImp","slagSpit","attack","true","false","spell","fire","spell","","fire","","delivery:projectile","",""
+"enemyMove","slagtongImp","tongueBrand","attack","true","false","weapon","fire","physical","attack","","","delivery:melee","",""
+"enemyMove","slagtongImp","cinderCackle","debuff","false","false","","","spell","","fire","","","",""
