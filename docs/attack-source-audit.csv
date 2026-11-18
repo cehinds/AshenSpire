@@ -479,7 +479,7 @@
 "enemyMove","fenwickToad","bileSpit","attack","true","false","weapon","poison","physical","attack","","","delivery:projectile","",""
 "enemyMove","fenwickToad","puffUp","block","false","false","","","physical","defend","","","","",""
 "enemyMove","reedpipePoacher","dart","attack","true","false","weapon","piercing","physical","attack","","","delivery:projectile","",""
-"enemyMove","reedpipePoacher","snare","debuff","false","false","","","physical","","","","","",""
+"enemyMove","reedpipePoacher","snare","debuff","false","false","","","spell","","frost","","","",""
 "enemyMove","wickerTitheman","tithe","attack","true","false","weapon","slashing","physical","attack","","","delivery:melee","",""
 "enemyMove","wickerTitheman","bindingStraw","debuff","false","false","","","spell","","","","","",""
 "enemyMove","wickerTitheman","kindleWard","block","false","false","","","physical","defend","","","","",""

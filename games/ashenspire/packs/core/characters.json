@@ -3734,7 +3734,7 @@
     "defaultGear": [
       {
         "key": "mainHand",
-        "id": "ashStaff"
+        "id": "shortbow"
       }
     ],
     "defaultRelics": [],
@@ -3744,19 +3744,22 @@
       "artFaces": "left"
     },
     "enemy": {
+      "firstCard": "reedpipePoacher.snare",
       "poiseMax": 2,
       "cardHints": {
         "reedpipePoacher.dart": {
           "aiWeight": 55,
           "costSource": "authored",
           "legacyMove": "dart",
-          "coreOffense": "card"
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "reedpipePoacher.snare": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "snare"
+          "costSource": "authored",
+          "legacyMove": "snare",
+          "coreSp": "card"
         },
         "reedpipePoacher.advance": {
           "aiWeight": 0,

@@ -5013,8 +5013,15 @@
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "shortbow",
+            "name": "Shortbow",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 1,
@@ -5028,15 +5035,8 @@
       },
       "intelligence": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "ashStaff",
-            "name": "Ash_Staff",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 2
+        "bonuses": [],
+        "total": 1
       }
     },
     "hp": {
@@ -5044,27 +5044,27 @@
         "base": 10,
         "constitution": 10,
         "strength": 5,
-        "dexterity": 6,
+        "dexterity": 9,
         "wisdom": 2,
-        "intelligence": 2,
+        "intelligence": 1,
         "level": 0
       },
-      "total": 35,
-      "formula": "10+10+5+6+2+2+0 = 35"
+      "total": 37,
+      "formula": "10+10+5+9+2+1+0 = 37"
     },
     "pools": {
-      "hp": 35,
+      "hp": 37,
       "sp": 2,
       "mp": 1,
       "ar": 1,
-      "dr": 2,
-      "hand": 4
+      "dr": 3,
+      "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "ashStaff",
-        "name": "Ash_Staff"
+        "id": "shortbow",
+        "name": "Shortbow"
       }
     ],
     "relics": [],

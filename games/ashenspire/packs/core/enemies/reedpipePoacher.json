@@ -30,7 +30,7 @@
   "equipment": [
     {
       "slot": "mainHand",
-      "ref": "gear:ashStaff"
+      "ref": "gear:shortbow"
     }
   ],
   "relics": [],
@@ -47,13 +47,15 @@
       "aiWeight": 55,
       "costSource": "authored",
       "legacyMove": "dart",
-      "coreOffense": "card"
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:reedpipePoacher.snare": {
       "aiWeight": 25,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "snare"
+      "costSource": "authored",
+      "legacyMove": "snare",
+      "coreSp": "card"
     },
     "card:reedpipePoacher.advance": {
       "aiWeight": 0,
@@ -68,6 +70,7 @@
     }
   },
   "behaviour": {
+    "firstCard": "card:reedpipePoacher.snare",
     "startingRange": "reach",
     "rangeClosingMove": "advance",
     "rangeRoutePolicy": "advance",
@@ -102,6 +105,7 @@
       "enemy"
     ],
     "enemy": [
+      "firstCard",
       "poiseMax",
       "cardHints",
       "startingRange",

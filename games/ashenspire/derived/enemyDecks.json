@@ -3599,14 +3599,15 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 4
+            "amount": 5
           }
         ],
         "hints": {
           "aiWeight": 55,
           "costSource": "authored",
           "legacyMove": "dart",
-          "coreOffense": "card"
+          "coreOffense": "card",
+          "coreSp": "card"
         }
       },
       {
@@ -3627,8 +3628,9 @@
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "snare"
+          "costSource": "authored",
+          "legacyMove": "snare",
+          "coreSp": "card"
         }
       },
       {
