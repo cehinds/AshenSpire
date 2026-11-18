@@ -913,7 +913,7 @@
         "effects": [
           {
             "op": "moveEngagement",
-            "target": "player",
+            "target": "enemy",
             "bands": -1
           }
         ]
