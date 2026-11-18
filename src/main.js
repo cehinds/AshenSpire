@@ -84,7 +84,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind, ConfiguredTraderOffersSmith } from './model/gameProfileShopKind.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith, ConfiguredTraderDock } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -2663,8 +2663,10 @@ function showShop() {
   }
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-    onSmith: ConfiguredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
+  // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
+  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
+  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds: dock.kinds,
+    onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       if (offer.options[index]?.kind === 'rankUps') {
