@@ -11,21 +11,21 @@ These are built from existing rules only:
 | Card | Element | Maneuver | Cost | Effect (authored, before scaling) | Note |
 |---|---|---|---|---|---|
 | Ember Wave | Fire | Sweep | 2 MP | 11 to all enemies; 1 Burn each | Spread is already in Fire's built-in tags, so there's no extra rider |
-| Meteor Fall | Fire | Smash | 3 MP | 20; Poise damage +100% | A slow, heavy hit |
+| Meteor Fall | Fire | Smash | 2 MP + 1 SP | 20; Poise damage +100% | A slow, heavy hit |
 | Frost Nova | Frost | Sweep | 2 MP | 10 to all enemies; 1 Chill each | Chill references Weak |
-| Glacier Hammer | Frost | Smash | 2 MP | 12; Poise +100%; 1 Brittle | Brittle references Vulnerable |
+| Glacier Hammer | Frost | Smash | 1 MP + 1 SP | 12; Poise +100%; 1 Brittle | Brittle references Vulnerable |
 | Chain Arc | Lightning | Sweep | 1 MP | 4 to all enemies | Lightning's built-in Pierce applies |
-| Thunderclap | Lightning | Smash | 2 MP | 12; Poise +100%; 1 Shock | |
+| Thunderclap | Lightning | Smash | 1 MP + 1 SP | 12; Poise +100%; 1 Shock | |
 | Quake | Earth | Sweep | 2 MP | 10 to all enemies; 1 Slowed each | |
-| Boulder Drop | Earth | Smash | 3 MP | 20; Poise +100%; gain 2 Stone Skin | |
+| Boulder Drop | Earth | Smash | 2 MP + 1 SP | 20; Poise +100%; gain 2 Stone Skin | |
 | Concussive Wave | Force (Alteration) | Sweep | 2 MP | 10 to all enemies | Physical; half of it goes to Poise |
-| Force Hammer | Force (Alteration) | Smash | 2 MP | 12; Poise +50% | Physical, so it takes the physical Smash +50% on top of Force's half-to-Poise split |
+| Force Hammer | Force (Alteration) | Smash | 1 MP + 1 SP | 12; Poise +50% | Physical, so it takes the physical Smash +50% on top of Force's half-to-Poise split |
 | Radiant Sweep | Holy | Sweep | 2 MP | 10 to all enemies; Cleanse 1 on self | |
-| Grave Smash | Necrotic | Smash | 2 MP | 12; Poise +100%; 1 Blight | |
+| Grave Smash | Necrotic | Smash | 1 MP + 1 SP | 12; Poise +100%; 1 Blight | |
 
 Rarity: Sweeps are common or uncommon; Smashes are uncommon, and the two 3-MP Smashes are rare.
 
-## Open choices for the owner
-1. Does a magic Smash or Sweep take part in the stance triangle (Smash beats Defend, and so on), or only physical ones?
-2. Is the +1 cost of a magic Smash paid in MP (proposed) or SP?
-3. Approve this list, or say which to cut or add.
+## Owner answers (2026-11-18)
+1. Magic Smashes and Sweeps join the stance triangle, as physical ones do.
+2. A magic Smash costs MP **and** SP. That split is its price, so there is no extra +1. The total stays on the damage tier's cost curve: a 2-cost Smash is 1 MP + 1 SP, a 3-cost one is 2 MP + 1 SP. Sweeps cost MP only.
+3. The list is pending owner approval.
