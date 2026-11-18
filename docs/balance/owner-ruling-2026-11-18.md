@@ -134,3 +134,13 @@ Existing effects that count as drawbacks:
   - Large hands should come only from card effects, relics, Retain and the like, never from stats alone.
   - Verify the act-3 figure with a run sim (INT reached by the end of act 3, at 1 attribute point per level).
 - **Armaments to re-tune** (ratings used to tell these pairs apart): greatsword vs warhammer, halberd vs warhammer, buckler vs kite shield, buckler vs round shield, round shield vs kite shield, Dusk Chime vs Blight Rod.
+
+## 13. Poise (owner, 2026-11-18)
+- **max Poise = 1 + CON + other Poise bonuses.** Each CON point gives +1 Poise, alongside its HP, however it was gained.
+- Armour, shields and some two-handed weapons (for example the greatsword) **add** Poise by default. Their old poiseThreshold becomes an additive bonus.
+- Each of those pieces also carries **one signature effect** from the approved tags:
+  - start-of-fight stacks of automatic Block, Counter, Evade or Reflect;
+  - Ward or Fortified;
+  - Retain on Defend cards;
+  - an element resistance, and so on.
+- The proposal table is in `docs/balance/equipment-signature-proposal-2026-11-18.md`, pending owner approval.
