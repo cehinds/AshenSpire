@@ -729,12 +729,15 @@ export function techniqueMagicShare(config) {
  * also joins the primary part. Parts never go negative: a shortfall moves to the
  * other part, so the two always sum to the amount.
  */
-export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart = null, share = 0, primary = 'physical' }) {
+export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart: typedPart = null, share = 0, primary = 'physical' }) {
+  let ratingPart = typedPart;
   const total = Math.max(0, Math.floor(Number(amount) || 0));
   const card = Math.max(0, Math.floor(Number(base) || 0));
   const rating = Math.max(0, Math.floor(Number(ratingBonus) || 0));
   const cardMagic = share >= 1 ? card : share > 0 ? Math.floor(card * share + 1e-9) : 0;
   let magic = cardMagic, physical = card - cardMagic;
+  // A hit with magic share 0 deals no magic (Force and Alteration, owner 2026-11-18): its Power joins the physical part too.
+  if (ratingPart === 'magic' && share <= 0) ratingPart = 'physical';
   if (ratingPart === 'magic') magic += rating;
   else if (ratingPart === 'physical') physical += rating;
   // The rest of the hit: everything beyond the card and its typed rating, and an untyped rating too.
