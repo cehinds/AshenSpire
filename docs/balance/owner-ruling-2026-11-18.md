@@ -27,12 +27,17 @@ New tags:
 - **Reckless:** you lose Poise. Fully breaking your own Poise is self-Broken (below).
 - **Bloodprice:** the card also costs HP.
 - **Wound:** adds a Wound card (the existing `wound`) to your discard pile.
-- **Winded:** start your next turn with 1 less SP per stack. It replaces the proposed "Overexert" and self-Broken. Unlike Broken (a Poise break), it does not make you take extra damage. *(owner: the name)*
+- **Staggered (self):** replaces the proposed "Overexert", "Winded" and self-Broken (owner). The player loses 1 SP next turn; an enemy loses its next action.
 
 Existing effects that count as drawbacks:
 - **Vulnerable (self):** replaces the proposed "Exposed".
 - **Exhaust** and **Ethereal**.
 - **Confused (self):** see section 4.
+
+## 3a. Staggered and the Poise break (owner)
+- Staggered no longer carries its own ×1.5 damage taken (`statuses.json` `staggered.modifiers.damageTakenMult`).
+- A Poise break (FixCore `poise.brokenDamageMultiplier` 1.5, `fixCoreMechanics.json`) also drops its ×1.5. Instead the break applies **1 stack of Vulnerable** (×1.25, 25% more attack damage, decays as Vulnerable does).
+- What Staggered keeps: the lost action, or the lost SP for the player.
 
 ## 4. Confused (existing status, new effect)
 - At the start of its owner's turn, each stack re-rolls the SP cost of one random card in hand to 0–3 SP. The rolled cost lasts that turn only, and the card face shows it.
