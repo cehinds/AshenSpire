@@ -279,6 +279,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Ward (fix):** each Ward stack adds **+5 max Poise** (`ward.poisePerStack` 5). While a character has Ward, damage goes **Block, then Poise (100% absorbed until Poise is 0), then HP**. Without Ward, the routing after Block stays 25% Poise and 75% HP. *(owner: +5 per stack)*
   - **Ward decay (owner):** Ward loses **1 stack** at the start of its invoker's next turn, not all of it. The max Poise from the lost stack leaves with it, and current Poise is clamped to the new max.
   - **Ward cards (owner):** every card that grants Ward carries the **Reaction** tag (`trait:reaction`), so it can be played as a reaction. Each Ward card pays for it with one of: a higher cost, Exhaust, or sharing its budget with Block. *(per-card choice in the rules pass)*
+  - **Ward breaks (owner):** when Poise reaches 0, all Ward stacks are removed. No stack cap is needed; a tome's growing Ward is answered by Poise damage. Magic hits deal extra Poise damage, and Force sends half its damage to Poise, so magic and Force are the natural counters to Ward.
   - **Magic absorption (owner, open):** some Ward cards may absorb magic. The mechanic is not decided yet.
 - **Staves and sceptres (owner):** both carry 1 Ward stack at the start of each turn as a built-in property of the type (with §20's Ward: +5 max Poise, and Poise absorbs fully).
 - **Tomes (owner):** 2 Ward stacks at the start of each turn by default (staves and sceptres give 1).
