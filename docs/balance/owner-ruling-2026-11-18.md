@@ -297,3 +297,9 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Retreat on either side:** a hit between two combatants needs **Reach** if either one holds a Retreat stack (the player can hold them too, e.g. a bow's end-of-turn stack). Without Reach, each side holding Retreat must be closed with an Advance (1 SP each, which spends one stack). When both sides hold Retreat, both Advances are needed (2 SP).
 - **Status-only plays are Reach by default:** a card's status effects that don't come from a melee attack, Sweep, Smash or Counter reach any target with no Advance cost. Example: a Defend card that inflicts Weak applies it to a retreated enemy for free.
 - **Self-and-all cards:** a card that affects the player and every enemy plays when you select the player **or** any enemy as its target.
+- **Poise target (owner):** a level-1 Reaver in plate starts near 15 Poise (was 21 = attributes 3 + Greatsword item 6 + plate item 6 + type bonuses 6). The fix is to lower the **type bonuses** and keep the items' own Poise:
+  - The heavy group goes from +5 to **+2** Poise.
+  - The Greatsword type goes from +1 to **0** Poise.
+  - To keep heavy above medium, medium goes from +3 to **+1** and light from +1 to **0**. *(decided)*
+  - Shields keep their +1 Poise.
+  - Result: about 17 for that Reaver, close to 15; the rest is left for playtest.
