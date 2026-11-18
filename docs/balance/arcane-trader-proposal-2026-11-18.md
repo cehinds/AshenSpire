@@ -20,7 +20,7 @@ Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal 
 | Shelf | Stock | Price |
 |---|---|---|
 | Magic relics | 2 | relic price +10% |
-| Scrolls | 3 | 60–220 by scroll |
+| Scrolls | 3 | spell scrolls by formula; unique scrolls as listed |
 | Magic armaments (staves, sceptres, tomes, talismans, chimes, light sources) | 2 | armament price |
 | Magic armour (unarmoured robes) | 1 | armour price |
 | Spell cards | 3 | card price |
@@ -28,24 +28,25 @@ Today a rare relic costs 810–900 gold (`balance.shop.relicCost`). The removal 
 - **Not sold:** card removal, flasks or inn rest; those stay at the market.
 - **Magic relics:** a relic is "magic" if it touches MP, Ward, spells, elements or Prepared stance. Proposed for the shelf: Runed Bracer, Shattered Aegis, Prepared Mind, Prism of Elements, Storm Rod, Tinderbox, Frostbitten Charm, Rotting Censer, plus the existing caster relics.
 
-## Scrolls (one use; the card is removed from the deck after use)
-Scrolls are cards added to the deck. Each costs 0 to play and leaves the deck for good once played, like the Teleport Scroll. They are sold at the Arcane Trader and turn up as rare rewards.
+## Scrolls (owner, 2026-11-18)
+- **Where they live:** scrolls are consumables in the **potions (flask) section**, not deck cards. They **do not count against the potion limit**.
+- **Using one in a fight:** the scroll is spent and **its card goes into your hand**. Once that card is played it leaves for good; it never joins the deck. Some scroll cards have **Retain** (they wait in hand until played); the rest are lost at the end of the turn if not played.
+- **Spell scrolls:** most scrolls are one-use copies of existing spells. **Every spell has a scroll version**, named "Scroll of <spell>", at the spell's base grade. Each card's Retain is set per scroll in the rules pass.
+- **Unique scrolls:** a few exist only as scrolls:
 
-| Scroll | Price | Effect |
-|---|---|---|
-| Teleport Scroll | 150 | Escape a non-boss fight with no rewards, or hop nodes on the map (approved) |
-| Scroll of Fire | 90 | 12 Fire damage to all enemies; 2 Burn each |
-| Scroll of Frost | 90 | 10 Frost damage to one enemy; it is Frozen |
-| Scroll of Lightning | 90 | 8 Lightning damage, Chain to 2 more enemies |
-| Scroll of Warding | 80 | Gain 3 Ward |
-| Scroll of Stoneskin | 70 | Gain 5 Stone Skin and 8 Block |
-| Scroll of Haste | 110 | Gain 2 SP and draw 2 cards |
-| Scroll of Mending | 100 | Heal 15 HP and Cleanse 2 |
-| Scroll of Unmaking | 120 | Remove all Ward and Block from one enemy |
-| Scroll of Farsight | 60 | Usable on the map: reveal the next 3 depths of your branch |
-| Scroll of Recall | 220 | Usable on the map: return to the last rest site you visited on this branch (no rewards for skipped nodes) |
+| Scroll | Price | Where used | Effect |
+|---|---|---|---|
+| Teleport Scroll | 150 | fight or map | Escape a non-boss fight with no rewards, or hop to a node on the same depth or 1 ahead (any branch before the pre-boss rest) |
+| Scroll of Farsight | 60 | map | Reveal the next 3 depths of your branch |
+| Scroll of Recall | 220 | map | Return to the last rest you visited on this branch |
+| Scroll of Unmaking | 120 | fight (Retain) | Remove all Ward and Block from one enemy |
+| Scroll of Haste | 110 | fight | Gain 2 SP and draw 2 cards |
+
+- **Price of a spell scroll:** 40 + 30 × the spell's cost (MP + SP); rare spells +50%.
+- **Where to buy:** the Arcane Trader always stocks 3 scrolls. **Regular traders also have a chance to stock 1** (proposed: 30% per visit). Scrolls also turn up as rare rewards.
 
 ## Open choices for the owner
 1. Approve the Arcane Trader stock and the scroll list, or name changes.
 2. Is "caster classes" Starseer and Herald, or Starseer only?
-3. Should scrolls count toward deck size for hand and draw, or sit apart (a scroll pouch)?
+3. (Answered: scrolls sit in the potions section, outside the potion limit.)
+4. Is a 30% chance for a regular trader to stock a scroll right?
