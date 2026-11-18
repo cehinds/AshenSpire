@@ -70,6 +70,7 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
   const previous = structuredClone(run.gameProfile);
   delete previous.modules.effects.baseDamageMultiplier;
   delete previous.modules.effects.playerDamageMultiplier;
+  delete previous.modules.effects.physicalDamageMultiplier;
   delete previous.hash;
   previous.hash = gameDigest(previous);
   const beforeBalance = { ...run, gameProfile: previous };
@@ -77,8 +78,9 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
     .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
 
   // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
-  assert.equal(damageLine(strike, run), '2 damage');
-  assert.equal(damageLine(ranked, run), '2 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), then floor(4 x 0.7)');
+  // Owner, 2026-11-18 (second cut): the physical share takes another x0.7 first: floor(3 x 0.7 x 0.7) = 1.
+  assert.equal(damageLine(strike, run), '1 damage');
+  assert.equal(damageLine(ranked, run), '1 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), then floor(4 x 0.7 x 0.7)');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
@@ -132,7 +134,8 @@ test('item 1: player and enemy Counters scale their authored base once before th
   knight.combat.piles.hand.push({ instanceId: 'into-parry', cardId: 'core.strike' });
   assert.equal(previewIntent(knight.combat, knight.enemy.id).counterDamage, 3, 'the enemy intent shows half of the 6 authored damage');
   dispatch(knight.combat, { type: 'playCard', cardInstanceId: 'into-parry', targetId: knight.enemy.id });
-  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) > 3, 'the share of the incoming hit stays intact');
+  // Owner, 2026-11-18 (second cut): the Strike's hit is small enough now that the stack share rounds to 0; the return still carries the whole counter base.
+  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) >= 3, 'the return keeps its counter base');
 });
 
 test('item 5 (owner, 2026-11-17): SP = 3 + floor((DEX - 1) / 3) and MP = 1 + floor((max(INT, WIS) - 1) / 3), at every level', () => {

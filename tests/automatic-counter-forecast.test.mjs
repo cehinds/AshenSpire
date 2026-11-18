@@ -54,7 +54,8 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   // contact; the Counter stance cuts it to 7, and an unspent Counter's Block takes one more off the first hit (owner, 2026-11-17).
   // Owner, 2026-11-18: the enemy side scale takes the 10 to 7 and the Counter stance cuts that to 5; an unspent Counter's Block (a share of the scaled hit,
   // not scaled again) takes one more off the first hit.
-  const expected = spent ? [5, 5, 5] : [4, 5, 5];
+  // Owner, 2026-11-18 (second cut): the physical x0.7 takes the 7 to 4.9 and the Counter stance cut leaves 3 a contact either way (the unspent Counter's Block no longer shows in the floor).
+  const expected = [3, 3, 3];
   assert.deepEqual(Array.from(forecast.hitDamages), expected);
   assert.equal(forecast.totalDamage, expected.reduce((a, b) => a + b, 0));
   assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');
