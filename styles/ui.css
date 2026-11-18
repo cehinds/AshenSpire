@@ -1597,9 +1597,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-rank[hidden] { display: none !important; }
 .deck-editor .deck-editor-tags { position: absolute; top: 2px; right: .6rem; z-index: 2; display: flex; justify-content: flex-end; gap: .25rem; pointer-events: none; }
 .deck-editor .deck-editor-tag { padding: 0 .35rem; border: 1px solid; border-radius: var(--r-1, 3px); font-size: max(.62rem, calc(10px / var(--ui-zoom, 1))); font-weight: 700; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; white-space: nowrap; }
-.deck-editor .deck-editor-tag.equipped { background: #1f4d2b; border-color: #5fbf7a; color: #c9f5d4; }
-.deck-editor .deck-editor-tag.reward { background: #3a3320; border-color: #c9a24a; color: #f0ddba; }
-.deck-editor .deck-editor-tag.art { background: #5a1e1e; border-color: #d65a5a; color: #ffd3d0; }
+.deck-editor .deck-editor-tag.equipped { background: color-mix(in srgb, var(--green) 28%, black); border-color: var(--green); color: color-mix(in srgb, var(--green) 35%, white); }
+.deck-editor .deck-editor-tag.reward { background: color-mix(in srgb, var(--gold) 22%, black); border-color: var(--gold); color: color-mix(in srgb, var(--gold) 35%, white); }
+.deck-editor .deck-editor-tag.art { background: color-mix(in srgb, var(--blood) 35%, black); border-color: var(--blood); color: color-mix(in srgb, var(--blood) 25%, white); }
 .deck-editor .deck-editor-main:has(> .deck-editor-tags) > .deck-editor-costs { align-self: end; margin-top: 1rem; }
 /* A library tile's count lives in its － count ＋ stepper, so the badge goes. */
 .deck-editor .deck-editor-tile .deck-editor-count { display: none; }

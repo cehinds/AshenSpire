@@ -29,8 +29,8 @@
           "kind": "style",
           "label": "EQUIPPED is green",
           "selector": ".deck-editor-tag.equipped",
-          "prop": "color",
-          "equals": "rgb(201, 245, 212)"
+          "prop": "border-top-color",
+          "equals": "rgb(127, 217, 127)"
         },
         {
           "kind": "visible",
@@ -41,8 +41,8 @@
           "kind": "style",
           "label": "ART is red",
           "selector": ".deck-editor-tag.art",
-          "prop": "color",
-          "equals": "rgb(255, 211, 208)"
+          "prop": "border-top-color",
+          "equals": "rgb(138, 26, 26)"
         },
         {
           "kind": "within",
