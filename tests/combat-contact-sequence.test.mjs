@@ -335,6 +335,28 @@ test('Core2 next-contact forecasts survive reaction pauses and JSON reload witho
   assert.equal(totalLoss, 12, 'Block (12) cuts the 24 to 12');
 });
 
+test('live and resumed contact displays show the same Poise without saving the forecast in the receipt', async () => {
+  const { projectCombatIntent, applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const ctx = live(8);
+  counters(ctx);
+  ctx.player.persistentPoise = { value: 3, max: 8 };
+  const id = ctx.enemies[0].id;
+  dispatch(ctx, { type: 'endTurn' });
+  assert.ok(ctx.pendingReaction);
+  const shown = projectCombatIntent(ctx, id);
+  assert.ok(shown.projectedPoise.max > 0, 'the impending contact takes Poise');
+  const prepared = ctx.eventLog.findLast(event => event.type === 'combatContactPrepared');
+  assert.equal(Object.hasOwn(prepared.intentPreview, 'projectedPoise'), false);
+  const entities = { [id]: { kind: 'enemy' } };
+  applyCombatIntentReceipt(entities, prepared);
+  assert.deepEqual({ ...entities[id].intentPreview }.projectedPoise, shown.projectedPoise);
+
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+  assert.equal(Object.hasOwn(saved.pendingReaction.intentPreview, 'projectedPoise'), false);
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
+  assert.deepEqual(projectCombatIntent(restored, id), shown);
+});
+
 test('intent playback clears only the acting instance and restores a prepared hold after a Counter', async () => {
   const { applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
   const hold = { kind: 'block', moveId: 'guard', block: 9, revealed: true };
