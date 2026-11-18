@@ -204,3 +204,7 @@ These override the generic Poise rule for the named items:
   - The player's Advance removes a stack, and so does the enemy's own advance (instead of moving forward).
   - Advancing costs 1 SP unless another effect changes it.
   - Every enemy loses 1 stack when the player advances. *(decided)*
+- **Retreat is expensive (owner):** every card that gives Retreat stacks pays for it.
+  - core.retreat: 1 SP + Exhaust.
+  - Cards that bundle Retreat with other effects (Backstep) gain Escalating unless they already Exhaust. *(decided)*
+- **Reach ignores Retreat (owner):** Reach attacks hit a retreated back-row enemy normally and don't remove its stacks.
