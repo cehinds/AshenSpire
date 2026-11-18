@@ -98,11 +98,6 @@ function itemByRatingSource(bundle) {
 // validator and the legacy migration cannot drift.
 const ITEM_RATING_MAX = 999;
 
-function isMagicalPiece(equipment, piece) {
-  const profile = (equipment?.basicCardProfiles || []).find(row => row.id === piece.attackProfile);
-  return Boolean(profile && profile.damageSchool !== 'physical');
-}
-
 /**
  * THE ITEM'S RATINGS ARE THE ITEM'S OWN NUMBERS (owner, 2026-09-21: "if I edit
  * the AR in the settings for straight sword to 2 then it should show 2 on the
@@ -119,12 +114,11 @@ function isMagicalPiece(equipment, piece) {
  * row, the item column and the combat receipt cannot drift apart.
  */
 export function authoredItemRatings(equipment, piece) {
-  const magical = isMagicalPiece(equipment, piece);
-  const attack = piece.attackRating || 0;
+  // An armament carries no AR, DR or PR any more (owner, 2026-11-18): damage reads STR, Block DEX, magic max(INT, WIS).
   return {
-    ar: magical ? 0 : attack,
-    dr: piece.defenseRating || 0,
-    pr: magical ? attack : 0,
+    ar: 0,
+    dr: 0,
+    pr: 0,
     poise: piece.kind === 'armor' ? piece.poiseThreshold || 0 : 0,
     ward: 0,
   };
@@ -143,16 +137,12 @@ export function authoredItemRatings(equipment, piece) {
  * combat, it just has nowhere on the card to print.
  */
 export function itemRatingColumn(equipment, piece, id) {
-  const magical = isMagicalPiece(equipment, piece);
   // ARMOUR AUTHORS NO ATTACK RATING AT ALL. It carries `poiseThreshold` and
   // nothing else, so treating "no attack profile" as "physical, therefore the
   // attackRating column" stamped a field onto an outfit that content never
   // gives one — and the row's note then promised a card that prints only DR
   // and Poise would show it.
   if (piece.kind === 'armor') return id === 'poise' ? 'poiseThreshold' : null;
-  if (id === 'ar') return magical ? null : 'attackRating';
-  if (id === 'pr') return magical ? 'attackRating' : null;
-  if (id === 'dr') return piece.kind === 'armor' ? null : 'defenseRating';
   if (id === 'poise') return piece.kind === 'armor' ? 'poiseThreshold' : null;
   return null;
 }
@@ -251,7 +241,7 @@ export function combatRatingRows(bundle) {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${statusLabel(status)} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ['poise', 'ward']) add(`bonuses.status:${status.id}.${id}`, 0, `${statusLabel(status)} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   // WHO WEARS IT, AND WHICH ONE IT IS. Every class owns a free starting
   // armour that shares its name with an "All classes" set piece — the Reaver
@@ -270,7 +260,7 @@ export function combatRatingRows(bundle) {
   };
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     const authored = authoredItemRatings(bundle.equipment, piece);
-    for (const id of ratingIds) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
+    for (const id of ['poise', 'ward']) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
       `${piece.name}${ownerOf(piece)} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
         integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
         note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
@@ -280,7 +270,7 @@ export function combatRatingRows(bundle) {
           + ' Applies to a new run.',
       });
   }
-  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
+  for (const relic of bundle.relics) for (const id of ['poise', 'ward']) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
     for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${ratingLabel(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {

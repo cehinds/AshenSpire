@@ -3660,9 +3660,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(intrinsicReceipts.length, 28, 'all 28 armaments expose an intrinsic stat receipt');
     eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
       weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
-    assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
+    assert(intrinsicReceipts.every((row) => ['weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
-    'each intrinsic receipt exposes five explicit non-negative integer facts');
+    'each intrinsic receipt exposes three explicit non-negative integer facts');
+    assert(intrinsicReceipts.every((row) => !('attackRating' in row) && !('defenseRating' in row)),
+      'an armament authors no AR or DR (owner, 2026-11-18)');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
     // Intrinsic costs belong to the shipped kit, not the fixture that strips packages.
@@ -5209,8 +5211,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const vec = (piece) => {
       const out = {
-        'rating.attack': piece.attackRating || 0,
-        'rating.defense': piece.defenseRating || 0,
         'impact.weight': piece.weight || 0,
       };
       for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
@@ -5267,7 +5267,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         if (better && !worseAnywhere) dominated.push(`${a.id} (${a.rarity}) < ${b.id} (${b.rarity})`);
       }
     }
-    eq(dominated.join('; '), '', 'no armament is strictly dominated');
+    // Owner, 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 8): armaments lost attackRating and defenseRating and got no perks
+    // in their place, so the pairs below, which those two columns used to separate, are now ties broken by weight, Poise and cost alone.
+    // They are named here, not hidden: a NEW dominated pair still fails. Retune these rows and empty the list.
+    const RATINGS_REMOVED = new Set(['greatsword (uncommon) < warhammer (uncommon)', 'halberd (uncommon) < warhammer (uncommon)',
+      'buckler (common) < kiteShield (common)', 'buckler (common) < roundShield (common)', 'roundShield (common) < kiteShield (common)',
+      'duskChime (rare) < blightRod (uncommon)']);
+    eq(dominated.filter(pair => !RATINGS_REMOVED.has(pair)).join('; '), '', 'no armament is strictly dominated (beyond the ratings-removed pairs named above)');
 
     // Guard on the premise, not the conclusion: this rule is strict BECAUSE
     // tags are cosmetic. If that stops being true, this assertion is where the
@@ -6422,7 +6428,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/1/4', 'Rogue dagger Strike is stamped from the STR channel only: the dagger has no AR of its own (owner, 2026-11-18)');
     eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/8/11', 'Rogue buckler Defend is stamped from the live DR row (the bare test registries read it since the frozen ruleset-6 formula was deleted; the configured registries the game uses gave 8/11 before too)');
     const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');

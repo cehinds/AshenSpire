@@ -1600,8 +1600,6 @@ export function mountEquipment(host, {
       fact('Combat bonuses', summaryItem.bonus),
       fact('Smithing tier', String(smithingLevel)),
       ...(intrinsic ? [
-        fact('Attack rating (AR)', String(intrinsic.attackRating)),
-        fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
         fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
         fact('Unique Skill Stamina', String(intrinsic.uniqueSkillStaminaCost)),
