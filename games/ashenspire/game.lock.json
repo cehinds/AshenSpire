@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:5804abeb578e217a21a13fe80fa509db30b4ab3a3d11f6c4575c2c5e75424d59",
+      "hash": "sha256:29d8278e5dd48246afec618f6a9010e7775dab88320fc55edaed36de52eb25ae",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -22,7 +22,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:5f8f86dcd179634c11512dc10eedc49fe63c5e753345d9e621aba9d47d6e82ea"
+          "hash": "sha256:ee971873018a971d6e806d233fab562450da7981e05200c7f87919b1c671f884"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:8904332fd5d5e0afd2e439a8b4563b85e07740db115bcff854e5c941ff133391"
+          "hash": "sha256:78812823283138d740708dd03848e0aa8aab5a7426706aa2839594522531d616"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -580,7 +580,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:8d0f02e5f51b833b153bfd18ec65a75f1a179cd4e4bf502c79735453a2673192"
+          "hash": "sha256:92914d06f1f9f60c43a64a6121a0a171f9611afe74eb9fb216b16903b1255ed5"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:11f0682ec2b9f37d14ec0ed489d95a54d2ce7167cc50f4cfbaa296280e0a9655"
+      "runtimeHash": "sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c"
     },
     "core": {
-      "hash": "sha256:5804abeb578e217a21a13fe80fa509db30b4ab3a3d11f6c4575c2c5e75424d59",
+      "hash": "sha256:29d8278e5dd48246afec618f6a9010e7775dab88320fc55edaed36de52eb25ae",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -746,7 +746,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:5f8f86dcd179634c11512dc10eedc49fe63c5e753345d9e621aba9d47d6e82ea"
+          "hash": "sha256:ee971873018a971d6e806d233fab562450da7981e05200c7f87919b1c671f884"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:8904332fd5d5e0afd2e439a8b4563b85e07740db115bcff854e5c941ff133391"
+          "hash": "sha256:78812823283138d740708dd03848e0aa8aab5a7426706aa2839594522531d616"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1304,7 +1304,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:8d0f02e5f51b833b153bfd18ec65a75f1a179cd4e4bf502c79735453a2673192"
+          "hash": "sha256:92914d06f1f9f60c43a64a6121a0a171f9611afe74eb9fb216b16903b1255ed5"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:11f0682ec2b9f37d14ec0ed489d95a54d2ce7167cc50f4cfbaa296280e0a9655"
+      "runtimeHash": "sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c"
     }
   }
 }
