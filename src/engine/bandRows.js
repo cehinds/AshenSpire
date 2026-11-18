@@ -144,12 +144,22 @@ export function BandsMoveEngagement(ctx, source, target, bands) {
     if (source.row === 'back') { SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
+  // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
+  if (bands > 0 && target?.kind === 'enemy') { SetEnemyRow(ctx, target, 'back', 'push'); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
   }
   SetAdvanced(ctx, source, false); // Backstep: you step back out of every reach you closed
   return false;
+}
+
+/** PlayerRetreat(ctx, entity): the player's Retreat (owner 2026-11-18): the Advance ends if there is one, and every living front-row enemy steps back (band +1). Works Advanced or not. */
+export function PlayerRetreat(ctx, entity) {
+  if (!BandsActive(ctx)) return false;
+  SetAdvanced(ctx, entity, false);
+  for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'front') SetEnemyRow(ctx, enemy, 'back', 'retreat');
+  return true;
 }
 
 const pieceTags = piece => [...(piece?.tags || []), ...(piece?.propertyTags || [])];
