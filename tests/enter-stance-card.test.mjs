@@ -119,6 +119,9 @@ test('entered-stance helper: only this play\'s receipts count, and Prepared read
   // A restored log holds the whole fight: a later play's stance change is not this card's.
   assert.equal(CardAsEnteredStance(card, [played, change('attack'), later, change('defend')], played).cardTags.at(-1), 'maneuver:attack');
   assert.equal(CardAsEnteredStance(card, [played, later, change('defend')], played), card);
+  // An enemy broken by the hit reports its own stance change (sourced from the player, aimed at the enemy): not the figure's.
+  const broken = { type: 'combatStanceChanged', sourceId: 'player', targetId: 'e1', maneuver: 'staggered' };
+  assert.equal(CardAsEnteredStance(card, [played, { ...change('defend'), targetId: 'player' }, broken], played).cardTags.at(-1), 'maneuver:defend');
   // Prepared (an immediate-transition Prepare) must not become an unknown maneuver tag.
   const prepared = CardAsEnteredStance(card, [played, change('prepared')], played);
   assert.equal(prepared.cardTags.at(-1), 'maneuver:casting');

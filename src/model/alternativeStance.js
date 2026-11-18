@@ -60,7 +60,7 @@ export function CardAsEnteredStance(card = {}, events = [], played = {}) {
   const start = events.indexOf(played) + 1;
   const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
   const after = events.slice(start, next < 0 ? undefined : next);
-  const changed = after.filter(event => event.type === 'combatStanceChanged' && (event.sourcePlayerId || event.sourceId || event.targetId) === actor).pop();
+  const changed = after.filter(event => event.type === 'combatStanceChanged' && (event.targetId ?? event.sourceId) === actor).pop();
   // Core 2 reports a Prepare as 'prepared'; the tag family spells it 'casting'.
   const maneuver = changed?.maneuver === 'prepared' ? 'casting' : changed?.maneuver;
   if (!maneuver || maneuver === 'staggered' || maneuver === 'neutral') return card;
