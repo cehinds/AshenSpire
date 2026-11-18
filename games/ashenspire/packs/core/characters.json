@@ -4176,5 +4176,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "pearlbackSnail",
+    "name": "Pearlback_Snail",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "pearlbackSnail.slimeBash",
+      "pearlbackSnail.shellSlam",
+      "pearlbackSnail.pearlGuard",
+      "pearlbackSnail.pearlGuard",
+      "pearlbackSnail.nacreWall",
+      "pearlbackSnail.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.pearlShell"
+      }
+    ],
+    "presentation": {
+      "art": "pearlbackSnail",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 14,
+      "cardHints": {
+        "pearlbackSnail.slimeBash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slimeBash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.shellSlam": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.pearlGuard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pearlGuard",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.nacreWall": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "nacreWall",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

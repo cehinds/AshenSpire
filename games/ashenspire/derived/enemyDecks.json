@@ -4189,5 +4189,132 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "pearlbackSnail",
+    "name": "Pearlback_Snail",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "pearlbackSnail.slimeBash",
+        "name": "Slime_Bash",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slimeBash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pearlbackSnail.shellSlam",
+        "name": "Shell_Slam",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pearlbackSnail.pearlGuard",
+        "name": "Pearl_Guard",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pearlGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pearlbackSnail.nacreWall",
+        "name": "Nacre_Wall",
+        "copies": 1,
+        "sp": 3,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 20
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "nacreWall",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "pearlbackSnail.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

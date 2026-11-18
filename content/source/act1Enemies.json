@@ -1256,5 +1256,75 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "pearlbackSnail",
+    "attributes": {
+      "strength": 4,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "size": "large",
+    "name": "Pearlback Snail",
+    "hp": [
+      96,
+      104
+    ],
+    "poiseMax": 28,
+    "levelProfile": {
+      "min": 4,
+      "max": 6
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "slimeBash": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 6,
+        "weight": 35,
+        "maxConsecutive": 2
+      },
+      "shellSlam": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 16,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "pearlGuard": {
+        "sp": 2,
+        "intent": "block",
+        "block": 14,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "nacreWall": {
+        "sp": 3,
+        "intent": "block",
+        "block": 20,
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      }
+    },
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "damage"
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      }
+    ]
   }
 ]

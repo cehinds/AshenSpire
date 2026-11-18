@@ -5077,5 +5077,151 @@
       "classification.skill"
     ],
     "textTemplate": "Fall back one band."
+  },
+  {
+    "id": "pearlbackSnail.slimeBash",
+    "name": "Slime_Bash",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "pearlbackSnail.shellSlam",
+    "name": "Shell_Slam",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "smash",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 16
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "pearlbackSnail.pearlGuard",
+    "name": "Pearl_Guard",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "defend",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 14
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block."
+  },
+  {
+    "id": "pearlbackSnail.nacreWall",
+    "name": "Nacre_Wall",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 3,
+    "staminaCost": 3,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "defend",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 20
+      },
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "fx:heal",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block. Heal {heal} HP."
+  },
+  {
+    "id": "pearlbackSnail.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
   }
 ]

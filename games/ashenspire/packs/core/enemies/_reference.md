@@ -36,6 +36,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
+| enemy:pearlbackSnail | Pearlback Snail | elite |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:stitchCrab | Stitch Crab | minion |
@@ -232,6 +233,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:blackrushStork.wadeGuard | Wade Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:blackrushStork.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:blackrushStork.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:pearlbackSnail.slimeBash | Slime Bash | attack | 1 | 0 | Deal {damage} damage. |
+| card:pearlbackSnail.shellSlam | Shell Slam | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:pearlbackSnail.pearlGuard | Pearl Guard | skill | 2 | 0 | Gain {block} Block. |
+| card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:pearlbackSnail.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -298,3 +304,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.abyssalCrown | Abyssal Crown | CON +2, WIS +2, INT +1 |
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
+| relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |

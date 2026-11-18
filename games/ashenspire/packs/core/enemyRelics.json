@@ -82,5 +82,14 @@
       "self.strength=+1"
     ],
     "text": "CON +2, STR +1"
+  },
+  {
+    "id": "enemy.relic.pearlShell",
+    "name": "Pearl_Shell",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.sp=-1"
+    ],
+    "text": "CON +3, SP -1"
   }
 ]

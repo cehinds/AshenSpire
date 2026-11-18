@@ -113,6 +113,10 @@
       "name": "Mirror Scribe",
       "tier": "minion"
     },
+    "enemy:pearlbackSnail": {
+      "name": "Pearlback Snail",
+      "tier": "elite"
+    },
     "enemy:reedpipePoacher": {
       "name": "Reedpipe Poacher",
       "tier": "minion"
@@ -1952,6 +1956,56 @@
       },
       "text": "Fall back one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:pearlbackSnail.slimeBash": {
+      "name": "Slime Bash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pearlbackSnail.shellSlam": {
+      "name": "Shell Slam",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pearlbackSnail.pearlGuard": {
+      "name": "Pearl Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pearlbackSnail.nacreWall": {
+      "name": "Nacre Wall",
+      "type": "skill",
+      "cost": {
+        "stamina": 3,
+        "mana": 0
+      },
+      "text": "Gain {block} Block. Heal {heal} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:pearlbackSnail.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -2609,6 +2663,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.pearlShell": {
+      "name": "Pearl Shell",
+      "text": "CON +3, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.sp=-1"
       ]
     }
   }

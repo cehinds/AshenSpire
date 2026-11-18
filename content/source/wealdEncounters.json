@@ -314,5 +314,22 @@
       "min": 2,
       "max": 3
     }
+  },
+  {
+    "id": "eliteWealdPearlback",
+    "enemies": [
+      "pearlbackSnail"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
   }
 ]
