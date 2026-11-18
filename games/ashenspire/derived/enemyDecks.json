@@ -5957,5 +5957,138 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "rimewheelPenitent",
+    "name": "Rimewheel_Penitent",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "rimewheelPenitent.penanceLash",
+        "name": "Penance_Lash",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "penanceLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "rimewheelPenitent.wheelScourge",
+        "name": "Wheel_Scourge",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wheelScourge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "rimewheelPenitent.rimeOffering",
+        "name": "Rime_Offering",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rimeOffering",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "rimewheelPenitent.frostGuard",
+        "name": "Frost_Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frostGuard",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "rimewheelPenitent.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

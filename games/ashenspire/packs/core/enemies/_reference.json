@@ -153,6 +153,10 @@
       "name": "Reedpipe Poacher",
       "tier": "minion"
     },
+    "enemy:rimewheelPenitent": {
+      "name": "Rimewheel Penitent",
+      "tier": "elite"
+    },
     "enemy:saltChoirWalrus": {
       "name": "Salt Choir Walrus",
       "tier": "elite"
@@ -2733,6 +2737,56 @@
         "mana": 0
       },
       "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:rimewheelPenitent.penanceLash": {
+      "name": "Penance Lash",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Lose {loseHp} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:rimewheelPenitent.wheelScourge": {
+      "name": "Wheel Scourge",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage. Lose {loseHp} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:rimewheelPenitent.rimeOffering": {
+      "name": "Rime Offering",
+      "type": "power",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Apply {strength} Strength to yourself. Lose {loseHp} HP.",
+      "usedBy": "enemy sheet"
+    },
+    "card:rimewheelPenitent.frostGuard": {
+      "name": "Frost Guard",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:rimewheelPenitent.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
       "usedBy": "enemy sheet"
     }
   },

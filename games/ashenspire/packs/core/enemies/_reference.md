@@ -46,6 +46,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:pearlbackSnail | Pearlback Snail | elite |
 | enemy:quarryRam | Quarry Ram | minion |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
+| enemy:rimewheelPenitent | Rimewheel Penitent | elite |
 | enemy:saltChoirWalrus | Salt Choir Walrus | elite |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:stitchCrab | Stitch Crab | minion |
@@ -318,6 +319,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:saltChoirWalrus.frozenBulwark | Frozen Bulwark | skill | 2 | 0 | Gain {block} Block. |
 | card:saltChoirWalrus.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:saltChoirWalrus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:rimewheelPenitent.penanceLash | Penance Lash | attack | 1 | 0 | Deal {damage} damage. Lose {loseHp} HP. |
+| card:rimewheelPenitent.wheelScourge | Wheel Scourge | attack | 2 | 0 | Deal {damage} damage. Lose {loseHp} HP. |
+| card:rimewheelPenitent.rimeOffering | Rime Offering | power | 1 | 1 | Apply {strength} Strength to yourself. Lose {loseHp} HP. |
+| card:rimewheelPenitent.frostGuard | Frost Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:rimewheelPenitent.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

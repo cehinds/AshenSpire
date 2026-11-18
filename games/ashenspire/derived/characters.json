@@ -7229,5 +7229,137 @@
         }
       ]
     }
+  },
+  {
+    "id": "rimewheelPenitent",
+    "name": "Rimewheel_Penitent",
+    "displayName": "Rimewheel Penitent",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "katana",
+            "name": "Katana",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "katana",
+            "name": "Katana",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.rimeweaveRobes",
+            "name": "Rimeweave_Robes",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.rimeweaveRobes",
+            "name": "Rimeweave_Robes",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 9,
+        "wisdom": 4,
+        "intelligence": 2,
+        "level": 10
+      },
+      "total": 70,
+      "formula": "10+20+15+9+4+2+10 = 70"
+    },
+    "pools": {
+      "hp": 70,
+      "sp": 3,
+      "mp": 2,
+      "ar": 3,
+      "dr": 3,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "katana",
+        "name": "Katana"
+      },
+      {
+        "key": "armor",
+        "id": "armor.rimeweaveRobes",
+        "name": "Rimeweave_Robes"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "rimewheelPenitent.penanceLash",
+          "name": "Penance_Lash",
+          "copies": 2
+        },
+        {
+          "id": "rimewheelPenitent.wheelScourge",
+          "name": "Wheel_Scourge",
+          "copies": 1
+        },
+        {
+          "id": "rimewheelPenitent.rimeOffering",
+          "name": "Rime_Offering",
+          "copies": 1
+        },
+        {
+          "id": "rimewheelPenitent.frostGuard",
+          "name": "Frost_Guard",
+          "copies": 1
+        },
+        {
+          "id": "rimewheelPenitent.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

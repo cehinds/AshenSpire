@@ -5572,5 +5572,102 @@
         }
       ]
     }
+  },
+  {
+    "id": "rimewheelPenitent",
+    "name": "Rimewheel_Penitent",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "rimewheelPenitent.penanceLash",
+      "rimewheelPenitent.penanceLash",
+      "rimewheelPenitent.wheelScourge",
+      "rimewheelPenitent.rimeOffering",
+      "rimewheelPenitent.frostGuard",
+      "rimewheelPenitent.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "katana"
+      },
+      {
+        "key": "armor",
+        "id": "armor.rimeweaveRobes"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "rimewheelPenitent",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "rimewheelPenitent.rimeOffering",
+      "poiseMax": 12,
+      "cardHints": {
+        "rimewheelPenitent.penanceLash": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "penanceLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.wheelScourge": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wheelScourge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.rimeOffering": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rimeOffering",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.frostGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frostGuard",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

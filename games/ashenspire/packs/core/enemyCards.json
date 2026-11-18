@@ -7160,5 +7160,158 @@
       "classification.skill"
     ],
     "textTemplate": "Fall back one band."
+  },
+  {
+    "id": "rimewheelPenitent.penanceLash",
+    "name": "Penance_Lash",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Lose {loseHp} HP.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "rimewheelPenitent.wheelScourge",
+    "name": "Wheel_Scourge",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 4,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 20
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Lose {loseHp} HP.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "rimewheelPenitent.rimeOffering",
+    "name": "Rime_Offering",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "power",
+    "icon": "casting",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 3,
+        "nonlethal": true
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "maneuver:casting",
+      "classification.power"
+    ],
+    "textTemplate": "Apply {strength} Strength to yourself. Lose {loseHp} HP."
+  },
+  {
+    "id": "rimewheelPenitent.frostGuard",
+    "name": "Frost_Guard",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "defend",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 7
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block."
+  },
+  {
+    "id": "rimewheelPenitent.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
   }
 ]
