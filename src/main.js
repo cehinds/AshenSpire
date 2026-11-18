@@ -16,7 +16,7 @@ import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
-import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
+import { openRestRecord, openSiteRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { configureDisplaySettings, installDisplaySettings, installCardSizeResize, projectHudPresentation, applyDisplaySettings, applyUiScale } from './ui/displaySettings.js';
 import { onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
@@ -2653,14 +2653,19 @@ function showShop() {
   // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
   const traderSmith = run.gameProfileTraderSmith === shopId;
   if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
+    // A Blacksmith left and re-entered from the map keeps the stock it was left with (restRevisit.js).
+    const smithRecord = traderSmith ? null : openSiteRecord(run, 'blacksmith');
+    if (smithRecord?.stock && shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = smithRecord.stock;
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
     persist(); audio.music('shop');
     return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
       onLeave: traderSmith
         ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
-        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+        : () => { smithRecord.stock = run.shopStock; run.shopStock = null; delete run.gameProfileOpenShop; markRestLeft(run); persist(); showMap(); } });
   }
+  // A trader left from the map stays enterable until a new node is chosen (restRevisit.js).
+  openSiteRecord(run, 'shop');
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
   // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
@@ -2678,7 +2683,7 @@ function showShop() {
       offerShopCardDestination(receipt);
     },
     onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; markRestLeft(run); persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
