@@ -4277,5 +4277,111 @@
         }
       ]
     }
+  },
+  {
+    "id": "alderMaskHarvester",
+    "name": "Alder_Mask_Harvester",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "alderMaskHarvester.scytheCut",
+      "alderMaskHarvester.reapingSweep",
+      "alderMaskHarvester.harvestArc",
+      "alderMaskHarvester.soulReap",
+      "alderMaskHarvester.alderVeil",
+      "alderMaskHarvester.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "katana"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "alderMaskHarvester",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "alderMaskHarvester.harvestArc",
+      "poiseMax": 12,
+      "cardHints": {
+        "alderMaskHarvester.scytheCut": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "scytheCut",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.reapingSweep": {
+          "aiWeight": 25,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "reapingSweep",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.harvestArc": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "harvestArc",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.soulReap": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "soulReap",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.alderVeil": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "alderVeil",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

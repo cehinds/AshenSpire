@@ -5692,5 +5692,142 @@
         }
       ]
     }
+  },
+  {
+    "id": "alderMaskHarvester",
+    "name": "Alder_Mask_Harvester",
+    "displayName": "Alder Mask Harvester",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "katana",
+            "name": "Katana",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "katana",
+            "name": "Katana",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.ossuaryWeave",
+            "name": "Ossuary_Weave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.ossuaryWeave",
+            "name": "Ossuary_Weave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 6,
+        "wisdom": 4,
+        "intelligence": 2,
+        "level": 5
+      },
+      "total": 62,
+      "formula": "10+20+15+6+4+2+5 = 62"
+    },
+    "pools": {
+      "hp": 62,
+      "sp": 3,
+      "mp": 2,
+      "ar": 3,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "katana",
+        "name": "Katana"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave",
+        "name": "Ossuary_Weave"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "alderMaskHarvester.scytheCut",
+          "name": "Scythe_Cut",
+          "copies": 1
+        },
+        {
+          "id": "alderMaskHarvester.reapingSweep",
+          "name": "Reaping_Sweep",
+          "copies": 1
+        },
+        {
+          "id": "alderMaskHarvester.harvestArc",
+          "name": "Harvest_Arc",
+          "copies": 1
+        },
+        {
+          "id": "alderMaskHarvester.soulReap",
+          "name": "Soul_Reap",
+          "copies": 1
+        },
+        {
+          "id": "alderMaskHarvester.alderVeil",
+          "name": "Alder_Veil",
+          "copies": 1
+        },
+        {
+          "id": "alderMaskHarvester.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

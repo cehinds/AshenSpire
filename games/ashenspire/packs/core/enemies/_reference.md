@@ -8,6 +8,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 
 | ref | name | tier |
 | --- | --- | --- |
+| enemy:alderMaskHarvester | Alder Mask Harvester | elite |
 | enemy:ashRevenant | Ash Revenant | minion |
 | enemy:ashheartDragon | The Ashheart Dragon | boss |
 | enemy:bellKeeper | The Bell Keeper | boss |
@@ -238,6 +239,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:pearlbackSnail.pearlGuard | Pearl Guard | skill | 2 | 0 | Gain {block} Block. |
 | card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. Heal {heal} HP. |
 | card:pearlbackSnail.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:alderMaskHarvester.scytheCut | Scythe Cut | attack | 1 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.reapingSweep | Reaping Sweep | attack | 1 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.harvestArc | Harvest Arc | attack | 2 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.soulReap | Soul Reap | attack | 3 | 1 | Deal {damage} damage. |
+| card:alderMaskHarvester.alderVeil | Alder Veil | skill | 1 | 0 | Gain {block} Block. |
+| card:alderMaskHarvester.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
