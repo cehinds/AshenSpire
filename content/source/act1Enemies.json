@@ -1006,6 +1006,7 @@
     "artFaces": "left",
     "moves": {
       "tithe": {
+        "sp": 1,
         "intent": "attack",
         "damage": 7,
         "weight": 45,
@@ -1019,6 +1020,7 @@
         ]
       },
       "bindingStraw": {
+        "sp": 1,
         "intent": "debuff",
         "weight": 30,
         "maxConsecutive": 1,
@@ -1032,6 +1034,7 @@
         ]
       },
       "kindleWard": {
+        "sp": 1,
         "intent": "block",
         "block": 7,
         "weight": 25,

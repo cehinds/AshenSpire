@@ -481,7 +481,7 @@
 "enemyMove","reedpipePoacher","dart","attack","true","false","weapon","piercing","physical","attack","","","delivery:projectile","",""
 "enemyMove","reedpipePoacher","snare","debuff","false","false","","","spell","","frost","","","",""
 "enemyMove","wickerTitheman","tithe","attack","true","false","weapon","slashing","physical","attack","","","delivery:melee","",""
-"enemyMove","wickerTitheman","bindingStraw","debuff","false","false","","","spell","","","","","",""
+"enemyMove","wickerTitheman","bindingStraw","debuff","false","false","","","spell","","illusion","","","",""
 "enemyMove","wickerTitheman","kindleWard","block","false","false","","","physical","defend","","","","",""
 "enemyMove","gildedKnight","thrust","attack","true","false","weapon","piercing","physical","attack","","","delivery:melee","",""
 "enemyMove","gildedKnight","parry","block","false","true","weapon","piercing","physical","counter","","melee","delivery:melee","",""

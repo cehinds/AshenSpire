@@ -33,7 +33,12 @@
       "ref": "gear:ashStaff"
     }
   ],
-  "relics": [],
+  "relics": [
+    {
+      "slot": "relic1",
+      "ref": "relic:enemy.relic.titheBand"
+    }
+  ],
   "deck": [
     "card:wickerTitheman.tithe",
     "card:wickerTitheman.tithe",
@@ -46,20 +51,24 @@
     "card:wickerTitheman.tithe": {
       "aiWeight": 45,
       "maxConsecutive": 2,
-      "costSource": "stance",
-      "legacyMove": "tithe"
+      "costSource": "authored",
+      "legacyMove": "tithe",
+      "coreOffense": "card",
+      "coreSp": "card"
     },
     "card:wickerTitheman.bindingStraw": {
       "aiWeight": 30,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "bindingStraw"
+      "costSource": "authored",
+      "legacyMove": "bindingStraw",
+      "coreSp": "card"
     },
     "card:wickerTitheman.kindleWard": {
       "aiWeight": 25,
       "maxConsecutive": 1,
-      "costSource": "stance",
-      "legacyMove": "kindleWard"
+      "costSource": "authored",
+      "legacyMove": "kindleWard",
+      "coreSp": "card"
     },
     "card:wickerTitheman.advance": {
       "aiWeight": 0,
@@ -106,7 +115,6 @@
       "startingRange",
       "rangeClosingMove",
       "rangeRoutePolicy",
-      "rangeRetreatMove",
       "weaknesses"
     ]
   }

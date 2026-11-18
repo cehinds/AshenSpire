@@ -3702,8 +3702,10 @@
         "hints": {
           "aiWeight": 45,
           "maxConsecutive": 2,
-          "costSource": "stance",
-          "legacyMove": "tithe"
+          "costSource": "authored",
+          "legacyMove": "tithe",
+          "coreOffense": "card",
+          "coreSp": "card"
         }
       },
       {
@@ -3724,8 +3726,9 @@
         "hints": {
           "aiWeight": 30,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "bindingStraw"
+          "costSource": "authored",
+          "legacyMove": "bindingStraw",
+          "coreSp": "card"
         }
       },
       {
@@ -3745,8 +3748,9 @@
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "kindleWard"
+          "costSource": "authored",
+          "legacyMove": "kindleWard",
+          "coreSp": "card"
         }
       },
       {

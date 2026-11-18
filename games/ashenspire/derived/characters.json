@@ -5119,13 +5119,27 @@
       },
       "constitution": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "enemy.relic.titheBand",
+            "name": "Tithe_Band",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "wisdom": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "enemy.relic.titheBand",
+            "name": "Tithe_Band",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 3
       },
       "intelligence": {
         "own": 2,
@@ -5143,18 +5157,18 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
+        "constitution": 20,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 4,
+        "wisdom": 6,
         "intelligence": 3,
         "level": 5
       },
-      "total": 40,
-      "formula": "10+10+5+3+4+3+5 = 40"
+      "total": 52,
+      "formula": "10+20+5+3+6+3+5 = 52"
     },
     "pools": {
-      "hp": 40,
+      "hp": 52,
       "sp": 2,
       "mp": 2,
       "ar": 1,
@@ -5168,7 +5182,13 @@
         "name": "Ash_Staff"
       }
     ],
-    "relics": [],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titheBand",
+        "name": "Tithe_Band"
+      }
+    ],
     "deck": {
       "size": 5,
       "cards": [

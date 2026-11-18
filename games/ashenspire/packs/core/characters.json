@@ -3820,7 +3820,12 @@
         "id": "ashStaff"
       }
     ],
-    "defaultRelics": [],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titheBand"
+      }
+    ],
     "presentation": {
       "art": "wickerTitheman",
       "size": "medium",
@@ -3832,20 +3837,24 @@
         "wickerTitheman.tithe": {
           "aiWeight": 45,
           "maxConsecutive": 2,
-          "costSource": "stance",
-          "legacyMove": "tithe"
+          "costSource": "authored",
+          "legacyMove": "tithe",
+          "coreOffense": "card",
+          "coreSp": "card"
         },
         "wickerTitheman.bindingStraw": {
           "aiWeight": 30,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "bindingStraw"
+          "costSource": "authored",
+          "legacyMove": "bindingStraw",
+          "coreSp": "card"
         },
         "wickerTitheman.kindleWard": {
           "aiWeight": 25,
           "maxConsecutive": 1,
-          "costSource": "stance",
-          "legacyMove": "kindleWard"
+          "costSource": "authored",
+          "legacyMove": "kindleWard",
+          "coreSp": "card"
         },
         "wickerTitheman.advance": {
           "aiWeight": 0,

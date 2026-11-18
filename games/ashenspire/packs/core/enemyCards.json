@@ -4512,9 +4512,9 @@
     ],
     "tags": [
       "camp:physical",
+      "fx:heal",
       "maneuver:attack",
-      "classification.attack",
-      "fx:heal"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Heal {heal} HP.",
     "damageSchool": "physical",

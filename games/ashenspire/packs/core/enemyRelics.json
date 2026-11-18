@@ -64,5 +64,14 @@
       "self.intelligence=+1"
     ],
     "text": "CON +2, WIS +2, INT +1"
+  },
+  {
+    "id": "enemy.relic.titheBand",
+    "name": "Tithe_Band",
+    "modifiers": [
+      "self.wisdom=+1",
+      "self.constitution=+1"
+    ],
+    "text": "WIS +1, CON +1"
   }
 ]
