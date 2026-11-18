@@ -79,6 +79,24 @@ export function shortLandscapeProfile(width, height, lanes = 3) {
   return near.skew <= cap ? near : { ...near, skew: cap };
 }
 
+// Owner, 2026-11-17: the battlefield runs lower and longer, into the room the smaller hand cards freed. Two drawings
+// behind one switch (perspectiveGrid.stageExtent.mode):
+//   'handTop'  the lead player's feet stand handGapPx above the resting cards: the stage stretches down to them, or the
+//              grid rises (up to handLiftMaxFraction) where the feet would already be lower;
+//   'fixed'    the stage is drawn fixedExtraFraction taller whatever the hand, which keeps its own band;
+//   'none'     the field's own height.
+// Returns the height the grid's fractions are taken of and the grid's lift, or null where the mode leaves the
+// hand-strip lift below in charge. `footRows` is how many strip heights below the grid top the lead's feet stand.
+export function StagePlacement({ height, profile, footRows, stripFraction, cardsTop, extent = GRID.stageExtent })
+{
+  if (extent?.mode === 'fixed') return { stage: height * (1 + (extent.fixedExtraFraction ?? 0)), lift: null };
+  if (extent?.mode !== 'handTop' || !(Number.isFinite(cardsTop) && cardsTop > 0)) return { stage: height, lift: null };
+  const feet = profile.top + footRows * stripFraction, target = cardsTop - (extent.handGapPx ?? 0);
+  if (!(feet > 0)) return { stage: height, lift: null };
+  const stage = Math.max(height, target / feet);
+  return { stage, lift: Math.max(0, Math.min(stage * (GRID.handLiftMaxFraction ?? 0), stage * feet - target)) };
+}
+
 export function alternativeFormation(plan, width, height, narrow, presentation = {}) {
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
@@ -99,16 +117,21 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   const { bands: activeBands, rows: bandRows, gap: gapRows } = perspectiveBandRows(GRID, extraEnabled, profile);
   // The profile's strip height holds for the default drawing; with the extra rank on, the strips shrink to stay in the field.
   const stripFraction = Math.min(profile.rowHeight, (1 - profile.top) / bandRows);
-  const rowHeight = height * stripFraction;
+  const lowestBand = activeBands.findLast(b => b.side === 'player');
+  // The cards' resting top when the screen knows it (the strip's own top sits higher on a phone), else the strip's top.
+  const leadBand = activeBands.find(b => b.id === 'player-front');
+  const placed = StagePlacement({ height, profile, footRows: leadBand.row + leadBand.anchor.y, stripFraction,
+    cardsTop: presentation.handCardsTop ?? presentation.handTop, extent: presentation.stageExtent ?? GRID.stageExtent });
+  const stage = placed.stage;
+  const rowHeight = stage * stripFraction;
   const bandOf = id => activeBands.find(b => b.id === id);
   // Owner 2026-11-06: the party's lowest strip must not hide under the hand. When the hand's top (field px, from
   // presentation.handTop) is above where a figure's feet would stand in that strip, the whole grid rises by the
   // difference, up to handLiftMaxFraction of the field, so the feet stand inside the drawn cell and above the hand.
-  const lowestBand = activeBands.findLast(b => b.side === 'player');
-  const frontBottom = height * profile.top + (lowestBand.row + 1) * rowHeight;
-  const lift = Number.isFinite(presentation.handTop) && GRID.footInCellFraction > 0
-    ? Math.max(0, Math.min(height * (GRID.handLiftMaxFraction ?? 0), frontBottom - GRID.footInCellFraction * rowHeight - presentation.handTop)) : 0;
-  const gridTop = height * profile.top - lift;
+  const frontBottom = stage * profile.top + (lowestBand.row + 1) * rowHeight;
+  const lift = placed.lift ?? (Number.isFinite(presentation.handTop) && GRID.footInCellFraction > 0
+    ? Math.max(0, Math.min(stage * (GRID.handLiftMaxFraction ?? 0), frontBottom - GRID.footInCellFraction * rowHeight - presentation.handTop)) : 0);
+  const gridTop = stage * profile.top - lift;
   const bandTop = band => gridTop + band.row * rowHeight;
   // The party's baseline (zero shear) is the bottom of its front strip, where the lead player's feet stand.
   const baseline = bandTop(bandOf('player-front')) + rowHeight;
