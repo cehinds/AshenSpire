@@ -34,8 +34,14 @@ export function ChannelAttribute(stat) {
   return IsChannelId(stat) ? CHANNEL_ATTRIBUTE[stat] : stat;
 }
 
-/** ChannelWeight(effects, id) → the per-point weight of a channel in an effects module (0 when the module states none, as before). */
+/** The keys an effects module saved before the STR/DEX/INT ruling carried: attack weight fed AR and PR, defense weight fed DR. */
+const LEGACY_WEIGHT_KEY = Object.freeze({ ar: 'attackRatingWeight', dr: 'defenseRatingWeight', pr: 'attackRatingWeight' });
+
+/** ChannelWeight(effects, id) → the per-point weight of a channel in an effects module; an old runtime's attack/defense weight keys
+ *  still apply when the new key is missing (a resumed run keeps its contribution), and 0 when the module states none, as before. */
 export function ChannelWeight(effects, id) {
   const value = effects?.[CHANNEL_WEIGHT_KEY[id]];
-  return Number.isFinite(value) ? value : 0;
+  if (Number.isFinite(value)) return value;
+  const legacy = effects?.[LEGACY_WEIGHT_KEY[id]];
+  return Number.isFinite(legacy) ? legacy : 0;
 }

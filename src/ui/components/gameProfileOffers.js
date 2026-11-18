@@ -8,7 +8,7 @@ import { openBoundCardInspection } from './cardInspection.js';
 import { el as buildElement, button, modalFooter } from '../kit/index.js';
 import { t as translate } from '../strings.js';
 import { OpenConfirmationModal } from './confirmationModal.js';
-import { OfferPicksLeft, IsBonusOption } from '../../model/gameProfileRewards.js';
+import { OfferPicksLeft, IsBonusOption, BonusFreeOffer } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 import { ActivateOnKey, MarkSelected } from '../selection.js';
@@ -422,11 +422,7 @@ export function MountGameProfileOffers(appRoot, {
         {
             return false;
         }
-        const offerWithoutBonus = {
-            ...offer,
-            options: offer.options.filter((option) => !IsBonusOption(option)),
-            taken: offer.taken.filter((takenIndex) => !IsBonusOption(offer.options[takenIndex])),
-        };
+        const offerWithoutBonus = BonusFreeOffer(offer);
         return OfferPicksLeft(offerWithoutBonus) < 1;
     }
 
