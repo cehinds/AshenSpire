@@ -32,13 +32,27 @@ function stripThemeB() {
     }
   };
 }
+// Owner, 2026-11-18 (section 20 and 21): Ward's decay and break keys, the Pierce Block-per-stack rule and Force's Poise share are newer than every fight these wrappers
+// rebuild. A fight made before them keeps Pierce's 20% Block bypass, Force's x1.5 Poise key, and no Ward decay or break keys. Owners are rebuilt whole on the way back so key order never moves.
+function stripSection20() {
+  const ward = fixCoreMechanics.ward, wardRows = Object.entries(ward), pierce = fixCoreMechanics.pierce, force = fixCoreMechanics.elements?.force;
+  delete ward.decayPerTurn; delete ward.breaksAtZeroPoise;
+  fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
+  if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
+  return () => {
+    for (const key of Object.keys(ward)) delete ward[key];
+    for (const [key, value] of wardRows) ward[key] = value;
+    fixCoreMechanics.pierce = pierce;
+    if (force) fixCoreMechanics.elements.force = force;
+  };
+}
 /** Theme B goes first and comes back last, so its whole-object snapshot also puts back the Counter-stack keys in their original places. */
 function guarded(build) {
-  const restoreThemeB = stripThemeB(), restore = stripCounterStacks();
-  try { return build(); } finally { restore(); restoreThemeB(); }
+  const restoreSection20 = stripSection20(), restoreThemeB = stripThemeB(), restore = stripCounterStacks();
+  try { return build(); } finally { restore(); restoreThemeB(); restoreSection20(); }
 }
 /** Runs `build` while the shipped default rules lack only the theme B keys (2026-11-17): a fight created before the status and stance rules. */
-export function withoutThemeBRules(build) { const restore = stripThemeB(); try { return build(); } finally { restore(); } }
+export function withoutThemeBRules(build) { const restoreSection20 = stripSection20(), restore = stripThemeB(); try { return build(); } finally { restore(); restoreSection20(); } }
 /** The rules of a fight saved before the 2026-11-14 ruling: the perception key is absent, so intents roll. */
 export function legacyPerceptionRules(rules = fixCoreMechanics) {
   const out = structuredClone(rules);
