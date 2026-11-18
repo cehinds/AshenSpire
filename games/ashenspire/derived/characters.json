@@ -7098,5 +7098,136 @@
         }
       ]
     }
+  },
+  {
+    "id": "saltChoirWalrus",
+    "name": "Salt_Choir_Walrus",
+    "displayName": "Salt Choir Walrus",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 3,
+    "attributePoints": 8,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "frostSpear",
+            "name": "Frost_Spear",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "frostSpear",
+            "name": "Frost_Spear",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "enemy.relic.saltBlubber",
+            "name": "Salt_Blubber",
+            "kind": "relic",
+            "amount": 3
+          }
+        ],
+        "total": 5
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 50,
+        "strength": 15,
+        "dexterity": 9,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 10
+      },
+      "total": 97,
+      "formula": "10+50+15+9+2+1+10 = 97"
+    },
+    "pools": {
+      "hp": 97,
+      "sp": 3,
+      "mp": 2,
+      "ar": 3,
+      "dr": 3,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "frostSpear",
+        "name": "Frost_Spear"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.saltBlubber",
+        "name": "Salt_Blubber"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "saltChoirWalrus.saltDirge",
+          "name": "Salt_Dirge",
+          "copies": 1
+        },
+        {
+          "id": "saltChoirWalrus.blubberSlam",
+          "name": "Blubber_Slam",
+          "copies": 1
+        },
+        {
+          "id": "saltChoirWalrus.choirChorus",
+          "name": "Choir_Chorus",
+          "copies": 1
+        },
+        {
+          "id": "saltChoirWalrus.frozenBulwark",
+          "name": "Frozen_Bulwark",
+          "copies": 1
+        },
+        {
+          "id": "saltChoirWalrus.advance",
+          "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "saltChoirWalrus.retreat",
+          "name": "Retreat",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]

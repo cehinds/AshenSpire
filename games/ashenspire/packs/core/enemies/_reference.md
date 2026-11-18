@@ -46,6 +46,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:pearlbackSnail | Pearlback Snail | elite |
 | enemy:quarryRam | Quarry Ram | minion |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
+| enemy:saltChoirWalrus | Salt Choir Walrus | elite |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
@@ -311,6 +312,12 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:mirrorFanAbbess.glassGlare | Glass Glare | attack | 2 | 1 | Deal {damage} damage. |
 | card:mirrorFanAbbess.wardingFan | Warding Fan | skill | 1 | 0 | Gain {block} Block. |
 | card:mirrorFanAbbess.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:saltChoirWalrus.saltDirge | Salt Dirge | attack | 1 | 1 | Deal {damage} damage. |
+| card:saltChoirWalrus.blubberSlam | Blubber Slam | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:saltChoirWalrus.choirChorus | Choir Chorus | power | 2 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
+| card:saltChoirWalrus.frozenBulwark | Frozen Bulwark | skill | 2 | 0 | Gain {block} Block. |
+| card:saltChoirWalrus.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:saltChoirWalrus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 
 ## Gear (gear:)
 
@@ -383,3 +390,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
+| relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |

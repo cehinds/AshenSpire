@@ -5468,5 +5468,109 @@
         }
       ]
     }
+  },
+  {
+    "id": "saltChoirWalrus",
+    "name": "Salt_Choir_Walrus",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "saltChoirWalrus.saltDirge",
+      "saltChoirWalrus.blubberSlam",
+      "saltChoirWalrus.choirChorus",
+      "saltChoirWalrus.frozenBulwark",
+      "saltChoirWalrus.advance",
+      "saltChoirWalrus.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "frostSpear"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.saltBlubber"
+      }
+    ],
+    "presentation": {
+      "art": "saltChoirWalrus",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 14,
+      "cardHints": {
+        "saltChoirWalrus.saltDirge": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "saltDirge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.blubberSlam": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "blubberSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.choirChorus": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "choirChorus",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.frozenBulwark": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frozenBulwark",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "saltChoirWalrus.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
   }
 ]

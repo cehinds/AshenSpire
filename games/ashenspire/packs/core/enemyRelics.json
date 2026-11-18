@@ -137,5 +137,14 @@
       "self.intelligence=+1"
     ],
     "text": "WIS +2, INT +1"
+  },
+  {
+    "id": "enemy.relic.saltBlubber",
+    "name": "Salt_Blubber",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.sp=-1"
+    ],
+    "text": "CON +3, SP -1"
   }
 ]

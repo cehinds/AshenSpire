@@ -153,6 +153,10 @@
       "name": "Reedpipe Poacher",
       "tier": "minion"
     },
+    "enemy:saltChoirWalrus": {
+      "name": "Salt Choir Walrus",
+      "tier": "elite"
+    },
     "enemy:siltCrownNewt": {
       "name": "Silt-Crown Newt",
       "tier": "elite"
@@ -2670,6 +2674,66 @@
       },
       "text": "Close one band.",
       "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.saltDirge": {
+      "name": "Salt Dirge",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 1
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.blubberSlam": {
+      "name": "Blubber Slam",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.choirChorus": {
+      "name": "Choir Chorus",
+      "type": "power",
+      "cost": {
+        "stamina": 2,
+        "mana": 1
+      },
+      "text": "Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy.",
+      "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.frozenBulwark": {
+      "name": "Frozen Bulwark",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:saltChoirWalrus.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
     }
   },
   "gear": {
@@ -3376,6 +3440,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.intelligence=+1"
+      ]
+    },
+    "relic:enemy.relic.saltBlubber": {
+      "name": "Salt Blubber",
+      "text": "CON +3, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.sp=-1"
       ]
     }
   }

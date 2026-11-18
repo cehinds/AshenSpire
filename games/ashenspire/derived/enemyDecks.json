@@ -5808,5 +5808,154 @@
       }
     ],
     "unlockCards": []
+  },
+  {
+    "id": "saltChoirWalrus",
+    "name": "Salt_Choir_Walrus",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "saltChoirWalrus.saltDirge",
+        "name": "Salt_Dirge",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "saltDirge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "saltChoirWalrus.blubberSlam",
+        "name": "Blubber_Slam",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "blubberSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "saltChoirWalrus.choirChorus",
+        "name": "Choir_Chorus",
+        "copies": 1,
+        "sp": 2,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "choirChorus",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "saltChoirWalrus.frozenBulwark",
+        "name": "Frozen_Bulwark",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frozenBulwark",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "saltChoirWalrus.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "saltChoirWalrus.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]
