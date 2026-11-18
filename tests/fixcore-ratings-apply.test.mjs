@@ -37,7 +37,7 @@ function world(classId, mutate, { targetStance = null } = {}) {
 }
 const weights = combat => {
   const fx = configuredModule(combat, 'effects');
-  return { ar: fx.attackRatingWeight, pr: fx.attackRatingWeight, dr: fx.defenseRatingWeight };
+  return { ar: fx.strengthDamageWeight, pr: fx.strengthDamageWeight, dr: fx.dexterityBlockWeight };
 };
 function hand(combat, cardId) {
   const instanceId = `rt_${cardId}`;

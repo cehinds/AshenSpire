@@ -15,10 +15,10 @@ import { configuredContentBundle } from '../src/model/advancedConfig.js';
 const registries = createRegistries(contentBundle);
 const fresh = () => createRunState({ seed: 4242, classId: 'reaver', registries });
 
-test('compact sheet contains exactly eight resources and all five attributes without modifying the run', () => {
+test('compact sheet contains exactly five resources (AR, DR and PR are not stats) and all five attributes without modifying the run', () => {
   const run = fresh(), before = structuredClone(run);
   const result = progressionStats(registries, run);
-  assert.deepEqual(result.rows.map(row => row.faceLabel), ['HP', 'Stamina', 'Mana', 'AR', 'PR', 'DR', 'HandSize', 'Draw']);
+  assert.deepEqual(result.rows.map(row => row.faceLabel), ['HP', 'Stamina', 'Mana', 'HandSize', 'Draw']);
   assert.equal(result.attributes.length, 5);
   assert.ok(result.rows.every(row => Number.isFinite(row.value)));
   assert.deepEqual(run, before);
@@ -26,13 +26,14 @@ test('compact sheet contains exactly eight resources and all five attributes wit
 
 test('attribute bonus uses the saved rule, including gain and caps', () => {
   const run = fresh();
-  Object.assign(run.derivedStatRuleSnapshot.rules.rules.ar, { strength: 3, gain: 2, max: 5 });
-  const rule = statRow(registries, run, 'ar');
+  // HP is a row the sheet still shows: tighten it with a gain and a cap and the attribute's marginal contribution follows.
+  Object.assign(run.derivedStatRuleSnapshot.rules.rules.hp, { constitution: 3, gain: 2, max: 20 });
+  const rule = statRow(registries, run, 'hp');
   const expected = statRowValue(rule, { attributes: run.attributes }).value
-    - statRowValue(rule, { attributes: { ...run.attributes, strength: 0 } }).value;
-  const attr = progressionStats(registries, run).attributes.find(row => row.id === 'strength');
-  assert.ok(attr.face.summary.includes(`AR: +${expected}`));
-  assert.ok(expected < run.attributes.strength * rule.strength * rule.gain, 'the cap changes the marginal contribution');
+    - statRowValue(rule, { attributes: { ...run.attributes, constitution: 0 } }).value;
+  const attr = progressionStats(registries, run).attributes.find(row => row.id === 'constitution');
+  assert.ok(attr.face.summary.includes(`HP: +${expected}`));
+  assert.ok(!/\b(AR|DR|PR)\b/.test(JSON.stringify(progressionStats(registries, run).attributes.map(a => a.face))), 'no attribute face names AR, DR or PR');
 });
 
 test('skill associations follow held item schools and the class reward pool', () => {

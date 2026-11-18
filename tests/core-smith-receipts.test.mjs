@@ -265,7 +265,7 @@ test('an armor tier that adds DEX raises DR, and Defend block preview equals the
   commitGameProfileRest(reg, run, 'smith', { itemRef: NIGHTVEIL });
   const after = gameProfileRatingReceipt(reg, run).totals.dr;
   assert.equal(after, dr + 1);
-  const weight = run.gameProfile.modules.defenses?.defenseRatingWeight ?? 1;
+  const weight = run.gameProfile.modules.defenses?.dexterityBlockWeight ?? 1;
   const now = defendBlock(withoutStanceBenefits(fight(run)));
   assert.ok(now > was);
   assert.equal(now - was, Math.floor((after - dr) * weight));
