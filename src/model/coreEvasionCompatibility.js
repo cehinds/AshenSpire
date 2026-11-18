@@ -113,7 +113,7 @@ const PREVIOUS_RUNTIMES = new Set([
 // The 2026-11-18 rulings (ratings removed, 0.7 cuts, hand, SP and MP per four points) move it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
 // The physical cut (2026-11-18: physicalDamageMultiplier 0.7, blockGainMultiplier 0.49) moves it again; 11f068... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:b41fec05502e1c7473ac5f75fd92cfaf1efb6afd40607e7d4c5a5b00340cc404';
+const FIXED_EVASION_RUNTIME = 'sha256:bfb20b471f58813a5211506467bf2e2f31984b094eb5f079983150bd574e844e';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

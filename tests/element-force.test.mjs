@@ -1,5 +1,4 @@
-// W25 (owner, 2026-11-14) Force: half of the post-Block damage to Poise (2026-11-18; was x1.5 Poise damage); a force card pushes the target from melee to reach (or, when the card says pull, from reach to melee)
-// on the existing range model; breaking Poise knocks the target back (it must Advance before its next melee move). No Core card carries the force
+// W25 (owner, 2026-11-14) Force: half of the post-Block damage to Poise (2026-11-18; was x1.5 Poise damage); a force card has no built-in push or knockback (owner 2026-11-18: Retreat is its own tag; a card that says pull still pulls). No Core card carries the force
 // school yet (card content is a later task), so the live tests play Comet Fragment (a school:force card from the base pack).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,28 +23,25 @@ test('force sends half of the post-Block damage to Poise (owner 2026-11-18, repl
   assert.equal(physical.poiseDrain || 0, 0, 'other elements add none');
 });
 
-test('a force hit pushes a melee target to reach; a pull moves a target at reach into melee; neither moves a target already there', () => {
+test('a force hit no longer pushes or knocks back by itself (owner 2026-11-18); a card that says pull still pulls', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 100 });
   assert.equal(band(combat, enemy), 0, 'starts in melee');
   play(combat, 'cometFragment', enemy.id);
-  assert.equal(band(combat, enemy), 1, 'pushed to reach');
-  play(combat, 'cometFragment', enemy.id);
-  assert.equal(band(combat, enemy), 1, 'already at reach');
+  assert.equal(band(combat, enemy), 0, 'a Force hit does not retreat the target');
+  ElementPushPull(combat, combat.player, enemy, { tags: ['school:force'] });
+  assert.equal(band(combat, enemy), 1, 'ElementPushPull is still the helper a Retreat-tagged effect may call');
   ElementPushPull(combat, combat.player, enemy, { tags: ['school:force', 'pull'] });
   assert.equal(band(combat, enemy), 0, 'pulled into melee');
-  ElementPushPull(combat, combat.player, enemy, { tags: ['school:force', 'pull'] });
-  assert.equal(band(combat, enemy), 0);
 });
 
-test('a force hit that breaks Poise applies Knockback (the target ends at reach and so pays Advance), and Knockback ends with its owner turn', () => {
+test('a force hit that breaks Poise applies no Knockback and no push', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 3 });
   play(combat, 'cometFragment', enemy.id);
   assert.equal(enemy.persistentPoise.value, 0);
-  assert.equal(getStacks(enemy, 'knockback'), 1);
-  assert.equal(band(combat, enemy), 1);
-  ElementTurnEnd(combat, enemy);
   assert.equal(getStacks(enemy, 'knockback'), 0);
-  assert.equal(band(combat, enemy), 1, 'it stays out until it advances');
+  assert.equal(band(combat, enemy), 0);
+  ElementTurnEnd(combat, enemy);
+  assert.equal(band(combat, enemy), 0);
 });
 
 test('an old fight has no force identity: no push, no Knockback', () => {

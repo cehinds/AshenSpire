@@ -177,8 +177,11 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
     Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
-  if (element === 'force' && target.alive && !carrier?.elementChain) ElementPushPull(ctx, source, target, carrier);
+  // Force no longer pushes by itself (owner, 2026-11-18); only a card that says pull still pulls. A push is the Retreat tag's moveEngagement.
+  if (element === 'force' && target.alive && !carrier?.elementChain && cardPulls(carrier)) ElementPushPull(ctx, source, target, carrier);
 }
+
+const cardPulls = carrier => (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
 
 /** Force: a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
 export function ElementPushPull(ctx, source, target, carrier) {
@@ -214,13 +217,8 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
     if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
   } else if (hit.element === 'frost') {
     if (stacksOf(target, 'chill') > 0) { Statuses.applyStatus(ctx, target, 'freeze', 1, source); Statuses.applyStatus(ctx, target, 'brittle', 1, source); }
-  } else if (hit.element === 'force') {
-    Statuses.applyStatus(ctx, target, 'knockback', 1, source);
-    if (ctx.rangeState?.policy?.enabled && source && target.alive) {
-      const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
-      if (sourceKey && targetKey && engagementBand(ctx.rangeState, sourceKey, targetKey) === 0) ElementPushPull(ctx, source, target, {});
-    }
   }
+  // Force has no break rider (owner, 2026-11-18): it no longer knocks the target back. Retreat is its own tag.
 }
 
 /**
