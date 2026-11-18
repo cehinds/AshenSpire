@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-18
 
-- **A bigger fighter on a longer field** ([#2824](https://github.com/cehinds/AshenSpire/pull/2824), `0.7.4.150`). Your fighter is 60% larger and the battlefield stretches down to the top of your hand. On a phone the enemy rows stand further back. Your health and Poise bars now sit beside your fighter, larger and easier to read, and move to the other side or above when there is no room.
+- **A bigger fighter on a longer field** ([#2824](https://github.com/cehinds/AshenSpire/pull/2824), `0.7.4.152`). Your fighter is 60% larger and the battlefield stretches down to the top of your hand. On a phone the enemy rows stand further back. Your health and Poise bars now sit beside your fighter, larger and easier to read, and move to the other side or above when there is no room.
 - **Smaller numbers** ([#2820](https://github.com/cehinds/AshenSpire/pull/2820), `0.7.4.150`). Base damage is halved. Attack rating now comes from STR alone, defence from DEX alone, and magic resistance from your higher of INT and WIS. Your health is 30 plus 5 for each point of CON and each level. Armour and weapons give stat points and Poise instead of ratings. Each extra Action or Mana point costs 3 stat points. Elites and bosses are cut back to the strength of their act. Blacksmith upgrades start at about 50 cinders and cost more with rank and with each earlier upgrade.
 
 ## 2026-11-17
