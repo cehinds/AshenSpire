@@ -7,6 +7,17 @@ This is the working spec for the 2026-11-18 pass. The owner gave the requests in
 - Example: a Poise break used to be "Staggered: skip a turn and take 50% more damage". It is now **Staggered** (skip a turn / lose SP) **+ Vulnerable** (the existing 25% more damage taken).
 - Audit in this pass: list every status and keyword whose effect duplicates another tag's effect, and split each into references. Likely candidates include the FixCore "broken" rule, Shock, Chill/Freeze, Frail, and any `damageTakenMult`, `blockGainedMult` or SP-loss modifiers that repeat Vulnerable, Weak, Frail or Staggered. Card faces and tooltips then name the referenced tags.
 
+## 0a. Audit decisions (owner, 2026-11-18)
+- **Elemental vulnerability:** one tag per element: Fire, Frost, Lightning, Magic, Psychic, and so on. Each takes +X% damage of that element per stack.
+  - Burn's +5% damage taken becomes Fire Vulnerable.
+  - Shock's +5% lightning taken becomes Lightning Vulnerable.
+  - Frost Exposed becomes Frost Vulnerable.
+  - Magic Vulnerable keeps its name.
+  - Insanity Exposed becomes Psychic Vulnerable.
+  - The generic **Vulnerable** (+25% attack damage) stays separate.
+- **Ward and Barrier** merge into one tag, **Ward**.
+- **Retreat bug:** some cards' Retreat does nothing. Retreat must move the character to the back row.
+
 ## 1. Multipliers (player and enemy)
 - Physical damage and Block gained drop another ×0.7 on top of the earlier 0.7 cut (PR #2833), so they end at ×0.49 of the pre-2833 value. *(decided)* This mostly lands on enemies, because player cards are re-tuned to the curve in section 2.
 
