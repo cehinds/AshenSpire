@@ -25,22 +25,19 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
-// The line the backdrop camera frames its ground anchor on. A fit may carry
-// its own `sceneryGround` (a short portrait phone keeps the near-row framing,
-// with its horizon and landmark in view, while its enemies stand further back).
-export function combatSceneryGround(sizes, actors, fallback) {
+function nearestEnemyGround(sizes, actors, fallback, groundField) {
   const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.sceneryGround ?? size.ground))
-    .map(size => size.sceneryGround ?? size.ground);
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size[groundField] ?? size.ground))
+    .map(size => size[groundField] ?? size.ground);
   return grounds.length ? Math.min(...grounds) : fallback;
 }
 
-// The farthest-back enemy foot line, which the backdrop keeps on its floor.
+export function combatSceneryGround(sizes, actors, fallback) {
+  return nearestEnemyGround(sizes, actors, fallback, 'sceneryGround');
+}
+
 export function combatStandingGround(sizes, actors, fallback) {
-  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.standingGround ?? size.ground))
-    .map(size => size.standingGround ?? size.ground);
-  return grounds.length ? Math.min(...grounds) : fallback;
+  return nearestEnemyGround(sizes, actors, fallback, 'standingGround');
 }
 
 // Attach the foreground player's feet to the battlefield edge, above the

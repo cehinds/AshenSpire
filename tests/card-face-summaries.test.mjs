@@ -170,7 +170,7 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           assert.doesNotMatch(face, /\b1 cards\b/i, label);
           if (el.dataset.faceSummary !== 'true') continue;
           summarized++;
-          const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def);
+          const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def, registries, rules);
           const full = (def.textTemplate || '').replace(tokenRe(), (m, k) => tokens[k] ?? m).replace(/<[^>]+>/g, '');
           const shown = `${face} ${(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word)).join(' ')}`;
           // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum).
@@ -249,18 +249,19 @@ test('an upgraded Evade card reads its doubled stacks, never "2 per 1"', () => w
 
 // W25-EvadeCards (owner review, 2026-11-15): the face shows every effect of the old Evade cards, not just Evade.
 test('each Evade card face names every effect it has, in at most three short lines', async () => {
-  const expected = {
-    quickstep: [/Counter 2|Return 2 damage/, /Evade 1/, /Draw 1/],
-    dodgeRoll: [/Evade 1/, /Advance/, /Retreat/],
-    evasiveGuard: [/Evade 1/, /2 Block/],
-    backstep: [/Evade 1/, /Retreat/, /Prepared/],
-    'core.backstep': [/Evade 1/, /Retreat/, /Prepared/],
-    acrobaticsRogue: [/Evade 1/, /\+1 DEX this turn/, /Draw 2/, /[Dd]iscard 1/],
-    shadowstep: [/Evade 2/, /Advance/, /Prepared/],
-    crawlingShot: [/4 Piercing damage/, /Evade 1/, /Retreat/],
-    'progression-nightstep': [/\+1 INT this turn/, /Evade 2/],
-  };
   for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
+    const scaled = name === 'core';
+    const expected = {
+      quickstep: [scaled ? /Counter 1|Return 1 damage/ : /Counter 2|Return 2 damage/, /Evade 1/, /Draw 1/],
+      dodgeRoll: [/Evade 1/, /Advance/, /Retreat/],
+      evasiveGuard: [/Evade 1/, /2 Block/],
+      backstep: [/Evade 1/, /Retreat/, /Prepared/],
+      'core.backstep': [/Evade 1/, /Retreat/, /Prepared/],
+      acrobaticsRogue: [/Evade 1/, /\+1 DEX this turn/, /Draw 2/, /[Dd]iscard 1/],
+      shadowstep: [/Evade 2/, /Advance/, /Prepared/],
+      crawlingShot: [scaled ? /1 Piercing damage/ : /4 Piercing damage/, /Evade 1/, /Retreat/],
+      'progression-nightstep': [/\+1 INT this turn/, /Evade 2/],
+    };
     for (const [cardId, patterns] of Object.entries(expected)) {
       if (!registries.cards.has(cardId)) continue;
       const face = facesOf(dom, registries, { cardId }, rules), joined = face.join(' | ');

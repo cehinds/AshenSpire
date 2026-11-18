@@ -20,7 +20,7 @@ import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription 
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
@@ -33,7 +33,8 @@ function fight(enemyIds = ['wanderingSoldier'], { legacy = false, seed = 511, no
   if (legacy) { combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } }; }
   return combat;
 }
-const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount, [], carrier); return before - target.hp; };
+// `amount` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so it is dealt from twice that base.
+const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount * 2, [], carrier); return before - target.hp; };
 const endTurn = combat => {
   dispatch(combat, { type: 'endTurn' });
   for (let safety = 0; combat.pendingReaction && safety < 20; safety++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -155,7 +156,8 @@ test('Ward or Barrier gained while Broken raises the maximum but does not refill
 test('after Broken ends the full bar must be broken again for a second break', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 5);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
-  assert.equal(enemy.persistentPoise.value, 5);
+  // The refill is to the soldier's rated Poise, 8 (its gear's Poise under the gear statPoints rule), not the sandbagged 5.
+  assert.equal(enemy.persistentPoise.value, 8);
   hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');
@@ -163,19 +165,25 @@ test('after Broken ends the full bar must be broken again for a second break', (
 
 test('the player Broken: next turn starts 1 Stamina short, hits x1.5 through that round, then Poise refills', () => {
   const plain = fight(); plain.player.persistentPoise.value = 0; primeAccuracyRolls(plain);
-  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 10, [], carrier);
+  // The plain player holds no stance, so it is Idle and takes the Idle stance weakness (theme B, 2026-11-17); a Broken player holds the
+  // Staggered stance and does not. The baseline leaves the weakness out so the comparison is Broken against nothing.
+  delete plain.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
+  // Bases 20 and 16 halve to 10 and 8 (Core base-damage scale).
+  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 20, [], carrier);
   const bare = hpPlain - plain.player.hp;
   const combat = fight(); const player = combat.player, enemy = combat.enemies[0];
   const full = player.energyMax;
+  // Core Reaver HP is 50 now: give it room so these hits and the enemy's real turn do not end the fight before Broken does.
+  player.hp = player.maxHp = 100;
   player.persistentPoise.value = 1;
   primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 8, [], carrier);
+  applyAttackDamage(combat, enemy, player, 16, [], carrier);
   assert.ok(player.broken, 'the player is Broken');
   assert.equal(player.persistentPoise.value, 0);
   assert.equal(player.statuses.vulnerable, undefined, 'no Vulnerable grant');
   assert.equal(player.pendingActionLoss, 1, 'the next turn opens 1 short');
   const hpBefore = player.hp; primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 10, [], carrier);
+  applyAttackDamage(combat, enemy, player, 20, [], carrier);
   assert.equal(hpBefore - player.hp, Math.floor(bare * 1.5), 'x1.5 while Broken');
   enemy.plannedMoves = []; enemy.planDue = false; enemy.intent = { kind: 'unknown', moveId: null };
   endTurn(combat);

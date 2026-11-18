@@ -246,7 +246,8 @@ test('Precision: a lightning spell gains +1 against a metal target, and each Sho
   player.statuses.shocked = { stacks: 2 };
   assert.equal(accuracy(combat, enemy, CARD), base - 2, 'two Shocked stacks');
   const parts = attackHitPreview(combat, player, enemy, CARD).precisionParts;
-  assert.equal(parts.reduce((sum, p) => sum + p.value, 0), accuracy(combat, enemy, CARD), 'the receipt parts add up');
+  // The parts are tenths (0.5 DEX, 0.1 STR, -0.6 rounding...), so their float sum is rounded to a millionth before the exact compare.
+  assert.equal(Math.round(parts.reduce((sum, p) => sum + p.value, 0) * 1e6) / 1e6, accuracy(combat, enemy, CARD), 'the receipt parts add up');
 });
 
 test('Damp halves Burn applied to its holder through applyStatus; a dry target takes it all', () => {

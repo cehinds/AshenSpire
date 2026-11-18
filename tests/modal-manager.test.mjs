@@ -356,6 +356,46 @@ test('back: the shared shell pushes on open, goes back on close, and closes on b
   });
 });
 
+test('back: a ModalController door over a shell door closes on browser back; history stays balanced', async () => {
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
+  const { ModalController } = await import('../src/ui/components/modalController.js');
+  withModalDom((dom) => {
+    withHistory(({ history, settle, userBack }) => {
+      resetModalState();
+      const openDoor = (onBack) => {
+        const veil = dom.document.createElement('div');
+        const panel = dom.document.createElement('section');
+        veil.appendChild(panel);
+        dom.document.body.appendChild(veil);
+        return new ModalController({ name: 'compare', veil, panel, onBack }).Open();
+      };
+      let shellCloses = 0;
+      let backs = 0;
+      const shell = OpenModal({ title: 'Armoury', onClose: () => { shellCloses += 1; } });
+      const door = openDoor(() => { backs += 1; });
+      assert.equal(history.pushes, 1, 'one sentinel for both doors');
+      userBack();
+      assert.equal(door.IsClosed(), true, 'back closes the controller door, as Escape does');
+      assert.equal(backs, 1);
+      assert.equal(shell.veil.isConnected, true, 'the shell door beneath stays');
+      assert.equal(history.pushes, 2, 'the sentinel is pushed again for the shell door');
+      userBack();
+      assert.equal(shellCloses, 1);
+      assert.equal(history.backCalls, 0, 'browser pops need no back() of our own');
+
+      const lone = openDoor(() => {});
+      assert.equal(history.pushes, 3);
+      lone.Close();
+      lone.Close();
+      assert.equal(history.backCalls, 1, 'a programmatic close goes back once');
+      settle();
+      assert.equal(history.state, null, 'no stray sentinel is left');
+      assert.equal(openModals().length, 0);
+    });
+  });
+});
+
 // --- Escape ---------------------------------------------------------------
 // The shell is exercised through withModalDom, whose window.press() replays a
 // key the way a browser orders it (window capture, document capture, bubble).

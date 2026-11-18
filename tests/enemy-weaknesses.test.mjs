@@ -49,7 +49,8 @@ test('the validator refuses malformed weaknesses', () => {
 });
 
 // ---- the live Core profile ----
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Base scale pinned to 1: these tests pin the weakness multipliers on a 10 hit, not Core's halved base damage.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function liveCore(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -58,6 +59,8 @@ function liveCore(enemyId = 'wanderingSoldier') {
   const target = combat.enemies[0];
   Object.assign(target, { block: 0, barrier: 0, persistentWard: null, persistentPoise: { value: 0, max: 20 }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;
+  // The target holds no stance (Idle); these cases pin type weaknesses alone, so the Idle stance weakness (theme B, 2026-11-17) is left out.
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return { combat, target };
 }
 function hit(carrier, { enemyId, weaknesses, statuses, amount = 10 } = {}) {

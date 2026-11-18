@@ -1,5 +1,5 @@
 import { previewIntent } from '../../engine/combat.js';
-import { captureEnemyIntent } from '../../engine/enemyIntentReceipt.js';
+import { captureEnemyIntent, PresentEnemyIntentReceipt } from '../../engine/enemyIntentReceipt.js';
 import { projectEnemyIntentDamage, ProjectPlannedMoveDamage } from '../../engine/enemyIntentProjection.js';
 import { EnemyChargingState } from '../../engine/enemyCharging.js';
 
@@ -25,7 +25,7 @@ function projectUncharged(combat, enemyInstanceId) {
     // A response with a nested card/discard choice temporarily owns the live
     // queue; the unanswered incoming contact waits in its saved resume queue.
     : combat.reactionResume?.queue?.find(queuedContact);
-  if (action) return captureEnemyIntent(combat, enemy, action) || intent;
+  if (action) return PresentEnemyIntentReceipt(captureEnemyIntent(combat, enemy, action)) || intent;
   return projectEnemyIntentDamage(combat, enemy, intent);
 }
 
@@ -78,13 +78,13 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
     return;
   }
   if (event.type === 'enemyActorTurnStarted') {
-    actor.intentPreview = event.intentPreview || { ...event.intent, profile: event.intent?.combatProfile || {}, revealed: true, hidden: false };
+    actor.intentPreview = PresentEnemyIntentReceipt(event.intentPreview) || { ...event.intent, profile: event.intent?.combatProfile || {}, revealed: true, hidden: false };
     actor.intentInFlight = false;
     delete actor.intentBeforeReaction;
   } else if (['combatContactPrepared', 'combatHitStarted', 'enemyMoveStarted'].includes(event.type)) {
     if (event.type === 'enemyMoveStarted' && !event.reaction) delete actor.intentBeforeReaction;
     if (event.reaction && !actor.intentBeforeReaction) actor.intentBeforeReaction = actor.intentPreview;
-    if (event.intentPreview) actor.intentPreview = event.intentPreview;
+    if (event.intentPreview) actor.intentPreview = PresentEnemyIntentReceipt(event.intentPreview);
     actor.intentInFlight = true;
   } else if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
     actor.intentBeforeReaction ||= actor.intentPreview;

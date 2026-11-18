@@ -345,13 +345,6 @@ export function openCardInspection({ title, card, details, opener, actions = nul
       commit();
     });
   }
-  shell.panel.addEventListener('keydown', event => {
-    if (event.key !== 'Tab') return;
-    const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
-    const first = targets[0], last = targets.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-  });
   return shell;
 }
 

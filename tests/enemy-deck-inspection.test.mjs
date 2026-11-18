@@ -141,7 +141,7 @@ test('Core Block and rating modifiers distinguish base payload from projected an
   enemy.intentRevealed = true; enemy.plannedMoves = []; enemy.maxStamina = 100; enemy.stamina = 100;
   enemy.knowledgeAction = { reads: { player: { visibility: 'exact' } } };
   const unmodified = previewIntent(combat, enemy.id);
-  enemy.ratings.ar = 7;
+  enemy.ratings.ar = 8; // 7 landed the Block-3 hit on the committed 8 by coincidence once the enemy side scale x0.7 (owner, 2026-11-18) came in
   const open = previewIntent(combat, enemy.id);
   assert.ok(open.totalDamage > unmodified.totalDamage, 'the base payload has not included live AR');
   combat.player.block = 3;

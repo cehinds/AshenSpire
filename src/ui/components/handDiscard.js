@@ -18,7 +18,14 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
     confirm.textContent = selected.size ? t('handDiscard.discardEndTurn', { count: selected.size }) : t('handDiscard.keepAllEndTurn');
     confirm.disabled = selected.size < plan.minimum;
     confirmReason();
-    controls.forEach(([input, id]) => { input.disabled = !selected.has(id) && selected.size >= plan.maximum; });
+    controls.forEach(([input, id]) => { input.checked = selected.has(id); });
+  };
+  // At the limit a new pick swaps out the earliest one, so a choice is never locked in.
+  const pick = id => {
+    if (selected.has(id)) { selected.delete(id); return; }
+    if (plan.maximum <= 0) return;
+    if (selected.size >= plan.maximum) selected.delete(selected.values().next().value);
+    selected.add(id);
   };
   const shell = openModal({ title: t('handDiscard.title'), size: 'xl', className: 'hand-discard-modal', opener,
     bodyClassName: 'pile-body', body: host => {
@@ -30,7 +37,7 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
         const input = el('input', { type: 'checkbox', 'aria-label': `${t('combat.discard')} ${resolveCard(registries, card).name}` });
         input.dataset.discardId = card.instanceId;
         input.addEventListener('change', () => {
-          if (input.checked) selected.add(card.instanceId); else selected.delete(card.instanceId);
+          if (input.checked !== selected.has(card.instanceId)) pick(card.instanceId);
           refresh();
         });
         label.append(input, document.createTextNode(` ${t('combat.discard')}`));

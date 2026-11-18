@@ -33,7 +33,7 @@ import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
-import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shopBuyChoice.js';
+import { openShopCardChoice, openShopArmamentChoice, OfferReceivedItems } from './ui/components/shopBuyChoice.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -84,7 +84,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith, ConfiguredTraderDock } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -579,7 +579,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart. Your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -598,7 +598,7 @@ function reportAutosaveFailure(error, now = Date.now()) {
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save: browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
@@ -659,7 +659,7 @@ function newRun(config) {
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
-    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))}: ${why}`);
     console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
     return Promise.resolve({ ok: false, reason: why });
   }
@@ -686,14 +686,14 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
+function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null, startingCards = null }) {
   resetArmouryTraySession();
   // A caller that bypassed the seed field still gets a refusal without a reroll.
   const asked = seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
     failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
-      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      ` · ${JSON.stringify(String(seedString))}: ${why}\n`
       + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
@@ -738,7 +738,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
     enemyKnowledgeVersion: configuredProfile ? undefined : enemyKnowledgeVersion,
     reactionRulesVersion: configuredProfile ? undefined : reactionRulesVersion,
     classId, customization, custom, startingKitId, startingHands, startingArmourId,
-    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, quickStart,
+    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, startingCards, settings: saves.loadMeta().settings || {}, quickStart,
   });
   run = prepared.run;
   rng = prepared.rng;
@@ -2649,16 +2649,24 @@ function showShop() {
   run.gameProfileOpenShop = shopId;
   // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
   // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-  if (configuredShopKind(run, shopId) === 'blacksmith') {
+  // A trader that keeps a Blacksmith (playtest 2026-11-17 item 42) opens it from its dock; while it is open the visit
+  // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
+  const traderSmith = run.gameProfileTraderSmith === shopId;
+  if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
     persist(); audio.music('shop');
     return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
-      onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+      onLeave: traderSmith
+        ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
+        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
+  // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
+  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
+  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds: dock.kinds,
+    onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       if (offer.options[index]?.kind === 'rankUps') {
@@ -2670,7 +2678,7 @@ function showShop() {
       offerShopCardDestination(receipt);
     },
     onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-    onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
@@ -2683,17 +2691,29 @@ function showEvent(eventId) {
     meta: saves.loadMeta(),
     rng,
     eventId,
-    onDone: () => {
-      if (run.combatEntered) {
-        // A startCombat effect stored the encounter id (string form).
-        const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
-        run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
-      }
-      persist();
-      showMap();
-    },
+    // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
+    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on: the what-changed
+    // receipt shows first, then the screen's own cleanup runs (`release`) before the Armoury replaces it.
+    onItemsReceived: (items, { receipt, release }) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+      onPersist: persist,
+      onEquip: id => {
+        persist();
+        const toArmoury = () => { release(); showArmoury({ equipItemId: id }, leaveEvent); };
+        if (!receipt(toArmoury)) toArmoury();
+      },
+      onDone: () => receipt() }),
+    onDone: () => leaveEvent(),
   });
+  function leaveEvent() {
+    if (run.combatEntered) {
+      // A startCombat effect stored the encounter id (string form).
+      const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
+      run.combatEntered = null;
+      return enterCombat(run.mapNodeId, encounterId);
+    }
+    persist();
+    showMap();
+  }
 }
 
 // Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded

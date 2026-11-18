@@ -29,8 +29,9 @@ const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
-// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
-const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
+// Owner 2026-11-14 (playableOnly): a class is never offered a card whose mana cost is above its maximum MP. Owner 2026-11-17:
+// the Reaver's class mana base is 1 (its 1-MP starter card), so a 1-MP card is payable and offered; a dearer one is not.
+const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;

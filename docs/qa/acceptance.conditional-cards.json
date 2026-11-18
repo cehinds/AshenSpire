@@ -1,0 +1,128 @@
+{
+  "request": "More self-buff cards, spread across the classes, that buff the player only. Cards that pay off on a condition, either the enemy's or the player's own: stance (Idle, Prepared, Defense, and so on), status, combat range. The procedural card generator gains effect layers for the tags that have none today.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "reaver-hand",
+      "url": "?shot=combat&shotSeed=4&shotClass=reaver&shotDeck=openingCut,holdTheLine,lungingThrust,steelResolve,ironHide",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Opening Cut is in the hand",
+          "selector": ".hand .card[data-card-id=\"openingCut\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Hold the Line is in the hand",
+          "selector": ".hand .card[data-card-id=\"holdTheLine\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Steel Resolve (self-buff) is in the hand",
+          "selector": ".hand .card[data-card-id=\"steelResolve\"]"
+        },
+        {
+          "kind": "text",
+          "label": "Lunging Thrust says Only at Reach",
+          "selector": ".hand .card[data-card-id=\"lungingThrust\"]",
+          "includes": "Only at Reach"
+        },
+        {
+          "kind": "within",
+          "label": "The hand stays inside the combat screen",
+          "selector": ".hand",
+          "container": ".combat"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource",
+            "card-cutouts",
+            "assets"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Hand is empty",
+          "selector": ".hand .card",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "starseer-hand",
+      "url": "?shot=combat&shotSeed=4&shotClass=reaver&shotDeck=unguardedBolt,focusedStar,rimeLance,distantStar,innerOrbit",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Unguarded Bolt is in the hand",
+          "selector": ".hand .card[data-card-id=\"unguardedBolt\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Inner Orbit (self-buff) is in the hand",
+          "selector": ".hand .card[data-card-id=\"innerOrbit\"]"
+        },
+        {
+          "kind": "within",
+          "label": "The hand stays inside the combat screen",
+          "selector": ".hand",
+          "container": ".combat"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource",
+            "card-cutouts",
+            "assets"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Hand is empty",
+          "selector": ".hand .card",
+          "eq": 0
+        }
+      ]
+    }
+  ]
+}

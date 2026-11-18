@@ -141,3 +141,6 @@
    beside the rules); they show while the card is hovered, focused, selected or in the inspector. */
 :root .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:none;}
 :root :is(.card:hover, .card:focus-visible, .card:focus-within, .card.selected, .card[data-selected="true"], .card-inspection-modal, .card-inspection-layout) .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:block;}
+/* Playtest 2026-11-17 item 39: on a phone the rules text runs 2pt smaller and shows in full (no line clamp). */
+:root[data-form-factor="mobile"] { --ic-rules-shrink:2pt; }
+:root[data-form-factor="mobile"] .illustrated-card .ic-text[data-card-binding="rules"] { display:block !important; -webkit-line-clamp:unset !important; overflow:visible; }

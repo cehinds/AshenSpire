@@ -679,16 +679,8 @@ export function ModalFooter({
     return footer;
 }
 
-export function BindModalDismiss({
-    veil,
-    panel,
-    close,
-    opener = document.activeElement,
-    escape = true,
-} = {})
+export function WatchLongPanel(panel)
 {
-    let pressBeganOnVeil = false;
-
     function promoteLongPanel()
     {
         if (
@@ -705,6 +697,60 @@ export function BindModalDismiss({
         }
     }
 
+    const resizeObserver = createResizeObserver(promoteLongPanel);
+    resizeObserver?.observe(panel);
+
+    const mutationObserver = createMutationObserver(promoteLongPanel);
+    mutationObserver?.observe(panel, PANEL_MUTATIONS_TO_WATCH);
+
+    return function stopWatchingLongPanel()
+    {
+        resizeObserver?.disconnect();
+        mutationObserver?.disconnect();
+    };
+}
+
+export function BindVeilDismiss(veil, onDismiss)
+{
+    let pressBeganOnVeil = false;
+
+    function rememberVeilPress(event)
+    {
+        pressBeganOnVeil = event.target === veil;
+    }
+
+    function dismissOnVeilClick(event)
+    {
+        const pressStartedOnVeil = pressBeganOnVeil;
+        pressBeganOnVeil = false;
+
+        if (
+            event.target === veil
+            && pressStartedOnVeil
+        )
+        {
+            onDismiss();
+        }
+    }
+
+    veil.addEventListener('pointerdown', rememberVeilPress);
+    veil.addEventListener('click', dismissOnVeilClick);
+
+    return function unbindVeilDismiss()
+    {
+        veil.removeEventListener('pointerdown', rememberVeilPress);
+        veil.removeEventListener('click', dismissOnVeilClick);
+    };
+}
+
+export function BindModalDismiss({
+    veil,
+    panel,
+    close,
+    opener = document.activeElement,
+    escape = true,
+} = {})
+{
     function handleKeydown(event)
     {
         if (event.defaultPrevented)
@@ -736,42 +782,16 @@ export function BindModalDismiss({
         close();
     }
 
-    function rememberVeilPress(event)
-    {
-        pressBeganOnVeil = event.target === veil;
-    }
-
-    function closeOnVeilClick(event)
-    {
-        const pressStartedOnVeil = pressBeganOnVeil;
-        pressBeganOnVeil = false;
-
-        if (
-            event.target === veil
-            && pressStartedOnVeil
-        )
-        {
-            close();
-        }
-    }
-
-    const resizeObserver = createResizeObserver(promoteLongPanel);
-    resizeObserver?.observe(panel);
-
-    const mutationObserver = createMutationObserver(promoteLongPanel);
-    mutationObserver?.observe(panel, PANEL_MUTATIONS_TO_WATCH);
+    const stopWatchingLongPanel = WatchLongPanel(panel);
 
     document.addEventListener('keydown', handleKeydown, true);
-    veil.addEventListener('pointerdown', rememberVeilPress);
-    veil.addEventListener('click', closeOnVeilClick);
+    const unbindVeilDismiss = BindVeilDismiss(veil, close);
 
     return function release({ restoreFocus = true } = {})
     {
-        resizeObserver?.disconnect();
-        mutationObserver?.disconnect();
+        stopWatchingLongPanel();
         document.removeEventListener('keydown', handleKeydown, true);
-        veil.removeEventListener('pointerdown', rememberVeilPress);
-        veil.removeEventListener('click', closeOnVeilClick);
+        unbindVeilDismiss();
 
         const canRestoreFocus = restoreFocus
             && opener?.isConnected
@@ -929,6 +949,8 @@ export function OpenModal({
     primary = null,
     footSize = DEFAULT_ROW_SIZE,
     onClose = null,
+    onDismiss = null,
+    onBackdrop = null,
     opener = document.activeElement,
     host = document.body,
     role = DEFAULT_MODAL_ROLE,
@@ -1087,14 +1109,14 @@ export function OpenModal({
 
     const deferInert = deferLift && hasAnimationFrames();
     unregisterModal = registerModal(name || title || 'modal', panel, {
-        dismiss: () => close(),
+        dismiss: () => (onDismiss ?? close)(),
         back: true,
         deferInert,
     });
     release = BindModalDismiss({
         veil,
         panel,
-        close,
+        close: () => (onBackdrop ?? close)(),
         opener,
         escape: false,
     });

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "range",
   "label": "Reach",
-  "description": "At reach: past arm's length but not yet ranged.",
+  "description": "Hits either row at its normal cost.",
   "attaches": [
     "card"
   ],

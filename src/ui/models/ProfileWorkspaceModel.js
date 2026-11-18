@@ -3,6 +3,7 @@
 // kind 'meta', and a set-aside run, kind 'run'), so no category is invented.
 // The current profile's identity is shown beside whichever is selected.
 // DOM-free; it reads the list saves.listArchives() returned and changes nothing.
+import { BuildRailItems } from './railItems.js';
 
 export const PROFILE_CATEGORIES = Object.freeze(['meta', 'run']);
 
@@ -25,7 +26,7 @@ export function profileWorkspaceView(archives = [], current = null) {
     : PROFILE_CATEGORIES.find((id) => counts[id] > 0) || PROFILE_CATEGORIES[0];
   const entries = Object.freeze(archives.filter((entry) => profileCategoryOf(entry) === active));
   return Object.freeze({
-    categories: Object.freeze(PROFILE_CATEGORIES.map((id) => Object.freeze({ id, count: counts[id], selected: id === active }))),
+    categories: BuildRailItems(PROFILE_CATEGORIES, active, (id) => ({ count: counts[id] })),
     current: active,
     entries,
     empty: archives.length === 0 ? 'drawer' : entries.length === 0 ? 'category' : null,

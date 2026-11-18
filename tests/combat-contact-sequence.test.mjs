@@ -19,9 +19,11 @@ import { withKitDom } from './helpers/dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-// Fund the authored three-contact Slash before the planner selects its head.
+// Fund the authored three-contact Slash before the planner selects its head. The Core 0.5 base-damage scale and the 0.7 side and Block scales are off: this file pins
+// the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -331,6 +333,28 @@ test('Core2 next-contact forecasts survive reaction pauses and JSON reload witho
   assert.equal(totalRaw, 24, 'the three contacts arrive as 3 x 8');
   assert.equal(totalLoss, whole.projectedDamage.max, 'the pre-action forecast is the HP lost over the three contacts');
   assert.equal(totalLoss, 12, 'Block (12) cuts the 24 to 12');
+});
+
+test('live and resumed contact displays show the same Poise without saving the forecast in the receipt', async () => {
+  const { projectCombatIntent, applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const ctx = live(8);
+  counters(ctx);
+  ctx.player.persistentPoise = { value: 3, max: 8 };
+  const id = ctx.enemies[0].id;
+  dispatch(ctx, { type: 'endTurn' });
+  assert.ok(ctx.pendingReaction);
+  const shown = projectCombatIntent(ctx, id);
+  assert.ok(shown.projectedPoise.max > 0, 'the impending contact takes Poise');
+  const prepared = ctx.eventLog.findLast(event => event.type === 'combatContactPrepared');
+  assert.equal(Object.hasOwn(prepared.intentPreview, 'projectedPoise'), false);
+  const entities = { [id]: { kind: 'enemy' } };
+  applyCombatIntentReceipt(entities, prepared);
+  assert.deepEqual({ ...entities[id].intentPreview }.projectedPoise, shown.projectedPoise);
+
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+  assert.equal(Object.hasOwn(saved.pendingReaction.intentPreview, 'projectedPoise'), false);
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
+  assert.deepEqual(projectCombatIntent(restored, id), shown);
 });
 
 test('intent playback clears only the acting instance and restores a prepared hold after a Counter', async () => {

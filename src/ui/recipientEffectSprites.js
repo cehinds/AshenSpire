@@ -2,7 +2,7 @@ import { assetUrl, assetsAreInlined, builtInSource } from './assetmap.js';
 import { effectsOff } from './performance.js';
 import { reducedMotionRequested } from './motion.js';
 import { SETTINGS } from '../content/recipientEffectSettings.js';
-import { recipientEffectAtlasEntry } from '../content/recipientEffectAtlas.js';
+import { RecipientEffectAtlasEntry } from '../content/recipientEffectAtlas.js';
 import { currentSpriteBodyBounds } from './components/combatSpriteGeometry.js';
 import { stageFor } from './services/PoseAnimator.js';
 
@@ -10,11 +10,11 @@ const active = new WeakMap(), loaded = new Map(), groups = new WeakMap();
 const S = SETTINGS.sizing, O = SETTINGS.layering.opacity, M = SETTINGS.motion;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const disabled = () => effectsOff() || reducedMotionRequested() || document.body.classList.contains('reduce-flashes');
-export const recipientAtlas = shape => recipientEffectAtlasEntry(shape) || recipientEffectAtlasEntry('skill');
+export const RecipientAtlas = shape => RecipientEffectAtlasEntry(shape) || RecipientEffectAtlasEntry('skill');
 const transform = (scaleX = 1) => ({rotation:0, scaleX, scaleY:1, transform:`scale(${scaleX}, 1)`});
 
 /** Impacts stay front-on. Only movement chevrons reverse with the moving actor. */
-export function recipientEffectView(recipe, {box, cardBox, targetFacing = 'back', size} = {}) {
+export function RecipientEffectView(recipe, {box, cardBox, targetFacing = 'back', size} = {}) {
   const facing = targetFacing === 'front' ? 'front' : 'back';
   const unit = size || clamp(Math.max(box.width * S.impactBodyWidth, box.height * S.impactBodyHeight), S.impactMinPx, S.impactMaxPx);
   let width = unit, height = unit, cy = box.top + box.height * S.centerY;
@@ -41,7 +41,7 @@ const MARKS = {
   casting: '<path d="M60 27L68 51L93 60L68 69L60 93L52 69L27 60L52 51Z"/>',
   skill: '<path d="M60 32L84 60L60 88L36 60Z"/>',
 };
-export function recipientPlaceholderSvg(action = 'skill', targetType = 'target') {
+export function RecipientPlaceholderSvg(action = 'skill', targetType = 'target') {
   const mark = Object.hasOwn(MARKS, action) ? MARKS[action] : MARKS.skill;
   const target = targetType === 'self'
     ? '<circle cx="60" cy="60" r="51"/>'
@@ -68,11 +68,11 @@ function load(url) {
 }
 function sourcesFor(recipe, resolveAsset) {
   return [{shape:recipe.shape,tinted:true}, ...(recipe.overlay ? [{shape:recipe.overlay,tinted:false}] : [])].map(source => {
-    const atlas=recipientAtlas(source.shape),url=resolveAsset(atlas.path);
+    const atlas=RecipientAtlas(source.shape),url=resolveAsset(atlas.path);
     return {...source,atlas,url,absent:!url || (resolveAsset===assetUrl && url===atlas.path && (assetsAreInlined() || builtInSource()))};
   });
 }
-export function prewarmRecipientEffect(recipe,{resolveAsset=assetUrl}={}) {
+export function PrewarmRecipientEffect(recipe,{resolveAsset=assetUrl}={}) {
   if (!recipe) return Promise.resolve(false);
   return Promise.all(sourcesFor(recipe,resolveAsset).map(s=>s.absent ? false : load(s.url))).then(r=>r.every(Boolean));
 }
@@ -143,16 +143,17 @@ function actorSnapshot(actor,layer,box) {
 function register(layer,stop){const set=active.get(layer)||new Set();active.set(layer,set);set.add(stop);return set;}
 
 /** Three-frame flat composition; a cold clip stays the same placeholder to its end. */
-export function playRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null}={}) {
+export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null}={}) {
   if(!layer||!box||!recipe||disabled())return ()=>{};
   const count=clamp(Math.round(recipe.frameCount||SETTINGS.behavior.frameCount),1,3);
   const ms=Math.max(SETTINGS.behavior.minimumFrameMs*count,Number(duration)||M.clipMs);
-  const view=recipientEffectView(recipe,{box,cardBox,targetFacing,size});
+  const view=RecipientEffectView(recipe,{box,cardBox,targetFacing,size});
   const host=document.createElement('div');host.className='recipient-effect';host.setAttribute('aria-hidden','true');
   Object.assign(host.dataset,{action:recipe.action||'skill',targetType:recipe.targetType||'target',shape:recipe.shape,phase:recipe.phase||'contact',frame:'1',renderer:'placeholder',facing:view.facing,mirrorX:String(view.base.scaleX),mirrorY:'1',rotation:'0',scaleY:'1',anchor:view.cardAnchored?'card-bottom':'body'});
   Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
-  const placeholder=document.createElement('img');placeholder.alt='';placeholder.src=`data:image/svg+xml,${encodeURIComponent(recipientPlaceholderSvg(recipe.action,recipe.targetType))}`;
-  Object.assign(placeholder.style,{width:'100%',height:'100%',objectFit:'contain',transform:view.placeholder.transform});host.appendChild(placeholder);layer.appendChild(host);
+  const placeholder=document.createElement('img');placeholder.alt='';placeholder.src=`data:image/svg+xml,${encodeURIComponent(RecipientPlaceholderSvg(recipe.action,recipe.targetType))}`;
+  const placeholderSize=Math.min(S.fallbackPx,view.width,view.height);
+  Object.assign(placeholder.style,{position:'absolute',left:`${(view.width-placeholderSize)/2}px`,top:`${(view.height-placeholderSize)/2}px`,width:`${placeholderSize}px`,height:`${placeholderSize}px`,objectFit:'contain',transform:view.placeholder.transform});host.appendChild(placeholder);layer.appendChild(host);
   let stopped=false,currentFrame=frame==null?0:clamp(frame,0,count-1),art=false;const timers=[],planes=[];
   const stop=()=>{if(stopped)return;stopped=true;timers.forEach(clearTimeout);host.remove();set.delete(stop);onStop?.();};const set=register(layer,stop);
   const snapshot=recipe.silhouette?actorSnapshot(actor,layer,box):null;
@@ -202,12 +203,12 @@ export function playRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
   const mount=()=>{if(stopped)return;art=true;placeholder.remove();host.dataset.renderer='art';
     const add=(source,ghost=false)=>{const node=canvas(view.width,view.height);Object.assign(node.style,{position:'absolute',inset:'0',width:'100%',height:'100%',overflow:'visible'});Object.assign(node.dataset,{shape:ghost?'actor-silhouette':source.shape,overlay:String(ghost||!source.tinted),actualActorMask:String(ghost)});host.appendChild(node);planes.push({node,source,ghost});};
     if(snapshot)add(null,true);sources.filter(s=>!s.tinted).forEach(s=>add(s));sources.filter(s=>s.tinted).forEach(s=>add(s));show(currentFrame);};
-  if(!forcePlaceholder){if(sources.every(s=>!s.absent&&loaded.get(s.url)?.ready))mount();else{const warming=prewarmRecipientEffect(recipe,{resolveAsset});if(frame!=null)warming.then(ok=>{if(ok)mount();});}}
+  if(!forcePlaceholder){if(sources.every(s=>!s.absent&&loaded.get(s.url)?.ready))mount();else{const warming=PrewarmRecipientEffect(recipe,{resolveAsset});if(frame!=null)warming.then(ok=>{if(ok)mount();});}}
   if(frame==null)for(let i=1;i<count;i++)timers.push(setTimeout(()=>show(i),ms*i/count));
   timers.push(setTimeout(stop,ms));return stop;
 }
 
-export function playRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false}={}) {
+export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false}={}) {
   if(recipe.range!=='reach'||!from||disabled()||forcePlaceholder)return ()=>{};
   const sources=sourcesFor({...recipe,shape:recipe.impactShape||'skill'},resolveAsset);
   if(!sources.every(source=>!source.absent&&loaded.get(source.url)?.ready))return ()=>{};
@@ -223,7 +224,7 @@ export function playRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
 }
 
 /** Schedules receipt layers without delaying the combat model or caster pose. */
-export function playRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targetId,...options}={}) {
+export function PlayRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targetId,...options}={}) {
   if(!layer||!anchorFor||disabled())return ()=>{};
   const stops=[],timers=[];let cancelled=false;
   const stop=()=>{cancelled=true;timers.forEach(clearTimeout);stops.forEach(fn=>fn());set.delete(stop);};const set=register(layer,stop);
@@ -244,11 +245,11 @@ export function playRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targ
       const source=anchorFor(recipe.sourceId||sourceId);const sourceBox=source?bodyBox(layer,source):null;
       const card=actor.closest('.combatant')?.querySelector('.combatant-card');
       const targetFacing=actor.closest('.combatant')?.classList.contains('enemy')?'front':'back';
-      if(recipe.phase==='delivery') { stops.push(playRecipientDelivery(layer,sourceBox,box,recipe,options)); return; }
-      stops.push(playRecipientEffect(layer,box,recipe,{...options,actor,sourceBox,targetFacing,cardBox:card?localBox(layer,card):null}));
+      if(recipe.phase==='delivery') { stops.push(PlayRecipientDelivery(layer,sourceBox,box,recipe,options)); return; }
+      stops.push(PlayRecipientEffect(layer,box,recipe,{...options,actor,sourceBox,targetFacing,cardBox:card?localBox(layer,card):null}));
     };
     if(recipe.delayMs>0)timers.push(setTimeout(play,recipe.delayMs));else play();
   }
   timers.push(setTimeout(stop,lifetime+M.cleanupSlackMs));return stop;
 }
-export function clearRecipientEffects(layer) {for(const stop of [...(active.get(layer)||[])])stop();groups.delete(layer);}
+export function ClearRecipientEffects(layer) {for(const stop of [...(active.get(layer)||[])])stop();groups.delete(layer);}

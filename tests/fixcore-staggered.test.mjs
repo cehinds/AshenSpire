@@ -21,7 +21,8 @@ import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { setProfileStance } from '../src/engine/gameProfileCombat.js';
 import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 function live(poise = 20) {
@@ -200,7 +201,7 @@ test('Ward off: Ward damage drains Poise with the piercing x1.25, floored', () =
   wardHit(combat, target, 3);
   assert.equal(target.persistentPoise.value, 17);
   wardHit(combat, target, 4, { combatProfile: { camp: 'spell', damageType: 'piercing' } });
-  assert.equal(target.persistentPoise.value, 12, 'floor(4 x 1.25) = 5');
+  assert.equal(target.persistentPoise.value, 7, 'floor(4 x 1.25) = 5, doubled by Core spellPoiseDamageMultiplier 2 (owner, 2026-11-18) = 10');
 });
 
 test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {

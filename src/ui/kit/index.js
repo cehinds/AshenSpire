@@ -58,6 +58,7 @@ export function MODAL_SIZES() { return SHELL_MODAL_SIZES; }
  * `text`, `html` (trusted, caller-escaped), `dataset` {k:v}, `aria` {k:v},
  * anything else is setAttribute. `children` is a node, a string (text), an
  * array of either, or null.
+ * @param {Node | string | Array<Node | string | null> | null} [children]
  */
 export function el(tag, attrs = {}, children = null) {
   const node = document.createElement(tag);

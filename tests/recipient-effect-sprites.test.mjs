@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playRecipientEffect, clearRecipientEffects, recipientPlaceholderSvg, prewarmRecipientEffect, recipientEffectView, playRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
-import { decorateRecipientEffects } from '../src/ui/recipientEffectEvents.js';
+import { PlayRecipientEffect, ClearRecipientEffects, RecipientPlaceholderSvg, PrewarmRecipientEffect, RecipientEffectView, PlayRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
+import { DecorateRecipientEffects } from '../src/ui/recipientEffectEvents.js';
 import { playTimeline } from '../src/ui/fx.js';
 import { withKitDom, rewardDom, installDom } from './helpers/dom.mjs';
 import { SETTINGS } from '../src/content/recipientEffectSettings.js';
@@ -14,7 +14,7 @@ test('missing art has one static action/target placeholder and skip clears it', 
   t.mock.timers.enable({ apis: ['setTimeout'] });
   withKitDom(dom => {
     const layer = dom.document.createElement('div');
-    playRecipientEffect(layer, box, recipe, { forcePlaceholder: true, duration: 600 });
+    PlayRecipientEffect(layer, box, recipe, { forcePlaceholder: true, duration: 600 });
     assert.equal(layer.children.length, 1);
     const el = layer.children[0];
     assert.equal(el.dataset.renderer, 'placeholder');
@@ -24,31 +24,51 @@ test('missing art has one static action/target placeholder and skip clears it', 
     t.mock.timers.tick(450);
     assert.equal(el.dataset.frame, '1');
     assert.equal(el.children[0].src, first);
-    clearRecipientEffects(layer);
+    ClearRecipientEffects(layer);
     assert.equal(layer.children.length, 0);
     t.mock.timers.tick(1000);
     assert.equal(layer.children.length, 0);
   });
 });
 
+test('debug image is capped and centered without changing large or narrow host bounds', () => {
+  withKitDom(dom => {
+    const layer = dom.document.createElement('div');
+    for (const size of [400, 70]) {
+      const view = RecipientEffectView(recipe, { box, size });
+      PlayRecipientEffect(layer, box, recipe, { forcePlaceholder: true, size });
+      const host = layer.children[0], image = host.children[0];
+      const footprint = Math.min(SETTINGS.sizing.fallbackPx, view.width, view.height);
+      assert.equal(host.style.width, `${view.width}px`);
+      assert.equal(host.style.height, `${view.height}px`);
+      assert.equal(image.style.width, `${footprint}px`);
+      assert.equal(image.style.height, `${footprint}px`);
+      assert.equal(image.style.left, `${(view.width - footprint) / 2}px`);
+      assert.equal(image.style.top, `${(view.height - footprint) / 2}px`);
+      assert.equal(image.style.position, 'absolute');
+      ClearRecipientEffects(layer);
+    }
+  });
+});
+
 test('debug marks distinguish all target types without palette variations', () => {
-  const values = ['self', 'target', 'aoe'].map(target => recipientPlaceholderSvg('attack', target));
+  const values = ['self', 'target', 'aoe'].map(target => RecipientPlaceholderSvg('attack', target));
   assert.equal(new Set(values).size, 3);
-  assert.notEqual(recipientPlaceholderSvg('attack', 'target'), recipientPlaceholderSvg('spell', 'target'));
+  assert.notEqual(RecipientPlaceholderSvg('attack', 'target'), RecipientPlaceholderSvg('spell', 'target'));
 });
 
 test('all impact shapes stay flat and unmirrored for both teams', () => {
   const action = { ...recipe, action: 'attack', shape: 'slash' };
   const sourceBox = { left: -150, top: 220, width: 60, height: 100 };
-  const front = recipientEffectView(action, { box, sourceBox, targetFacing: 'front' });
-  const back = recipientEffectView(action, { box, sourceBox, targetFacing: 'back' });
+  const front = RecipientEffectView(action, { box, sourceBox, targetFacing: 'front' });
+  const back = RecipientEffectView(action, { box, sourceBox, targetFacing: 'back' });
   assert.equal(front.base.scaleX, 1);
   assert.equal(back.base.scaleX, 1);
   assert.equal(front.base.rotation, 0);
   assert.equal(front.overlay.scaleX, 1, 'flames stay upright despite the slash mirror');
   assert.equal(front.overlay.scaleY, 1);
   for (const shape of ['spell', 'smash']) {
-    const radial = recipientEffectView({ ...recipe, shape }, { box, sourceBox, targetFacing: 'front' });
+    const radial = RecipientEffectView({ ...recipe, shape }, { box, sourceBox, targetFacing: 'front' });
     assert.equal(radial.base.rotation, 0);
     assert.equal(radial.base.scaleX, 1);
     assert.equal(radial.base.scaleY, 1);
@@ -58,11 +78,11 @@ test('all impact shapes stay flat and unmirrored for both teams', () => {
 test('thrust and sweep remain front-on independent of attack direction', () => {
   const target = { left: 100, top: 100, width: 20, height: 20 };
   const thrust = { ...recipe, action: 'attack', shape: 'thrust' };
-  assert.equal(recipientEffectView(thrust, { box: target, sourceBox: { left: 0, top: 0, width: 20, height: 20 } }).base.rotation, 0);
-  assert.equal(recipientEffectView(thrust, { box: target, sourceBox: { left: 200, top: 0, width: 20, height: 20 } }).base.rotation, 0);
+  assert.equal(RecipientEffectView(thrust, { box: target, sourceBox: { left: 0, top: 0, width: 20, height: 20 } }).base.rotation, 0);
+  assert.equal(RecipientEffectView(thrust, { box: target, sourceBox: { left: 200, top: 0, width: 20, height: 20 } }).base.rotation, 0);
   const sweep = { ...recipe, action: 'sweep', shape: 'sweep', targetType: 'aoe', polarity: 'impact' };
-  const front = recipientEffectView(sweep, { box, targetFacing: 'front' });
-  const back = recipientEffectView(sweep, { box, targetFacing: 'back' });
+  const front = RecipientEffectView(sweep, { box, targetFacing: 'front' });
+  const back = RecipientEffectView(sweep, { box, targetFacing: 'back' });
   assert.equal(front.base.rotation, 0);
   assert.equal(front.base.scaleY, 1);
   assert.equal(back.base.scaleY, 1);
@@ -72,17 +92,17 @@ test('thrust and sweep remain front-on independent of attack direction', () => {
 
 test('Ward and status auras stay upright, recipient bounds control scale, and explicit preview size remains available', () => {
   for (const shape of ['ward', 'buff', 'debuff', 'heal', 'status']) {
-    const view = recipientEffectView({ ...recipe, shape }, { box, sourceBox: { left: 500, top: -80, width: 40, height: 80 }, targetFacing: 'front' });
+    const view = RecipientEffectView({ ...recipe, shape }, { box, sourceBox: { left: 500, top: -80, width: 40, height: 80 }, targetFacing: 'front' });
     assert.equal(view.base.rotation, 0);
     assert.equal(view.base.scaleX, 1);
     assert.equal(view.base.scaleY, 1);
   }
-  const near = recipientEffectView(recipe, { box: { left: 0, top: 0, width: 100, height: 200 } });
-  const far = recipientEffectView(recipe, { box: { left: 0, top: 0, width: 40, height: 80 } });
+  const near = RecipientEffectView(recipe, { box: { left: 0, top: 0, width: 100, height: 200 } });
+  const far = RecipientEffectView(recipe, { box: { left: 0, top: 0, width: 40, height: 80 } });
   assert.ok(far.width < near.width);
   assert.ok(far.height < near.height);
-  assert.equal(recipientEffectView(recipe, { box, size: 160 }).size, 160);
-  const narrow=recipientEffectView(recipe,{box:{left:0,top:0,width:30,height:110}});
+  assert.equal(RecipientEffectView(recipe, { box, size: 160 }).size, 160);
+  const narrow=RecipientEffectView(recipe,{box:{left:0,top:0,width:30,height:110}});
   assert.equal(narrow.size,110*SETTINGS.sizing.impactBodyHeight,'narrow actors retain a readable body-height impact');
 });
 
@@ -90,8 +110,8 @@ test('fallback retains the identical static action-target sprite on both teams',
   withKitDom(dom => {
     const layer = dom.document.createElement('div');
     const action = { ...recipe, action: 'attack', shape: 'slash' };
-    playRecipientEffect(layer, box, action, { forcePlaceholder: true, targetFacing: 'front' });
-    playRecipientEffect(layer, box, action, { forcePlaceholder: true, targetFacing: 'back' });
+    PlayRecipientEffect(layer, box, action, { forcePlaceholder: true, targetFacing: 'front' });
+    PlayRecipientEffect(layer, box, action, { forcePlaceholder: true, targetFacing: 'back' });
     const [front, back] = layer.children;
     assert.equal(front.children[0].src, back.children[0].src);
     assert.equal(front.children[0].style.transform, back.children[0].style.transform);
@@ -99,7 +119,7 @@ test('fallback retains the identical static action-target sprite on both teams',
     assert.equal(front.dataset.mirrorX, '1');
     assert.equal(back.dataset.mirrorX, '1');
     assert.equal(front.dataset.frame, '1');
-    clearRecipientEffects(layer);
+    ClearRecipientEffects(layer);
   });
 });
 
@@ -112,8 +132,8 @@ test('loaded art animates at most three frames and failed overlays retain the pl
   };
   const layer = dom.document.createElement('div');
   try {
-    await prewarmRecipientEffect(recipe, { resolveAsset: path => `ok/${path}` });
-    playRecipientEffect(layer, box, { ...recipe, frameCount: 9 }, { resolveAsset: path => `ok/${path}`, duration: 600 });
+    await PrewarmRecipientEffect(recipe, { resolveAsset: path => `ok/${path}` });
+    PlayRecipientEffect(layer, box, { ...recipe, frameCount: 9 }, { resolveAsset: path => `ok/${path}`, duration: 600 });
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     const el = layer.children[0];
     assert.equal(el.dataset.renderer, 'art');
@@ -121,11 +141,11 @@ test('loaded art animates at most three frames and failed overlays retain the pl
     t.mock.timers.tick(210); assert.equal(el.dataset.frame, '2');
     t.mock.timers.tick(200); assert.equal(el.dataset.frame, '3');
     t.mock.timers.tick(200); assert.equal(layer.children.length, 0);
-    playRecipientEffect(layer, box, recipe, { resolveAsset: path => path.includes('/fire.png') ? 'failed/elements' : `ok/${path}` });
+    PlayRecipientEffect(layer, box, recipe, { resolveAsset: path => path.includes('/fire.png') ? 'failed/elements' : `ok/${path}` });
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     assert.equal(layer.children[0].dataset.renderer, 'placeholder');
     assert.equal(layer.children[0].children.length, 1);
-  } finally { clearRecipientEffects(layer); globalThis.Image = oldImage; restore(); }
+  } finally { ClearRecipientEffects(layer); globalThis.Image = oldImage; restore(); }
 });
 
 test('cold loads cannot join an active contact late or resurrect it; the next hit starts ready at frame one', async t => {
@@ -139,9 +159,9 @@ test('cold loads cannot join an active contact late or resurrect it; the next hi
   const layer = dom.document.createElement('div');
   const resolveAsset = path => `delayed/${path}`;
   try {
-    const warming = prewarmRecipientEffect(recipe, { resolveAsset });
+    const warming = PrewarmRecipientEffect(recipe, { resolveAsset });
     assert.equal(waiting.length, 2, 'prewarm queues both atlases before playback');
-    playRecipientEffect(layer, box, recipe, { resolveAsset, duration: 300 });
+    PlayRecipientEffect(layer, box, recipe, { resolveAsset, duration: 300 });
     const cold = layer.children[0];
     t.mock.timers.tick(150);
     waiting.forEach(image => image.onload());
@@ -150,34 +170,34 @@ test('cold loads cannot join an active contact late or resurrect it; the next hi
     assert.equal(cold.dataset.frame, '1');
     t.mock.timers.tick(151);
     assert.equal(layer.children.length, 0);
-    playRecipientEffect(layer, box, recipe, { resolveAsset, duration: 300 });
+    PlayRecipientEffect(layer, box, recipe, { resolveAsset, duration: 300 });
     assert.equal(layer.children[0].dataset.renderer, 'art');
     assert.equal(layer.children[0].dataset.frame, '1');
     t.mock.timers.tick(101);
     assert.equal(layer.children[0].dataset.frame, '2');
-    clearRecipientEffects(layer);
+    ClearRecipientEffects(layer);
     const lateAsset = path => `after-expiry/${path}`;
-    const late = prewarmRecipientEffect(recipe, { resolveAsset: lateAsset });
-    playRecipientEffect(layer, box, recipe, { resolveAsset: lateAsset, duration: 300 });
+    const late = PrewarmRecipientEffect(recipe, { resolveAsset: lateAsset });
+    PlayRecipientEffect(layer, box, recipe, { resolveAsset: lateAsset, duration: 300 });
     t.mock.timers.tick(301);
     waiting.slice(2).forEach(image => image.onload());
     await late;
     assert.equal(layer.children.length, 0, 'late cache completion cannot resurrect an expired effect');
-    playRecipientEffect(layer, box, recipe, { resolveAsset: lateAsset });
+    PlayRecipientEffect(layer, box, recipe, { resolveAsset: lateAsset });
     assert.equal(layer.children[0].dataset.renderer, 'art');
     assert.equal(layer.children[0].dataset.frame, '1');
-  } finally { clearRecipientEffects(layer); globalThis.Image = oldImage; restore(); }
+  } finally { ClearRecipientEffects(layer); globalThis.Image = oldImage; restore(); }
 });
 
 test('effects off and reduced motion omit recipient sprites', () => {
   withKitDom(dom => {
     const layer = dom.document.createElement('div');
     dom.document.documentElement = { dataset: { effects: 'off' } };
-    playRecipientEffect(layer, box, recipe);
+    PlayRecipientEffect(layer, box, recipe);
     assert.equal(layer.children.length, 0);
     dom.document.documentElement.dataset.effects = 'on';
     dom.document.body.classList.add('reduced-motion');
-    playRecipientEffect(layer, box, recipe);
+    PlayRecipientEffect(layer, box, recipe);
     assert.equal(layer.children.length, 0);
   });
 });
@@ -192,7 +212,7 @@ test('receipt decoration keeps actual targets and action scope for player, enemy
     { type: 'enemyMoveStarted', sourceId: 'enemy-1', enemyId: 'ogre', moveId: 'smash' },
     { type: 'damageDealt', sourceId: 'enemy-1', targetId: 'player', targetPlayerId: 'seat-b', amount: 3 },
   ];
-  const out = decorateRecipientEffects(events, { resolveCard: () => card, resolveEnemyMove: () => ({ combatProfile: { maneuver: 'smash' } }) });
+  const out = DecorateRecipientEffects(events, { resolveCard: () => card, resolveEnemyMove: () => ({ combatProfile: { maneuver: 'smash' } }) });
   assert.equal(out[1].recipientEffect.palette, 'fire');
   assert.equal(out[1].recipientSourceId, 'seat-a');
   assert.equal(out[1].recipientEffect.targetType, 'aoe');
@@ -221,7 +241,7 @@ test('combat timeline plays confirmed recipient impacts on enemies and players',
       playerFrame.appendChild(player); enemyFrame.appendChild(enemy);
       const seen = new Set();
       const facing = new Map();
-      const events = decorateRecipientEffects([
+      const events = DecorateRecipientEffects([
         { type: 'cardPlayed', playerId: 'player', cardId: 'flame', cardType: 'attack' },
         { type: 'damageDealt', sourceId: 'player', targetId: 'enemy', amount: 5 },
         { type: 'enemyMoveStarted', sourceId: 'enemy', enemyId: 'ogre', moveId: 'smash', kind: 'attack' },
@@ -251,7 +271,7 @@ test('fresh continuation batches retain enemy school/range and interleaved count
     resolveCard: () => ({ type: 'attack', tags: ['pierce'] }),
   };
   for (const type of ['combatHitStarted', 'combatContactPrepared']) {
-    const out = decorateRecipientEffects([
+    const out = DecorateRecipientEffects([
       { type, sourceId: 'enemy-1', enemyId: 'fire-mage', moveId: 'triple-bolt', contactIndex: 1, contactCount: 3 },
       { type: 'combatCounterTriggered', sourceKind: 'player', sourceId: 'player', cardId: 'counter' },
       { type: 'damageDealt', sourceId: 'player', targetId: 'enemy-1', amount: 2 },
@@ -269,7 +289,7 @@ test('source-less trailing self grants recover their root action after a counter
   const fire = { type: 'spell', tags: ['school:fire'], effects: [{ op: 'gainWard', target: 'self' }] };
   const start = { type: 'enemyMoveStarted', sourceId: 'enemy-1', enemyId: 'mage', moveId: 'fire-ward' };
   const ward = { type: 'persistentWardChanged', targetId: 'enemy-1', restored: 3 };
-  const out = decorateRecipientEffects([
+  const out = DecorateRecipientEffects([
     start,
     { type: 'combatCounterTriggered', sourceKind: 'player', sourceId: 'player', cardId: 'counter' },
     { type: 'damageDealt', sourceId: 'player', targetId: 'enemy-1', amount: 2 },
@@ -280,7 +300,7 @@ test('source-less trailing self grants recover their root action after a counter
   assert.equal(out[3].recipientEffect.palette, 'fire');
   assert.equal(out[3].recipientEffect.shape, 'ward');
   assert.equal(out[3].recipientEffect.targetType, 'self');
-  const ally = decorateRecipientEffects([
+  const ally = DecorateRecipientEffects([
     start,
     { type: 'cardPlayed', playerId: 'ally', cardId: 'ally-ward' },
     ward,
@@ -295,30 +315,30 @@ test('buff and debuff use exact card bounds and bottom origin on both teams', ()
   withKitDom(dom => {
     const layer=dom.document.createElement('div');
     for (const targetFacing of ['front','back']) for (const shape of ['buff','debuff']) {
-      const view=recipientEffectView({...recipe,shape},{box,cardBox,targetFacing});
+      const view=RecipientEffectView({...recipe,shape},{box,cardBox,targetFacing});
       for(const key of ['left','top','width','height'])assert.equal(view[key],cardBox[key]);
-      playRecipientEffect(layer,box,{...recipe,shape},{cardBox,targetFacing,forcePlaceholder:true});
+      PlayRecipientEffect(layer,box,{...recipe,shape},{cardBox,targetFacing,forcePlaceholder:true});
       const host=layer.children.at(-1);
       assert.equal(host.style.width,'180px');assert.equal(host.style.height,'260px');
       assert.equal(host.style.transformOrigin,'bottom center');assert.equal(host.style.overflow,'hidden');
       assert.equal(host.dataset.anchor,'card-bottom');
     }
-    clearRecipientEffects(layer);
+    ClearRecipientEffects(layer);
   });
 });
 
 test('only movement chevrons mirror; group sweep and delayed secondary cancel together', t => {
   t.mock.timers.enable({apis:['setTimeout']});
-  assert.equal(recipientEffectView({...recipe,shape:'advance'},{box,targetFacing:'front'}).base.scaleX,-1);
+  assert.equal(RecipientEffectView({...recipe,shape:'advance'},{box,targetFacing:'front'}).base.scaleX,-1);
   withKitDom(dom => {
     const layer=dom.document.createElement('div'),a=dom.document.createElement('div'),b=dom.document.createElement('div');
     a.box={left:40,top:20,width:60,height:100};b.box={left:140,top:20,width:60,height:100};
     const anchorFor=id=>id==='a'?a:b;
-    playRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true});
+    PlayRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true});
     assert.equal(layer.children.length,1);assert.equal(layer.children[0].dataset.shape,'sweep');
     t.mock.timers.tick(200);assert.equal(layer.children.length,2);
     assert.equal(layer.children[1].dataset.shape,'heal-plus');
-    clearRecipientEffects(layer);t.mock.timers.tick(1000);assert.equal(layer.children.length,0);
+    ClearRecipientEffects(layer);t.mock.timers.tick(1000);assert.equal(layer.children.length,0);
   });
 });
 
@@ -337,13 +357,13 @@ test('runtime tint preserves shading, reads royal-blue/opacity config and leaves
   const layer=create('div'),resolveAsset=path=>`tint-check/${path}`;
   try {
     const magic={...recipe,shape:'spell-circle',color:SETTINGS.behavior.palettes.magic,overlay:null,opacity:SETTINGS.layering.opacity.spellCircle};
-    await prewarmRecipientEffect(magic,{resolveAsset});playRecipientEffect(layer,box,magic,{resolveAsset,frame:0});
+    await PrewarmRecipientEffect(magic,{resolveAsset});PlayRecipientEffect(layer,box,magic,{resolveAsset,frame:0});
     assert.equal(magic.color,'#4169E1');assert.equal(magic.opacity,.9);
     assert.ok(draws.some(draw=>draw.filter==='grayscale(1)'));
     assert.ok(draws.some(draw=>draw.alpha===SETTINGS.layering.opacity.spellCircle));
-    clearRecipientEffects(layer);draws.length=0;
+    ClearRecipientEffects(layer);draws.length=0;
     const physical={...recipe,shape:'slash',color:SETTINGS.behavior.palettes.physical,overlay:null};
-    await prewarmRecipientEffect(physical,{resolveAsset});playRecipientEffect(layer,box,physical,{resolveAsset,frame:0});
+    await PrewarmRecipientEffect(physical,{resolveAsset});PlayRecipientEffect(layer,box,physical,{resolveAsset,frame:0});
     assert.ok(draws.every(draw=>draw.filter!=='grayscale(1)'));
-  } finally {clearRecipientEffects(layer);globalThis.Image=oldImage;restore();}
+  } finally {ClearRecipientEffects(layer);globalThis.Image=oldImage;restore();}
 });

@@ -98,8 +98,14 @@ function playChecked(combat, card, targetId, tally, label) {
     // A Counter's return can stagger the player in the middle of a multi-hit card, which changes the later hits (no matching-stance bonus,
     // Vulnerable): the hits from that point are another action's business, and the ones before it must match the face.
     const cut = events.findIndex(event => event.type === 'playerStaggered');
+    // Likewise a weakness stagger (enemyStaggered, cause 'weakness') lands after the hit that found the weakness: the face does not price
+    // weakness effects, so that target's later hits (Staggered, Vulnerable) are compared no further. Seen once the halved base damage
+    // (owner, 2026-11-17) moved which Poise a multi-hit spell breaks (starseer seed 154, Star Shower).
+    const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
+      if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
+      if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);
     }
     // An Evade stack cancels a hit outright (an attackMissed event, no damage event): the face priced those leading hits at 0.
@@ -128,7 +134,7 @@ function playChecked(combat, card, targetId, tally, label) {
       assert.ok(explains(0, 0), `${label}: ${card.cardId} -> ${id} HP lost per hit [${got}] equals the face [${priced}]`);
       const sure = list.filter(row => !row.conditional).reduce((n, row) => n + row.hits.length, 0);
       // A fight the target's own Counter reply ended (the player fell mid-card) cuts the remaining hits off like a death does.
-      if (enemyAlive(combat, id) && cut < 0 && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
+      if (enemyAlive(combat, id) && cut < 0 && !weaknessStaggered.has(id) && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
       tally.hits += got.length;
     }
     void enemiesBefore;
@@ -302,8 +308,10 @@ test('a target with Block, a target with Poise, and both', () => {
   for (const [label, state] of [['Block', { block: 5 }], ['Poise', { persistentPoise: { value: 10, max: 20 } }], ['Block and Poise', { block: 5, persistentPoise: { value: 10, max: 20 } }]]) {
     const { combat, card } = fixture();
     Object.assign(combat.enemies[0], state);
+    const open = fixture().combat; // the same hit on the same target with no Block or Poise
+    const undefended = faceOf(open, open.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
-    assert.ok(shown[0] < 12, `${label}: the face already is the HP after defences (${shown})`);
+    assert.ok(shown[0] < undefended, `${label}: the face already is the HP after defences (${shown} against ${undefended})`);
     assert.ok(check(combat, card, 'e1', label).hits >= 1);
   }
 });
@@ -313,6 +321,8 @@ test('a target in a defensive stance', () => {
     const { combat, card } = fixture({ hand });
     combat.enemies[0].combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
     const open = fixture({ hand }).combat; // the same hit with no stance, for comparison
+    // An Idle target takes the stance weakness (theme B, 2026-11-17); the comparison is with a target that has none, so it is left out here.
+    delete open.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
     const baseline = faceOf(open, open.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1')[0];
     if (hand !== 'core.strike') assert.notEqual(shown, baseline, `${hand}: the Defend stance moves the face (${shown} against ${baseline})`);

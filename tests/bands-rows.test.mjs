@@ -83,6 +83,7 @@ test('a fight made without the bands key plays as before: no rows, no Advanced s
   delete fixCoreMechanics.bands;
   try {
     const combat = bandsFight({ hand: ['core.strike'] });
+    combat.enemies[1].hp = 1; // the halved Strike no longer kills the wisp outright; a living wisp retreats, which grows the pair
     assert.deepEqual(combat.enemies.map(e => e.row), [undefined, undefined]);
     assert.equal(combat.rangeState.engagements[pairOf('e2')], 1);
     dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: 'e2' });

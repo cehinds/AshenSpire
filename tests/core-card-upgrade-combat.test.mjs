@@ -61,15 +61,19 @@ test('combat plays exactly the face the steps give', () => {
     const face = resolveCombatCard(combat, instance);
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: enemy.id });
-    return { hit: combat.eventLog.slice(start).find((e) => e.type === 'damageDealt' && e.targetId === enemy.id), face };
+    return { hit: combat.eventLog.slice(start).find((e) => e.type === 'damageDealt' && e.targetId === enemy.id), face, baseScale: combat.gameProfile.modules.effects.baseDamageMultiplier ?? 1 };
   };
   const faceAmount = (r) => r.face.effects.find((e) => e.op === 'damage').amount;
+  // Core scales the card's base damage (effects.baseDamageMultiplier, rounded up) before attribute bonuses add (owner, 2026-11-17).
+  const scaledFace = (r) => Math.ceil(faceAmount(r) * r.baseScale);
   const authored = play([{ k: 'authored' }]), more = play(STEPS), rolled = play([{ k: 'dmg', n: 3 }]);
   assert.equal(faceAmount(more), faceAmount(authored) + 3);
   assert.equal(faceAmount(rolled), faceAmount(play([{ k: 'dmg', n: 0 }])) + 3, 'a rolled first step starts from the base');
-  // Attribute bonuses add the same flat amount to every copy, so dealt - face is constant: combat plays the face.
-  const offset = authored.hit.amount - faceAmount(authored);
-  for (const r of [authored, more, rolled]) assert.equal(r.hit.amount - faceAmount(r), offset, 'dealt damage tracks the face');
+  // Attribute bonuses add the same flat amount to every copy, so dealt - scaled face is constant: combat plays the face.
+  // Owner, 2026-11-18: the player's side scale (x0.7) then multiplies the hit, so the constant offset is read just before that stage.
+  const beforeSide = (r) => r.hit.damageReceipt.hits[0].sources.find((row) => row.id === 'side-damage-scale')?.requested ?? r.hit.amount;
+  const offset = beforeSide(authored) - scaledFace(authored);
+  for (const r of [authored, more, rolled]) assert.equal(beforeSide(r) - scaledFace(r), offset, 'dealt damage tracks the face');
   assert.ok(more.hit.amount > authored.hit.amount);
 });
 

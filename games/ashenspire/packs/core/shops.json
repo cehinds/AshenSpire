@@ -78,7 +78,9 @@
         100,
         150
       ],
-      "cardUpgrade": 40,
+      "cardUpgrade": 50,
+      "cardUpgradePerUpgrade": 35,
+      "cardUpgradePerRank": 25,
       "rankUp": 120
     },
     "rankUpStones": 1,
@@ -99,5 +101,20 @@
   },
   "rankUp": {
     "stockChancePct": 15
+  },
+  "trader": {
+    "always": [
+      "weapons",
+      "combatCards",
+      "relics"
+    ],
+    "optional": [
+      "weaponArts",
+      "armor",
+      "potions"
+    ],
+    "minCategories": 3,
+    "maxCategories": 6,
+    "smithChance": 25
   }
 }

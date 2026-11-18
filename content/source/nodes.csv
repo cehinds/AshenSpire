@@ -29,46 +29,46 @@
 #
 # columns: id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
 id,parentId,label,color,glyph,visibility,priority,domain,aside,blurb
-card,,Card,,,,,,,"What a card IS — its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
+card,,Card,,,,,,,"What a card IS: its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
 creature,,Creature,,,,,,,"What a creature IS. Gates proc resistance, and the one domain the engine reads at runtime."
 item,,Item,,,,,,,"What a piece of gear DOES beyond its numbers, and what a run pickup is."
-run,,Run,,,,,,,"Run structure — what an event, an encounter or an unlock is about."
+run,,Run,,,,,,,"Run structure: what an event, an encounter or an unlock is about."
 itemType,,Item type,,,,,,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword."
-grantSource,,Grant source,,,,,,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
+grantSource,,Grant source,,,,,,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these. The `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
 presentation,,Combat presentation,,,INTERNAL,0,PRESENTATION,true,Sprite selection only; never damage or resistance identity.
 attackSource,,Attack source,,,,,,,Source profile supplying an attack; separate from damage type.
 delivery,,Delivery,,,,,,,How a direct attack reaches its targets.
 damageType,,Damage type,,,,,,,Identity of a typed HP damage component.
 technique,,Technique,,,,,,,Conditions for explicit technique bonuses.
 theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
-property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
-blade,card,Blade,C9502E,⚔,,,,,Steel and edge — direct weapon work.
+property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one. What the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
+blade,card,Blade,C9502E,⚔,,,,,Steel and edge: direct weapon work.
 bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
 retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts a free Retreat card in your hand each turn: step back out of the Advance."
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
 gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
-starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery — charges and combos.
+starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery: charges and combos.
 ritual,card,Ritual,C9A227,◈,,,,,"Rites, offerings, and faith work."
 blight,card,Blight,B5541C,☣,,,,,Creeping decay.
 oath,card,Oath,C9A227,✚,,,,,"Binding, lasting commitments."
-flourish,card,Flourish,9FC3E8,✧,,,,,Finesse — footwork and multi-hit.
+flourish,card,Flourish,9FC3E8,✧,,,,,Finesse: footwork and multi-hit.
 finesse,card,Finesse,9FC3E8,✧,,,,,"Multi-hit without the per-hit SP price: the move costs its ordinary price."
 ash,card,Ash,7A6F5A,•,,,,,"Spent once, then gone to ash."
 heavy,card,Heavy,C9A227,◆,,,,,"Slow, committed, and hard to stop."
-basic,card,Basic,7A6F5A,○,,,,,Everybody's — on the shelf without being found.
+basic,card,Basic,7A6F5A,○,,,,,Everybody's: on the shelf without being found.
 rank.cantrip,card,Cantrip,7FA8C9,✦,,,,,Basic spell eligible for Magic Adept deck copies.
 pierce,card,Pierce,9FC3E8,†,,,,,A precise physical form; presentation only.
 ranged,card,Ranged,7FA8C9,➶,,,,,Authored ranged presentation; no position system.
 precision,card,Precision,C9A227,◎,,,,,Deliberate aim and finesse; presentation only.
 guile,card,Guile,647B73,◇,,,,,"Preparation, misdirection, and stolen openings."
 venom,card,Venom,7FAF63,☠,,,,,Poisons that punish enemies over time.
-extractable,card,Extractable,C9A227,⚙,,,,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
-bound,item,Bound,C9A227,⛓,,,,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.
+extractable,card,Extractable,C9A227,⚙,,,,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it today."
+bound,item,Bound,C9A227,⛓,,,,,Carries its own cards. They arrive with the piece and are named in equipmentGrants.csv.
 beast,creature,Beast,7A6F5A,🐾,,,,,"Animal, unreasoning, driven by hunger."
 humanoid,creature,Humanoid,B8B0A0,👤,,,,,"Two arms, two legs, and a reason for being here."
 undead,creature,Undead,647B73,💀,,,,,Died once and did not stay down.
-construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born — no blood to let."
+construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born. No blood to let."
 spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
 item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
 item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
@@ -212,7 +212,7 @@ grimHarvest,property,Grim Harvest,9FC3E8,🩸,,,,,"What falls feeds you."
 restHpSmall,property,Small rest,7FA8C9,♨,,,,,"A rough camp's rest: a small share of your max HP back."
 restHpPartial,property,Partial rest,7FA8C9,♨,,,,,"A shrine's rest: part of your max HP back."
 restHpFull,property,Full rest,7FA8C9,♨,,,,,"A town's bed: HP to full."
-restMana,property,Mana rest,7FA8C9,◈,,,,,"Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
+restMana,property,Mana rest,7FA8C9,◈,,,,,"Mana back by the configured mode (balance.rest.mana.mode). The door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
 restManaFlat,property,Flat mana rest,7FA8C9,◈,,,,,"Mana back by a fixed amount."
 restManaFloor,property,Mana rest to a floor,7FA8C9,◈,,,,,"Mana back to a floor of max, or to full when already there."
 restManaFull,property,Full mana rest,7FA8C9,◈,,,,,"Mana to full."
@@ -477,9 +477,9 @@ classification.enemyMove,classification,enemyMove,,,INTERNAL,30,,,A scoped actio
 range,,Range,,,,,,,Inspection details for combat techniques.
 trait,,Combat traits,,,,,,,Inspection details for combat techniques.
 maneuver:casting,maneuver,Spell,9FC3E8,✧,,,,,A spell stance. Counter coverage depends on school and delivery. Stance benefit: spells deal +25% damage.
-range:melee,range,Melee,9FC3E8,◇,,,,,At melee range: within arm's length.
-range:reach,range,Reach,9FC3E8,◇,,,,,At reach: past arm's length but not yet ranged.
-range:ranged,range,Ranged,9FC3E8,◇,,,,,At ranged distance.
+range:melee,range,Melee,9FC3E8,◇,,,,,"Hits the front row. A back-row target costs 1 more Stamina, and you Advance."
+range:reach,range,Reach,9FC3E8,◇,,,,,Hits either row at its normal cost.
+range:ranged,range,Ranged,9FC3E8,◇,,,,,Hits any enemy at its normal cost.
 targeting:single,targeting,Single,9FC3E8,◇,,,,,One direct target.
 targeting:area,targeting,Area,9FC3E8,◇,,,,,An area action; most Counters do not cover it.
 trait:adequateReach,trait,Adequatereach,9FC3E8,◇,,,,,Adequatereach combat interaction.
@@ -495,7 +495,7 @@ ramp.momentum,card,Momentum,9FC3E8,◇,,,,,"+N damage or Block for each earlier 
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
 trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.
-trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Playable from hand during the opponent's turn, before the pending action resolves."
+trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Can be played on the enemy's turn, before its action lands."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
 trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.

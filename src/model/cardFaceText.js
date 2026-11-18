@@ -21,7 +21,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
+import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, CardHpLossWording, PlayConditionPhrase } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -293,7 +293,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
-      case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'loseHp': {
+        const loss = CardHpLossWording(effect, num(n, base));
+        return frag(!loss.hostile && index === 0 && !effect.if ? 'cost' : 'bonus', loss.text);
+      }
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
@@ -478,6 +481,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
   for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
+  const playGate = PlayConditionPhrase(def.playIf);
+  if (playGate) byKind.condition.unshift(esc(playGate));
 
   const lines = [];
   for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push(faceText.has(html) ? { kind, html, faceHtml: faceText.get(html) } : { kind, html });

@@ -47,3 +47,55 @@
 
 /* An unread follow-up (?) keeps its purple, in both phases. */
 :root .combat .intent .intent-followup[data-unknown='true'] { color: #c88aeb; }
+
+/* Press-and-hold reads a fighter (playtest 2026-11-17): the phone's own long-press callout, text selection and image drag
+   must not take the press first. */
+:root .combat .combatant { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+:root .combat .combatant img { -webkit-user-drag: none; }
+/* An enemy action's tooltip reads one effect per line, in the readable body colour. */
+#tooltip .tt-intent-lines, #tooltip-2 .tt-intent-lines { margin: 0.35rem 0 0; padding-left: 1.35rem; color: var(--parchment); font-size: 1.4rem; line-height: 1.35; }
+#tooltip .tt-intent-lines > li + li, #tooltip-2 .tt-intent-lines > li + li { margin-top: 0.3rem; }
+/* The turn-start refresh (playtest 2026-11-17): the last hand drops away to the discard, then the new hand rises in.
+   A retained card stays where it is. Informational, so it plays with effects off too; reduced motion skips it in hand.js. */
+:root .combat .hand .card[data-discarding] { pointer-events: none; animation: card-discard-turn var(--hand-discard-ms, 200ms) ease-in forwards; }
+:root .combat .hand .card.card-drawn.card-drawn-after-discard { animation: card-arrive-turn var(--hand-draw-ms, 160ms) ease-out var(--hand-discard-ms, 200ms) backwards; }
+@keyframes card-discard-turn { to { opacity: 0; translate: 0 36px; } }
+@keyframes card-arrive-turn { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
+
+/* Enemy and player intent contrast (owner, 2026-11-18): a dark outline behind every intent number and word and a dark
+   contact outline round every glyph, in the boxed, formation and target-HUD layouts alike (those layouts clear the
+   box and its shadow, so the outline sits on the text and icon themselves). paint-order draws the stroke under the fill,
+   so the glyph stays full weight; a tight shadow under it lifts it off busy art. A damage-class icon keeps its own
+   coloured outline. */
+:root .combat {
+  --intent-outline: rgb(11 8 5);
+  --intent-stroke: calc(2.5px / var(--ui-zoom, 1));
+}
+:root .combat .intent :is(.intent-value, .intent-action-value, .intent-stance, .intent-compact, .intent-damage-scope, .intent-later-turns),
+:root .combat .player-action-intent :is(.intent-action-value, .intent-action) {
+  -webkit-text-stroke: var(--intent-stroke) var(--intent-outline);
+  paint-order: stroke fill;
+  text-shadow: 0 calc(1px / var(--ui-zoom, 1)) calc(2px / var(--ui-zoom, 1)) rgb(0 0 0 / .8), 0 0 calc(3px / var(--ui-zoom, 1)) rgb(0 0 0 / .65);
+}
+:root .combat .intent:not([data-damage-class]) .intent-icon,
+:root .combat .player-action-intent .intent-icon {
+  filter:
+    drop-shadow(calc(.8px / var(--ui-zoom, 1)) 0 0 var(--intent-outline))
+    drop-shadow(calc(-.8px / var(--ui-zoom, 1)) 0 0 var(--intent-outline))
+    drop-shadow(0 calc(.8px / var(--ui-zoom, 1)) 0 var(--intent-outline))
+    drop-shadow(0 calc(-.8px / var(--ui-zoom, 1)) 0 var(--intent-outline))
+    drop-shadow(0 calc(2px / var(--ui-zoom, 1)) calc(3px / var(--ui-zoom, 1)) rgb(0 0 0 / .65));
+}
+/* Effects off: the glow and blur go, the crisp outline stays. */
+:root[data-effects='off'] .combat .intent :is(.intent-value, .intent-action-value, .intent-stance, .intent-compact, .intent-damage-scope, .intent-later-turns),
+:root[data-effects='off'] .combat .player-action-intent :is(.intent-action-value, .intent-action) {
+  text-shadow: 0 calc(1px / var(--ui-zoom, 1)) 0 black;
+}
+:root[data-effects='off'] .combat .intent:not([data-damage-class]) .intent-icon,
+:root[data-effects='off'] .combat .player-action-intent .intent-icon {
+  filter:
+    drop-shadow(calc(.8px / var(--ui-zoom, 1)) 0 0 var(--intent-outline))
+    drop-shadow(calc(-.8px / var(--ui-zoom, 1)) 0 0 var(--intent-outline))
+    drop-shadow(0 calc(.8px / var(--ui-zoom, 1)) 0 var(--intent-outline))
+    drop-shadow(0 calc(-.8px / var(--ui-zoom, 1)) 0 var(--intent-outline));
+}
