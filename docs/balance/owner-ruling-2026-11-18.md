@@ -168,3 +168,4 @@ Existing effects that count as drawbacks:
   - A number turns **red** only when an in-combat effect lowers it: a debuff such as Weak or Frail.
   - The comparison is against the same card's out-of-combat face.
   - Always-on attribute and equipment bonuses stay black. An equipment, relic or card effect that **triggers** during combat (for example "first attack each fight +3" or a per-turn Block signature) turns the numbers it changes green or red for as long as it applies.
+- **XP tiers (owner):** elites ×3 so elite-heavy runs reach about level 8 by the end of act 3; bosses stay ×1.5, so no fight gives more than 2 levels.
