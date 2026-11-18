@@ -542,23 +542,6 @@ export function MountGameProfileOffers(appRoot, {
         }
     }
 
-    function handleFaceClick(face, optionIndex, isCardOption)
-    {
-        const canInspect = isCardOption
-            && selectedIndex === optionIndex
-            && !isClaimPending
-            && !isReviewing
-            && !isCompleted;
-        if (canInspect)
-        {
-            openBoundCardInspection(face, face);
-        }
-        else
-        {
-            selectOption(optionIndex);
-        }
-    }
-
     function buildChoiceFace(option, optionIndex, definition)
     {
         const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
@@ -569,7 +552,6 @@ export function MountGameProfileOffers(appRoot, {
 
     function appendChoice(option, optionIndex)
     {
-        const isCardOption = isCardKind(option.kind);
         const definition = findOptionDefinition(registries, activeRun, option);
         const isSpent = isOptionSpent(optionIndex);
         const column = buildChoiceColumn(optionIndex, isSpent);
@@ -578,7 +560,7 @@ export function MountGameProfileOffers(appRoot, {
         {
             face.addEventListener('click', () =>
             {
-                handleFaceClick(face, optionIndex, isCardOption);
+                selectOption(optionIndex);
             });
         }
         const choiceLabel = readChoiceLabel(option, definition);
