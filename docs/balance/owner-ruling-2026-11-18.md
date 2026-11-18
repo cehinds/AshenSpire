@@ -167,3 +167,4 @@ Existing effects that count as drawbacks:
   - A number turns **green** only when an in-combat effect raises it: a buff, the current stance's bonus, or a relic or card trigger active this fight.
   - A number turns **red** only when an in-combat effect lowers it: a debuff such as Weak or Frail.
   - The comparison is against the same card's out-of-combat face.
+  - Always-on attribute and equipment bonuses stay black. An equipment, relic or card effect that **triggers** during combat (for example "first attack each fight +3" or a per-turn Block signature) turns the numbers it changes green or red for as long as it applies.
