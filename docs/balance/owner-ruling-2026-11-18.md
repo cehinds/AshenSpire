@@ -2,6 +2,11 @@
 
 This is the working spec for the 2026-11-18 pass. The owner gave the requests in a session, and each choice the orchestrator made is marked *(decided)*. Task status lives in the PR body.
 
+## 0. Principle: compose existing tags, never re-bundle them (owner)
+- Each effect lives in exactly one tag or status. A status or card that needs an effect another tag already provides applies that tag; it does not copy the effect into itself.
+- Example: a Poise break used to be "Staggered: skip a turn and take 50% more damage". It is now **Staggered** (skip a turn / lose SP) **+ Vulnerable** (the existing 25% more damage taken).
+- Audit in this pass: list every status and keyword whose effect duplicates another tag's effect, and split each into references. Likely candidates include the FixCore "broken" rule, Shock, Chill/Freeze, Frail, and any `damageTakenMult`, `blockGainedMult` or SP-loss modifiers that repeat Vulnerable, Weak, Frail or Staggered. Card faces and tooltips then name the referenced tags.
+
 ## 1. Multipliers (player and enemy)
 - Physical damage and Block gained drop another ×0.7 on top of the earlier 0.7 cut (PR #2833), so they end at ×0.49 of the pre-2833 value. *(decided)* This mostly lands on enemies, because player cards are re-tuned to the curve in section 2.
 
