@@ -26,3 +26,10 @@ for (const [classId, gearId] of Object.entries(GEAR)) {
     assert.equal(source.itemId, `armor.${gearId}`);
   });
 }
+
+test('an armour group base Poise replaces the armour item\'s own Poise: a level-1 Reaver in plate opens at 15', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 7, profileMeta: meta });
+  const receipt = gameProfileEquipmentReceipt(registries, run);
+  assert.equal(receipt.sources.find(row => row.slot === 'armor').poise, 0, 'the plate\'s item Poise is replaced by the Heavy base');
+  assert.equal(receipt.sources.find(row => row.sourceId === 'type/poise').poise, 6, 'Heavy +5 and the Greatsword +1');
+});

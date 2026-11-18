@@ -25,8 +25,8 @@ const fightPoise = (run) => createRunCombat({ registries: reg, run, rng: createR
 
 // Measured at level 1. Before the 2026-11-18 gear rule: reaver 8, starseer 5, rogue 8, herald 5 (every item floored at 1 Poise point).
 // After: a non-defensive one-hander (staff, dagger) adds 0, the Greatsword still adds its 6, and the starting armour is not a catalogue item.
-// 2026-11-18 (gear pass A): the four starting outfits now resolve to their gear items (Poise from their points) and every worn piece adds its type or group base (Heavy +5, Greatsword +1, Light +1).
-const LEVEL_ONE_POISE = { reaver: 21, starseer: 8, rogue: 6, herald: 8 };
+// 2026-11-18 (gear pass A): the four starting outfits now resolve to their gear items (Poise from their points) and every worn piece adds its type or group base (Heavy +5, Greatsword +1, Light +1); an armour group base REPLACES the armour item's own Poise points, so armour is not counted twice.
+const LEVEL_ONE_POISE = { reaver: 15, starseer: 8, rogue: 3, herald: 8 };
 // A staff or sceptre grants 1 Ward at the start of each turn (owner, 2026-11-18), and a Ward stack is +5 maximum Poise while it lasts.
 const WARD_AT_FIGHT_START = { reaver: 0, starseer: 5, rogue: 0, herald: 5 };
 

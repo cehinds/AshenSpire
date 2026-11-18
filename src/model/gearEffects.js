@@ -260,3 +260,12 @@ export function GearModText(registries, raw) {
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;
 }
+
+/**
+ * GearGroupSetsPoise(piece) -> true when an armour piece's group base states Poise (Light +1, Medium +3, Heavy +5). Owner, 2026-11-18: that base REPLACES the
+ * piece's old per-item Poise points rather than adding to them, so armour is not counted twice.
+ */
+export function GearGroupSetsPoise(piece) {
+  const row = piece?.kind === 'armor' ? GearTypeRow(piece) : null;
+  return !!row && (row.mods || []).some(raw => ParseGearMod(raw)?.field === 'statPoise');
+}
