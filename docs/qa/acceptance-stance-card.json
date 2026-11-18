@@ -121,7 +121,7 @@
           }
         },
         {
-          "click": ".combatant.enemy"
+          "click": ".combatant.enemy .sprite"
         },
         {
           "wait": {
@@ -130,6 +130,11 @@
         },
         {
           "click": ".card-choice-option:has-text(\"Defend\")"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
         },
         {
           "click": ".card-choice .as-btn.primary"
