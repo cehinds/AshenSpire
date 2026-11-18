@@ -23,7 +23,7 @@ import { execFileSync } from 'node:child_process';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const CHECK_KINDS = ['visible', 'hidden', 'count', 'text', 'within', 'noOverlap', 'style', 'consoleErrors', 'stamped', 'scrollTop'];
-export const ACTION_KINDS = ['click', 'tap', 'hold', 'key', 'wait', 'stamp', 'scrollTo'];
+export const ACTION_KINDS = ['click', 'tap', 'hold', 'key', 'wait', 'stamp', 'scrollTo', 'drag'];
 
 // ---------- pure: spec validation ----------
 
@@ -67,6 +67,7 @@ export function validateAction(action, where) {
   const v = action[kind];
   if ((kind === 'click' || kind === 'tap' || kind === 'key' || kind === 'stamp') && !isStr(v)) return [`${where}: ${kind} needs a string`];
   if (kind === 'scrollTo' && !(v && isStr(v.selector) && Number.isFinite(v.top))) return [`${where}: scrollTo needs {selector, top}`];
+  if (kind === 'drag' && !(v && isStr(v.from) && isStr(v.to))) return [`${where}: drag needs {from, to} selectors`];
   if (kind === 'wait' && !(v && Number.isFinite(v.ms))) return [`${where}: wait needs {ms}`];
   if (kind === 'hold' && !(v && isStr(v.selector) && Number.isFinite(v.ms))) return [`${where}: hold needs {selector, ms}`];
   if (kind === 'hold' && v.position != null && !['x', 'y'].every(axis => Number.isFinite(v.position[axis]) && v.position[axis] >= 0 && v.position[axis] <= 1)) return [`${where}: hold position needs x and y fractions between 0 and 1`];
@@ -219,6 +220,15 @@ async function collectFacts(page, check, consoleErrors) {
 async function runActions(page, actions) {
   for (const a of actions || []) {
     if (a.stamp) await page.evaluate((selector) => { for (const e of document.querySelectorAll(selector)) e.__qaStamp = true; }, a.stamp);
+    else if (a.drag) {
+      // A pointer drag from the centre of one element to the centre of another, in steps (a press, a move past the slop, a release).
+      const from = await (await page.waitForSelector(a.drag.from, { timeout: 5000 })).boundingBox();
+      const to = await (await page.waitForSelector(a.drag.to, { timeout: 5000 })).boundingBox();
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+      await page.mouse.up();
+    }
     else if (a.scrollTo) await page.evaluate(({ selector, top }) => { const e = document.querySelector(selector); if (e) e.scrollTop = top; }, a.scrollTo);
     else if (a.click) await page.click(a.click, { timeout: 5000 });
     else if (a.tap) await page.tap(a.tap, { timeout: 5000 }).catch(() => page.click(a.tap, { timeout: 5000 }));
