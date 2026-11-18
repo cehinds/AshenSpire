@@ -147,5 +147,7 @@ test('a static card face applies the physical cut to a physical damage figure, a
   // Owner, 2026-11-18 (static faces): a face outside combat adds the run's STR first (a new Reaver's effective STR is 5), then the cut.
   assert.equal(faceOf(plain, 'core.strike', 'reaver'), 6 + 5);
   assert.equal(faceOf(halved, 'core.strike', 'reaver'), Math.floor((6 + 5) * 0.5), 'floor((6 + STR) x 0.5)');
-  assert.equal(faceOf(halved, 'core.cantrip', 'starseer'), faceOf(plain, 'core.cantrip', 'starseer'), 'a spell face is untouched');
+  assert.equal(faceOf(halved, 'core.cinderDart', 'starseer'), faceOf(plain, 'core.cinderDart', 'starseer'), 'a pure-magic spell face is untouched');
+  // Codex on PR #2835: a Starseer's Arcane Spark resolves to Arcane (half physical) from the wielded staff, so the cut reaches its physical half.
+  assert.ok(faceOf(halved, 'core.cantrip', 'starseer') < faceOf(plain, 'core.cantrip', 'starseer'), 'a mixed Arcane spell face takes the cut on its physical share');
 });
