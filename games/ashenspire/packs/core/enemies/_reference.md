@@ -39,6 +39,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:mireProcessional | The Mire Processional | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:pearlbackSnail | Pearlback Snail | elite |
+| enemy:quarryRam | Quarry Ram | minion |
 | enemy:reedpipePoacher | Reedpipe Poacher | minion |
 | enemy:siltCrownNewt | Silt-Crown Newt | elite |
 | enemy:stitchCrab | Stitch Crab | minion |
@@ -263,6 +264,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:mireProcessional.finalRequiem | Final Requiem | attack | 3 | 2 | Deal {damage} damage. |
 | card:mireProcessional.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:mireProcessional.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:quarryRam.headbutt | Headbutt | attack | 1 | 0 | Deal {damage} damage. |
+| card:quarryRam.quarryCharge | Quarry Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:quarryRam.stonyStand | Stony Stand | skill | 1 | 0 | Gain {block} Block. |
+| card:quarryRam.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 

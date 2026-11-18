@@ -189,5 +189,41 @@
       "min": 4,
       "max": 4
     }
+  },
+  {
+    "id": "a2_quarryRams",
+    "enemies": [
+      "quarryRam",
+      "courtMarionette"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "marches",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "a2_tuskDrive",
+    "enemies": [
+      "brackenTusker",
+      "quarryRam"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "marches",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
   }
 ]

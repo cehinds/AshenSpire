@@ -125,6 +125,10 @@
       "name": "Pearlback Snail",
       "tier": "elite"
     },
+    "enemy:quarryRam": {
+      "name": "Quarry Ram",
+      "tier": "minion"
+    },
     "enemy:reedpipePoacher": {
       "name": "Reedpipe Poacher",
       "tier": "minion"
@@ -2237,6 +2241,46 @@
         "mana": 0
       },
       "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
+    "card:quarryRam.headbutt": {
+      "name": "Headbutt",
+      "type": "attack",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:quarryRam.quarryCharge": {
+      "name": "Quarry Charge",
+      "type": "attack",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "usedBy": "enemy sheet"
+    },
+    "card:quarryRam.stonyStand": {
+      "name": "Stony Stand",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Gain {block} Block.",
+      "usedBy": "enemy sheet"
+    },
+    "card:quarryRam.advance": {
+      "name": "Advance",
+      "type": "skill",
+      "cost": {
+        "stamina": 1,
+        "mana": 0
+      },
+      "text": "Close one band.",
       "usedBy": "enemy sheet"
     }
   },

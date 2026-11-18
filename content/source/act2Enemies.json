@@ -814,5 +814,63 @@
         "effect": "damage"
       }
     ]
+  },
+  {
+    "id": "quarryRam",
+    "equipmentSp": 1,
+    "attributes": {
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 2,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "size": "medium",
+    "name": "Quarry Ram",
+    "hp": [
+      40,
+      44
+    ],
+    "poiseMax": 18,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "art": "enemy",
+    "artFaces": "left",
+    "moves": {
+      "headbutt": {
+        "sp": 1,
+        "intent": "attack",
+        "damage": 7,
+        "weight": 40,
+        "maxConsecutive": 2
+      },
+      "quarryCharge": {
+        "sp": 2,
+        "intent": "attack",
+        "damage": 16,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "stonyStand": {
+        "sp": 1,
+        "intent": "block",
+        "block": 7,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "quarryCharge",
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "damage"
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      }
+    ]
   }
 ]

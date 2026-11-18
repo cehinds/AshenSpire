@@ -4691,5 +4691,90 @@
         }
       ]
     }
+  },
+  {
+    "id": "quarryRam",
+    "name": "Quarry_Ram",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "quarryRam.headbutt",
+      "quarryRam.headbutt",
+      "quarryRam.quarryCharge",
+      "quarryRam.stonyStand",
+      "quarryRam.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "quarryRam",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "quarryRam.quarryCharge",
+      "poiseMax": 9,
+      "cardHints": {
+        "quarryRam.headbutt": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "headbutt",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "quarryRam.quarryCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "quarryCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "quarryRam.stonyStand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "stonyStand",
+          "coreSp": "card"
+        },
+        "quarryRam.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
   }
 ]

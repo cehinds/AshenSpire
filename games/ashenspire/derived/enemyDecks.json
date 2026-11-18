@@ -4814,5 +4814,105 @@
         "name": "Final_Requiem"
       }
     ]
+  },
+  {
+    "id": "quarryRam",
+    "name": "Quarry_Ram",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "quarryRam.headbutt",
+        "name": "Headbutt",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "headbutt",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "quarryRam.quarryCharge",
+        "name": "Quarry_Charge",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "quarryCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "quarryRam.stonyStand",
+        "name": "Stony_Stand",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "stonyStand",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "quarryRam.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
   }
 ]

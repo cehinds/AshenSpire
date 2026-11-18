@@ -6134,5 +6134,106 @@
         }
       ]
     }
+  },
+  {
+    "id": "quarryRam",
+    "name": "Quarry_Ram",
+    "displayName": "Quarry Ram",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 7,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "warhammer",
+            "name": "Warhammer",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 20,
+        "dexterity": 3,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 5
+      },
+      "total": 61,
+      "formula": "10+20+20+3+2+1+5 = 61"
+    },
+    "pools": {
+      "hp": 61,
+      "sp": 2,
+      "mp": 1,
+      "ar": 4,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer",
+        "name": "Warhammer"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "quarryRam.headbutt",
+          "name": "Headbutt",
+          "copies": 2
+        },
+        {
+          "id": "quarryRam.quarryCharge",
+          "name": "Quarry_Charge",
+          "copies": 1
+        },
+        {
+          "id": "quarryRam.stonyStand",
+          "name": "Stony_Stand",
+          "copies": 1
+        },
+        {
+          "id": "quarryRam.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
   }
 ]
