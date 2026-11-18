@@ -1,0 +1,110 @@
+{
+  "request": "Cards whose effect changes stance (the enterStance op, e.g. Enter: Gorefire) do not change the player's sprite pose or the stance icon. The owner isn't sure the stance really changes. The stance bonus does seem to reach card numbers.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "before playing a stance card",
+      "url": "?shot=combat&shotSeed=4&shotDeck=enterGorefire,enterGorefire,enterGorefire,enterGorefire,enterGorefire",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Hand holds the stance cards",
+          "selector": ".hand .card",
+          "min": 3
+        },
+        {
+          "kind": "visible",
+          "label": "The resting action glyph shows before the card is played",
+          "selector": ".combatant.player .player-action-intent[data-maneuver=\"ready\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "A stance chip is already shown before any stance card is played",
+          "selector": ".combatant.player .stance-chip"
+        }
+      ]
+    },
+    {
+      "name": "after playing Enter Gorefire",
+      "url": "?shot=combat&shotSeed=4&shotDeck=enterGorefire,enterGorefire,enterGorefire,enterGorefire,enterGorefire",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 3000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The action glyph shows the Attack stance Gorefire enters",
+          "selector": ".combatant.player .player-action-intent[data-maneuver=\"attack\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The sprite holds the offensive stance pose",
+          "selector": ".combatant.player .pose-stage[data-stance=\"offensive\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The glyph still shows Prepare (casting) after entering Gorefire",
+          "selector": ".combatant.player .player-action-intent[data-maneuver=\"prepare\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The sprite still holds the casting pose after entering Gorefire",
+          "selector": ".combatant.player .pose-stage[data-stance=\"casting\"]"
+        }
+      ]
+    }
+  ]
+}
