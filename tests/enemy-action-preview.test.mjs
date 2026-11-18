@@ -10,6 +10,8 @@ const { createRng } = require('src/engine/rng.js');
 const { createRunCombat } = require('src/engine/runCombat.js');
 const { dispatch, previewIntent } = require('src/engine/combat.js');
 const { previewEnemyAction } = require('src/engine/enemyActionPreview.js');
+const { magicShareOf } = require('src/model/combatRatings.js');
+const { ScalePhysicalDamage } = require('src/model/combatCardProfile.js');
 const { guardHitFloatParts } = require('src/ui/fx.js');
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -29,18 +31,19 @@ function fixture(enemyId, moveId, normalize = true) {
   enemy.intent = { kind: move.intent, moveId, damage: move.damage ?? null, hits: move.hits ?? 1, combatProfile: projection.profile };
   enemy.intentRevealed = true; enemy.plannedMoves = []; enemy.maxStamina = 100; enemy.stamina = 100;
   enemy.knowledgeAction = { reads: { player: { visibility: 'exact' } } };
-  return { combat, enemy, move };
+  return { combat, enemy, move, profile: projection.profile };
 }
 
 for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedValkyrie', 'whirlwind'],
   ['blightedValkyrie', 'scarletDance'], ['hollowAstronomer', 'orbitalShards'], ['hollowAstronomer', 'fallingHeavens']]) {
   test(`bundled authored ${enemyId}/${moveId} keeps per-hit amounts through previews, execution and floats`, () => {
-    const { combat, enemy, move } = fixture(enemyId, moveId);
+    const { combat, enemy, move, profile: moveProfile } = fixture(enemyId, moveId);
     const view = previewIntent(combat, enemy.id);
     // Core scales an enemy move's base damage too (effects.baseDamageMultiplier, rounded up; owner, 2026-11-17).
     // Then the enemy side scale (effects.enemyDamageMultiplier, floored, never 0 for a positive hit; owner, 2026-11-18).
     const scaled = Math.ceil(move.damage * (profile.modules.effects.baseDamageMultiplier ?? 1));
-    const perHit = Math.max(1, Math.floor(scaled * (profile.modules.effects.enemyDamageMultiplier ?? 1)));
+    // Owner, 2026-11-18 (second cut): the physical share of a hit takes the physical x0.7 before the side scale, in one full-precision chain.
+    const perHit = Math.max(1, Math.floor(ScalePhysicalDamage(scaled, 1 - magicShareOf(moveProfile), profile.modules.effects.physicalDamageMultiplier ?? 1) * (profile.modules.effects.enemyDamageMultiplier ?? 1)));
     assert.deepEqual(Array.from(view.hitDamages), Array(move.hits).fill(perHit));
     assert.equal(view.totalDamage, perHit * move.hits);
     assert.equal(view.damageReceipt.totalDamage, view.totalDamage);

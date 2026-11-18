@@ -19,7 +19,7 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(registries = reg) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

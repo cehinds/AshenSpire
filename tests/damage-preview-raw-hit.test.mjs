@@ -11,7 +11,7 @@ import { combatIntentPresentation } from '../src/ui/models/CombatIntentModel.js'
 // Owner, 2026-11-14 (supersedes 2026-11-03): an enemy intent shows the HP the player will lose if the move resolved now, after the
 // player's Block, Poise, Ward, Reflect, stance and Evade; it moves as that state moves. The receipt still carries `rawHit` (the pre-defence hit).
 function fixture() {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins the receipt's shape, not the scale
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const combat = createCombat({ registries, rng: createRng(71), gameProfile: profile, combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 100, maxHp: 100, maxMana: 5, mana: 5, maxStamina: 5, stamina: 5, energyMax: 5, drawPerTurn: 1, deck: [] } });

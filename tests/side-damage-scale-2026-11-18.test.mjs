@@ -18,7 +18,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const shipped = Profile.resolveGameProfile('default');
 // The soldier opens with its Slash, so the enemy side has a hit to price.
 const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, firstMove: 'slash' } : enemy) };
-const KEYS = ['playerDamageMultiplier', 'enemyDamageMultiplier', 'blockGainMultiplier', 'spellPoiseDamageMultiplier'];
+const KEYS = ['playerDamageMultiplier', 'enemyDamageMultiplier', 'blockGainMultiplier', 'spellPoiseDamageMultiplier', 'physicalDamageMultiplier'];
 /** The shipped profile with `effects` settings overridden (a re-hashed snapshot), bound into registries. */
 function variant(overrides = {}) {
   const profile = structuredClone(shipped);
@@ -46,7 +46,8 @@ test('the shipped Core sets the four new effects settings and the module default
   const effects = shipped.modules.effects;
   assert.equal(effects.playerDamageMultiplier, 0.7);
   assert.equal(effects.enemyDamageMultiplier, 0.7);
-  assert.equal(effects.blockGainMultiplier, 0.7);
+  assert.equal(effects.blockGainMultiplier, 0.49, 'owner, 2026-11-18: 0.7, then another 0.7 for the playtest');
+  assert.equal(effects.physicalDamageMultiplier, 0.7);
   assert.equal(effects.spellPoiseDamageMultiplier, 2);
   const defaults = JSON.parse((await import('node:fs')).readFileSync(new URL('../engine/modules/effects/defaults.json', import.meta.url), 'utf8'));
   for (const key of KEYS) assert.equal(defaults[key], 1, `${key} defaults to 1`);
@@ -75,7 +76,8 @@ test('a player hit takes the player side scale as one receipt stage', () => {
   assert.equal(scaleRow(plain), undefined, 'a neutral profile has no side stage');
   assert.equal(scaleRow(scaled)?.multiplier, 0.7);
   assert.ok(plain.incoming > 1 && scaled.incoming < plain.incoming);
-  assert.ok(scaled.incoming >= Math.floor(plain.incoming * 0.7) && scaled.incoming <= Math.floor((plain.incoming + 1) * 0.7), `${plain.incoming} -> ${scaled.incoming}`);
+  // A neutral profile pins the physical cut to 1 too, so the shipped hit carries the side scale and the physical x0.7 (owner, 2026-11-18): x0.49.
+  assert.ok(scaled.incoming >= Math.floor(plain.incoming * 0.49) && scaled.incoming <= Math.floor((plain.incoming + 1) * 0.49), `${plain.incoming} -> ${scaled.incoming}`);
 });
 
 test('an enemy hit takes the enemy side scale and a Counter return is not scaled again', () => {
@@ -109,7 +111,7 @@ test('Block gain takes blockGainMultiplier, floored, in computeBlockGain', () =>
   const gain = world => { const combat = begin(world); return computeBlockGain(combat, combat.player, 5); };
   const scaled = gain(shippedWorld), plain = gain(variant(NEUTRAL));
   assert.ok(plain >= 5);
-  assert.ok(scaled < plain && scaled >= Math.floor(plain * 0.7) && scaled <= Math.floor((plain + 1) * 0.7), `${plain} -> ${scaled}`);
+  assert.ok(scaled < plain && scaled >= Math.floor(plain * 0.49) && scaled <= Math.floor((plain + 1) * 0.49), `${plain} -> ${scaled}`);
   assert.equal(gain(variant({ blockGainMultiplier: 0 })), 0);
 });
 
@@ -143,9 +145,9 @@ test('a static card face shows the player side scale', () => {
   const run = createRunState({ registries: shippedWorld.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strike = shippedWorld.registries.cards.get('core.strike');
   const line = def => cardFaceLines(def, undefined, shippedWorld.registries, run).find(row => row.kind === 'damage').html.replace(/<[^>]+>/g, '');
-  assert.equal(line(strike), '2 damage', 'ceil(6 x 0.5) = 3, then floor(3 x 0.7) = 2');
+  assert.equal(line(strike), '1 damage', 'ceil(6 x 0.5) = 3, then floor(3 x 0.7 x 0.7) = 1 (physical cut, then side scale)');
   const ranked = playingCardDefinition(shippedWorld.registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
-  assert.equal(line(ranked), '2 damage', 'rank 2: ceil(7 x 0.5) = 4, floor(4 x 0.7) = 2');
+  assert.equal(line(ranked), '1 damage', 'rank 2: ceil(7 x 0.5) = 4, floor(4 x 0.7 x 0.7) = 1');
 });
 
 test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the preview quotes the played total', () => {
@@ -157,7 +159,7 @@ test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the pre
   };
   const scaled = quote(shippedWorld), plain = quote(variant(NEUTRAL));
   assert.ok(plain.value >= 2);
-  assert.ok(scaled.value < plain.value && scaled.value >= Math.floor(plain.value * 0.7) && scaled.value <= Math.floor((plain.value + 1) * 0.7), `${plain.value} -> ${scaled.value}`);
+  assert.ok(scaled.value < plain.value && scaled.value >= Math.floor(plain.value * 0.49) && scaled.value <= Math.floor((plain.value + 1) * 0.49), `${plain.value} -> ${scaled.value}`);
   const { combat } = scaled;
   const had = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'ward' });
