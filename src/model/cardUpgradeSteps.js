@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -21,8 +21,12 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
+  // Easing a drawback (playtest 2026-11-17, theme C): offered only on a card that has it, and weighted to come up.
+  'fx:unethereal': 12, 'fx:steady': 12,
   // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
   attr: 2 });
+/** Every option kind a rolled upgrade can be; a card's `upgradeMenu` names a subset of these (theme C, playtest 2026-11-17). */
+export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
 // A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
 // cantrip upgrades add +1 stack); every other status keeps STACK_CAPS, or none.
 const CANTRIP_STACK_CAP = 5;
@@ -190,6 +194,8 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   if (!keywords.includes('retain') && !keywords.includes('ethereal')) set('retain');
   if (!keywords.includes('innate')) set('innate');
   if (keywords.includes('exhaust')) set('unexhaust');
+  if (keywords.includes('ethereal')) set('unethereal');
+  if (risingCost(current)) set('steady');
   if (!hasOp(effects, 'retain')) set('holdOne');
   const boosted = (stat) => effects.some((e) => (e.op === 'applyStatus' && e.thisTurn === true && e.status === stat) || (e.op === 'changeAttribute' && e.attribute === stat));
   // A boost is a live attribute change (engine/liveStats.js): STR for an attack, DEX for a block, INT for a spell's damage, WIS for a
@@ -207,6 +213,8 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
 }
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
+/** Whether the card's cost still rises with each play (an upgrade's `steady` sets the growth to 0). */
+const risingCost = (card) => !!card.costGrowth && ((card.costGrowth.stamina || 0) > 0 || (card.costGrowth.mana || 0) > 0);
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
@@ -327,7 +335,12 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const found = options(baseDef, current, applied, limits);
-  const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);
+  // An authored `upgradeMenu` limits the rolled options to the kinds it names (Star Seer's Ethereal: Reaction, drop Ethereal or more Block).
+  // A ranked ability card's grade table owns its numbers, so it applies only drawback-removal steps (cardUpgrade.js DrawbackSteps):
+  // it is offered only those, so the offer equals the effect (review of #2819).
+  const menu = Array.isArray(baseDef.upgradeMenu) ? baseDef.upgradeMenu
+    : Array.isArray(baseDef.gradeProfiles) ? DrawbackSteps.map((fx) => `fx:${fx}`) : null;
+  const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)));
   const out = [];
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {

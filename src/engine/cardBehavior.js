@@ -9,7 +9,8 @@ export function projectCardBehavior(ctx, instance, def) {
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (def.costGrowth) {
-    const growth=def.costGrowth, plays=ctx.player.abilityRiders?.cardUsesCombat?.[instance.cardId] || 0;
+    // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
+    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=def.costGrowth;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;

@@ -68,6 +68,9 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.effects'), extras(before), extras(after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
+  // A rising cost (costGrowth) and the steady step that stops it (review of #2819: the picker named no change for it).
+  const rising = (def) => (def?.costGrowth?.stamina > 0 ? t('cardUpgrade.value.risingCost', { n: def.costGrowth.stamina }) : t('cardUpgrade.value.steadyCost'));
+  push(t('cardUpgrade.change.risingCost'), rising(before), rising(after));
   const from = statusStacks(before), to = statusStacks(after);
   if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
   return freeze(out);
