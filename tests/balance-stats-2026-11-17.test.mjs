@@ -69,14 +69,16 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
   const strike = registries.cards.get('core.strike');
   const previous = structuredClone(run.gameProfile);
   delete previous.modules.effects.baseDamageMultiplier;
+  delete previous.modules.effects.playerDamageMultiplier;
   delete previous.hash;
   previous.hash = gameDigest(previous);
   const beforeBalance = { ...run, gameProfile: previous };
   const damageLine = (def, rules, preview) => cardFaceLines(def, preview, registries, rules)
     .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
 
-  assert.equal(damageLine(strike, run), '3 damage');
-  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes the authored 7 before rounding the scaled base up');
+  // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
+  assert.equal(damageLine(strike, run), '2 damage');
+  assert.equal(damageLine(ranked, run), '2 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), then floor(4 x 0.7)');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');

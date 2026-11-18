@@ -62,6 +62,8 @@ test('a paused display capture retains the painted quote and ordered hand instan
     registries, projectCombatIntent, previewCard, followMemo: createFollowMemo(),
     paintedHandQuotes: new Map(), upcastRanksByCard: new Map(),
   };
+  // The knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it, so lend the Strike attack rating.
+  combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
   const before = CaptureCombatDisplay(combat, options);
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: combat.enemies[0].id });
   assert.ok(combat.pendingReaction);

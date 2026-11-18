@@ -9,14 +9,13 @@ const RANK_UP_KIND = 'rankUpCard';
 const ROW_CLASS = 'rank-up-option';
 const FALLBACK_ART_GLYPH = 'attack';
 
-function findCardArtPath(card, definition, registries)
+function findCardArt(card, definition, registries)
 {
-    const cardArt = PlayingCardArtworkOrNull(
+    return PlayingCardArtworkOrNull(
         card.cardId,
         definition,
         registries,
     );
-    return cardArt?.path || null;
 }
 
 function buildRankUpRow(card, registries, run)
@@ -27,7 +26,7 @@ function buildRankUpRow(card, registries, run)
         ...card,
         rank: rank + 1,
     };
-    const artPath = findCardArtPath(
+    const cardArt = findCardArt(
         card,
         definition,
         registries,
@@ -41,10 +40,11 @@ function buildRankUpRow(card, registries, run)
             to: rank + 1,
         }),
         chip: translate('rankUp.pick.slots', { slots: UpgradeSlots(run, rankedUpCard) }),
-        artAsset: artPath,
-        artGlyph: artPath
+        artAsset: cardArt?.path || null,
+        artGlyph: cardArt?.path
             ? null
             : FALLBACK_ART_GLYPH,
+        artComposition: cardArt,
     };
 }
 

@@ -58,7 +58,7 @@ test('a charging turn takes no HP, and the next turn the move lands as an attack
   dispatch(combat, { type: 'endTurn' });
   while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
   assert.equal(combat.player.hp, hp, 'the charging turn cost the player nothing');
-  assert.equal(enemy.block >= 5, true, 'the Block was gained now');
+  assert.equal(enemy.block >= Math.floor(5 * 0.7), true, 'the Block was gained now (the authored 5 takes the Core blockGainMultiplier 0.7)');
   assert.ok(enemy.pendingMove, 'the move is committed');
   // Landing turn: an ordinary attack, no charging state.
   const landing = projectCombatIntent(combat, enemy.id);

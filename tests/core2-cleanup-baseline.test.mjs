@@ -169,6 +169,8 @@ const scenarios = [
     assert.deepEqual([quote.sp, quote.advanceSp, quote.totalSp], [1, 1, 2]);
     const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
     assert.ok(strike);
+    // The knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it.
+    combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
     const before = checkpoint(api, combat);
     const { cost, manaCost, staminaCost, values, damageSequences } = api.previewCard(combat, strike.instanceId, enemy.id);
     assert.deepEqual(checkpoint(api, combat), before, 'preview does not mutate the save or draw RNG');

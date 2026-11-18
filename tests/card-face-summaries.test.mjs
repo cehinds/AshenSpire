@@ -259,7 +259,7 @@ test('each Evade card face names every effect it has, in at most three short lin
       'core.backstep': [/Evade 1/, /Retreat/, /Prepared/],
       acrobaticsRogue: [/Evade 1/, /\+1 DEX this turn/, /Draw 2/, /[Dd]iscard 1/],
       shadowstep: [/Evade 2/, /Advance/, /Prepared/],
-      crawlingShot: [scaled ? /2 Piercing damage/ : /4 Piercing damage/, /Evade 1/, /Retreat/],
+      crawlingShot: [scaled ? /1 Piercing damage/ : /4 Piercing damage/, /Evade 1/, /Retreat/],
       'progression-nightstep': [/\+1 INT this turn/, /Evade 2/],
     };
     for (const [cardId, patterns] of Object.entries(expected)) {
