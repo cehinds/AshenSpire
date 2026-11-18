@@ -44,7 +44,20 @@ Owner rule: each relic acts on **one fixed node type**. No relic lets the player
 | Mystery Map | uncommon | Every node becomes an unknown (?) |
 | Hearthstone | rare | Every node becomes a rest |
 
-**Conflict to settle:** the approved Fateweaver Coin lets the player pick which of two outcomes an unknown node becomes, which breaks the "never choose the type" rule. Proposed replacement: **Fateweaver Coin (rare): unknown (?) nodes never roll a normal combat.**
+**Owner decisions:**
+- **Fateweaver Coin keeps its pick.** It is the one exception to the "never choose the type" rule.
+- **The removal and conversion relics are approved and super rare.** Each has a drop chance (and the same chance to appear in a trader's stock) of 0.1–5%, weighted heavily toward 0.1–1%.
+- **Relics at 1–5% carry a drawback.** The higher the chance, the bigger the drawback or the weaker the effect.
+
+| Relic | Drop / shop chance | Drawback |
+|---|---|---|
+| Hearthstone | 0.1% | none |
+| Merchant's Bell | 0.3% | none |
+| Forge Ember | 0.3% | none |
+| Ward of Passage | 0.5% | none |
+| Bounty Writ | 0.8% | none (elites are their own risk) |
+| Mystery Map | 2% | each use costs 15 gold |
+| Smoke Bomb | 5% | each use: take 6 damage, and the next fight starts with 1 Vulnerable |
 
 ## Teleport Scroll (card)
 
