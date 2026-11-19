@@ -1,6 +1,7 @@
 [
   {
     "id": "gorefire",
+    "maneuver": "attack",
     "class": "reaver",
     "name": "Gorefire Stance",
     "icon": "burn",
@@ -38,6 +39,7 @@
   },
   {
     "id": "bulwark",
+    "maneuver": "defend",
     "class": "reaver",
     "name": "Bulwark Stance",
     "icon": "shield",
@@ -68,6 +70,7 @@
   },
   {
     "id": "brace",
+    "maneuver": "defend",
     "class": "reaver",
     "name": "Brace",
     "icon": "motion",

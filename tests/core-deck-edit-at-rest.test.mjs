@@ -66,7 +66,7 @@ test('the Core rest component offers the deck-opt door, which is not a service a
   assert.doesNotMatch(door.slice(0, door.indexOf('// The recovery ledger')), /onCommit|commit\(|visit\.service/);
   const run = make(core, coreRegistries);
   run.mapGraph = buildActMap(coreRegistries, createRng(7), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   assert.equal(visit.service, null);
 });

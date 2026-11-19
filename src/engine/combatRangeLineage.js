@@ -53,8 +53,11 @@ function sourceStatuses(ctx,source,actions) {
   while(changed) { changed=false; for(const {trigger} of Triggers.rangeHookSources(ctx,source,[...ids])) for(const effect of trigger.do || []) if(effect.op==='applyStatus' && ['self','owner'].includes(effect.target) && !ids.has(effect.status)){ids.add(effect.status);changed=true;} }
   return [...ids];
 }
-function sampledTargets(ctx,source,target,effect,carrier) {
-  return Actions.resolveTargets(ctx,{source,owner:source,target,card:carrier,effect,meta:{}},effect.target);
+// `died` lists enemies that already died earlier in this causal chain: at play
+// time they are not living, so a random selector must not sample them here.
+function sampledTargets(ctx,source,target,effect,carrier,died=[]) {
+  const view=died.length?Object.assign(Object.create(ctx),{enemies:ctx.enemies.filter(enemy=>!died.includes(keyOf(ctx,enemy)))}):ctx;
+  return Actions.resolveTargets(view,{source,owner:source,target,card:carrier,effect,meta:{}},effect.target);
 }
 export function assertPreparingRangeSupported(ctx,source,def) {
   if(!ctx.rangeState?.policy.enabled) return;
@@ -82,11 +85,17 @@ export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,c
   const sourceContact=(target,card,effect,id)=>Engagement.rangeSourceContact(ctx,source,target,card,effect,id);
   const maxEvents=combatRules.triggers.maxEvents;
   const maxDepth=combatRules.triggers.maxDepth;
-  const visit=(site,card,path=[])=>{
+  // An enemy dies at most once per causal chain: once `enemyDied` fired for a
+  // target on the way to a site, no descendant of that site can kill it again.
+  // Without this a randomEnemy rider on enemyDied (Carrion Talon) with one enemy
+  // left recurses damage -> enemyDied -> damage until the depth guard throws.
+  const visit=(site,card,path=[],died=[])=>{
     if(sites.length>maxEvents || edges.length>maxEvents || path.length>maxDepth) throw Rules.playRefusal('This action has an unbounded range-trigger envelope','range');
     const target=find(ctx,site.targetKey);
     for(const event of site.events) for(const hook of hooks) {
+      if(event.type==='enemyDied' && died.includes(site.targetKey))continue;
       if(hook.trigger.on!==event.type || gateSpent(ctx,hook) || !possible(hook.trigger.if,event,sourceKey,site.targetKey,card))continue;
+      const childDied=event.type==='enemyDied'?[...died,site.targetKey]:died;
       const prior=path.filter(key=>key===hook.key).length;
       const limit=hook.trigger.once ? 1 : hook.trigger.limitPerTurn;
       if(limit!=null && prior>=limit)continue;
@@ -97,14 +106,14 @@ export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,c
         const probe={source,owner:source,target,card,effect,meta:{}};
         const repeats=Math.max(0,Math.floor(evaluate(effect.repeat ?? 1,Actions.formulaCtxFor(ctx,probe,target))));
         const hits=effect.op==='damage'?Math.max(0,Math.floor(evaluate(effect.hits ?? 1,Actions.formulaCtxFor(ctx,probe,target)))):1;
-        for(let r=0;r<repeats;r++)for(let h=0;h<hits;h++)for(const childTarget of sampledTargets(ctx,source,target,effect,card)) {
+        for(let r=0;r<repeats;r++)for(let h=0;h<hits;h++)for(const childTarget of sampledTargets(ctx,source,target,effect,card,childDied)) {
           const targetKey=keyOf(ctx,childTarget),childId=`s${sites.length}`;
           const delivery=effect.attack || effect.tags ? flags(sourceContact(childTarget,{},effect,childId)) : site.delivery;
           const contactId=hostile.has(effect.op)&&source.kind!==childTarget.kind?`rider:${childId}`:null;
           if(contactId) contacts.push({contactId,targetKey,...delivery});
           const child={id:childId,targetKey,parentId:site.id,events:eventsFor(ctx,effect,childTarget),delivery};
           sites.push(child);edge.targets.push({targetKey,siteId:childId,contactId,batch:r*hits+h});
-          visit(child,{},[...path,hook.key]);
+          visit(child,{},[...path,hook.key],childDied);
         }
       }
     }

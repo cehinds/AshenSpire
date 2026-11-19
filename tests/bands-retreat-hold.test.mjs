@@ -95,3 +95,83 @@ test('a repeated Advance spends a stack each time, even at full Advance duration
   assert.equal(stacks(enemy), 0);
   assert.equal(SetAdvanced(combat, combat.player, true), false, 'with no stacks left and full duration it does nothing');
 });
+
+// Codex on PR #2835 (bandRows.js:172): a held enemy's approach spends ONE stack and does not move; the queued melee behind it must not land
+// as if in range, nor wipe the other stacks through its implicit Advance. The plan shows an approach per stack; the plan shown is the plan played.
+function heldPlan(seed, stackCount) {
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier'], seed, hand: ['core.retreat'] });
+  const enemy = combat.enemies[0];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
+  enemy.statuses.retreat = { stacks: stackCount + 1 }; enemy.maxStamina = 6; // the first end turn plans a 6-SP turn (and may spend one stack)
+  endTurn(combat);
+  const start = stacks(enemy);
+  const shown = [enemy.intent?.moveId, ...(enemy.plannedMoves || []).map(entry => entry.moveId)];
+  const mark = combat.eventLog.length;
+  endTurn(combat);
+  return { combat, enemy, start, shown, events: combat.eventLog.slice(mark) };
+}
+
+test('a 6-SP plan with several stacks: each approach spends one, the enemy stays back, and no Slash lands while it holds a stack', () => {
+  let held = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    const { enemy, start, events } = heldPlan(seed, 3);
+    let left = start;
+    for (const event of events) {
+      if (event.type === 'combatEngagementMoved' && event.sourceId === enemy.id && left > 0) assert.equal(event.bands, 0, `seed ${seed}: a held approach announces no band move`);
+      if (event.type === 'statusRemoved' && event.status === 'retreat' && event.targetId === enemy.id) left--;
+      assert.ok(!(event.type === 'combatRowChanged' && event.targetId === enemy.id && event.reason === 'advance'), `seed ${seed}: no implicit Advance wipes the stacks`);
+      if (event.type === 'damageDealt' && left > 0) assert.fail(`seed ${seed}: a melee attack landed while the enemy still held ${left} Retreat stacks`);
+      if (event.type === 'combatRowChanged' && event.targetId === enemy.id && event.reason === 'approach') assert.equal(left, 0, `seed ${seed}: it steps forward only with no stacks left`);
+    }
+    assert.equal(stacks(enemy), Math.max(0, left), `seed ${seed}: stacks match the approaches played`);
+    if (stacks(enemy) > 0) { held++; assert.equal(enemy.row, 'back', `seed ${seed}: still holding stacks, still in the back row`); }
+  }
+  assert.ok(held > 0, 'some seed ends the turn still holding stacks');
+});
+
+test('with one stack the approach spends it and the next Advance moves the enemy forward', () => {
+  let stepped = 0, guarded = 0;
+  for (let seed = 1; seed <= 60; seed++) {
+    const { combat, enemy, start, events } = heldPlan(seed, 0);
+    if (start !== 1) continue; // the first end turn already spent it; only a plan read with one stack held applies
+    const removed = events.filter(e => e.type === 'statusRemoved' && e.status === 'retreat').length;
+    const forward = events.findIndex(e => e.type === 'combatRowChanged' && e.targetId === enemy.id && ['approach', 'advance'].includes(e.reason));
+    const spentAt = events.findIndex(e => e.type === 'statusRemoved' && e.status === 'retreat');
+    if (forward >= 0) { stepped++; assert.ok(spentAt >= 0 && spentAt < forward, `seed ${seed}: the stack is spent first, then the step forward`); assert.equal(enemy.row, 'front'); }
+    assert.ok(removed <= 1, `seed ${seed}: one stack, one removal`);
+    const firstHit = events.findIndex(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
+    if (firstHit >= 0) guarded++;
+    if (firstHit >= 0) assert.ok(events.slice(0, firstHit).filter(e => e.type === 'enemyMoveStarted' && e.moveId === 'advance').length >= 2, `seed ${seed}: the stack takes one approach and the step forward a second one before any melee lands`);
+    assert.ok(combat.enemies[0] === enemy);
+  }
+  assert.ok(stepped > 0 && guarded > 0, 'some seed plays the second approach and steps forward');
+});
+
+test('intents shown equal moves played for a held enemy with a multi-action plan', () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    const { shown, events } = heldPlan(seed, 3);
+    const played = events.filter(e => e.type === 'enemyMoveStarted').map(e => e.moveId);
+    assert.deepEqual(played, shown.filter(Boolean).slice(0, played.length), `seed ${seed}: the plan shown is the plan played`);
+    assert.ok(played.length > 0);
+  }
+});
+
+// Reviewer on PR #2835: a charged (prepaid) melee that resolves from the back row, after a Retreat gave the charger stacks, must not land.
+// It spends one stack as its approach and fizzles; the old code stepped it forward, wiped the stacks and hit.
+test('a charged melee resolving from the back row with stacks spends one stack, stays back and does not land', () => {
+  const combat = bandsFight({ enemyIds: ['bellKeeper'], hand: ['core.retreat'] });
+  const enemy = combat.enemies[0];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
+  assert.equal(enemy.row, 'back');
+  enemy.statuses.retreat = { stacks: 3 };
+  enemy.plannedMoves = []; enemy.planDue = false;
+  enemy.intent = { kind: 'attack', moveId: 'bronzeToll', pending: true };
+  enemy.pendingMove = { moveId: 'bronzeToll', resolveOnTurn: combat.turn, spPayment: { sp: 1, advanceSp: 0, totalSp: 1 } };
+  const hp = combat.player.hp, mark = combat.eventLog.length;
+  endTurn(combat);
+  const events = combat.eventLog.slice(mark);
+  assert.equal(combat.player.hp, hp, 'the charged melee did not land');
+  assert.ok(!events.some(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.moveId === 'bronzeToll'));
+  assert.equal(enemy.row, 'back');
+  assert.equal(stacks(enemy), 2, 'one stack spent as the approach, the rest kept');
+});

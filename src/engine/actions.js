@@ -5,7 +5,7 @@ import * as Engagement from './combatEngagement.js';
 import { SwapEnemyRows, PullEnemy } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
-import { stanceEffectiveness } from '../model/stanceRules.js';
+import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
 import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -62,6 +62,7 @@ import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { reconcileRunLoadoutHp } from '../model/loadout/cardMods.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { cardUpgradeStepsOn, freeCardUpgradeStep, applyFreeCardUpgrade } from '../model/cardUpgradeService.js';
@@ -2089,7 +2090,11 @@ export const OPCODE_HANDLERS = Object.freeze({
       if(eff.maneuver || eff.choose==='maneuver') {
         const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
         for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
-          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          // The pick, not the card's own maneuver, is the stance the figure ends in. Already there (a Defend pick on a card
+          // that resolved in Defend): nothing to change, so the per-card Defend restore does not run twice. A different pick
+          // keeps the entry grant of the stance entered: choosing the stance is the card's point (numbers as on dev).
+          if(stanceOf(entity.combatStance)?.maneuver===(maneuver==='prepared'?'casting':maneuver)) continue;
+          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'},stanceFromEffect:true};
           Matchups.setCombatStance(ctx,entity,carrier);
         }
         return;
@@ -2102,12 +2107,26 @@ export const OPCODE_HANDLERS = Object.freeze({
       // stance (tests/warriors-vow.test.mjs pins the throw).
       if (eff.choose && stanceId == null) throw new Error(`enterStance choose '${eff.choose}' needs a play choice; only a played card supplies one`);
       const def = ctx.registries.stances.get(stanceId);
-      if (ctx.player.stanceId === stanceId) return; // already in it: no-op (StS)
+      // Entering a stance by card is a real stance change: the Core combat stance follows the stance row's maneuver
+      // (the same setter a maneuver card uses), so the sprite, icon, benefits and matchups all read it.
+      const followCombatStance = () => {
+        if (!def.maneuver) return;
+        // Already in that stance (the card's own maneuver put the figure there): nothing to change, and the setter's
+        // per-accepted-card Defend restore must not run a second time.
+        if (stanceOf(ctx.player.combatStance)?.maneuver === def.maneuver) return;
+        const carrier = { ...action.card, combatProfile: { ...action.card?.combatProfile, maneuver: def.maneuver, stanceTrigger: true,
+          range: action.card?.combatProfile?.range || 'melee', camp: action.card?.combatProfile?.camp || 'physical' },
+          // A registry stance entry pays no maneuver entry grant (the card does not show one): only the stance changes.
+          registryStanceEntry: true, stanceFromEffect: true };
+        Matchups.setCombatStance(ctx, ctx.player, carrier);
+      };
+      if (ctx.player.stanceId === stanceId) { followCombatStance(); return; } // already in it: no registry change (StS)
       if (ctx.player.stanceId) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
       ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
+      followCombatStance();
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
@@ -2327,6 +2346,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
+        reconcileRunLoadoutHp(ctx.registries, run); // relic properties (maxMana1) raise the pools the moment it is held
       }
       return;
     },
