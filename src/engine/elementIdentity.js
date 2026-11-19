@@ -88,6 +88,11 @@ export function ElementReceiptStages(ctx, source, target, carrier, raw) {
   if (carrier?.elementChain) push('element-chain', 'Lightning chains', rules.lightning.chainMultiplier);
   push('element-burn', 'Burn: damage taken', 1 + rules.burn.damageTakenPerStack * stacksOf(target, 'burn'));
   if (element === 'lightning') push('element-shock', 'Shock: lightning taken', 1 + rules.shock.lightningTakenPerStack * stacksOf(target, 'shock'));
+  // One tag per element (owner, 2026-11-18): a target's <Element> Vulnerable stacks raise the damage of that element it takes.
+  for (const [id, inst] of Object.entries(target?.statuses || {})) {
+    const row = inst?.stacks > 0 ? ctx.registries?.statuses?.get(id)?.elementVulnerability : null;
+    if (row && element === row.element) push(`element-vulnerable-${row.element}`, `${row.element[0].toUpperCase()}${row.element.slice(1)} Vulnerable`, 1 + row.perStack * inst.stacks);
+  }
   if (stacksOf(target, 'brittle') > 0) push('element-brittle', 'Brittle', rules.frost.brittleMultiplier);
   const undead = ElementHasTag(ctx, target, rules.necrotic.undeadTag);
   if (element === 'divine' && undead) push('element-divine-undead', 'Divine against the undead', rules.divine.undeadMultiplier);

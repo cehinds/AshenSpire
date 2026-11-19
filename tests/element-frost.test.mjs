@@ -1,8 +1,11 @@
-// W25 (owner, 2026-11-14) Frost: every frost hit applies Chill = 1 (+1 per 3 INT). Chill: -5% damage dealt per stack, the unit's next turn starts with
+// Current Frost uses shared casting: Chill = 1 + floor(max(INT, WIS) / 3). Archived W25 Frost retains 1 + floor(INT / 3).
+// Chill: -5% damage dealt per stack, the unit's next turn starts with
 // -1 Stamina per 3 stacks, -1 stack per turn. A Poise break on a Chilled target Freezes it (loses its next action) and makes it Brittle (its next hit
 // taken x1.5, then Brittle ends).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { fight, play } from './elementFixture.mjs';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { getStacks, decayAtTurnStart } from '../src/engine/statuses.js';
@@ -16,9 +19,12 @@ const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row =>
 
 // core.frostNip is a cantrip that prints Chill itself (w25-cantrips: a school cantrip carries its school status), so a hit adds the rule's stacks to it.
 const FROST_NIP_PRINTED_CHILL = 3;
-test('every frost hit applies 1 Chill plus 1 per 3 INT, to a single target', () => {
+const archivedGearProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/gear-profile-62323292.json.gz', import.meta.url))));
+test('historical gear-parent frost applies 1 Chill plus 1 per 3 INT, to a single target', () => {
   for (const [intelligence, stacks] of [[0, 1], [2, 1], [3, 2], [4, 2], [6, 3], [9, 4]]) {
-    const { combat, enemies } = fight({ enemies: 2, attributes: { intelligence } });
+    const { combat, enemies } = fight({ profile: archivedGearProfile, enemies: 2, attributes: { intelligence } });
+    assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+    assert.equal(combat.fixCoreRules.spellTraditionsVersion, undefined);
     play(combat, 'core.frostNip', enemies[0].id);
     assert.equal(getStacks(enemies[0], 'chill'), stacks + FROST_NIP_PRINTED_CHILL, `INT ${intelligence}`);
     assert.equal(getStacks(enemies[1], 'chill'), 0, 'frost never spreads by element');
@@ -26,6 +32,17 @@ test('every frost hit applies 1 Chill plus 1 per 3 INT, to a single target', () 
   const old = fight({ enemies: 1, legacy: true });
   play(old.combat, 'core.frostNip', old.enemy.id);
   assert.equal(getStacks(old.enemy, 'chill'), FROST_NIP_PRINTED_CHILL, 'an old fight adds no element Chill: only the card\'s printed Chill');
+});
+
+test('current Frost uses the higher of explicit INT and WIS for Chill and never spreads', () => {
+  for (const [intelligence, wisdom] of [[0, 0], [2, 0], [3, 0], [0, 3], [2, 8], [8, 2], [6, 6], [9, 9]]) {
+    const { combat, enemies } = fight({ enemies: 2, attributes: { intelligence, wisdom } });
+    assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+    assert.equal(combat.fixCoreRules.spellTraditionsVersion, 1);
+    play(combat, 'core.frostNip', enemies[0].id);
+    assert.equal(getStacks(enemies[0], 'chill'), 1 + Math.floor(Math.max(intelligence, wisdom) / 3) + FROST_NIP_PRINTED_CHILL, `INT ${intelligence}, WIS ${wisdom}`);
+    assert.equal(getStacks(enemies[1], 'chill'), 0, 'frost never spreads by element');
+  }
 });
 
 test('Chill: -5% of the damage the chilled unit deals, per stack', () => {

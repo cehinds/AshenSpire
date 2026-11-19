@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/actionCosts.js",
-    "symbol": "actionStance"
+    "file": "src/engine/gearHooks.js",
+    "symbol": "QueueGearCardPlayed"
   }
 }

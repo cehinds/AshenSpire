@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { fight, play, profile } from './elementFixture.mjs';
+import { fight, play, profile, reg } from './elementFixture.mjs';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { ElementTurnEnd } from '../src/engine/elementIdentity.js';
@@ -49,7 +49,7 @@ test('archived 6727 with elements enabled retains INT build-up and leaves the li
   const archivedBefore = structuredClone(archivedProfile);
   const liveBefore = structuredClone(profile);
   for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
-    const { combat, enemy } = fight({ profile: archivedProfile, enemies: 1, poise: 0, attributes: { intelligence, wisdom: 9 } });
+    const { combat, enemy } = fight({ registries: reg, profile: archivedProfile, enemies: 1, poise: 0, attributes: { intelligence, wisdom: 9 } });
     assert.equal(combat.fixCoreRules.elements.version, 1, 'the archived fight still has element rules');
     play(combat, 'core.graveToll', enemy.id);
     assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `archived INT ${intelligence}, WIS 9`);

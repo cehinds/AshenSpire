@@ -3,14 +3,15 @@ import { gameContent } from '../model/gameProfile.js';
 // Runtime projections of authored behavior. The same definition is used for
 // presentation, affordability and actual effect execution.
 import * as Triggers from './triggers.js';
-export function projectCardBehavior(ctx, instance, def) {
-  let result=def;
+import { GearCardDefinition } from './gearHooks.js';
+export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {}) {
+  let result=applyGear ? GearCardDefinition(ctx,def) : def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
-  if (def.costGrowth) {
+  if (result.costGrowth) {
     // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
-    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=def.costGrowth;
+    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=result.costGrowth;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;
@@ -43,7 +44,7 @@ export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;
   const meta={energySpent:paid.energy || 0,manaSpent:paid.mana || 0,staminaSpent:paid.stamina || 0};
   const variant=def.effectVariants.find(row=>Triggers.evalPredicate(ctx,row.if,{source:ctx.player,owner:ctx.player,target,card:def,meta}));
-  return variant ? {...def,effects:variant.effects,...(variant.textTemplate ? {textTemplate:variant.textTemplate} : {}),activeEffectVariant:def.effectVariants.indexOf(variant)} : def;
+  return variant ? {...def,effects:variant.effects,...(variant.gearApplied ? {gearApplied:variant.gearApplied} : {}),...(variant.textTemplate ? {textTemplate:variant.textTemplate} : {}),activeEffectVariant:def.effectVariants.indexOf(variant)} : def;
 }
 
 export function weaponDamageBasis(ctx,actor=ctx.player) {

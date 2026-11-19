@@ -6,6 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
 import { SpellTraditionsActive, SpellScalingValue } from '../src/model/spellTraditions.js';
@@ -50,24 +51,32 @@ test('fresh Core snapshots assign only Health to CON and Poise/Mana to WIS', () 
 test('real allocations pay SP/MP/hand only on the saved fourth-point thresholds', () => {
   for (const [attribute, pool] of [['dexterity', 'maxStamina'], ['wisdom', 'maxMana']]) {
     const run = makeRun();
-    run.attributes[attribute] = 2;
+    const offset = gameProfileEffectiveAttributes(registries, run)[attribute] - run.attributes[attribute];
+    run.attributes[attribute] = 2 - offset;
     rederivePools(registries, run, 'threshold fixture');
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 2);
     const before = run[pool];
     run.level.unspentPoints = 2;
     allocateAttributePoint(registries, run, attribute);
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 3);
     assert.equal(run[pool], before, `${attribute} 2 -> 3`);
     allocateAttributePoint(registries, run, attribute);
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 4);
     assert.equal(run[pool], before + 1, `${attribute} 3 -> 4`);
   }
   const run = makeRun();
-  run.attributes.intelligence = 2;
+  const offset = gameProfileEffectiveAttributes(registries, run).intelligence - run.attributes.intelligence;
+  run.attributes.intelligence = 2 - offset;
   rederivePools(registries, run, 'hand fixture');
+  assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 2);
   const initial = profileHandSize(fight(run));
   const mana = run.maxMana;
   run.level.unspentPoints = 2;
   allocateAttributePoint(registries, run, 'intelligence');
+  assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 3);
   assert.equal(profileHandSize(fight(run)), initial);
   allocateAttributePoint(registries, run, 'intelligence');
+  assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 4);
   assert.equal(profileHandSize(fight(run)), initial + 1);
   assert.equal(run.maxMana, mana, 'INT no longer buys Mana');
 });

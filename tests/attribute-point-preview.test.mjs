@@ -11,6 +11,7 @@ import { createRunCombat } from './withoutWeaknesses.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { profileHandSize } from '../src/engine/gameProfileCombat.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 
 const build = (mutate = null) => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -136,26 +137,32 @@ test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4
 
 test('allocation preview and progression totals agree at threshold and nonthreshold points', () => {
   for (const attribute of ['constitution', 'wisdom', 'dexterity', 'intelligence']) {
-    for (const beforePoints of [3, 4]) {
+    const observedCadence = new Set();
+    for (const beforePoints of [3, 4, 5]) {
       const { registries, run } = build(character => {
         character.attributes[attribute] = beforePoints;
         character.level.unspentPoints = 1;
       });
       rederivePools(registries, run, 'test');
+      const effectiveBefore = gameProfileEffectiveAttributes(registries, run)[attribute];
+      const thresholdGain = Math.floor((effectiveBefore + 1) / 4) - Math.floor(effectiveBefore / 4);
+      observedCadence.add(thresholdGain);
       const predicted = new Map(attributePointGains(registries, run, attribute).map(gain => [gain.statId, gain.delta]));
       const before = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       const beforeUi = progressionStats(registries, run);
       assert.equal(beforeUi.rows.find(row => row.id === 'handSize').value, before.handSize);
       allocateAttributePoint(registries, run, attribute);
+      assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], effectiveBefore + 1);
       const after = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       for (const stat of Object.keys(before)) assert.equal(after[stat] - before[stat], predicted.get(stat) || 0, `${attribute} ${beforePoints}->${beforePoints + 1}: ${stat}`);
       const afterUi = progressionStats(registries, run);
       assert.equal(afterUi.rows.find(row => row.id === 'draw').value, after.handSize);
-      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, beforePoints === 3 ? 1 : 0);
-      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, beforePoints === 3 ? 1 : 0);
-      if (attribute === 'dexterity') assert.equal(predicted.get('stamina') || 0, beforePoints === 3 ? 1 : 0);
+      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, thresholdGain);
+      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, thresholdGain);
+      if (attribute === 'dexterity') assert.equal(predicted.get('stamina') || 0, thresholdGain);
       if (attribute === 'constitution') assert.equal(predicted.get('hp'), 5);
     }
+    if (attribute !== 'constitution') assert.deepEqual([...observedCadence].sort(), [0, 1], `${attribute}: exercise both a real crossing and a non-crossing with current gear`);
   }
 });
 

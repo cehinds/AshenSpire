@@ -11,6 +11,8 @@ import * as Profile from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { rederivePools } from '../src/model/levelup.js';
 import { staticCardTokens } from '../src/model/playingCard.js';
+import { evadeStackGainPhrase } from '../src/model/fixCoreMechanics.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
@@ -39,8 +41,8 @@ function fight(classId, { ownProfile = profile, attributes = {} } = {}) {
   return { run, combat, enemy, registries: reg };
 }
 const classes = (html) => [...html.matchAll(/<span class="(val[^"]*)">(\d+)<\/span>/g)].map(match => match[1].replace('val', '').trim() || 'black');
-function damageFace({ combat, enemy, registries: reg }, cardId) {
-  combat.piles.hand.push({ instanceId: `c-${cardId}-${combat.piles.hand.length}`, cardId });
+function damageFace({ combat, enemy, registries: reg }, cardId, instance = {}) {
+  combat.piles.hand.push({ instanceId: `c-${cardId}-${combat.piles.hand.length}`, cardId, ...instance });
   const inst = combat.piles.hand.at(-1);
   const preview = previewCard(combat, inst.instanceId, enemy.id);
   const def = reg.cards.get(cardId);
@@ -49,6 +51,17 @@ function damageFace({ combat, enemy, registries: reg }, cardId) {
     baseline: staticCardTokens(def, reg, preview.faceRules).damage, preview };
 }
 const damageClasses = (world, cardId) => damageFace(world, cardId).classes;
+function isolateAttributeColours(world) {
+  // These casts enter a beneficial stance, and Decay has its own damage multiplier.
+  // Keep Gear enabled while isolating channel ownership from these combat-only effects.
+  delete world.combat.fixCoreRules.stanceBenefits;
+  delete world.combat.fixCoreRules.elements;
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+}
+const unitDamageProfile = (modules = {}) => Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+  ...modules,
+  effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
+} });
 
 test('a face outside combat is always black', () => {
   const { run } = fight('starseer');
@@ -108,16 +121,12 @@ for (const [label, cardId, attributes, matching, other] of [
   ['shared INT', 'core.cinderDart', { intelligence: 8, wisdom: 2 }, 'intelligence', 'wisdom'],
   ['shared WIS', 'core.cinderDart', { intelligence: 2, wisdom: 8 }, 'wisdom', 'intelligence'],
 ]) test(`${label} faces use their own always-on baseline and colour only relevant fight changes`, () => {
-  const ownProfile = Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-    effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
-  } });
+  const ownProfile = unitDamageProfile();
   const world = fight('starseer', { ownProfile, attributes });
-  // Isolate the attribute baseline: these casts otherwise enter a beneficial stance,
-  // and Decay has its own damage multiplier. Unit side/physical scales also isolate
-  // channel ownership from split rounding. Original tests above retain stance/colour coverage.
-  delete world.combat.fixCoreRules.stanceBenefits;
-  delete world.combat.fixCoreRules.elements;
-  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  // Unit side/physical scales isolate split rounding; original tests retain full stance/colour coverage.
+  isolateAttributeColours(world);
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
   const first = damageFace(world, cardId);
   assert.deepEqual(first.classes, ['black']);
   assert.equal(first.value, first.baseline, 'the live forecast equals the face outside combat');
@@ -155,10 +164,12 @@ test('a genuine incoming Dev profile keeps its max(INT, WIS) face and live colou
 });
 
 for (const version of [undefined, 0]) test(`saved combat tradition policy ${version} wins over a current profile face`, () => {
-  const world = fight('starseer', { attributes: { intelligence: 8, wisdom: 2 } });
+  const world = fight('starseer', { ownProfile: unitDamageProfile(), attributes: { intelligence: 8, wisdom: 2 } });
+  isolateAttributeColours(world);
   if (version === undefined) delete world.combat.fixCoreRules.spellTraditionsVersion;
   else world.combat.fixCoreRules.spellTraditionsVersion = version;
   assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
   const face = damageFace(world, 'blightTouch');
   assert.equal(face.preview.faceRules.fixCoreRules.spellTraditionsVersion, version);
   assert.equal(face.value, face.baseline);
@@ -166,7 +177,63 @@ for (const version of [undefined, 0]) test(`saved combat tradition policy ${vers
   const def = world.registries.cards.get('blightTouch');
   assert.equal(staticCardTokens(def, world.registries, world.combat).damage, face.value, 'pile/combat face honors the saved policy');
   assert.equal(staticCardTokens(def, world.registries, { ...world.run, fixCoreRules: world.combat.fixCoreRules }).damage, face.value, 'saved run policy wins too');
-  assert.equal(staticCardTokens(def, world.registries, { faceAttributes: face.preview.faceRules.faceAttributes, fixCoreRules: world.combat.fixCoreRules }).damage, face.value, 'registry profile fallback retains the saved policy');
+  assert.equal(staticCardTokens(def, world.registries, { ...face.preview.faceRules, gameProfile: undefined }).damage, face.value, 'registry profile fallback retains the saved policy and Gear context');
+});
+
+test('current Sceptre damage enters the spell baseline once, while a triggered Gear bonus stays green and quote equals play', () => {
+  const world = fight('starseer', { ownProfile: unitDamageProfile(), attributes: { intelligence: 8, wisdom: 2 } });
+  isolateAttributeColours(world);
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
+  const calm = damageFace(world, 'core.cinderDart');
+  const base = calm.preview.faceRules.baselineDefinition;
+  assert.equal(base.effects[0].amount, 3, 'the selected card before combat Gear projection');
+  assert.equal(calm.preview.resolvedDefinition.effects[0].amount, 4, 'Sceptre adds exactly one base damage');
+  assert.equal(calm.baseline, calm.value);
+  assert.deepEqual(calm.classes, ['black']);
+  assert.deepEqual(classes(cardFaceLines(calm.preview.resolvedDefinition, calm.preview, world.registries).find(row => row.kind === 'damage').html), ['black'], 'the renderer also accepts its already projected live definition');
+  const rulesBefore = structuredClone(world.combat.player.itemProps.cardRules);
+  world.combat.player.itemProps.cardRules.push({ selector: 'spell', arg: null, conds: [{ name: 'first', arg: 'fight' }], stat: 'damage', amount: 8, mode: 'add', source: 'handCrossbow' });
+  const lit = damageFace(world, 'core.cinderDart');
+  assert.equal(lit.baseline, calm.baseline, 'triggered Gear never enters the baseline');
+  assert.ok(lit.value > calm.value);
+  assert.deepEqual(lit.classes, ['up']);
+  assert.deepEqual(world.combat.player.itemProps.cardRules.slice(0, -1), rulesBefore, 'preview did not rewrite Gear rules');
+  lit.preview.faceRules.baselineDefinition.effects[0].amount = 999;
+  const card = world.combat.piles.hand.at(-1);
+  const quote = previewCard(world.combat, card.instanceId, world.enemy.id);
+  assert.equal(quote.faceRules.baselineDefinition.effects[0].amount, 3, 'baseline metadata is detached');
+  const expected = quote.values.find(row => row.op === 'damage').perTargetHitDamages[world.enemy.id].reduce((sum, amount) => sum + amount, 0);
+  const before = world.enemy.hp;
+  world.combat.player.energy = world.combat.player.stamina = world.combat.player.mana = 100;
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: world.enemy.id });
+  assert.equal(before - world.enemy.hp, expected, 'the active Gear/tradition forecast equals committed damage');
+});
+
+test('the pre-Gear baseline preserves an upgraded copy, card rank and the selected effect variant', () => {
+  const ownProfile = unitDamageProfile({ progression: { cardRanks: true } });
+  for (const [instance, amount] of [[{ upgraded: true }, 4], [{ rank: 3 }, 5]]) {
+    const world = fight('starseer', { ownProfile });
+    isolateAttributeColours(world);
+    const face = damageFace(world, 'core.cinderDart', instance);
+    const card = world.combat.piles.hand.at(-1);
+    const projected = Profile.projectGameCard(world.combat, card);
+    assert.equal(projected.effects[0].amount, amount, 'the upgraded/ranked card differs from the raw registry');
+    assert.deepEqual(face.preview.faceRules.baselineDefinition.effects, projected.effects);
+    assert.equal(face.preview.resolvedDefinition.effects[0].amount, amount + 1, 'Sceptre applies after upgrade/rank');
+    assert.equal(face.value, face.baseline);
+    assert.deepEqual(face.classes, ['black']);
+    assert.deepEqual(resolveCombatCard(world.combat, card, { applyGear: false }).effects, projected.effects);
+  }
+  const world = fight('reaver', { ownProfile });
+  world.combat.player.combatStance = { maneuver: 'smash', camp: 'physical', range: 'melee' };
+  const face = damageFace(world, 'base.current-stance-variant');
+  const live = face.preview.resolvedDefinition, base = face.preview.faceRules.baselineDefinition;
+  assert.equal(live.activeEffectVariant, 0);
+  assert.equal(base.activeEffectVariant, live.activeEffectVariant, 'the same variant is selected before Gear');
+  assert.deepEqual(base.effects, base.effectVariants[0].effects);
+  assert.equal(base.effects[0].op, 'damage', 'the selected Smash branch replaces the base branch');
+  assert.equal(base.effects[0].amount, 12);
 });
 
 for (const policy of ['current', 'saved attribute rule', 'saved disabled tradition']) test(`an Evade metric face renders its full detached ${policy} snapshot`, () => {
@@ -192,11 +259,13 @@ for (const policy of ['current', 'saved attribute rule', 'saved disabled traditi
   assert.notEqual(snapshot.accuracy, rules.accuracy);
   assert.notEqual(snapshot.accuracy.precisionWeights, rules.accuracy.precisionWeights);
   assert.equal(Object.hasOwn(snapshot, 'spellTraditionsVersion'), Object.hasOwn(before, 'spellTraditionsVersion'));
-  const expected = policy === 'saved attribute rule' ? 5 + 2 * world.combat.player.attributes.dexterity
+  const accuracyGain = policy === 'saved attribute rule' ? 5 + 2 * world.combat.player.attributes.dexterity
     : policy === 'saved disabled tradition' ? 4 : 1;
-  assert.equal(preview.values[0].value, expected, 'the live gain follows the saved accuracy rule');
-  assert.equal(staticCardTokens(def, world.registries, preview.faceRules).evade,
-    policy === 'saved attribute rule' ? '5 plus 2× DEX' : String(expected), 'the static consumer accepts the complete saved rule envelope');
+  const expected = accuracyGain + 1;
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.equal(preview.values[0].value, expected, 'saved accuracy plus the current Leathers +1 Evade');
+  assert.equal(evadeStackGainPhrase(preview.faceRules, def),
+    policy === 'saved attribute rule' ? '5 plus 2× DEX' : String(accuracyGain), 'the metric reader accepts the full saved rule envelope');
   const lines = cardFaceLines(def, preview, world.registries, null);
   assert.ok(lines?.length > 0, 'the in-hand card renders');
   assert.match(lines.map(row => row.html).join(''), new RegExp(`>${expected}</span> Evade`));

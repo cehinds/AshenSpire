@@ -16,15 +16,17 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { legacyRolls } from './legacyHitRules.mjs';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const preGearRegistries = legacyGearRegistries(reg);
 const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 // Precision and Evasion only price the d20, so these fights carry the rules of one saved before the 2026-11-14 ruling (no hitRoll key).
-function live(enemyId = 'wanderingSoldier') {
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: unlocks });
-  const combat = legacyRolls(createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: [enemyId] }));
+function live(enemyId = 'wanderingSoldier', registries = reg) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: unlocks });
+  const combat = legacyRolls(createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] }));
   return { combat, player: combat.player, enemy: combat.enemies[0] };
 }
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, ''));
@@ -141,7 +143,8 @@ test('hit chances: Reaver vs wanderingSoldier both ways, fellWarden and glassReg
   // Stack-free baseline and after one stance-entry stack (the 1-stack column is what a first attack of the fight prices).
   const table = {};
   for (const id of ['wanderingSoldier', 'fellWarden', 'glassRegent']) {
-    const { combat, player, enemy } = live(id);
+    // This captured d20 table predates Heavy armour's -1 DEX; all other accuracy/parity fixtures keep current gear.
+    const { combat, player, enemy } = live(id, preGearRegistries);
     const row = {};
     for (const stacks of [0, 1]) {
       player.statuses = enemy.statuses = {};

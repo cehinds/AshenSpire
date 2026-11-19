@@ -1,3 +1,4 @@
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 // Owner ruling 2026-10-19 (Core): equipped gear grants cards; the Bone Sceptre grants Mana Surge
 // (1 SP, gain 2 Mana) to any class holding it.
 import test from 'node:test';
@@ -133,9 +134,11 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 // As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
 for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
-    const run = start('herald');
-    if (intelligencePoints) spendEarnedPoints(reg, run, 'wisdom', intelligencePoints);
-    const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    // These 1/2 MP cap examples predate robe-type capacity; the swap/save integration below keeps current gear.
+    const historical = legacyGearRegistries(reg);
+    const run = createRunState({ registries: historical, classId: 'herald', seed: 511, profileMeta: meta });
+    if (intelligencePoints) spendEarnedPoints(historical, run, 'wisdom', intelligencePoints);
+    const combat = createRunCombat({ registries: historical, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.player.maxMana, maxMana);
     const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
     assert.ok(card, 'Mana Surge reaches the fight piles');
@@ -287,7 +290,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod wisdom raises the saved Mana formula');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 2 : 0), 'the rod adds one MP through WIS and one uncapped raw maxMana bonus');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
@@ -298,11 +301,22 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         assert.equal(p.energyMax, p.maxStamina);
         assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+        assert.equal(run.equipmentPoolBonuses.maxMana, sceptre ? 1 : 0, 'persist only the rod raw +1 MP, never the WIS-derived increase');
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
         assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
       }
     }
+    dispatch(combat, intent === 'swapArmament'
+      ? { type: intent, slotId: 'rightHand', setIndex: 1 }
+      : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: POOL_PIECE });
+    combat.result = 'victory';
+    runCombatEnd(run, combat);
+    run.combatEntered = null; // The finished-fight transition clears its resume point.
+    assert.equal(run.equipmentPoolBonuses.maxMana, 1, 'the combat-end door persists the same raw pool bonus');
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, combat.rng);
+    assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
   });
 }
 
