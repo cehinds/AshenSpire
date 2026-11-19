@@ -1299,14 +1299,7 @@
         "intent": "block",
         "block": 20,
         "weight": 15,
-        "maxConsecutive": 1,
-        "effects": [
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 4
-          }
-        ]
+        "maxConsecutive": 1
       }
     },
     "weaknesses": [

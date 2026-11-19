@@ -260,7 +260,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:pearlbackSnail.slimeBash | Slime Bash | attack | 1 | 0 | Deal {damage} damage. |
 | card:pearlbackSnail.shellSlam | Shell Slam | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:pearlbackSnail.pearlGuard | Pearl Guard | skill | 2 | 0 | Gain {block} Block. |
-| card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. |
 | card:pearlbackSnail.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:alderMaskHarvester.scytheCut | Scythe Cut | attack | 1 | 0 | Deal {damage} damage. |
 | card:alderMaskHarvester.reapingSweep | Reaping Sweep | attack | 1 | 0 | Deal {damage} damage. |
@@ -464,7 +464,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.ashenCore | Ashen Core | CON +2, STR +2, WIS +1, SP -2 |
 | relic:enemy.relic.emberBrand | Ember Brand | SP -1 |
 | relic:enemy.relic.abyssalCrown | Abyssal Crown | CON +2, WIS +2, INT +1 |
-| relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
@@ -480,3 +479,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
 | relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
+| relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |

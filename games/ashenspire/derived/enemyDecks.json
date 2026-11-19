@@ -4275,11 +4275,6 @@
             "op": "block",
             "target": "self",
             "amount": 20
-          },
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 4
           }
         ],
         "hints": {

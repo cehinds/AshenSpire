@@ -2090,7 +2090,7 @@
         "stamina": 3,
         "mana": 0
       },
-      "text": "Gain {block} Block. Heal {heal} HP.",
+      "text": "Gain {block} Block.",
       "usedBy": "enemy sheet"
     },
     "card:pearlbackSnail.advance": {
@@ -4125,14 +4125,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.pearlShell": {
-      "name": "Pearl Shell",
-      "text": "CON +3, SP -1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.sp=-1"
-      ]
-    },
     "relic:enemy.relic.woundwoodHeart": {
       "name": "Woundwood Heart",
       "text": "CON +3, STR +1",
@@ -4253,6 +4245,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.pearlShell": {
+      "name": "Pearl Shell",
+      "text": "CON +3, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.sp=-1"
       ]
     }
   }
