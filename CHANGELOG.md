@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
-- **Stance cards change your stance** ([#2843](https://github.com/cehinds/AshenSpire/pull/2843), `0.7.4.179`). Entering a stance with a card (Enter: Gorefire, Bulwark, Brace) now changes your combat stance, so your pose and the action icon above you show the stance you entered, and its bonuses apply instead of Prepared's.
+- **Stance cards change your stance** ([#2843](https://github.com/cehinds/AshenSpire/pull/2843), `0.7.4.181`). Entering a stance with a card (Enter: Gorefire, Bulwark, Brace) now changes your combat stance, so your pose and the action icon above you show the stance you entered, and its bonuses apply instead of Prepared's.
 
 ## 2026-11-18
 
