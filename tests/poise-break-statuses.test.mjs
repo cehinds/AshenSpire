@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { EndBrokenWhenDue, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
-import { getStacks, decayAtTurnStart, removeStatus } from '../src/engine/statuses.js';
+import { getStacks, decayAtTurnStart, removeStatus, TakeFromBreakGrant } from '../src/engine/statuses.js';
 import { drainFixCorePoise } from '../src/engine/actions.js';
 
 test('the break status stacks are a config value: 2', () => {
@@ -117,4 +117,32 @@ test('a cleanse that empties a status the break added does not make a later gain
   second.combat.turn = second.enemy.broken.endTurn; delete second.enemy.broken.loseNext;
   EndBrokenWhenDue(second.combat, second.enemy);
   assert.equal(getStacks(second.enemy, 'vulnerable'), 3, 'the loss took the grant first');
+});
+
+test('every stack loss takes the break\'s grant first, including gains made after the break: base 1, break +2, Bash +2, lose 1 -> expiry leaves 3', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 0 });
+  enemy.statuses.vulnerable = { stacks: 1 };
+  enemy.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', enemy.id);
+  assert.equal(getStacks(enemy, 'vulnerable'), 3, '1 held + the break\'s 2');
+  enemy.statuses.vulnerable.stacks += 2; // Bash, after the break
+  removeStatus(combat, enemy, 'vulnerable', { amount: 1, reason: 'ownerTurnStart' }); // turn-start decay path
+  assert.equal(getStacks(enemy, 'vulnerable'), 4);
+  assert.equal(enemy.broken.statusGrants.vulnerable.granted, 1, 'the loss took the grant first');
+  combat.turn = enemy.broken.endTurn; delete enemy.broken.loseNext;
+  EndBrokenWhenDue(combat, enemy);
+  assert.equal(getStacks(enemy, 'vulnerable'), 3);
+});
+
+test('turn-end decay and a cleanse also take the grant first', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 0 });
+  enemy.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', enemy.id);
+  TakeFromBreakGrant(enemy, 'weak', 1); // the helper the turn-end decay and ClearTurnBoosts call
+  assert.equal(enemy.broken.statusGrants.weak.granted, 1);
+  TakeFromBreakGrant(enemy, 'weak', 5);
+  assert.equal(enemy.broken.statusGrants.weak.granted, 0, 'never below 0');
+  assert.equal(getStacks(enemy, 'frail'), 2);
+  removeStatus(combat, enemy, 'frail', { reason: 'cleansed' });
+  assert.equal(enemy.broken.statusGrants.frail.granted, 0, 'a cleanse to 0 takes the whole grant');
 });

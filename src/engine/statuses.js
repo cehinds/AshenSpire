@@ -219,8 +219,9 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 }
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
+  const before = getStacks(target, statusId);
   const result = removeStatusRaw(ctx, target, statusId, opts);
-  TrackBreakGrant(target, statusId);
+  TakeFromBreakGrant(target, statusId, before - getStacks(target, statusId));
   syncPoolsAfterStatus(ctx, target);
   return result;
 }
@@ -258,30 +259,33 @@ export function ClearTurnBoosts(ctx, entity) {
     // before it (or gained since, without `thisTurn`) are never eaten. A boost saved without a base keeps the old subtraction.
     const present = Number.isFinite(bases[statusId]) ? Math.max(0, Math.min(stacks, inst.stacks - bases[statusId])) : stacks;
     inst.stacks -= present;
+    TakeFromBreakGrant(entity, statusId, present);
     if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
   }
   delete entity.turnBoosts;
   delete entity.turnBoostBases;
 }
 
-/** A loss (decay, a cleanse) takes the break's grant first and then the stacks the owner held: the record shrinks so a later gain from another source is never mistaken for the grant. */
-function TrackBreakGrant(target, statusId) {
+/**
+ * TakeFromBreakGrant(target, statusId, loss) — the one helper every stack-loss path calls (removeStatus: a cleanse, a consume, turn-start decay;
+ * turn-end decay; ClearTurnBoosts). A loss takes the stacks a Poise break added FIRST, then the rest, so a gain from another source made after the
+ * break (or before it) is never mistaken for the grant: base 1, break +2, Bash +2, lose 1 leaves a grant of 1 and expiry takes it, leaving 3.
+ */
+export function TakeFromBreakGrant(target, statusId, loss) {
   const grant = target?.broken?.statusGrants?.[statusId];
-  if (!grant) return;
-  const remaining = getStacks(target, statusId);
-  grant.granted = Math.max(0, Math.min(grant.granted, remaining - grant.base));
-  grant.base = Math.min(grant.base, remaining);
+  if (!grant || !(loss > 0)) return;
+  grant.granted = Math.max(0, grant.granted - loss);
 }
 
 /**
- * RemoveBreakGrants(ctx, entity, grants) — remove what a Poise break added ({ id: { granted, base } }), never more than is still above the stacks the owner held
- * before it: a loss since the grant (decay) takes the grant first, so stacks from another source (Bash, a later card) are never eaten.
+ * RemoveBreakGrants(ctx, entity, grants) — remove what a Poise break added ({ id: { granted } }), never more than the grant that is left: every loss since
+ * the break took the grant first (TakeFromBreakGrant), so stacks from another source (Bash, a later card) are never eaten.
  */
 export function RemoveBreakGrants(ctx, entity, grants) {
-  for (const [id, { granted, base }] of Object.entries(grants || {})) {
+  for (const [id, { granted }] of Object.entries(grants || {})) {
     const inst = entity.statuses?.[id];
     if (!inst) continue;
-    const present = Math.max(0, Math.min(granted, inst.stacks - base));
+    const present = Math.max(0, Math.min(granted, inst.stacks));
     if (present > 0) removeStatus(ctx, entity, id, { amount: present, reason: 'brokenEnd' });
   }
 }
@@ -302,7 +306,7 @@ export function decayAtTurnEnd(ctx, entity) {
     if (statusId === 'precision') continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
-      else inst.stacks -= 1;
+      else { inst.stacks -= 1; TakeFromBreakGrant(entity, statusId, 1); }
       // A stack that carries a Ward or Poise bonus moves the pool at once, not at the next status change.
       syncPoolsAfterStatus(ctx, entity);
       if (getStacks(entity, statusId) <= 0) {
