@@ -9,9 +9,9 @@
 // A fight without `elements` rules (an old save, another profile) never enters any of it: ElementRulesOf is null.
 // Random rolls use the `elements` rng stream only, and only when a rule needs a roll, so no other stream shifts.
 // Headless: no document, window or timers.
-import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
-import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
+import { ElementRulesOf, ElementOfHit, HitsAllTargets, ForceRules } from '../model/elementIdentityRules.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
+import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
 import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
@@ -118,8 +118,17 @@ export function ElementProtectionView(ctx, source, target, carrier) {
 }
 
 /**
+ * ForcePoiseShare(ctx, carrier) -> the share of a Force hit's post-Block damage that goes to Poise (`elements.force.poiseShare`, 0.5;
+ * owner 2026-11-18: the other half is HP, where a normal physical hit sends 25% to Poise), or null for any other hit.
+ */
+export function ForcePoiseShare(ctx, carrier) {
+  const rules = ElementRulesOf(ctx), share = ForceRules(ctx).poiseShare;
+  return rules && share !== null && ElementOfHit(carrier) === 'force' ? share : null;
+}
+
+/**
  * The Poise lost in addition to what absorbed the hit: Fire's ignored points leave the pool (they never absorb, so a fire
- * hit can still break it), and Force adds (multiplier - 1) of the Poise damage the hit did.
+ * hit can still break it). Force's Poise rule is a share of the hit, not extra loss: see ForcePoiseShare.
  */
 export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const rules = ElementRulesOf(ctx);
@@ -128,7 +137,9 @@ export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const dealt = (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0);
   let extra = 0;
   if (view?.ignored > 0) extra += view.ignored;
-  if (element === 'force' && !receipt.evaded) extra += Math.floor(dealt * (rules.force.poiseMultiplier - 1));
+  // A fight saved with `elements.force.poiseMultiplier` keeps the old Force: x1.5 Poise damage (extra = (multiplier - 1) of what the hit did).
+  const force = ForceRules(ctx);
+  if (element === 'force' && !receipt.evaded && force.poiseMultiplier !== null && force.poiseShare === null) extra += Math.floor(dealt * (force.poiseMultiplier - 1));
   const left = Math.max(0, (pool?.value || 0) - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0));
   const added = receipt.evaded ? 0 : Math.min(extra, left);
   if (added > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + added;
@@ -168,15 +179,19 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
     Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
-  if (element === 'force' && target.alive && !carrier?.elementChain) ElementPushPull(ctx, source, target, carrier);
+  // Force has no built-in push or pull (owner, 2026-11-18): Retreat is its own tag, a moveEngagement effect. A fight saved with the old Force keeps the push and the pull.
+  if (element === 'force' && target.alive && !carrier?.elementChain && ForceRules(ctx).push) ElementPushPull(ctx, source, target, carrier);
 }
 
-/** Force: a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
+
+const cardPulls = carrier => (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
+
+/** Old Force (a fight saved before 2026-11-18): a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
 export function ElementPushPull(ctx, source, target, carrier) {
   if (!ctx.rangeState?.policy?.enabled || !source || !target) return;
   const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
   if (!sourceKey || !targetKey) return;
-  const pull = (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
+  const pull = cardPulls(carrier);
   const band = engagementBand(ctx.rangeState, sourceKey, targetKey);
   if (pull ? band === 1 : band === 0) {
     ctx.rangeState = movedEngagementState(ctx.rangeState, sourceKey, targetKey, pull ? -1 : 1);
@@ -205,7 +220,8 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
     if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
   } else if (hit.element === 'frost') {
     if (stacksOf(target, 'chill') > 0) { Statuses.applyStatus(ctx, target, 'freeze', 1, source); Statuses.applyStatus(ctx, target, 'brittle', 1, source); }
-  } else if (hit.element === 'force') {
+  } else if (hit.element === 'force' && ForceRules(ctx).knockback) {
+    // Only a fight saved with the old Force knocks back (owner, 2026-11-18: no built-in Retreat on Force). The status stays for tools/statusreach.mjs and old saves.
     Statuses.applyStatus(ctx, target, 'knockback', 1, source);
     if (ctx.rangeState?.policy?.enabled && source && target.alive) {
       const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);

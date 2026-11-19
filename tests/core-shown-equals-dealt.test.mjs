@@ -26,6 +26,8 @@ import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js'
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { DragFaceQuote, DragFaceTargetId } from '../src/ui/models/DragFaceModel.js';
+import { BreakCombatant, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
+import { FixCoreBrokenRules } from '../src/model/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -390,12 +392,14 @@ test('a target with an Evade stack is priced at 0 and spends one stack per hit',
 });
 
 test('a Broken target: the face already holds the x1.5 and the hit lands for it', () => {
+  // Preserve this historical contract for fights saved before the status-based break ruling.
   for (const hand of ['core.strike', 'supernova']) {
     const classId = hand === 'supernova' ? 'starseer' : 'reaver';
     const plain = fixture({ classId, hand }), broken = fixture({ classId, hand });
     for (const row of [plain, broken]) { row.combat.player.energy = 3; row.combat.player.stamina = 3; row.combat.player.mana = 9; }
-    broken.combat.enemies[0].broken = { since: 1, endTurn: 1 };
-    broken.combat.enemies[0].combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+    broken.combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+    assert.deepEqual(FixCoreBrokenRules(broken.combat), { damageMultiplier: 1.5, statusStacks: 0 });
+    BreakCombatant(broken.combat, broken.combat.enemies[0], FixCoreBrokenRules(broken.combat));
     const before = faceOf(plain.combat, plain.card.instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(broken.combat, broken.card.instanceId, 'e1').perEnemy.get('e1')[0];
     assert.ok(shown > before, `${hand}: Broken is in the number (${shown} > ${before})`);
@@ -404,6 +408,7 @@ test('a Broken target: the face already holds the x1.5 and the hit lands for it'
 });
 
 test('a Broken player: the intent number holds the x1.5 and the enemy then costs the player exactly that', () => {
+  // A saved fight retains its explicit multiplier and does not acquire the newer break statuses.
   const run = () => {
     const { combat } = fixture();
     const enemy = combat.enemies[0];
@@ -413,14 +418,44 @@ test('a Broken player: the intent number holds the x1.5 and the enemy then costs
   };
   const shownFor = combat => projectCombatIntent(combat, 'e1')?.projectedDamage?.max;
   const bare = run(), brokenFight = run();
-  brokenFight.player.broken = { since: 1, endTurn: 2 };
-  brokenFight.player.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+  brokenFight.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  assert.deepEqual(FixCoreBrokenRules(brokenFight), { damageMultiplier: 1.5, statusStacks: 0 });
+  BreakCombatant(brokenFight, brokenFight.player, FixCoreBrokenRules(brokenFight));
   const [plainShown, brokenShown] = [shownFor(bare), shownFor(brokenFight)];
   assert.ok(brokenShown > plainShown, `the intent prices the Broken player: ${brokenShown} > ${plainShown}`);
   const hp = brokenFight.player.hp;
   dispatch(brokenFight, { type: 'endTurn' });
   while (brokenFight.pendingReaction) dispatch(brokenFight, { type: 'chooseReaction', offerId: brokenFight.pendingReaction.id, optionId: null });
   assert.equal(hp - brokenFight.player.hp, brokenShown, 'what the Broken player loses is the number the intent showed');
+});
+
+test('a current Broken target shows its two-stack break statuses and deals exactly the face number without x1.5', () => {
+  for (const hand of ['core.strike', 'supernova']) {
+    const { combat, card } = fixture({ classId: hand === 'supernova' ? 'starseer' : 'reaver', hand });
+    const target = combat.enemies[0], rules = FixCoreBrokenRules(combat);
+    assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
+    BreakCombatant(combat, target, rules);
+    for (const status of BREAK_STATUS_IDS) assert.equal(target.statuses[status]?.stacks, 2, status);
+    assert.equal(target.combatStance.damageMultiplier, 1);
+    const shown = faceOf(combat, card.instanceId, target.id).perEnemy.get(target.id), hp = target.hp;
+    check(combat, card, target.id, `current Broken target ${hand}`);
+    assert.equal(hp - target.hp, shown.reduce((total, hit) => total + hit, 0), `${hand}: the full face equals HP lost`);
+  }
+});
+
+test('a current Broken player shows the break statuses in its incoming intent and loses exactly that HP', () => {
+  const { combat } = fixture(), enemy = combat.enemies[0];
+  Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }, planDue: true });
+  Object.assign(combat.player, { block: 0, hp: 100, persistentPoise: { value: 0, max: 8 }, statuses: {} });
+  const rules = FixCoreBrokenRules(combat);
+  assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
+  BreakCombatant(combat, combat.player, rules);
+  for (const status of BREAK_STATUS_IDS) assert.equal(combat.player.statuses[status]?.stacks, 2, status);
+  assert.equal(combat.player.combatStance.damageMultiplier, 1);
+  const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage?.max, hp = combat.player.hp;
+  dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  assert.equal(hp - combat.player.hp, shown, 'the actual status-based incoming loss equals the intent');
 });
 
 test('a farther target that needs Advance: the face cost is the cost paid', () => {

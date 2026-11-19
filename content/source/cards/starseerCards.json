@@ -3531,7 +3531,7 @@
       {
         "op": "loseHp",
         "target": "enemy",
-        "amount": 1,
+        "amount": 2,
         "if": {
           "p": "inStance",
           "of": "target",
@@ -3550,7 +3550,7 @@
         {
           "op": "loseHp",
           "target": "enemy",
-          "amount": 1,
+          "amount": 3,
           "if": {
             "p": "inStance",
             "of": "target",
