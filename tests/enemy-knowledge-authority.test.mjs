@@ -4,7 +4,7 @@ import { snapshotEnemyKnowledgeRules } from '../src/model/enemyKnowledgeRules.js
 import { knowledgePoints } from '../src/model/enemyKnowledgeProfile.js';
 import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, resolveKnowledgeAction, creditKnowledgeResponse, recordKnowledgeEvent, addKnowledgeObserver } from '../src/engine/enemyKnowledge.js';
-const rules = snapshotEnemyKnowledgeRules(); rules.reads.baseExact = 0; rules.reads.baseClue = 0;
+const rules = snapshotEnemyKnowledgeRules(); rules.perception.enabled = true; rules.reads.baseExact = 0; rules.reads.baseClue = 0;
 const encounter = { id: 'unique-run/1/node/fight', enemyIds: ['soldier'] };
 function combat() {
   const c = { rng: createRng(6), phase: 'player', result: null, player: { id: 'player', alive: true }, playerKey: 'player',
@@ -88,7 +88,7 @@ assert.equal(e.knowledgeAction.serial, 2);
 function coop(order) {
   const c = combat(); delete c.enemyKnowledge; delete c.enemies[0].knowledgeAction;
   c.players = new Map(order.map(id => [id, { entity: { id: 'player', alive: true }, skills: { perception: { xp: 0, level: 0, pendingDrafts: 0 } }, attributes: {}, characterLevel: 1 }]));
-  initializeCombatKnowledge(c, { rules: snapshotEnemyKnowledgeRules(), encounter, bankable: true, privateSeed: 8612 });
+  initializeCombatKnowledge(c, { rules: Object.assign(snapshotEnemyKnowledgeRules(), { perception: { ...snapshotEnemyKnowledgeRules().perception, enabled: true } }), encounter, bankable: true, privateSeed: 8612 });
   rollEnemyKnowledge(c, c.enemies[0]); return c;
 }
 const a = coop(['z', 'a']), b = coop(['a', 'z']);

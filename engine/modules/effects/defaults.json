@@ -3,11 +3,13 @@
   "damageModel": "unified",
   "elements": false,
   "spellRanks": false,
-  "attackRatingWeight": 1,
-  "defenseRatingWeight": 1,
+  "strengthDamageWeight": 1,
+  "dexterityBlockWeight": 1,
+  "magicStatWeight": 1,
   "baseDamageMultiplier": 1,
   "playerDamageMultiplier": 1,
   "enemyDamageMultiplier": 1,
+  "physicalDamageMultiplier": 1,
   "blockGainMultiplier": 1,
   "spellPoiseDamageMultiplier": 1
 }

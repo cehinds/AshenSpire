@@ -4,6 +4,7 @@
   "retainHand": false,
   "handBase": 4,
   "handAttribute": "intelligence",
+  "handPointsPerIncrease": 1,
   "turnPolicy": "multiCard",
   "freeCommandLimit": 32,
   "editorEnabled": true,

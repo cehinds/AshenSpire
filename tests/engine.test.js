@@ -3665,9 +3665,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(intrinsicReceipts.length, 61, 'all 61 armaments expose an intrinsic stat receipt');
     eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
       weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
-    assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
+    assert(intrinsicReceipts.every((row) => ['weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
-    'each intrinsic receipt exposes five explicit non-negative integer facts');
+    'each intrinsic receipt exposes three explicit non-negative integer facts');
+    assert(intrinsicReceipts.every((row) => !('attackRating' in row) && !('defenseRating' in row)),
+      'an armament authors no AR or DR (owner, 2026-11-18)');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
     // Intrinsic costs belong to the shipped kit, not the fixture that strips packages.
@@ -3677,7 +3679,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
     eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
-      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 1, uniqueSkillStaminaCost: 0 }),
+      JSON.stringify({ itemId: 'greatsword', weight: 8, weaponArtManaCost: 1, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
@@ -3687,8 +3689,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         armaments: legacyBundle.equipment.armaments.map((piece) => ({ ...piece })),
       },
     };
-    delete missingIntrinsicBundle.equipment.armaments[0].attackRating;
-    assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
+    delete missingIntrinsicBundle.equipment.armaments[0].weight;
+    assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.weight')),
       'boot validation fails closed when an intrinsic armament field is absent');
     const mismatchedIntrinsicRegistries = {
       ...REG,
@@ -5214,8 +5216,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const vec = (piece) => {
       const out = {
-        'rating.attack': piece.attackRating || 0,
-        'rating.defense': piece.defenseRating || 0,
         'impact.weight': piece.weight || 0,
       };
       for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
@@ -5272,7 +5272,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         if (better && !worseAnywhere) dominated.push(`${a.id} (${a.rarity}) < ${b.id} (${b.rarity})`);
       }
     }
-    eq(dominated.join('; '), '', 'no armament is strictly dominated');
+    // Owner, 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 8): armaments lost attackRating and defenseRating and got no perks
+    // in their place, so the pairs below, which those two columns used to separate, are now ties broken by weight, Poise and cost alone.
+    // They are named here, not hidden: a NEW dominated pair still fails. Retune these rows and empty the list.
+    const RATINGS_REMOVED = new Set(['greatsword (uncommon) < warhammer (uncommon)', 'halberd (uncommon) < warhammer (uncommon)',
+      'buckler (common) < kiteShield (common)', 'buckler (common) < roundShield (common)', 'roundShield (common) < kiteShield (common)',
+      'duskChime (rare) < blightRod (uncommon)']);
+    eq(dominated.filter(pair => !RATINGS_REMOVED.has(pair)).join('; '), '', 'no armament is strictly dominated (beyond the ratings-removed pairs named above)');
 
     // Guard on the premise, not the conclusion: this rule is strict BECAUSE
     // tags are cosmetic. If that stops being true, this assertion is where the
@@ -6412,7 +6418,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // points); Draw is the ruleset-7 draw row, base 4 since the hand refresh update
     // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/5', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,300,450,680,1010,1520,2280,3420,5130,7690', 'default XP steps start at 200 and grow ×1.5 (SPEC §13.4o)');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
@@ -6423,12 +6429,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/53/3/4', 'Rogue lean stats reach the HP, action, and hand formulas');
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/53/3/5', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/8/11', 'Rogue buckler Defend is stamped from the live DR row (the bare test registries read it since the frozen ruleset-6 formula was deleted; the configured registries the game uses gave 8/11 before too)');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/1/4', 'Rogue dagger Strike is stamped from the STR channel only: the dagger has no AR of its own (owner, 2026-11-18)');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/3/6', 'Rogue buckler Defend is stamped from DEX alone: the buckler has no DR of its own (owner, 2026-11-18)');
     const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
@@ -6946,8 +6952,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE AWARDS: a won fight, each kill by the door's pool; a loss keeps its kills.
     const xp = REG.balance.xp;
     eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), 34);
-    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), 17);
-    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 2, 'a lost fight pays its kills and no combat-power award');
+    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), 25, 'a boss pays one and a half times (tier multiplier)');
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 6, 'a lost fight pays its kills (x3 for an elite) and no combat-power award');
     eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), 17, 'an unknown pool pays the normal rate');
     eq(questLevelXp(REG), xp.quest);
 
@@ -7918,19 +7924,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Since 2026-09-24 Mana reads CON at 0.25 and Stamina at 0.5 (the owner's
     // exported weights), so the face gains a Mana fact and Stamina's cadence
     // halves — derived, so the card followed the row with no prose edit.
-    eq(constitution.face.summary, '+1 HP per pt · +1 Mana per 4 pts · +1 Stamina / turn per 4 pts · +1 Poise per pt',
+    // Owner, 2026-11-18: Mana is WIS in fours and Stamina is DEX in fours, so Constitution feeds neither any more.
+    eq(constitution.face.summary, '+1 HP per pt · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
     eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+1 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Mana \+1 every 4 points$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \/ turn \+1 every 4 points$/.test(line))
+      && !constitution.reveal.lines.some((line) => /^Mana /.test(line))
+      && !constitution.reveal.lines.some((line) => /^Stamina /.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
     // Since ruleset 7 AR is the `ar` row of the derived-stat table and there
     // is no global multiplier to state: the line is the row's own weight.
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(1 × STR)'),
-      'the active rating formula projects Strength AR weight without copied UI prose');
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical damage: floor(1 × STR)'),
+      'the physical-damage channel projects Strength weight without copied UI prose, and names no AR (owner, 2026-11-18)');
 
     const changed = {
       ...contentBundle,
@@ -8769,7 +8776,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(armourSteps.slice(0, 5).join(','), '100,200,400,795,1585', 'armour starts at 100 and each step costs about 1.995 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{"perception":{"xp":0,"level":0,"pendingDrafts":0}}', 'a fresh run starts only automatic Perception at zero');
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run starts with no Perception track (off, owner 2026-11-18)');
     eq(skillLevel(run, 'item:blade'), 0);
     const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
     eq(first.levelUps, 2, 'enough XP for two steps climbs two');
@@ -9391,7 +9398,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const bornAttributes = { ...old.attributes };
     delete old.level; old.schemaVersion = 9; old.levelUps = 3; old.levelPoints = 3; old.attributes.constitution += 3;
     const moved = (id) => attributeTerms(snapRules[id], old.attributes) - attributeTerms(snapRules[id], bornAttributes);
-    eq(`${moved('hp')}/${moved('stamina')}/${moved('mana')}`, '3/1/1', 'three CON purchases move three HP, one Stamina and one Mana under the live rows');
+    eq(`${moved('hp')}/${moved('stamina')}/${moved('mana')}`, '3/0/0', 'three CON purchases move three HP and neither Stamina nor Mana under the live rows (owner, 2026-11-18)');
     old.maxHp += moved('hp'); old.hp = old.maxHp; old.maxStamina += moved('stamina'); old.stamina = old.maxStamina;
     old.maxMana += moved('mana'); old.mana = old.maxMana;
     for (const row of Object.values(old.derivedStatRuleSnapshot.rules.rules)) delete row.perLevel;
@@ -9419,6 +9426,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const fresh = (classId = 'herald') => {
       const run = createRunState({ seed: 4, classId, registries: REG });
       run.hp = 10;
+      // The shrine's Mana floor is a share of max Mana; at the new 1-Mana start it rounds to nothing, so this fixture gives the herald four.
+      run.maxMana = 4;
       run.mana = 0;
       run.fullHpCharges = run.flaskCharges.hpCurrent;
       run.flaskCharges.hpCurrent = 0;
@@ -9745,12 +9754,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // puts every stat in it: the hand (openingHand, draw, handSize) and the
     // combat ratings (ar, dr, pr, ward) are rows of this table now, and a
     // ruleset-6 snapshot is still restored without them.
-    eq(rules.rulesetVersion, 7, 'the authored table is ruleset 7 — the one format, every stat');
-    eq(['openingHand', 'draw', 'handSize', 'ar', 'dr', 'pr', 'ward'].every((id) => !!rules.rules[id]), true, 'the hand and rating rows are authored in it');
+    eq(rules.rulesetVersion, 8, 'the authored table is ruleset 8 — ruleset 7\'s one format, minus the AR, DR and PR rows (owner, 2026-11-18)');
+    eq(['openingHand', 'draw', 'handSize', 'ward'].every((id) => !!rules.rules[id]) && ['ar', 'dr', 'pr'].every((id) => !rules.rules[id]), true, 'the hand and Ward rows are authored in it, the three retired rows are not');
     eq(derivedStatIdsFor(6).includes('handSize') || derivedStatIdsFor(6).includes('ar'), false, 'ruleset 6 requires no hand or rating row');
     eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
-    eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
-    eq(rules.rules.stamina.constitution, 0.25, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
+    eq(rules.rules.mana.wisdom, 0.25, 'Wisdom alone leads Mana, one in four points (owner, 2026-11-18)');
+    eq(rules.rules.stamina.dexterity, 0.25, 'Dexterity alone leads Stamina, one in four points (owner, 2026-11-18)');
+    eq(rules.rules.stamina.constitution, undefined, 'Constitution no longer feeds Stamina');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '51/1', 'HP is 51 + CON');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
     // A pool carries its own flat base beside the attribute — a class or relic

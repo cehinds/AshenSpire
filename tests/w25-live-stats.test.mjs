@@ -13,7 +13,7 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats, LiveAttribute, ElementStatScale, StatScaledNumber } from '../src/engine/liveStats.js';
 import { ratingValue } from '../src/model/combatRatings.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(classId = 'reaver', seed = 511) {
   const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -81,8 +81,10 @@ test('CON raises Stamina when its row answers to it, and the run is untouched', 
 test('hand size and draw change live and return', () => {
   const { combat } = live();
   const hand = combat.handMax, draw = combat.drawPerTurn;
+  const int = LiveAttribute(combat.player, 'intelligence');
   ChangeAttribute(combat, combat.player, 'intelligence', 3);
-  assert.equal(combat.handMax, hand + 3, 'the hand size reads Intelligence');
+  // Owner 2026-11-18 (ruling §9): the hand is 5 + floor(INT / 4), so +3 INT adds one card only when it crosses a multiple of 4.
+  assert.equal(combat.handMax, hand + Math.floor((int + 3) / 4) - Math.floor(int / 4), 'the hand size reads Intelligence');
   assert.ok(combat.drawPerTurn >= draw);
   RestoreLiveStats(combat);
   assert.equal(combat.handMax, hand);

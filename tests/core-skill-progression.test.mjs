@@ -19,7 +19,7 @@ import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotice
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, ArmamentRewardRule, ArmamentRewardStep } from '../src/model/gameProfileRewards.js';
 import { grantSmithingReward, smithingRewardId } from '../src/model/smithing.js';
 import { readFileSync } from 'node:fs';
 import { runCombatEnd } from '../src/engine/runCombat.js';
@@ -77,8 +77,8 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
-  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8, x0.7 player side scale (owner, 2026-11-18) = 5.6, then Poise protection = 4.
-  assert.equal(hit.amount, 4, 'attribution does not scope or change the existing damage rating');
+  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8, x0.7 physical cut x0.7 player side scale (owner, 2026-11-18) = 3.92, then Poise protection = 3.
+  assert.equal(hit.amount, 3, 'attribution does not scope or change the existing damage rating');
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
@@ -592,7 +592,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, settleConfiguredSkillProgression, skillLevelNotices,
     combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
-    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, ArmamentRewardRule, ArmamentRewardStep, coreCardRanks, pendingRankUpRows,
     // Core pays the §15.3 stone door too since #2392; a normal pool pays 0 and writes its claim.
     grantSmithingReward, smithingRewardId,
     // The one victory screen (W2-E): the combined door asks VictorySpoils for its strip; a marker stands in for it here.

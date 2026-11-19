@@ -3856,7 +3856,6 @@
         "plate"
       ],
       "points": {
-        "dr": 1,
         "constitution": 1
       }
     },
@@ -3867,10 +3866,7 @@
       "rarity": "uncommon",
       "tags": [
         "mail"
-      ],
-      "points": {
-        "dr": 1
-      }
+      ]
     },
     "gear:armor.gildedOathsworn": {
       "name": "Gilded Oathsworn",
@@ -3881,7 +3877,6 @@
         "plate"
       ],
       "points": {
-        "dr": 1,
         "strength": 1
       }
     },
@@ -3893,10 +3888,7 @@
       "tags": [
         "mail",
         "unwieldy"
-      ],
-      "points": {
-        "dr": 1
-      }
+      ]
     },
     "gear:armor.nightweave": {
       "name": "Nightweave",
@@ -3953,10 +3945,7 @@
       "rarity": "common",
       "tags": [
         "robes"
-      ],
-      "points": {
-        "dr": 1
-      }
+      ]
     },
     "gear:armor.ossuaryWeave": {
       "name": "Ossuary Weave",
@@ -3990,7 +3979,6 @@
         "robes"
       ],
       "points": {
-        "dr": 1,
         "constitution": 1
       }
     },
@@ -4011,10 +3999,7 @@
       "rarity": "uncommon",
       "tags": [
         "leathers"
-      ],
-      "points": {
-        "dr": 1
-      }
+      ]
     },
     "gear:armor.duelistJerkin": {
       "name": "Duelist Jerkin",
@@ -4047,10 +4032,7 @@
       "tags": [
         "plate",
         "encumbered"
-      ],
-      "points": {
-        "dr": 1
-      }
+      ]
     },
     "gear:armor.rimeweaveRobes": {
       "name": "Rimeweave Robes",

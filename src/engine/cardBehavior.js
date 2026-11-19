@@ -55,5 +55,5 @@ export function weaponDamageBasis(ctx,actor=ctx.player) {
   return Math.max(0,(strike?.effects?.find(e=>e.op==='damage')?.amount || 6)+(actor.ratings?.ar || 0));
  }
  const profile=equipment.basicCardProfiles?.find(row=>row.id===(weapon?.weaponCardPackage?.combatKit?.attackProfileId || weapon?.attackProfile || 'unarmedAttack'));
- return Math.max(0,(profile?.baseValue || 3)+(weapon?.attackRating || 0)+(ctx.itemUpgradeLevels?.[`armament/${weapon?.id}`] || 0));
+ return Math.max(0,(profile?.baseValue || 3)+(ctx.itemUpgradeLevels?.[`armament/${weapon?.id}`] || 0));
 }

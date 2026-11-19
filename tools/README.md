@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (245 tool files, plus the 9 subfolders)
+## Tools something references (246 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -72,6 +72,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `bundle-cycles.mjs` | tools/bundle-cycles.mjs — find named imports that the bundler turns into a load-time destructure of a module that is still loading. | tests jev, run-node; tools jev; docs docs/ai/tasks/CARD-UPGRADES-2026-10-28.md |
 | `bundle.mjs` | bundle — produce the built game: the pack-shaped HTML at | wf ci, dev-preview; tests alternative-art, build-identity, combat-audit-runtime +8; tools ai-disclosure, art-manifest, art-source +26; docs DEVELOPER.md, SPEC.md, desktop/windows/README.md +8; other buildordinal.json, desktop/windows/build-installer.mjs +20 |
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
+| `card-budget-report.mjs` | Card budget survey (2026-11-18): previews and plays every Core card per starting class in a neutral fight and prints the authored and final values with where each number comes from. | npm balance:card-budget; docs docs/balance/card-budget-2026-11-18.md |
 | `card-art-contact-sheets.py` | QA montage of existing artwork, never an artwork-generation step. | docs docs/EXTENDED-CARD-ART.md |
 | `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
 | `card-components.mjs`, `card-layout-save.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
@@ -165,6 +166,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `launch.mjs` | launch — the one-click launcher. | wf sync-dev-to-alternative-dev, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
 | `layered-art.mjs` | (no header comment) | tests display-art-cache, layered-art-pack; tools asset-pack, buildversion, bundle +1 |
+| `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
 | `literal-asset-references.mjs` | Checks missing literal assets; only exact, explicitly optional generated recipient atlas properties may use the static fallback. | tools bundle; tests literal-asset-references; docs RECIPIENT-EFFECTS |
 | `recipient-effects-export.py` | Validates and stages approved three-frame PNG strips, tier copies, source hashes and provenance for art intake. | docs RECIPIENT-EFFECTS |
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
@@ -218,6 +220,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `rear-qa-runtime.mjs` | Browser-test instrumentation only. The on-disk package stays unchanged; | tools combat-attached-details-qa, combat-card-stability-qa, combat-layer-qa +2 |
 | `rebuild-matches.mjs` | rebuild-matches — does a build from THIS source reproduce what is | tools buildversion, bundle; docs docs/EXTERNAL-ASSETS-PLAN.md, docs/versioning.md; other src/buildversion.js |
 | `receipts.mjs` | receipts — EVERY MERGED PULL REQUEST HAS A RECEIPT BEFORE IT IS PROMOTED. | wf receipts, worker-check; tests receipts-pr, receipts-root, receipts-window; tools about-changelog, build-stamp, equipment-surface-receipts +3; docs CHANGELOG.md, DEVELOPER.md, docs/FINISH.md +4; other package.json, src/model/equipmentPresentation.js +1 |
+| `redraw-probe.mjs` | Measures how much DOM one small action rebuilds (owner, 2026-11-18): nodes added and removed, scroll position and focus kept. | npm qa:redraw-probe |
 | `release-series.mjs` | Gate current CI/CD builds; archived downloads retain their original versions. | wf ci, dev-preview, pages-builds; docs docs/RELEASE-CHECKLIST.md |
 | `release-shots-selftest.mjs` | release-shots-selftest — the known-bad corpus for release-shots. | tools release-shots |
 | `release-shots.mjs` | release-shots — photograph the RELEASE BUILD, screen by screen, | wf ci; tests engine.test.js, run-node; tools axisfit, buildstamp-shot, contrast-audit +5; docs SPEC.md, docs/SPEC-RECONCILE.md, docs/preview/issue-185-5198e8a/README.md +3; other src/buildversion.js, src/main.js +2 |

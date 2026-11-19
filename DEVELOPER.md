@@ -1434,6 +1434,10 @@ Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
 `--artifact --screenshots` only after the serialized standalone build has been
 regenerated from frozen source.
 
+## Release checklist: saves across builds
+
+- [ ] Set `behavior.discardOnNewBuild` to `false` in `content/config/ui/presentation/saves.json` (then `node tools/config-build.mjs`) before any public release. On (the dev default, owner 2026-11-18) a new build deletes old run saves at boot (run slots only; settings and the profile are kept) so players lose their runs on every update. `tests/save-wipe.test.mjs` fails on a `release` or `main` ref (`GITHUB_REF_NAME` / `GITHUB_BASE_REF`) while it is `true`; ci.yml runs on pushes to `release`.
+
 ## The build (`build/AshenSpire.html` and `build/download/AshenSpire.html`)
 
 `node tools/bundle.mjs` emits the game to `build/`: every ES module bundled

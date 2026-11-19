@@ -6,6 +6,7 @@ import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { core2ActionPolicyEnabled } from './core2ActionPolicy.js';
 import { gameContent } from './gameProfile.js';
 import { characterTags } from '../../engine/kernel/gameConfig.js';
+import { ChannelRowValue } from './channelRowValue.js';
 import { mirroredManeuver, MIRRORED_TYPES } from './profileStance.js';
 export { mirroredManeuver };
 
@@ -117,6 +118,19 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
   const cfg = stanceRulesFor(ctx), magical = stanceOf(carrier).camp === 'spell';
   return Math.max(magical ? cfg.magicalMinimumSp : cfg.physicalMinimumSp, base - cfg.sameStanceDiscount);
 }
+/**
+ * What the item properties' +n STR / DEX / INT while in a stance add to channel `id` (owner, 2026-11-18): the grant goes onto the entity's
+ * live attribute and the channel is priced twice, with and without it, so max(INT, WIS) moves only when the granted attribute leads.
+ * Fight-local: the entity's attributes are read, never written. 0 without grants, attributes or registries (a preview).
+ */
+function stanceAttributeBonus(ctx, entity, maneuver, id) {
+  const grants = entity?.itemProps?.stanceAttribute?.[maneuver];
+  if (!grants || !entity.attributes || !ctx?.registries) return 0;
+  const boosted = { ...entity.attributes };
+  for (const [attribute, n] of Object.entries(grants)) boosted[attribute] = Math.max(0, (Number(boosted[attribute]) || 0) + n);
+  const row = entity.finesseView && id === 'ar' ? 'dr' : id; // a finesse hit's Attack rating is the DEX-driven row (finesseRatingView)
+  return ChannelRowValue(ctx, entity, row, boosted) - ChannelRowValue(ctx, entity, row, entity.attributes);
+}
 export function stanceRatingBonus(ctx, entity, id) {
   if (ctx?.combatExpansionVersion !== 2) return 0;
   const stance = stanceOf(entity?.combatStance);
@@ -124,7 +138,7 @@ export function stanceRatingBonus(ctx, entity, id) {
   const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter'].includes(stance.maneuver);
   const offensiveId = stance.maneuver === 'casting' || stance.mirrored || (stance.maneuver === 'counter' && stance.camp === 'spell') ? 'pr' : 'ar';
-  return (entity?.itemProps?.stanceRating?.[stance.maneuver]?.[id] || 0) + (offensive && id === offensiveId ? cfg.offensiveRating : 0)
+  return (entity?.itemProps?.stanceRating?.[stance.maneuver]?.[id] || 0) + stanceAttributeBonus(ctx, entity, stance.maneuver, id) + (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
 export function stanceEntryBonuses(carrier, ctx = null) {

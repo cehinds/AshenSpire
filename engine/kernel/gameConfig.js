@@ -261,7 +261,11 @@ function resolveStatPointGear(item, settings, rank) {
   const ratingsWeights = gearWeights(item, settings, 'ratings');
   const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
   const ratingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
-  const poise = authored.poise || Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * (ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0)));
+  // Owner, 2026-11-18: max Poise = 1 + CON + other Poise bonuses. Gear that guards (armour, shields, defensive two-handers) simply ADDS
+  // its Poise; an item whose ratings weights name no Poise (a dagger, a bow, a staff) adds 0 unless it authors some, so `poiseMin`
+  // is the floor only for an item that has a Poise share at all.
+  const poiseShare = ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0;
+  const poise = authored.poise || (poiseShare > 0 ? Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * poiseShare)) : 0);
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
   const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
@@ -509,7 +513,7 @@ export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
 }
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
-  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
   const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, enemyAttributeTotal(row, settings, id, own[id], bonus)]));
   const pools = {};
@@ -813,7 +817,7 @@ export function resolveGameAuthor(author, catalog) {
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
-    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
+    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + Math.floor(row.attributes.intelligence / Math.max(1, content.stats.handPointsPerIncrease || 1))]));
   }
   const artifacts = [...catalog.runtimeArtifacts, ...bundle.artifacts,
     ...Object.entries(modules).filter(([,v]) => v).flatMap(([id]) => catalog.modules[id].artifacts),

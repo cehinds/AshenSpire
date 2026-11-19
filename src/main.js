@@ -2,7 +2,7 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
@@ -120,7 +120,10 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
-import { BUILD_VERSION } from './buildversion.js';
+import { BUILD_VERSION, SOURCE as BUILD_SOURCE } from './buildversion.js';
+import { ApplyBuildWipe, BuildSaveId } from './engine/buildWipe.js';
+import { DrawSaveWipeNotice } from './ui/components/saveWipeNotice.js';
+import { uiConfig } from './config/generated/ui.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
@@ -374,6 +377,8 @@ if (shotState === 'crisis') {
 // asking would make every run start fail.
 let persistentStorage = false;
 try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+// Dev toggle (content/config/ui/presentation/saves.json): a new build clears old run saves; settings are kept.
+const saveWipe = ApplyBuildWipe(bootStorage, { enabled: uiConfig.presentation.saves.behavior.discardOnNewBuild === true, buildId: BuildSaveId({ version: BUILD_VERSION, source: BUILD_SOURCE }) });
 const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
@@ -1095,6 +1100,7 @@ function afterBootArt(fn) {
 // null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
 let artNoticeState = null;
 function drawArtNotice(root) {
+  DrawSaveWipeNotice(root, saveWipe.cleared);
   if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
   mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
 }
@@ -1476,6 +1482,8 @@ function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place 
     registries,
     run,
     focusCard,
+    // The drag order rides the run and is written with the confirmed edit (onDone) or the next run save. Saving it on every drag
+    // would also write unconfirmed deck changes, which Cancel then restores only in memory (Codex review, PR #2835).
     backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
@@ -2287,6 +2295,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
+    position: { floor: run.floor, floors: Math.max(0, ...Object.values(run.mapGraph?.nodes || {}).map((n) => n.floor || 0)), act: run.actNumber },
     characterMultiplier: configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1,
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
@@ -2337,7 +2346,7 @@ async function onCombatEnd(result, combat, enc) {
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic, armamentReward: ArmamentRewardRule(run, enc.pool) ? enc.pool : '' });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -2493,12 +2502,12 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, pool = 'normal' } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, armamentReward = '', pool = 'normal', takeCount = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
-  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
+  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool, takeCount });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}), ...(armamentReward ? { armamentReward } : {}) };
   persistOrWarn(); return showGameProfileReward();
 }
 
@@ -2564,10 +2573,15 @@ function leaveRewardDoor(pending) {
     const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
     if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
       run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
-    } else if (rest.levelOffers > 0) {
-      const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
-      gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-      run.gameProfilePendingReward = { ...rest, offerId, source: 'level', levelOffers: rest.levelOffers - 1 };
+    } else {
+      // Armament reward (rewards.json armamentReward): an elite's chance, a boss's certainty, directly after the relic door, rolled once.
+      const step = ArmamentRewardStep(registries, run, rng, rest);
+      if (step.next) run.gameProfilePendingReward = step.next;
+      else if (step.rest.levelOffers > 0) {
+        const offerId = `${step.rest.offerId}:level:${step.rest.levelOffers}`;
+        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+        run.gameProfilePendingReward = { ...step.rest, offerId, source: 'level', levelOffers: step.rest.levelOffers - 1 };
+      }
     }
   });
   if (run.gameProfilePendingReward) return showGameProfileReward();
@@ -2597,7 +2611,7 @@ function mountGameProfileOfferDoor(pending, { combined }) {
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
   }) : null;
   MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
-    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : pending.source === 'armament' ? 'Armament reward' : 'Victory rewards',
     // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
     onTake: index => (offer.options[index]?.kind === 'rankUps'
       ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
@@ -2946,7 +2960,7 @@ function showFirstScreenNow(createShotStates) {
   const shotStates = shotState ? createShotStates({
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
-    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
     showSettings, showStartupGate, showCustomize,
     // `?shotAct=<n>`: the act's map, built as advanceAct builds it.
     poseActNumber: (act) => { run.actNumber = act; run.mapGraph = buildActMap(registries, rng, currentSeat(), act, null, { history: run.history }); run.mapNodeId = null; run.path = []; run.floor = 0; },

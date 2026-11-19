@@ -1,0 +1,452 @@
+{
+  "request": "Reward door after a won fight: the \"Rank up a card\" reward must not be a tile among the cards; it becomes its own step after the card reward, opening the rank-up card picker as its own modal. When the door allows N card picks, the player can select up to N cards; each selected card glows green without re-rendering the strip; tapping a selected card deselects it; the prompt updates live (Select N card rewards, Select N-1 card reward(s), ... Select 0 card rewards). Continue is always enabled but neutral until all N picks are made, then green; pressing it opens a confirmation listing the chosen cards (and the unused picks); Back keeps the selection; Confirm claims the cards and moves on: rank-up modal, then the elite/boss relic modal, then whatever follows.",
+  "success": "No rank-up tile in the card strip; selected faces (exactly those) glow green; the prompt counts picks live; Continue is neutral then green; Continue opens a confirmation listing the cards; Back keeps the selection; Confirm opens the rank-up picker.",
+  "failure": "A rank-up tile among the cards; the strip redrawn or the wrong faces green; a stale prompt; Continue always green or disabled; no confirmation; Back dropping the selection; Confirm skipping the rank-up modal.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "phone-landscape",
+      "width": 844,
+      "height": 390
+    }
+  ],
+  "scenes": [
+    {
+      "name": "door-idle",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The card strip shows the offered cards (3 or more)",
+          "selector": ".reward-choice-face",
+          "min": 3
+        },
+        {
+          "kind": "text",
+          "label": "The prompt asks for 2 card rewards",
+          "selector": ".reward-pick-prompt",
+          "includes": "Select 2 card rewards"
+        },
+        {
+          "kind": "visible",
+          "label": "Continue is always on screen and enabled",
+          "selector": "#reward-card-confirm:not(:disabled)"
+        },
+        {
+          "kind": "count",
+          "label": "Continue has no primary (green) styling before any pick",
+          "selector": "#reward-card-confirm.primary",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A rank-up tile is still among the cards",
+          "selector": ".rank-up-offer-card",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "pick-one",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Exactly one face glows green",
+          "selector": ".reward-choice-face.is-chosen",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "It is the first face",
+          "selector": ".reward-choice-option:nth-child(1) .reward-choice-face.is-chosen",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "The prompt reads Select 1 card reward (singular)",
+          "selector": ".reward-pick-prompt",
+          "includes": "Select 1 card reward"
+        },
+        {
+          "kind": "count",
+          "label": "Continue is still neutral with one of two picks made",
+          "selector": "#reward-card-confirm.primary",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "pick-two",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Exactly two faces glow green",
+          "selector": ".reward-choice-face.is-chosen",
+          "eq": 2
+        },
+        {
+          "kind": "count",
+          "label": "The third face is not chosen",
+          "selector": ".reward-choice-option:nth-child(3) .reward-choice-face.is-chosen",
+          "eq": 0
+        },
+        {
+          "kind": "text",
+          "label": "The prompt reads Select 0 card rewards",
+          "selector": ".reward-pick-prompt",
+          "includes": "Select 0 card rewards"
+        },
+        {
+          "kind": "count",
+          "label": "Continue turns primary (green) once both picks are made",
+          "selector": "#reward-card-confirm.primary",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "pick-three-capped",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(3) .reward-choice-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "A third tap cannot exceed the two picks",
+          "selector": ".reward-choice-face.is-chosen",
+          "eq": 2
+        },
+        {
+          "kind": "count",
+          "label": "The card strip is not rebuilt (still the same faces, 3 or more)",
+          "selector": ".reward-choice-face",
+          "min": 3
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "deselect",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Tapping a chosen card puts it back",
+          "selector": ".reward-choice-face.is-chosen",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "The prompt counts the freed pick",
+          "selector": ".reward-pick-prompt",
+          "includes": "Select 1 card reward"
+        },
+        {
+          "kind": "count",
+          "label": "Continue is neutral again",
+          "selector": "#reward-card-confirm.primary",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "continue-confirmation",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Continue opens the confirmation",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "count",
+          "label": "It lists the two chosen cards",
+          "selector": ".reward-pick-confirm-list li",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "One destination choice is offered (Add to deck)",
+          "selector": ".reward-pick-destination[data-destination='deck']"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "back-keeps-selection",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".confirmation-cancel"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Back closes the confirmation",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "count",
+          "label": "The two chosen cards stay chosen and editable",
+          "selector": ".reward-choice-face.is-chosen",
+          "eq": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unused-pick-named",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "The confirmation says one pick is unused",
+          "selector": ".reward-pick-confirm-unused",
+          "includes": "1 pick unused"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "confirm-opens-rankup",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1&shotTake=2",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".confirmation-confirm"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "The confirmation is gone",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "count",
+          "label": "The rank-up card picker opens next",
+          "selector": ".rank-up-option",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (the shrine.ogg 404 is on dev too)",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404",
+            "shrine.ogg"
+          ]
+        }
+      ]
+    }
+  ]
+}

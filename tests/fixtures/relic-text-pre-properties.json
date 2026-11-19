@@ -93,7 +93,7 @@
   },
   "pearlOfSagacity": {
     "name": "Pearl of Sagacity",
-    "text": "Every 6th card you play each combat: gain 1 Stamina."
+    "text": "+1 max Mana. Every 6th card you play each combat: gain 1 Stamina."
   },
   "blessedDew": {
     "name": "Blessed Dew",
@@ -101,7 +101,7 @@
   },
   "azureSigil": {
     "name": "Azure Sigil",
-    "text": "The first Skill you play each combat: gain 1 Stamina."
+    "text": "+1 max Mana. The first Skill you play each combat: gain 1 Stamina."
   },
   "bloodstainedChalice": {
     "name": "Bloodstained Chalice",
@@ -301,7 +301,7 @@
   },
   "graduate": {
     "name": "Graduate",
-    "text": "Deck editing adds any number of cantrips (unranked spells)."
+    "text": "+1 max Mana. Deck editing adds any number of cantrips (unranked spells)."
   },
   "threadbareSatchel": {
     "name": "Threadbare Satchel",

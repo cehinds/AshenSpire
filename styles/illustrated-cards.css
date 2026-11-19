@@ -47,9 +47,9 @@
 :root .card-inspection-modal .modal-body { overflow:auto; }
 
 /* Preserve live preview direction and the combat status tint on parchment. */
-:root .illustrated-card-face .ic-text .val.up { color:#205e2b; font-weight:bold; }
-:root .illustrated-card-face .ic-text .val.down { color:#8d2424; font-weight:bold; }
-:root .card.illustrated-card.tag-boost .ic-text .val.up { color:var(--boost-tint,#205e2b); text-shadow:0 1px #efe1ba; }
+:root .illustrated-card-face .ic-text .val.up { color:var(--face-up); font-weight:bold; }
+:root .illustrated-card-face .ic-text .val.down { color:var(--face-down); font-weight:bold; }
+:root .card.illustrated-card.tag-boost .ic-text .val.up { color:var(--boost-tint,var(--face-up)); text-shadow:0 1px #efe1ba; }
 
 /* The card footer pairs the shared intent symbol with its authored card type.
    Information keeps schools, damage types and the full tag vocabulary. */

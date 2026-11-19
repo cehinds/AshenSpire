@@ -35,7 +35,8 @@ Settings live in `engine/modules/cards/settings.schema.json`; shipped defaults a
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Selects configured host adapter behavior.
 - `/roundShuffle` (type enum; default `"entireDeck"`; allowed "entireDeck"): Core reshuffles the full deck at round end.
 - `/retainHand` (type enum; default `false`; allowed false): Core does not retain the hand across the boundary.
-- `/handBase` (type integer; default `4`; range 0..1000000): Base hand before INT; core hand is 4 + INT.
+- `/handBase` (type integer; default `4`; range 0..1000000): Base hand before INT; hand = handBase + floor(INT / handPointsPerIncrease). Core (owner, 2026-11-18): 5 + floor(INT / 4).
+- `/handPointsPerIncrease` (type integer; default `1`; range 1..1000): Attribute points for each +1 card of the opening hand and the turn draw. Core sets 4.
 - `/handAttribute` (type enum; default `"intelligence"`; allowed "intelligence"): Attribute added to handBase.
 - `/turnPolicy` (type enum; default `"multiCard"`; allowed "multiCard"): Allows multiple card plays then End Turn.
 - `/freeCommandLimit` (type integer; default `32`; range 0..1000000): Bound on free commands to prevent runaway loops.

@@ -16,8 +16,12 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-18 again after merging the Codex weapons and armour (38 new gear items) and wiring the concept art: the gear roster moved the profile, runtime, snapshot and save hashes; events, RNG and continuations are identical.
-// Recaptured 2026-11-18 for the Codex roster (32 enemies): only profile, snapshot and save hashes moved; events, RNG and continuations are identical.
+// Recaptured 2026-11-18 (green-discovered pass): runtime hash moved by the Retreat mechanic folder; the historical scenario moved with the same-day gear rulings (see the fixture's recapture note).
+// Recaptured 2026-11-18 for the physical cut on top of the ratings removal (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the three current-profile scenarios' events and continuations move by design;
+// the historical scenario's events, RNG and continuation are identical and only its snapshot, stored and loaded hashes moved (the new effects setting's module default joins the profile).
+// Recaptured 2026-11-18 (AR, DR and PR removed; hand, SP and MP per four points): the runtime hash and the current-profile scenarios moved by design.
+// Recaptured 2026-11-18 for the second cut (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the new setting joins the profile, so the profile, snapshot and save hashes move,
+// and the three current-profile scenarios' events and continuations move by design; the historical scenario is unchanged.
 // Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
 // Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
 // Recaptured 2026-11-17 after the balance review changed pool thresholds, starting gear, tier HP and reactive damage.
@@ -77,7 +81,7 @@ function openFight(api, enemyId, encounterId, profileId) {
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
   delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
-  if (combat.fixCoreRules?.counter) for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete combat.fixCoreRules.counter[key];
+  if (combat.fixCoreRules?.counter) for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete combat.fixCoreRules.counter[key];
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight drops the `bands` rules, as one saved before them.
   delete combat.fixCoreRules?.bands;

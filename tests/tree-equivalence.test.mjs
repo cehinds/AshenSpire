@@ -83,6 +83,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
     'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
     'from:armor': { label: 'Armour' },
+    // Owner 2026-11-18 (ruling §9): a focus (staff, sceptre) lowers every spell's Mana cost by 1, so its blurb says so.
+    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0).' },
     'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },

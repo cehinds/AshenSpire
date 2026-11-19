@@ -1,6 +1,7 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { t } from '../strings.js';
 
 const EDGES = Object.freeze(['top', 'right', 'bottom', 'left']);
 
@@ -57,7 +58,7 @@ export function trayModel({
   edge = 'bottom',
   expanded = false,
   sortable = false,
-  sortLabel = 'Sort',
+  sortLabel = t('deckEditor.sort.default'),
   resizable = true,
   minExpandedSize = 160,
   items = [],

@@ -22,8 +22,8 @@ import { execFileSync } from 'node:child_process';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-export const CHECK_KINDS = ['visible', 'hidden', 'count', 'text', 'within', 'noOverlap', 'style', 'consoleErrors'];
-export const ACTION_KINDS = ['click', 'tap', 'hold', 'key', 'wait'];
+export const CHECK_KINDS = ['visible', 'hidden', 'count', 'text', 'within', 'noOverlap', 'style', 'consoleErrors', 'stamped', 'scrollTop'];
+export const ACTION_KINDS = ['click', 'tap', 'rightClick', 'hold', 'key', 'wait', 'stamp', 'scrollTo', 'drag'];
 
 // ---------- pure: spec validation ----------
 
@@ -38,7 +38,7 @@ export function validateCheck(check, where) {
   const need = (...keys) => { for (const k of keys) if (!isStr(check[k])) errs.push(`${where}: ${check.kind} needs a ${k}`); };
   switch (check.kind) {
     case 'visible': case 'hidden': need('selector'); break;
-    case 'count':
+    case 'count': case 'stamped':
       need('selector');
       if (!['min', 'max', 'eq'].some((k) => Number.isFinite(check[k]))) errs.push(`${where}: count needs min, max or eq`);
       for (const k of ['min', 'max', 'eq']) if (check[k] != null && !Number.isFinite(check[k])) errs.push(`${where}: ${k} must be a number`);
@@ -48,6 +48,7 @@ export function validateCheck(check, where) {
       if (!isStr(check.includes) && !isStr(check.matches)) errs.push(`${where}: text needs includes or matches`);
       if (isStr(check.matches)) { try { new RegExp(check.matches); } catch { errs.push(`${where}: matches is not a valid regex`); } }
       break;
+    case 'scrollTop': need('selector'); break;
     case 'within': need('selector', 'container'); break;
     case 'noOverlap': need('a', 'b'); break;
     case 'style': need('selector', 'prop'); if (typeof check.equals !== 'string') errs.push(`${where}: style needs equals`); break;
@@ -64,7 +65,9 @@ export function validateAction(action, where) {
   const kind = Object.keys(action).find((k) => ACTION_KINDS.includes(k));
   if (!kind) return [`${where}: unknown action (one of ${ACTION_KINDS.join(', ')})`];
   const v = action[kind];
-  if ((kind === 'click' || kind === 'tap' || kind === 'key') && !isStr(v)) return [`${where}: ${kind} needs a string`];
+  if ((kind === 'click' || kind === 'tap' || kind === 'rightClick' || kind === 'key' || kind === 'stamp') && !isStr(v)) return [`${where}: ${kind} needs a string`];
+  if (kind === 'scrollTo' && !(v && isStr(v.selector) && Number.isFinite(v.top))) return [`${where}: scrollTo needs {selector, top}`];
+  if (kind === 'drag' && !(v && isStr(v.from) && isStr(v.to))) return [`${where}: drag needs {from, to} selectors`];
   if (kind === 'wait' && !(v && Number.isFinite(v.ms))) return [`${where}: wait needs {ms}`];
   if (kind === 'hold' && !(v && isStr(v.selector) && Number.isFinite(v.ms))) return [`${where}: hold needs {selector, ms}`];
   if (kind === 'hold' && v.position != null && !['x', 'y'].every(axis => Number.isFinite(v.position[axis]) && v.position[axis] >= 0 && v.position[axis] <= 1)) return [`${where}: hold position needs x and y fractions between 0 and 1`];
@@ -84,6 +87,7 @@ export function validateSpec(spec) {
     const w = `scenes[${i}]`;
     if (!isStr(s?.name)) errs.push(`${w}: missing name`);
     if (!isStr(s?.url)) errs.push(`${w}: missing url`);
+    if (s?.seedStorage != null && (typeof s.seedStorage !== 'object' || Array.isArray(s.seedStorage) || Object.values(s.seedStorage).some((v) => typeof v !== 'string'))) errs.push(`${w}: seedStorage must be an object of string values`);
     if (s?.ready != null && !isStr(s.ready)) errs.push(`${w}: ready must be a selector string`);
     (s?.actions || []).forEach((a, j) => errs.push(...validateAction(a, `${w}.actions[${j}]`)));
     for (const group of ['success', 'failure']) {
@@ -108,7 +112,9 @@ export function evaluateCheck(check, facts) {
   switch (check.kind) {
     case 'visible': return { holds: !!facts.visible, detail: facts.visible ? 'visible' : (facts.count ? 'present but not visible' : 'not found') };
     case 'hidden': return { holds: !facts.visible, detail: facts.visible ? 'is visible' : 'hidden or absent' };
-    case 'count': {
+    // `stamped`: how many nodes matching the selector still carry the mark an earlier `stamp` action put on them (an
+    // expando, not an attribute, so a redraw that rewrites attributes cannot fake it). A node that was rebuilt lost it.
+    case 'count': case 'stamped': {
       const n = facts.count;
       const ok = (check.eq == null || n === check.eq) && (check.min == null || n >= check.min) && (check.max == null || n <= check.max);
       return { holds: ok, detail: `count ${n}` };
@@ -130,6 +136,10 @@ export function evaluateCheck(check, facts) {
       const hit = overlaps(facts.a, facts.b);
       return { holds: !hit, detail: hit ? `overlap ${fmt(facts.a)} / ${fmt(facts.b)}` : 'apart' };
     }
+    // `scrollTop {selector, min}`: the first match is scrolled at least `min` px (a redraw that rebuilt its list resets it to 0).
+    case 'scrollTop':
+      if (facts.value == null) return { holds: false, missing: true, detail: `${check.selector} not found` };
+      return { holds: facts.value >= (check.min ?? 1), detail: `scrollTop ${Math.round(facts.value)}` };
     case 'style':
       if (facts.value == null) return { holds: false, missing: true, detail: `${check.selector} not found` };
       return { holds: facts.value === check.equals, detail: `${check.prop} = ${JSON.stringify(facts.value)}` };
@@ -197,6 +207,8 @@ async function collectFacts(page, check, consoleErrors) {
     switch (check.kind) {
       case 'visible': case 'hidden': { const els = all(check.selector); return { count: els.length, visible: els.some(vis) }; }
       case 'count': return { count: all(check.selector).filter(vis).length };
+      case 'scrollTop': { const e = document.querySelector(check.selector); return { value: e ? e.scrollTop : null }; }
+      case 'stamped': return { count: all(check.selector).filter((e) => e.__qaStamp === true).length };
       case 'text': return { texts: all(check.selector).map((e) => (e.textContent || '').trim()) };
       case 'within': return { box: box(first(check.selector)), container: box(first(check.container)) };
       case 'noOverlap': return { a: box(first(check.a)), b: box(first(check.b)) };
@@ -208,7 +220,19 @@ async function collectFacts(page, check, consoleErrors) {
 
 async function runActions(page, actions) {
   for (const a of actions || []) {
-    if (a.click) await page.click(a.click, { timeout: 5000 });
+    if (a.stamp) await page.evaluate((selector) => { for (const e of document.querySelectorAll(selector)) e.__qaStamp = true; }, a.stamp);
+    else if (a.drag) {
+      // A pointer drag from the centre of one element to the centre of another, in steps (a press, a move past the slop, a release).
+      const from = await (await page.waitForSelector(a.drag.from, { timeout: 5000 })).boundingBox();
+      const to = await (await page.waitForSelector(a.drag.to, { timeout: 5000 })).boundingBox();
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+      await page.mouse.up();
+    }
+    else if (a.scrollTo) await page.evaluate(({ selector, top }) => { const e = document.querySelector(selector); if (e) e.scrollTop = top; }, a.scrollTo);
+    else if (a.click) await page.click(a.click, { timeout: 5000 });
+    else if (a.rightClick) await page.click(a.rightClick, { button: 'right', timeout: 5000 });
     else if (a.tap) await page.tap(a.tap, { timeout: 5000 }).catch(() => page.click(a.tap, { timeout: 5000 }));
     else if (a.hold) {
       const box = await (await page.waitForSelector(a.hold.selector, { timeout: 5000 })).boundingBox();
@@ -227,6 +251,8 @@ export function sceneUrl(baseUrl, url = '') {
 
 async function runScene(browser, baseUrl, viewport, scene, shotPath) {
   const ctx = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, hasTouch: viewport.width < 600 });
+  // scene.seedStorage {key: string}: localStorage entries written once, before the game's first script runs.
+  if (scene.seedStorage) await ctx.addInitScript((seed) => { try { if (localStorage.getItem('__qa_seeded') == null) { for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v); localStorage.setItem('__qa_seeded', '1'); } } catch { /* blocked storage */ } }, scene.seedStorage);
   const page = await ctx.newPage();
   const consoleErrors = [];
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });

@@ -31,9 +31,11 @@ export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
 // Owner, 2026-11-17 (theme B): `armedWhileStacks: true` keeps an armed Counter through its owner's turn start while Counter stacks remain (the stacks
 // follow the normal decay rule, so the Counter lasts as long as they do); `enemyBadgeStacks` is the Counter badge an enemy Counter move shows, which
 // fades by decayPerTurn at the enemy's turn start and loses 1 each time the Counter is used. A fight saved without a key keeps the earlier rule.
-const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard', 'armedWhileStacks', 'enemyBadgeStacks']);
+const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard', 'armedWhileStacks', 'enemyBadgeStacks']);
 /** The Counter-stack rules a fight plays under (the `counter` block with `stackSource: "card"`), or null for the Block-as-stacks rule of an earlier fight. */
 export const FixCoreCounterStacks = ctx => fixCoreEnabled(ctx) && rawRules(ctx).counter?.stackSource === 'card' ? rawRules(ctx).counter : null;
+/** When Counter stacks fade (owner 2026-11-18): "ownerTurnStart", the start of the holder's own turn, never the end of it. A fight saved without the key fades them at the same clock. */
+export const CounterDecayClock = ctx => FixCoreCounterStacks(ctx)?.decayClock ?? 'ownerTurnStart';
 /** True when an armed Counter survives its owner's turn start while Counter stacks remain (theme B, 2026-11-17). */
 export const CounterArmedWhileStacks = ctx => FixCoreCounterStacks(ctx)?.armedWhileStacks === true;
 /** The Counter badge stacks an enemy Counter move grants (theme B, 2026-11-17); 0 for a fight saved without the key. */
@@ -52,9 +54,10 @@ function validateCounterStacks(row) {
     || !Number.isInteger(row.stacksPerCard) || row.stacksPerCard < 1 || row.stacksPerCard > row.stacksMax
     || (row.stacksByCard !== undefined && (typeof row.stacksByCard !== 'object' || row.stacksByCard === null
       || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))
+    || (row.decayClock !== undefined && row.decayClock !== 'ownerTurnStart')
     || (row.armedWhileStacks !== undefined && typeof row.armedWhileStacks !== 'boolean')
     || (row.enemyBadgeStacks !== undefined && !whole(row.enemyBadgeStacks))) {
-    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax, boolean armedWhileStacks, whole enemyBadgeStacks');
+    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax, decayClock "ownerTurnStart", boolean armedWhileStacks, whole enemyBadgeStacks');
   }
 }
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });

@@ -18,11 +18,11 @@ const build = (mutate = null) => {
 test('Core 2 largest per-point gains read from the live formulas', () => {
   const { registries, run } = build();
   const text = (id) => largestAttributeGain(registries, run, id)?.text;
-  assert.equal(text('strength'), '+1 AR');
-  assert.equal(text('dexterity'), '+1 DR');
+  assert.equal(text('strength'), '+1 Physical damage');
+  assert.equal(text('dexterity'), '+1 Block');
   assert.equal(text('constitution'), '+5 HP');
   assert.equal(text('wisdom'), '+1 Perception');
-  assert.equal(text('intelligence'), '+1 PR');
+  assert.equal(text('intelligence'), '+1 Magic damage');
 });
 
 test('the full list names every non-zero gain and skips Ward while Core switches it off', () => {
@@ -31,6 +31,8 @@ test('the full list names every non-zero gain and skips Ward while Core switches
   assert.ok(con.some(g => g.statId === 'hp' && g.delta === 5));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
   assert.match(attributeGainSummary(con), /^\+5 HP, /);
+  // Owner, 2026-11-18: the hand is 5 + floor(INT / 4), so the card arrives at INT 4, not with every point.
+  run.attributes.intelligence = 3;
   assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
   assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
 });
@@ -83,7 +85,8 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
 
-test('a blight INT bonus moves the Mana threshold in both the preview and allocation', () => {
+// Owner, 2026-11-18: Mana is 1 + floor(WIS / 4); INT no longer buys any, so a blight INT bonus moves no Mana threshold.
+test('a blight INT bonus moves no Mana threshold, and the preview equals the allocation', () => {
   const { registries, run } = build((r) => {
     r.attributes.intelligence = 2;
     r.level.unspentPoints = 1;
@@ -96,7 +99,7 @@ test('a blight INT bonus moves the Mana threshold in both the preview and alloca
   const before = run.maxMana;
   allocateAttributePoint(registries, run, 'intelligence');
   assert.equal(run.maxMana - before, predicted, 'preview equals the real allocation');
-  assert.equal(predicted, 1, 'the bonus moves effective INT from 3 to 4 when the point is spent');
+  assert.equal(predicted, 0, 'INT is not a Mana stat any more');
 });
 
 test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {
@@ -115,13 +118,13 @@ test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', (
   assert.equal(predicted?.text, '+1 Energy');
 });
 
-test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card', () => {
+test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card (5 + floor(INT / 4))', () => {
   const { registries, run } = build();
   run.attributes.intelligence = 3;
   const gains = attributePointGains(registries, run, 'intelligence');
   for (const id of ['draw', 'openingHand', 'handSize']) assert.equal(gains.find(g => g.statId === id)?.delta, 1, `${id} +1`);
-  assert.equal(gains.find(g => g.statId === 'draw').before, 7);
-  assert.equal(gains.find(g => g.statId === 'draw').after, 8);
+  assert.equal(gains.find(g => g.statId === 'draw').before, 5);
+  assert.equal(gains.find(g => g.statId === 'draw').after, 6);
   assert.ok(gains.some(g => g.statId === 'pr' && g.delta === 1));
   assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'pr', 'tie-break keeps PR as mainGain');
 });
@@ -131,8 +134,11 @@ test('a legacy run still counts Draw and Opening hand through the hand rows: cap
   const run = createRunState({ seed: 4242, classId: 'rogue', registries });
   run.combatExpansionVersion = 1;
   const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence').map(g => g.statId); };
-  const capped = ids(3);
-  assert.ok(!capped.includes('draw') && !capped.includes('openingHand'), 'INT 3 -> 4 deals no extra card, so shows none');
+  // Owner, 2026-11-18: opening hand and draw are 5 + floor(INT / 4): the card arrives at INT 4, capacity (7 + 0.2 per INT over 4) does not.
+  const arrives = ids(3);
+  assert.ok(arrives.includes('draw') && arrives.includes('openingHand') && !arrives.includes('handSize'), 'INT 3 -> 4 deals one more card, capacity unmoved');
+  const between = ids(5);
+  assert.ok(!between.includes('draw') && !between.includes('openingHand'), 'INT 5 -> 6 deals no extra card, so shows none');
   const raisesCapacity = ids(8);
-  for (const id of ['draw', 'openingHand', 'handSize']) assert.ok(raisesCapacity.includes(id), `INT 8 -> 9 raises capacity, so ${id} shows`);
+  assert.ok(raisesCapacity.includes('handSize') && !raisesCapacity.includes('draw'), 'INT 8 -> 9 raises capacity but deals no extra card');
 });
