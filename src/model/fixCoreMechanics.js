@@ -238,8 +238,9 @@ export function validateFixCoreRules(rules) {
   validateElementFlux(rules.elementFlux);
   validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
-  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
-    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','defendDamageMultiplier','blockFraction','poiseFraction'].includes(key))
+    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0
+    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
   if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);

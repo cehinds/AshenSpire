@@ -147,7 +147,7 @@ export function combatCardType(def) {
  * static tokens. Every card-face text model reads through this one context.
  */
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, preview?.faceRules ?? rules ?? null);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -209,8 +209,8 @@ export function AllEnemySpread(live) {
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
-export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
+export function combatCardSummary(def, preview = null, registries = null, rules = null) {
+  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries, rules);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
@@ -328,7 +328,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
@@ -513,7 +513,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
   // Owner, 2026-11-18: the colour baseline is the same card's face outside combat (always-on attributes and gear included), so a live number is
   // green or red only when something in the fight raised or lowered it.
-  const base = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
+  const base = staticCardTokens(def, registries, preview?.faceRules ?? rules ?? null);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its

@@ -29,6 +29,9 @@ const precedingEquipment = JSON.parse(readFileSync(new URL('./fixtures/pre-codex
 // Exact resolved Dev profile at 6727a25530, before the stat changes and after the Codex content merge.
 // Archive SHA256: ce955c3da5182f89cd1e1e78fedbb2d8f4d92be84e63569468a0cbd827de5cbd.
 const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
+// Genuine resolved Dev 4fc475a249 profile, with the Defend-only Smash rule and without stat traditions.
+// Archive SHA256: 0c4712d1748aa2424505d5ad40f2ba354deb988cda19bdee3abb3aeeec0cfbe6.
+const smashDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-4fc475a2.json.gz', import.meta.url))));
 
 function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -40,7 +43,7 @@ function fight([seed, classId], profile = resolveGameProfile('default'), equipme
   return combat;
 }
 function legacyFight(setup) {
-  return withoutGearPierce(fight(setup, precedingDevProfile, precedingEquipment));
+  return withoutSmashOverride(withoutGearPierce(fight(setup, precedingDevProfile, precedingEquipment)));
 }
 function withoutGearPierce(combat) {
   // These immutable historical fixtures predate the three new Pierce snapshot fields.
@@ -49,7 +52,12 @@ function withoutGearPierce(combat) {
 }
 function preGearFight(setup, profile = legacyGearProfile(resolveGameProfile('default'))) {
   // Explicit pre-type-effects compatibility lane. The current stat policy remains enabled.
-  return withoutGearPierce(fight(setup, profile));
+  return withoutSmashOverride(withoutGearPierce(fight(setup, profile)));
+}
+function withoutSmashOverride(combat) {
+  // A saved fixture from before the Defend-only Smash ruling retains its entire original state and arithmetic.
+  delete combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier;
+  return combat;
 }
 function answerReactions(combat) {
   for (let guard = 0; combat.pendingReaction && guard < 20; guard++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -271,6 +279,16 @@ const PINNED = [
   [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: 'fab8c6a9fa4c1e58', events: 207, turn: 6 }],
   [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: '8ce9e14daf8cf0d5', events: 217, turn: 6 }],
 ];
+function assertStatPolicyOnly(current, previous) {
+  assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
+  assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');
+  const before = JSON.parse(JSON.stringify(stateData(previous), replacer));
+  const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
+  for (const key of ['rules', 'baseRules']) restored.derivedStatRuleSnapshot[key].rules.poise = before.derivedStatRuleSnapshot[key].rules.poise;
+  delete restored.derivedStatRuleSnapshot.modifierOverride.rules.poise;
+  delete restored.fixCoreRules.spellTraditionsVersion;
+  assert.equal(JSON.stringify(restored), JSON.stringify(before), 'only saved Poise ownership and the tradition flag differ');
+}
 for (const [index, [setup, expected]] of PINNED.entries()) {
   const seed = `${setup[0]}/${setup[1]}`;
   test(`pre-gear seeded fight ${seed} reproduces its stat-policy log, final state and RNG position`, () => {
@@ -282,14 +300,38 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
     assert.deepEqual(first, expected, 'digest matches the pinned profile and fight rules');
     const previous = play(preGearFight(setup, incomingDevProfile), 5);
     assert.deepEqual(digest(previous), PRE_STAT_PINNED[index], 'the exact prior profile retains its entire prior digest');
-    assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
-    assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');
-    const before = JSON.parse(JSON.stringify(stateData(previous), replacer));
-    const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
-    for (const key of ['rules', 'baseRules']) restored.derivedStatRuleSnapshot[key].rules.poise = before.derivedStatRuleSnapshot[key].rules.poise;
-    delete restored.derivedStatRuleSnapshot.modifierOverride.rules.poise;
-    delete restored.fixCoreRules.spellTraditionsVersion;
-    assert.equal(JSON.stringify(restored), JSON.stringify(before), 'only saved Poise ownership and the tradition flag differ');
+    assertStatPolicyOnly(current, previous);
+  });
+}
+
+// New Smash pins are additional controls; every historical array and pre-Smash pin above stays intact.
+// PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP7 ->9 and Poise4 ->5.
+// That hit's HP/Poise receipts and subsequent HP snapshots change; event counts, turns and all RNG counters do not.
+const SMASH_PINNED = [
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '7a558c6868e71c92', events: 207, turn: 6 }, '643cecce794d5d7d'],
+  [[4242, 'reaver'], { log: 'd9f8ab14d3786fe3', state: '29b21ebc307d74a2', events: 217, turn: 6 }, 'c20d74fee88cb015'],
+];
+for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
+  test(`pre-gear current Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
+    const current = play(withoutGearPierce(fight(setup, legacyGearProfile(resolveGameProfile('default')))), 5);
+    const incoming = play(withoutGearPierce(fight(setup, legacyGearProfile(smashDevProfile))), 5);
+    assert.equal(current.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
+    assert.deepEqual(digest(current), expected);
+    assert.deepEqual(digest(incoming), { ...expected, state: incomingState }, 'the genuine incoming profile reproduces its Dev golden');
+    assertStatPolicyOnly(current, incoming);
+    const prior = play(preGearFight(setup), 5);
+    assert.deepEqual(digest(prior), PINNED[index][1], 'removing only the new Smash override reproduces the exact prior stat pin');
+    assert.equal(current.eventLog.length, prior.eventLog.length);
+    assert.equal(current.turn, prior.turn);
+    assert.deepEqual(current.rng.getCounters(), prior.rng.getCounters());
+    const changedHits = current.eventLog.flatMap((event, i) => event.type === 'damageDealt' && event.hpLoss !== prior.eventLog[i].hpLoss
+      ? [[prior.eventLog[i].hpLoss, event.hpLoss, prior.eventLog[i].poiseDamage, event.poiseDamage]] : []);
+    assert.deepEqual(changedHits, index === 0 ? [] : [[7, 9, 4, 5]], 'only the documented Defend Smash hit changes HP and Poise');
+    if (index === 0) {
+      const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
+      delete restored.fixCoreRules.smashVsDefensive.defendDamageMultiplier;
+      assert.equal(JSON.stringify(restored), JSON.stringify(JSON.parse(JSON.stringify(stateData(prior), replacer))), 'PERF1 changes only the saved Smash key');
+    }
   });
 }
 

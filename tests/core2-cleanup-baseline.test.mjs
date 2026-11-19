@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
+// Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
 // Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
 // Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
@@ -105,6 +107,8 @@ function openFight(api, enemyId, encounterId, profileId) {
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight drops the `bands` rules, as one saved before them.
   delete combat.fixCoreRules?.bands;
+  // This scenario pins an actual pre-override combat, not today's new-fight defaults.
+  if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
   return { api, profile, registries, run, combat, encounter };
 }

@@ -2607,6 +2607,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // once, the halves let a pure selection change reuse the unselected cards'
     // previews instead of re-quoting the whole hand.
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      { fixCoreRules: combat.fixCoreRules, profileHash: combat.gameProfile?.hash, combatExpansionVersion: combat.combatExpansionVersion },
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     // A play paints the hand from `disp.handPreviews`, the quotes taken BEFORE the dispatch, while `combat` is already
     // post-dispatch, so stateKey alone is the same before and after the animation ends. The tag keeps those two paints
@@ -2654,7 +2655,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+        return { inst, preview: pv, rules: combat, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
           stacked: stackedIds.has(inst.instanceId), maxRange: combat.rangeState?.policy?.maxRange,
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
@@ -3088,7 +3089,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           : { preview: pv, affordable };
       } catch (e) { console.warn('[combat] dragged card not previewable for', targetId); return; }
       const old = dragGhost;
-      const face = renderCard(registries, inst, { preview: quote.preview, affordable: quote.affordable, range: true,
+      const face = renderCard(registries, inst, { preview: quote.preview, rules: combat, affordable: quote.affordable, range: true,
         maxRange: combat.rangeState?.policy?.maxRange, faceLineLimit: 3, inspection: false });
       face.classList.add(...[...old.classList].filter(name => name !== 'unaffordable'));
       face.setAttribute('aria-hidden', 'true');

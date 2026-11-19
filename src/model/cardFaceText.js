@@ -418,7 +418,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   }
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', tag: true, text: esc(smashClause) });
   // A run-long attribute upgrade (W25-L) says what it gives while the card is in the deck.
   for (const [attribute, amount] of Object.entries(def.runAttributeBonus || {})) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(amount)} ${ATTRIBUTE_ABBREVIATION[attribute] || esc(title(attribute))} for the run while in your deck` });

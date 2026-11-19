@@ -262,6 +262,26 @@ test('faceDefinition never replaces a different card or an anonymous synthetic d
   assert.deepEqual(staticCardTokens({ effects: [] }), {}, 'no face rules and no ID are valid');
 });
 
+test('the hand saved-rule context preserves the preview numeric baseline and live colour changes', () => {
+  const world = fight('starseer', { ownProfile: unitDamageProfile(), attributes: { intelligence: 8, wisdom: 2 } });
+  isolateAttributeColours(world);
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
+  const first = damageFace(world, 'core.cinderDart');
+  const instance = world.combat.piles.hand.at(-1);
+  const rendered = playingCardModel(world.registries, instance, { preview: first.preview, rules: world.combat });
+  assert.equal(rendered.baseTokens.damage, first.baseline, 'the full combat context cannot reapply Sceptre to an already projected definition');
+  const lines = cardFaceLines(first.preview.resolvedDefinition, first.preview, world.registries, world.combat);
+  assert.deepEqual(classes(lines.find(row => row.kind === 'damage').html), ['black']);
+  ChangeAttribute(world.combat, world.combat.player, 'intelligence', 4);
+  const boosted = previewCard(world.combat, instance.instanceId, world.enemy.id);
+  const liveModel = playingCardModel(world.registries, instance, { preview: boosted, rules: world.combat });
+  assert.equal(liveModel.baseTokens.damage, first.baseline, 'saved context and live boosts do not alter the baseline');
+  assert.ok(boosted.values.find(row => row.op === 'damage').faceValue > first.value);
+  const liveLines = cardFaceLines(boosted.resolvedDefinition, boosted, world.registries, world.combat);
+  assert.deepEqual(classes(liveLines.find(row => row.kind === 'damage').html), ['up']);
+});
+
 for (const policy of ['current', 'saved attribute rule', 'saved disabled tradition']) test(`an Evade metric face renders its full detached ${policy} snapshot`, () => {
   const world = fight('rogue');
   const rules = world.combat.fixCoreRules;
