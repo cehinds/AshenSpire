@@ -271,6 +271,7 @@ test('the hand saved-rule context preserves the preview numeric baseline and liv
   const instance = world.combat.piles.hand.at(-1);
   const rendered = playingCardModel(world.registries, instance, { preview: first.preview, rules: world.combat });
   assert.equal(rendered.baseTokens.damage, first.baseline, 'the full combat context cannot reapply Sceptre to an already projected definition');
+  assert.equal(playingCardModel(world.registries, instance, { rules: world.combat }).baseTokens.damage, first.baseline, 'the outside face without a preview keeps its existing numeric path');
   const lines = cardFaceLines(first.preview.resolvedDefinition, first.preview, world.registries, world.combat);
   assert.deepEqual(classes(lines.find(row => row.kind === 'damage').html), ['black']);
   ChangeAttribute(world.combat, world.combat.player, 'intelligence', 4);
