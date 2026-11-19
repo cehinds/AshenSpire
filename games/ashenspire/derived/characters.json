@@ -5516,13 +5516,13 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "halberd",
-            "name": "Halberd",
+            "source": "pike",
+            "name": "Pike",
             "kind": "gear",
-            "amount": 2
+            "amount": 1
           }
         ],
-        "total": 4
+        "total": 3
       },
       "dexterity": {
         "own": 2,
@@ -5549,28 +5549,28 @@
       "terms": {
         "base": 10,
         "constitution": 10,
-        "strength": 20,
+        "strength": 15,
         "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 54,
-      "formula": "10+10+20+6+2+1+5 = 54"
+      "total": 49,
+      "formula": "10+10+15+6+2+1+5 = 49"
     },
     "pools": {
-      "hp": 54,
+      "hp": 49,
       "sp": 3,
       "mp": 1,
-      "ar": 4,
+      "ar": 3,
       "dr": 2,
       "hand": 4
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "halberd",
-        "name": "Halberd"
+        "id": "pike",
+        "name": "Pike"
       }
     ],
     "relics": [],
