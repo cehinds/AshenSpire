@@ -1,6 +1,7 @@
 // Gear module (owner 2026-10-17): point pools by rarity, tag-driven fill priority, merged in Core,
 // and enemies wearing the same (lootable) gear and playing player-shaped cards.
 import test from 'node:test';
+import { CODEX_IDS } from '../tools/enemy-roster-table.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
@@ -88,7 +89,8 @@ test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', a
   assert.deepEqual(core.modifiers, ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2']);
   const e = characterSettings(profile.modules);
   const carriers = enemies.filter(x => enemyRelicIds(x).includes(core.id));
-  const minions = enemies.filter(x => x.tier === 'minion'), elites = enemies.filter(x => x.tier === 'elite');
+  // The Codex roster (2026-11-18) is authored with its own stamina curve and no Blight Core, so "most minions" counts the older roster.
+  const minions = enemies.filter(x => x.tier === 'minion' && !CODEX_IDS.includes(x.id)), elites = enemies.filter(x => x.tier === 'elite');
   assert.ok(carriers.filter(x => x.tier === 'minion').length > minions.length / 2, 'most minions');
   assert.ok(carriers.filter(x => x.tier === 'boss').length >= 2, 'a couple of bosses');
   for (const x of carriers) assert.ok(enemyPools(x, e, undefined, enemyItemBonuses(x, profile.content, gearSettings)).sp >= 1, x.id);
