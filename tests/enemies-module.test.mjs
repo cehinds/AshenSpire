@@ -229,7 +229,7 @@ test('defaultDeck and keyed defaultGear / defaultRelics lists', () => {
 test('players and enemies share one character shape; tags pick the block; one HP algorithm', () => {
   const chars = profile.content.characters;
   const players = chars.filter(c => c.tags.includes('character.player')), foes = chars.filter(c => c.tags.includes('character.enemy'));
-  assert.equal(players.length, 4); assert.equal(foes.length, 33);
+  assert.equal(players.length, 4); assert.equal(foes.length, 65);
   const shared = ['id', 'name', 'tags', 'attributePriority', 'defaultDeck', 'defaultGear', 'defaultRelics', 'presentation'];
   for (const c of chars) for (const key of shared) assert.ok(key in c, `${c.id}.${key}`);
   for (const p of players) assert.ok(p.player && !p.enemy, p.id);
