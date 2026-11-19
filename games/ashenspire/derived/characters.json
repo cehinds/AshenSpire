@@ -8743,24 +8743,25 @@
         "own": 3,
         "bonuses": [
           {
-            "source": "cinderAxe",
-            "name": "Cinder_Axe",
-            "kind": "gear",
-            "amount": 2
-          },
-          {
             "source": "enemy.relic.crucibleHeart",
             "name": "Crucible_Heart",
             "kind": "relic",
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "beastClaws",
+            "name": "Beast_Claws",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
       },
       "constitution": {
         "own": 3,
@@ -8789,28 +8790,28 @@
       "terms": {
         "base": 10,
         "constitution": 60,
-        "strength": 30,
-        "dexterity": 6,
+        "strength": 20,
+        "dexterity": 12,
         "wisdom": 2,
         "intelligence": 1,
         "level": 20
       },
-      "total": 129,
-      "formula": "10+60+30+6+2+1+20 = 129"
+      "total": 125,
+      "formula": "10+60+20+12+2+1+20 = 125"
     },
     "pools": {
-      "hp": 129,
-      "sp": 4,
+      "hp": 125,
+      "sp": 5,
       "mp": 2,
-      "ar": 6,
-      "dr": 2,
+      "ar": 4,
+      "dr": 4,
       "hand": 5
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "cinderAxe",
-        "name": "Cinder_Axe"
+        "id": "beastClaws",
+        "name": "Beast_Claws"
       }
     ],
     "relics": [

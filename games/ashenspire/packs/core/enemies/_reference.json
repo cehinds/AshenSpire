@@ -3440,7 +3440,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:crucibleNewt.slagBreath": {
@@ -4535,14 +4535,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.crucibleHeart": {
-      "name": "Crucible Heart",
-      "text": "CON +3, STR +1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.titheBand": {
       "name": "Tithe Band",
       "text": "WIS +1, CON +1",
@@ -4662,6 +4654,14 @@
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.crucibleHeart": {
+      "name": "Crucible Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
         "self.strength=+1"
       ]
     }
