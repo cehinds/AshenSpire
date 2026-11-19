@@ -67,7 +67,7 @@ function snapshot(ctx, entity) {
     attributeRow: attributeRow(entity) ? Object.fromEntries(RATING_IDS.map(id => [id, Number(attributeRow(entity)[id]) || 0])) : null,
     maxHp: entity.maxHp, maxStamina: entity.maxStamina, maxMana: entity.maxMana, energyMax: entity.energyMax,
     drawPerTurn: entity.drawPerTurn,
-    persistentPoiseMax: entity.persistentPoise?.max, persistentWardMax: entity.persistentWard?.max, poiseMeterMax: entity.poiseMeter?.max,
+    persistentPoiseMax: Number.isFinite(entity.persistentPoise?.max) ? Math.max(0, entity.persistentPoise.max - (entity.persistentPoise.barrierBonus || 0)) : entity.persistentPoise?.max, persistentWardMax: entity.persistentWard?.max, poiseMeterMax: entity.poiseMeter?.max,
     ...(isPlayer ? { handMax: ctx.handMax, combatDrawPerTurn: ctx.drawPerTurn } : {}),
   };
 }
@@ -121,7 +121,9 @@ export function RecomputeLiveStats(ctx, entity) {
   if (Number.isFinite(base.maxMana)) resize(entity, 'maxMana', whole(base.maxMana + delta('mana')), ['mana']);
   // Poise and Ward pools move by the same rating delta their maxima were priced from at the fight start.
   if (entity.persistentPoise && Number.isFinite(base.persistentPoiseMax)) {
-    const max = whole(base.persistentPoiseMax + delta('poise'));
+    // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a); the fight-start base holds none of it, so the
+    // bonus is added back, or the maximum would fall below the bonus and the combat snapshot would be refused.
+    const max = whole(base.persistentPoiseMax + delta('poise')) + (entity.persistentPoise.barrierBonus || 0);
     entity.persistentPoise.value = clamp(entity.persistentPoise.value + Math.max(0, max - entity.persistentPoise.max), max);
     entity.persistentPoise.max = max;
   }
