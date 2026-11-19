@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-18 again after merging the Codex weapons and armour (38 new gear items) and wiring the concept art: the gear roster moved the profile, runtime, snapshot and save hashes; events, RNG and continuations are identical.
 // Recaptured 2026-11-18 for the Codex roster (32 enemies): only profile, snapshot and save hashes moved; events, RNG and continuations are identical.
 // Recaptured 2026-11-18 for Event Copy. Only current profile, snapshot and save hashes moved.
 // Runtime hashes, events, RNG, continuations and the complete historical scenario are identical.
