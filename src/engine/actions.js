@@ -62,6 +62,7 @@ import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { reconcileRunLoadoutHp } from '../model/loadout/cardMods.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { cardUpgradeStepsOn, freeCardUpgradeStep, applyFreeCardUpgrade } from '../model/cardUpgradeService.js';
@@ -2326,6 +2327,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
+        reconcileRunLoadoutHp(ctx.registries, run); // relic properties (maxMana1) raise the pools the moment it is held
       }
       return;
     },
