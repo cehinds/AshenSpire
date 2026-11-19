@@ -32,8 +32,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-19
+
+- **Longer acts, a V-shaped map and re-enterable traders** ([#2847](https://github.com/cehinds/AshenSpire/pull/2847), `0.7.4.183`). Acts now have 11 levels before the boss. Acts 2 and 3 open on a rest, and rests sit 2 to 5 nodes apart. The boss branches fan out like a V, each with one pre-boss rest that leads only to its own boss, so you never see the other bosses from there. You can click the trader or blacksmith you are standing on to go back in, and the blacksmith keeps the stock you left. A rare combat crash with Carrion Talon and one enemy left is fixed, and its random shot no longer lands on an enemy that already died.
+- **Stance cards change your stance** ([#2843](https://github.com/cehinds/AshenSpire/pull/2843), `0.7.4.181`). Entering a stance with a card (Enter: Gorefire, Bulwark, Brace) now changes your combat stance, so your pose and the action icon above you show the stance you entered, and its bonuses apply instead of Prepared's.
+
 ## 2026-11-18
 
+- **Split Windows promotion tests into eight groups** ([#2848](https://github.com/cehinds/AshenSpire/pull/2848), `0.7.4.178`). Windows now divides its regular discovery tests across eight runners so each group has less work to finish within the 15-minute limit.
+- **Published enemy concept and equipment artwork** ([#2844](https://github.com/cehinds/AshenSpire/pull/2844), `0.7.4.175`). The game pins verified art pack v28, adding 448 enemy concept poses and 49 equipment illustrations. The concept catalog keeps all 32 enemy designs disabled for later integration.
 - **Rarity banner trim and enemy sprite concepts** ([#2842](https://github.com/cehinds/AshenSpire/pull/2842), `0.7.4.173`). Combat cards show white, green or blue on the cost-banner trim for common, uncommon or rare, including on phones in Lite mode. An authoring catalog marks 32 enemy sprite designs as disabled concepts with complete stance, action and downed poses for future integration.
 - **Browser checks follow character Review and reward controls** ([#2839](https://github.com/cehinds/AshenSpire/pull/2839), `0.7.4.170`). Browser checks wait for the character Review tap guard before pressing Begin, and the full-run check picks rewards through the visible card or name button before confirming.
 - **Effects follow the spell and its target** ([#2836](https://github.com/cehinds/AshenSpire/pull/2836), `0.7.4.167`). Combat selects layered effects from the card and what actually happened: one Sweep across its targets, distinct protection hits and breaks, rising buffs and healing, and falling blood drops. With the effect art installed, spell circles grow on the caster before the target effect. Missing art uses simple static markers.

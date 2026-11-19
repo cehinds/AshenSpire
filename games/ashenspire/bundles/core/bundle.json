@@ -241,7 +241,13 @@
         "variedNeighbours": "variedNeighbours",
         "shopsPerBranch": "shopsPerBranch",
         "forkPercent": "forkPercent",
-        "crossLinkPercent": "crossLinkPercent"
+        "crossLinkPercent": "crossLinkPercent",
+        "startRestFromAct": "startRestFromAct",
+        "restGap": "restGap",
+        "restFloorSpread": "restFloorSpread",
+        "branchSpread": "branchSpread",
+        "singlePrebossRest": "singlePrebossRest",
+        "fogCommittedBranch": "fogCommittedBranch"
       }
     },
     {

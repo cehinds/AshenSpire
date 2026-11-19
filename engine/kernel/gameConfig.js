@@ -728,6 +728,9 @@ function verifySettings(modules, instances = {}) {
     const {restFloors,restsPerAct,prebossNodes,minimumThreatFloor} = modules.routes;
     if (prebossNodes + 1 < minimumThreatFloor) fail('$/modules/routes/prebossNodes', 'boss depth must reach minimumThreatFloor');
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
+    const {restGap,startRestFromAct} = modules.routes;
+    if (restGap && restGap.min > restGap.max) fail('$/modules/routes/restGap', 'min must not exceed max');
+    if (startRestFromAct != null && startRestFromAct > modules.routes.acts) fail('$/modules/routes/startRestFromAct', 'must not exceed acts');
     if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
   // A one-service visit needs a deck-free fallback so a visit can always be spent; "all" visits heal on arrival, so any list will do.
@@ -743,7 +746,7 @@ function verifyRouteFirstFloor(modules, content) {
   const {firstFloor = null, restFloors, minimumThreatFloor} = routes;
   if (firstFloor === null) return;
   const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
-  if (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
+  if (!alternatives.includes(firstFloor) || (restFloors.includes(1) && !(routes.startRestFromAct > 1)) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
 }
 function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;
