@@ -6205,20 +6205,20 @@
     "attributes": {
       "strength": {
         "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "dexterity": {
+        "own": 1,
         "bonuses": [
           {
-            "source": "warhammer",
-            "name": "Warhammer",
+            "source": "beastClaws",
+            "name": "Beast_Claws",
             "kind": "gear",
             "amount": 2
           }
         ],
-        "total": 4
-      },
-      "dexterity": {
-        "own": 1,
-        "bonuses": [],
-        "total": 1
+        "total": 3
       },
       "constitution": {
         "own": 2,
@@ -6240,28 +6240,28 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 20,
-        "dexterity": 3,
+        "strength": 10,
+        "dexterity": 9,
         "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 61,
-      "formula": "10+20+20+3+2+1+5 = 61"
+      "total": 57,
+      "formula": "10+20+10+9+2+1+5 = 57"
     },
     "pools": {
-      "hp": 61,
+      "hp": 57,
       "sp": 2,
       "mp": 1,
-      "ar": 4,
-      "dr": 1,
+      "ar": 2,
+      "dr": 3,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "warhammer",
-        "name": "Warhammer"
+        "id": "beastClaws",
+        "name": "Beast_Claws"
       }
     ],
     "relics": [],
