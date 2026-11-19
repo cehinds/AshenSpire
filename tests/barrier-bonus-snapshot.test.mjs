@@ -61,3 +61,18 @@ test('a saved snapshot already holding barrierBonus above max loads repaired and
   const frac = structuredClone(saved); frac.player.persistentPoise.barrierBonus = 7.5;
   assert.equal(restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: frac }).player.persistentPoise.barrierBonus, 7);
 });
+
+test('a fight saved with the bonus inside liveStats.base does not inflate the maximum on the next stat change', () => {
+  for (const devFormat of [true, false]) {
+    const { combat, player } = fight({ classId: 'reaver' });
+    ChangeAttribute(combat, player, 'wisdom', 1);
+    ward(combat, player, 2);
+    if (devFormat) player.liveStats.base.persistentPoiseMax += 10; // what build 0.7.4.216 stored when Ward was up at the first change
+    const saved = createCombatSnapshot(combat);
+    const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: saved });
+    const before = { ...restored.player.persistentPoise };
+    ChangeAttribute(restored, restored.player, 'strength', 1);
+    assert.deepEqual(restored.player.persistentPoise, before, devFormat ? 'dev-format base' : 'new-format base');
+    assert.deepEqual(combatSnapshotProblems(createCombatSnapshot(restored)), []);
+  }
+});

@@ -12,6 +12,7 @@
 //   boosts      net attribute change, by attribute, for the rest of the fight (turn boosts included)
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
+import { persistentPoiseMaximum } from '../model/combatRatings.js';
 import { ChannelRowValue } from '../model/channelRowValue.js';
 import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { handRow, scaledCards } from '../model/handRules.js';
@@ -121,9 +122,11 @@ export function RecomputeLiveStats(ctx, entity) {
   if (Number.isFinite(base.maxMana)) resize(entity, 'maxMana', whole(base.maxMana + delta('mana')), ['mana']);
   // Poise and Ward pools move by the same rating delta their maxima were priced from at the fight start.
   if (entity.persistentPoise && Number.isFinite(base.persistentPoiseMax)) {
-    // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a); the fight-start base holds none of it, so the
-    // bonus is added back, or the maximum would fall below the bonus and the combat snapshot would be refused.
-    const max = whole(base.persistentPoiseMax + delta('poise')) + (entity.persistentPoise.barrierBonus || 0);
+    // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a). With a rating table the maximum comes from the
+    // same source syncPoiseMaximum uses (rating maximum + bonus), so the stored base format (a fight saved by 0.7.4.216 holds the bonus in it)
+    // no longer matters; otherwise the fight-start base plus the rating delta, plus the bonus.
+    const bonus = entity.persistentPoise.barrierBonus || 0;
+    const max = (entity.ratings && ctx.combatExpansionVersion === 2 ? persistentPoiseMaximum(ctx, entity) : whole(base.persistentPoiseMax + delta('poise'))) + bonus;
     entity.persistentPoise.value = clamp(entity.persistentPoise.value + Math.max(0, max - entity.persistentPoise.max), max);
     entity.persistentPoise.max = max;
   }
