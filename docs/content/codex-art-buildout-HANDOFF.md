@@ -2,7 +2,29 @@
 
 Owner task, 2026-11-18: give every new Codex enemy and weapon asset real, playable content. Follow CLAUDE.md: workers code, the main session reviews, sandbox QA, PR into `dev`, merge, then promote `dev` → `review`.
 
-State at handoff (2026-11-19): branch head `41cef8a3c5`, pushed and clean. No PR yet. All work is committed. The worker was stopped at the final test-lane comparison.
+Resume state: reviewed source is pushed at `6a7378b6a039cbe6bc2f7348fbfc8b049abfca35`, including `origin/dev` at `0327759be4` (build box 0.7.4.201). No PR yet. Final isolated discovered lanes and browser QA are running; do not claim final acceptance until their reports finish.
+
+### Completed during resume
+
+- Repriced all 22 new Smashes. Five 2-SP normals deal 5–8; the others cost 3 SP for 15–20. Woundwood Rampage is 3 SP / 20 so optional enemy-relic removal cannot make its deck invalid. Affordability covers optional modules, attribute variance, openers and reserves.
+- Added the real historical-save roster regression, including map/RNG equivalence and a mutation proof that removing the gate fails.
+- Replaced the Compendium fixture with real reward → claim → equip → Armoury flows for four icons. Beast Claws grants `weaponArt:beastClaws:twinbladeFlurry`; Rapier still grants Riposte.
+- Added 45 explicit animation bindings for the five declared outfit appearances. Historical exports remain 35 bindings / 32 paintings; all 40 current outfits are covered without relaxing the importer.
+- Compared the first full discovered run to clean dev: 15 feature-only failures. Corrected their causes: missing outfit bindings, new defaults globally repricing old cards, an overtuned newly reachable art, optional-relic affordability, unsupported Retreat tags and stale catalog expectations.
+- All 28 old weapon packages and 395 old cards' resolved base/upgraded prices and Mana categories are frozen and unchanged. Only new packages were reassigned; Stiletto teaches Feint instead of the newly reachable unpenalized Deathblow.
+- Removed unsupported Retreat tags from Pike, Scythe, Reaper's Crescent and both whips in both content representations. Four new bows grant Retreat; the inherited Bone/Storm Sceptre source mismatch is recorded in the equipment gaps, without an engine change.
+- Independent Codex reviewer source sign-off completed. Local Claude reviewer authentication expired; its read-only brief was performed by an independent Codex agent. PR-level review with the eventual PR number remains required.
+- Regenerated authoritative projections. Final recapture changed 24 current-profile hash fields only; every behavioral and historical capture field stayed identical. Native and production transforms agree; all 24 determinism/baseline tests pass.
+
+### Final verification locations
+
+- Reviewed source: `6a7378b6a039cbe6bc2f7348fbfc8b049abfca35`.
+- Clean baseline `66e473a77c`: core 151 PASS; code check PASS; all 1,205 discovered files / 9,424 tests passed. Newer dev changes before `0327759be4` were card-art object priority and build metadata.
+- Windows cannot spawn the exact unsharded no-slow command (ENAMETOOLONG). Run all four official zero-based shards in independent checkouts; never treat the launch error as a passing suite.
+- Final test logs: each test worker's ignored `scratch/qa/codex-art-verified-6a7378/`.
+- Final browser checkout: `C:\Users\const\.codex\worktrees\codex-art-final-qa\AshenSpire`; sandbox output `scratch/qa/codex-art-final/`, decoded-image proof and supplemental captures `scratch/qa/codex-art-resume/decoded/`.
+- Main worktree: `C:\Users\const\.codex\worktrees\codex-art-buildout\AshenSpire`. Preserve the unrelated edited checkout at `C:\repos\AshenSpire`.
+- Pages returned HTTP 503 during verification. Use a successful exact-source feature-preview Actions artifact if Pages remains unavailable; do not describe an unverified Pages URL as working.
 
 ## Read first
 - [codex-art-buildout-2026-11-18.md](codex-art-buildout-2026-11-18.md): the survey, the enemy roster table (from `node tools/enemy-roster-table.mjs`) and the asset table.
@@ -25,6 +47,8 @@ State at handoff (2026-11-19): branch head `41cef8a3c5`, pushed and clean. No PR
 - Sandbox QA at `007a7eefaa`: 144 PASS / 0 FAIL. The combat screenshots show the real concept art.
 
 ## To do, in order
+The original checklist below records the requested sequence. Steps 1–2 and source regeneration/review are complete as described above. Remaining: finish final lanes and sandbox/decoded-image proof, publish the evidence/README, open and review the PR, add its receipt, merge on green, wait for architecture/build-stamp/dev-preview, and promote dev → review. Then do the separately authorized Smash stance work. CONTRIBUTING requires its SPEC change in a preceding separate PR. Counter already applies ×0.75 through defender advantage; do not multiply it a second time. Defend needs its own optional ×1.5 override while Prepared and old snapshots retain ×1.25.
+
 1. **Smash re-price** of the new Codex cards, in one commit. Keep every deck playable within its SP pool. Then run `node tools/enemy-roster-table.mjs` and refresh the doc.
 2. **Weapon icon QA scene.** `?shot=compendium&shotFound=...` drew "Unknown weapon" silhouettes, not the found items, so it proves nothing. Find a hook that renders the found or held item with `icon_<id>`, or report that one is missing. Do not pass the check on the absence of a placeholder alone.
 3. Run `node tools/jev.mjs regen`, then recapture pins only if they moved. Then run `npm test`, `npm run code:check` (if `typescript` is missing, run `npm ci` in tools/code-quality first), and `node tests/run-node.mjs --discovered-only --no-slow`. Compare the no-slow failures against a clean `origin/dev` worktree; the remaining failures should be art-pack and environment ones only.
