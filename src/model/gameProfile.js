@@ -151,6 +151,11 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     if(Array.isArray(bundle.enemies)) bundle.enemies=bundle.enemies.filter(def=>pinnedRoster.has(def.id));
     if(Array.isArray(bundle.enemyMoves)) bundle.enemyMoves=bundle.enemyMoves.filter(row=>pinnedRoster.has(row.enemyId));
     if(Array.isArray(bundle.encounters)) bundle.encounters=bundle.encounters.filter(row=>!Array.isArray(row.enemies)||row.enemies.every(id=>pinnedRoster.has(id)));
+    // Rows tagging what was dropped would tag nothing, which the registry refuses.
+    const allEnemies=new Set((baseBundle.enemies||[]).map(def=>def.id)), keptEncounters=new Set((bundle.encounters||[]).map(row=>row.id));
+    const allEncounters=new Set((baseBundle.encounters||[]).map(row=>row.id));
+    if(Array.isArray(bundle.tagging)) bundle.tagging=bundle.tagging.filter(row=>!((row.family==='enemy'&&allEnemies.has(row.objectId)&&!pinnedRoster.has(row.objectId))
+      ||(row.family==='enemyMove'&&allEnemies.has(row.scope)&&!pinnedRoster.has(row.scope))||(row.family==='encounter'&&allEncounters.has(row.objectId)&&!keptEncounters.has(row.objectId))));
   }
   if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
     ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);

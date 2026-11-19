@@ -16,7 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-18 after merging origin/dev into the Codex branch (32 enemies, 38 weapons and armour): only the profile, runtime, snapshot and save hashes moved; events, RNG and continuations are identical.
+// Recaptured 2026-11-18 after merging origin/dev into the Codex branch (32 enemies, 38 weapons and armour): only the profile, snapshot and save hashes moved; events, RNG, continuations and runtime hashes are identical.
 // Recaptured 2026-11-18 (green-discovered pass): runtime hash moved by the Retreat mechanic folder; the historical scenario moved with the same-day gear rulings (see the fixture's recapture note).
 // Recaptured 2026-11-18 for the physical cut on top of the ratings removal (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the three current-profile scenarios' events and continuations move by design;
 // the historical scenario's events, RNG and continuation are identical and only its snapshot, stored and loaded hashes moved (the new effects setting's module default joins the profile).
