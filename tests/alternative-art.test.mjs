@@ -47,9 +47,13 @@ test('every canonical armor maps exactly, including dedicated alias appearances 
   assert.equal(alternativePlayerId('reaver', 'unknown'), 'reaver-default');
 });
 
+// The Codex enemies are excluded on purpose, not for want of a release: the art v28 pin does ship their 32 concept frame sets, but the
+// alternative-art catalog is built by tools/alternative-art-build.py from reviewed alternative masters (sourceCommit 41ae95a), a separate
+// art family from the expansion frames the concept enemies use (enemyExpansion.js). No master exists for them, so the catalog cannot be
+// regenerated from the v28 release; it needs owner-made alternative art. Their frames are covered by enemy-expansion and enemy-stance-sprites.
 test('enemy, companion and speaker IDs match the canonical content roster', () => {
   for (const [family, rows] of [['enemy', contentBundle.enemies], ['companion', contentBundle.companions], ['speaker', contentBundle.speakers]]) {
-    assert.deepEqual(Object.keys(catalog.sprites).filter(id => catalog.sprites[id].family === family).sort(), rows.map(r => r.id).filter(id => !CODEX_IDS.includes(id)).sort(), family); // Codex enemies (2026-11-18) wait on an art release
+    assert.deepEqual(Object.keys(catalog.sprites).filter(id => catalog.sprites[id].family === family).sort(), rows.map(r => r.id).filter(id => !CODEX_IDS.includes(id)).sort(), family);
   }
 });
 
