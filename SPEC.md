@@ -774,6 +774,8 @@ No `frostbite` status ships; the frost identity is the **Frost** proc row and it
 
 At most one stance is active; stances are combat-scoped. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Some cards read "If in [stance]: bonus" (predicate `inStance`). The stance icon shows beside the player's status row.
 
+**Entering a stance with a card** (`enterStance`, e.g. Enter: Gorefire, Bulwark, Brace, Warrior's Vow; owner, 2026-11-18, #2843): a real stance change. The Core combat stance follows the stance row's `maneuver` (the setter a maneuver card uses), so the player's sprite pose, the stance icon, the stance bonuses and the matchups all read the entered stance, not Prepared's. A pick that differs from the stance the card's own maneuver put the figure in switches to the picked stance (Warrior's Vow, the maneuver choice) and keeps that stance's entry grant; a pick already in force changes nothing. A registry stance entry gives no Precision, Evade or Block entry grant and does not restore Defend a second time; it only syncs the stance. The change receipt names the causing play (`cardInstanceId`), and a replayed card instance reads its own pick, not the last in the log.
+
 | Stance | While active | On entering |
 |---|---|---|
 | Gorefire | Your attacks apply +2 Bleed | Take 2 damage (ignores block) |
