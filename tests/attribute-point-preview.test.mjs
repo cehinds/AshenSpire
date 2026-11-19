@@ -11,6 +11,7 @@ import { createRunCombat } from './withoutWeaknesses.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { profileHandSize } from '../src/engine/gameProfileCombat.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 
 const build = (mutate = null) => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -135,6 +136,8 @@ test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4
 });
 
 test('allocation preview and progression totals agree at threshold and nonthreshold points', () => {
+  // Fixed current-Heavy controls: raw DEX 3->4 is effective 2->3; raw 4->5 is effective 3->4.
+  const heavyDex = { 3: { before: 2, after: 3, stamina: 0 }, 4: { before: 3, after: 4, stamina: 1 } };
   for (const attribute of ['constitution', 'wisdom', 'dexterity', 'intelligence']) {
     for (const beforePoints of [3, 4]) {
       const { registries, run } = build(character => {
@@ -142,6 +145,7 @@ test('allocation preview and progression totals agree at threshold and nonthresh
         character.level.unspentPoints = 1;
       });
       rederivePools(registries, run, 'test');
+      if (attribute === 'dexterity') assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].before);
       const predicted = new Map(attributePointGains(registries, run, attribute).map(gain => [gain.statId, gain.delta]));
       const before = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       const beforeUi = progressionStats(registries, run);
@@ -153,9 +157,31 @@ test('allocation preview and progression totals agree at threshold and nonthresh
       assert.equal(afterUi.rows.find(row => row.id === 'draw').value, after.handSize);
       if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, beforePoints === 3 ? 1 : 0);
       if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, beforePoints === 3 ? 1 : 0);
-      if (attribute === 'dexterity') assert.equal(predicted.get('stamina') || 0, beforePoints === 3 ? 1 : 0);
+      if (attribute === 'dexterity') {
+        assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].after);
+        assert.equal(predicted.get('stamina') || 0, heavyDex[beforePoints].stamina);
+        assert.equal(after.stamina - before.stamina, heavyDex[beforePoints].stamina, 'the real allocation crosses only the equipped fourth point');
+      }
       if (attribute === 'constitution') assert.equal(predicted.get('hp'), 5);
     }
+  }
+});
+
+test('unarmoured Dexterity keeps the raw fourth-point threshold in both preview and real allocation', () => {
+  for (const [beforePoints, expectedGain] of [[3, 1], [4, 0]]) {
+    const { registries, run } = build(character => {
+      character.loadout.sets.armor = [];
+      character.attributes.dexterity = beforePoints;
+      character.level.unspentPoints = 1;
+    });
+    rederivePools(registries, run, 'unarmoured threshold control');
+    assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, beforePoints, 'no armour offsets the control attribute');
+    const before = run.maxStamina;
+    const predicted = attributePointGains(registries, run, 'dexterity').find(gain => gain.statId === 'stamina');
+    assert.equal(predicted?.delta || 0, expectedGain, `raw DEX ${beforePoints}->${beforePoints + 1} preview`);
+    allocateAttributePoint(registries, run, 'dexterity');
+    assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, beforePoints + 1);
+    assert.equal(run.maxStamina - before, expectedGain, `raw DEX ${beforePoints}->${beforePoints + 1} allocation`);
   }
 });
 
