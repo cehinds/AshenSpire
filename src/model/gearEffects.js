@@ -66,9 +66,15 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
     mainWeaponType: typeEffects && loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
   if (!typeEffects) return out;
-  for (const piece of worn) for (const raw of GearPieceMods(piece, typeEffects)) {
+  let focusTaken = false;
+  for (const piece of worn) for (const [modIndex, raw] of GearPieceMods(piece, typeEffects).entries()) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
+    // The built-in staff/sceptre Focus is one shared effect. Piece signatures and robe discounts remain independent.
+    const type = GearTypeRow(piece);
+    const focus = modIndex < (type?.mods?.length || 0) && ['staff', 'sceptre'].includes(type?.id) && mod.field === 'cardMana' && mod.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared');
+    if (focus && focusTaken) continue;
+    if (focus) focusTaken = true;
     const common = { selector: mod.selector, arg: mod.arg, conds: mod.conds, source: piece.id };
     if (spec.scope === 'run') {
       if (spec.apply === 'statPoint') out.statPoints[spec.op] = wholeNumber(mod.mode, mod.value, out.statPoints[spec.op]);
@@ -273,6 +279,15 @@ export function GearModText(registries, raw) {
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;
 }
+
+/** The counters, held stacks and stance a pure gear condition reads. */
+export const GearConditionState = (entity, weaponType = null) => ({
+  stance: entity?.combatStance?.maneuver,
+  attacksPlayedThisCombat: entity?.counters?.attacksPlayedThisCombat || 0,
+  spellsPlayedThisTurn: entity?.counters?.spellsPlayedThisTurn || 0,
+  weaponType,
+  holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
+});
 
 /** Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors. */
 export function GearManaCost(def, price) {

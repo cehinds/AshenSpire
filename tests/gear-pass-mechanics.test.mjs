@@ -552,3 +552,15 @@ test('the current Greatsword second STR uses the configured channel weight', () 
     assert.equal(GearReceiptAdd(combat, combat.player, enemy, carrier, { ratingId: 'ar', ar: 5, effects: { strengthDamageWeight: weight } }), 5 * weight);
   }
 });
+
+
+test('dual Focus shares its built-in discount while robe and piece signatures remain independent', () => {
+  const run = createRunState({ registries, classId: 'starseer', seed: 31, profileMeta: META });
+  run.loadout.sets.rightHand[0] = 'boneSceptre'; run.loadout.sets.leftHand[0] = 'emberlightSceptre';
+  const signature = 'spell@stance:prepared.cardMana=-1';
+  const custom = { ...registries, equipment: { ...registries.equipment, armaments: registries.equipment.armaments.map(piece => ['boneSceptre', 'emberlightSceptre'].includes(piece.id) ? { ...piece, mods: [...piece.mods, signature] } : piece) } };
+  const rules = GearSummary(custom, run.loadout, run.class, run).cardRules;
+  const def = ApplyGearCardRules(rules, { tags: ['camp:spell'], effects: [], cost: 1, manaCost: 8 }, { stance: 'prepared' });
+  assert.equal(def.gearManaRules.length, 4, 'one shared Focus, one robe, and both independent signatures');
+  assert.equal(GearManaCost(def, 9), 5, 'no general cap on independent Mana modifiers');
+});
