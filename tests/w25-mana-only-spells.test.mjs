@@ -165,11 +165,13 @@ test('the element spells play for 0 SP, set their element as the flux and the ne
   const energy = combat.player.energy, mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: a.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Pyre Lash cost no Stamina');
-  assert.equal(mana - combat.player.mana, Math.max(0, def('core.pyreLash').manaCost + 1 - 1 - 1), 'printed Mana + spell surcharge - Focus - current robe discount');
+  assert.equal(mana - combat.player.mana, 1, 'printed 1 + surcharge 1 - robe 1; Focus gives no discount before Prepared');
   assert.equal(combat.player.elementFlux, 'fire');
-  const before = enemy.hp;
+  const before = enemy.hp, preparedMana = combat.player.mana;
+  assert.equal(cardPlayCosts(combat, b.instanceId).mana, 0, 'Prepared Adept reduces printed 2 to 1, then surcharge +1, robe -1 and Focus -1');
   dispatch(combat, { type: 'playCard', cardInstanceId: b.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Conflagration cost no Stamina either');
+  assert.equal(combat.player.mana, preparedMana, 'the Prepared Focus quote matches the second spell payment');
   assert.ok(before - enemy.hp >= Math.floor(22 * 1.25) - 2, `the fluxed Fire card dealt ${before - enemy.hp}`);
 });
 

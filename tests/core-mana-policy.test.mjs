@@ -85,22 +85,33 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and actually app
 });
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
-  // Comet Lance prints 1 SP / 1 MP: +1 each spell surcharge, robe -1 MP,
-  // Ash Staff Focus -1 MP, Prepared -1 SP. Each resource floors at zero.
-  for (const [hand, prepared, expected] of [['greatsword', false, [2, 1]], ['ashStaff', false, [2, 0]], ['ashStaff', true, [1, 0]]]) {
+  // Independent worked prices: spells add 1 MP and (except Cantrip) 1 SP;
+  // Prepared cuts SP by 1 and positive printed MP by 1 (Adept's floor is 1).
+  // Robes then cut final MP by 1; a Focus cuts it by exactly 1 only in Prepared.
+  // In particular, robes cancel Cantrip's surcharge even though it prints 0 MP.
+  const prices = [
+    ['core.cometLance', [2, 1], [1, 1], [1, 0]],
+    ['core.meteor', [2, 3], [1, 2], [1, 1]],
+    ['core.cantrip', [1, 0], [0, 0], [0, 0]],
+  ];
+  for (const [cardId, plain, prepared, focused] of prices) for (const [hand, stance, expected] of [
+    ['greatsword', null, plain], ['ashStaff', null, plain], ['boneSceptre', null, plain],
+    ['greatsword', 'casting', prepared], ['ashStaff', 'casting', focused],
+    ['ashStaff', 'prepared', focused], ['boneSceptre', 'casting', focused],
+  ]) {
     const run = fresh('starseer');
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
     const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
     assert.equal(combat.player.maxMana, 3, 'base 1 + Nightweave 1 + robe type 1');
-    assert.equal(getStacks(combat.player, 'ward'), hand === 'ashStaff' ? 1 : 0, 'staff type grants Ward at turn start');
-    combat.piles.hand = [{ instanceId: 'robe-focus', cardId: 'core.cometLance', upgraded: false }];
+    assert.equal(getStacks(combat.player, 'ward'), hand === 'greatsword' ? 0 : 1, 'staff and sceptre types grant Ward at turn start');
+    combat.piles.hand = [{ instanceId: 'robe-focus', cardId, upgraded: false }];
     combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
     combat.enemies[0].persistentPoise = { value: 100, max: 100 };
-    if (prepared) combat.player.combatStance = { maneuver: 'casting', camp: 'spell' };
+    if (stance) combat.player.combatStance = { maneuver: stance, camp: 'spell' };
     const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
     const costs = cardPlayCosts(combat, 'robe-focus'), preview = previewCard(combat, 'robe-focus', combat.enemies[0].id);
-    assert.deepEqual([costs.stamina, costs.mana], expected, `${hand}/${prepared}`);
+    assert.deepEqual([costs.stamina, costs.mana], expected, `${cardId}/${hand}/${stance}`);
     assert.deepEqual([preview.staminaCost, preview.manaCost], expected);
     assert.deepEqual(serializeCombatSnapshot(combat), before, 'quotes do not mutate combat');
     assert.deepEqual(combat.rng.getCounters(), counters, 'quotes consume no RNG');
