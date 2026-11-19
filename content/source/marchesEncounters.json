@@ -318,8 +318,7 @@
   {
     "id": "a2_eliteInkveil",
     "enemies": [
-      "inkveilNautilus",
-      "mirrorScribe"
+      "inkveilNautilus"
     ],
     "weight": 1,
     "pool": "elite",

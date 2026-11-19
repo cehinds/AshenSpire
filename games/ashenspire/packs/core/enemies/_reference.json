@@ -4158,14 +4158,6 @@
         "self.wisdom=+1"
       ]
     },
-    "relic:enemy.relic.inkVeil": {
-      "name": "Ink Veil",
-      "text": "WIS +2, INT +1",
-      "modifiers": [
-        "self.wisdom=+2",
-        "self.intelligence=+1"
-      ]
-    },
     "relic:enemy.relic.saltBlubber": {
       "name": "Salt Blubber",
       "text": "CON +3, SP -1",
@@ -4253,6 +4245,14 @@
       "modifiers": [
         "self.constitution=+3",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.inkVeil": {
+      "name": "Ink Veil",
+      "text": "WIS +2, INT +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.intelligence=+1"
       ]
     }
   }
