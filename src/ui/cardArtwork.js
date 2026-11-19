@@ -2,6 +2,7 @@ import { EXTENDED_CARD_ART } from './extendedCardArtwork.js';
 import { defaultCardArtwork, defaultCardArtFallbacks } from './defaultCardArtwork.js';
 import { simpleCardArt, proceduralDefinitionArt } from './cardArtComposition.js';
 import { reviewedCardArt } from './reviewedCardArt.js';
+import { withChargedEffects } from '../model/cardFaceText.js';
 import { cardArtStyle, CARD_ART_LEGACY, CARD_ART_REVIEWED } from './cardArtStyle.js';
 export { defaultCardArtFallbacks };
 
@@ -35,9 +36,9 @@ export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CAR
 }
 
 /** Resolve the visual style without changing the legacy artwork catalog. */
-export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, registries, style = cardArtStyle() } = {}) {
+export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, preview, registries, style = cardArtStyle() } = {}) {
   if (style !== CARD_ART_LEGACY && style !== CARD_ART_REVIEWED && definition) {
-    const procedural = proceduralDefinitionArt(definition, { ref, registries });
+    const procedural = proceduralDefinitionArt(withChargedEffects(definition, preview), { ref, registries });
     if (procedural || Object.hasOwn(definition, 'cardTags')) return procedural;
   }
   if (style === CARD_ART_REVIEWED && definition) {
