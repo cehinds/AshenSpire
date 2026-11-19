@@ -13,6 +13,8 @@ import { dispatch, previewCard, previewCardHit } from '../src/engine/combat.js';
 import { TargetQuote, TargetQuoteHits, TargetQuoteHitsText } from '../src/ui/models/TargetQuoteModel.js';
 import { t } from '../src/ui/strings.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
+import { BreakCombatant, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
+import { FixCoreBrokenRules } from '../src/model/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -151,12 +153,27 @@ test('the quote names the Poise the play removes, and BREAK when it empties that
 });
 
 test('a Broken enemy takes the x1.5 in the quote, and the quote adds no Poise word (its bar is empty)', () => {
+  // This named legacy case keeps the multiplier snapshotted in an older saved fight.
   const { combat, card } = fixture();
   const plain = quoteFor(combat, card, 'e2');
-  combat.enemies[1].broken = { since: 1, endTurn: 1 };
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  assert.deepEqual(FixCoreBrokenRules(combat), { damageMultiplier: 1.5, statusStacks: 0 });
   combat.enemies[1].persistentPoise = { value: 0, max: 20 };
+  BreakCombatant(combat, combat.enemies[1], FixCoreBrokenRules(combat));
   const broken = quoteFor(combat, card, 'e2');
   assert.ok(broken.hits[0] > plain.hits[0], `${broken.hits} > ${plain.hits}`);
   assert.equal(broken.poise, null);
   assert.equal(playOn(combat, card, 'e2').hits[0], broken.hits[0]);
+});
+
+test('a current Broken enemy quotes its two-stack statuses without x1.5 and loses exactly the quoted HP', () => {
+  const { combat, card } = fixture(), target = combat.enemies[1], rules = FixCoreBrokenRules(combat);
+  assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
+  BreakCombatant(combat, target, rules);
+  for (const status of BREAK_STATUS_IDS) assert.equal(target.statuses[status]?.stacks, 2, status);
+  assert.equal(target.combatStance.damageMultiplier, 1);
+  const quoted = quoteFor(combat, card, target.id), dealt = playOn(combat, card, target.id);
+  assert.equal(quoted.poise, null, 'the already-broken bar has no additional Poise to quote');
+  assert.deepEqual(dealt.hits, quoted.hits);
+  assert.equal(dealt.lost, quoted.hits.reduce((total, hit) => total + hit, 0));
 });

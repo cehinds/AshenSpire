@@ -10,6 +10,10 @@
 // `entity.broken` is the one record of it: { since, endTurn, loseNext?, cancelledMove? }. A rules object without the key never
 // reaches this module: a fight saved before this ruling keeps the Staggered stance of actions.js (fixCoreStagger).
 import { cancelKnowledgeAction } from './enemyKnowledge.js';
+import * as Statuses from './statuses.js';
+
+/** The statuses a Poise break applies, `poise.breakStatusStacks` stacks each (owner, 2026-11-18): they leave with Broken, at the start of the owner's next turn. */
+export const BREAK_STATUS_IDS = Object.freeze(['staggered', 'vulnerable', 'weak', 'frail']);
 
 const seatOf = (ctx, entity) => ctx.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {};
 
@@ -80,6 +84,17 @@ export function BreakCombatant(ctx, entity, rules) {
     if (cancelledMove) record.cancelledMove = cancelledMove;
   }
   entity.broken = record;
+  if (rules.statusStacks > 0) {
+    // What the break added, and what the owner held before it (the ClearTurnBoosts pattern): only the grant leaves with Broken, never stacks from another source.
+    // Whether the owner's turn start for this round has already happened: if not (an enemy broken during the player's phase, or by another enemy's action earlier in the enemy phase), its next turn starts this round.
+    record.statusGrants = {}; record.ownerTurnStarted = entity.fixCoreDecayRound === ctx.turn;
+    for (const id of BREAK_STATUS_IDS) {
+      const base = Statuses.getStacks(entity, id);
+      Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);
+      const granted = Statuses.getStacks(entity, id) - base;
+      if (granted > 0) record.statusGrants[id] = { granted, base };
+    }
+  }
   entity.combatStance = brokenStance(entity, rules);
   ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered', broken: true });
   if (player) ctx.emit('playerStaggered', { targetId: entity.id, actionLoss: 1, statuses: {}, broken: true,
@@ -105,6 +120,8 @@ export function ApplyPendingLoss(ctx, enemy) {
 export function EndBrokenWhenDue(ctx, entity) {
   const broken = entity?.broken;
   if (!broken || broken.loseNext || (ctx.turn || 0) < broken.endTurn) return false;
+  // Still Broken while the statuses go, so the pool re-sync keeps the bar empty until the refill below.
+  Statuses.RemoveBreakGrants(ctx, entity, broken.statusGrants);
   delete entity.broken;
   if (entity.combatStance?.broken) delete entity.combatStance;
   const poise = entity.persistentPoise;
