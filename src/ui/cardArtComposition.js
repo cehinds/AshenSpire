@@ -2,6 +2,8 @@ import { approvedCardArt } from './layeredCardArt.js';
 import { objectTagIds } from '../content/tags.js';
 import { tagService } from '../model/tagService.js';
 import { proceduralCardArt } from './proceduralCardArt.js';
+import { cardStatModifierTags } from './cardStatModifiers.js';
+import { combatProfileFor } from '../model/combatCardProfile.js';
 
 export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', 'evade', 'sweep', 'defend']);
 // Presentation only: these palettes do not introduce damage schools or rules.
@@ -60,8 +62,8 @@ const damageElement = (def, tags) => {
 };
 
 /** Compatibility adapter only: old definitions may declare visual facts in DSL.
- * Explicit cardTags are authoritative, even when empty; the pure factory never
- * reads effects, card IDs or registry card definitions.
+ * Explicit cardTags are authoritative for identity, even when empty. Live
+ * stat modifiers supply additional presentation tags for every definition.
  */
 export function proceduralDefinitionArt(def, { ref, registries } = {}) {
   if (!def || typeof def !== 'object') return null;
@@ -91,11 +93,21 @@ export function proceduralDefinitionArt(def, { ref, registries } = {}) {
       tags.push(...damage.filter(type => typeof type === 'string').map(type => `damage:${type}`));
     }
   }
+  // Runtime card proposals can change range without rewriting the authored tags.
+  if (def.range !== undefined || typeof def.reach === 'string') {
+    const { range } = combatProfileFor({ range: def.range, reach: def.reach });
+    if (range) {
+      for (let i = tags.length - 1; i >= 0; i--) {
+        if (/^(range|reach):/.test(tags[i])) tags.splice(i, 1);
+      }
+      tags.push(`range:${range}`);
+    }
+  }
   const validRank = rank => Number.isInteger(rank) && rank > 0;
   const validAbility = rank => Number.isInteger(rank) && rank >= 0;
   const rank = validRank(def.rank) ? def.rank : validAbility(def.abilityRank) ? def.abilityRank + 1
     : validRank(ref?.rank) ? ref.rank : validAbility(ref?.abilityRank) ? ref.abilityRank + 1 : 1;
-  return proceduralCardArt({ type: def.type, tags, rank }, { registries });
+  return proceduralCardArt({ type: def.type, tags: [...tags, ...cardStatModifierTags(def, registries)], rank }, { registries });
 }
 
 /** Every active status can contribute a small motif; registry labels are data, not markup. */

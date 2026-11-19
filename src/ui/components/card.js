@@ -407,7 +407,7 @@ export function renderCard(registries, ref, opts = {}) {
   const paint = (at) => {
     const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
     const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
-      definition:def,registries,style:opts.artStyle});
+      definition:def,preview:opts.preview,registries,style:opts.artStyle});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
