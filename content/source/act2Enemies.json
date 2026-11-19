@@ -1091,7 +1091,6 @@
   },
   {
     "id": "knellcapSentinel",
-    "equipmentSp": 1,
     "attributes": {
       "strength": 4,
       "dexterity": 1,
