@@ -575,6 +575,8 @@ test('no image error handler in src/ui swaps or removes art without marking it (
   // Handlers that swap nothing a restore must bring back, by file and why.
   const ALLOWED = new Map([
     ['assets.js:enemySprite', 'its placeholder() marks the node itself (markArtPlaceholder inside placeholder)'],
+    // A whole-file entry (`file:*`): every error handler there removes only an overlay it drew itself.
+    ['merchantItemArtFit.js:*', 'removes its own fitted SVG overlay, unhides the original <img> and re-dispatches error to it, so the renderer\'s own (marking) fallback runs'],
   ]);
   const bad = [];
   let seen = 0;
@@ -591,7 +593,7 @@ test('no image error handler in src/ui swaps or removes art without marking it (
       }
       if (!SWAPS.test(body) || MARKS.test(body)) continue;
       const site = `${f.split('/').pop()}:${/enemySprite/.test(text.slice(Math.max(0, m.index - 4000), m.index)) && /placeholder\(\)/.test(body) ? 'enemySprite' : m.index}`;
-      if (!ALLOWED.has(site)) bad.push(`${f}: ${body.replace(/\s+/g, ' ').slice(0, 100)}`);
+      if (!ALLOWED.has(site) && !ALLOWED.has(`${f.split('/').pop()}:*`)) bad.push(`${f}: ${body.replace(/\s+/g, ' ').slice(0, 100)}`);
     }
   }
   assert.ok(seen >= 10, `the census found the handlers (${seen})`);

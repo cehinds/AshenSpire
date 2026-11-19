@@ -178,10 +178,13 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
         canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
-      app.querySelector('.reward-pick').click();
+      // The face opens the inspect door; the name control is what selects.
+      app.querySelector('.reward-choice-face').click();
       const inspection = document.querySelector('.card-inspection-modal');
-      assert.ok(inspection, 'armament selection opens the inspect door');
+      assert.ok(inspection, 'an armament face opens the inspect door');
       inspection.querySelector('.card-inspection-back').click();
+      assert.equal(document.querySelector('.card-inspection-modal'), null, 'Back leaves without claiming');
+      app.querySelector('.reward-pick').click();
       app.querySelector('#reward-card-confirm').click();
       const equip = app.querySelector('#reward-equip-now');
       assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
