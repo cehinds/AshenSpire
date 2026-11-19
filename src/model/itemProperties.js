@@ -12,7 +12,6 @@
 //   resist         { <damageType>: 'resist'|'immune' } incoming damage of a type is halved or negated
 //   statusShorten  { <status>: n }                     statuses applied to the player start n stacks smaller
 //   unlimited      ['Basic'|'Cantrip']                 card kinds deck editing adds without limit
-import { ATTRIBUTE_CHANNEL } from './damageChannels.js';
 import { ITEM_PROPERTIES } from '../content/itemProperties.js';
 import { ItemPropertyIds, ItemPicks } from './itemPicks.js';
 
@@ -42,14 +41,17 @@ export function ItemPropertySummary(run) {
       for (const key of SUMMED) if (Number.isFinite(fx[key])) bump(key, fx[key]);
       if (fx.weaponBonus) (out.weaponBonuses ||= []).push({ ...fx.weaponBonus });
       if (fx.onHit) (out.onHit ||= []).push({ ...fx.onHit });
-      // `stanceAttribute` (owner, 2026-11-18): +n STR / DEX / INT while in a stance. The summary keeps the damage-channel key the fight reads
-      // (a fight saved before the ruling carries it), so the attribute is turned into its channel here; `stanceRating` is the old spelling.
-      const stanceBonus = fx.stanceAttribute
-        ? { stance: fx.stanceAttribute.stance, rating: ATTRIBUTE_CHANNEL[fx.stanceAttribute.attribute], n: fx.stanceAttribute.n }
-        : fx.stanceRating;
-      if (stanceBonus?.rating) {
-        const row = ((out.stanceRating ||= {})[stanceBonus.stance] ||= {});
-        row[stanceBonus.rating] = (row[stanceBonus.rating] || 0) + stanceBonus.n;
+      // `stanceAttribute` (owner, 2026-11-18): +n STR / DEX / INT while in a stance. It is summarised as { <stance>: { <attribute>: n } } and
+      // the fight adds it to the attribute BEFORE the channel is priced (model/stanceRules.js), so a channel read from several attributes
+      // (magic is max(INT, WIS)) only rises when the granted attribute is the one that leads. `stanceRating` is the old spelling (a flat
+      // channel bonus); a fight saved before the ruling carries it and keeps that behaviour.
+      if (fx.stanceAttribute?.attribute) {
+        const row = ((out.stanceAttribute ||= {})[fx.stanceAttribute.stance] ||= {});
+        row[fx.stanceAttribute.attribute] = (row[fx.stanceAttribute.attribute] || 0) + fx.stanceAttribute.n;
+      }
+      if (fx.stanceRating?.rating) {
+        const row = ((out.stanceRating ||= {})[fx.stanceRating.stance] ||= {});
+        row[fx.stanceRating.rating] = (row[fx.stanceRating.rating] || 0) + fx.stanceRating.n;
       }
       for (const [type, kind] of Object.entries(fx.resist || {})) {
         const map = (out.resist ||= {});

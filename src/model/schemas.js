@@ -1094,6 +1094,9 @@ export const SCHEMAS = Object.freeze({
     name: str,
     class: opt(ref('classes')),
     icon: opt(str),
+    // The Core combat stance (maneuver) a card that enters this stance puts the figure in: the one stance the sprite,
+    // the icon, the benefits and the matchup triangle read. Omitted: entering changes only this registry stance.
+    maneuver: opt(en('attack', 'smash', 'defend', 'sweep', 'counter')),
     onEnter: opt(effects),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),

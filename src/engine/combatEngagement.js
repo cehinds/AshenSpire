@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
+import { BandsActive, BandsEnemyAdvance, BandsEnemyHeldBack, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -151,11 +151,12 @@ export function executeEngagementMovement(ctx, action) {
   const before = ctx.rangeState;
   // Rows (W25-BANDS): an enemy's move changes its own row; the player's Advance or Backstep sets or clears the Advanced state.
   const pairKey = rangePairKey(actorRangeKey(ctx, action.source), actorRangeKey(ctx, target)), pairBefore = before?.engagements[pairKey];
+  const heldBefore = action.source.kind === 'enemy' && BandsEnemyHeldBack(ctx, action.source);
   const byRows = BandsMoveEngagement(ctx, action.source, target, action.effect.bands, action.card?.rangePlan?.rootId);
   if (!byRows) ctx.rangeState = movedEngagementState(ctx.rangeState, actorRangeKey(ctx, action.source), actorRangeKey(ctx, target), action.effect.bands);
   // A player's push the rows handled announces the band the engine really moved: a push that leaves the Advance on moves nothing.
   const pushed = byRows && action.source.kind !== 'enemy' && action.effect.bands > 0 && pairBefore !== undefined;
-  ctx.emit?.('combatEngagementMoved', { sourceId: action.source.id, targetId: target.id, bands: pushed ? ctx.rangeState.engagements[pairKey] - pairBefore : action.effect.bands });
+  ctx.emit?.('combatEngagementMoved', { sourceId: action.source.id, targetId: target.id, bands: pushed ? ctx.rangeState.engagements[pairKey] - pairBefore : heldBefore && byRows ? 0 : action.effect.bands }); // a held enemy's approach spends a stack and moves nothing
 }
 export function assertRangeCardEnabled(ctx, def) {
   Lineage.assertPreparingRangeSupported(ctx,ctx.player,def);
@@ -209,7 +210,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
     const before = ctx.rangeState;
     // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
-    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
+    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') BandsEnemyAdvance(ctx, source, 'advance');
     else if (BandsActive(ctx) && source.kind !== 'enemy') { SetAdvanced(ctx, source, true); MarkAdvancedByPlay(source, rootId); }
     else ctx.rangeState = advancedEngagementState(before, plan);
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);

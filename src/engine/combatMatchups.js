@@ -370,7 +370,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (changed) {
     if(stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
-    const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
+    const grants = carrier?.registryStanceEntry ? { block: 0, barrier: 0, precision: 0, evade: 0 } : stanceEntryBonuses({ combatProfile: profile }, ctx);
     if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
       entity.nextEvadeMode = { advantage: !!profile.evade.advantage, disadvantage: !!profile.evade.disadvantage,
         ...(profile.evade.whileStatus ? { whileStatus: profile.evade.whileStatus } : {}) };
@@ -384,8 +384,9 @@ export function setCombatStance(ctx, entity, carrier) {
         owner: entity, target: entity, card: carrier, meta: { ...provenance, stanceEntry: true } });
     }
   }
-  // Defense restores on every accepted card, including an unchanged stance.
-  if (next.maneuver === 'defend') {
+  // Defense restores on every accepted card, including an unchanged stance. A registry stance entry (an enterStance effect,
+  // e.g. Warrior's Vow picking Bulwark) only syncs the stance: it restores nothing the card does not show (Codex on #2843).
+  if (next.maneuver === 'defend' && !carrier?.registryStanceEntry) {
     const amount = stanceRulesFor(ctx).defenseRestore;
     for (const [poolName, overflowOp] of [['persistentPoise', 'block'], ['persistentWard', 'gainBarrier']]) {
       const pool = entity[poolName];
@@ -407,7 +408,9 @@ export function setCombatStance(ctx, entity, carrier) {
     entity.combatTraitGuard = { poise: Math.max(armed.poise, trait.impact || 0), ward: Math.max(armed.ward, trait.flux || 0) };
   }
   if (changed) ctx.emit?.('combatStanceChanged', { sourceId: entity.id,
-    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance });
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance,
+    // An enterStance effect names the play that caused the change, so a reader can tell it from the card's own maneuver.
+    ...(carrier?.stanceFromEffect ? { cardInstanceId: carrier.instanceId } : {}) });
   return entity.combatStance;
 }
 

@@ -16,6 +16,7 @@ import { carriedIds } from './loadout/ownership.js';
 import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
+import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -408,6 +409,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     draft.relics.push(option.id);
     // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
     syncFlaskGrowth(registries,draft);
+    reconcileRunLoadoutHp(registries,draft); // a relic property such as maxMana1 raises the pools now, not at the next load
     if(flaskGrowthTable(registries.balance).some(row=>row?.source==='relic'&&row.id===option.id))refillFlaskCharges(draft.flaskCharges);
   } else if(option.kind==='potions') {
     const acquisition=acquireFlask(registries,draft,option.id);

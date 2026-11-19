@@ -25,13 +25,14 @@ import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
+import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
 export function createShotStates(ctx) {
   const {
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
     beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
-    showSettings, showStartupGate, showCustomize,
+    showSettings, showStartupGate, showCustomize, poseActNumber,
   } = ctx;
 
   // The posed states that need a started run: shared preamble, then the per-state
@@ -207,17 +208,35 @@ export function createShotStates(ctx) {
         run.itemRanks[ref] = 1 + (at % 2);
       });
     }
+    // `?shotAct=<n>` — the map of act n (2 or 3 open on a Rest), built the way advanceAct builds it. Poses before `?shotAt`.
+    const shotAct = name === 'map' ? shotParams.get('shotAct') : null;
+    if (shotAct) {
+      const act = Number(shotAct);
+      if (!Number.isInteger(act) || act < 1 || act > 3) throw new Error(`?shotAct=${shotAct}: an act is 1, 2 or 3.`);
+      poseActNumber(act);
+      showMap();
+    }
     const shotAt = name === 'map' ? shotParams.get('shotAt') : null;
     if (shotAt) {
       const g = run.mapGraph;
       const byFloor = /^floor:(\d+)$/.exec(shotAt);
+      // `?shotAt=type:shop` stands on the first node of that type (shop, shrine, boss ...) in id order; `floor:last` is the pre-boss depth.
+      const byType = /^type:(\w+)$/.exec(shotAt);
+      const lastFloor = shotAt === 'floor:last' ? g.floors - 1 : null;
       const at = byFloor
         ? Object.values(g.nodes).filter((n) => n.floor === Number(byFloor[1])).map((n) => n.id)[0]
+        : byType ? Object.values(g.nodes).find((n) => n.actualType === byType[1] || n.type === byType[1])?.id
+        : lastFloor !== null ? Object.values(g.nodes).filter((n) => n.floor === lastFloor)[0]?.id
         : (g.nodes[shotAt] ? shotAt : null);
       if (!at) throw new Error(`?shotAt=${shotAt}: no such node in this act. Use a node id (n4_2) or floor:N — a silent fallback here would report a framing measured somewhere else.`);
       run.mapNodeId = at;
       run.floor = g.nodes[at].floor;
-      run.path = [at];
+      // The posed trail is the way to it, so fog and the committed branch read as they would in play.
+      const parent = { [g.startIds[0]]: null }, queue = [g.startIds[0]];
+      while (queue.length) { const id = queue.shift(); for (const next of g.nodes[id].next || []) if (!(next in parent)) { parent[next] = id; queue.push(next); } }
+      run.path = shotParams.get('shotTrail') === '1' && at in parent ? (() => { const trail = []; for (let id = at; id; id = parent[id]) trail.unshift(id); return trail; })() : [at];
+      // `?shotRevisit=shop` — the trader (or rest) you stand on was left: its node re-opens from the map (restRevisit.js).
+      if (shotParams.get('shotRevisit')) { OpenSiteRecord(run, shotParams.get('shotRevisit')); markRestLeft(run); }
       showMap();
     }
     // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.

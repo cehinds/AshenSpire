@@ -16,6 +16,12 @@
 // re-entry does not refill again. `multiUse` is the Multi-use setting as the
 // visit opened, frozen per visit.
 //
+// TRADERS AND BLACKSMITHS (owner, 2026-11-18). The same rule holds for a shop node: leave the trader or the
+// Blacksmith and the node you still stand on re-opens it; travelling elsewhere ends that. They use this one
+// record (a `kind` of 'shop' or 'blacksmith', and for a Blacksmith the `stock` it was left with). A record with no
+// `kind`, which is every record saved before this, is a rest site, so an old save with only `restRevisit` loads and
+// behaves as it did.
+//
 // SCOPE. Classic map only (`run.mapGraph`).
 //
 // Headless: no DOM, no imports. The caller persists the run.
@@ -31,6 +37,39 @@ export function openRestRecord(run, { multiUse = false } = {}) {
   if (matchesPlace(run, run.restRevisit)) return run.restRevisit;
   run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, rested: false, spent: false, left: false, refilled: false, multiUse: !!multiUse };
   return run.restRevisit;
+}
+
+// The record for a trader or Blacksmith the run stands on, created when none matches the place. `kind` is
+// 'shop' or 'blacksmith'.
+export function OpenSiteRecord(run, kind) {
+  if (kind === 'rest') return openRestRecord(run);
+  if (matchesPlace(run, run.restRevisit)) {
+    if (run.restRevisit.kind !== kind) run.restRevisit.kind = kind;
+    return run.restRevisit;
+  }
+  run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, kind, left: false };
+  return run.restRevisit;
+}
+
+// A Blacksmith's stock, kept on the place's record under `slot` ('stock' for a Blacksmith node, 'smithStock' for the workshop a
+// trader keeps), so leaving and re-entering shows the same stock, minus what was bought, and never rolls a new one.
+// `roll` makes a fresh stock and is called only when the record holds none.
+export function VisitSiteStock(run, slot, roll) {
+  const record = matchesPlace(run, run.restRevisit) ? run.restRevisit : null;
+  if (record && record[slot]) return record[slot];
+  const stock = roll();
+  if (record) record[slot] = stock;
+  return stock;
+}
+
+// Leaving the workshop: the stock as it now stands (purchases taken out) goes back on the record under `slot`.
+export function StashSiteStock(run, slot, stock) {
+  if (matchesPlace(run, run.restRevisit) && stock) run.restRevisit[slot] = stock;
+}
+
+// What kind of site a record is: records saved before traders could be re-entered have no `kind` and are rest sites.
+export function SiteRevisitKind(record) {
+  return record ? record.kind || 'rest' : null;
 }
 
 // A consumed choice at this place. `rested` only for a Rest; `spent` for all.

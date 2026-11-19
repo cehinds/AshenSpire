@@ -10,6 +10,7 @@ export const LEGACY_ROUTES = {
   restFloors: [3, 6, 9], branchColumns: 3, minimumThreatFloor: 3, mapMode: 'fog', firstFloor: 'fight',
   shopShare: 0.15, requirePrebossRest: true, maxBranches: 3, startNodeRefills: true, fogRevealRests: null, fogTrailOnly: null,
   typeWeights: null, variedNeighbours: null, shopsPerBranch: null, forkPercent: null, crossLinkPercent: null,
+  startRestFromAct: null, restGap: null, restFloorSpread: null, branchSpread: null, singlePrebossRest: null, fogCommittedBranch: null,
 };
 let compiled = null;
 // Resolve the Core profile with the legacy routes content; `routes` are author setting overrides, as resolveGameProfile takes.
