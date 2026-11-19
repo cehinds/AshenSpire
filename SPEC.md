@@ -1406,23 +1406,27 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
 
 `buildGameProfileActMap`, `routes.maxBranches`. A profile without `maxBranches` keeps the single-trunk map; stored graphs are never regenerated.
 
-- Nine pre-boss depths; rests on depths 3, 6, 9.
-- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new). Core 2 ships `startNodeRefills: false` (owner brief, 2026-11-14): its start node restores nothing.
+- **Eleven pre-boss depths per act** (`prebossNodes` 11; owner, 2026-11-18, #2847, `docs/balance/owner-ruling-2026-11-18.md` §22; was nine). Authored rests at depths 1, 6, 11 (depth 1 and 11 fixed; the middle rest moves, below).
+- **Rest spacing** (`routes.restGap` `{ min 2, max 5 }`, `restFloorSpread` 1): every path has 2–5 non-rest nodes between two rests, the start counting as a rest when depth 1 is not one. The gap that ends at the pre-boss rest is not limited. One `map` draw per act places the middle rest (depth 5–7) inside the gap; every branch rests on the same depths.
+- **Start node** (`startRestFromAct` 2): Act 1 opens on a combat (`firstFloor` draws it); Acts 2 and 3 open on a rest.
+- **V spread** (`branchSpread` 1): branch k's centre moves away from the board centre in proportion to its depth, so the branches fan apart like a V and the board widens toward the bosses (`columns` is the widened width; the map frames it with free pan).
+- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest from `startRestFromAct`) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new). Core 2 ships `startNodeRefills: false` (owner brief, 2026-11-14): its start node restores nothing.
 - Branches `b = rng.int('map', 1, min(maxBranches, distinct bosses))`; Core `maxBranches` 3 (engine max 5). Bosses: first `b` of a seeded shuffle; the first boss beaten ends the act.
-- From depth 2 each branch is a subgraph in up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5; board at most `2 * branchColumns` wide). Edges after depth 1 never leave a branch.
-- No forced rejoin: every lane on a rest depth has its own rest; each lane holds at least one elite on some non-rest depth at or past `minimumThreatFloor` (per lane, not per path: a remerge edge can carry a path past it; a lane with no such depth has none).
+- From depth 2 each branch is a subgraph in up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5; board at most `2 * branchColumns` lanes wide before the V spread). Edges after depth 1 never leave a branch.
+- No forced rejoin: every lane on a rest depth has its own rest, except the pre-boss depth (below); each lane holds at least one elite on some non-rest depth at or past `minimumThreatFloor` (per lane, not per path: a remerge edge can carry a path past it; a lane with no such depth has none).
 - Each branch is a tree:
   - Opens at depth 2 with ONE node, or TWO when it has three lanes (50% `map` draw).
-  - Forks outward: each boundary node draws `FORK_PERCENT` (40%) per depth to grow a neighbouring lane; forced full by depth `prebossNodes - 3` (6 in Core).
+  - Forks outward: each boundary node draws `FORK_PERCENT` (40%) per depth to grow a neighbouring lane; forced full by depth `prebossNodes - 3` (8 in Core).
   - Last two depths: a three-lane branch may narrow once (25%, an outer lane joins its neighbour), never below two lanes; once widened it never collapses to one path (before its first fork the trunk may be a single path, rest depths included). A one-lane branch (b 4–5) stays single. Every path ends at the branch's boss.
+  - **One pre-boss rest per branch** (`singlePrebossRest`, Core true; owner, 2026-11-18): the last depth before the boss is ONE rest node centred on the branch, reached from every lane of the branch and linked only to its own boss. No cross-link or remerge edge enters it.
 - Remerge: per branch and per gap between in-branch depths, one `map` draw (18%) may add ONE edge between neighbouring lanes existing on both depths; never into every rest depth.
-- Ids: `n{depth}_{branchIndex * L + lane}`, column `branch * L + lane`. `bossId` `boss_0`; `bossIds` all `boss_k`; `shrineIds` every pre-boss rest (`shrineId` the first); nodes carry `branch` (null on depth 1).
+- Ids: `n{depth}_{branchIndex * L + lane}`, column `branch * L + lane`. `bossId` `boss_0`; `bossIds` all `boss_k`; `shrineIds` every pre-boss rest (one per branch under `singlePrebossRest`; `shrineId` the first); nodes carry `branch` (null on depth 1).
 - Visible forks (owner brief, 2026-11-14). Each key is read only when present; a profile without it keeps the draws above, draw for draw (`tests/core-map-legacy-golden.test.mjs`).
   - `typeWeights`: a free node (not a rest, the forced first node or a guaranteed slot) is a weighted draw over the listed types; `shopShare` is ignored. Core: fight 70, event 16, shop 9, treasure 5 (no random elites; the per-lane elite stays).
   - `variedNeighbours`: a free node never repeats the type of the lane beside it on the same depth when another type can roll.
   - `shopsPerBranch` 1: each branch holds one guaranteed shop on a non-rest depth 4–8, never on a guaranteed elite slot.
   - `forkPercent` replaces `FORK_PERCENT` (Core 70). `crossLinkPercent` replaces the remerge rule (Core 100): every pair of neighbouring lanes present on both depths of a gap draws ONE diagonal edge, direction 50/50, dropped if it would cross an edge already in that gap; the rest-depth exception does not apply.
-  - Core 2 hides no node type (`hiddenTypes: []`). Its map is fog (`mapMode: "fog"`, `fogRevealRests: true`; owner, 2026-11-15, see *Wave 2 adjustments (batch 4)*): the fog light is lit only for rest sites, the trail already travelled, the split ahead, the entrance and the bosses.
+  - Core 2 hides no node type (`hiddenTypes: []`). Its map is fog (`mapMode: "fog"`, `fogRevealRests: true`; owner, 2026-11-15, see *Wave 2 adjustments (batch 4)*): the fog light is lit only for rest sites, the trail already travelled, the split ahead, the entrance and the bosses. With `fogCommittedBranch` (Core, owner 2026-11-18) the bosses lit are only those of the branch the trail has entered: once it leaves the start node, the other branches' bosses are fogged, so from a pre-boss rest no other branch's boss is seen.
   - Measured over 300 Act 1 seeds (`tests/core-map-shape.test.mjs`): 5.0 fights per walk (was 4.5), a shop in every branch (was 47% of maps), 57% of type-free steps offer two or more node types (was 23%; rest rows and the boss cannot fork by type, and edges that never cross cap this near two thirds).
 
 ### Rewards after combat and merchant prices
@@ -3283,11 +3287,12 @@ Describes the configured Ashen profile branch. It does not change legacy game ru
 
 ### Routes, rests and runs
 
-- Three deterministic acts, nine pre-boss depths, one boss per branch per act (§6).
+- Three deterministic acts, eleven pre-boss depths, one boss per branch per act (§6).
 - A rest visit commits exactly one of Strategize, Smith or Level Up.
   - Spending earned attribute points is no longer rest-only (owner 2026-10-27, §17).
   - Strategize is the only manual deck-editing service.
   - The chosen service restores full HP, SP, MP and both healing and MP flask pools.
+- **Traders and Blacksmiths re-enter** (owner, 2026-11-18, #2847): after leaving a trader or Blacksmith, the node you still stand on opens it again; travelling elsewhere ends that. They share the rest site's revisit record (`src/model/restRevisit.js`, `kind` shop or blacksmith); a Blacksmith's stock is kept on it, so re-entering shows the same stock minus what was bought, never a fresh roll. A record with no `kind` (older saves) is a rest site.
 - Equipment editing has an independent policy. Shop and reward content comes from the selected core pack.
 - Each new run snapshots its resolved profile, runtime artifacts and hash.
   - Save schema v25 preserves that pin; a profile/runtime mismatch refuses to load without overwriting the stored save.
