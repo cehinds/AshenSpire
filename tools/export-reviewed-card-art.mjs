@@ -29,7 +29,15 @@ if (importAt !== -1) {
 const existing = JSON.parse(readFileSync(root+'asset-data/card-art/layered-runtime.json', 'utf8'));
 // Effect layers: one approved PNG per presentation `fx:` tag, painted by the procedural Simple art (src/ui/proceduralCardArt.js).
 const effectLayers = source.effectLayers || {};
-const used = new Set([...source.rows.flatMap(row => row.layers.map(layer => layer.assetId)), ...Object.values(effectLayers).map(layer => layer.assetId)]);
+const proceduralObjects = source.proceduralObjects || {};
+const modifiers = source.proceduralModifiers;
+const used = new Set([
+  ...source.rows.flatMap(row => row.layers.map(layer => layer.assetId)),
+  ...Object.values(effectLayers).map(layer => layer.assetId),
+  ...Object.values(proceduralObjects).map(layer => layer.assetId),
+  modifiers.chevrons.assetId,
+  ...Object.values(modifiers.stats).map(stat => stat.assetId).filter(Boolean),
+]);
 const assets = Object.fromEntries([...used].map(id => {
   const a = source.assets[id];
   if (!a?.path || !a.sha256 || !a.bytes) throw Error(`Unregistered PNG: ${id}`);
@@ -57,7 +65,58 @@ const effects = Object.fromEntries(Object.entries(effectLayers).map(([tag, layer
   if (layer.role !== 'effect') throw Error(`Effect layer role must be effect: ${tag}`);
   return [tag, compileSprite(layer, 0, tag, `fx-${tag.slice(3)}`)];
 }));
-const runtime = {schema:1,sourceCommit:source.sourceCommit,reviewPage:source.reviewPage,assets,records,effectLayers:effects};
+const objects = Object.fromEntries(Object.entries(proceduralObjects).map(([action, layer]) => {
+  if (layer.role !== 'object') throw Error(`Procedural object role must be object: ${action}`);
+  return [action, compileSprite(layer, 0, action, 'object')];
+}));
+for (const [id, stat] of Object.entries(modifiers.stats)) {
+  if (!/^[a-z]+$/.test(id) || !Array.isArray(stat.statuses)
+    || !stat.statuses.every(status => typeof status === 'string')
+    || (stat.assetId !== null && !assets[stat.assetId])) throw Error(`Invalid procedural modifier: ${id}`);
+}
+const { priority, statAliases, object, chevrons } = modifiers;
+const statIds = Object.keys(modifiers.stats);
+if (!Array.isArray(priority) || new Set(priority).size !== statIds.length || priority.length !== statIds.length
+  || !priority.every(id => Object.hasOwn(modifiers.stats, id))) throw Error('Modifier priority must list each stat once');
+for (const [alias, id] of Object.entries(statAliases)) {
+  if (!/^[a-z]+$/.test(alias) || Object.hasOwn(modifiers.stats, alias) || !Object.hasOwn(modifiers.stats, id)) {
+    throw Error(`Invalid modifier alias: ${alias}`);
+  }
+}
+if (![object.tintStrength, object.edgeTintStrength, object.edgeWidth, object.edgeSoftness].every(Number.isFinite)
+  || !(0 <= object.tintStrength && object.tintStrength <= object.edgeTintStrength && object.edgeTintStrength < 1)
+  || !(0 < object.edgeSoftness && object.edgeSoftness <= object.edgeWidth && object.edgeWidth < 0.5)) {
+  throw Error('Invalid modifier object tint');
+}
+if (![chevrons.opposingX, chevrons.opposingScale, chevrons.glowRadius].every(Number.isFinite)
+  || chevrons.opposingX < 0 || chevrons.opposingScale <= 0 || chevrons.glowRadius < 0
+  || chevrons.opposingX + chevrons.width * chevrons.opposingScale / 2 > chevrons.width / 2
+  || chevrons.opposingScale > 1) throw Error('Invalid modifier accents');
+const { center } = modifiers;
+if (!(Number.isFinite(center.objectScale) && center.objectScale > 0)
+  || ![center.chevronsOffsetY, center.objectOffsetY].every(Number.isFinite)
+  || Object.values(modifiers.stats).some(({ centerObjectScale }) => centerObjectScale !== undefined
+    && !(Number.isFinite(centerObjectScale) && centerObjectScale > 0))) throw Error('Invalid modifier center layout');
+for (const layout of [modifiers.center, modifiers.corner]) {
+  if (![layout.x, layout.y, layout.width, layout.height, layout.maxSize].every(Number.isFinite)
+    || Math.min(layout.width, layout.height, layout.maxSize) <= 0
+    || layout.x < 0 || layout.y < 0 || layout.x + layout.width > 512 || layout.y + layout.height > 640) {
+    throw Error('Modifier layout must fit the card art well');
+  }
+}
+for (const polarity of ['buff', 'debuff']) {
+  const style = modifiers.polarities[polarity];
+  if (![style.tint, style.aura].every(value => typeof value === 'string' && value.length > 0)) throw Error(`Invalid modifier tint: ${polarity}`);
+  if (style.rgb?.length !== 3 || !style.rgb.every(channel => Number.isFinite(channel) && channel >= 0 && channel <= 1)
+    || !Number.isFinite(style.scale) || style.scale <= 0 || !/^#[0-9a-f]{6}$/i.test(style.glow)) {
+    throw Error(`Invalid modifier luminance tint: ${polarity}`);
+  }
+  for (const layer of [modifiers.object, modifiers.aura, {...modifiers.chevrons,rotation:style.rotation}]) {
+    compileSprite({...layer, assetId:modifiers.chevrons.assetId}, 0, polarity, 'modifier');
+  }
+}
+const runtime = {schema:1,sourceCommit:source.sourceCommit,reviewPage:source.reviewPage,assets,records,effectLayers:effects,
+  proceduralObjects:objects,proceduralModifiers:modifiers};
 const outputs = {
   'src/content/reviewedCardArt.generated.js':'// Generated by tools/export-reviewed-card-art.mjs; edit asset-data/card-art/reviewed-library.json.\nexport const reviewedCardArtCatalog = '+JSON.stringify(runtime)+';\n',
   'asset-data/card-art/reviewed-assets.json':JSON.stringify({schema:1,assets:Object.fromEntries(Object.entries(assets).filter(([id])=>!Object.hasOwn(existing.assets,id)))},null,2)+'\n',

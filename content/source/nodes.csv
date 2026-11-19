@@ -120,7 +120,7 @@ damage:blunt,damageType,Blunt,9FC3E8,◇,,,,,Adds 2 Poise damage once per action
 damage:fire,damageType,Fire,9FC3E8,◇,,,,,Applies 1 Burn on a Health hit unless the card already prints a Burn effect.
 damage:frost,damageType,Cold,9FC3E8,◇,,,,,Applies 1 Frost on a Health hit unless the card already prints a Frost effect.
 damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.
-damage:arcane,damageType,Force,9FC3E8,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
+damage:arcane,damageType,Force,9BC8BE,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
 damage:sacred,damageType,Holy,9FC3E8,◇,,,,,Removes 1 hostile debuff from the attacker after a Health hit.
 damage:decay,damageType,Necrotic,9FC3E8,◇,,,,,Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.
 damage:poison,damageType,Poison,9FC3E8,◇,,,,,Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up.
@@ -464,7 +464,7 @@ maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage ag
 school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.
 school:fire,school,Fire,E47C43,🔥,,,,,Fire pressure: Burn buildup keeps pressure between turns.
 school:lightning,school,Lightning,E8D46A,ϟ,,,,,Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.
-school:force,school,Force,B99DEC,✦,,,,,Force pressure: strip Ward and bypass melee Counter.
+school:force,school,Force,9BC8BE,✦,,,,,Force pressure: strip Ward and bypass melee Counter.
 school:alteration,school,Alteration,9BC8BE,◇,,,,,"Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure."
 school:illusion,school,Illusion,C59BD7,◎,,,,,"Tempo and hand control: Weak, confusion, draw and energy tools."
 school:divine,school,Divine,F0D99A,✚,,,,,"Restoration and cleansing: heal, protect and remove hostile effects."

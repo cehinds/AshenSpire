@@ -1,4 +1,4 @@
-import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp } from './gearHooks.js';
+import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp, RefreshGearItemProps } from './gearHooks.js';
 import { GearRuleTriggered } from '../model/gearEffects.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
@@ -531,7 +531,7 @@ function startPlayerTurn(combat) {
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
   p.counters.cardsPlayedThisTurn = 0;
-  p.counters.spellsPlayedThisTurn = 0;
+  if (combat.gameProfile?.modules?.gear?.typeEffectsVersion === 1) p.counters.spellsPlayedThisTurn = 0;
   const eqcfg = combat.registries.balance.equipment || {};
   combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
 
@@ -1388,6 +1388,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The hand now holds a different set: its old piece's properties leave with
   // it and the new piece's arrive (source ownership, engine/properties.js).
   syncLoadoutProperties(combat);
+  RefreshGearItemProps(combat);
   if (activeBefore !== combat.loadout.active[slotId]) {
     combat.equipmentChanged = true;
     const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -1524,6 +1525,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   // Unmount the outgoing piece's properties and mount the incoming piece's,
   // now that equipPiece has committed (engine/properties.js).
   syncLoadoutProperties(combat);
+  RefreshGearItemProps(combat);
   const poolAfter = combatEquipmentPoolProjection(combat);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;

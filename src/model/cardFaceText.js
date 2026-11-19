@@ -289,6 +289,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
         if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat foes');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        // Owner, 2026-11-18: a push on a foe inflicts Retreat (the stack bandRows.addRetreat gives); the face says so.
+        if (!close && effect.target === 'enemy') return frag('bonus', 'Inflict Retreat');
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);

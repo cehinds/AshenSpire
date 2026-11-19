@@ -1,3 +1,4 @@
+import { BREAK_STATUS_IDS } from './brokenRule.js';
 import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCorePierceRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -59,11 +60,17 @@ export function PreviewStateRestore(state, snapshot) {
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
-  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (x1.5, no Vulnerable grant).
+  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (the multiplier, 1 since 2026-11-18, and the break's statuses).
   const broken = FixCoreBrokenRules(ctx);
   if (broken) {
     defender.broken = { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1, preview: true };
     defender.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: broken.damageMultiplier };
+    // The break's statuses (owner, 2026-11-18, `poise.breakStatusStacks`) land before the card's later hits, as BreakCombatant applies them live.
+    if (broken.statusStacks > 0) {
+      const statuses = { ...defender.statuses };
+      for (const id of BREAK_STATUS_IDS) statuses[id] = { ...statuses[id], stacks: (statuses[id]?.stacks || 0) + broken.statusStacks };
+      defender.statuses = statuses;
+    }
     return;
   }
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);

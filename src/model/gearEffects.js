@@ -44,8 +44,8 @@ export function GearTypeRow(piece) {
 }
 
 /** GearPieceMods(piece) -> the mod strings a worn piece carries: its type or armour group base (one body piece wears the whole group base, Thorns and all), then its own mods. */
-export function GearPieceMods(piece) {
-  const row = GearTypeRow(piece);
+export function GearPieceMods(piece, includeType = true) {
+  const row = includeType ? GearTypeRow(piece) : null;
   return [...(row?.mods || []), ...(piece?.mods || [])];
 }
 
@@ -55,12 +55,16 @@ const wholeNumber = (mode, value, prior = 0) => (mode === 'add' ? prior + value 
  * GearSummary(registries, loadout, classId) -> the folded effects of every worn piece.
  * `statPoints` and `pools` are read by the receipt and runMods; the rest is stamped on the player for the fight.
  */
-export function GearSummary(registries, loadout, classId) {
+export const GearTypeEffectsEnabled = subject => subject?.gameProfile?.modules?.gear?.typeEffectsVersion === 1;
+
+export function GearSummary(registries, loadout, classId, subject = registries) {
+  const typeEffects = GearTypeEffectsEnabled(subject);
   const fields = registries?.equipment?.modFields || {};
   const worn = loadout ? equippedPieces(registries, loadout, classId) : [];
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
-    mainWeaponType: loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
-  for (const piece of worn) for (const raw of GearPieceMods(piece)) {
+    mainWeaponType: typeEffects && loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
+  if (!typeEffects) return out;
+  for (const piece of worn) for (const raw of GearPieceMods(piece, typeEffects)) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
     const common = { selector: mod.selector, arg: mod.arg, conds: mod.conds, source: piece.id };
@@ -237,7 +241,7 @@ export function GearHitRiders(rules, carrier, target, state = {}) {
  */
 export function GearAlwaysOn(registries, run) {
   if (!run?.loadout || !registries) return { rules: [], state: {} };
-  const summary = GearSummary(registries, run.loadout, run.class);
+  const summary = GearSummary(registries, run.loadout, run.class, run);
   return { rules: summary.cardRules.filter(rule => !GearRuleTriggered(rule)), state: { weaponType: summary.mainWeaponType } };
 }
 

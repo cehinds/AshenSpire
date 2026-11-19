@@ -1330,7 +1330,7 @@
     "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 stack at the start of your turn.",
+    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 Ward at the start of your turn, and its +5 maximum Poise with it. When your Poise reaches 0, all Ward is lost.",
     "sharedWord": true
   },
   {
@@ -1422,7 +1422,7 @@
     "tint": "#c9a36a",
     "stackMode": "unique",
     "decay": "none",
-    "tooltip": "Knocked back: it must Advance (pay its Advance cost) before its next melee move."
+    "tooltip": "Knocked back by a fight saved before Force lost its push: it must Advance (pay its Advance cost) before its next melee move. New fights never apply it."
   },
   {
     "id": "stoneHide",
@@ -1431,7 +1431,7 @@
     "tint": "#8a7b5c",
     "stackMode": "add",
     "decay": "ownerTurnStart",
-    "tooltip": "Each stack reduces Pierce damage by 1, from any Pierce source. Gone at the start of its owner's turn, like Block."
+    "tooltip": "Each stack cancels 1 Pierce stack; both stacks are spent. Gone at the start of its owner's turn, like Block."
   },
   {
     "id": "thorns",

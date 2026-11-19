@@ -168,7 +168,7 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run),
       ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
         attributes: gameProfileEffectiveAttributes(registries, run),
-        itemProps: { ...ItemPropertySummary(run), ...GearItemProps(GearSummary(registries, run.loadout, run.class)) }, // W25 step 6 and the 2026-11-18 gear vocabulary: what the gear and relics set for this fight
+        itemProps: { ...ItemPropertySummary(run), ...GearItemProps(GearSummary(registries, run.loadout, run.class, run)) }, // W25 step 6 and the 2026-11-18 gear vocabulary: what the gear and relics set for this fight
         baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,

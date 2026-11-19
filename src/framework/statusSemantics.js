@@ -23,6 +23,10 @@ export function statusDefinition(...args) { return Adopted.statusDefinition(...a
 export function decayAtTurnStart(...args) { return Adopted.decayAtTurnStart(...args); }
 export function decayAtTurnEnd(...args) { return Adopted.decayAtTurnEnd(...args); }
 export function ClearTurnBoosts(...args) { return Adopted.ClearTurnBoosts(...args); }
+// The Poise break's statuses (owner, 2026-11-18, 3a): expiry at the owner's next turn start, and the grant-first loss bookkeeping.
+export function ExpireBreakStatuses(...args) { return Adopted.ExpireBreakStatuses(...args); }
+export function RemoveBreakGrants(...args) { return Adopted.RemoveBreakGrants(...args); }
+export function TakeFromBreakGrant(...args) { return Adopted.TakeFromBreakGrant(...args); }
 export function getMult(...args) { return Adopted.getMult(...args); }
 export function getAdd(...args) { return Adopted.getAdd(...args); }
 export function getFlag(...args) { return Adopted.getFlag(...args); }
