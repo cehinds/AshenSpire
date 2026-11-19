@@ -65,10 +65,10 @@ test('scoped enemy moves resolve through both the tag service and nested combat 
   const service = tagService(registries);
   const meleeCounters = service.withTag('enemyMove', 'counter:melee');
   assert.deepEqual(meleeCounters.map(move => `${move.enemyId}.${move.id}`).sort(),
-    ['cinderMantis.foldedBlades', 'courtDuelist.riposte', 'gildedKnight.parry']);
-  // 66 rolled physical moves plus the two physical reaction moves (gildedGuard, bindingRiposte).
-  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 68);
-  assert.equal(service.withTag('enemyMove', 'camp:spell').length, 37);
+    ['cinderMantis.foldedBlades', 'courtDuelist.riposte', 'gildedKnight.parry', 'mirrorFanAbbess.mirrorRiposte']);
+  // Codex roster (2026-11-18) added 95 physical and 37 spell moves to the 68 and 37 before it.
+  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 163);
+  assert.equal(service.withTag('enemyMove', 'camp:spell').length, 74);
   for (const move of registries.enemyMoves) {
     const nested = registries.enemies.get(move.enemyId).moves[move.id];
     assert.equal(nested, move, `${move.enemyId}.${move.id}: combat and tag queries share the stamped action`);

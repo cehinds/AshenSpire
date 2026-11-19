@@ -16,11 +16,14 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
+// Native and production agree; immutable-parent oracles explain historical metadata drift, with events, RNG, receipts, continuations and original profile provenance preserved.
 // Recaptured 2026-11-19 for the Strength call-map reanchor to finishAbilityPlay: only 27 current-profile/runtime/snapshot/save hashes moved.
 // Native and production captures agree in all four scenarios; events, RNG, continuations and the historical profile/provenance are unchanged.
 // Recaptured 2026-11-19 after Prepared-only Focus copy and the Evade grant source reference; behavior and RNG are unchanged.
 // Recaptured 2026-11-19 after combining GearPass and Force/Ward: only 34 profile/runtime/snapshot/save hashes moved.
 // JS01 explicitly predates equipment type effects. Event digests, RNG, receipts and continuations match origin/dev exactly, including the historical profile.
+// Recaptured 2026-11-18 after merging origin/dev into the Codex branch (32 enemies, 38 weapons and armour): only the profile, snapshot and save hashes moved; events, RNG, continuations and runtime hashes are identical.
 // Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.
 // Runtime, event digests, RNG, receipts, continuations and the complete historical scenario are unchanged; native and production captures agree.
 // Recaptured 2026-11-19 (owner rulings 20-23 on chore/ForceWardRules: Force, Ward, Pierce, break statuses): every current-profile hash and the events they price moved; measured with this test's own output.

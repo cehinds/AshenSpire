@@ -57,10 +57,12 @@ test('registered enemy held bodies normalize to their idle while preserving floo
 });
 
 import { enemyStanceSprites } from '../src/content/enemyStanceSprites.js';
+import { conceptEnemyIds } from '../src/content/enemyExpansion.js';
 test('all enemy species have semantic metadata for idle and every held stance',()=>{
   for(const [id,stances] of Object.entries(enemyStanceSprites))for(const pose of new Set(['idle',...Object.values(stances)])){
     const path=`assets/enemy-poses/expansion/${id}/${pose}.webp`;
     assert(COMBAT_BODY_LANDMARKS[path],`${path} missing semantic head/body anchor`);
-    assert.equal(COMBAT_BODY_LANDMARKS[path].confidence,'visual-reviewed');
+    // The Codex concept frames (2026-11-18) carry alpha-measured landmarks (head = top of the opaque silhouette, feet = the 480 floor) until a visual review promotes them.
+    assert.equal(COMBAT_BODY_LANDMARKS[path].confidence,conceptEnemyIds.includes(id)?'alpha-measured':'visual-reviewed');
   }
 });

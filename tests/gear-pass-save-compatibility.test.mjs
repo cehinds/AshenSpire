@@ -109,14 +109,14 @@ test('an old profile future shop offer matches Dev items and RNG, and cached off
 });
 
 test('pre-type profiles keep Dev future armament and Blacksmith offers without new theme rolls', () => {
-  // Independent oracle: clean Dev 66e473a77c, seed511 / offer RNG41, default profile before the opt-in existed.
+  // Independent oracle: Dev 6727a25530050d63aaa3d960a0d8e3d1855e9fc4, seed511 / offer RNG41: its Codex-expanded catalog with legacy gear rules.
   const { registries, run } = world(false), rng = createRng(41);
   const offer = GameProfileArmamentOffer(registries, run, rng, { offerId: 'old-boss', pool: 'boss' });
   assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'kiteShield' }, { kind: 'armor', id: 'riteVestments' }]);
   assert.equal(rng.getCounters().cardRewards, 9);
   const other = world(false), smithRng = createRng(41);
   const smith = coreBlacksmithShelves(other.registries, smithRng, other.run);
-  assert.deepEqual(smith.armaments, [{ id: 'lantern', tier: 3, cost: 170 }, { id: 'katana', tier: 2, cost: 187 }, { id: 'duskChime', tier: 3, cost: 370 }, { id: 'halberd', tier: 0, cost: 101 }, { id: 'towerShield', tier: 0, cost: 157 }, { id: 'torch', tier: 1, cost: 85 }]);
+  assert.deepEqual(smith.armaments, [{ id: 'flamberge', tier: 3, cost: 407 }, { id: 'buckler', tier: 2, cost: 124 }, { id: 'sunTalisman', tier: 3, cost: 225 }, { id: 'kiteShield', tier: 0, cost: 67 }, { id: 'wyrmhornStaff', tier: 0, cost: 157 }, { id: 'broadsword', tier: 1, cost: 129 }]);
   assert.equal(smithRng.getCounters().shopOffers, 19);
 });
 
