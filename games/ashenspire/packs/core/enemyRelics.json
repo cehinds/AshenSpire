@@ -148,15 +148,6 @@
     "text": "CON +3, WIS +1, SP -2"
   },
   {
-    "id": "enemy.relic.judgeSeal",
-    "name": "Judge_Seal",
-    "modifiers": [
-      "self.strength=+2",
-      "self.wisdom=+1"
-    ],
-    "text": "STR +2, WIS +1"
-  },
-  {
     "id": "enemy.relic.hearseFrame",
     "name": "Hearse_Frame",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.wisdom=+1"
     ],
     "text": "CON +2, WIS +1"
+  },
+  {
+    "id": "enemy.relic.judgeSeal",
+    "name": "Judge_Seal",
+    "modifiers": [
+      "self.strength=+2",
+      "self.wisdom=+1"
+    ],
+    "text": "STR +2, WIS +1"
   }
 ]
