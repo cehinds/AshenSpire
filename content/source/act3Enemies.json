@@ -1498,10 +1498,6 @@
         "to": "blunt",
         "effect": "stagger",
         "amount": 20
-      },
-      {
-        "to": "frost",
-        "effect": "damage"
       }
     ]
   }
