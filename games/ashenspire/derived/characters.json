@@ -4912,8 +4912,15 @@
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "leatherWhip",
+            "name": "Leather_Whip",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 2,
@@ -4922,15 +4929,8 @@
       },
       "wisdom": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "blightRod",
-            "name": "Blight_Rod",
-            "kind": "gear",
-            "amount": 2
-          }
-        ],
-        "total": 3
+        "bonuses": [],
+        "total": 1
       },
       "intelligence": {
         "own": 1,
@@ -4943,27 +4943,27 @@
         "base": 10,
         "constitution": 20,
         "strength": 5,
-        "dexterity": 3,
-        "wisdom": 6,
+        "dexterity": 6,
+        "wisdom": 2,
         "intelligence": 1,
         "level": 0
       },
-      "total": 45,
-      "formula": "10+20+5+3+6+1+0 = 45"
+      "total": 44,
+      "formula": "10+20+5+6+2+1+0 = 44"
     },
     "pools": {
-      "hp": 45,
+      "hp": 44,
       "sp": 2,
-      "mp": 2,
+      "mp": 1,
       "ar": 1,
-      "dr": 1,
+      "dr": 2,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "blightRod",
-        "name": "Blight_Rod"
+        "id": "leatherWhip",
+        "name": "Leather_Whip"
       }
     ],
     "relics": [],
