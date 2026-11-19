@@ -53,7 +53,7 @@ function fixture(code = rendering, wrote = {}) {
 }
 
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
-  const probe = fixture(); probe.api.render();
+  const probe = fixture(rendering, { topbar: true }); probe.api.render();
   assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true,badgesReady:true}]);
   assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','intent-rows','aim','hint','automation']);
   assert.equal(probe.field.dataset.playerCell, 'A1');
@@ -73,7 +73,7 @@ test('the former actual render order is rejected by the first-fit receipt condit
   const former = (rendering.slice(0,begin)+'    renderHand();\n    renderControls();\n    renderCombatTools();\n'
     +rendering.slice(end)).replace(/(?<!function )renderCombatantStage\(\{[^;]*\);/,'renderCombatantStage();');
   assert.notEqual(former, rendering);
-  const probe = fixture(former); probe.api.render();
+  const probe = fixture(former, { topbar: true }); probe.api.render();
   assert.equal(probe.fits.length, 1);
   assert.equal(probe.fits[0].handWidth, 390);
   assert.equal(probe.fits[0].handReceipt, undefined, 'the original fit sees no final authored hand receipt');
@@ -110,10 +110,10 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
 });
 
 test('tools-first ordering cannot inspect the incoming card obstacle receipt',()=>{
-  const wrong=rendering.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools.flushGeometry\(\);/,
+  const wrong=rendering.replace(/(    (?:if \()?renderHand\([^;]*;)([\s\S]*?)    combatTools.flushGeometry\(\);/,
     (_all,hand,between)=>'    combatTools.flushGeometry();\n'+hand+between);
   assert.notEqual(wrong,rendering);
-  assert.throws(()=>fixture(wrong).api.render(),/raised toolbar collision checks must measure current card geometry/);
+  assert.throws(()=>fixture(wrong,{topbar:true}).api.render(),/raised toolbar collision checks must measure current card geometry/);
 });
 
 // finishRender: the end of a played-out sequence. Same order as render(); the tools measure and the full
@@ -146,4 +146,19 @@ test('finishRender keeps render()\'s order before the geometry and reports itsel
   instrumented.api.finishRender();
   assert.deepEqual(counted, ['finishRender']);
   assert.ok(rendering.slice(rendering.indexOf('  function finishRender()')).indexOf("globalThis.__perfCount?.('finishRender');") < 60);
+});
+
+// render() shares finishRender's gate (combat perf, 2026-11-19): a render that re-arms a card or resyncs an
+// unchanged board skips the tools measure and the battlefield fit; any stage, top-bar or fan write still runs both.
+test('render() skips the tools measure and the battlefield fit when nothing that can move the board wrote', () => {
+  for (const wrote of [{}, { hand: { reshaped: false, rebuilt: 1 } }, { player: false, enemies: false, topbar: false }]) {
+    const probe = fixture(rendering, wrote); probe.api.render();
+    assert.deepEqual(probe.events, FINISH_QUIET, JSON.stringify(wrote));
+    assert.equal(probe.fits.length, 0);
+  }
+  for (const wrote of [{ player: true }, { enemies: true }, { topbar: true }, { hand: { reshaped: true, rebuilt: 0 } }]) {
+    const probe = fixture(rendering, wrote); probe.api.render();
+    assert.deepEqual(probe.events, FINISH_MOVED, JSON.stringify(wrote));
+    assert.equal(probe.fits.length, 1);
+  }
 });

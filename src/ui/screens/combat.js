@@ -1599,22 +1599,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function render() {
     globalThis.__perfCount?.('render');
+    let moved = false;
     handStrip.primeStripBox();
-    renderTopbar();
+    if (renderTopbar()) moved = true;
     syncEditLock();
     renderPotionTray();
+    stageWrote = false;
     renderCombatantStage({ fit: false, refreshTargets: false });
+    if (stageWrote) moved = true;
     renderControls();
     renderCombatTools();
-    renderHand({ refreshHitChances: false });
+    if (renderHand({ refreshHitChances: false })?.reshaped) moved = true;
     // The full render owns one final quote/badge update after the new hand
     // faces and costs exist. Individual stage/hand renders retain immediate
     // refreshes; no state or geometry is cached across playback beats.
     syncHitChances();
     // The tools occupy the incoming hand's top band without consuming width.
     // Measure that authored hand before the single full-board HUD/target fit.
-    combatTools.flushGeometry();
-    battlefieldStage.refresh();
+    // Like finishRender, only when a stage slot, the top bar or the hand's fan wrote: a render that only
+    // re-arms a card or resyncs an unchanged board (most of them) moved nothing these two passes would see.
+    // The first render and a rebuilt board always write; window, viewport and form-factor changes have their
+    // own observers in combatTools and the battlefield stage.
+    if (moved) {
+      combatTools.flushGeometry();
+      battlefieldStage.refresh();
+    }
     formationMovement?.refresh();
     applyTargetLayer();
     KeepIntentRowsInside(combatEl);
