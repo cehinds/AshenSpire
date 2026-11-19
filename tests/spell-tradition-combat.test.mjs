@@ -14,7 +14,7 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { ChangeAttribute, RestoreLiveStats, ElementStatScale } from '../src/engine/liveStats.js';
 import { ElementProtectionView, ApplyElementReceipt, OnPoiseBreak, ElementPreviewBreak } from '../src/engine/elementIdentity.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { spellScalingValue, spellTraditionsActive, traditionSpellPower } from '../src/model/spellTraditions.js';
+import { SpellScalingValue, SpellTraditionsActive, TraditionSpellPower } from '../src/model/spellTraditions.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { validateGameProfileSnapshot } from '../src/model/gameProfile.js';
 
@@ -36,10 +36,10 @@ const power = (combat, entity, card) => sourceRatingValue(combat, entity, 'pr', 
 test('exclusive schools read their own attribute, shared schools read the greater, for both asymmetric builds', () => {
   for (const attributes of [{ intelligence: 8, wisdom: 2 }, { intelligence: 2, wisdom: 8 }]) {
     const { combat, p } = make(attributes);
-    assert.equal(spellTraditionsActive(combat), true);
+    assert.equal(SpellTraditionsActive(combat), true);
     for (const school of ['force', 'illusion', 'alteration', 'divine', 'decay', 'fire', 'earth', 'lightning', 'frost', null]) {
       const card = carrier(school);
-      const expected = spellScalingValue(p.attributes, card);
+      const expected = SpellScalingValue(p.attributes, card);
       assert.equal(power(combat, p, card), expected, `${school}: exact intrinsic contribution`);
       const receipt = profileDamageReceipt(combat, p, combat.enemies[0], 10, card);
       assert.ok(receipt.rawHit > 0, `${school}: actual damage path executes`);
@@ -104,7 +104,7 @@ test('stance attribute grants use the selected school and preserve flat spell mo
   const arcane = carrier('illusion'), divine = carrier('divine');
   assert.equal(power(combat, p, arcane) - power({ ...combat }, { ...p, itemProps: {} }, arcane), 3);
   assert.equal(power(combat, p, divine) - power({ ...combat }, { ...p, itemProps: {} }, divine), 0);
-  assert.equal(traditionSpellPower(combat, p, divine, p.ratings.pr + 4), p.attributes.wisdom + 4);
+  assert.equal(TraditionSpellPower(combat, p, divine, p.ratings.pr + 4), p.attributes.wisdom + 4);
 });
 
 test('Wisdom alone grows new-run Poise at allocation and combat creation; Constitution grows Health', () => {
@@ -161,7 +161,7 @@ test('run and combat serialization retain Wisdom Poise and the explicit casting 
   assert.equal(restoredRun.derivedStatRuleSnapshot.rules.rules.poise.wisdom, 1);
   assert.equal(restoredRun.derivedStatRuleSnapshot.rules.rules.poise.constitution || 0, 0);
   const restored = restoreCombatSnapshot({ registries, rng: createRng(4242), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: run.gameProfile });
-  assert.equal(spellTraditionsActive(restored), true);
+  assert.equal(SpellTraditionsActive(restored), true);
   assert.equal(restored.player.persistentPoise.max, combat.player.persistentPoise.max);
   assert.equal(power(restored, restored.player, carrier('divine')), power(combat, combat.player, carrier('divine')));
 });
@@ -171,7 +171,7 @@ test('a fight without the version flag retains shared spell damage and its old e
   const legacy = structuredClone(combat.fixCoreRules);
   delete legacy.spellTraditionsVersion;
   combat.fixCoreRules = legacy;
-  assert.equal(spellTraditionsActive(combat), false);
+  assert.equal(SpellTraditionsActive(combat), false);
   assert.equal(power(combat, p, carrier('force')), power(combat, p, carrier('divine')));
   target.persistentPoise = { value: 100, max: 100 };
   assert.equal(ElementProtectionView(combat, p, target, carrier('fire')).ignored, 10);
@@ -238,7 +238,7 @@ test('the genuine previous-dev profile and saved CON Poise row survive loading a
   const born = createRunState({ registries: reg, classId: 'reaver', seed: 4242, derivedStatRuleSnapshot: savedRules.snapshot });
   const run = deserializeRun(serializeRun(born));
   assert.deepEqual(run.derivedStatRuleSnapshot, savedRules.snapshot);
-  assert.equal(spellTraditionsActive(run), false);
+  assert.equal(SpellTraditionsActive(run), false);
   const fight = () => createRunCombat({ registries: reg, run, rng: createRng(4242), enemyIds: ['wanderingSoldier'] });
   const before = fight();
   assert.equal(before.fixCoreRules.spellTraditionsVersion, undefined, 'new fight on old run stays on old scaling');
@@ -250,4 +250,52 @@ test('the genuine previous-dev profile and saved CON Poise row survive loading a
   assert.equal(fight().player.persistentPoise.max, poise + 1, 'the new Wisdom row does not leak into the saved run');
   const resumed = fight();
   assert.equal(power(resumed, resumed.player, carrier('force')), power(resumed, resumed.player, carrier('divine')));
+});
+
+test('the genuine incoming Dev profile retains its casting, Wisdom Poise and unrebalanced card definitions', () => {
+  // Resolved from MERGE_HEAD 0b11a358's own compiled catalog. Its digest also
+  // matches that commit's game.lock.json profiles.default.hash.
+  const archived = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-0b11a358.json.gz', import.meta.url))));
+  const archivedBefore = structuredClone(archived);
+  const profile = validateGameProfileSnapshot(archived);
+  assert.equal(profile.hash, 'sha256:427182c7b26d668c06eb20470df7f23f022600bd10d8a430b9ea4bf6bb71308a');
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const born = createRunState({ registries: reg, classId: 'reaver', seed: 4242 });
+  Object.assign(born.attributes, { intelligence: 8, wisdom: 2 });
+  rederivePools(reg, born, 'archived Dev casting');
+  const run = deserializeRun(serializeRun(born));
+  assert.equal(SpellTraditionsActive(run), true);
+  assert.equal(run.gameProfile.modules.effects.spellRewardPolicyVersion || 0, 0, 'casting opt-in does not opt the saved profile into new reward policy');
+  assert.ok(reg.cards.get('core.graveToll').effects.some(effect => effect.op === 'damage'), 'saved Grave Toll keeps its original offensive effects');
+  const fight = () => createRunCombat({ registries: reg, run, rng: createRng(4242), enemyIds: ['wanderingSoldier'] });
+  const before = fight();
+  for (const school of ['force', 'divine', 'fire']) {
+    const card = carrier(school);
+    assert.equal(power(before, before.player, card), SpellScalingValue(before.player.attributes, card));
+  }
+  run.level.unspentPoints = 1;
+  allocateAttributePoint(reg, run, 'wisdom');
+  const later = fight();
+  assert.equal(later.player.persistentPoise.max, before.player.persistentPoise.max + 1);
+  const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(4242), snapshot: serializeCombatSnapshot(later), expectedGameProfile: profile });
+  assert.equal(restored.gameProfile.hash, profile.hash);
+  assert.equal(power(restored, restored.player, carrier('divine')), power(later, later.player, carrier('divine')));
+  assert.deepEqual(archived, archivedBefore, 'loading and allocation leave the archived profile immutable');
+});
+
+test('the ac607 checkpoint profile and its saved Wisdom snapshot retain the implemented support cards', () => {
+  const archived = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/checkpoint-profile-8204b997.json.gz', import.meta.url))));
+  const profile = validateGameProfileSnapshot(archived);
+  assert.equal(profile.hash, 'sha256:2a25d3cbf87b70b876c5c4c6dde9dd86df9dd582f692cce9efe15ae9c5fdae07');
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const born = createRunState({ registries: reg, classId: 'reaver', seed: 4242 });
+  const run = deserializeRun(serializeRun(born));
+  assert.equal(run.derivedStatRuleSnapshot.rules.rules.poise.wisdom, 1);
+  assert.equal(run.derivedStatRuleSnapshot.rules.rules.poise.constitution || 0, 0);
+  assert.ok(reg.cards.get('core.graveToll').effects.some(effect => effect.op === 'restorePoise'));
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(4242), enemyIds: ['wanderingSoldier'] });
+  const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(4242), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: profile });
+  assert.equal(restored.gameProfile.hash, profile.hash);
+  assert.equal(SpellTraditionsActive(restored), true);
+  assert.equal(restored.player.persistentPoise.max, combat.player.persistentPoise.max);
 });

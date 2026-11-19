@@ -1,5 +1,5 @@
 import { ChannelLabel } from './damageChannels.js';
-import { traditionSpellPower } from './spellTraditions.js';
+import { TraditionSpellPower } from './spellTraditions.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
@@ -485,7 +485,7 @@ export function ratingValue(ctx, entity, id, carrier = null) {
   let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id, carrier);
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, id === 'pr' && carrier ? traditionSpellPower(ctx, entity, carrier, value) : value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 /**
@@ -520,7 +520,7 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, id === 'pr' && carrier ? traditionSpellPower(ctx, entity, carrier, value) : value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 export function isMagicalAttack(ctx, carrier) {

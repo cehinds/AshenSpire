@@ -42,8 +42,8 @@
     font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.23rem));
   }
 }
-/* Allocation summaries are useful instructions, not disposable labels. At
-   the minimum size they may grow vertically beside the unchanged stepper. */
+/* Allocation summaries wrap below the name, within the text column that
+   ends before the stepper. */
 .modal .as-row.setting.se-row .disc-summary {
   font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.35rem));
   white-space: normal; overflow: visible; text-overflow: clip;

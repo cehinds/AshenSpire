@@ -32,6 +32,9 @@ earlier stat, spell and card-pool prose in SPEC.md.
   profiles keep their original combat scaling and stat snapshots; existing
   card IDs, decks and earned offers remain loadable. No saved run is discarded
   or silently repriced to implement these rules.
+- Reward eligibility and role weighting have their own profile marker,
+  `effects.spellRewardPolicyVersion: 1`. Profiles that already shipped casting
+  traditions without this marker keep their original reward policy.
 - Short attribute descriptions use benefit names without bonus amounts and
   omit multi-point traits: STR Physical damage; DEX Defense; CON Health;
   WIS Poise / Divine magic; INT Arcane magic. Hand growth remains threshold-based.

@@ -1,7 +1,6 @@
 {
   "type": "object",
   "properties": {
-    "spellTraditionsVersion": { "enum": [0, 1] },
     "mode": {
       "enum": [
         "legacy",
@@ -80,6 +79,17 @@
       "enum": [
         1,
         2
+      ]
+    },
+    "spellRewardPolicyVersion": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
+    "spellTraditionsVersion": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
       ]
     }
   },

@@ -6,7 +6,7 @@ import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { illustratedCardHtml, CARD_LAYERS } from '../src/ui/components/illustratedCard.js';
 import { rewardDom } from './helpers/dom.mjs';
-import { cardSpellTraditions, spellTraditionLabel } from '../src/model/spellTraditions.js';
+import { CardSpellTraditions, SpellTraditionLabel } from '../src/model/spellTraditions.js';
 const reg = createRegistries(contentBundle);
 
 test('every ability family presents each authored rank and its canonical identity', () => {
@@ -17,8 +17,8 @@ test('every ability family presents each authored rank and its canonical identit
     assert.ok(model.rankHelp.includes(`Rank ${abilityRank}`));
     assert.equal(model.type.abilityLabel, card.abilityKind === 'spell' ? abilityRank === 0 ? 'Cantrip' : null : abilityRank === 0 ? 'Technique' : 'Combat Maneuver');
     if (card.abilityKind === 'spell') {
-      assert.equal(model.type.label, spellTraditionLabel(card).toUpperCase());
-      assert.deepEqual(model.sigils.traditions, cardSpellTraditions(card));
+      assert.equal(model.type.label, SpellTraditionLabel(card).toUpperCase());
+      assert.deepEqual(model.sigils.traditions, CardSpellTraditions(card));
     }
     assert.equal(model.type.weaponArt, abilityRank > 0 && model.costs.mana > 0 && card.tags.includes('source:weapon') ? 'Weapon Art' : null);
     assert.ok(model.type.glyph && model.type.help.includes(abilityRank === 0 ? model.type.abilityLabel : `Rank ${abilityRank}`));

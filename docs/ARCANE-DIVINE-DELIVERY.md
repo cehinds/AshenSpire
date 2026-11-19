@@ -1,8 +1,10 @@
-# Arcane / Divine implementation status
+# Arcane / Divine implementation verification
 
-2026-11-18. Work is local on `codex/arcane-divine-traditions`, based on
-`dev` commit `66e473a77c74da54bd8701fd5a2614a0e7484985`. The original
-`C:\repos\AshenSpire` checkout and its existing edits were preserved.
+Initial implementation was verified on 2026-11-18 against dev commit
+`66e473a77c74da54bd8701fd5a2614a0e7484985`. Integration on 2026-11-19
+combines it with dev `0b11a35843`, including the intervening Gear, Smash,
+saved-preview and stat-allocation changes. The original checkout and its
+existing edits were preserved. The feature PR records current CI and merge status.
 
 ## Merged
 
@@ -10,7 +12,7 @@ None of this change has been merged.
 
 ## In queue to be merged
 
-None. No remote branch or pull request has been created for this change.
+Merge requested by the owner on 2026-11-19; the PR records the current queue state.
 
 ## CD/CI testing
 
@@ -26,7 +28,7 @@ None. No remote branch or pull request has been created for this change.
 - [x] Final upgrade audit: every rolled Core card upgrade changes gameplay.
   Final runtime checks total 214 passing tests across 17 suites, including
   the 152-fight damage audit and Reflect/Divine/revive cases.
-- [ ] Remote CI/CD: not run; this work has not been pushed.
+- [ ] Remote CI/CD and merged-tree verification: tracked in the feature PR.
 
 The discovered fast suite exercised 1,209 files / 9,452 tests across the
 implementation. Its initial failures were triaged and corrected; focused
@@ -35,18 +37,17 @@ all 9,452 tests passed on the final tree.
 
 ## PR ready
 
-- [ ] PR not opened. Live `dev` advanced during implementation to
-  `0327759be4e5ea47cabf5ddcd75ac19347a2528b` (card-art priority and automated
-  documentation/build stamps). Those commits have not been integrated here.
+- [x] Reconciled current dev's stat-row evaluation, equipment and saved contexts.
+- [x] Added separate reward-policy versioning for profiles that already had casting traditions.
+- [ ] Browser sandbox acceptance and final integrated CI: recorded in the feature PR.
 
 ## In progress
 
-None. Requested local implementation and verification are complete.
+Integration validation, PR review and merge delivery.
 
 ## Not implemented
 
-No requested gameplay or UI feature is intentionally deferred. Publishing,
-merging and promotion have not been performed.
+No requested gameplay or UI feature is intentionally deferred.
 
 ## Implemented changes
 

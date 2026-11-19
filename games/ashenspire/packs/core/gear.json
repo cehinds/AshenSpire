@@ -921,5 +921,672 @@
       "file": "content/source/outfits.csv",
       "id": "waywatcher"
     }
+  },
+  {
+    "id": "kris",
+    "name": "Kris",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "dagger",
+      "flurry",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "kris"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "stiletto",
+    "name": "Stiletto",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "dagger",
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "stiletto"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "broadsword",
+    "name": "Broadsword",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "broadsword"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "flamberge",
+    "name": "Flamberge",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "sword",
+      "burn"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "flamberge"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "rapier",
+    "name": "Rapier",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "rapier"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "estoc",
+    "name": "Estoc",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "estoc"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "duelistsFoil",
+    "name": "Duelists_Foil",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "duelistsFoil"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "ashenClaymore",
+    "name": "Ashen_Claymore",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "ashenClaymore"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "zweihander",
+    "name": "Zweihander",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "zweihander"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "pike",
+    "name": "Pike",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "spear"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "pike"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "scythe",
+    "name": "Scythe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "polearm"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "scythe"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "reapersCrescent",
+    "name": "Reapers_Crescent",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "polearm"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "reapersCrescent"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "mace",
+    "name": "Mace",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "mace"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "morningStar",
+    "name": "Morning_Star",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "hammer",
+      "stagger",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "morningStar"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "flail",
+    "name": "Flail",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "flail"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "maul",
+    "name": "Maul",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "maul"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "thunderMallet",
+    "name": "Thunder_Mallet",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "thunderMallet"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "beardedAxe",
+    "name": "Bearded_Axe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "axe",
+      "heavy"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "beardedAxe"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "moonlitKatana",
+    "name": "Moonlit_Katana",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "katana",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "moonlitKatana"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "moonGlaives",
+    "name": "Moon_Glaives",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "twinblade",
+      "flurry",
+      "light",
+      "frost"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "moonGlaives"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "longbow",
+    "name": "Longbow",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "longbow"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "huntersRecurve",
+    "name": "Hunters_Recurve",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "huntersRecurve"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "handCrossbow",
+    "name": "Hand_Crossbow",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "handCrossbow"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "arbalest",
+    "name": "Arbalest",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "arbalest"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "leatherWhip",
+    "name": "Leather_Whip",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "leatherWhip"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "thornWhip",
+    "name": "Thorn_Whip",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "flurry",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "thornWhip"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "ironKnuckles",
+    "name": "Iron_Knuckles",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "ironKnuckles"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "beastClaws",
+    "name": "Beast_Claws",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "flurry",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "beastClaws"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "stormSceptre",
+    "name": "Storm_Sceptre",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "sceptre",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "stormSceptre"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "grimoire",
+    "name": "Grimoire",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "grimoire"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "prayerBook",
+    "name": "Prayer_Book",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "prayerBook"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "sunTalisman",
+    "name": "Sun_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [
+      "regen"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "sunTalisman"
+    },
+    "range": "melee"
+  },
+  {
+    "id": "boneTalisman",
+    "name": "Bone_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "boneTalisman"
+    },
+    "range": "melee"
+  },
+  {
+    "id": "armor.cinderforgedPlate",
+    "name": "Cinderforged_Plate",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "rare",
+    "tags": [
+      "plate"
+    ],
+    "points": {},
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "cinderforgedPlate"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.wyrmscaleMail",
+    "name": "Wyrmscale_Mail",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "rare",
+    "tags": [
+      "mail"
+    ],
+    "points": {},
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "wyrmscaleMail"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.ringmailHauberk",
+    "name": "Ringmail_Hauberk",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "mail"
+    ],
+    "points": {},
+    "classes": [
+      "herald"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "ringmailHauberk"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.huntersHide",
+    "name": "Hunters_Hide",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "leathers"
+    ],
+    "points": {},
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "huntersHide"
+    }
+  },
+  {
+    "id": "armor.sagesRobe",
+    "name": "Sages_Robe",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes"
+    ],
+    "points": {},
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "sagesRobe"
+    }
   }
 ]

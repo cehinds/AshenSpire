@@ -10,9 +10,9 @@
 // Random rolls use the `elements` rng stream only, and only when a rule needs a roll, so no other stream shifts.
 // Headless: no document, window or timers.
 import { ElementRulesOf, ElementOfHit, HitsAllTargets, ForceRules } from '../model/elementIdentityRules.js';
+import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
 import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
-import { spellScalingValue, spellTraditionsActive } from '../model/spellTraditions.js';
 import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
@@ -28,8 +28,8 @@ export function ElementAttribute(ctx, entity, id) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 const sumAttributes = (ctx, entity, ids) => ids.reduce((sum, id) => sum + ElementAttribute(ctx, entity, id), 0);
-const castingValue = (ctx, entity, school, legacy) => spellTraditionsActive(ctx)
-  ? spellScalingValue(Object.fromEntries(ATTRIBUTE_IDS.map(id => [id, ElementAttribute(ctx, entity, id)])), { school })
+const castingValue = (ctx, entity, school, legacy) => SpellTraditionsActive(ctx)
+  ? SpellScalingValue(Object.fromEntries(ATTRIBUTE_IDS.map(id => [id, ElementAttribute(ctx, entity, id)])), { school })
   : legacy();
 const stacksOf = (entity, id) => Statuses.getStacks(entity, id);
 const defOf = (ctx, entity) => (entity?.kind === 'enemy' && entity.enemyId && ctx?.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null);
@@ -88,6 +88,11 @@ export function ElementReceiptStages(ctx, source, target, carrier, raw) {
   if (carrier?.elementChain) push('element-chain', 'Lightning chains', rules.lightning.chainMultiplier);
   push('element-burn', 'Burn: damage taken', 1 + rules.burn.damageTakenPerStack * stacksOf(target, 'burn'));
   if (element === 'lightning') push('element-shock', 'Shock: lightning taken', 1 + rules.shock.lightningTakenPerStack * stacksOf(target, 'shock'));
+  // One tag per element (owner, 2026-11-18): a target's <Element> Vulnerable stacks raise the damage of that element it takes.
+  for (const [id, inst] of Object.entries(target?.statuses || {})) {
+    const row = inst?.stacks > 0 ? ctx.registries?.statuses?.get(id)?.elementVulnerability : null;
+    if (row && element === row.element) push(`element-vulnerable-${row.element}`, `${row.element[0].toUpperCase()}${row.element.slice(1)} Vulnerable`, 1 + row.perStack * inst.stacks);
+  }
   if (stacksOf(target, 'brittle') > 0) push('element-brittle', 'Brittle', rules.frost.brittleMultiplier);
   const undead = ElementHasTag(ctx, target, rules.necrotic.undeadTag);
   if (element === 'divine' && undead) push('element-divine-undead', 'Divine against the undead', rules.divine.undeadMultiplier);
@@ -115,8 +120,7 @@ export function ElementProtectionView(ctx, source, target, carrier) {
   const element = ElementOfHit(carrier);
   if (element === 'necrotic') return { value: 0, ignored: 0, all: true };
   if (element === 'fire') {
-    const ignored = Math.min(pool.value, Math.floor(castingValue(ctx, source, 'fire',
-      () => sumAttributes(ctx, source, rules.fire.poiseIgnoreAttributes)) * rules.fire.poiseIgnorePerPoint));
+    const ignored = Math.min(pool.value, Math.floor(castingValue(ctx, source, 'fire', () => sumAttributes(ctx, source, rules.fire.poiseIgnoreAttributes)) * rules.fire.poiseIgnorePerPoint));
     return ignored > 0 ? { value: pool.value - ignored, ignored } : null;
   }
   return null;
@@ -171,8 +175,7 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
   if (receipt.element?.heal > 0) Actions.applyHeal(ctx, target, receipt.element.heal);
   // Build-up needs the target's Poise broken (at 0), like the other elemental statuses; the damage itself ignores Poise.
   if (element === 'necrotic' && target.alive && !(target.persistentPoise?.value > 0) && !ElementHasTag(ctx, target, rules.necrotic.undeadTag)) {
-    const stacks = Math.max(rules.necrotic.buildupMin, castingValue(ctx, source, 'necrotic',
-      () => ElementAttribute(ctx, source, rules.necrotic.buildupAttribute)));
+    const stacks = Math.max(rules.necrotic.buildupMin, castingValue(ctx, source, 'necrotic', () => ElementAttribute(ctx, source, rules.necrotic.buildupAttribute)));
     Statuses.applyStatus(ctx, target, 'necroticBuildup', stacks, source);
   }
   if (element === 'divine' && source?.alive) {
@@ -182,8 +185,7 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     for (const id of ['necroticBuildup', 'shock']) if (cleanse > 0 && stacksOf(source, id) > 0) Statuses.removeStatus(ctx, source, id, { amount: cleanse, reason: 'consumed' });
   }
   if (element === 'frost' && target.alive) {
-    const stacks = rules.frost.chillBase + Math.floor(castingValue(ctx, source, 'frost',
-      () => ElementAttribute(ctx, source, 'intelligence')) / rules.frost.chillIntPerExtra);
+    const stacks = rules.frost.chillBase + Math.floor(castingValue(ctx, source, 'frost', () => ElementAttribute(ctx, source, 'intelligence')) / rules.frost.chillIntPerExtra);
     Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
   // Force has no built-in push or pull (owner, 2026-11-18): Retreat is its own tag, a moveEngagement effect. A fight saved with the old Force keeps the push and the pull.
@@ -217,12 +219,10 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
   if (!rules || !hit || hit.targetId !== target?.id || !hit.element) return;
   const source = attacker;
   if (hit.element === 'fire') {
-    const stacks = Math.max(rules.fire.burnMin, castingValue(ctx, source, 'fire',
-      () => ElementAttribute(ctx, source, rules.fire.burnAttribute)));
+    const stacks = Math.max(rules.fire.burnMin, castingValue(ctx, source, 'fire', () => ElementAttribute(ctx, source, rules.fire.burnAttribute)));
     addCapped(ctx, target, 'burn', stacks, source, burnCap(ctx, rules));
   } else if (hit.element === 'lightning') {
-    const stacks = castingValue(ctx, source, 'lightning',
-      () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0));
+    const stacks = castingValue(ctx, source, 'lightning', () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0));
     addCapped(ctx, target, 'shock', stacks, source, shockCap(ctx, rules));
   } else if (hit.element === 'divine') {
     const smite = Math.floor(hit.amount * rules.divine.smiteFraction);
@@ -251,10 +251,8 @@ export function ElementPreviewBreak(ctx, attacker, defender, element, incoming =
     const have = defender.statuses?.[id]?.stacks || 0, give = Math.min(Math.floor(stacks), Math.max(0, cap - have));
     if (give > 0) defender.statuses = { ...defender.statuses, [id]: { ...defender.statuses?.[id], stacks: have + give } };
   };
-  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, castingValue(ctx, attacker, 'fire',
-    () => ElementAttribute(ctx, attacker, rules.fire.burnAttribute))), burnCap(ctx, rules));
-  else if (element === 'lightning') add('shock', castingValue(ctx, attacker, 'lightning',
-    () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0)), shockCap(ctx, rules));
+  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, castingValue(ctx, attacker, 'fire', () => ElementAttribute(ctx, attacker, rules.fire.burnAttribute))), burnCap(ctx, rules));
+  else if (element === 'lightning') add('shock', castingValue(ctx, attacker, 'lightning', () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0)), shockCap(ctx, rules));
   else if (element === 'frost' && (defender.statuses?.chill?.stacks || 0) > 0) { add('freeze', 1); add('brittle', 1); }
   else if (element === 'divine') return Math.floor((incoming || 0) * rules.divine.smiteFraction);
   return 0;

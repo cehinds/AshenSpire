@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, gameContent, projectGameCard } from '../src/model/gameProfile.js';
 import { validateContent } from '../src/model/validate.js';
-import { cardSpellTraditions, spellPoolRole, spellPoolWeights } from '../src/model/spellTraditions.js';
+import { CardSpellTraditions, SpellPoolRole, SpellPoolWeights } from '../src/model/spellTraditions.js';
 import { gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 
 const sourceCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
@@ -15,7 +15,7 @@ const bundle = applyGameProfileToContent(contentBundle, profile);
 const registries = bindGameProfileRegistries(createRegistries(bundle), profile);
 const isSpell = card => card.tags?.includes('camp:spell');
 const countRoles = cards => cards.reduce((counts, card) => {
-  counts[spellPoolRole(card)]++;
+  counts[SpellPoolRole(card)]++;
   return counts;
 }, { offense: 0, support: 0 });
 
@@ -48,7 +48,7 @@ test('each shared natural school includes an authored support choice with both t
     const card = sourceCards.find(card => card.id === id);
     assert.ok(card.tags.includes(`school:${school}`), id);
     assert.deepEqual(card.tags.filter(tag => tag.startsWith('tradition:')).sort(), ['tradition:arcane', 'tradition:divine']);
-    assert.equal(spellPoolRole(card), 'support', id);
+    assert.equal(SpellPoolRole(card), 'support', id);
     assert.ok(!card.effects.some(effect => effect.op === 'damage'), id);
   }
 });
@@ -57,7 +57,7 @@ test('Divine support includes cleansing, regeneration, Poise restoration and sup
   const get = id => sourceCards.find(card => card.id === id);
   for (const id of ['core.censure', 'core.rendingHex', 'core.acidSplash', 'core.witherDraught', 'core.graveToll']) {
     const card = get(id);
-    assert.equal(spellPoolRole(card), 'support', id);
+    assert.equal(SpellPoolRole(card), 'support', id);
     for (const effects of [card.effects, card.upgrade.effects]) assert.ok(!effects.some(effect => effect.op === 'damage'), id);
   }
   assert.ok(get('core.purifyingLight').effects.some(effect => effect.op === 'heal'));
@@ -74,7 +74,7 @@ test('resolved Core content has valid effect references, tokens and canonical sp
   assert.ok(spells.length > sourceCards.filter(isSpell).length, 'audit includes base, legacy and enemy-projected spells');
   for (const card of spells) {
     const actual = card.tags.filter(tag => tag.startsWith('tradition:')).map(tag => tag.slice(10)).sort();
-    assert.deepEqual(actual, [...cardSpellTraditions(card)].sort(), card.id);
+    assert.deepEqual(actual, [...CardSpellTraditions(card)].sort(), card.id);
   }
 });
 
@@ -85,11 +85,11 @@ test('resolved class reward pools retain both roles and normalize to the intende
     // Audit the complete role pool before affordability narrows it early in a climb.
     run.maxMana = 99;
     const eligible = gameProfileRewardPools(registries, run).combatCards.map(id => registries.cards.get(id)).filter(isSpell);
-    const cards = eligible.filter(card => cardSpellTraditions(card).includes(tradition));
+    const cards = eligible.filter(card => CardSpellTraditions(card).includes(tradition));
     const counts = countRoles(cards);
     assert.ok(counts.offense > 0 && counts.support > 0, classId);
-    const weights = spellPoolWeights(cards, tradition);
-    const totals = cards.reduce((out, card) => { out[spellPoolRole(card)] += weights[card.id]; return out; }, { offense: 0, support: 0 });
+    const weights = SpellPoolWeights(cards, tradition);
+    const totals = cards.reduce((out, card) => { out[SpellPoolRole(card)] += weights[card.id]; return out; }, { offense: 0, support: 0 });
     assert.ok(Math.abs(totals.offense / totals.support - ratio) < 1e-9, JSON.stringify(totals));
     t.diagnostic(`${classId} resolved ${tradition} pool: ${counts.offense} offense, ${counts.support} support; normalized role ratio ${ratio}`);
   }

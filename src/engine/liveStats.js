@@ -13,9 +13,9 @@
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
 import { ChannelRowValue } from '../model/channelRowValue.js';
+import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { configuredCombat, profileHandSize } from './gameProfileCombat.js';
-import { spellScalingValue, spellTraditionsActive } from '../model/spellTraditions.js';
 
 export const LIVE_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
 const RATING_IDS = ['ar', 'dr', 'pr', 'ward', 'poise'];
@@ -45,9 +45,10 @@ export function StatScaledNumber(entity, ids, mode = 'sum') {
 
 /** ElementStatScale(entity, element) -> the attacker's live stat number an element's rule scales by (0 for an element with no stat scale). */
 export function ElementStatScale(entity, element, ctx = null) {
-  if (spellTraditionsActive(ctx) && Object.hasOwn(ELEMENT_STAT_SCALING, element)) return spellScalingValue(entity?.attributes, { school: element });
   const rule = ELEMENT_STAT_SCALING[element];
-  return rule ? StatScaledNumber(entity, rule.ids, rule.mode) : 0;
+  if (!rule) return 0;
+  return SpellTraditionsActive(ctx) ? SpellScalingValue(entity?.attributes || {}, { school: element })
+    : StatScaledNumber(entity, rule.ids, rule.mode);
 }
 
 const whole = value => Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));

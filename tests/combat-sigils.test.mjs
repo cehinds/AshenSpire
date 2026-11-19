@@ -5,7 +5,7 @@ import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../src/content/
 import { compactCardRules, cardSigilsHtml, sigilExplanationHtml, sigilHtml } from '../src/ui/components/combatSigilView.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { playingCardModel, cardPresentationSigils, staticCardTokens } from '../src/model/playingCard.js';
+import { playingCardModel, CardPresentationSigils, staticCardTokens } from '../src/model/playingCard.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
@@ -102,7 +102,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
   for (const ref of refs) for (const expanded of [false, true]) {
     const def = expanded ? applyCombatExpansionCard(resolveCard(reg, ref)) : resolveCard(reg, ref);
     const model = playingCardModel(reg, ref, {preview: expanded ? {resolvedDefinition:def} : null});
-    assert.deepEqual(model.sigils, cardPresentationSigils(def), JSON.stringify(ref));
+    assert.deepEqual(model.sigils, CardPresentationSigils(def), JSON.stringify(ref));
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }

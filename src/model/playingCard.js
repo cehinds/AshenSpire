@@ -1,8 +1,10 @@
+import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
-import { cardSpellTraditions, spellTraditionLabel, spellScalingValue, spellTraditionsActive } from './spellTraditions.js';
+import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -140,17 +142,32 @@ export function combatCardType(def) {
 }
 
 /** The same profile-aware type identity for a card face and compact list rows. */
-export function cardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
+export function CardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
   // Saved profiles retain their historical shared scaling and generic label.
   // A catalog without a selected profile describes the current rules.
-  const presentationRules = rules?.gameProfile ? rules : preview?.faceRules?.gameProfile ? preview.faceRules
+  const context = CardPresentationContext(def, preview, rules);
+  const presentationRules = context?.gameProfile || context?.fixCoreRules ? context
     : registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
   const profile = combatProfileFor(def);
   const identity = cardSigilIdentity(combatCardType(def), profile);
-  if (presentationRules && !spellTraditionsActive(presentationRules)
+  if (presentationRules && !SpellTraditionsActive(presentationRules)
     || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
   const card = { ...def, combatProfile: profile };
-  return freeze({ ...identity, traditions: freeze(cardSpellTraditions(card)), displayLabel: spellTraditionLabel(card) });
+  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), displayLabel: SpellTraditionLabel(card) });
+}
+
+/** Live saved policy plus the matching quote's detached baseline metadata. */
+export function CardPresentationContext(def, preview = null, rules = null) {
+  const face = preview?.faceRules;
+  if (!rules) return face ?? null;
+  if (!face?.faceDefinition || face.faceDefinition.id !== def.id) return rules;
+  // The live host owns saved policy. The matching quote owns its detached,
+  // pre-Gear baseline, including the selected branch, rank and always-on stats.
+  const context = { ...rules };
+  for (const key of ['faceDefinition', 'faceAttributes', 'gearRules', 'gearState']) {
+    if (Object.hasOwn(face, key)) context[key] = face[key];
+  }
+  return context;
 }
 
 /**
@@ -160,7 +177,7 @@ export function cardPresentationSigils(def, { registries = null, rules = null, p
  * static tokens. Every card-face text model reads through this one context.
  */
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -222,8 +239,8 @@ export function AllEnemySpread(live) {
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
-export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
+export function combatCardSummary(def, preview = null, registries = null, rules = null) {
+  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries, rules);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
@@ -342,7 +359,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
@@ -380,8 +397,14 @@ function faceDamageProfile(def, registries, rules) {
 }
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
-  // A live preview carries only the always-on attributes (`faceAttributes`); the profile pin is the registries' own.
-  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  // A live definition already contains combat Gear and charged effects. Compare it with
+  // the same selected card before that projection, retaining its rank and upgrades.
+  if (rules?.faceDefinition && rules.faceDefinition.id === def.id) def = rules.faceDefinition;
+  // Owner, 2026-11-18: always-on gear (a Sword's +1, a Heavy set's Block) is in the baseline face; triggered gear is not (it colours in the fight).
+  const gear = rules?.gearRules ? { rules: rules.gearRules, state: rules.gearState || {} } : rules?.loadout ? GearAlwaysOn(registries, rules) : null;
+  if (gear?.rules.length) def = ApplyGearCardRules(gear.rules, def, gear.state);
+  // Keep any saved combat policy with the always-on attributes; an explicit profile pin wins over the registries' own.
+  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);
   const baseDamageMultiplier = holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
   // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
@@ -396,15 +419,14 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
   const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
-  // physical damage adds STR, a finesse hit DEX; new magic reads its tradition's INT/WIS, shared spells the higher. Saved profiles
-  // without the tradition marker keep max(INT,WIS). Each uses its effects weight; Block adds DEX. No stance, status or enemy defence.
+  // physical damage adds STR, a finesse hit DEX, and magic its saved tradition's attribute (legacy: max(INT, WIS)), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
   // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
-  const magicStat = attributes && spellTraditionsActive(holder)
-    ? spellScalingValue(attributes, def) : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
+  const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
+    : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
   const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
   // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
   const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : 'ar');
@@ -522,7 +544,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
   // Owner, 2026-11-18: the colour baseline is the same card's face outside combat (always-on attributes and gear included), so a live number is
   // green or red only when something in the fight raised or lowered it.
-  const base = staticCardTokens(def, registries, rules ?? preview?.faceRules ?? null);
+  const base = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
@@ -607,7 +629,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
     : rankBadge || '';
-  const sigils = cardPresentationSigils(def, { registries, rules, preview });
+  const sigils = CardPresentationSigils(def, { registries, rules, preview });
   const traditionType = sigils.displayLabel || null;
 
   return freeze({

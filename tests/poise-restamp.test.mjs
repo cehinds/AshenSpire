@@ -17,12 +17,12 @@ function fight() {
   run.loadout.sets.rightHand = ['straightSword', 'boneSceptre', null];
   const receipt = playerPoiseThresholdReceipt(registries, run);
   // A BASE OF 13, COUNTED IN POINTS RATHER THAN IN POISE. The creation mode
-  // carries a conversion scale, so one Wisdom point is worth however many
+  // carries a conversion scale, so one Constitution point is worth however many
   // tiers of the Poise row the run was born with — read it off the run's own
   // snapshot instead of assuming a point is a point.
   const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
-  const perPoint = Math.floor(poiseRow.wisdom + 1e-9) || 1;
-  run.attributes.wisdom += Math.round((13 - receipt.value) / perPoint);
+  const perPoint = Math.floor(poiseRow.constitution + 1e-9) || 1;
+  run.attributes.constitution += Math.round((13 - receipt.value) / perPoint);
   return createCombat({ registries, rng: createRng(99), player: {
     classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
     // The rule the run was born with, exactly as main.js hands it to combat:

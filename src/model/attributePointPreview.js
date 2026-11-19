@@ -13,11 +13,12 @@ import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
 import { fixCoreEnabled, fixCoreWardDisabled, FixCoreHitRollOff, FixCorePerceptionRollOff } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
-import { spellTraditionsActive } from './spellTraditions.js';
+import { SpellRowValue, SpellTraditionsActive } from './spellTraditions.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
 import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { ItemPropertySummary } from './itemProperties.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
 import { t } from './strings.js';
 
@@ -39,37 +40,52 @@ const LABEL_KEYS = Object.freeze({
 const round = (n) => Math.round(n * 100) / 100;
 
 function previewContext(registries, run, attributes) {
-  const entity = { id: 'player', kind: 'player', attributes, level: run.level, classId: run.class };
+  const entity = { id: 'player', kind: 'player', attributes, level: run.level, classId: run.class, itemProps: ItemPropertySummary(run) };
   const ctx = {
     registries, player: entity, loadout: run.loadout, attributes, characterLevel: run.level?.level,
     combatExpansionVersion: run.combatExpansionVersion, gameProfile: run.gameProfile || registries.gameProfile,
+    derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
     ...(run.fixCoreRules ? { fixCoreRules: run.fixCoreRules } : {}),
   };
   return { ctx, entity };
+}
+
+function effectiveAttributesFor(registries, run, attributes) {
+  const probe = { ...run, attributes, allocatedAttributes: undefined };
+  return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe));
+}
+
+export function AttributeHandReceipts(registries, run, settings = {}, attributes = run.attributes) {
+  const effective = effectiveAttributesFor(registries, run, attributes);
+  const { ctx } = previewContext(registries, run, effective);
+  if (!configuredCombat(ctx)) return handSizeReceipts(runHandRules(registries, run, settings), effective, run.level?.level);
+  const value = profileHandSize(ctx);
+  return { configured: true, opening: { value }, turn: { value }, capacity: { value } };
 }
 
 /** attributePointGains(registries, run, attributeId, { settings }) → [{ statId, label, before, after, delta, text }] for +1 of that attribute. */
 export function attributePointGains(registries, run, attributeId, { settings = {} } = {}) {
   // The same transforms rederivePools (model/levelup.js) applies before pricing a
   // pool: a constant blight or gear bonus moves which floored point crosses a threshold.
-  const effective = (attributes) => { const probe = { ...run, attributes, allocatedAttributes: undefined }; return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe)); };
+  const effective = (attributes) => effectiveAttributesFor(registries, run, attributes);
   const rawNow = { ...run.attributes };
   const current = effective(rawNow);
   const raised = effective({ ...rawNow, [attributeId]: (Number(rawNow[attributeId]) || 0) + 1 });
   const level = run.level?.level;
   const classDef = registries.classes?.get?.(run.class);
   const gains = [];
+  const traditions = SpellTraditionsActive(run);
   const push = (statId, before, after) => {
     const delta = round(after - before);
     if (!delta) return;
     // Ward's word is the stat table's own presentation label (no second copy of it in uiStrings).
-    const label = LABEL_KEYS[statId] ? t(LABEL_KEYS[statId]) : registries.derivedStatRules?.presentation?.[statId]?.label || statId;
+    const label = traditions && statId === 'ar' ? 'Physical damage' : traditions && statId === 'dr' ? 'Block'
+      : LABEL_KEYS[statId] ? t(LABEL_KEYS[statId]) : registries.derivedStatRules?.presentation?.[statId]?.label || statId;
     gains.push({ statId, label, before: round(before), after: round(after), delta,
       text: t('progression.gain.item', { amount: `${delta > 0 ? '+' : ''}${delta}`, label }) });
   };
   const { ctx, entity } = previewContext(registries, run, current);
   const fixCore = fixCoreEnabled(ctx);
-  const traditions = spellTraditionsActive(ctx);
   for (const statId of ROW_IDS) {
     if (traditions && statId === 'pr') continue;
     if (statId === 'ward' && fixCoreWardDisabled(ctx)) continue;
@@ -82,8 +98,10 @@ export function attributePointGains(registries, run, attributeId, { settings = {
   }
   const after = previewContext(registries, run, raised);
   if (traditions) {
-    push('arcaneMagic', Number(current.intelligence) || 0, Number(raised.intelligence) || 0);
-    push('divineMagic', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
+    for (const [id, tradition] of [['arcaneMagic', 'arcane'], ['divineMagic', 'divine']]) {
+      const card = { tags: [`tradition:${tradition}`] };
+      push(id, SpellRowValue(ctx, entity, current, card), SpellRowValue(after.ctx, after.entity, raised, card));
+    }
   }
   if (configuredCombat(ctx)) {
     // A configured (Core 2) fight deals handBase + INT for the opening hand, every turn draw and the capacity

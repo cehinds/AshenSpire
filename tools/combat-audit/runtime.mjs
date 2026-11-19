@@ -27,7 +27,7 @@ function sourceIdentity() {
     auditFiles: Object.fromEntries(auditFiles.map(path => [path, digest(readFileSync(resolve(root, path)))])) };
 }
 const moduleIds = [
-  'src/content/index.js', 'src/model/registries.js', 'src/model/state.js',
+  'src/content/index.js', 'src/model/registries.js', 'src/model/state.js', 'src/model/gameProfile.js',
   'src/engine/combat.js', 'src/engine/runCombat.js', 'src/engine/rng.js',
   'src/engine/combatExpansion.js', 'src/engine/combatReactions.js',
   'src/engine/abilityRiders.js', 'src/model/cardTargets.js', 'src/model/upcasting.js',

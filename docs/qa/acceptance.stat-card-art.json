@@ -25,8 +25,8 @@
         },
         {
           "kind": "visible",
-          "label": "Strength outranks Dexterity on Gilded Oath",
-          "selector": "[data-card-id=\"gildedOath\"] img[data-card-art-component=\"stat.str\"]"
+          "label": "Gilded Oath shows its secondary Dexterity cutout",
+          "selector": "[data-card-id=\"gildedOath\"] img[data-card-art-component=\"stat.dex\"]"
         },
         {
           "kind": "visible",
@@ -76,8 +76,8 @@
       "failure": [
         {
           "kind": "visible",
-          "label": "Lower-priority Dexterity displaced Strength",
-          "selector": "[data-art-layer=\"modifier-buff-dexterity-object\"]"
+          "label": "The lower-priority main Strength object displaced Dexterity on Gilded Oath",
+          "selector": "[data-card-id=\"gildedOath\"] [data-art-layer=\"modifier-buff-strength-object\"]"
         }
       ]
     }

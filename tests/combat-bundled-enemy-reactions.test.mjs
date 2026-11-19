@@ -29,6 +29,8 @@ function coreCounterFixture({ cardStacks = false } = {}) {
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [],
     attributes: { dexterity: 0 }, basePrecisionBonus: 1000 });
   combat.player.basePrecisionBonus = 1000;
+  // This pins the Counter arithmetic, not the armour: a Heavy set adds Block to a Counter card (gear pass A, 2026-11-18), which raises its stacks.
+  if (combat.player.itemProps) combat.player.itemProps = {};
   return { combat, enemy };
 }
 

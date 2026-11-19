@@ -1677,6 +1677,11 @@ test('Reading Desk rows share the card face tradition labels and icons without c
       assert.equal(row.querySelectorAll('.deck-editor-camp .combat-sigil-tradition').length, marker === 1 ? traditions.length : 0);
       assert.equal(row.closest('.deck-editor-group').querySelector('summary').textContent.split(' ·')[0], 'Spell');
       assert.equal(row.querySelector('.deck-editor-stance').dataset.stance, 'prepare');
+      row.querySelector('.deck-editor-main').dispatchEvent(new Event('focus'));
+      const face = editor.root.querySelector('.deck-editor-inspector .playing-poker-card');
+      assert.ok(face, `${id}: selecting a row renders its face`);
+      assert.equal(face.querySelector('.card-sigil-band').dataset.traditions, marker === 1 ? traditions.join(' ') : undefined);
+      assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, marker === 1 ? traditions.length : 0);
     }
     editor.close();
   });

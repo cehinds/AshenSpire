@@ -1,3 +1,4 @@
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 // Owner, 2026-11-14 content decisions for Core (W25-B): Backstep cost, Jab as a reaction, spell damage, Ward and Barrier.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,9 +27,9 @@ import { dispatch } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live(classId = 'reaver', seed = 511) {
-  const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+function live(classId = 'reaver', seed = 511, registries = reg) {
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
   return { run, combat };
 }
 
@@ -108,7 +109,7 @@ test('a cast cantrip deals its halved damage, and the hit meets Poise before HP'
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c1', targetId: target.id });
   const dealt = out.events.find(event => event.type === 'damageDealt');
   const hit = dealt.damageReceipt.hits[0];
-  assert.equal(hit.sources.find(row => row.id === 'base').amount, 6, 'Cantrip: 6 before the doubling, 12 after it, 6 again after "Halve cantrip damage"');
+  assert.equal(hit.sources.find(row => row.id === 'base').amount, 6 + 1, 'Cantrip authored 6 after the halving, plus the current Sceptre magic damage 1');
   assert.ok(dealt.poiseAbsorbed > 0, 'Poise took its share first');
   assert.equal(hit.hpLoss, hit.incoming - hit.poiseReduced, 'HP only took what Poise left');
   assert.equal(500 - target.hp, dealt.hpLoss);
@@ -172,7 +173,7 @@ test('while the holder has Ward or Barrier, a hit meets Poise before HP', () => 
 });
 
 test('a fight saved before the ruling (its rules lack ward.poisePerStack) gives Ward no Poise', () => {
-  const { combat } = live('starseer');
+  const { combat } = live('starseer', 511, legacyGearRegistries(reg));
   delete combat.fixCoreRules.ward.poisePerStack;
   const before = poiseOf(combat);
   applyStatus(combat, combat.player, 'ward', 2, null);

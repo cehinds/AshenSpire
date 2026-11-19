@@ -74,8 +74,8 @@ test('a freshly paid Counter refreshes only the imminent contact after its defen
   }
 });
 
-test('all 33 ordinary, elite and boss current actions capture without changing entities or RNG', () => {
-  assert.equal(baseRegistries.enemies.all().length, 33);
+test('all 65 ordinary, elite and boss current actions capture without changing entities or RNG', () => {
+  assert.equal(baseRegistries.enemies.all().length, 65);
   for (const def of baseRegistries.enemies.all()) {
     const run = createRunState({ registries: baseRegistries, classId: 'reaver', seed: 511 });
     const combat = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: [def.id] });

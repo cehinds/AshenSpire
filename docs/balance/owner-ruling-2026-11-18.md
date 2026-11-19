@@ -315,3 +315,13 @@ Every item of a type carries its type's base effect. An item's own signature (se
 ## 23. No hidden caps (owner, 2026-11-18)
 - Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
 - New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.
+
+## 24. Continuation approvals (owner, 2026-11-18 Alaska / 2026-11-19 UTC)
+- The 30 martial cards are approved; cards 29-30 use Rare, the top rarity.
+- The 12 magic Smash/Sweep cards are approved.
+- Block retention is displayed as **Diamond Skin**; its existing `stoneskin` status/card keys stay unchanged. Pierce cancellation stays **Stone Skin**, status `stoneHide`.
+- Starseer uses the calculated starting hand; there is no special five-card override.
+- **Magic Absorption trial (owner, supersedes the open note in §20):** each stack absorbs up to 10 magic damage before Block, Poise or HP. Consume a stack once it absorbs damage; the caster gains 1 MP per consumed stack.
+- The new Magic Absorption card costs **2 SP, 0 MP** and has two drawbacks chosen from Exhaust, Ethereal, Escalating, Vulnerable, Weak, bind, paralysis or self-damage. Its first upgrade guarantees **Reaction**, plus another tag or drawback easing.
+- **Initial trial defaults (orchestrator-decided):** start with **3 stacks**, continuing the prior trial, and choose **Exhaust + Ethereal** as the two starting drawbacks.
+- Implementation is queued with the later magic-card pass; this amendment adds no Magic Absorption mechanic to GearPass.

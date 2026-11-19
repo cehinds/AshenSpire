@@ -855,7 +855,7 @@
   },
   {
     "id": "stoneskin",
-    "name": "Stoneskin",
+    "name": "Diamond Skin",
     "class": "colorless",
     "rarity": "uncommon",
     "cost": 1,
@@ -878,7 +878,7 @@
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain {block} Block and {stoneskin} Stoneskin: your Block is not removed at the start of your next turn.",
+    "textTemplate": "Gain {block} Block and {stoneskin} Diamond Skin: your Block is not removed at the start of your next turn.",
     "upgrade": {
       "effects": [
         {

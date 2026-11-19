@@ -1,6 +1,5 @@
 {
   "mode": "configured",
-  "spellTraditionsVersion": 0,
   "damageModel": "unified",
   "elements": false,
   "spellRanks": false,
@@ -12,5 +11,7 @@
   "enemyDamageMultiplier": 1,
   "physicalDamageMultiplier": 1,
   "blockGainMultiplier": 1,
-  "spellPoiseDamageMultiplier": 1
+  "spellPoiseDamageMultiplier": 1,
+  "spellTraditionsVersion": 0,
+  "spellRewardPolicyVersion": 0
 }

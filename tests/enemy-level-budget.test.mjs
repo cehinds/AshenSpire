@@ -13,9 +13,9 @@ const enemies = profile.content.enemies;
 const sum = a => Object.values(a).reduce((x, y) => x + y, 0);
 
 const acts = {
-  1: { minion: [1, 2], elite: [2, 3], boss: [3, 3], ids: 'wanderingSoldier blightHound huskBrute graveWisp lanternMoth briarHermit chainScavenger wyrmAspirant fellWarden bellKeeper thornMatriarch' },
-  2: { minion: [2, 3], elite: [3, 4], boss: [4, 4], ids: 'gildedKnight courtSurgeon stitchedHound courtMarionette livingArmor mirrorScribe stitchCrab courtDuelist stitchedKing glassRegent marrowOrganist' },
-  3: { minion: [3, 4], elite: [4, 5], boss: [5, 5], ids: 'ashRevenant emberStarvedPilgrim valkyrieShade charredColossus cinderMantis eclipseCantor wyrmLord blightedValkyrie furnaceSaint hollowAstronomer ashheartDragon' }
+  1: { minion: [1, 2], elite: [2, 3], boss: [3, 3], ids: 'wanderingSoldier blightHound huskBrute graveWisp lanternMoth briarHermit chainScavenger wyrmAspirant fellWarden bellKeeper thornMatriarch brackenTusker fenwickToad reedpipePoacher wickerTitheman siltCrownNewt wickerHind blackrushStork pearlbackSnail alderMaskHarvester woundwoodTusker mireProcessional' },
+  2: { minion: [2, 3], elite: [3, 4], boss: [4, 4], ids: 'gildedKnight courtSurgeon stitchedHound courtMarionette livingArmor mirrorScribe stitchCrab courtDuelist stitchedKing glassRegent marrowOrganist quarryRam tollgateHookman waxsealBailiff carrionHeadsman knellcapSentinel pallidOathCamel inkveilNautilus mirrorFanAbbess saltChoirWalrus rimewheelPenitent veiledJusticiar sixleggedHearse' },
+  3: { minion: [3, 4], elite: [4, 5], boss: [5, 5], ids: 'ashRevenant emberStarvedPilgrim valkyrieShade charredColossus cinderMantis eclipseCantor wyrmLord blightedValkyrie furnaceSaint hollowAstronomer ashheartDragon kilnshellTortoise slagtongImp sootwingBat brassThroatIbex kilnbackTerrapin slagwingHeron ashSilkWeaver ferrumVotary crucibleNewt' }
 };
 const expected = new Map();
 for (const [n, act] of Object.entries(acts)) for (const id of act.ids.split(' ')) expected.set(id, { act: Number(n), act_: act });

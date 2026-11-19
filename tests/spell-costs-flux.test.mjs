@@ -29,6 +29,8 @@ test('shipped data holds the approved spell cost and flux numbers and the valida
 import { fight, profile, reg } from './elementFixture.mjs';
 import { cardPlayCosts, previewCard, dispatch } from '../src/engine/combat.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+const printedCostRegistries = legacyGearRegistries(reg);
 
 const SPELLS = profile.content.cards.filter(card => cardManaCategory(reg, reg.cards.get(card.id)) === 'spell');
 const PREPARED = { maneuver: 'casting', camp: 'spell' };
@@ -37,7 +39,8 @@ const fightCache = new Map();
 function costsIn({ hand, stance, id, legacy = false }) {
   const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}`;
   if (!fightCache.has(key)) {
-    const { combat } = fight({ legacy });
+    // These tables isolate the spellCosts rule against its pre-gear price; live flux/payment fixtures below keep current equipment.
+    const { combat } = fight({ legacy, registries: printedCostRegistries });
     if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
     combat.loadout.sets.rightHand[0] = hand;
     if (stance) combat.player.combatStance = { ...stance };

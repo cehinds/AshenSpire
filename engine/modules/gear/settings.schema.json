@@ -1,6 +1,7 @@
 {
   "type": "object",
   "properties": {
+    "typeEffectsVersion": { "type": "integer", "enum": [1] },
     "mode": {
       "enum": [
         "legacy",

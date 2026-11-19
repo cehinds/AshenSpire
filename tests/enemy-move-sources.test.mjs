@@ -44,8 +44,8 @@ test('legacy nested-only bundles materialize one shared tagged move table', () =
   const { enemyMoves: _derivedView, ...bundle } = contentBundle;
   const registries = createRegistries({ ...bundle, enemies: nestedOverride({ damage: 42 }) });
   assert.equal(action(registries).damage, 42);
-  // 105 = the shipped rows; gildedGuard and bindingRiposte (enemy reactions) were added.
-  assert.equal(registries.enemyMoves.length, 105);
+  // 237 = the shipped rows plus the 132 Codex moves (2026-11-18); gildedGuard and bindingRiposte (enemy reactions) were added.
+  assert.equal(registries.enemyMoves.length, 237);
   assert.equal(action(registries),registries.enemyMoves.find(row => row.enemyId === 'wanderingSoldier' && row.id === 'slash'));
 });
 
@@ -69,8 +69,8 @@ test('nested customization drives scaled enemy intent, move-card catalog and exe
 test('normal shipped definitions are unchanged and derived provenance stays outside payload serialization', () => {
   const before = JSON.stringify(contentBundle.enemyMoves);
   const registries = createRegistries(contentBundle);
-  // 105 = the shipped rows; gildedGuard and bindingRiposte (enemy reactions) were added.
-  assert.equal(registries.enemyMoves.length, 105);
+  // 237 = the shipped rows plus the 132 Codex moves (2026-11-18); gildedGuard and bindingRiposte (enemy reactions) were added.
+  assert.equal(registries.enemyMoves.length, 237);
   for (const row of registries.enemyMoves) {
     const original = contentBundle.enemies.find(enemy => enemy.id === row.enemyId).moves[row.id];
     const { id, enemyId, tags, kindIds, propertyTags, ...payload } = row;

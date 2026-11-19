@@ -42,7 +42,7 @@ import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { sigilHtml } from '../components/combatSigilView.js';
 import { cardClassification } from '../../model/cardClassification.js';
-import { playingCardModel, playingCardDefinition, cardPresentationSigils } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, CardPresentationSigils } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
@@ -312,7 +312,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const def = resolveCard(registries, row.ref);
     // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
     const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
-      definition: combatDef(row) });
+      definition: combatDef(row), rules: run });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -482,7 +482,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const stanceName = row => {
     const def = combatDef(row);
     const identity = cardClassification(def);
-    const presentation = cardPresentationSigils(def, { registries, rules: run });
+    const presentation = CardPresentationSigils(def, { registries, rules: run });
     const title = value => value[0].toUpperCase() + value.slice(1);
     return [presentation.displayLabel || title(identity.cardCategory),
       presentation.displayLabel && identity.cardCategory === 'power' ? 'Power' : null,
@@ -517,7 +517,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const campNode = (row) => {
     const def = combatDef(row);
     const camp = combatProfileFor(def).camp === 'spell' ? 'magical' : 'physical';
-    const presentation = cardPresentationSigils(def, { registries, rules: run });
+    const presentation = CardPresentationSigils(def, { registries, rules: run });
     const traditions = presentation.traditions || [];
     const label = traditions.length ? traditions.map(value => value[0].toUpperCase() + value.slice(1)).join(' and ') : t(`deckEditor.camp.${camp}`);
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp, traditions: traditions.join(' ') }, role: 'img', title: traditions.length ? label : tFull(`deckEditor.camp.${camp}`), 'aria-label': label });

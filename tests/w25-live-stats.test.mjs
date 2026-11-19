@@ -42,16 +42,17 @@ test('the quote rises by the AR gained (shown = dealt)', () => {
   assert.equal(boosted, plain + 2);
 });
 
-test('+2 CON raises max HP without Poise; the fight restores Health and HP is trimmed', () => {
+test('+2 CON raises max HP by 10 without raising Stamina or Poise; restoration trims HP', () => {
   const { combat } = live();
   const p = combat.player;
   const start = { maxHp: p.maxHp, hp: p.hp, maxStamina: p.maxStamina, energyMax: p.energyMax, poise: p.ratings.poise, pMax: p.persistentPoise.max };
   ChangeAttribute(combat, p, 'constitution', 2);
-  assert.ok(p.maxHp > start.maxHp, 'max HP follows the HP row');
+  assert.equal(p.maxHp, start.maxHp + 10, 'each CON point adds 5 Health');
   assert.equal(p.hp, start.hp, 'a higher maximum does not heal');
-  assert.equal(p.ratings.poise, start.poise, 'Constitution no longer raises Poise');
+  assert.equal(p.ratings.poise, start.poise, 'Constitution no longer grants Poise');
   assert.equal(p.persistentPoise.max, p.ratings.poise);
-  assert.ok(p.maxStamina >= start.maxStamina);
+  assert.equal(p.maxStamina, start.maxStamina);
+  assert.equal(p.energyMax, start.energyMax);
   p.hp = p.maxHp; // full on the raised maximum
   RestoreLiveStats(combat);
   assert.equal(p.maxHp, start.maxHp);
@@ -61,14 +62,30 @@ test('+2 CON raises max HP without Poise; the fight restores Health and HP is tr
   assert.equal(p.liveStats, undefined);
 });
 
-test('CON raises Stamina when its row answers to it, and the run is untouched', () => {
+test('+2 WIS raises live Poise and its vessel by 2, then restoration removes the bonus', () => {
+  const { combat } = live();
+  const p = combat.player;
+  const before = { poise: p.ratings.poise, max: p.persistentPoise.max, hp: p.maxHp, stamina: p.maxStamina };
+  ChangeAttribute(combat, p, 'wisdom', 2);
+  assert.equal(p.ratings.poise, before.poise + 2);
+  assert.equal(p.persistentPoise.max, before.max + 2);
+  assert.equal(p.maxHp, before.hp);
+  assert.equal(p.maxStamina, before.stamina);
+  RestoreLiveStats(combat);
+  assert.equal(p.ratings.poise, before.poise);
+  assert.equal(p.persistentPoise.max, before.max);
+});
+
+test('only DEX raises new-profile Stamina, and live attribute boosts leave the run untouched', () => {
   const { run, combat } = live();
   const p = combat.player;
   const attrs = structuredClone(run.attributes);
   const maxHp = run.maxHp;
+  const stamina = p.maxStamina;
   ChangeAttribute(combat, p, 'constitution', 8);
+  assert.equal(p.maxStamina, stamina, 'CON does not grant Stamina');
   ChangeAttribute(combat, p, 'dexterity', 8);
-  assert.ok(p.maxStamina > run.maxStamina, 'Stamina follows CON and DEX');
+  assert.equal(p.maxStamina, stamina + 2, '8 DEX pays two fourth-point Stamina increases');
   assert.ok(p.energyMax >= p.maxStamina - 0);
   assert.deepEqual(run.attributes, attrs, 'the run attributes are never written');
   assert.equal(run.maxHp, maxHp);
@@ -78,14 +95,17 @@ test('CON raises Stamina when its row answers to it, and the run is untouched', 
   assert.deepEqual(run.attributes, attrs);
 });
 
-test('hand size and draw change live and return', () => {
+test('live hand size and draw pay on the fourth INT point, then return', () => {
   const { combat } = live();
   const hand = combat.handMax, draw = combat.drawPerTurn;
-  const int = LiveAttribute(combat.player, 'intelligence');
-  ChangeAttribute(combat, combat.player, 'intelligence', 3);
-  // Owner 2026-11-18 (ruling §9): the hand is 5 + floor(INT / 4), so +3 INT adds one card only when it crosses a multiple of 4.
-  assert.equal(combat.handMax, hand + Math.floor((int + 3) / 4) - Math.floor(int / 4), 'the hand size reads Intelligence');
-  assert.ok(combat.drawPerTurn >= draw);
+  ChangeAttribute(combat, combat.player, 'intelligence', 2 - LiveAttribute(combat.player, 'intelligence'));
+  const atTwo = { hand: combat.handMax, draw: combat.drawPerTurn };
+  ChangeAttribute(combat, combat.player, 'intelligence', 1);
+  assert.equal(combat.handMax, atTwo.hand, 'INT 2 -> 3 grants no card');
+  assert.equal(combat.drawPerTurn, atTwo.draw);
+  ChangeAttribute(combat, combat.player, 'intelligence', 1);
+  assert.equal(combat.handMax, atTwo.hand + 1, 'INT 3 -> 4 grants one card');
+  assert.equal(combat.drawPerTurn, atTwo.draw + 1);
   RestoreLiveStats(combat);
   assert.equal(combat.handMax, hand);
   assert.equal(combat.drawPerTurn, draw);
@@ -119,15 +139,17 @@ test('enemies change live too', () => {
 test('a mid-fight INT boost raises the stat-scaled element numbers at once and they revert', () => {
   const { combat } = live();
   const p = combat.player;
-  const fire = ElementStatScale(p, 'fire'), shock = ElementStatScale(p, 'lightning'), chill = ElementStatScale(p, 'frost');
+  const fire = ElementStatScale(p, 'fire', combat), shock = ElementStatScale(p, 'lightning', combat), chill = ElementStatScale(p, 'frost', combat);
   ChangeAttribute(combat, p, 'intelligence', 2);
-  assert.equal(ElementStatScale(p, 'fire'), fire + 2, 'Fire ignores Poise per WIS + INT');
-  assert.equal(ElementStatScale(p, 'frost'), chill + 2);
-  assert.ok(ElementStatScale(p, 'lightning') >= shock);
+  const shared = Math.max(LiveAttribute(p, 'intelligence'), LiveAttribute(p, 'wisdom'));
+  assert.equal(ElementStatScale(p, 'fire', combat), shared, 'shared Fire reads the greater casting attribute');
+  assert.equal(ElementStatScale(p, 'frost', combat), shared);
+  assert.equal(ElementStatScale(p, 'lightning', combat), shared);
+  assert.ok(shared >= shock);
   assert.equal(StatScaledNumber(p, ['intelligence', 'wisdom'], 'max'), Math.max(LiveAttribute(p, 'intelligence'), LiveAttribute(p, 'wisdom')));
   RestoreLiveStats(combat);
-  assert.equal(ElementStatScale(p, 'fire'), fire);
-  assert.equal(ElementStatScale(p, 'frost'), chill);
+  assert.equal(ElementStatScale(p, 'fire', combat), fire);
+  assert.equal(ElementStatScale(p, 'frost', combat), chill);
 });
 
 test('a mid-fight INT or WIS boost raises PR under max(INT, WIS)', () => {

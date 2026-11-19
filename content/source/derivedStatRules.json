@@ -66,7 +66,7 @@
     },
     "poise": {
       "base": 1,
-      "wisdom": 1
+      "constitution": 1
     }
   },
   "presentation": {

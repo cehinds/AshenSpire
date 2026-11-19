@@ -123,7 +123,7 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
  * live attribute and the channel is priced twice, with and without it, so max(INT, WIS) moves only when the granted attribute leads.
  * Fight-local: the entity's attributes are read, never written. 0 without grants, attributes or registries (a preview).
  */
-function stanceAttributeBonus(ctx, entity, maneuver, id, carrier = null) {
+function stanceAttributeBonus(ctx, entity, maneuver, id, carrier) {
   const grants = entity?.itemProps?.stanceAttribute?.[maneuver];
   if (!grants || !entity.attributes || !ctx?.registries) return 0;
   const boosted = { ...entity.attributes };

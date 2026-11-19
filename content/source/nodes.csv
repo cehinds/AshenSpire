@@ -72,7 +72,7 @@ construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born. No blood to let."
 spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
 item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
 item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
-item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,"What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0)."
+item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,"What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies."
 item:armor,itemType,Armour,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armour.
 from:global,grantSource,Global,B8B0A0,🌐,,,,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.
 from:relic,grantSource,Relic,C9A227,◈,,,,,Carried in by the starting relic.

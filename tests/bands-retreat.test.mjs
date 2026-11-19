@@ -8,11 +8,14 @@ import { cardClassification } from '../src/model/cardClassification.js';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
 
 const gear = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/gear.json', import.meta.url), 'utf8'));
-const RETREAT_WEAPONS = ['shortbow', 'halberd', 'boneSceptre', 'emberlightSceptre', 'gorefireBrand'];
+const LEGACY_RETREAT_WEAPONS = ['shortbow', 'halberd', 'boneSceptre', 'emberlightSceptre', 'gorefireBrand'];
+// SPEC §17: bows, the halberd and sceptres grant Retreat; Reach or a borrowed halberd sprite alone does not.
+const CODEX_RETREAT_WEAPONS = ['longbow', 'huntersRecurve', 'handCrossbow', 'arbalest', 'stormSceptre'];
+const OTHER_REACH_WEAPONS = ['pike', 'scythe', 'reapersCrescent', 'leatherWhip', 'thornWhip'];
 
-test('every bow, the halberd and the sceptres carry the retreat tag, and no other weapon does', () => {
+test('the original five Retreat weapons and new bows and sceptre carry the tag, and no other weapon does', () => {
   const tagged = gear.filter(g => (g.tags || []).includes('retreat')).map(g => g.id).sort();
-  assert.deepEqual(tagged, [...RETREAT_WEAPONS].sort());
+  assert.deepEqual(tagged, [...LEGACY_RETREAT_WEAPONS, ...CODEX_RETREAT_WEAPONS].sort());
   for (const g of gear.filter(g => (g.tags || []).includes('bow') || (g.tags || []).includes('sceptre'))) assert.ok((g.tags || []).includes('retreat'), g.id);
 });
 
@@ -44,6 +47,20 @@ test('a retreat weapon grants one Retreat per turn start, never two', () => {
 test('a weapon without the tag grants none', () => {
   const combat = withWeapon('straightSword');
   assert.equal(GrantRetreatCard(combat), false);
+});
+
+test('each new bow grants one Retreat, while other Reach weapons grant none', () => {
+  for (const id of ['longbow', 'huntersRecurve', 'handCrossbow', 'arbalest']) {
+    const combat = withWeapon(id);
+    assert.equal(GrantRetreatCard(combat), true, `${id}: grants Retreat`);
+    assert.equal(combat.piles.hand.filter(card => card.cardId === 'core.retreat').length, 1, id);
+    assert.equal(GrantRetreatCard(combat), false, `${id}: never stacks`);
+  }
+  for (const id of OTHER_REACH_WEAPONS) {
+    const combat = withWeapon(id);
+    assert.equal(GrantRetreatCard(combat), false, `${id}: Reach alone grants no Retreat`);
+    assert.equal(combat.piles.hand.filter(card => card.cardId === 'core.retreat').length, 0, id);
+  }
 });
 
 test('playing Retreat ends the Advance and costs 1 Stamina (shown = paid); an unplayed one exhausts at end of turn', () => {
