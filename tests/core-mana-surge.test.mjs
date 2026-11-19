@@ -287,7 +287,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod wisdom raises the saved Mana formula');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 2 : 0), 'the rod adds one MP through WIS and one uncapped raw maxMana bonus');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
@@ -298,11 +298,22 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         assert.equal(p.energyMax, p.maxStamina);
         assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+        assert.equal(run.equipmentPoolBonuses.maxMana, sceptre ? 1 : 0, 'persist only the rod raw +1 MP, never the WIS-derived increase');
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
         assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
       }
     }
+    dispatch(combat, intent === 'swapArmament'
+      ? { type: intent, slotId: 'rightHand', setIndex: 1 }
+      : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: POOL_PIECE });
+    combat.result = 'victory';
+    runCombatEnd(run, combat);
+    run.combatEntered = null; // The finished-fight transition clears its resume point.
+    assert.equal(run.equipmentPoolBonuses.maxMana, 1, 'the combat-end door persists the same raw pool bonus');
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, combat.rng);
+    assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
   });
 }
 
