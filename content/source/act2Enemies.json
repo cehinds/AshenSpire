@@ -1466,30 +1466,14 @@
         "intent": "attack",
         "damage": 8,
         "weight": 40,
-        "maxConsecutive": 2,
-        "effects": [
-          {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 2,
-            "nonlethal": true
-          }
-        ]
+        "maxConsecutive": 2
       },
       "wheelScourge": {
         "sp": 2,
         "intent": "attack",
         "damage": 20,
         "weight": 25,
-        "maxConsecutive": 1,
-        "effects": [
-          {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 4,
-            "nonlethal": true
-          }
-        ]
+        "maxConsecutive": 1
       },
       "rimeOffering": {
         "sp": 1,
@@ -1498,16 +1482,10 @@
         "maxConsecutive": 1,
         "effects": [
           {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 3,
-            "nonlethal": true
-          },
-          {
             "op": "applyStatus",
             "target": "self",
             "status": "strength",
-            "stacks": 3
+            "stacks": 2
           }
         ]
       },

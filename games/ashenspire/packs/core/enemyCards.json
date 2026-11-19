@@ -7182,12 +7182,6 @@
     "keywords": [],
     "effects": [
       {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 2,
-        "nonlethal": true
-      },
-      {
         "op": "damage",
         "target": "enemy",
         "amount": 8
@@ -7198,7 +7192,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -7216,12 +7210,6 @@
     "keywords": [],
     "effects": [
       {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 4,
-        "nonlethal": true
-      },
-      {
         "op": "damage",
         "target": "enemy",
         "amount": 20
@@ -7232,7 +7220,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -7250,16 +7238,10 @@
     "keywords": [],
     "effects": [
       {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 3,
-        "nonlethal": true
-      },
-      {
         "op": "applyStatus",
         "target": "self",
         "status": "strength",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [
@@ -7267,7 +7249,7 @@
       "maneuver:casting",
       "classification.power"
     ],
-    "textTemplate": "Apply {strength} Strength to yourself. Lose {loseHp} HP."
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "rimewheelPenitent.frostGuard",

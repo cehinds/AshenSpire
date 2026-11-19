@@ -5977,11 +5977,6 @@
         "keywords": [],
         "effects": [
           {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 2
-          },
-          {
             "op": "damage",
             "target": "enemy",
             "amount": 8
@@ -6004,11 +5999,6 @@
         "mp": 0,
         "keywords": [],
         "effects": [
-          {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 4
-          },
           {
             "op": "damage",
             "target": "enemy",
@@ -6033,15 +6023,10 @@
         "keywords": [],
         "effects": [
           {
-            "op": "loseHp",
-            "target": "self",
-            "amount": 3
-          },
-          {
             "op": "applyStatus",
             "target": "self",
             "status": "strength",
-            "stacks": 3
+            "stacks": 2
           }
         ],
         "hints": {

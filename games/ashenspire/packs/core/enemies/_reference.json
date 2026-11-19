@@ -2800,7 +2800,7 @@
         "stamina": 1,
         "mana": 0
       },
-      "text": "Deal {damage} damage. Lose {loseHp} HP.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:rimewheelPenitent.wheelScourge": {
@@ -2810,7 +2810,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage. Lose {loseHp} HP.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:rimewheelPenitent.rimeOffering": {
@@ -2820,7 +2820,7 @@
         "stamina": 1,
         "mana": 1
       },
-      "text": "Apply {strength} Strength to yourself. Lose {loseHp} HP.",
+      "text": "Apply {strength} Strength to yourself.",
       "usedBy": "enemy sheet"
     },
     "card:rimewheelPenitent.frostGuard": {
