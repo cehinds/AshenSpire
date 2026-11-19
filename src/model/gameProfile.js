@@ -143,6 +143,15 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
     bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
   }
+  // A profile pins the enemy roster it was authored with. A run stamped with an older profile never meets an encounter that fields an
+  // enemy its pack does not carry: that enemy would have no stamina pool, stats or moves under the profile's rules (the Codex roster,
+  // 2026-11-18, is the first addition to meet an older pinned profile).
+  const pinnedRoster=new Set((gameContent(profile,'enemies')||[]).map(row=>row.id));
+  if(pinnedRoster.size) {
+    if(Array.isArray(bundle.enemies)) bundle.enemies=bundle.enemies.filter(def=>pinnedRoster.has(def.id));
+    if(Array.isArray(bundle.enemyMoves)) bundle.enemyMoves=bundle.enemyMoves.filter(row=>pinnedRoster.has(row.enemyId));
+    if(Array.isArray(bundle.encounters)) bundle.encounters=bundle.encounters.filter(row=>!Array.isArray(row.enemies)||row.enemies.every(id=>pinnedRoster.has(id)));
+  }
   if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
     ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);
   }

@@ -107,7 +107,8 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
   for (const id of PRE_SEAT_UNGATED_EVENTS) assert.ok(REG.events.has(id), `pre-seat event '${id}' still ships`);
   const gates = contentBundle.eventHistoryRequirements || {};
   const PRE_SEAT_REG = createRegistries({ ...contentBundle, events: contentBundle.events.filter((e) => gates[e.id] || PRE_SEAT_UNGATED_EVENTS.includes(e.id)), encounters: contentBundle.encounters.filter((e) => !e.enemies.some((id) => CODEX_IDS.includes(id))) });
-  // Today's events, but not the Codex encounters (2026-11-18): new bosses legitimately change the branch count a map offers.
+  // Today's events, but not the Codex encounters (2026-11-18): this fixture fingerprints the map CODE against the pre-seat tree, and five
+  // new bosses legitimately change the branch count a map offers. It builds from contentBundle, not a pinned profile, so no pin gates them.
   const LIVE_REG = createRegistries({ ...contentBundle, encounters: contentBundle.encounters.filter((e) => !e.enemies.some((id) => CODEX_IDS.includes(id))) });
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/actmap-fingerprint-pre-seats.json', import.meta.url), 'utf8'));
   for (const [key, before] of Object.entries(fixture.maps)) {

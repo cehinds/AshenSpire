@@ -36,12 +36,9 @@ test('a dev-era profile keeps v1 pricing and every enemy can afford a damage mov
   assert.equal(dev.modules.effects.core2ActionRulesVersion, undefined);
   const setup = open(dev), { registries } = setup;
   const stranded = [];
-  // Enemies authored after this profile was pinned (the Codex roster, 2026-11-18) have no historical pool to retain.
-  const pinned = new Set(dev.content.enemies.map(row => row.id));
   for (const id of registries.enemies.ids()) {
     const combat = fightOf(setup, id), enemy = combat.enemies[0];
     assert.equal(combat.core2ActionRulesVersion, 1, `${id} is stamped v1`);
-    if (!pinned.has(id)) continue;
     const moves = damageMoves(registries, id);
     if (moves.length && !moves.some(([moveId, move]) => enemyMoveSp(move, { enemy, moveId, combat }) <= enemy.maxStamina)) stranded.push(id);
   }
