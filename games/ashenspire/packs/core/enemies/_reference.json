@@ -4167,14 +4167,6 @@
         "self.sp=-1"
       ]
     },
-    "relic:enemy.relic.oathPack": {
-      "name": "Oath Pack",
-      "text": "CON +2, WIS +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.wisdom=+1"
-      ]
-    },
     "relic:enemy.relic.kilnbackFurnace": {
       "name": "Kilnback Furnace",
       "text": "CON +2, STR +1",
@@ -4263,6 +4255,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.oathPack": {
+      "name": "Oath Pack",
+      "text": "CON +2, WIS +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.wisdom=+1"
       ]
     }
   }

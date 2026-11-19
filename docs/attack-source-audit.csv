@@ -573,7 +573,7 @@
 "enemyMove","knellcapSentinel","bellRing","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "enemyMove","knellcapSentinel","capGuard","block","false","false","","","physical","defend","","","","",""
 "enemyMove","pallidOathCamel","oathKick","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""
-"enemyMove","pallidOathCamel","hallowSpit","attack","true","false","spell","sacred","spell","","divine","","delivery:projectile","",""
+"enemyMove","pallidOathCamel","hallowSpit","attack","true","false","spell","arcane","spell","","divine","","delivery:projectile","",""
 "enemyMove","pallidOathCamel","packCrush","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "enemyMove","pallidOathCamel","oathWater","block","false","false","","","physical","defend","","","","",""
 "enemyMove","pallidOathCamel","pilgrimBurden","attack","true","false","weapon","blunt","physical","attack","","","delivery:melee","",""

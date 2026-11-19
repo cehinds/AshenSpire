@@ -102,15 +102,6 @@
     "text": "CON +3, SP -1"
   },
   {
-    "id": "enemy.relic.oathPack",
-    "name": "Oath_Pack",
-    "modifiers": [
-      "self.constitution=+2",
-      "self.wisdom=+1"
-    ],
-    "text": "CON +2, WIS +1"
-  },
-  {
     "id": "enemy.relic.kilnbackFurnace",
     "name": "Kilnback_Furnace",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.constitution=+1"
     ],
     "text": "WIS +2, CON +1"
+  },
+  {
+    "id": "enemy.relic.oathPack",
+    "name": "Oath_Pack",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.wisdom=+1"
+    ],
+    "text": "CON +2, WIS +1"
   }
 ]
