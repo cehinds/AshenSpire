@@ -4503,20 +4503,14 @@
         "op": "damage",
         "target": "enemy",
         "amount": 7
-      },
-      {
-        "op": "heal",
-        "target": "self",
-        "amount": 2
       }
     ],
     "tags": [
       "camp:physical",
-      "fx:heal",
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Heal {heal} HP.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },

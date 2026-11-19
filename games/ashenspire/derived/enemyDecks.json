@@ -3692,11 +3692,6 @@
             "op": "damage",
             "target": "enemy",
             "amount": 7
-          },
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 2
           }
         ],
         "hints": {

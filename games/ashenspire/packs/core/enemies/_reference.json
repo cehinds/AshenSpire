@@ -1850,7 +1850,7 @@
         "stamina": 1,
         "mana": 0
       },
-      "text": "Deal {damage} damage. Heal {heal} HP.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:wickerTitheman.bindingStraw": {
@@ -4125,14 +4125,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.titheBand": {
-      "name": "Tithe Band",
-      "text": "WIS +1, CON +1",
-      "modifiers": [
-        "self.wisdom=+1",
-        "self.constitution=+1"
-      ]
-    },
     "relic:enemy.relic.siltCrown": {
       "name": "Silt Crown",
       "text": "CON +2, STR +1",
@@ -4245,6 +4237,14 @@
       "modifiers": [
         "self.constitution=+3",
         "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.titheBand": {
+      "name": "Tithe Band",
+      "text": "WIS +1, CON +1",
+      "modifiers": [
+        "self.wisdom=+1",
+        "self.constitution=+1"
       ]
     }
   }

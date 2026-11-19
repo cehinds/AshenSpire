@@ -1010,14 +1010,7 @@
         "intent": "attack",
         "damage": 7,
         "weight": 45,
-        "maxConsecutive": 2,
-        "effects": [
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 2
-          }
-        ]
+        "maxConsecutive": 2
       },
       "bindingStraw": {
         "sp": 1,
