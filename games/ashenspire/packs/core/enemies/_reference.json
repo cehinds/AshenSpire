@@ -4125,14 +4125,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.siltCrown": {
-      "name": "Silt Crown",
-      "text": "CON +2, STR +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.pearlShell": {
       "name": "Pearl Shell",
       "text": "CON +3, SP -1",
@@ -4245,6 +4237,14 @@
       "modifiers": [
         "self.wisdom=+1",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.siltCrown": {
+      "name": "Silt Crown",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
       ]
     }
   }

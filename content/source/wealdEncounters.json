@@ -265,8 +265,7 @@
   {
     "id": "eliteSiltCrown",
     "enemies": [
-      "siltCrownNewt",
-      "fenwickToad"
+      "siltCrownNewt"
     ],
     "weight": 1,
     "pool": "elite",

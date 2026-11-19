@@ -66,15 +66,6 @@
     "text": "CON +2, WIS +2, INT +1"
   },
   {
-    "id": "enemy.relic.siltCrown",
-    "name": "Silt_Crown",
-    "modifiers": [
-      "self.constitution=+2",
-      "self.strength=+1"
-    ],
-    "text": "CON +2, STR +1"
-  },
-  {
     "id": "enemy.relic.pearlShell",
     "name": "Pearl_Shell",
     "modifiers": [
@@ -201,5 +192,14 @@
       "self.constitution=+1"
     ],
     "text": "WIS +1, CON +1"
+  },
+  {
+    "id": "enemy.relic.siltCrown",
+    "name": "Silt_Crown",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.strength=+1"
+    ],
+    "text": "CON +2, STR +1"
   }
 ]
