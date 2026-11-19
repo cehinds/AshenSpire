@@ -105,19 +105,31 @@ export function ContactRetreatStacks(ctx, source, target) {
 }
 
 /**
- * SpendRetreatAdvances(ctx, source, plan): the Advances a plan paid for Retreat each spend one stack. ORDER: the enemy's stacks first, then the player's
- * (the enemy stands between you and the hit; your own Retreat is the step you took back, so it is walked off last). A melee contact's full stacks on
- * both sides were priced into the plan, so all of them are spent.
+ * SpendRetreatAdvances(ctx, source, plan, { frozen }): the Advances a plan paid each spend one Retreat stack, so spent equals paid on both sides.
+ * ORDER: the enemy's stacks first, then the player's (the enemy stands between you and the hit; your own Retreat is the step you took back, so it is
+ * walked off last). A player's paid Advance closes on every enemy (owner decision 2026-11-19): enemies the hit did not touch lose one stack per Advance
+ * paid (SetAdvanced already took the first), the contacted enemy loses all of its stacks. An enemy source spends all of its own stacks and steps
+ * forward. `frozen` (a charged enemy move whose plan was priced at the charge): the player's stacks are spent only up to what the plan priced; stacks
+ * gained since are left alone.
  */
-export function SpendRetreatAdvances(ctx, source, plan) {
+export function SpendRetreatAdvances(ctx, source, plan, { frozen = false } = {}) {
   if (!BandsActive(ctx) || !plan?.targets) return;
-  const opposing = plan.targets.filter(row => row.coverage === 0 && !row.bypass).map(row => row.targetKey);
-  if (!opposing.length) return;
-  const keys = new Set(opposing);
-  const all = [...ctx.enemies, ...playerEntities(ctx)];
-  for (const entity of all) if (entity.kind === 'enemy' && keys.has(actorRangeKey(ctx, entity))) spendRetreat(ctx, entity, RetreatStacks(entity));
-  const playerKeys = new Set(source.kind === 'enemy' ? opposing : [actorRangeKey(ctx, source)]);
-  for (const entity of playerEntities(ctx)) if (playerKeys.has(actorRangeKey(ctx, entity))) spendRetreat(ctx, entity, RetreatStacks(entity));
+  const melee = plan.targets.filter(row => row.coverage === 0 && !row.bypass);
+  if (!melee.length) return;
+  const paid = Math.max(0, Math.round(plan.advanceSp / (ctx.rangeState.policy.advanceSpPerBand || 1)));
+  const contacted = new Set(melee.map(row => row.targetKey));
+  if (source.kind === 'enemy') {
+    if (RetreatStacks(source) > 0) spendRetreat(ctx, source, RetreatStacks(source));
+    if (source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
+    const priced = Math.max(0, ...melee.map(row => row.retreatBands || 0));
+    for (const player of playerEntities(ctx)) if (contacted.has(actorRangeKey(ctx, player))) spendRetreat(ctx, player, frozen ? Math.min(RetreatStacks(player), priced) : RetreatStacks(player));
+    return;
+  }
+  for (const enemy of ctx.enemies) {
+    if (!enemy.alive || RetreatStacks(enemy) <= 0) continue;
+    spendRetreat(ctx, enemy, contacted.has(actorRangeKey(ctx, enemy)) ? RetreatStacks(enemy) : Math.max(0, paid - 1));
+  }
+  if (RetreatStacks(source) > 0) spendRetreat(ctx, source, RetreatStacks(source));
 }
 
 /** PullEnemy(ctx, target): Gale Pull (owner 2026-11-18 section 22). Removes 1 Retreat stack from the target; with none left the target comes forward to the front row. No rows: nothing. */

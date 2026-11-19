@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsEnemyAdvance, BandsEnemyHeldBack, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow, ContactRetreatStacks, SpendRetreatAdvances } from './bandRows.js';
+import { BandsActive, BandsEnemyHeldBack, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow, ContactRetreatStacks, SpendRetreatAdvances } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -228,10 +228,10 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
     // A throw pays only its Retreat Advances (it replaced the distance one): it spends the stacks and moves nobody.
     if (plan.route === 'throw') { /* stacks are spent below */ }
-    else if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') BandsEnemyAdvance(ctx, source, 'advance');
+    else if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') { /* its stacks are spent and it steps forward below */ }
     else if (BandsActive(ctx) && source.kind !== 'enemy') { SetAdvanced(ctx, source, true); MarkAdvancedByPlay(source, rootId); }
     else ctx.rangeState = advancedEngagementState(before, plan);
-    SpendRetreatAdvances(ctx, source, plan);
+    SpendRetreatAdvances(ctx, source, plan, { frozen: prepaidPlanPending });
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
