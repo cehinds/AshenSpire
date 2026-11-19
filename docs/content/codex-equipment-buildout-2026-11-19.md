@@ -89,3 +89,7 @@ Engine test 32 forbids an item that a same-profile item of equal or lower rarity
 - Maul is an enemy move name in the game, not a weapon; it is authored here as a new hammer.
 - Armour rows are single-class (Cinderforged Plate and Wyrmscale Mail Reaver, Sage's Robe Starseer, Ringmail Hauberk Herald, Hunter's Hide Rogue), reusing that class's outfit art, and carry their peer's unlock.
 - Relics not authored: anvilSigil, duelistsRibbon, prayerBeads, quiverStrap, whetstoneCharm.
+
+## Inventory icon QA correction (2026-11-19)
+
+The Compendium `shotFound` fixture cannot prove these icons: equipment persistence is `perRun`, so the off-run view does not own those pieces. The acceptance scenes now roll production boss armament rewards (seeds: Rapier 133, Beast Claws 102, Hand Crossbow 88, Scythe 49), claim the actual item, equip it in Main Hand 1 through the slot and replacement dialogs, finish the reward, and reopen the Armory. Each check requires the real held item card and its exact `icon_<id>.webp` image in `rightHand:0`. Combat hand checks also require the granted weapon-art instance (Riposte / Fan of Knives), rather than an arbitrary card. The sandbox visible check proves the matching image element is drawn; final browser QA separately verifies `complete` and positive `naturalWidth`, with screenshots.
