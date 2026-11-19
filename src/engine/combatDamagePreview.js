@@ -115,6 +115,7 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
   // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
   defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
+  if (defender.earthBlock) defender.earthBlock = Math.min(defender.earthBlock, defender.block);
   // Stone Skin spent against this hit's Pierce reaches the next hit of the same card, as live does (actions.js applyProfileDamage).
   if (receipt.skinSpent > 0) {
     const skin = fixCorePierceRules(fixCoreRules(ctx, defender)).skinStatus, held = skin && defender.statuses?.[skin];

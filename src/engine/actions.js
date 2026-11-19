@@ -446,6 +446,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   const before = target.block || 0;
   let poiseBefore = 0;
   target.block = receipt.blockRemaining;
+  if (target.earthBlock) target.earthBlock = Math.min(target.earthBlock, target.block);
   if (fixCoreEnabled(ctx)) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
