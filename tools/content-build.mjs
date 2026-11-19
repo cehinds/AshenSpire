@@ -180,6 +180,28 @@ function checkWeaponRanges(rows, file) {
   });
 }
 
+function checkSpellTraditions(data, file) {
+  const ids = ['arcane', 'divine'];
+  if (!data || data.version !== 1 || Object.keys(data).some(key => !['version', 'traditions', 'schools'].includes(key))) {
+    bthrow(`${file}: invalid spell tradition version or field`);
+  }
+  if (!data.traditions || Object.keys(data.traditions).length !== ids.length) bthrow(`${file}: expected Arcane and Divine traditions`);
+  for (const id of ids) {
+    const row = data.traditions[id];
+    if (!row || Object.keys(row).some(key => !['label', 'attribute'].includes(key))
+      || typeof row.label !== 'string' || !row.label.trim()
+      || !['intelligence', 'wisdom'].includes(row.attribute)) bthrow(`${file}: invalid tradition '${id}'`);
+  }
+  if (!data.schools || typeof data.schools !== 'object' || Array.isArray(data.schools)) bthrow(`${file}: missing spell schools`);
+  for (const [school, traditions] of Object.entries(data.schools)) {
+    if (!Array.isArray(traditions) || !traditions.length || new Set(traditions).size !== traditions.length
+      || traditions.some(id => !ids.includes(id))) bthrow(`${file}: invalid school '${school}'`);
+  }
+  for (const school of ['arcane', 'fire', 'earth', 'lightning', 'frost']) {
+    if (!ids.every(id => data.schools[school]?.includes(id))) bthrow(`${file}: shared school '${school}' must include both traditions`);
+  }
+}
+
 /**
  * compileDir(srcDir, outDir, { write }) → { results, stale, orphans }
  *
@@ -207,6 +229,7 @@ function compileDir(srcDir, outDir, { write } = {}) {
       try { data = JSON.parse(text); } catch (e) { bthrow(`${file}: ${e.message}`); }
     }
     if (name === 'weapons') checkWeaponRanges(data, file);
+    if (name === 'spellTraditions') checkSpellTraditions(data, file);
     parsed.set(name, data);
     stale += place(outDir, name, emit(name, data, file), write, produced);
     results.push({ file, name, rows: Array.isArray(data) ? data.length : Object.keys(data).length });

@@ -27,6 +27,7 @@ const globals = { ...dom, Node: dom.document.body.constructor,
 const previous = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
 Object.assign(globalThis, globals);
 const { attachTooltip, hideTooltip, clearControlSelection } = await import('../src/ui/components/tooltip.js');
+const { mountDisclosure } = await import('../src/ui/components/disclosure.js');
 let escaped = 0;
 document.addEventListener('keydown', event => { if (event.key === 'Escape') escaped++; });
 const fire = (el, type, options = {}) => el.dispatchEvent(new Event(type, { pointerType: 'mouse', ...options }));
@@ -136,6 +137,31 @@ test('touch selection survives a render hide and focus so the second tap still a
   fire(info, 'click', { pointerType: 'touch' });
   assert.equal(activated, 1);
   assert.equal(selected(info), false);
+});
+
+test('native disclosure summaries toggle on repeated taps without opening a blocking tooltip', () => {
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const fold = mountDisclosure(host, [{
+    key: 'attribute:constitution', kind: 'attribute', disclosure: 'face',
+    face: { label: 'Constitution', value: 2 },
+    reveal: { title: 'Constitution', lines: ['Health +5 every 1 point'] },
+    tooltip: 'Expand Constitution for bonuses and scaling.',
+  }], { structure: 'details' });
+  const summary = host.querySelector('summary');
+  fire(summary, 'click', { pointerType: 'touch' });
+  assert.equal(fold.openKey, 'attribute:constitution');
+  assert.equal(summary.getAttribute('aria-expanded'), 'true');
+  fire(summary, 'click', { pointerType: 'touch' });
+  assert.equal(fold.openKey, null);
+  assert.equal(summary.getAttribute('aria-expanded'), 'false');
+  advance(2000);
+  assert.equal(document.getElementById('tooltip')?.dataset.open ?? 'false', 'false');
+  assert.equal(selected(summary), false);
+  fire(summary, 'pointerenter');
+  advance(1000);
+  assert.equal(document.getElementById('tooltip').dataset.open, 'true', 'hover still explains the native disclosure');
+  hideTooltip(); host.remove();
 });
 
 test('two-tap explanation survives hide and selecting another owner resets selection provenance', () => {

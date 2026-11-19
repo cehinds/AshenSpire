@@ -291,6 +291,8 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
+    if (gameModule(combat, 'effects')?.spellTraditionsVersion === 1) combat.fixCoreRules.spellTraditionsVersion = 1;
+    else delete combat.fixCoreRules.spellTraditionsVersion;
     // Stamp v2 only when the run's own profile carries the current rules; a run started on an older profile keeps v1.
     combat.core2ActionRulesVersion = Math.min(CORE2_ACTION_RULES_VERSION, gameModule(combat, 'effects')?.core2ActionRulesVersion ?? 1);
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
@@ -2182,6 +2184,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const priceReceipt = resolvedCardPriceReceipt(combat, def);
   const paidCosts = priceReceipt.paid;
   def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
+  // Resolve the same upgraded/ranked variant before combat Gear projection. Face comparisons
+  // apply its always-on Gear once, independently of live triggered bonuses and charged effects.
+  const faceDefinition = configuredCombat(combat) && combat.gameProfile
+    ? selectCardVariant(combat, resolveCombatCard(combat, inst, { upcastRanks, applyGear: false }), paidCosts, targetId ? findEntity(combat, targetId) : null) : null;
   const displayCosts = priceReceipt.display;
   const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
@@ -2566,6 +2572,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // The rules a face outside combat would read for this player: the profile pin and the always-on attributes (no fight boosts). A live number is
     // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
+      // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
+      fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
+      faceDefinition: structuredClone(faceDefinition),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,
       // Owner, 2026-11-18: the always-on gear rules are part of the baseline face; triggered ones are not (they colour in the fight).

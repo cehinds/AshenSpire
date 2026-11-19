@@ -12,6 +12,7 @@ import { createRunState } from '../src/model/state.js';
 import { equipPiece, validateEquipment, runMods } from '../src/model/loadout.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { persistentPoiseMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
@@ -36,7 +37,7 @@ function build({ right, left, armor, classId = 'reaver', player } = {}) {
   dispatch(combat, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(combat, { count: 3 });
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { hp: 900, maxHp: 900, block: 0, statuses: {}, persistentPoise: { value: 0, max: 0 } });
+  Object.assign(enemy, { hp: 900, maxHp: 900, block: 0, statuses: {}, persistentPoise: { value: 0, max: persistentPoiseMaximum(combat, enemy) } });
   return { run, combat, enemy };
 }
 let serial = 0;
@@ -205,10 +206,21 @@ test('Resist takes 25% less damage of its element; Fire Vulnerable adds 5% per s
   assert.equal(ItemIncomingPercent(wearer, 'fire'), -25);
   assert.equal(ItemIncomingPercent(wearer, 'physical', 'fire'), -25);
   assert.equal(ItemIncomingPercent(wearer, 'frost'), 0);
+  // Keep a valid empty pool: applying a status resizes an impossible 0/0 pool to the enemy's live maximum and fills it.
+  enemy.persistentPoise = { value: 0, max: persistentPoiseMaximum(combat, enemy) };
+  const emptyPoise = structuredClone(enemy.persistentPoise);
   const fireHit = { tags: ['camp:spell', 'school:fire', 'classification.attack'] };
-  const cold = profileDamageReceipt(combat, combat.player, enemy, 40, fireHit).hpLoss + profileDamageReceipt(combat, combat.player, enemy, 40, fireHit).blocked;
+  const coldReceipt = profileDamageReceipt(combat, combat.player, enemy, 40, fireHit);
+  const cold = coldReceipt.hpLoss + coldReceipt.blocked;
   applyStatus(combat, enemy, 'fireVulnerable', 4, enemy);
-  const hot = profileDamageReceipt(combat, combat.player, enemy, 40, fireHit).hpLoss;
+  assert.deepEqual(enemy.persistentPoise, emptyPoise, 'Fire Vulnerable does not refill a valid empty Poise pool');
+  const hotReceipt = profileDamageReceipt(combat, combat.player, enemy, 40, fireHit);
+  const hot = hotReceipt.hpLoss;
+  const coldHit = coldReceipt.damageReceipt.hits[0], hotHit = hotReceipt.damageReceipt.hits[0];
+  assert.equal(hotHit.sources.find(source => source.id === 'element-vulnerable-fire').multiplier, 1.2, 'four stacks add exactly 20% before mitigation');
+  assert.deepEqual([coldHit.incoming, hotHit.incoming], [20, 24]);
+  assert.deepEqual([coldHit.poiseReduced, hotHit.poiseReduced], [0, 0]);
+  assert.deepEqual([coldHit.hpLoss, hotHit.hpLoss], [20, 24], 'the Fire increase reaches HP when both pools are empty');
   assert.ok(hot > cold, 'four stacks of Fire Vulnerable raise a Fire hit');
 });
 

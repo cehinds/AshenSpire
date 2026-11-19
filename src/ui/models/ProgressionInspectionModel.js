@@ -2,7 +2,10 @@ import { t } from '../strings.js';
 import { statRowValue } from '../../model/derivedStats.js';
 import { statProjection, handResourceRows } from '../../model/statProjection.js';
 import { statRow } from '../../model/statRows.js';
-import { runHandRules, handSizeReceipts } from '../../model/handRules.js';
+import { runHandRules } from '../../model/handRules.js';
+import { AttributeHandReceipts } from '../../model/attributePointPreview.js';
+import { SpellTraditionsActive } from '../../model/spellTraditions.js';
+import { configuredModule } from '../../model/profileModule.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { skillSchools } from '../../model/skills.js';
 import { abilityKindForSkill, abilityRankAt, isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from '../../model/abilityGrades.js';
@@ -15,13 +18,15 @@ import { characterSheetRegistries } from './CharacterSheetModel.js';
 export function progressionStats(registries, run, settings = {}) {
   const projection = statProjection(registries, run);
   const hand = runHandRules(registries, run, settings);
-  const handReceipts = handSizeReceipts(hand, run.attributes, run.level?.level);
+  const handReceipts = AttributeHandReceipts(registries, run, settings);
+  const traditions = SpellTraditionsActive(run);
   const resources = handResourceRows(registries, run, settings);
   const derived = (id, label) => ({ ...projection.derived.find(row => row.id === id), faceLabel: label });
   const rows = [derived('hp', 'HP'), derived('stamina', 'Stamina'), derived('mana', 'Mana'),
     { id: 'handSize', label: t('statsPreview.overview.handSize'), faceLabel: 'HandSize', value: handReceipts.capacity.value,
       formula: `Maximum cards held: ${handReceipts.capacity.value}` },
-    { ...resources.find(row => row.id === 'draw'), faceLabel: 'Draw' }];
+    { ...resources.find(row => row.id === 'draw'), faceLabel: 'Draw', value: handReceipts.turn.value,
+      ...(handReceipts.configured ? { formula: `Cards drawn each turn: ${handReceipts.turn.value}` } : {}) }];
   const attributes = attributeCardModels(registries, run.attributes, {
     projection, equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles, hand, gainContext: { run, settings },
   });
@@ -29,11 +34,13 @@ export function progressionStats(registries, run, settings = {}) {
   // respects retired pooled rounding, configured gain, and shared caps.
   for (const attr of attributes) {
     const without = { ...run.attributes, [attr.id]: 0 };
-    const lesserHand = handSizeReceipts(hand, without, run.level?.level);
+    const lesserHand = AttributeHandReceipts(registries, run, settings, without);
     const contributions = [];
     for (const row of [...rows, { id: 'poise', faceLabel: t('statsPreview.overview.poise') }, { id: 'ward', faceLabel: 'Ward' }]) {
+      if (traditions && row.id === 'ward') continue;
       const rule = statRow(registries, run, row.id, { settings });
-      if (!rule || !rule[attr.id]) continue;
+      const handRow = handReceipts.configured && ['draw', 'handSize'].includes(row.id);
+      if (handRow ? attr.id !== (configuredModule(run, 'cards')?.handAttribute || 'intelligence') : !rule || !rule[attr.id]) continue;
       const value = attributes => statRowValue(rule, { attributes, classDef: registries.classes.get(run.class), level: run.level?.level, statId: row.id }).value;
       const contribution = row.id === 'draw' ? handReceipts.turn.value - lesserHand.turn.value
         : row.id === 'handSize' ? handReceipts.capacity.value - lesserHand.capacity.value

@@ -123,22 +123,22 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
  * live attribute and the channel is priced twice, with and without it, so max(INT, WIS) moves only when the granted attribute leads.
  * Fight-local: the entity's attributes are read, never written. 0 without grants, attributes or registries (a preview).
  */
-function stanceAttributeBonus(ctx, entity, maneuver, id) {
+function stanceAttributeBonus(ctx, entity, maneuver, id, carrier) {
   const grants = entity?.itemProps?.stanceAttribute?.[maneuver];
   if (!grants || !entity.attributes || !ctx?.registries) return 0;
   const boosted = { ...entity.attributes };
   for (const [attribute, n] of Object.entries(grants)) boosted[attribute] = Math.max(0, (Number(boosted[attribute]) || 0) + n);
   const row = entity.finesseView && id === 'ar' ? 'dr' : id; // a finesse hit's Attack rating is the DEX-driven row (finesseRatingView)
-  return ChannelRowValue(ctx, entity, row, boosted) - ChannelRowValue(ctx, entity, row, entity.attributes);
+  return ChannelRowValue(ctx, entity, row, boosted, carrier) - ChannelRowValue(ctx, entity, row, entity.attributes, carrier);
 }
-export function stanceRatingBonus(ctx, entity, id) {
+export function stanceRatingBonus(ctx, entity, id, carrier = null) {
   if (ctx?.combatExpansionVersion !== 2) return 0;
   const stance = stanceOf(entity?.combatStance);
   if (!stance) return 0;
   const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter'].includes(stance.maneuver);
   const offensiveId = stance.maneuver === 'casting' || stance.mirrored || (stance.maneuver === 'counter' && stance.camp === 'spell') ? 'pr' : 'ar';
-  return (entity?.itemProps?.stanceRating?.[stance.maneuver]?.[id] || 0) + stanceAttributeBonus(ctx, entity, stance.maneuver, id) + (offensive && id === offensiveId ? cfg.offensiveRating : 0)
+  return (entity?.itemProps?.stanceRating?.[stance.maneuver]?.[id] || 0) + stanceAttributeBonus(ctx, entity, stance.maneuver, id, carrier) + (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
 export function stanceEntryBonuses(carrier, ctx = null) {

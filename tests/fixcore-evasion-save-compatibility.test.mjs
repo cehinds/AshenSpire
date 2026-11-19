@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -31,6 +33,43 @@ function priorRuntimeEnvelope() {
 }
 
 const restoreStripped = (...args) => withoutWeaknesses(restoreCombatSnapshot(...args)); // a restore refills enemy weaknesses; the fixture drops them again
+// Genuine resolved profiles from the two exact merge parents, rather than current profiles with edited runtime hashes.
+for (const [name, file, runtime, rulesFile] of [
+  ['stat parent 6e2cb1b8', 'stat-profile-6e2cb1b8.json.gz', 'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc'],
+  ['Gear parent 62323292', 'gear-profile-62323292.json.gz', 'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649'],
+  ['stat parent 05ce3864', 'stat-profile-05ce3864.json.gz', 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9', 'stat-rules-05ce3864.json'],
+  ['Smash Dev parent 4fc475a2', 'dev-profile-4fc475a2.json.gz', 'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8', 'dev-rules-4fc475a2.json'],
+]) test(`the genuine ${name} profile resumes with its exact saved policy`, () => {
+  const profile = JSON.parse(gunzipSync(readFileSync(new URL(`./fixtures/${file}`, import.meta.url))));
+  const before = structuredClone(profile);
+  assert.equal(profile.lock.runtimeHash, runtime);
+  assert.deepEqual(validateGameProfileSnapshot(profile), before);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 512 });
+  const restoredRun = deserializeRun(serializeRun(run));
+  assert.deepEqual(restoredRun.gameProfile, before);
+  const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
+  const snapshot = serializeCombatSnapshot(combat);
+  // These exact parent JSON bytes pin the original combat policy, independently of today's new-fight defaults.
+  if (rulesFile) snapshot.fixCoreRules = JSON.parse(readFileSync(new URL(`./fixtures/${rulesFile}`, import.meta.url)));
+  const rulesBefore = structuredClone(snapshot.fixCoreRules);
+  if (rulesFile) {
+    assert.equal(snapshot.fixCoreRules.spellTraditionsVersion, profile.modules.effects.spellTraditionsVersion);
+    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') ? 1.5 : undefined);
+    const entries = new Map();
+    const save = createSaveManager({ getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
+    restoredRun.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
+    save.saveRun(restoredRun, combat.rng);
+    const loaded = save.loadRun(registries);
+    assert.ok(loaded, 'the genuine parent loads through the real save path');
+    assert.deepEqual(loaded.gameProfile, before);
+    assert.deepEqual(loaded.combatEntered.snapshot.fixCoreRules, rulesBefore, 'the complete original policy survives save/load');
+  }
+  const restored = restoreStripped({ registries, rng: createRng(512), snapshot, expectedGameProfile: restoredRun.gameProfile });
+  assert.deepEqual(restored.gameProfile, before);
+  assert.deepEqual(restored.fixCoreRules, rulesBefore, 'the complete saved rules survive restoration');
+  assert.deepEqual(profile, before, 'loading must not rewrite either parent profile');
+});
 test('a compatible prior-runtime Core profile resumes without changing its integrity hash', () => {
   const profile = priorRuntimeEnvelope(), before = JSON.stringify(profile), originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
@@ -100,7 +139,7 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), saved.lock.runtimeHash);
 });
 
 test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) and dev\'s current runtime (58cd1d...) still validate on the merged runtime', () => {
@@ -109,7 +148,7 @@ test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules
     saved.lock.runtimeHash = hash;
     digest(saved);
     assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8'), hash);
+    assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), hash);
   }
 });
 
@@ -172,7 +211,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
-  assert.equal(profile.lock.runtimeHash, 'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8');
+  // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
+  assert.equal(profile.lock.runtimeHash, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
