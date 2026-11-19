@@ -2930,7 +2930,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:sixleggedHearse.pallTrample": {
@@ -4559,15 +4559,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.hearseFrame": {
-      "name": "Hearse Frame",
-      "text": "CON +3, STR +1, SP -1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.strength=+1",
-        "self.sp=-1"
-      ]
-    },
     "relic:enemy.relic.crucibleHeart": {
       "name": "Crucible Heart",
       "text": "CON +3, STR +1",
@@ -4663,6 +4654,15 @@
       "modifiers": [
         "self.strength=+2",
         "self.wisdom=+1"
+      ]
+    },
+    "relic:enemy.relic.hearseFrame": {
+      "name": "Hearse Frame",
+      "text": "CON +3, STR +1, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.strength=+1",
+        "self.sp=-1"
       ]
     }
   }

@@ -344,7 +344,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:veiledJusticiar.finalJudgement | Final Judgement | attack | 3 | 2 | Deal {damage} damage. |
 | card:veiledJusticiar.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:sixleggedHearse.legStomp | Leg Stomp | attack | 1 | 0 | Deal {damage} damage. |
-| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 2 | 0 | Deal {damage} damage. |
 | card:sixleggedHearse.pallTrample | Pall Trample | attack | 2 | 0 | Deal {damage} damage. |
 | card:sixleggedHearse.coffinShield | Coffin Shield | skill | 1 | 0 | Gain {block} Block. |
 | card:sixleggedHearse.graveReek | Grave Reek | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
@@ -506,7 +506,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
 | relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
-| relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
@@ -519,3 +518,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
 | relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
+| relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |

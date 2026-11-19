@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:2efd78dfe31a3b40bf69858341e56e69df18a952c1744d7e845dd7e2cde3084d",
+      "hash": "sha256:f86742d3eb553073cabc7fe5b4a36e8a89addfb0903744e8baabbfad5c1e6c83",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -652,13 +652,13 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b6e03043268b88f3f0a86f303c576039b463a364c131f5a7f1af1b10b7178ea7"
+          "hash": "sha256:10b3e5aa854e63a0f6124bb249eecafd0f85b12fdf1a603f205e9cc73c49ae61"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c3a0de83cc33d464cfd57ada9fc2d7557a564d0c460623280c8496e1c4049427"
+          "hash": "sha256:b5a3a781435773f123e4f7ac38b0a8cd4ca404c34a6a0f6fe0fe5bd1317f6732"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb"
     },
     "core": {
-      "hash": "sha256:2efd78dfe31a3b40bf69858341e56e69df18a952c1744d7e845dd7e2cde3084d",
+      "hash": "sha256:f86742d3eb553073cabc7fe5b4a36e8a89addfb0903744e8baabbfad5c1e6c83",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1376,13 +1376,13 @@
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b6e03043268b88f3f0a86f303c576039b463a364c131f5a7f1af1b10b7178ea7"
+          "hash": "sha256:10b3e5aa854e63a0f6124bb249eecafd0f85b12fdf1a603f205e9cc73c49ae61"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c3a0de83cc33d464cfd57ada9fc2d7557a564d0c460623280c8496e1c4049427"
+          "hash": "sha256:b5a3a781435773f123e4f7ac38b0a8cd4ca404c34a6a0f6fe0fe5bd1317f6732"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
