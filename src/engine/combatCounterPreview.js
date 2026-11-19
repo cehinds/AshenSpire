@@ -88,7 +88,10 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     let incoming = 0;
     // A new Counter adds its resulting Block as stacks before contact.
     const cardStacks = FixCoreCounterStacks(ctx);
-    const stacks = card
+    // A projected defender has already received the card's immediate stack grant and any intervening turn-end grants.
+    const stacks = projected && cardStacks
+        ? counterStackCount(projected)
+        : card
         ? counterStacksAfterCard(ctx.player, base.block, ctx, card)
         : counterStackCount(ctx.player);
     let held = stacks;

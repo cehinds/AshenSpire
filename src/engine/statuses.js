@@ -2,6 +2,7 @@ import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreWardDecay } from '../mo
 import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
+import { GearTypeEffectsEnabled } from '../model/gearEffects.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
 // Statuses are CONTENT, not code: this module interprets stackMode, decay
@@ -296,9 +297,15 @@ export function RemoveBreakGrants(ctx, entity, grants) {
  *   { duration }   → −1 turn (expire at 0; stacks untouched until then)
  *   'none' / 'onConsume' → untouched
  */
+const reachDecaysAtOwnerEnd = (ctx, id, def) => id === 'reach' && GearTypeEffectsEnabled(ctx) && def.decay === 'perTurnEnd';
+
 export function decayAtTurnEnd(ctx, entity) {
   // Core 2 (owner, 2026-10-31): Precision no longer clears wholesale at owner turn end; it loses a stack at turn start like Evade.
-  if (fixCoreEnabled(ctx)) return;
+  if (fixCoreEnabled(ctx)) {
+    // Current gear's Reach lasts through its owner's turn; older snapshots keep the Core start clock.
+    if (entity.statuses?.reach && reachDecaysAtOwnerEnd(ctx, 'reach', statusDefinition(ctx, 'reach'))) removeStatus(ctx, entity, 'reach', { amount: 1, reason: 'ownerTurnEnd' });
+    return;
+  }
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = statusDefinition(ctx, statusId);
@@ -436,11 +443,15 @@ export function decayAtTurnStart(ctx, entity) {
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {
     const inst = entity.statuses[id], def = statusDefinition(ctx, id);
+    if (reachDecaysAtOwnerEnd(ctx, id, def)) continue;
     if (id === 'precision') {
       // Persistent stacks are exempt; the decay amount is the Core 2 accuracy constant, not statuses.decayAmount.
       const temporary = Math.max(0, inst.stacks - (inst.persistentStacks || 0));
       const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
       if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
+    } else if (def.decay === 'ownerTurnStart') {
+      // Gone entirely at the start of its owner's turn, like Block (Stone Skin).
+      removeStatus(ctx, entity, id, { reason: 'ownerTurnStart' });
     } else if (def.decay === 'perTurnEnd' || id === 'evade') {
       // Owner, 2026-11-18: Ward's own decay is `ward.decayPerTurn`; its max Poise leaves with each stack (syncPoolsAfterStatus clamps current Poise).
       removeStatus(ctx, entity, id, { amount: id === 'ward' ? FixCoreWardDecay(ctx, entity, amount) : amount, reason: 'ownerTurnStart' });

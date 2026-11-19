@@ -17,6 +17,7 @@ import { previewCard, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { ElementProtectionView } from '../src/engine/elementIdentity.js';
 import { ChannelRowValue } from '../src/model/channelRowValue.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 
 const profile = resolveGameProfile('core');
 const registriesFor = own => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, own)), own);
@@ -50,13 +51,17 @@ test('fresh Core snapshots assign only Health to CON and Poise/Mana to WIS', () 
 test('real allocations pay SP/MP/hand only on the saved fourth-point thresholds', () => {
   for (const [attribute, pool] of [['dexterity', 'maxStamina'], ['wisdom', 'maxMana']]) {
     const run = makeRun();
-    run.attributes[attribute] = 2;
+    // The current Reaver's Heavy armour supplies -1 DEX; thresholds read the equipped attribute.
+    run.attributes[attribute] = attribute === 'dexterity' ? 3 : 2;
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 2);
     rederivePools(registries, run, 'threshold fixture');
     const before = run[pool];
     run.level.unspentPoints = 2;
     allocateAttributePoint(registries, run, attribute);
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 3);
     assert.equal(run[pool], before, `${attribute} 2 -> 3`);
     allocateAttributePoint(registries, run, attribute);
+    assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 4);
     assert.equal(run[pool], before + 1, `${attribute} 3 -> 4`);
   }
   const run = makeRun();

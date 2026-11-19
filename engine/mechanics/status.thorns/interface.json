@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.thorns",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

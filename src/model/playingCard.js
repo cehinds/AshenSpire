@@ -1,3 +1,4 @@
+import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { FaceCostProfile } from './faceCosts.js';
@@ -365,6 +366,11 @@ function faceDamageProfile(def, registries, rules) {
 }
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
+  // Live effects already contain gear and charges; the colour baseline starts from the same upgraded card as a face outside combat.
+  if (rules?.faceDefinition && rules.faceDefinition.id === def.id) def = rules.faceDefinition;
+  // Owner, 2026-11-18: always-on gear (a Sword's +1, a Heavy set's Block) is in the baseline face; triggered gear is not (it colours in the fight).
+  const gear = rules?.gearRules ? { rules: rules.gearRules, state: rules.gearState || {} } : rules?.loadout ? GearAlwaysOn(registries, rules) : null;
+  if (gear?.rules.length) def = ApplyGearCardRules(gear.rules, def, gear.state);
   // Keep any saved combat policy with the always-on attributes; an explicit profile pin wins over the registries' own.
   const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);

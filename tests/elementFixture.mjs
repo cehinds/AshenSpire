@@ -14,10 +14,10 @@ export const reg = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 export const ATTRIBUTES = { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 };
 
 /** A fight with `enemies` plain enemies (500 HP, no Block, Poise `poise`), the player with `attributes`. */
-export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false, profile: pinnedProfile } = {}) {
+export function fight({ registries: suppliedRegistries = reg, classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false, profile: pinnedProfile } = {}) {
   // Explicit historical profiles retain their original policy; never rebind or mutate the shared live fixture.
   const ownProfile = pinnedProfile === undefined ? null : structuredClone(pinnedProfile);
-  const registries = ownProfile === null ? reg : bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, ownProfile)), ownProfile);
+  const registries = ownProfile === null ? suppliedRegistries : bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, ownProfile)), ownProfile);
   const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
   for (const enemy of combat.enemies) {

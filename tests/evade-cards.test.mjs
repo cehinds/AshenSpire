@@ -7,10 +7,14 @@ import { LiveAttribute } from '../src/engine/liveStats.js';
 import { bandsFight, registries } from './helpers/bands-fight.mjs';
 import { cardChoicePlan } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
 const evade = c => c.player.statuses?.evade?.stacks || 0;
 const play = (c, id = 'qa0', extra = {}) => dispatch(c, { type: 'playCard', cardInstanceId: id, ...extra });
-const fight = (id, opts = {}) => bandsFight({ hand: [id], classId: 'rogue', ...opts });
+const preGearRegistries = legacyGearRegistries(registries);
+// Intrinsic card grants are separate from the Light armour type's +1 per gain; the parity case below explicitly keeps current gear.
+const fight = (id, { currentGear = false, ...opts } = {}) => bandsFight({ registries: currentGear ? registries : preGearRegistries, hand: [id], classId: 'rogue', ...opts });
 const def = id => registries.cards.get(id);
 const upg = id => ({ ...def(id), ...def(id).upgrade });
 
@@ -95,16 +99,22 @@ test('Crawling Shot deals its shot, gives Evade and retreats', () => {
 });
 
 test('shown = dealt: the forecast Evade equals what the card grants', () => {
-  const c = fight('shadowstep');
+  const c = fight('shadowstep', { currentGear: true });
+  assert.equal(c.gameProfile.modules.gear.typeEffectsVersion, 1, 'this forecast includes current Light armour');
+  const before = serializeCombatSnapshot(c), counters = c.rng.getCounters();
   const shown = previewCard(c, 'qa0', undefined).values?.find(v => v.status === 'evade' || v.op === 'applyStatus');
+  assert.ok(shown, 'the forecast has an Evade row');
+  assert.equal(shown.value, 2 + 1, 'Shadowstep base 2 + Light armour per-gain bonus 1');
+  assert.deepEqual(serializeCombatSnapshot(c), before, 'forecast is pure');
+  assert.deepEqual(c.rng.getCounters(), counters);
   play(c);
-  if (shown?.value !== undefined) assert.equal(shown.value, evade(c));
-  assert.equal(evade(c), 2);
+  assert.equal(shown.value, evade(c));
+  assert.equal(evade(c), 2 + 1);
 });
 
 test('a fight without the rows rule: Advance and Retreat do nothing, the card still gives its Evade', () => {
   const saved = fixCoreMechanics.bands; delete fixCoreMechanics.bands;
-  let c; try { c = bandsFight({ hand: ['shadowstep'], classId: 'rogue' }); } finally { fixCoreMechanics.bands = saved; }
+  let c; try { c = bandsFight({ registries: preGearRegistries, hand: ['shadowstep'], classId: 'rogue' }); } finally { fixCoreMechanics.bands = saved; }
   const before = JSON.stringify(c.rangeState.engagements);
   play(c); assert.equal(evade(c), 2); assert.equal(c.player.advanced, undefined);
   assert.equal(JSON.stringify(c.rangeState.engagements), before);
