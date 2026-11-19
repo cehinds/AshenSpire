@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/concurrentStances.js",
-    "symbol": "defensiveCombatStance"
+    "file": "src/engine/actions.js",
+    "symbol": "OPCODE_HANDLERS"
   }
 }
