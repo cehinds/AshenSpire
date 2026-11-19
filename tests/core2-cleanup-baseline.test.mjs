@@ -89,6 +89,8 @@ function openFight(api, enemyId, encounterId, profileId) {
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight drops the `bands` rules, as one saved before them.
   delete combat.fixCoreRules?.bands;
+  // This scenario pins an actual pre-override combat, not today's new-fight defaults.
+  if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
   return { api, profile, registries, run, combat, encounter };
 }
