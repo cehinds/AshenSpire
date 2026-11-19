@@ -299,8 +299,7 @@
   {
     "id": "eliteBlackrushStork",
     "enemies": [
-      "blackrushStork",
-      "reedpipePoacher"
+      "blackrushStork"
     ],
     "weight": 1,
     "pool": "elite",
