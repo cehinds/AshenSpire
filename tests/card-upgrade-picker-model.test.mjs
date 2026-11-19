@@ -124,13 +124,13 @@ test('the Core rest model lists Upgrade Card with a preview per upgradable deck 
 
 test('a procedural step the template does not mention (an added status) still shows in the preview', () => {
   let found = 0;
-  for (let seed = 1; seed <= 400 && !found; seed += 1) {
+  for (let seed = 1; seed <= 40 && !found; seed += 1) {
     const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
     const model = cardUpgradeModel(registries, run, strike(run).instanceId);
     if (model.selected.plan.step.k !== 'addStatus') continue;
     found = seed;
     const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
-    assert.match(html, /(Weak|Bleed)[^<]*<span class="val up">1/, 'the new status is named and marked as raised');
+    assert.match(html, new RegExp(`(Weak|Bleed)[^<]*<span class="val up">${model.selected.plan.step.stacks}`), 'the new status is named and marked as raised');
   }
   assert.ok(found, 'some seed rolls an added status');
 });

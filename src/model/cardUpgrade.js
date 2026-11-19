@@ -40,6 +40,7 @@ export function upgradedDefinition(base) {
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
 //                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
 //                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
+//   (every step may carry `r`: 'uncommon' or 'rare', its rarity; none means common)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
 export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
@@ -69,6 +70,8 @@ export const ELEMENT_IDENTITY = Object.freeze({
 });
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
+// A rolled step may carry `r`, its rarity, for the picker's colour and label (owner, 2026-11-19). It changes no number: the size is in the step.
+export const UPGRADE_RARITIES = Object.freeze(words('common uncommon rare'));
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
 // cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
 // retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
@@ -309,7 +312,7 @@ function applyFx(card, step) {
     // A step rolled from 2026-11-14 carries `other`: one OTHER enemy, never the main target. A step saved before it keeps a random enemy.
     case 'target': {
       const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
-      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
+      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount * (Number.isFinite(step.share) ? step.share : 0.5))) });
       break;
     }
     case 'reaction': addTag(reactionTag); break;
@@ -379,6 +382,7 @@ export function upgradeStepsProblems(instance, path) {
     }
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
+    if (step.r !== undefined && !UPGRADE_RARITIES.includes(step.r)) bad('r');
     if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
     if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
@@ -390,6 +394,7 @@ export function upgradeStepsProblems(instance, path) {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
       if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
+      if (step.share !== undefined && !(step.fx === 'target' && step.share > 0 && step.share <= 1)) bad('share');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
       if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
       if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');

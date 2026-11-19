@@ -126,7 +126,7 @@ function withSecondEffects(run, instance, applied, chosen, candidates, outcome, 
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
-    if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored') return step;
+    if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored' || step.k === 'combo') return step;
     const kindOf = (s) => (s.k === 'fx' ? `fx:${s.fx}` : s.k === 'tag' ? `tag:${(s.tag || '').split(':')[0]}` : s.k);
     const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && kindOf(other) !== kindOf(step)
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));

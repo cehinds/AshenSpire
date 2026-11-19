@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, rarityOfStep } from '../src/model/cardUpgradeSteps.js';
 
 const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
 const byId = (id) => cards.find((c) => c.id === id);
@@ -15,6 +15,7 @@ const ROLLS = 2000;
 const EASE_FX = new Set(['unexhaust', 'unethereal', 'steady']);
 const IDENTITY_TAGS = ['range:', 'targeting:', 'maneuver:', 'school:'];
 function groupOf(step) {
+  if (step.k === 'combo') return groupOf(step.steps[0]);
   if (step.k === 'fx') return EASE_FX.has(step.fx) ? 'ease' : 'new';
   if (step.k === 'tag') {
     if (step.damageSchool) return 'eff';
@@ -45,6 +46,7 @@ const STAGES = [0, 4, 7, 9];
 
 export function distribution(card, stepIndex, rolls = ROLLS) {
   const groups = { ease: 0, eff: 0, new: 0, identity: 0 };
+  const rarities = { common: 0, uncommon: 0, rare: 0 };
   const kinds = {};
   let got = 0;
   for (let i = 0; i < rolls; i += 1) {
@@ -52,21 +54,22 @@ export function distribution(card, stepIndex, rolls = ROLLS) {
     if (!step) continue;
     got += 1;
     groups[groupOf(step)] += 1;
+    rarities[rarityOfStep(step)] += 1;
     const key = step.k === 'fx' ? `fx:${step.fx}` : step.k;
     kinds[key] = (kinds[key] || 0) + 1;
   }
-  return { groups, kinds, got };
+  return { groups, rarities, kinds, got };
 }
 
 test('upgrade roll distribution per card type (printed)', () => {
   const pct = (n, total) => `${((100 * n) / total).toFixed(1)}%`.padStart(6);
-  const lines = ['group shares per card type (ease / effectiveness-cost / new effect / identity)'];
+  const lines = ['group shares per card type: ease / effectiveness-cost / new effect / identity | common / uncommon / rare'];
   for (const [label, card] of SAMPLES) {
     assert.ok(card, label);
     for (const stepIndex of STAGES) {
-      const { groups, got } = distribution(card, stepIndex);
+      const { groups, rarities, got } = distribution(card, stepIndex);
       if (!got) { lines.push(`${label.padEnd(26)} #${String(stepIndex + 1).padEnd(2)} no options`); continue; }
-      lines.push(`${label.padEnd(26)} #${String(stepIndex + 1).padEnd(2)} ${pct(groups.ease, got)} ${pct(groups.eff, got)} ${pct(groups.new, got)} ${pct(groups.identity, got)}`);
+      lines.push(`${label.padEnd(26)} #${String(stepIndex + 1).padEnd(2)} ${pct(groups.ease, got)} ${pct(groups.eff, got)} ${pct(groups.new, got)} ${pct(groups.identity, got)} | ${pct(rarities.common, got)} ${pct(rarities.uncommon, got)} ${pct(rarities.rare, got)}`);
       assert.equal(groups.ease + groups.eff + groups.new + groups.identity, got);
     }
   }
