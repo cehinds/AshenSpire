@@ -12,6 +12,7 @@
 // Pure and headless. Card rules are applied to the card DEFINITION (ApplyGearCardRules), the one definition the face, the quote and the play all read,
 // so a preview equals the play. A rule with a target condition (Retreat-stacked, back row, front row) reads the target, so it rides the hit
 // (engine/gearHooks.js), through the same receipt the quote uses.
+import { RANGES } from './combatRanges.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
@@ -65,9 +66,15 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
     mainWeaponType: typeEffects && loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
   if (!typeEffects) return out;
-  for (const piece of worn) for (const raw of GearPieceMods(piece, typeEffects)) {
+  let focusTaken = false;
+  for (const piece of worn) for (const [modIndex, raw] of GearPieceMods(piece, typeEffects).entries()) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
+    // The built-in staff/sceptre Focus is one shared effect. Piece signatures and robe discounts remain independent.
+    const type = GearTypeRow(piece);
+    const focus = modIndex < (type?.mods?.length || 0) && ['staff', 'sceptre'].includes(type?.id) && mod.field === 'cardMana' && mod.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared');
+    if (focus && focusTaken) continue;
+    if (focus) focusTaken = true;
     const common = { selector: mod.selector, arg: mod.arg, conds: mod.conds, source: piece.id };
     if (spec.scope === 'run') {
       if (spec.apply === 'statPoint') out.statPoints[spec.op] = wholeNumber(mod.mode, mod.value, out.statPoints[spec.op]);
@@ -82,6 +89,12 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
       else if (spec.apply === 'turnGrant') out.turnGrants.push({ phase: mod.selector, conds: mod.conds, grant: spec.op || 'status', status: spec.status || null, amount: mod.value, source: piece.id });
       else if (spec.apply === 'playGrant') out.playGrants.push({ ...common, grant: spec.op || 'status', status: spec.status || null, amount: mod.value });
     }
+  }
+  // Existing Focus-tagged pieces (Dusk Chime) retain the same Prepared-only effect even without a staff/sceptre type row.
+  const taggedFocus = !focusTaken && worn.find(piece => (piece.itemTypeTags || []).includes(registries?.balance?.mana?.focusItemType));
+  if (taggedFocus) {
+    const mod = (GEAR_TYPES.weaponTypes.staff?.mods || []).map(ParseGearMod).find(row => row?.field === 'cardMana' && row.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared'));
+    if (mod && fields[mod.field]) out.cardRules.push({ selector: mod.selector, arg: mod.arg, conds: mod.conds, source: taggedFocus.id, stat: fields[mod.field].op, amount: mod.value, mode: mod.mode });
   }
   return out;
 }
@@ -129,7 +142,7 @@ export const GearRuleNeedsTarget = rule => rule.conds.some(cond => TARGET_CONDS.
  */
 export function GearCondMet(cond, state = {}) {
   const kind = GEAR_TYPES.conditions[cond.name]?.kind;
-  if (kind === 'stance') return state.stance === cond.arg;
+  if (kind === 'stance') return (state.stance === 'casting' ? 'prepared' : state.stance) === (cond.arg === 'casting' ? 'prepared' : cond.arg);
   if (kind === 'weapon') return state.weaponType === cond.arg;
   if (kind === 'break') return state.poiseBreak === true; // only the hit that Poise-breaks its target (engine/actions.js GearBreakRiders)
   if (kind === 'holding') return (state.holding?.[cond.arg] || 0) >= 1; // holding 0 stacks gives nothing
@@ -170,8 +183,10 @@ export function ApplyGearCardRules(rules, def, state = {}) {
   if (!live.length || !def) return def;
   let effects = (def.effects || []).map(effect => ({ ...effect }));
   const gear = { ...(def.gear || {}) }, applied = [...(def.gearApplied || [])];
-  let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost), mana = Number(def.resourceCosts?.mp ?? def.manaCost) || 0;
-  let keywords = def.keywords, range = def.range, costGrowth = def.costGrowth;
+  let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost);
+  const manaRules = [...(def.gearManaRules || [])];
+  let keywords = def.keywords, costGrowth = def.costGrowth;
+  let range = [def.range, def.combatProfile?.range, ...tagsOfDef(def).filter(tag => tag.startsWith('range:')).map(tag => tag.slice(6))].filter(id => RANGES.includes(id)).sort((a, b) => RANGES.indexOf(a) - RANGES.indexOf(b)).at(-1);
   const hasCost = Number.isFinite(stamina);
   for (const rule of live) {
     const triggered = GearRuleTriggered(rule), n = rule.amount;
@@ -194,16 +209,16 @@ export function ApplyGearCardRules(rules, def, state = {}) {
       for (const effect of effects) if (effect.op === 'damage' && ENEMY_AIMED.has(effect.target)) { effect.hits = Math.max(1, (effect.hits || 1) + n); touched = true; }
       if (touched) note();
     } else if (rule.stat === 'cost' && hasCost) { stamina = Math.max(0, adjust(stamina, rule)); note(); }
-    else if (rule.stat === 'manaCost') { mana = Math.max(0, adjust(mana, rule)); note(); }
+    else if (rule.stat === 'manaCost') { manaRules.push({ mode: rule.mode, amount: n }); note(); }
     else if (rule.stat === 'reach') { if (range !== 'ranged') range = 'reach'; note(); }
     else if (rule.stat === 'retain') { keywords = [...new Set([...(keywords || []), 'retain'])]; note(); }
     else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: Number.MAX_SAFE_INTEGER, stamina: 1 }; note(); }
     else if (['pierce', 'ignoreBlock', 'addDex', 'addStr'].includes(rule.stat)) { gear[rule.stat] = adjust(gear[rule.stat], rule); note(); }
   }
   const costs = hasCost ? { cost: stamina, staminaCost: stamina } : {};
-  const next = { ...def, effects, ...costs, ...(mana !== (Number(def.manaCost) || 0) ? { manaCost: mana } : {}), keywords, gear, gearApplied: applied,
+  const next = { ...def, effects, ...costs, ...(manaRules.length ? { gearManaRules: manaRules } : {}), keywords, gear, gearApplied: applied,
     ...(costGrowth ? { costGrowth } : {}), ...(range && range !== def.range ? { range, combatProfile: { ...(def.combatProfile || {}), range } } : {}) };
-  if (def.resourceCosts && (hasCost || mana !== (Number(def.manaCost) || 0))) next.resourceCosts = { ...def.resourceCosts, ...(hasCost ? { sp: stamina } : {}), mp: mana };
+  if (def.resourceCosts && hasCost) next.resourceCosts = { ...def.resourceCosts, sp: stamina };
   return next;
 }
 
@@ -242,7 +257,8 @@ export function GearHitRiders(rules, carrier, target, state = {}) {
  */
 export function GearAlwaysOn(registries, run) {
   if (!run?.loadout || !registries) return { rules: [], state: {} };
-  const summary = GearSummary(registries, run.loadout, run.class, run);
+  const classId = run.class ?? run.player?.classId;
+  const summary = GearSummary(registries, run.loadout, classId, run);
   return { rules: summary.cardRules.filter(rule => !GearRuleTriggered(rule)), state: { weaponType: summary.mainWeaponType } };
 }
 
@@ -250,6 +266,7 @@ export function GearAlwaysOn(registries, run) {
 
 const humanize = id => String(id).replace(/([a-z\d])([A-Z])/g, '$1 $2').toLowerCase();
 const COND_WORDS = { stance: arg => `in ${arg[0].toUpperCase()}${arg.slice(1)} stance`, first: arg => (arg === 'fight' ? 'the first one each fight' : 'the first one each turn'),
+  holding: arg => `while holding ${arg[0].toUpperCase()}${arg.slice(1)}`,
   weapon: arg => `with a ${humanize(arg)}`, breaks: () => 'that break Poise', target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
 const SELECTOR_WORDS = { any: 'cards', attack: 'attacks', sweep: 'Sweeps', smash: 'Smashes', counter: 'Counter cards', defend: 'Defend cards', anyAttack: 'physical attacks',
   zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells' };
@@ -267,4 +284,18 @@ export function GearModText(registries, raw) {
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;
+}
+
+/** The counters, held stacks and stance a pure gear condition reads. */
+export const GearConditionState = (entity, weaponType = null) => ({
+  stance: entity?.combatStance?.maneuver,
+  attacksPlayedThisCombat: entity?.counters?.attacksPlayedThisCombat || 0,
+  spellsPlayedThisTurn: entity?.counters?.spellsPlayedThisTurn || 0,
+  weaponType,
+  holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
+});
+
+/** Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors. */
+export function GearManaCost(def, price) {
+  return Math.max(0, (def?.gearManaRules || []).reduce((value, rule) => adjust(value, rule), price));
 }

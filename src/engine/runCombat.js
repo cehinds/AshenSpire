@@ -28,7 +28,7 @@ import { resolveCombatCard } from './combatExpansion.js';
 import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
-import { runMods, resolveSwapCostRule } from '../model/loadout.js';
+import { runMods, resolveSwapCostRule, EQUIPMENT_POOL_FIELDS } from '../model/loadout.js';
 import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart, manaAtCombatEnd, manaDeficitAtCombatEnd } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
@@ -216,6 +216,10 @@ export function runCombatEnd(run, combat) {
     if (field === 'mana') run.mana = manaAtCombatEnd({ currentMana: combat.player.mana, maxMana: combat.player.maxMana });
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
+  }
+  if (combat.equipmentChanged && run.loadout) {
+    const mods = runMods(combat.registries, run.loadout, run.class, run);
+    run.equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map(field => [field, mods[field]]));
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
   run.equipmentPoolDeficits.mana = manaDeficitAtCombatEnd(run.equipmentPoolDeficits.mana ?? 0);

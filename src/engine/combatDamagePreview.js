@@ -121,8 +121,6 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
     // The detached copy shares its statuses with the real target, so the change is made on a copy.
     if (held) { const left = held.stacks - receipt.skinSpent, next = { ...defender.statuses }; if (left > 0) next[skin] = { ...held, stacks: left }; else delete next[skin]; defender.statuses = next; }
   }
-  // A reflected hit spends one Reflect stack, as live does (SPEC §17).
-  if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
   if (!fixCoreEnabled(ctx)) return;
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
@@ -150,12 +148,19 @@ export function cloneDetachedAttacker(entity) {
 export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
   if (!receipt?.reflect || !attacker || attacker === holder || !(attacker.hp > 0)) return false;
   const amount = reflectReturned(receipt.reflect.original, receipt.reflect.stacks);
+  // Live spends Reflect only after Thorns has left a living attacker, including a zero-damage return.
+  const left = Math.max(0, (holder.reflectStacks || 0) - 1);
+  if (left) holder.reflectStacks = left; else delete holder.reflectStacks;
   if (!(amount > 0)) return false;
   const back = ProfileCombat.profileDamageReceipt(ctx, holder, attacker, amount,
     { ...carrier, combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
       combatProfile: { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true }, combatRiderTargets: [] });
   applyReceiptToPreviewTarget(ctx, attacker, { ...back, reflect: null });
-  attacker.hp -= fixCoreEnabled(ctx) ? back.hpLoss : back.amount;
+  return previewAttackerHpLoss(ctx, attacker, fixCoreEnabled(ctx) ? back.hpLoss : back.amount);
+}
+
+function previewAttackerHpLoss(ctx, attacker, amount) {
+  attacker.hp -= amount;
   if (attacker.hp > 0) return false;
   // Death prevention, as live afterHpChange (SPEC §14.3): a solo player spends one revive token and rises at its hpPct. Only the
   // detached attacker's own copy of the counts is spent; the live entity and the fight's counts are never touched.
@@ -170,6 +175,14 @@ export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
   }
   attacker.hp = 0;
   return true;
+}
+
+/** Landed-hit returns follow the live order: Thorns, then Reflect, then a possible Counter. */
+export function PreviewHitReturns(ctx, attacker, holder, receipt, carrier) {
+  if (!attacker || !(attacker.hp > 0)) return false;
+  const thorns = Actions.ThornsDamage(ctx, attacker, holder, carrier, receipt);
+  if (thorns > 0 && previewAttackerHpLoss(ctx, attacker, thorns)) return true;
+  return previewReflectReturn(ctx, attacker, holder, receipt, carrier);
 }
 
 /**
@@ -238,7 +251,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
       // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
-      if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
+      if (defender && PreviewHitReturns(previewCtx, attacker, defender, receipt, carrier)) break;
     }
     // Owner, 2026-11-14: the quoted hit is the HP the target will lose from it (receipt.hpLoss): after its defensive stance, Reflect, Block,
     // Poise and Evade, carried hit to hit through the detached defender. Supersedes the 2026-11-02 and 2026-11-03 rulings.

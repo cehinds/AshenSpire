@@ -721,7 +721,7 @@ test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP
       combat.player.energy = combat.player.stamina = combat.player.mana = 9;
       let face;
       try { face = faceOf(combat, combat.piles.hand[0].instanceId, enemy.id); } catch { continue; }
-      const start = combat.eventLog.length, hp = enemy.hp;
+      const start = combat.eventLog.length, playedInstanceId = combat.piles.hand[0].instanceId;
       try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; }
       while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
       const events = combat.eventLog.slice(start);
@@ -731,7 +731,9 @@ test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP
       const faceTotal = (face.perEnemy.get(enemy.id) || []).reduce((n, v) => n + v, 0);
       const firstHit = events.findIndex(event => event.type === 'damageDealt' && event.sourceId === 'player');
       assert.ok(firstHit < 0 || stacked < firstHit, `${card.id}: the reaction comes before the card's hit`);
-      assert.ok(hp - enemy.hp <= faceTotal || !enemy.alive, `${card.id}: the HP taken (${hp - enemy.hp}) is not more than the pre-reaction face (${faceTotal})`);
+      // Heavy armour's Thorns can answer the enemy reaction before this card hits; that passive return is not this card's face.
+      const primaryLoss = events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId === enemy.id && event.cardInstanceId === playedInstanceId).reduce((sum, event) => sum + event.hpLoss, 0);
+      assert.ok(primaryLoss <= faceTotal || !enemy.alive, `${card.id}: the primary hit HP (${primaryLoss}) is not more than the pre-reaction face (${faceTotal})`);
     }
   }
   assert.ok(answered > 0, 'the Knight answered at least one play');

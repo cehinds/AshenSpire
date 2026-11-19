@@ -66,8 +66,9 @@
 //   R3  resist    proc.resistance.status of a REACHED proc status — enqueued
 //                 by the engine, not by content (engine/statuses.js:142).
 //   R4  equip     an equipMods row whose `apply` is `status`/`startStatus`,
-//                 AND at least one armament or armour row whose `mods` names
-//                 that field. BOTH halves, or it is vocabulary nobody speaks.
+//                 AND at least one armament or armour row whose own mods or
+//                 carried weapon type / armour group names that field. A type
+//                 definition without an actual piece is vocabulary, not reach.
 //                 (model/loadout.js applyCardMods / runMods)
 //   R5  code      a CLOSED, DECLARED list of appliers that live in code rather
 //                 than content. Today it has exactly one member and that is
@@ -177,7 +178,7 @@
 // that a run can ever draw it.
 
 import { readFileSync } from 'node:fs';
-import { GEAR_TYPES } from '../src/content/gearTypes.js';
+import { GearTypeRow } from '../src/model/gearEffects.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
@@ -362,9 +363,11 @@ export function statusReach(bundle, opts = {}) {
   // ---- R4: equipment needs BOTH halves ------------------------------------
   const eq = bundle.equipment || {};
   const modFields = eq.modFields || {};
-  // Owner, 2026-11-18: a type's or group's base mods are spoken by every piece of that type, so they count as users too.
-  const typeRows = [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)].map(([id, row]) => ({ id: `type:${id}`, mods: row.mods || [] }));
-  const pieces = [...(eq.armaments || []), ...(eq.armour || []), ...typeRows];
+  // Owner, 2026-11-18: a type's or group's base mods are spoken by each actual piece of that type.
+  // The global type dictionary is not itself a carrier: removing every piece must remove its reach witnesses too.
+  const pieces = [...(eq.armaments || []), ...(eq.armour || [])].map(piece => ({
+    id: piece.id, mods: [...(piece.mods || []), ...(GearTypeRow(piece)?.mods || [])],
+  }));
   const fieldsUsed = new Map(); // field -> [piece ids]
   for (const p of pieces) {
     for (const raw of p.mods || []) {
@@ -723,9 +726,13 @@ async function selftest(real) {
     // op in the tree gone. Two of this file's five routes were invisible to
     // the first draft of this plant, and both times the tool was right and the
     // plant was the thing entering downstream of the defect.
-    for (const p of [...b.equipment.armaments, ...b.equipment.armour]) {
-      p.mods = (p.mods || []).filter((m) => !String(m).includes(`.${id}=`));
-    }
+    const appliesStatus = raw => {
+      const field = String(raw).split('=')[0].split('.').pop();
+      return field === id || b.equipment.modFields[field]?.status === id;
+    };
+    for (const p of [...b.equipment.armaments, ...b.equipment.armour]) p.mods = (p.mods || []).filter(raw => !appliesStatus(raw));
+    // Type grants are implicit on the piece. Remove those actual carriers too, rather than pretending that deleting only explicit mods silences them.
+    for (const kind of ['armaments', 'armour']) b.equipment[kind] = b.equipment[kind].filter(piece => !(GearTypeRow(piece)?.mods || []).some(appliesStatus));
     // AND the property rules — the THIRD time this plant has been found sitting
     // downstream of a route it did not know about, and the third time the tool
     // was right. Plan phase 2 moved every relic's triggers into propertyRules;

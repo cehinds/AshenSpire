@@ -1,3 +1,4 @@
+import { GearReceiptAdd } from '../src/engine/gearReceipt.js';
 // Owner, 2026-11-18 (gear pass A): the gear vocabulary is data (equipMods.csv + equipmentTypes.json) and each effect has an engine consumer. Preview equals play.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ import { ThornsReturn } from '../src/engine/actions.js';
 import { ItemIncomingPercent } from '../src/engine/itemPropertyHooks.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { GEAR_TYPES } from '../src/content/gearTypes.js';
-import { ParseGearMod, GearPieceMods, GearSummary, ApplyGearCardRules, GearHitRiders, GearHitAdds, GearModText, GearRuleTriggered } from '../src/model/gearEffects.js';
+import { ParseGearMod, GearPieceMods, GearSummary, ApplyGearCardRules, GearHitRiders, GearHitAdds, GearModText, GearRuleTriggered, GearManaCost } from '../src/model/gearEffects.js';
 
 const { catalog, authors } = compileGameProfiles();
 const profile = resolveGameAuthor(authors.core, catalog);
@@ -160,9 +161,11 @@ test('a rule that reads the target (Retreat-stacked, front row) rides the hit, n
 test('a stance condition changes a card only in that stance (magic focus: -1 MP in Prepared)', () => {
   const rules = [{ selector: 'spell', arg: null, conds: [{ name: 'stance', arg: 'prepared' }], stat: 'manaCost', amount: -1, mode: 'add', source: 'staff' }];
   const spell = { tags: ['camp:spell', 'maneuver:casting', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 10 }], cost: 1, staminaCost: 1, manaCost: 2 };
-  assert.equal(ApplyGearCardRules(rules, spell, { stance: 'prepared' }).manaCost, 1);
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, spell, { stance: 'prepared' }), 3), 2);
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, spell, { stance: 'casting' }), 3), 2, 'saved casting alias is Prepared');
+  assert.equal(ApplyGearCardRules(rules, spell, { stance: 'prepared' }).manaCost, 2, 'the authored price stays intact');
   assert.equal(ApplyGearCardRules(rules, spell, { stance: 'attack' }).manaCost, 2);
-  assert.equal(ApplyGearCardRules(rules, { ...spell, manaCost: 0 }, { stance: 'prepared' }).manaCost, 0, 'never below 0');
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, { ...spell, manaCost: 0 }, { stance: 'prepared' }), 1), 0, 'a zero printed price takes its discount after the surcharge');
   assert.ok(GearRuleTriggered(rules[0]));
 });
 
@@ -439,3 +442,125 @@ for (const intent of ['swapArmament', 'changeEquipment']) {
     assert.deepEqual(restored.player.itemProps, combat.player.itemProps);
   });
 }
+
+test('a gear Reach grant preserves a root range:ranged tag or combat profile', () => {
+  const rules = [{ selector: 'anyAttack', arg: null, conds: [], stat: 'reach', amount: 1, mode: 'add' }];
+  for (const extra of [{ tags: ['camp:physical', 'maneuver:attack', 'classification.attack', 'range:ranged'] }, { combatProfile: { range: 'ranged' } }]) {
+    const card = { tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 3 }], ...extra };
+    const projected = ApplyGearCardRules(rules, card);
+    assert.equal(projected.range, 'ranged');
+    assert.equal(projected.combatProfile.range, 'ranged');
+  }
+});
+
+test('current Light armour Evade gain is included once in the pure preview and the live grant', () => {
+  const { combat } = build({ classId: 'rogue', right: 'dagger' });
+  assert.equal(combat.player.itemProps.gainBonus.evade, 1);
+  const id = 'gear-light-shadowstep';
+  combat.piles.hand.push({ instanceId: id, cardId: 'shadowstep' });
+  combat.player.stamina = 20;
+  const before = combat.player.statuses.evade?.stacks || 0, counters = combat.rng.getCounters();
+  const shown = previewCard(combat, id).values.find(row => row.status === 'evade').value;
+  assert.equal(shown, 3, 'Shadowstep base 2 plus the worn Light armour bonus');
+  assert.equal(combat.player.statuses.evade?.stacks || 0, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal((combat.player.statuses.evade?.stacks || 0) - before, shown);
+});
+
+
+test('current Medium armour Counter forecast matches the played card and exchange', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.player.counterStacks = 4;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
+  combat.player.stamina = 30;
+  const id = 'gear-medium-counter';
+  combat.piles.hand.push({ instanceId: id, cardId: 'core.counter' });
+  const before = combat.player.counterStacks, counters = combat.rng.getCounters();
+  const forecast = previewCard(combat, id).counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(combat.player.counterStacks, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
+  assert.ok(actual);
+  assert.equal(forecast.hp, actual.amount);
+  assert.equal(actual.counterStacks, 7, 'the exact end grant is included once before the contact');
+});
+
+
+test('a current Medium Counter reaction forecast adds the card gain but no intervening turn-end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.phase = 'enemy';
+  combat.player.counterStacks = 3;
+  combat.player.stamina = 30;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'medium-reaction', cardId: 'core.counter' });
+  const forecast = previewCard(combat, 'medium-reaction').counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and Medium 1, no end grant');
+  assert.equal(combat.player.counterStacks, 3);
+});
+
+
+test('current Medium spell Counter forecast keeps Prepared and gives no Counter stance end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.player.counterStacks = 4;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
+  combat.player.stamina = 30;
+  combat.player.mana = combat.player.maxMana = 20;
+  const id = 'gear-medium-spell-counter';
+  combat.piles.hand.push({ instanceId: id, cardId: 'frostCounter' });
+  const before = combat.player.counterStacks, counters = combat.rng.getCounters();
+  const forecast = previewCard(combat, id).counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(combat.player.counterStacks, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
+  assert.ok(actual);
+  assert.equal(forecast.hp, actual.amount);
+  assert.equal(combat.player.combatStance.maneuver, 'prepared');
+  assert.equal(actual.counterStacks, 6, 'Prepared gets the card gain, but no Counter stance end grant');
+});
+
+
+
+test('the current Greatsword second STR uses the configured channel weight', () => {
+  const { combat, enemy } = build({ right: 'greatsword' });
+  const def = resolveCombatCard(combat, { instanceId: addCard({ combat }, 'core.smash'), cardId: 'core.smash' });
+  const carrier = { ...def, combatProfile: { camp: 'physical', maneuver: 'smash' } };
+  assert.equal(carrier.gear.addStr, 1, 'the current worn Greatsword authored the second STR');
+  for (const weight of [0, 0.5, 1, 2]) {
+    assert.equal(GearReceiptAdd(combat, combat.player, enemy, carrier, { ratingId: 'ar', ar: 5, effects: { strengthDamageWeight: weight } }), 5 * weight);
+  }
+});
+
+
+test('dual Focus shares its built-in discount while robe and piece signatures remain independent', () => {
+  const run = createRunState({ registries, classId: 'starseer', seed: 31, profileMeta: META });
+  run.loadout.sets.rightHand[0] = 'boneSceptre'; run.loadout.sets.leftHand[0] = 'emberlightSceptre';
+  const signature = 'spell@stance:prepared.cardMana=-1';
+  const custom = { ...registries, equipment: { ...registries.equipment, armaments: registries.equipment.armaments.map(piece => ['boneSceptre', 'emberlightSceptre'].includes(piece.id) ? { ...piece, mods: [...piece.mods, signature] } : piece) } };
+  const rules = GearSummary(custom, run.loadout, run.class, run).cardRules;
+  const def = ApplyGearCardRules(rules, { tags: ['camp:spell'], effects: [], cost: 1, manaCost: 8 }, { stance: 'prepared' });
+  assert.equal(def.gearManaRules.length, 4, 'one shared Focus, one robe, and both independent signatures');
+  assert.equal(GearManaCost(def, 9), 5, 'no general cap on independent Mana modifiers');
+});

@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-19 after Prepared-only Focus copy and the Evade grant source reference; behavior and RNG are unchanged.
 // Recaptured 2026-11-19 after combining GearPass and Force/Ward: only 34 profile/runtime/snapshot/save hashes moved.
 // JS01 explicitly predates equipment type effects. Event digests, RNG, receipts and continuations match origin/dev exactly, including the historical profile.
 // Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.

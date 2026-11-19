@@ -46,7 +46,8 @@ function rangeSourceContext(ctx,source) {
   return {...ctx,player:source,loadout:seat.loadout,registries:ctx.registriesForPlayer?.(seatId) || ctx.registries};
 }
 function rangeSourceProfile(carrier,effect) {
-  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+  const effectRange = effect.range ?? effect.combatProfile?.range ?? effect.tags?.find(tag => tag.startsWith('range:'))?.slice(6);
+  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier, ...(effectRange ? { range: effectRange } : {}), tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
   return { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
 }
 function committedRangeSource(ctx,source,carrier,effect,profile) {

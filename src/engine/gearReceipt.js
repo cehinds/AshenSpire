@@ -1,5 +1,5 @@
 // src/engine/gearReceipt.js — the leaf the damage receipt reads for worn gear (no liveStats import, so the receipt can load it while it loads).
-import { GearHitAdds } from '../model/gearEffects.js';
+import { GearHitAdds, GearConditionState } from '../model/gearEffects.js';
 import { ChannelWeight } from '../model/damageChannels.js';
 import { sourceRatingValue } from '../model/combatRatings.js';
 
@@ -8,13 +8,7 @@ export const GearGainBonus = (entity, kind) => Math.max(0, Number(GearProps(enti
 export const GearProps = entity => (entity && entity.kind !== 'enemy' ? entity.itemProps || null : null);
 
 /** The state a gear condition reads, from the player as it stands now. */
-export const GearState = (ctx, entity) => ({
-  stance: entity?.combatStance?.maneuver,
-  attacksPlayedThisCombat: entity?.counters?.attacksPlayedThisCombat || 0,
-  spellsPlayedThisTurn: entity?.counters?.spellsPlayedThisTurn || 0,
-  weaponType: GearProps(entity)?.mainWeaponType || null,
-  holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
-});
+export const GearState = (ctx, entity) => GearConditionState(entity, GearProps(entity)?.mainWeaponType);
 
 /**
  * GearReceiptAdd(ctx, source, target, carrier, { ratingId, ar, effects }) -> the damage the worn gear adds to one hit before stance, status and defence:

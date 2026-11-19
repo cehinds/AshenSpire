@@ -1,5 +1,5 @@
+import { GearManaCost, GearTypeEffectsEnabled, GearRuleTriggered } from '../model/gearEffects.js';
 import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp, RefreshGearItemProps } from './gearHooks.js';
-import { GearRuleTriggered } from '../model/gearEffects.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
@@ -14,7 +14,7 @@ import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
 import { scaleOwnElementActions } from './elementRules.js';
-import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
+import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
@@ -1624,18 +1624,20 @@ function resolvedCardPriceReceipt(combat,def) {
  // Focus (owner, 2026-11-01): in the Prepared stance a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
  // affordability checks, the bot and the payment all read the same number.
  // Owner, 2026-11-15 (W25-F): a fight with `spellCosts` rules prices every spell through engine/spellCosts.js instead (+1 Mana, +1 Stamina unless a cantrip,
- // Prepared -1 Stamina, a Focus item -1 Mana in any stance); a fight created before the ruling keeps the Prepared-only Focus rule above.
+ // Prepared -1 Stamina; old saved gear keeps Focus in any stance). Current gear applies its Prepared-only Focus and robe rules once at the final Mana price.
  if(SpellCostRules(combat)) {
   const paid=SpellCostAdjust(combat,def,{stamina:result.paid.stamina,mana:result.paid.mana}),shown=SpellCostAdjust(combat,def,{stamina:result.display.stamina,mana:result.display.mana});
   result.paid={...result.paid,mana:paid.mana,stamina:paid.stamina,...(def.cost==='X' ? {} : {energy:paid.stamina})};
   result.display={...result.display,mana:shown.mana,stamina:shown.stamina,...(def.cost==='X' ? {} : {action:shown.stamina})};
   return result;
  }
- const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
+ const focus=GearTypeEffectsEnabled(combat) ? 0 : focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
  if(focus>0) {
   result.paid={...result.paid,mana:applyFocusManaDiscount(result.paid.mana,focus)};
   result.display={...result.display,mana:applyFocusManaDiscount(result.display.mana,focus)};
  }
+ result.paid={...result.paid,mana:GearManaCost(def,result.paid.mana)};
+ result.display={...result.display,mana:GearManaCost(def,result.display.mana)};
  return result;
 }
 function baseCardPriceReceipt(combat, def) {
@@ -2243,7 +2245,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       if (effect.op === 'damage' || effect.target !== 'self') continue;
       sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
     }
+    // A Counter's stack grant is synthetic support (prepareTacticalCard arms it only live).
+    if (FixCoreCounterStacks(combat)) sim.queue.push({ effect: { op: 'gainCounterStacks', target: 'self' }, source: sim.player, owner: sim.player, target: sim.player, card: action.card });
     drainQueue(sim);
+    // The forecast reads the coming enemy phase. A reaction during that phase has no intervening owner turn end.
+    if (combat.phase === 'player') {
+      QueueGearTurnGrants(sim, sim.player, 'end');
+      drainQueue(sim);
+    }
     return (counterProjection = sim.player);
   };
   // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.
@@ -2445,7 +2454,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       }
       case 'applyStatus': {
         entry.status = eff.status;
-        entry.value = FluxScale(combat, p, action.card, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0));
+        const statusTarget = ['self', 'owner'].includes(eff.target) || !primary ? p : primary;
+        entry.value = A.ComputeStatusGrant(combat, action, eff, statusTarget, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary));
         break;
       }
       case 'heal':

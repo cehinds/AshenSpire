@@ -489,7 +489,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
  * Constant, no decay. A row with `onBlockOnly` (Fire Thorns, the Lantern) answers only a hit that met Block. The return is plain HP loss, never an attack, so it
  * cannot trigger Thorns, Reflect or a Counter; a reflected, countered or reactive hit is not an attacker landing a hit.
  */
-export function ThornsReturn(ctx, source, target, carrier, receipt) {
+export function ThornsDamage(ctx, source, target, carrier, receipt) {
   if (!source?.alive || !target || source === target || source.kind === target.kind || receipt?.evaded || carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return 0;
   let total = 0;
   for (const [id, inst] of Object.entries(target.statuses || {})) {
@@ -502,6 +502,10 @@ export function ThornsReturn(ctx, source, target, carrier, receipt) {
     }
     total += amount;
   }
+  return total;
+}
+export function ThornsReturn(ctx, source, target, carrier, receipt) {
+  const total = ThornsDamage(ctx, source, target, carrier, receipt);
   if (total > 0) {
     ctx.emit('thornsReturned', { sourceId: target.id, targetId: source.id, amount: total });
     applyLoseHp(ctx, source, total, 'thorns', { sourceId: target.id });
@@ -1707,6 +1711,12 @@ function plannedStatusTargets(ctx, action, eff) {
 
 // Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
 // (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
+/** The authored status grant before target resistance: shared by a card preview and the landed opcode. */
+export function ComputeStatusGrant(ctx, action, eff, target, base) {
+  const authored = base + (eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
+  return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
+}
+
 function runGuardStackOpcode(ctx, action, eff) {
   if (eff.op === 'gainCounterStacks') {
     if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
@@ -1949,8 +1959,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     applyStatus: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const authored = evalNum(ctx, action, eff.stacks, 1, t) + (eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(t, 'evade') : 0); // Light full set: every Evade gain gives more
-        const stacks = FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0)); // W25-F: the flux lifts the stacks a card applies
+        const stacks = ComputeStatusGrant(ctx, action, eff, t, evalNum(ctx, action, eff.stacks, 1, t));
         const held = t.statuses?.[eff.status]?.stacks || 0;
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
           tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]
