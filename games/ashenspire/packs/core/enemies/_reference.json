@@ -2860,7 +2860,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:veiledJusticiar.righteousLight": {
@@ -4576,14 +4576,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.judgeSeal": {
-      "name": "Judge Seal",
-      "text": "STR +2, WIS +1",
-      "modifiers": [
-        "self.strength=+2",
-        "self.wisdom=+1"
-      ]
-    },
     "relic:enemy.relic.titheBand": {
       "name": "Tithe Band",
       "text": "WIS +1, CON +1",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.constitution=+3",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.judgeSeal": {
+      "name": "Judge Seal",
+      "text": "STR +2, WIS +1",
+      "modifiers": [
+        "self.strength=+2",
+        "self.wisdom=+1"
       ]
     }
   }
