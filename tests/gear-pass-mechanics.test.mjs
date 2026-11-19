@@ -18,7 +18,7 @@ import { ThornsReturn } from '../src/engine/actions.js';
 import { ItemIncomingPercent } from '../src/engine/itemPropertyHooks.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { GEAR_TYPES } from '../src/content/gearTypes.js';
-import { ParseGearMod, GearPieceMods, GearSummary, ApplyGearCardRules, GearHitRiders, GearHitAdds, GearModText, GearRuleTriggered } from '../src/model/gearEffects.js';
+import { ParseGearMod, GearPieceMods, GearSummary, ApplyGearCardRules, GearHitRiders, GearHitAdds, GearModText, GearRuleTriggered, GearManaCost } from '../src/model/gearEffects.js';
 
 const { catalog, authors } = compileGameProfiles();
 const profile = resolveGameAuthor(authors.core, catalog);
@@ -160,9 +160,11 @@ test('a rule that reads the target (Retreat-stacked, front row) rides the hit, n
 test('a stance condition changes a card only in that stance (magic focus: -1 MP in Prepared)', () => {
   const rules = [{ selector: 'spell', arg: null, conds: [{ name: 'stance', arg: 'prepared' }], stat: 'manaCost', amount: -1, mode: 'add', source: 'staff' }];
   const spell = { tags: ['camp:spell', 'maneuver:casting', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 10 }], cost: 1, staminaCost: 1, manaCost: 2 };
-  assert.equal(ApplyGearCardRules(rules, spell, { stance: 'prepared' }).manaCost, 1);
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, spell, { stance: 'prepared' }), 3), 2);
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, spell, { stance: 'casting' }), 3), 2, 'saved casting alias is Prepared');
+  assert.equal(ApplyGearCardRules(rules, spell, { stance: 'prepared' }).manaCost, 2, 'the authored price stays intact');
   assert.equal(ApplyGearCardRules(rules, spell, { stance: 'attack' }).manaCost, 2);
-  assert.equal(ApplyGearCardRules(rules, { ...spell, manaCost: 0 }, { stance: 'prepared' }).manaCost, 0, 'never below 0');
+  assert.equal(GearManaCost(ApplyGearCardRules(rules, { ...spell, manaCost: 0 }, { stance: 'prepared' }), 1), 0, 'a zero printed price takes its discount after the surcharge');
   assert.ok(GearRuleTriggered(rules[0]));
 });
 
@@ -508,3 +510,33 @@ test('a current Medium Counter reaction forecast adds the card gain but no inter
   assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and Medium 1, no end grant');
   assert.equal(combat.player.counterStacks, 3);
 });
+
+
+test('current Medium spell Counter forecast keeps Prepared and gives no Counter stance end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.player.counterStacks = 4;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
+  combat.player.stamina = 30;
+  combat.player.mana = combat.player.maxMana = 20;
+  const id = 'gear-medium-spell-counter';
+  combat.piles.hand.push({ instanceId: id, cardId: 'frostCounter' });
+  const before = combat.player.counterStacks, counters = combat.rng.getCounters();
+  const forecast = previewCard(combat, id).counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(combat.player.counterStacks, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
+  assert.ok(actual);
+  assert.equal(forecast.hp, actual.amount);
+  assert.equal(combat.player.combatStance.maneuver, 'prepared');
+  assert.equal(actual.counterStacks, 6, 'Prepared gets the card gain, but no Counter stance end grant');
+});
+

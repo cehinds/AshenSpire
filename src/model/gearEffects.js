@@ -130,7 +130,7 @@ export const GearRuleNeedsTarget = rule => rule.conds.some(cond => TARGET_CONDS.
  */
 export function GearCondMet(cond, state = {}) {
   const kind = GEAR_TYPES.conditions[cond.name]?.kind;
-  if (kind === 'stance') return state.stance === cond.arg;
+  if (kind === 'stance') return (state.stance === 'casting' ? 'prepared' : state.stance) === (cond.arg === 'casting' ? 'prepared' : cond.arg);
   if (kind === 'weapon') return state.weaponType === cond.arg;
   if (kind === 'break') return state.poiseBreak === true; // only the hit that Poise-breaks its target (engine/actions.js GearBreakRiders)
   if (kind === 'holding') return (state.holding?.[cond.arg] || 0) >= 1; // holding 0 stacks gives nothing
@@ -171,7 +171,8 @@ export function ApplyGearCardRules(rules, def, state = {}) {
   if (!live.length || !def) return def;
   let effects = (def.effects || []).map(effect => ({ ...effect }));
   const gear = { ...(def.gear || {}) }, applied = [...(def.gearApplied || [])];
-  let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost), mana = Number(def.resourceCosts?.mp ?? def.manaCost) || 0;
+  let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost);
+  const manaRules = [...(def.gearManaRules || [])];
   let keywords = def.keywords, costGrowth = def.costGrowth;
   let range = [def.range, def.combatProfile?.range, ...tagsOfDef(def).filter(tag => tag.startsWith('range:')).map(tag => tag.slice(6))].filter(id => RANGES.includes(id)).sort((a, b) => RANGES.indexOf(a) - RANGES.indexOf(b)).at(-1);
   const hasCost = Number.isFinite(stamina);
@@ -196,16 +197,16 @@ export function ApplyGearCardRules(rules, def, state = {}) {
       for (const effect of effects) if (effect.op === 'damage' && ENEMY_AIMED.has(effect.target)) { effect.hits = Math.max(1, (effect.hits || 1) + n); touched = true; }
       if (touched) note();
     } else if (rule.stat === 'cost' && hasCost) { stamina = Math.max(0, adjust(stamina, rule)); note(); }
-    else if (rule.stat === 'manaCost') { mana = Math.max(0, adjust(mana, rule)); note(); }
+    else if (rule.stat === 'manaCost') { manaRules.push({ mode: rule.mode, amount: n }); note(); }
     else if (rule.stat === 'reach') { if (range !== 'ranged') range = 'reach'; note(); }
     else if (rule.stat === 'retain') { keywords = [...new Set([...(keywords || []), 'retain'])]; note(); }
     else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: Number.MAX_SAFE_INTEGER, stamina: 1 }; note(); }
     else if (['pierce', 'ignoreBlock', 'addDex', 'addStr'].includes(rule.stat)) { gear[rule.stat] = adjust(gear[rule.stat], rule); note(); }
   }
   const costs = hasCost ? { cost: stamina, staminaCost: stamina } : {};
-  const next = { ...def, effects, ...costs, ...(mana !== (Number(def.manaCost) || 0) ? { manaCost: mana } : {}), keywords, gear, gearApplied: applied,
+  const next = { ...def, effects, ...costs, ...(manaRules.length ? { gearManaRules: manaRules } : {}), keywords, gear, gearApplied: applied,
     ...(costGrowth ? { costGrowth } : {}), ...(range && range !== def.range ? { range, combatProfile: { ...(def.combatProfile || {}), range } } : {}) };
-  if (def.resourceCosts && (hasCost || mana !== (Number(def.manaCost) || 0))) next.resourceCosts = { ...def.resourceCosts, ...(hasCost ? { sp: stamina } : {}), mp: mana };
+  if (def.resourceCosts && hasCost) next.resourceCosts = { ...def.resourceCosts, sp: stamina };
   return next;
 }
 
@@ -270,4 +271,9 @@ export function GearModText(registries, raw) {
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;
+}
+
+/** Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors. */
+export function GearManaCost(def, price) {
+  return Math.max(0, (def?.gearManaRules || []).reduce((value, rule) => adjust(value, rule), price));
 }
