@@ -6,10 +6,12 @@ import { startingKitProblems } from '../startingKits.js';
 import { tagService } from '../tagService.js';
 import { DAMAGE_SCHOOLS } from '../schemas.js';
 import { parseMod } from './modStrings.js';
+import { GearPieceMods, ParseGearMod } from '../gearEffects.js';
+import { GEAR_TYPES } from '../../content/gearTypes.js';
 import {
   HANDS, EQUIPMENT_ROLES, armamentIntrinsicStatProblems, slotHand, pieceHand, fitsSlot,
 } from './hands.js';
-import { CARD_MOD_APPLIES, RUN_MOD_APPLIES } from './applyVocab.js';
+import { CARD_MOD_APPLIES, RUN_MOD_APPLIES, GEAR_MOD_APPLIES } from './applyVocab.js';
 import { equipmentRequirementReceipt } from './requirements.js';
 import { fromDropPool } from './ownership.js';
 import { SLOT_RUNG_KIND, slotRungs } from './slotLadder.js';
@@ -46,6 +48,15 @@ export function validateEquipment(registries) {
     problems.push(`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; any problems listed above were found before it, and the stack points at the field that threw`);
     return problems;
   }
+}
+
+/** A gear-scope mod names a registered selector (or start/end) and registered conditions (equipmentTypes.json). */
+function gearModProblems(id, raw) {
+  const mod = ParseGearMod(raw), out = [];
+  if (!mod) return out;
+  if (!['start', 'end'].includes(mod.selector) && !GEAR_TYPES.selectors[mod.selector]) out.push(`${id}: '${mod.selector}' in '${raw}' is not a gear selector (add it to equipmentTypes.json)`);
+  for (const cond of mod.conds) if (!GEAR_TYPES.conditions[cond.name]) out.push(`${id}: '${cond.name}' in '${raw}' is not a gear condition (add it to equipmentTypes.json)`);
+  return out;
 }
 
 function collectEquipmentProblems(registries, problems = []) {
@@ -140,7 +151,7 @@ function collectEquipmentProblems(registries, problems = []) {
   }
 
   for (const piece of pieces) {
-    for (const raw of piece.mods || []) {
+    for (const raw of GearPieceMods(piece)) {
       const mod = parseMod(raw);
       if (!mod) {
         problems.push(`${piece.id}: unparseable mod '${raw}'`);
@@ -154,12 +165,31 @@ function collectEquipmentProblems(registries, problems = []) {
       if (spec.scope === 'run' && mod.prefix !== 'self') {
         problems.push(`${piece.id}: '${mod.field}' is a run mod and must be written as 'self.${mod.field}'`);
       }
+      if (spec.scope === 'gear') problems.push(...gearModProblems(piece.id, raw));
       if (spec.scope === 'card' && !(eq.cardTargets || []).includes(mod.prefix)) {
         problems.push(`${piece.id}: '${mod.prefix}' is not a card target (add it to equipTargets.csv)`);
       }
       if (spec.status && !registries.statuses.has(spec.status)) {
         problems.push(`equipMods.csv: field '${mod.field}' names unknown status '${spec.status}'`);
       }
+    }
+  }
+
+  // ---- the equipment type table (equipmentTypes.json): every named piece and every row names what exists ---------------------------------
+  for (const [pieceId, typeId] of Object.entries(GEAR_TYPES.items)) {
+    if (!GEAR_TYPES.weaponTypes[typeId]) problems.push(`equipmentTypes.json: item '${pieceId}' names unknown weapon type '${typeId}'`);
+    if (Array.isArray(eq.armaments) && !eq.armaments.some((piece) => piece.id === pieceId)) problems.push(`equipmentTypes.json: item '${pieceId}' is not an armament`);
+  }
+  for (const [pieceId, groupId] of Object.entries(GEAR_TYPES.armourItems)) {
+    if (!GEAR_TYPES.armourGroups[groupId]) problems.push(`equipmentTypes.json: armour '${pieceId}' names unknown group '${groupId}'`);
+    if (Array.isArray(eq.armour) && !eq.armour.some((piece) => piece.id === pieceId)) problems.push(`equipmentTypes.json: armour '${pieceId}' is not an outfit`);
+  }
+  for (const [id, row] of [...Object.entries(GEAR_TYPES.weaponTypes), ...Object.entries(GEAR_TYPES.armourGroups)]) {
+    for (const raw of (row.mods || [])) {
+      const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
+      if (!spec) problems.push(`equipmentTypes.json: '${id}' has an unknown or unparseable mod '${raw}'`);
+      else if (spec.scope === 'gear') problems.push(...gearModProblems(id, raw));
+      else if (spec.scope !== 'run' || mod.selector !== 'self') problems.push(`equipmentTypes.json: '${id}' mod '${raw}' must be a gear mod or a self.* run mod`);
     }
   }
 
@@ -170,9 +200,9 @@ function collectEquipmentProblems(registries, problems = []) {
   // input, no output, no complaint — Law 0 clause 5's dangerous half. The lists
   // live beside those consumers (CARD_MOD_APPLIES / RUN_MOD_APPLIES).
   for (const [field, spec] of Object.entries(fields)) {
-    const legal = spec.scope === 'run' ? RUN_MOD_APPLIES : spec.scope === 'card' ? CARD_MOD_APPLIES : null;
+    const legal = spec.scope === 'run' ? RUN_MOD_APPLIES : spec.scope === 'card' ? CARD_MOD_APPLIES : spec.scope === 'gear' ? GEAR_MOD_APPLIES : null;
     if (!legal) {
-      problems.push(`equipMods.csv: field '${field}' has scope '${spec.scope}' — expected 'card' or 'run'`);
+      problems.push(`equipMods.csv: field '${field}' has scope '${spec.scope}' — expected 'card', 'run' or 'gear'`);
       continue;
     }
     if (!legal.includes(spec.apply)) {

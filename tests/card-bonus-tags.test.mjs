@@ -212,7 +212,7 @@ test('delegating a status definition preserves target, duration, chance and cond
   const copy = text(faceWith(def, tags, null, legacy));
   assert.match(copy, /Prepared/);
   assert.match(copy, /before this card/);
-  assert.match(copy, /Stoneskin 2/);
+  assert.match(copy, /Diamond Skin 2/);
   assert.match(copy, /2 turns/);
   assert.match(copy, /an ally/);
   assert.match(copy, /50% chance/);

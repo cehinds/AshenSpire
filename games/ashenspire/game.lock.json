@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:2febb857e5bf087b9992a6ec57fb21ff5f55234cc7c4391e77cef4cc21588a0e",
+      "hash": "sha256:06a3a199e06234b56796bfefc4d6d947762d8ad94983f0ecaf5931e1c11c1d66",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:2d706a32937e1e5c7e34a1fe2be3cc80a016eb3e3d47b50d12dcc619ed5ec42e"
+          "hash": "sha256:54db8c947e4fb3754370157bffefa648eb335c29050c1394d5119592010a7205"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -322,7 +322,7 @@
           "path": "engine/modules/gear/settings.schema.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:5d1832320184fa0f6928afa0a9fe93f06cae811f106da9b964eb8ed3d0d64dea"
+          "hash": "sha256:429a0d561b3966866940e1e9023cf8042fb79f0e11890ce2db35140bc0266c38"
         },
         {
           "path": "engine/modules/heal-rules/defaults.json",
@@ -586,7 +586,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:3cd0e7889ab929d956402e914cf784c83721a6f5ccc225f2967e22bcd4c676ec"
+          "hash": "sha256:558253d2fa77a6e848a8983f4cec3017504b2bc8acd265500ebbb96cc5863244"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:59cc12805591c6c2441d3b34360fd2562376fad622f136e591680a05d56af10a"
+      "runtimeHash": "sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8"
     },
     "core": {
-      "hash": "sha256:2febb857e5bf087b9992a6ec57fb21ff5f55234cc7c4391e77cef4cc21588a0e",
+      "hash": "sha256:06a3a199e06234b56796bfefc4d6d947762d8ad94983f0ecaf5931e1c11c1d66",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:2d706a32937e1e5c7e34a1fe2be3cc80a016eb3e3d47b50d12dcc619ed5ec42e"
+          "hash": "sha256:54db8c947e4fb3754370157bffefa648eb335c29050c1394d5119592010a7205"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1046,7 +1046,7 @@
           "path": "engine/modules/gear/settings.schema.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:5d1832320184fa0f6928afa0a9fe93f06cae811f106da9b964eb8ed3d0d64dea"
+          "hash": "sha256:429a0d561b3966866940e1e9023cf8042fb79f0e11890ce2db35140bc0266c38"
         },
         {
           "path": "engine/modules/heal-rules/defaults.json",
@@ -1310,7 +1310,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:3cd0e7889ab929d956402e914cf784c83721a6f5ccc225f2967e22bcd4c676ec"
+          "hash": "sha256:558253d2fa77a6e848a8983f4cec3017504b2bc8acd265500ebbb96cc5863244"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:59cc12805591c6c2441d3b34360fd2562376fad622f136e591680a05d56af10a"
+      "runtimeHash": "sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8"
     }
   }
 }

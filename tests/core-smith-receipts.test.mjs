@@ -72,7 +72,11 @@ test('Core weapon tier: receipt names the attribute and each card it changes, an
   assert.equal(saved.changes[0].label, 'STR');
   const cards = saved.changes.filter((row) => row.kind === 'card' && row.op === 'damage');
   assert.ok(cards.length, 'at least one deck card changes damage');
-  assert.ok(cards.every((row) => row.after === row.before + 1), 'STR +1 is AR +1 at weight 1: +1 damage per card');
+  assert.ok(cards.some(row => reg.cards.get(row.cardId)?.tags.includes('maneuver:smash')), 'the receipt includes a Greatsword Smash');
+  for (const row of cards) {
+    const smash = reg.cards.get(row.cardId)?.tags.includes('maneuver:smash');
+    assert.equal(row.after - row.before, smash ? 2 : 1, `${row.cardId}: STR +1 contributes once, and a Greatsword Smash adds it a second time`);
+  }
   assert.ok(smith);
   // The receipt is the printed face: a fight's card face shows exactly before/after (levels reset for before).
   const face = (cardId) => { const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);

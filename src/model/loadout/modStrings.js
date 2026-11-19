@@ -6,7 +6,7 @@
  * Returns null on anything malformed; validateEquipment() reports those.
  */
 export function parseMod(str) {
-  const m = /^([A-Za-z]\w*)\.([A-Za-z]\w*)=([+-]?)(\d+(?:\.\d+)?)$/.exec(String(str).trim());
+  const m = /^([A-Za-z][\w:@]*)\.([A-Za-z]\w*)=([+-]?)(\d+(?:\.\d+)?)$/.exec(String(str).trim());
   if (!m) return null;
   const [, prefix, field, sign, num] = m;
   return {

@@ -56,6 +56,10 @@ for (const mode of ['native', 'bundled']) {
       'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
     ]);
     assert.equal(report.statuses.applyAndDecayCovered, statusCount);
+    const stoneSkin = report.statuses.rows.find(row => row.id === 'stoneHide');
+    assert.deepEqual({ before: stoneSkin.stacksBeforeDecay, after: stoneSkin.stacksAfterDecay,
+      retainedAtTurnEnd: stoneSkin.ownerTurnEndRetained, removed: stoneSkin.decayReceipt?.amount },
+    { before: 2, after: 0, retainedAtTurnEnd: true, removed: 2 }, 'Stone Skin exercises its actual owner-turn-start clock');
     assert.equal(report.statuses.modifierOutcomesCovered, report.statuses.modifierDeclarations);
     assert.equal(report.statuses.procBranchesCovered, 3);
     assert.equal(report.statuses.resistanceBranchesCovered, 3);

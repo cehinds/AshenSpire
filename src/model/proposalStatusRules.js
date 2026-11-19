@@ -3,6 +3,7 @@
 // never mutate actors, spend resources, roll randomness or execute reactions.
 // Chance checks take a d20 roll (owner, 2026-11-01) and pass on roll >= 21 - round(chance% / 5).
 import { chanceToD20Target } from './d20Chance.js';
+import { GearHitRiders } from './gearEffects.js';
 const stacksOf = instance => Math.max(0, Number(typeof instance === 'number' ? instance : instance?.stacks) || 0);
 const idOf = actor => actor?.id ?? actor?.actorId ?? 'player';
 const tagsOf = card => card?.cardTags ?? card?.tags ?? [];
@@ -148,6 +149,12 @@ export function proposalHitRules({ actor, target, card, amount, damageType, camp
     for (const b of actor.itemProps.weaponBonuses || []) if (hasAnyTag(card, ['classification.attack']) && !tagsOf(card).includes('camp:spell') && (!range || range === 'melee'))
       out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: 'spell', proposalReactive: true }));
     for (const b of actor.itemProps.onHit || []) out.effects.push(effect(actor, target, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
+    // Owner, 2026-11-18: gear hit rules (a Sweep applies Weak, a Smash Bleed, a whip removes Retreat), read through the card's tags and the target.
+    const riders = GearHitRiders(actor.itemProps.hitRules, card, target, { stance: actor.combatStance?.maneuver, weaponType: actor.itemProps.mainWeaponType });
+    for (const b of riders.applies) out.effects.push(effect(actor, target, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
+    // A push goes through the engagement move a Gale Push uses: the target takes the back row and a Retreat stack (engine/bandRows.js).
+    for (const b of riders.pushes) out.effects.push(effect(actor, target, { op: 'moveEngagement', target: 'enemy', bands: b.bands }));
+    for (const b of riders.removes) out.effects.push(effect(actor, target, { op: 'removeStatus', target: 'enemy', status: b.status, amount: b.stacks }));
   }
   out.amount = damageQuantity(out.amount * outgoingMultiplier);
   let incomingCap = Infinity, healingMultiplier = null;

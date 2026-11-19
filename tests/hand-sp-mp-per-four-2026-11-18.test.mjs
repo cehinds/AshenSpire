@@ -1,5 +1,5 @@
 // Owner, 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 9): opening hand and draw are 5 + floor(INT / 4) (base 5 so a starting character holds
-// 5 to 6 cards), max MP is 1 + floor(WIS / 4), max SP is 3 + floor(DEX / 4), a staff or sceptre takes 1 off every spell's Mana cost (never below 0), and
+// 5 to 6 cards), max MP is 1 + floor(WIS / 4), max SP is 3 + floor(DEX / 4), a staff or sceptre takes 1 off a spell's final Mana cost only in Prepared (never below 0), and
 // a few magic relics give +1 max Mana. The formula boundaries (3/4, 7/8) are pinned in tests/balance-stats-2026-11-17.test.mjs item 5.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -64,24 +64,26 @@ test('max SP and MP read DEX and WIS in fours', () => {
   }
 });
 
-test('a staff or sceptre takes 1 off every spell Mana cost (never below 0); preview equals play', () => {
-  // The Focus item type every staff and sceptre carries is the owner's "inherently lower": Core prices a spell at its Mana + 1 and a held
-  // focus (spellCosts.focusManaDiscount) takes the 1 back, so the same spell costs 1 more without one. It is shown in the Magic Focus text.
+test('current staff or sceptre Focus takes 1 Mana off only in Prepared; preview equals play', () => {
+  // Owner section 18 supersedes section 9's unconditional timing: current Focus discounts only Prepared.
   const costOf = (combat, cardId) => {
     combat.piles.hand.push({ instanceId: `probe-${cardId}`, cardId });
     return previewCard(combat, `probe-${cardId}`, combat.enemies[0].id).costs.mana;
   };
   const sceptre = fight('starseer').combat, sword = fight('starseer', { weapon: 'straightSword' }).combat;
-  for (const cardId of ['starShower', 'core.cantrip', 'starstoneArc']) assert.equal(costOf(sword, cardId) - costOf(sceptre, cardId), 1, `${cardId}: 1 less with a focus`);
+  for (const cardId of ['starShower', 'core.cantrip', 'starstoneArc']) assert.equal(costOf(sceptre, cardId), costOf(sword, cardId), `${cardId}: no Focus discount outside Prepared`);
+  sceptre.player.combatStance = sword.player.combatStance = { maneuver: 'prepared', camp: 'spell' };
+  for (const cardId of ['starShower', 'core.cantrip', 'starstoneArc']) assert.equal(costOf(sceptre, cardId), Math.max(0, costOf(sword, cardId) - 1), `${cardId}: one Focus discount in Prepared, final floor 0`);
   assert.equal(costOf(sceptre, 'core.cantrip'), 0, 'a free spell stays free, never negative');
   assert.equal(costOf(sceptre, 'warcry'), 0, 'a non-spell is untouched');
   for (const staff of contentBundle.equipment.armaments.filter(p => p.kind === 'staff')) {
     assert.ok(registries.equipment.armaments.find(p => p.id === staff.id).itemTypeTags.includes('item:magic-focus'), `${staff.id} is a Focus`);
   }
-  assert.match(registries.tags.find(tag => tag.id === 'item:magic-focus').blurb, /lowers the Mana cost of every spell by 1/);
+  assert.match(registries.tags.find(tag => tag.id === 'item:magic-focus').blurb, /Prepared stance.*lowers the final Mana cost of each spell by 1/);
   // Preview == play: the Mana the real play spends is the Mana the preview quoted.
   const { combat } = fight('starseer');
   combat.player.mana = combat.player.maxMana;
+  combat.player.combatStance = { maneuver: 'prepared', camp: 'spell' };
   combat.piles.hand.push({ instanceId: 'cast', cardId: 'starShower' });
   const quoted = previewCard(combat, 'cast', combat.enemies[0].id).costs.mana;
   const before = combat.player.mana;
