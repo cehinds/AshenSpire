@@ -83,6 +83,48 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     detailButton.setAttribute('aria-pressed', String(detailed));
     renderCombatLogEntries(list, currentEntries, { detailed, palette, legend: true });
   });
+  const copyButton = button({ label: t('common.copy'), attrs: { 'data-combat-log-copy': '', 'aria-live': 'polite' } });
+  let closed = false, copyReset = null;
+  copyButton.addEventListener('click', async () => {
+    if (copyButton.disabled) return;
+    let round;
+    const lines = [];
+    for (const entry of currentEntries) {
+      if (entry.round !== round) {
+        round = entry.round;
+        if (lines.length) lines.push('');
+        lines.push(t('combat.log.round', { round }));
+      }
+      lines.push(Array.isArray(entry.segments) && entry.segments.length
+        ? entry.segments.map(segment => typeof segment?.text === 'string' ? segment.text : '').join('')
+        : entry.text);
+      if (detailed) lines.push(...damageReceiptLines(entry.damageReceipt), ...rollReceiptLines(entry.rollReceipt));
+    }
+    const text = lines.length ? lines.join('\n') : tFull('combat.log.empty');
+    copyButton.disabled = true;
+    clearTimeout(copyReset);
+    try {
+      await navigator.clipboard.writeText(text);
+      if (closed) return;
+      copyButton.textContent = t('common.copied');
+    } catch {
+      if (closed) return;
+      // Keep the selected log available for manual copy when clipboard access is blocked.
+      const range = document.createRange();
+      range.selectNodeContents(list);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      copyButton.textContent = t('debugChrome.consoleManualCopy');
+    } finally {
+      if (!closed) {
+        copyButton.disabled = false;
+        copyReset = setTimeout(() => {
+          if (!closed) copyButton.textContent = t('common.copy');
+        }, 1500);
+      }
+    }
+  });
   const consoleButton = button({ label: t('debugChrome.console'), attrs: { 'aria-haspopup': 'dialog', 'data-console-shortcut': '' } });
   let consoleModal = null;
   consoleButton.addEventListener('click', () => {
@@ -98,14 +140,14 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
   };
   const modal = OpenModal({
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
-    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, consoleButton], opener: openerRef, onClose: () => { consoleModal?.close(); onClose?.(); },
+    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, copyButton, consoleButton], opener: openerRef, onClose: () => { closed = true; clearTimeout(copyReset); consoleModal?.close(); onClose?.(); },
   });
   let consoleEnabled = null;
   const setConsoleEnabled = enabled => {
     if (consoleEnabled === !!enabled) return;
     consoleEnabled = !!enabled;
     consoleButton.hidden = !enabled;
-    modal.foot.querySelector('.modal-foot-actions').dataset.actionCount = enabled ? '3' : '2';
+    modal.foot.querySelector('.modal-foot-actions').dataset.actionCount = enabled ? '4' : '3';
   };
   setConsoleEnabled(showConsole);
   markUiComponent(modal.panel, UI.combatLogModal);

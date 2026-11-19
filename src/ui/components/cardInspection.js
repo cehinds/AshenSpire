@@ -305,7 +305,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     note.className = 'card-action-reason';
     note.setAttribute('role', 'status');
     note.textContent = blocked.map((row) => row.reason).join(' ');
-    details.append(note);
+    details.prepend(note);
   }
   const buttons = rows.map((row) => {
     const button = document.createElement('button');

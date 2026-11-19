@@ -1758,7 +1758,7 @@
    head and the entries clear of them. Specificity beats the rung's width. */
 .modal-veil:has(> .combat-log-modal) { padding: 0 !important; }
 .modal.combat-log-modal[data-size] { --modal-rung-width: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1)); width: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1)); max-width: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom,1)); max-height: none; border: 0; border-radius: 0; box-sizing: border-box; padding: calc(env(safe-area-inset-top,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-right,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-left,0px) / var(--ui-zoom,1)); }
-.combat-log-modal-entries { padding: 0.6rem 1.4rem 2rem; font-size: calc(15px / var(--ui-zoom,1)); line-height: 1.45; }
+.combat-log-modal-entries { padding: 0.6rem 1.4rem 2rem; font-size: calc(15px / var(--ui-zoom,1)); line-height: 1.45; user-select: text; }
 .combat-log-modal-entries h3 { font-size: inherit; color: var(--gold); margin: 1rem 0 0.3rem; }
 .combat-log-modal-entries ol { list-style: none; padding: 0; margin: 0; }
 .combat-log-modal-entries li { border-bottom: 1px solid #b4925438; padding: 0.35rem 0; }
