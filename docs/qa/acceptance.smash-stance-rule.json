@@ -24,8 +24,8 @@
   ],
   "scenes": [
     {
-      "name": "Core Smash real Information states Defend 1.5 and Prepared 1.25",
-      "url": "?shot=combat&shotSeed=4&shotEnemies=wanderingSoldier&shotDeck=core.smash",
+      "name": "Core Smash real Information states Defend 1.5 and Prepared 1.25 (audio muted)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=wanderingSoldier&shotDeck=core.smash&shotSettings=%7B%22muteAudio%22%3Atrue%7D",
       "ready": ".hand .card[data-card-id=\"core.smash\"]",
       "settleMs": 1500,
       "actions": [
