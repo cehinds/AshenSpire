@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
-- **Card art shows what stats change** ([#2854](https://github.com/cehinds/AshenSpire/pull/2854), `0.7.4.189`). Cards use steel objects to show their stat changes. Green up chevrons signal a boost, and red down chevrons signal a penalty, including in Lite mode. Artwork follows live card effects and range changes, so a sword can switch to a spear when the attack gains Reach.
+- **Card art shows what stats change** ([#2854](https://github.com/cehinds/AshenSpire/pull/2854), `0.7.4.191`). Cards use steel objects to show their stat changes. Green up chevrons signal a boost, and red down chevrons signal a penalty, including in Lite mode. Artwork follows live card effects and range changes, so a sword can switch to a spear when the attack gains Reach.
 - **Retry interrupted build downloads** ([#2857](https://github.com/cehinds/AshenSpire/pull/2857), `0.7.4.189`). Publishing can retry a connection that drops partway through restoring the existing Main build, discarding the incomplete bytes. Download attempts stay limited, and oversized or invalid files still stop publication.
 
 - **Rules handbook catches up** ([#2856](https://github.com/cehinds/AshenSpire/pull/2856), `0.7.4.187`). The rules handbook now describes the longer acts and V-shaped map, stance cards, the max Mana relics and the stance attribute bonuses.
