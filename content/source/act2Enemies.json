@@ -1197,14 +1197,7 @@
         "intent": "block",
         "block": 12,
         "weight": 20,
-        "maxConsecutive": 1,
-        "effects": [
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 4
-          }
-        ]
+        "maxConsecutive": 1
       },
       "pilgrimBurden": {
         "sp": 3,

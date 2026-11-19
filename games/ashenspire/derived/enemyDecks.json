@@ -5473,11 +5473,6 @@
             "op": "block",
             "target": "self",
             "amount": 12
-          },
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 4
           }
         ],
         "hints": {

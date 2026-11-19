@@ -6601,21 +6601,15 @@
         "op": "block",
         "target": "self",
         "amount": 12
-      },
-      {
-        "op": "heal",
-        "target": "self",
-        "amount": 4
       }
     ],
     "tags": [
       "camp:physical",
-      "fx:heal",
       "maneuver:defend",
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Heal {heal} HP."
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "pallidOathCamel.pilgrimBurden",

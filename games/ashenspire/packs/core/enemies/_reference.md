@@ -310,7 +310,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:pallidOathCamel.oathKick | Oath Kick | attack | 1 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.hallowSpit | Hallow Spit | attack | 1 | 1 | Deal {damage} damage. |
 | card:pallidOathCamel.packCrush | Pack Crush | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
-| card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. |
 | card:pallidOathCamel.pilgrimBurden | Pilgrim Burden | attack | 3 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:inkveilNautilus.inkJet | Ink Jet | attack | 1 | 1 | Deal {damage} damage. |
@@ -467,7 +467,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
-| relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
@@ -480,3 +479,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
+| relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |

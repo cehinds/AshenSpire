@@ -2590,7 +2590,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Gain {block} Block. Heal {heal} HP.",
+      "text": "Gain {block} Block.",
       "usedBy": "enemy sheet"
     },
     "card:pallidOathCamel.pilgrimBurden": {
@@ -4150,14 +4150,6 @@
         "self.sp=-1"
       ]
     },
-    "relic:enemy.relic.oathPack": {
-      "name": "Oath Pack",
-      "text": "CON +2, WIS +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.wisdom=+1"
-      ]
-    },
     "relic:enemy.relic.saltBlubber": {
       "name": "Salt Blubber",
       "text": "CON +3, SP -1",
@@ -4253,6 +4245,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.intelligence=+1"
+      ]
+    },
+    "relic:enemy.relic.oathPack": {
+      "name": "Oath Pack",
+      "text": "CON +2, WIS +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.wisdom=+1"
       ]
     }
   }
