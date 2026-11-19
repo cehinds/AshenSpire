@@ -55,7 +55,11 @@
         "roundShield",
         "spikedShield",
         "lantern",
-        "torch"
+        "torch",
+        "grimoire",
+        "prayerBook",
+        "sunTalisman",
+        "boneTalisman"
       ]
     },
     "scepters": {

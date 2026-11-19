@@ -433,6 +433,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
 | gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
 | gear:stormSceptre | Storm Sceptre | rightHand | staff | uncommon | sceptre, retreat |
+| gear:grimoire | Grimoire | leftHand | shield | uncommon |  |
+| gear:prayerBook | Prayer Book | leftHand | shield | common |  |
+| gear:sunTalisman | Sun Talisman | leftHand | shield | uncommon | regen |
+| gear:boneTalisman | Bone Talisman | leftHand | shield | uncommon |  |
 
 ## Relics (relic:)
 

@@ -1081,5 +1081,81 @@
         "artCardId": "starstoneKris"
       }
     }
+  },
+  {
+    "weaponId": "grimoire",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "pyreOfCharts"
+      ],
+      "learnableArts": [
+        "ashfallRite",
+        "cinderLance"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "pyreOfCharts"
+      }
+    }
+  },
+  {
+    "weaponId": "prayerBook",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "transfusion"
+      ],
+      "learnableArts": [
+        "lastMercy",
+        "secondBloom"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "transfusion"
+      }
+    }
+  },
+  {
+    "weaponId": "sunTalisman",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "martyrBlood"
+      ],
+      "learnableArts": [
+        "bloodletting",
+        "litany"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "martyrBlood"
+      }
+    }
+  },
+  {
+    "weaponId": "boneTalisman",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "blightwardLash"
+      ],
+      "learnableArts": [
+        "cullTheWeak",
+        "progression-blight-litany"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "blightwardLash"
+      }
+    }
   }
 ]

@@ -4345,5 +4345,217 @@
         "max": 4
       }
     }
+  },
+  {
+    "id": "grimoire",
+    "name": "Grimoire",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  },
+  {
+    "id": "prayerBook",
+    "name": "Prayer_Book",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
+    }
+  },
+  {
+    "id": "sunTalisman",
+    "name": "Sun_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [
+      "regen"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "self.regen=+1"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  },
+  {
+    "id": "boneTalisman",
+    "name": "Bone_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
   }
 ]

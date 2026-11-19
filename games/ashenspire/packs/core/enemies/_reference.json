@@ -3946,6 +3946,40 @@
         "retreat"
       ],
       "range": "reach"
+    },
+    "gear:grimoire": {
+      "name": "Grimoire",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [],
+      "range": "melee"
+    },
+    "gear:prayerBook": {
+      "name": "Prayer Book",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "common",
+      "tags": [],
+      "range": "melee"
+    },
+    "gear:sunTalisman": {
+      "name": "Sun Talisman",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [
+        "regen"
+      ],
+      "range": "melee"
+    },
+    "gear:boneTalisman": {
+      "name": "Bone Talisman",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [],
+      "range": "melee"
     }
   },
   "relics": {

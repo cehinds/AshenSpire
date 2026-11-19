@@ -1453,5 +1453,65 @@
       "id": "stormSceptre"
     },
     "range": "reach"
+  },
+  {
+    "id": "grimoire",
+    "name": "Grimoire",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "grimoire"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "prayerBook",
+    "name": "Prayer_Book",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "prayerBook"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "sunTalisman",
+    "name": "Sun_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [
+      "regen"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "sunTalisman"
+    },
+    "range": "melee"
+  },
+  {
+    "id": "boneTalisman",
+    "name": "Bone_Talisman",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "boneTalisman"
+    },
+    "range": "melee"
   }
 ]

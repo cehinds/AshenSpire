@@ -534,6 +534,26 @@
         "caster": true,
         "conductive": true
       }
+    },
+    "grimoire": {
+      "flat": {
+        "fire": 1
+      }
+    },
+    "prayerBook": {
+      "flat": {
+        "decay": 1
+      }
+    },
+    "sunTalisman": {
+      "flat": {
+        "frost": 1
+      }
+    },
+    "boneTalisman": {
+      "flat": {
+        "frost": 1
+      }
     }
   },
   "enemies": {

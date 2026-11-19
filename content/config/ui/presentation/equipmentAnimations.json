@@ -65,10 +65,14 @@
         "spikedShield"
       ],
       "lantern": [
-        "lantern"
+        "lantern",
+        "grimoire",
+        "prayerBook"
       ],
       "torch": [
-        "torch"
+        "torch",
+        "sunTalisman",
+        "boneTalisman"
       ],
       "staff": [
         "ashStaff",
