@@ -2186,7 +2186,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
   // Resolve the same upgraded/ranked variant before combat Gear projection. Face comparisons
   // apply its always-on Gear once, independently of live triggered bonuses and charged effects.
-  const baselineDefinition = configuredCombat(combat) && combat.gameProfile
+  const faceDefinition = configuredCombat(combat) && combat.gameProfile
     ? selectCardVariant(combat, resolveCombatCard(combat, inst, { upcastRanks, applyGear: false }), paidCosts, targetId ? findEntity(combat, targetId) : null) : null;
   const displayCosts = priceReceipt.display;
   const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
@@ -2574,7 +2574,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
       fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
-      baselineDefinition: structuredClone(baselineDefinition),
+      faceDefinition: structuredClone(faceDefinition),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,
       // Owner, 2026-11-18: the always-on gear rules are part of the baseline face; triggered ones are not (they colour in the fight).

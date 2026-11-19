@@ -26,17 +26,16 @@ const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } 
 const mk = (classId, registries = reg) => createRunState({ registries, classId, seed: 511, profileMeta: meta });
 const fightPoise = (run, registries = reg) => createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.persistentPoise.max;
 
-// Measured at level 1. Before the 2026-11-18 gear rule: reaver 8, starseer 5, rogue 8, herald 5 (every item floored at 1 Poise point).
-// After: a non-defensive one-hander (staff, dagger) adds 0, the Greatsword still adds its 6, and the starting armour is not a catalogue item.
+// Exact historical Dev 6727a255 profile controls: no current equipment type/group grants or start-of-turn Ward.
 const LEVEL_ONE_POISE = { reaver: 8, starseer: 2, rogue: 2, herald: 2 };
 
 test('historical level-1 Poise per class is 1 + CON + the Poise the worn gear adds', () => {
   for (const [classId, expected] of Object.entries(LEVEL_ONE_POISE)) {
     const run = mk(classId);
-    assert.equal(fightPoise(run), expected, `${classId} opens a fight at ${expected} Poise`);
+    assert.equal(fightPoise(run), expected, `${classId} opens a historical fight at ${expected} Poise`);
     const receipt = gameProfileRatingReceipt(reg, run);
     const attribute = receipt.sources.filter((s) => s.kind === 'attribute').reduce((sum, s) => sum + s.poise, 0);
-    assert.equal(attribute, 1 + run.attributes.constitution, `${classId}: the attribute term is the row's base 1 plus CON, counted once`);
+    assert.equal(attribute, 1 + gameProfileEffectiveAttributes(reg, run).constitution, `${classId}: the attribute term is the row's base 1 plus CON, counted once`);
     assert.equal(receipt.totals.poise, expected);
   }
 });

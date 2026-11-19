@@ -10,7 +10,7 @@ import { createRegistries } from '../src/model/registries.js';
 import * as Profile from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { rederivePools } from '../src/model/levelup.js';
-import { staticCardTokens } from '../src/model/playingCard.js';
+import { staticCardTokens, playingCardModel } from '../src/model/playingCard.js';
 import { evadeStackGainPhrase } from '../src/model/fixCoreMechanics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
@@ -186,7 +186,7 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
   assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
   assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
   const calm = damageFace(world, 'core.cinderDart');
-  const base = calm.preview.faceRules.baselineDefinition;
+  const base = calm.preview.faceRules.faceDefinition;
   assert.equal(base.effects[0].amount, 3, 'the selected card before combat Gear projection');
   assert.equal(calm.preview.resolvedDefinition.effects[0].amount, 4, 'Sceptre adds exactly one base damage');
   assert.equal(calm.baseline, calm.value);
@@ -199,10 +199,10 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
   assert.ok(lit.value > calm.value);
   assert.deepEqual(lit.classes, ['up']);
   assert.deepEqual(world.combat.player.itemProps.cardRules.slice(0, -1), rulesBefore, 'preview did not rewrite Gear rules');
-  lit.preview.faceRules.baselineDefinition.effects[0].amount = 999;
+  lit.preview.faceRules.faceDefinition.effects[0].amount = 999;
   const card = world.combat.piles.hand.at(-1);
   const quote = previewCard(world.combat, card.instanceId, world.enemy.id);
-  assert.equal(quote.faceRules.baselineDefinition.effects[0].amount, 3, 'baseline metadata is detached');
+  assert.equal(quote.faceRules.faceDefinition.effects[0].amount, 3, 'baseline metadata is detached');
   const expected = quote.values.find(row => row.op === 'damage').perTargetHitDamages[world.enemy.id].reduce((sum, amount) => sum + amount, 0);
   const before = world.enemy.hp;
   world.combat.player.energy = world.combat.player.stamina = world.combat.player.mana = 100;
@@ -219,7 +219,7 @@ test('the pre-Gear baseline preserves an upgraded copy, card rank and the select
     const card = world.combat.piles.hand.at(-1);
     const projected = Profile.projectGameCard(world.combat, card);
     assert.equal(projected.effects[0].amount, amount, 'the upgraded/ranked card differs from the raw registry');
-    assert.deepEqual(face.preview.faceRules.baselineDefinition.effects, projected.effects);
+    assert.deepEqual(face.preview.faceRules.faceDefinition.effects, projected.effects);
     assert.equal(face.preview.resolvedDefinition.effects[0].amount, amount + 1, 'Sceptre applies after upgrade/rank');
     assert.equal(face.value, face.baseline);
     assert.deepEqual(face.classes, ['black']);
@@ -228,12 +228,38 @@ test('the pre-Gear baseline preserves an upgraded copy, card rank and the select
   const world = fight('reaver', { ownProfile });
   world.combat.player.combatStance = { maneuver: 'smash', camp: 'physical', range: 'melee' };
   const face = damageFace(world, 'base.current-stance-variant');
-  const live = face.preview.resolvedDefinition, base = face.preview.faceRules.baselineDefinition;
+  const live = face.preview.resolvedDefinition, base = face.preview.faceRules.faceDefinition;
   assert.equal(live.activeEffectVariant, 0);
   assert.equal(base.activeEffectVariant, live.activeEffectVariant, 'the same variant is selected before Gear');
   assert.deepEqual(base.effects, base.effectVariants[0].effects);
   assert.equal(base.effects[0].op, 'damage', 'the selected Smash branch replaces the base branch');
   assert.equal(base.effects[0].amount, 12);
+});
+
+test('faceDefinition retains fallback cards and instance proposal changes through the same resolver', () => {
+  const world = fight('starseer', { ownProfile: unitDamageProfile() });
+  isolateAttributeColours(world);
+  assert.equal(Profile.projectGameCard(world.combat, { cardId: 'blightTouch' }), null, 'this real spell takes the registry fallback path');
+  const fallback = damageFace(world, 'blightTouch');
+  assert.equal(fallback.preview.faceRules.faceDefinition.id, 'blightTouch');
+  assert.equal(fallback.preview.resolvedDefinition.effects[0].amount, fallback.preview.faceRules.faceDefinition.effects[0].amount + 1, 'Sceptre still projects the fallback card once');
+  assert.deepEqual(fallback.classes, ['black']);
+  const proposed = damageFace(world, 'core.cinderDart', { proposalChanges: { range: 'ranged', maneuver: 'ranged', retain: true } });
+  const face = proposed.preview.faceRules.faceDefinition;
+  assert.equal(face.range, 'ranged');
+  assert.equal(face.combatProfile.range, 'ranged');
+  assert.equal(face.combatProfile.maneuver, 'ranged');
+  assert.ok(face.keywords.includes('retain'));
+});
+
+test('faceDefinition never replaces a different card or an anonymous synthetic definition', () => {
+  const world = fight('starseer');
+  const face = damageFace(world, 'core.cinderDart').preview.faceRules;
+  const withoutDefinition = { ...face, faceDefinition: undefined };
+  for (const def of [{ id: 'unrelated', effects: [{ op: 'block', target: 'self', amount: 3 }] }, { effects: [{ op: 'block', target: 'self', amount: 3 }] }]) {
+    assert.deepEqual(staticCardTokens(def, world.registries, face), staticCardTokens(def, world.registries, withoutDefinition));
+  }
+  assert.deepEqual(staticCardTokens({ effects: [] }), {}, 'no face rules and no ID are valid');
 });
 
 for (const policy of ['current', 'saved attribute rule', 'saved disabled tradition']) test(`an Evade metric face renders its full detached ${policy} snapshot`, () => {
@@ -287,4 +313,120 @@ test('an Evade face with no saved rule object keeps the historical default path'
   assert.match(lines.map(row => row.html).join(''), />1<\/span> Evade/);
   assert.equal(world.combat.fixCoreRules, undefined, 'rendering does not install a rule snapshot');
   assert.equal(ownProfile.modules.effects.spellTraditionsVersion, undefined, 'the genuine profile keeps its historical policy');
+});
+
+test('current Light armour adds its real Evade bonus in the hand, target quote and live play', () => {
+  const world = fight('rogue');
+  assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.equal(world.combat.player.itemProps.gainBonus.evade, 1);
+  world.combat.piles.hand = [{ instanceId: 'light-evade', cardId: 'core.evade' }];
+  const before = world.combat.player.statuses.evade?.stacks || 0;
+  const preview = previewCard(world.combat, 'light-evade');
+  assert.equal(preview.values[0].value, 2, 'one configured stack plus one real Light armour stack');
+  const lines = cardFaceLines(world.registries.cards.get('core.evade'), preview, world.registries, null);
+  assert.match(lines.map(row => row.html).join(''), />2<\/span> Evade/);
+  world.combat.player.stamina = world.combat.player.energy = 100;
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: 'light-evade' });
+  assert.equal(world.combat.player.statuses.evade.stacks - before, 2);
+});
+
+for (const upgraded of [false, true]) test(`always-on Gear is counted once on the original${upgraded ? ' upgraded' : ''} face, hand and live cast`, () => {
+  const ownProfile = Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
+  } });
+  const world = fight('starseer', { ownProfile, attributes: { intelligence: 8, wisdom: 2 } });
+  delete world.combat.fixCoreRules.elements;
+  delete world.combat.fixCoreRules.stanceBenefits;
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  world.enemy.actorIntentRevealed = true;
+  const authored = structuredClone(world.registries.cards.get('core.cinderDart'));
+  const result = damageFace(world, 'core.cinderDart', { upgraded });
+  const instance = world.combat.piles.hand.at(-1);
+  const original = Profile.projectGameCard(world.combat, instance);
+  assert.deepEqual(result.preview.faceRules.faceDefinition, original, 'the baseline owns the same upgrade as the card outside combat');
+  assert.equal(result.preview.resolvedDefinition.effects[0].amount, original.effects[0].amount + 1, 'the real Sceptre supplies exactly one flat bonus');
+  assert.equal(result.preview.faceRules.gearRules.filter(rule => rule.stat === 'damage').length, 1);
+  assert.deepEqual(result.classes, ['black']);
+  assert.equal(result.value, result.baseline);
+  assert.equal(staticCardTokens(original, world.registries, world.run).damage, result.baseline, 'the outside face agrees');
+  assert.equal(playingCardModel(world.registries, instance, { preview: result.preview }).baseTokens.damage, result.baseline, 'the full rendered-card model shares that baseline');
+  world.combat.player.mana = world.combat.player.stamina = world.combat.player.energy = 100;
+  const hp = world.enemy.hp;
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: world.enemy.id });
+  assert.equal(hp - world.enemy.hp, result.preview.values.find(value => value.op === 'damage').perTarget[world.enemy.id], 'the target quote equals the actual cast');
+  result.preview.faceRules.faceDefinition.effects[0].amount = 999;
+  assert.deepEqual(world.registries.cards.get('core.cinderDart'), authored, 'mutable presentation metadata cannot change authored card data');
+  assert.deepEqual(Profile.projectGameCard(world.combat, instance), original);
+});
+
+test('triggered Gear stays outside the always-on face baseline', () => {
+  const ownProfile = Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
+  } });
+  const world = fight('starseer', { ownProfile, attributes: { intelligence: 8, wisdom: 2 } });
+  delete world.combat.fixCoreRules.elements;
+  delete world.combat.fixCoreRules.stanceBenefits;
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  const before = damageFace(world, 'core.cinderDart');
+  world.combat.player.itemProps.cardRules.push({ selector: 'spell', arg: null, conds: [{ name: 'first', arg: 'fight' }], stat: 'damage', amount: 4, mode: 'add', source: 'test:first-cast' });
+  const triggered = damageFace(world, 'core.cinderDart');
+  assert.equal(triggered.preview.resolvedDefinition.effects[0].amount, before.preview.resolvedDefinition.effects[0].amount + 4);
+  assert.equal(triggered.baseline, before.baseline, 'only always-on Gear belongs to the baseline');
+  assert.ok(triggered.value > before.value);
+  assert.deepEqual(triggered.classes, ['up']);
+  assert.equal(playingCardModel(world.registries, world.combat.piles.hand.at(-1), { preview: triggered.preview }).baseTokens.damage, before.baseline);
+});
+
+for (const upgraded of [false, true]) test(`selected Stance Echo keeps its original${upgraded ? ' upgraded' : ''} branch baseline and live Multi-hit`, () => {
+  const ownProfile = Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
+  } });
+  const world = fight('starseer', { ownProfile });
+  delete world.combat.fixCoreRules.elements;
+  delete world.combat.fixCoreRules.stanceBenefits;
+  world.combat.fixCoreRules.stance.effectivenessMultiplier = 1;
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  world.combat.player.combatStance = { maneuver: 'smash', camp: 'physical', range: 'melee' };
+  world.combat.player.statuses.multiHit = { stacks: 2 };
+  world.enemy.actorIntentRevealed = true;
+  const result = damageFace(world, 'base.current-stance-variant', { upgraded });
+  const instance = world.combat.piles.hand.at(-1), original = Profile.projectGameCard(world.combat, instance);
+  const branch = result.preview.resolvedDefinition.activeEffectVariant;
+  assert.equal(branch, 0, 'the real Smash branch is selected');
+  assert.deepEqual(result.preview.faceRules.faceDefinition.effects, original.effectVariants[branch].effects, 'the baseline keeps the selected authored branch before Gear/status changes');
+  assert.equal(result.preview.faceRules.faceDefinition.activeEffectVariant, branch);
+  assert.equal(result.value, result.baseline);
+  assert.equal(result.preview.values.find(value => value.op === 'damage').hits, 3);
+  assert.equal(playingCardModel(world.registries, instance, { preview: result.preview }).baseTokens.damage, result.baseline);
+  world.combat.player.mana = world.combat.player.stamina = world.combat.player.energy = 100;
+  const hp = world.enemy.hp, start = world.combat.eventLog.length;
+  dispatch(world.combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: world.enemy.id });
+  const expected = result.preview.values.find(value => value.op === 'damage').perTargetHitDamages[world.enemy.id];
+  const contacts = world.combat.eventLog.slice(start).filter(event => event.type === 'damageDealt' && event.targetId === world.enemy.id);
+  assert.equal(hp - world.enemy.hp, expected.reduce((sum, amount) => sum + amount, 0));
+  assert.deepEqual(contacts.map(event => event.hpLoss), expected);
+  assert.equal(contacts.length, 3);
+});
+
+
+
+
+for (const version of [undefined, 0]) test(`saved combat tradition policy ${version} wins with default damage scales and active Gear`, () => {
+  const world = fight('starseer', { attributes: { intelligence: 8, wisdom: 2 } });
+  // This checks the saved casting policy, not Decay's multiplier or Prepared's bonus.
+  // Keep current equipment and the real side scale while isolating those fight effects.
+  delete world.combat.fixCoreRules.elements;
+  delete world.combat.fixCoreRules.stanceBenefits;
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  if (version === undefined) delete world.combat.fixCoreRules.spellTraditionsVersion;
+  else world.combat.fixCoreRules.spellTraditionsVersion = version;
+  assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
+  const face = damageFace(world, 'blightTouch');
+  assert.equal(face.preview.faceRules.fixCoreRules.spellTraditionsVersion, version);
+  assert.equal(face.value, face.baseline);
+  assert.deepEqual(face.classes, ['black']);
+  const def = world.registries.cards.get('blightTouch');
+  assert.equal(staticCardTokens(def, world.registries, world.combat).damage, face.value, 'pile/combat face honors the saved policy');
+  assert.equal(staticCardTokens(def, world.registries, { ...world.run, fixCoreRules: world.combat.fixCoreRules }).damage, face.value, 'saved run policy wins too');
+  assert.equal(staticCardTokens(def, world.registries, { ...face.preview.faceRules, gameProfile: undefined }).damage, face.value, 'registry profile fallback retains the saved policy and the same equipment');
 });
