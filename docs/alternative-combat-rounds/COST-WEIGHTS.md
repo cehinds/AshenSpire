@@ -382,7 +382,6 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `retreat` | 2 | card | The owner's floor for a status. |
 | `stanceShifted` | 2 | card | The owner's floor for a status. |
 | `stoneskin` | 2 | card | The owner's floor for a status. |
-| `retreat` | 2 | card | The owner's floor for a status. |
 | `fireVulnerable` | 2 | card | The owner's floor for a status. |
 | `multiHit` | 2 | card | The owner's floor for a status. |
 | `reach` | 2 | card | The owner's floor for a status. |
