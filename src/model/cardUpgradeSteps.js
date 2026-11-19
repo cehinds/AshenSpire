@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, PHYSICAL_DAMAGE_TYPES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -17,7 +17,7 @@ export { STACK_CAPS };
 // pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
 // several never offers the same thing twice.
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
-  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
+  poise: 12, range: 3, targeting: 6, maneuver: 5, dmgType: 5, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
@@ -34,7 +34,7 @@ export const UPGRADE_GROUPS = Object.freeze(['ease', 'eff', 'new', 'identity']);
 const GROUP_OF = Object.freeze({
   'fx:unexhaust': 'ease', 'fx:unethereal': 'ease', 'fx:steady': 'ease', stkEase: 'ease',
   dmg: 'eff', blk: 'eff', stk: 'eff', cost: 'eff', hits: 'eff', poise: 'eff', element: 'eff', rankDown: 'eff',
-  range: 'identity', targeting: 'identity', maneuver: 'identity', school: 'identity',
+  range: 'identity', targeting: 'identity', maneuver: 'identity', dmgType: 'identity',
 });
 /** The group an option kind belongs to; every `fx:` effect and `addStatus` / `attr` is a new effect. */
 export const upgradeGroupOf = (kind) => GROUP_OF[kind] || 'new';
@@ -81,7 +81,7 @@ const SIZE_MULT = Object.freeze({ dmg: [1, 2, 4], blk: [1, 2, 4], poise: [1, 2, 
 const PLACED_AT = Object.freeze({
   'fx:cull': 0, 'fx:copy': 0, 'fx:shuffle': 0, 'fx:counter': 0,
   'fx:retain': 1, 'fx:innate': 1, 'fx:holdOne': 1, 'fx:reaction': 1, targeting: 1, maneuver: 1, rankDown: 1, element: 0,
-  range: 2, attr: 2, school: 0,
+  range: 2, attr: 2, dmgType: 0,
 });
 // The ease kinds: easing a drawback is common; the uncommon version removes it and draws a card, the rare one removes it and takes a rare-size step.
 const EASE_KINDS = Object.freeze(['fx:unexhaust', 'fx:unethereal', 'fx:steady', 'stkEase']);
@@ -121,6 +121,7 @@ export function upgradeStepRng(runSeed, instanceId, stepIndex) {
   return mulberry32(upgradeSeed(runSeed, instanceId, stepIndex));
 }
 
+const hitsAnEnemy = (effect) => effect.target === 'enemy' || effect.target === 'allEnemies';
 const hitsOf = (effect) => (Number.isInteger(effect.hits) && effect.hits > 1 ? effect.hits : 1);
 const totalOf = (effects, op) => {
   const index = firstPlainIndex(effects, op);
@@ -178,7 +179,8 @@ function options(base, current, applied, limits, rarity = 0) {
   // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
   const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
   const dmgIndex = firstPlainIndex(effects, 'damage');
-  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
+  // Owner, 2026-11-19: a Sweep (damage on allEnemies) rolls damage too; the step raises the damage each target takes.
+  if (!counterReturn && dmgIndex >= 0 && hitsAnEnemy(effects[dmgIndex])) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.15)), sized('dmg'), (k) => (effects[dmgIndex].amount + k) * hitsOf(effects[dmgIndex]) - baseTotal <= baseTotal);
     if (n) found.dmg = { n };
@@ -222,7 +224,7 @@ function options(base, current, applied, limits, rarity = 0) {
   }
 
   if (!counterReturn && dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
-    && effects[dmgIndex].target === 'enemy' && effects[dmgIndex].amount <= 8) {
+    && hitsAnEnemy(effects[dmgIndex]) && effects[dmgIndex].amount <= 8) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const amount = effects[dmgIndex].amount;
     const per = Math.ceil(amount * 0.6);
@@ -313,6 +315,7 @@ const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const risingCost = (card) => !!card.costGrowth && ((card.costGrowth.stamina || 0) > 0 || (card.costGrowth.mana || 0) > 0);
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
+const PHYSICAL_TYPES = PHYSICAL_DAMAGE_TYPES;
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
 /** Chill stacks a card applies at or above which a frost hit leaves its Poise damage nothing to spend (see freezesTarget). */
 const FREEZING_CHILL = 3;
@@ -365,8 +368,16 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     const tags2 = ATTACK_MANEUVERS.filter((m) => m !== maneuver && (m !== 'smash' || sp >= 2));
     if (tags2.length) found.maneuver = { tags: tags2.map((m) => `maneuver:${m}`) };
   }
-  // No `school` swap option: a school change alone changes no play (the riders that read it belong to the elements work),
-  // and `add elemental damage` (step 2) is how a card gains an element.
+  // No `school` swap option: a school change alone changes no play, and the element option is how a card gains an element.
+  // dmgType (owner, 2026-11-19): a melee, non-spell, non-elemental attack, smash or sweep may change its physical type (once per card).
+  // A weapon card may change away from its weapon's type: the step replaces the weapon block with the fixed type, as an element does.
+  if (hitsEnemy && !counterReturn && !spell && ['attack', 'smash', 'sweep'].includes(maneuver) && current.damageSchool === 'physical'
+    && (familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || 'melee') === 'melee'
+    && !tags.some((t) => t.startsWith('damage:') && !PHYSICAL_TYPES.includes(t.slice(7)))
+    && !tagged((s) => s.damageSchool || PHYSICAL_TYPES.includes(s.damage))) {
+    const now = tags.find((t) => t.startsWith('damage:'))?.slice(7) || current.attack?.damageType;
+    found.dmgType = { types: PHYSICAL_TYPES.filter((type) => type !== now) };
+  }
   if (hitsEnemy && !counterReturn && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
   // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
   // ...and only a card that pays Mana: on a 0-Mana card the step would change a tag and nothing else.
@@ -450,8 +461,9 @@ const stepOf = (kind, option, choice, rarity = 0) => {
     case 'poise': return rated({ k: 'poise', n: option.n });
     case 'attr': return rated({ k: 'attr', stat: pickOf(option.stats), n: 1 });
     case 'range': case 'rankDown': return rated({ k: 'tag', tag: option.tag });
+    case 'dmgType': return rated({ k: 'tag', damage: pickOf(option.types) });
     case 'targeting': return rated({ k: 'tag', tag: option.tag, retarget: option.retarget });
-    case 'maneuver': case 'school': return rated({ k: 'tag', tag: pickOf(option.tags) });
+    case 'maneuver': return rated({ k: 'tag', tag: pickOf(option.tags) });
     case 'element': {
       const damageSchool = pickOf(option.schools);
       const identity = ELEMENT_IDENTITY[damageSchool];
