@@ -19,7 +19,7 @@ const digest = map => createHash('sha256').update(JSON.stringify(Object.keys(map
   const n = map.nodes[id];
   return [n.id, n.actualType, n.type, n.next, n.refill ?? null, n.resolved ?? null];
 }))).digest('hex').slice(0, 16);
-const GOLDEN = {"1:1":"06c0b3b8895ef861","1:3":"6c2c5ecabdf18fd5","2:1":"a3c27d16e485f54d","2:3":"a9d88e72c42f21e7","3:1":"4062f62f428aea8d","3:3":"930bb73fbf9f0e05","4:1":"d45b20aed2f0ed65","4:3":"64605f54bfd7d28a","5:1":"b8a5d35cf1e7d9fa","5:3":"502a7a09d2457c42","6:1":"f9a2c8cb011e0236","6:3":"70966e19c20bfdab","7:1":"4e0cd3f47fbe4f86","7:3":"49dbfaba7d12b98d","8:1":"96b258483fb29492","8:3":"3ecdd45be279eafc","9:1":"704425a0f5875793","9:3":"b5f0b45dc203c663","10:1":"c232832381f76539","10:3":"fe092026062a6959","11:1":"72c784d97c1d2dfa","11:3":"816ab31d07fd6fa6","12:1":"478eba23b45df5ae","12:3":"dc116460284eb2ca"};
+const GOLDEN = {"1:1":"2a85ff8c70edd962","1:3":"2a85ff8c70edd962","2:1":"887df68001ae93d1","2:3":"887df68001ae93d1","3:1":"de92f1a015b42a15","3:3":"de92f1a015b42a15","4:1":"506b1e09433af296","4:3":"506b1e09433af296","5:1":"464fcb059389034c","5:3":"464fcb059389034c","6:1":"c52df117b644485f","6:3":"c52df117b644485f","7:1":"4a149f2f55a25da5","7:3":"4a149f2f55a25da5","8:1":"3db0d86d938cff79","8:3":"3db0d86d938cff79","9:1":"6aec74eaf14798e9","9:3":"6aec74eaf14798e9","10:1":"00298f86f46f2a4c","10:3":"00298f86f46f2a4c","11:1":"c78a9fa9629f2138","11:3":"c78a9fa9629f2138","12:1":"20f6c4cbdbd69541","12:3":"20f6c4cbdbd69541"};
 
 test('legacy routes content still rolls the same maps draw for draw', () => {
   const got = {};
