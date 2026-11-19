@@ -1,0 +1,40 @@
+{
+  "request": "Owner 2026-11-18: armour cards must not say 'Granted modifiers: Rank 1 · 3 points'. Their body states what the armour provides (for example '3 Poise. Gain 1 Constitution.'), or the item's authored flavour text when it provides nothing concrete.",
+  "success": "On the boss armament reward door the armour choice's effects body names Poise (and the attributes it grants) and no armament card's effects body mentions points or a Rank line, at 1280x800 and 390x844, with no console errors.",
+  "failure": "Any armament card's effects body still reads 'Rank N · X points' or mentions points, or no armour choice states its Poise, or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "boss-armament-armour-text",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "text",
+          "label": "An armour choice's effects body names its Poise",
+          "selector": ".reward-choice-option:nth-child(2) .epc-effects",
+          "includes": "Poise"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "An effects body still says points",
+          "selector": ".reward-choice-option:nth-child(2) .epc-effects",
+          "matches": "[Pp]oints|Rank \\d"
+        }
+      ]
+    }
+  ]
+}

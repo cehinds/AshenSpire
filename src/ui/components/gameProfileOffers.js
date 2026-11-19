@@ -8,7 +8,7 @@ import { openBoundCardInspection } from './cardInspection.js';
 import { el as buildElement, button, modalFooter } from '../kit/index.js';
 import { t as translate } from '../strings.js';
 import { OpenConfirmationModal } from './confirmationModal.js';
-import { OfferPicksLeft } from '../../model/gameProfileRewards.js';
+import { OfferPicksLeft, IsBonusOption, BonusFreeOffer } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 import { ModalModelFor } from '../models/ModalModel.js';
 import { ActivateOnKey, MarkSelected } from '../selection.js';
@@ -331,8 +331,30 @@ export function MountGameProfileOffers(appRoot, {
     onEditEquipment = null,
     canEditEquipment = false,
     spoils = null,
+    initialStatus = '',
 })
 {
+    if (isCardPickDoor(offer))
+    {
+        return mountCardPickDoor(appRoot, {
+            registries,
+            run: activeRun,
+            offer,
+            title,
+            onTake,
+            onContinue,
+            settings,
+            onAddToDeck,
+            addRefusal,
+            onEditDeck,
+            canEditDeck,
+            deckMax,
+            onEditEquipment,
+            canEditEquipment,
+            spoils,
+            initialStatus,
+        });
+    }
     clearSelection();
     const presentation = findOrCreateDoorPresentation(activeRun, offer.id);
     const doorCopy = RewardDoorCopy(
@@ -396,15 +418,11 @@ export function MountGameProfileOffers(appRoot, {
         {
             return true;
         }
-        if (offer.options[optionIndex]?.bonus)
+        if (IsBonusOption(offer.options[optionIndex]))
         {
             return false;
         }
-        const offerWithoutBonus = {
-            ...offer,
-            options: offer.options.filter((option) => !option.bonus),
-            taken: offer.taken.filter((takenIndex) => !offer.options[takenIndex]?.bonus),
-        };
+        const offerWithoutBonus = BonusFreeOffer(offer);
         return OfferPicksLeft(offerWithoutBonus) < 1;
     }
 
@@ -857,6 +875,549 @@ export function MountGameProfileOffers(appRoot, {
         if (!wasReplaced)
         {
             renderDoor();
+        }
+    }
+}
+
+// Owner 2026-11-18: a door of cards (and, from a won fight, a "Rank up a card" service) is a multi-pick door.
+// - The rank-up is never a tile in the strip; it is its own step (the rank-up card picker) after the cards are resolved.
+//   An older saved offer that still lists it among the cards is filtered from the strip and routed to that step.
+// - Up to N cards can be chosen (N = the card picks the offer still allows). A tap toggles the chosen class on the face in
+//   place (the strip is never redrawn); the prompt line counts the picks left.
+// - Continue is always live, neutral until all N are chosen, then primary. It opens a confirmation listing the cards.
+//   One destination choice covers every chosen card: Add to deck by default, Add to library when the deck cannot take
+//   them all right now (or the door has no deck route).
+function isCardPickDoor(offer)
+{
+    return offer.options.length > 0
+        && offer.options.every((option) =>
+        {
+            return isCardKind(option.kind)
+                || option.kind === RANK_UP_KIND;
+        });
+}
+
+function buildPickPrompt(picksLeft)
+{
+    return translate(
+        picksLeft === 1
+            ? 'reward.picks.prompt.one'
+            : 'reward.picks.prompt.many',
+        {
+            count: picksLeft,
+        },
+    );
+}
+
+function buildDestinationButton(labelKey, destination)
+{
+    return button({
+        label: translate(labelKey),
+        className: 'reward-pick-destination',
+        attrs: {
+            role: 'radio',
+            dataset: {
+                destination,
+            },
+        },
+    });
+}
+
+function buildPickConfirmDetails({
+    names,
+    unused,
+    canDeck,
+    canEdit,
+    destination,
+    onDestination,
+})
+{
+    const details = buildElement('div', {
+        class: 'reward-pick-confirm',
+    });
+    if (names.length)
+    {
+        details.append(buildElement(
+            'ul',
+            {
+                class: 'reward-pick-confirm-list',
+            },
+            names.map((name) => buildElement('li', {
+                text: name,
+            })),
+        ));
+    }
+    else
+    {
+        details.append(buildElement('p', {
+            text: translate('reward.picks.continue.none'),
+        }));
+    }
+    if (unused > 0)
+    {
+        details.append(buildElement('p', {
+            class: 'reward-pick-confirm-unused',
+            text: translate(
+                unused === 1
+                    ? 'reward.picks.continue.unusedOne'
+                    : 'reward.picks.continue.unusedMany',
+                {
+                    count: unused,
+                },
+            ),
+        }));
+    }
+    if (!names.length)
+    {
+        return details;
+    }
+    const deckButton = buildDestinationButton('reward.configured.addToDeck', 'deck');
+    deckButton.disabled = !canDeck;
+    const libraryButton = buildDestinationButton('reward.configured.addToLibrary', 'library');
+    // Edit deck keeps the card in the library and opens the deck editor with it ready (one card only).
+    const editButton = canEdit
+        ? buildDestinationButton('reward.configured.editDeck', 'edit')
+        : null;
+    const buttons = [deckButton, libraryButton, editButton].filter(Boolean);
+    const mark = (chosen) =>
+    {
+        for (const node of buttons)
+        {
+            const isChosen = node.dataset.destination === chosen;
+            node.classList.toggle(CHOSEN_CLASS, isChosen);
+            node.setAttribute('aria-checked', String(isChosen));
+        }
+        onDestination(chosen);
+    };
+    for (const node of buttons)
+    {
+        node.addEventListener('click', () =>
+        {
+            if (!node.disabled)
+            {
+                mark(node.dataset.destination);
+            }
+        });
+    }
+    mark(destination);
+    details.append(buildElement('div', {
+        class: 'reward-pick-destinations',
+        role: 'radiogroup',
+        'aria-label': translate('reward.picks.destination.label'),
+    }, buttons));
+    if (!canDeck)
+    {
+        details.append(buildElement('p', {
+            class: 'reward-pick-confirm-unused',
+            text: translate('reward.picks.destination.deckFull'),
+        }));
+    }
+    return details;
+}
+
+function mountCardPickDoor(appRoot, doorArgs)
+{
+    const {
+        registries,
+        run: activeRun,
+        title,
+        onTake,
+        onContinue,
+        onAddToDeck,
+        addRefusal,
+        onEditDeck,
+        canEditDeck,
+        deckMax,
+        spoils,
+        initialStatus,
+    } = doorArgs;
+    let { offer } = doorArgs;
+    clearSelection();
+    const presentation = findOrCreateDoorPresentation(activeRun, offer.id);
+    const cardIndexes = offer.options.flatMap((option, optionIndex) =>
+    {
+        return isCardKind(option.kind)
+            ? [optionIndex]
+            : [];
+    });
+    const takenCards = offer.taken.filter((takenIndex) => isCardKind(offer.options[takenIndex]?.kind)).length;
+    const picksAllowed = offer.claimed !== null
+        ? 0
+        : Math.max(0, Math.min(offer.takeCount, cardIndexes.length) - takenCards);
+    const choiceStrip = buildChoiceStrip('reward.picks.aria', cardIndexes.length);
+    choiceStrip.setAttribute('role', 'group');
+    const promptLine = buildElement('p', {
+        class: 'reward-note reward-pick-prompt',
+        'aria-live': 'polite',
+    });
+    const statusLine = buildStatusLine();
+    statusLine.textContent = initialStatus || '';
+    const continueButton = button({
+        label: translate('common.continue'),
+        id: 'reward-card-confirm',
+        className: 'reward-confirm',
+    });
+    const skipButton = button({
+        label: translate(SKIP_LABEL_KEY),
+        id: 'reward-continue',
+        className: 'danger',
+    });
+    const isFaceRadio = !ModalModelFor('reward').showNameButton;
+    const choices = new Map();
+    const selected = new Set();
+    let isBusy = false;
+    let isCompleted = false;
+    let isRankUpDeclined = false;
+    let areCardsClaimed = false;
+
+    for (const optionIndex of cardIndexes)
+    {
+        appendCard(optionIndex);
+    }
+    skipButton.addEventListener('click', handleSkip);
+    continueButton.addEventListener('click', handleContinue);
+    MountRewardDoor(appRoot, {
+        owner: presentation.owner,
+        title,
+        body: [
+            spoils,
+            promptLine,
+            choiceStrip,
+            statusLine,
+        ],
+        foot: modalFooter({
+            secondary: [skipButton],
+            primary: continueButton,
+            className: 'reward-foot reward-chooser-foot',
+            size: 'medium',
+        }),
+    });
+    // After the mount: the footer marks its primary slot as primary, and Continue is neutral until every pick is made.
+    refresh();
+    if (picksAllowed < 1)
+    {
+        // Nothing left to pick (a reload after the cards, or an offer of only the rank-up): go on to the next step.
+        queueMicrotask(afterCards);
+    }
+
+    function isSpent(optionIndex)
+    {
+        return offer.taken.includes(optionIndex)
+            || offer.claimed !== null
+            || picksAllowed < 1;
+    }
+
+    function appendCard(optionIndex)
+    {
+        const option = offer.options[optionIndex];
+        const definition = findOptionDefinition(registries, activeRun, option);
+        const spent = isSpent(optionIndex);
+        const column = buildChoiceColumn(optionIndex, spent);
+        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
+        face.classList.add('reward-choice-face');
+        face.dataset.pickId = String(optionIndex);
+        const label = readChoiceLabel(option, definition);
+        const control = buildChoiceControl(label, spent, optionIndex);
+        control.setAttribute('role', 'checkbox');
+        if (isFaceRadio)
+        {
+            applyRadioRole(face, label, spent, () => toggle(optionIndex));
+            face.setAttribute('role', 'checkbox');
+        }
+        if (!spent)
+        {
+            face.addEventListener('click', () => toggle(optionIndex));
+            control.addEventListener('click', () => toggle(optionIndex));
+        }
+        column.append(face, control);
+        choiceStrip.append(column);
+        choices.set(optionIndex, {
+            face,
+            control,
+        });
+    }
+
+    function toggle(optionIndex)
+    {
+        if (
+            isBusy
+            || isCompleted
+            || isSpent(optionIndex)
+        )
+        {
+            return;
+        }
+        statusLine.textContent = '';
+        if (selected.has(optionIndex))
+        {
+            selected.delete(optionIndex);
+        }
+        else if (selected.size < picksAllowed)
+        {
+            selected.add(optionIndex);
+        }
+        else if (picksAllowed === 1)
+        {
+            // A single pick moves with the tap, like a radio.
+            selected.clear();
+            selected.add(optionIndex);
+        }
+        else
+        {
+            statusLine.textContent = translate('reward.picks.full', {
+                count: picksAllowed,
+            });
+        }
+        refresh();
+    }
+
+    function refresh()
+    {
+        for (const [optionIndex, { face, control }] of choices)
+        {
+            const isChosen = selected.has(optionIndex);
+            MarkSelected(face, isChosen, {
+                className: [
+                    'reward-selected',
+                    CHOSEN_CLASS,
+                ],
+                ariaAttribute: isFaceRadio
+                    ? 'aria-checked'
+                    : null,
+            });
+            MarkSelected(control, isChosen, {
+                className: CHOSEN_CLASS,
+                ariaAttribute: 'aria-checked',
+            });
+        }
+        promptLine.textContent = buildPickPrompt(picksAllowed - selected.size);
+        // Neutral until every pick is made, then the door's one green (primary) action.
+        const isComplete = selected.size >= picksAllowed;
+        continueButton.classList.toggle('primary', isComplete);
+        continueButton.dataset.controlRole = isComplete
+            ? 'primary'
+            : 'utility';
+    }
+
+    function setBusy(isNowBusy)
+    {
+        isBusy = isNowBusy;
+        continueButton.disabled = isNowBusy;
+        skipButton.disabled = isNowBusy;
+        choiceStrip.inert = isNowBusy;
+    }
+
+    function deckRoom()
+    {
+        return Number.isFinite(deckMax) && Array.isArray(activeRun.deck)
+            ? deckMax - activeRun.deck.length
+            : Infinity;
+    }
+
+    function canAllJoinDeck(picks)
+    {
+        return !!onAddToDeck
+            && picks.length <= deckRoom()
+            && picks.every((optionIndex) => !(addRefusal && addRefusal(optionIndex)));
+    }
+
+    function handleContinue()
+    {
+        if (
+            isBusy
+            || isCompleted
+        )
+        {
+            return;
+        }
+        if (
+            picksAllowed < 1
+            || areCardsClaimed
+        )
+        {
+            // Nothing left to claim (or the claim is done and only the exit is being retried).
+            afterCards();
+            return;
+        }
+        const picks = [...selected].sort((a, b) => a - b);
+        const canDeck = canAllJoinDeck(picks);
+        const canEdit = !!(onEditDeck && canEditDeck) && picks.length === 1;
+        let destination = canDeck
+            ? 'deck'
+            : 'library';
+        OpenConfirmationModal({
+            title: translate('reward.picks.continue.title'),
+            message: picks.length
+                ? translate('reward.picks.continue.message')
+                : '',
+            detailsNode: buildPickConfirmDetails({
+                names: picks.map((optionIndex) =>
+                {
+                    return findOptionDefinition(registries, activeRun, offer.options[optionIndex])?.name
+                        || offer.options[optionIndex].id;
+                }),
+                unused: picksAllowed - picks.length,
+                canDeck,
+                canEdit,
+                destination,
+                onDestination: (chosen) =>
+                {
+                    destination = chosen;
+                },
+            }),
+            confirmLabel: translate(CONFIRM_LABEL_KEY),
+            cancelLabel: translate('common.back'),
+            returnFocusElement: continueButton,
+            onConfirm: () => claimChosen(picks, destination),
+        });
+    }
+
+    function adoptOffer(result)
+    {
+        if (
+            result?.id === offer.id
+            && Array.isArray(result.taken)
+        )
+        {
+            offer = result;
+        }
+    }
+
+    async function claimOne(optionIndex, toDeck)
+    {
+        if (!toDeck)
+        {
+            return onTake(optionIndex);
+        }
+        try
+        {
+            return await onAddToDeck(optionIndex);
+        }
+        catch
+        {
+            // The deck refused this one after all: it stays in the library instead of stalling the claim.
+            return onTake(optionIndex);
+        }
+    }
+
+    async function claimChosen(picks, destination)
+    {
+        setBusy(true);
+        const toDeck = destination === 'deck';
+        try
+        {
+            for (const optionIndex of picks)
+            {
+                if (!offer.taken.includes(optionIndex))
+                {
+                    adoptOffer(await claimOne(optionIndex, toDeck));
+                }
+            }
+        }
+        catch (error)
+        {
+            // Cards already claimed stay claimed: draw the door again from the saved offer, with the reason.
+            MountGameProfileOffers(appRoot, {
+                ...doorArgs,
+                offer: activeRun.gameProfileRewardOffers?.[offer.id] || offer,
+                initialStatus: error.message,
+            });
+            return;
+        }
+        areCardsClaimed = true;
+        setBusy(false);
+        if (destination === 'edit')
+        {
+            // The deck editor opens with the card ready; leaving it carries on to the next step.
+            onEditDeck(picks[0], afterCards);
+            return;
+        }
+        afterCards();
+    }
+
+    function handleSkip()
+    {
+        if (
+            isBusy
+            || isCompleted
+        )
+        {
+            return;
+        }
+        if (
+            offer.taken.length
+            || picksAllowed < 1
+        )
+        {
+            afterCards();
+            return;
+        }
+        OpenConfirmationModal({
+            title: translate('reward.leave.question'),
+            message: translate('reward.leave.message'),
+            confirmLabel: translate('reward.leave.confirm'),
+            cancelLabel: translate('reward.leave.take'),
+            returnFocusElement: skipButton,
+            onConfirm: afterCards,
+        });
+    }
+
+    // The step after the cards: the rank-up card picker when a rank-up is still owed, else the door's own exit.
+    function afterCards()
+    {
+        if (
+            isBusy
+            || isCompleted
+        )
+        {
+            return;
+        }
+        const rankUpIndex = isRankUpDeclined
+            ? -1
+            : offer.options.findIndex((option, optionIndex) =>
+            {
+                return option.kind === RANK_UP_KIND
+                    && !offer.taken.includes(optionIndex);
+            });
+        if (rankUpIndex < 0)
+        {
+            finish();
+            return;
+        }
+        setBusy(true);
+        Promise.resolve()
+            .then(() => onTake(rankUpIndex))
+            .then((result) =>
+            {
+                adoptOffer(result);
+                setBusy(false);
+                finish();
+            }, (error) =>
+            {
+                setBusy(false);
+                if (error?.message)
+                {
+                    // A failed claim (the save was rolled back) leaves the rank-up open, so Continue can retry it.
+                    statusLine.textContent = error.message;
+                    return;
+                }
+                // The picker was closed without a card: the rank-up is declined and the chain goes on.
+                isRankUpDeclined = true;
+                finish();
+            });
+    }
+
+    function finish()
+    {
+        try
+        {
+            onContinue();
+            isCompleted = true;
+            choiceStrip.inert = true;
+        }
+        catch (error)
+        {
+            statusLine.textContent = error.message;
         }
     }
 }

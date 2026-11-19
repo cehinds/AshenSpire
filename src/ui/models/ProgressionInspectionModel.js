@@ -1,8 +1,7 @@
 import { t } from '../strings.js';
 import { statRowValue } from '../../model/derivedStats.js';
 import { statProjection, handResourceRows } from '../../model/statProjection.js';
-import { ratingReceipt } from '../../model/combatRatings.js';
-import { ratingsConfigFor, statRow } from '../../model/statRows.js';
+import { statRow } from '../../model/statRows.js';
 import { runHandRules, handSizeReceipts } from '../../model/handRules.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { skillSchools } from '../../model/skills.js';
@@ -15,14 +14,11 @@ import { characterSheetRegistries } from './CharacterSheetModel.js';
 /** Presentation only: all values retain the run's own calculation receipts. */
 export function progressionStats(registries, run, settings = {}) {
   const projection = statProjection(registries, run);
-  const ratings = ratingReceipt(registries, run, ratingsConfigFor(registries, run, registries.balance?.combatRatings || {}));
   const hand = runHandRules(registries, run, settings);
   const handReceipts = handSizeReceipts(hand, run.attributes, run.level?.level);
   const resources = handResourceRows(registries, run, settings);
   const derived = (id, label) => ({ ...projection.derived.find(row => row.id === id), faceLabel: label });
   const rows = [derived('hp', 'HP'), derived('stamina', 'Stamina'), derived('mana', 'Mana'),
-    ...['ar', 'pr', 'dr'].map(id => ({ id, label: id.toUpperCase(), faceLabel: id.toUpperCase(), value: ratings.totals[id],
-      formula: ratings.sources.map(source => `${source.name}: ${source[id] || 0}`).join(' + ') })),
     { id: 'handSize', label: t('statsPreview.overview.handSize'), faceLabel: 'HandSize', value: handReceipts.capacity.value,
       formula: `Maximum cards held: ${handReceipts.capacity.value}` },
     { ...resources.find(row => row.id === 'draw'), faceLabel: 'Draw' }];

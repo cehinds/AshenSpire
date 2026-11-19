@@ -567,8 +567,6 @@ test('importer refuses an armament whose weight is missing, non-numeric, negativ
   const first = contentBundle.equipment.armaments[0];
   assertThrows(() => importLegacyContent(withArmament({ weight: undefined })), /weight must be a non-negative integer/, 'missing weight');
   assertThrows(() => importLegacyContent(withArmament({ weight: 'heavy' })), /weight must be a non-negative integer/, 'non-numeric weight');
-  assertThrows(() => importLegacyContent(withArmament({ attackRating: -1 })), /attackRating must be a non-negative integer/, 'negative attackRating');
-  assertThrows(() => importLegacyContent(withArmament({ defenseRating: 1.5 })), /defenseRating must be a non-negative integer/, 'fractional defenseRating');
   assertThrows(() => importLegacyContent(withArmament({ weight: first.weight + 1 })), /must equal its poiseThreshold/, 'weight off its poise threshold');
   const ok = importLegacyContent(contentBundle);
   const imported = ok.entities.find((e) => e.explicitOverrides && e.explicitOverrides.legacyId === first.id);
@@ -581,11 +579,8 @@ test('importer refuses an armament whose weight is missing, non-numeric, negativ
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: undefined })), /poiseThreshold must be a non-negative integer/, 'missing armour poise');
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: -1 })), /poiseThreshold must be a non-negative integer/, 'negative armour poise');
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: 'plate' })), /poiseThreshold must be a non-negative integer/, 'non-numeric armour poise');
-  // Armour's optional DR column: carried as authored, blank is 0, junk refused.
-  assertThrows(() => importLegacyContent(withArmour({ defenseRating: -1 })), /defenseRating must be blank or a non-negative integer/, 'negative armour DR');
-  const armourDr = (outfit) => ok.entities.find((e) => e.explicitOverrides?.legacyId === outfit.id && e.explicitOverrides?.legacyClassId === outfit.classId).explicitOverrides.defenseRating;
-  for (const outfit of contentBundle.equipment.armour) eq(armourDr(outfit), outfit.defenseRating === '' ? 0 : outfit.defenseRating, `${outfit.classId}/${outfit.id} imports its authored DR`);
-  assert(contentBundle.equipment.armour.some((outfit) => armourDr(outfit) > 0), 'at least one armour carries a DR, so the carry is exercised');
+  // An outfit authors no DR column any more (owner, 2026-11-18): nothing is carried.
+  assert(ok.entities.filter((e) => e.explicitOverrides?.legacyClassId).every((e) => !('defenseRating' in e.explicitOverrides)), 'no armour carries a DR');
 });
 
 test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {

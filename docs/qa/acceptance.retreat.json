@@ -1,0 +1,131 @@
+{
+  "request": "retreat doesn't seem to do anything on some cards, it should retreat the character to the back row. (Owner ruling: a player Retreat moves every front-row enemy to the back row.)",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "backstep",
+      "url": "?shot=combat&shotSeed=4&shotClass=reaver&shotDeck=core.backstep,core.backstep,core.backstep",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.backstep\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.backstep\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "an enemy is drawn",
+          "selector": ".enemy-row .combatant"
+        },
+        {
+          "kind": "visible",
+          "label": "after Backstep an enemy is tagged Back",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "the tag at its feet reads Back",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"] .band-row-tag",
+          "includes": "Back"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "an enemy is still in the front row after Retreat",
+          "selector": ".enemy-row .combatant[data-band-row=\"front\"]"
+        }
+      ]
+    },
+    {
+      "name": "retreat",
+      "url": "?shot=combat&shotSeed=4&shotClass=reaver&shotDeck=core.retreat,core.retreat,core.retreat",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "an enemy is drawn",
+          "selector": ".enemy-row .combatant"
+        },
+        {
+          "kind": "visible",
+          "label": "after Retreat an enemy is tagged Back",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "the tag at its feet reads Back",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"] .band-row-tag",
+          "includes": "Back"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "an enemy is still in the front row after Retreat",
+          "selector": ".enemy-row .combatant[data-band-row=\"front\"]"
+        }
+      ]
+    }
+  ]
+}

@@ -195,6 +195,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // and keep the reason in the row.
 export const CODE_APPLIERS = [
   {
+    status: 'retreat',
+    file: 'src/engine/bandRows.js',
+    needle: `S.applyStatus(ctx, enemy, 'retreat', `,
+    why: 'Retreat stacks (owner 2026-11-18): the Retreat card and a push give each enemy they send back to the back row one stack; no card row names the status',
+  },
+  {
     status: 'barrier',
     file: 'src/engine/actions.js',
     needle: `statuses.applyStatus(ctx, entity, 'barrier', amount, null);`,

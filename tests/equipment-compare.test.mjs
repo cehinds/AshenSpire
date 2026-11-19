@@ -1,5 +1,5 @@
 // The Replace comparison model: equipped on the left (before), candidate on the
-// right (after); higher AR/DR/Poise is better, a higher requirement is worse.
+// right (after); higher Poise is better, a higher requirement is worse.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -14,8 +14,8 @@ const pick = (row) => [row.before, row.after, row.verdict];
 
 test('weapon rows read equipped to candidate, with better and worse marked', () => {
   const rows = equipmentCompareRows(registries, weapon('greatsword'), weapon('ashStaff'), { attributes: {} });
-  assert.deepEqual(pick(byId(rows, 'attackRating')), [4, 1, 'worse']);
-  assert.deepEqual(pick(byId(rows, 'defenseRating')), [2, 1, 'worse']);
+  assert.equal(byId(rows, 'attackRating'), undefined, 'an armament has no AR row (owner, 2026-11-18)');
+  assert.equal(byId(rows, 'defenseRating'), undefined, 'an armament has no DR row (owner, 2026-11-18)');
   assert.equal(byId(rows, 'poise'), undefined, 'a weapon has no Poise row: its poiseThreshold is its weight');
   const weight = byId(rows, 'weight');
   assert.equal(weight.verdict, 'changed', 'a lighter weapon is neither better nor worse');
@@ -30,7 +30,6 @@ test('a lower requirement is better and a higher one is worse', () => {
 
 test('the reverse comparison flips every verdict; an identical item is all same', () => {
   const rows = equipmentCompareRows(registries, weapon('ashStaff'), weapon('greatsword'), { attributes: {} });
-  assert.deepEqual(pick(byId(rows, 'attackRating')), [1, 4, 'better']);
   assert.deepEqual(pick(byId(rows, 'req:strength')), [0, 3, 'worse']);
   const same = equipmentCompareRows(registries, weapon('ashStaff'), weapon('ashStaff'), { attributes: {} });
   assert.ok(same.every((row) => row.verdict === 'same'), 'no text rows and no better or worse for an identical item');
@@ -43,11 +42,11 @@ test('weapon art and modifiers are text rows, shown only when they differ', () =
   assert.notEqual(byId(rows, 'weaponArt').before, 'None');
 });
 
-test('armour compares DR and Poise the same way', () => {
-  const current = { ...outfit('default'), defenseRating: 1, poiseThreshold: 6 };
-  const next = { ...outfit('default'), defenseRating: 3, poiseThreshold: 4 };
+test('armour compares Poise, and no DR row', () => {
+  const current = { ...outfit('default'), poiseThreshold: 6 };
+  const next = { ...outfit('default'), poiseThreshold: 4 };
   const rows = equipmentCompareRows(registries, current, next, { attributes: {} });
-  assert.deepEqual(pick(byId(rows, 'defenseRating')), [1, 3, 'better']);
+  assert.equal(byId(rows, 'defenseRating'), undefined);
   assert.deepEqual(pick(byId(rows, 'poise')), [6, 4, 'worse']);
 });
 

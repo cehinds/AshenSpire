@@ -6,12 +6,14 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, CombatRankUpIsBonus, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
+import { carriedIds } from './loadout/ownership.js';
+import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -241,11 +243,20 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   // W25-R: a won fight may also offer to raise a card's rank (rewards.json rankUp.chancePct by fight tier). It rolls on a hash of
   // the run's seed and the offer's id, not on a stream, so it moves no counter and a reload answers the same.
-  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,...(CombatRankUpIsBonus(run,offerId)?{bonus:true}:{})});
+  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,bonus:true});
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
+}
+/** Owner 2026-11-18: a "Rank up a card" option is its own step after the card pick, never one of the card picks, so it counts
+ * as a bonus pick whether or not the saved offer flagged it (an older saved offer lists it without `bonus`). An older offer's
+ * rank-up that was already TAKEN was spent as its plain pick (before the ruling it used one), so once taken it is no bonus. */
+export const IsBonusOption = (option, taken = false) => !!option && (option.bonus === true || (option.kind === RANK_UP_OPTION.kind && !taken));
+const bonusAt = (offer, at) => IsBonusOption(offer.options[at], offer.taken.includes(at));
+/** BonusFreeOffer(offer) -> the offer as the plain card picks see it: bonus options and the picks taken on them removed. */
+export function BonusFreeOffer(offer) {
+  return { ...offer, options: offer.options.filter((_, at) => !bonusAt(offer, at)), taken: offer.taken.filter(at => !bonusAt(offer, at)) };
 }
 /**
  * OfferPicksLeft(offer) -> how many picks the player may still make. A bonus option (a rank-up that came beside the card pick,
@@ -253,11 +264,11 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
  * without a bonus option counts exactly as before.
  */
 export function OfferPicksLeft(offer) {
-  const bonus = offer.options.filter(option => option.bonus), plain = offer.options.length - bonus.length;
-  const plainTaken = offer.taken.filter(at => !offer.options[at]?.bonus).length, bonusTaken = offer.taken.length - plainTaken;
+  const bonus = offer.options.filter((_, at) => bonusAt(offer, at)), plain = offer.options.length - bonus.length;
+  const plainTaken = offer.taken.filter(at => !bonusAt(offer, at)).length, bonusTaken = offer.taken.length - plainTaken;
   return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
 }
-export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
+export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal', takeCount: takeOverride = null } = {}) {
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
@@ -265,7 +276,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
   const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
-  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:takeOverride??module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
@@ -288,12 +299,89 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   (run.gameProfileRewardOffers ||= {})[offerId] = offer;
   return offer;
 }
+/**
+ * ArmamentRewardRule(run, pool) -> the authored { chancePct, min, max } for a won fight of this pool (rewards.json
+ * `armamentReward.elite|boss`), or null when the profile has none for it (normal fights never drop one).
+ */
+export function ArmamentRewardRule(run, pool) {
+  const rule = gameContent(run, 'rewards')?.armamentReward?.[pool];
+  return rule && typeof rule === 'object' && pool !== 'normal' ? rule : null;
+}
+/**
+ * ArmamentRewardStep(registries, run, rng, rest) -> { next, rest }: the armament door that follows the relic step, rolled ONCE.
+ * `next` is the pending reward to show (an armament offer) or null; `rest` is the pending record to carry on with, its
+ * `armamentReward` flag spent either way, so a failed chance roll never re-rolls after a level door (offer ids differ).
+ */
+export function ArmamentRewardStep(registries, run, rng, rest) {
+  if (!rest.armamentReward) return { next: null, rest };
+  const offerId = `${rest.offerId}:armament`;
+  if (GameProfileArmamentOffer(registries, run, rng, { offerId, pool: rest.armamentReward })) {
+    return { next: { ...rest, offerId, source: 'armament', armamentReward: '' }, rest: { ...rest, armamentReward: '' } };
+  }
+  return { next: null, rest: { ...rest, armamentReward: '' } };
+}
+// Least-picked selection at each level (type, family, sub-kind): the candidates left are those whose group the offer has used
+// least, a random one of those groups wins ties, so weapons and armour, and different families, spread across the choices.
+function spreadPick(rng, candidates, chosen, levels) {
+  let rows = candidates;
+  for (const level of levels) {
+    const used = key => chosen.filter(row => level(row) === key).length;
+    const keys = [...new Set(rows.map(level))];
+    const fewest = Math.min(...keys.map(used));
+    const key = rng.pick('cardRewards', keys.filter(value => used(value) === fewest));
+    rows = rows.filter(row => level(row) === key);
+  }
+  return rng.pick('cardRewards', rows);
+}
+/**
+ * GameProfileArmamentOffer(registries, run, rng, { offerId, pool }) -> the armament choice a won elite (chancePct) or boss
+ * (guaranteed) lays out after its other spoils (owner 2026-11-18). A weapon or armour piece per choice, min..max of them,
+ * every one unowned (storage, equipped sets, bought armour) and from the same authored eligibility groups as the shop; the choices
+ * spread over weapon/armour and over weapon families and armour groups before repeating one. Rolled once per offerId on the reward
+ * stream and saved on the run like any offer, so a reload shows the same door. Returns null (nothing stored) when the profile has no
+ * rule for the pool, the chance roll fails, or nothing eligible is left. Claiming is the ordinary claimGameProfileReward.
+ */
+export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool = 'elite' } = {}) {
+  if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
+  if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
+  const rule = ArmamentRewardRule(run, pool);
+  if (!rule || !gameModule(run, 'equipment')) return null;
+  const chance = Number.isFinite(rule.chancePct) ? rule.chancePct : 100;
+  if (chance <= 0 || (chance < 100 && rng.int('cardRewards', 1, 100) > chance)) return null;
+  const rules = gameContent(run, 'rewards'), available = pools(registries, run);
+  const owned = new Set([...carriedIds(run.loadout), ...(run.loadout?.boughtArmour || []).map(row => row?.id)]);
+  const armourGroupOf = new Map();
+  for (const groupId of rules.eligibility?.armor?.groups || []) for (const member of rules.equipmentGroups?.[groupId]?.members || []) armourGroupOf.set(member, groupId);
+  const storageFull = (run.loadout?.storage || []).length >= (registries.balance.equipment?.storageSlots ?? 8);
+  const candidates = [];
+  if (!storageFull) for (const id of available.weapons) {
+    const row = (registries.equipment.armaments || []).find(item => item.id === id);
+    if (row && !owned.has(id)) candidates.push({ kind: 'weapons', id, type: 'weapon', family: `weapon:${row.kind || ''}`, sub: row.geom || id });
+  }
+  for (const id of available.armor) {
+    if (owned.has(id)) continue;
+    candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
+  }
+  const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
+  const wanted = min === max ? min : rng.int('cardRewards', min, max);
+  const chosen = [];
+  let left = candidates;
+  while (chosen.length < wanted && left.length) {
+    const pick = spreadPick(rng, left, chosen, [row => row.type, row => row.family, row => row.sub]);
+    chosen.push(pick);
+    left = left.filter(row => row !== pick);
+  }
+  if (!chosen.length) return null;
+  const offer = { id: offerId, source: 'armament', options: chosen.map(({ kind, id }) => ({ kind, id })), takeCount: 1, taken: [], claimed: null };
+  (run.gameProfileRewardOffers ||= {})[offerId] = offer;
+  return offer;
+}
 export function claimGameProfileReward(registries,run,offerId,index,{instanceId=null}={}) {
   const offer=run.gameProfileRewardOffers?.[offerId];
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if(!option.bonus&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!row.bonus),taken:offer.taken.filter(at=>!offer.options[at]?.bonus)})<1)throw new Error('Reward offer is missing or already claimed');
+  if(!IsBonusOption(option)&&OfferPicksLeft(BonusFreeOffer(offer))<1)throw new Error('Reward offer is missing or already claimed');
   if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   let raised=null;
@@ -315,6 +403,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     draft.relics.push(option.id);
     // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
     syncFlaskGrowth(registries,draft);
+    reconcileRunLoadoutHp(registries,draft); // a relic property such as maxMana1 raises the pools now, not at the next load
     if(flaskGrowthTable(registries.balance).some(row=>row?.source==='relic'&&row.id===option.id))refillFlaskCharges(draft.flaskCharges);
   } else if(option.kind==='potions') {
     const acquisition=acquireFlask(registries,draft,option.id);

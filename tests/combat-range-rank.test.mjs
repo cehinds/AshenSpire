@@ -5,6 +5,7 @@ import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFro
 import { alternativeFormation } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { createRangeState, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
+import { SetEnemyRow } from '../src/engine/bandRows.js';
 
 const fight = (bands, { dead = [], range = true } = {}) => {
   const enemies = Object.keys(bands).map(id => ({ id, kind: 'enemy', alive: !dead.includes(id) }));
@@ -166,7 +167,7 @@ test('playback: a short-range-profile attack that commits no Advance leaves both
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
 });
 
-test('playback: Hit and Run from Reach steps in on its Advance beat and back out on its retreat beat', async () => {
+test('playback: Hit and Run from Reach steps in on its Advance beat and sends the target to the back row on its retreat beat (ruling 2026-11-18 §0a)', async () => {
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
@@ -180,14 +181,18 @@ test('playback: Hit and Run from Reach steps in on its Advance beat and back out
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   combat.player.hp = combat.player.maxHp = 10000; combat.player.energy = 9;
   const pair = rangePairKey('player:player', 'enemy:e1');
-  combat.rangeState.engagements[pair] = 1;
+  SetEnemyRow(combat, combat.enemies[0], 'back'); // rows own the band: the foe is in the back row, at Reach
   combat.piles.hand.find(card => card.cardId === 'core.strike').cardId = 'core.hitAndRun';
   const card = combat.piles.hand.find(c => c.cardId === 'core.hitAndRun');
   const snap = rangeRankSnapshot(combat);
   const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  // Owner 2026-11-18 (§0a): "Retreat one band" on an enemy moves the target to the back row; it no longer steps the engagement back out.
+  // The foe stands in the back row (Reach); the push finds it already there, so it gains a Retreat stack and the player's Advance ends: Reach is restored.
   assert.equal(combat.rangeState.engagements[pair], 1, 'the retreat restores Reach');
+  assert.equal(combat.enemies[0].row, 'back');
+  assert.equal(combat.enemies[0].statuses.retreat?.stacks, 1, 'the push leaves a Retreat stack that holds it back');
   const moves = events.filter(e => e.type === 'combatEngagementMoved');
-  assert.deepEqual(moves.map(e => e.bands), [-1, 1], 'a step in, then a step back out');
+  assert.deepEqual(moves.map(e => e.bands), [-1, 1], 'a step in, then the push event');
   const seen = [];
   for (const event of events) {
     applyRangeRankEvent(snap, event);

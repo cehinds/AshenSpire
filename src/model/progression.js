@@ -18,6 +18,7 @@
 // private inside `sense`: the Armoury used to re-spell both beside the bar,
 // so the plural rule lived in two files and a reworded tooltip would have
 // silently disagreed with the badge under it.
+import { PerceptionEnabled } from './perception.js';
 import { characterLevel, levelUpPlan } from './levelup.js';
 import { classSkillId, skillLevel, skillMaxLevel, skillTracks, xpToNext as skillXpToNext } from './skills.js';
 
@@ -101,7 +102,7 @@ export function levelProgress(registries, run) {
  */
 export function skillProgressRows(registries, run, { includeUntouched = false } = {}) {
   if (run.enemyKnowledgeRules) registries = { ...registries, balance: { ...registries.balance, enemyKnowledge: run.enemyKnowledgeRules } };
-  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules });
+  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && PerceptionEnabled(run.enemyKnowledgeRules) });
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownId = classId ? classSkillId(classId) : null;
   if (ownId && !tracks.some((track) => track.id === ownId)) {
@@ -154,7 +155,7 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
  * pending drafts, and a summary that omits it lies about what is waiting.
  */
 export function staleSkillTracks(registries, run) {
-  const known = new Set(skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules }).map((track) => track.id));
+  const known = new Set(skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && PerceptionEnabled(run.enemyKnowledgeRules) }).map((track) => track.id));
   const ledger = (run && run.skills && typeof run.skills === 'object') ? run.skills : {};
   return Object.keys(ledger).filter((id) => !known.has(id));
 }

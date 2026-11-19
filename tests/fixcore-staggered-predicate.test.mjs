@@ -15,7 +15,7 @@ import { applyStatus } from '../src/engine/statuses.js';
 import { evalPredicate } from '../src/engine/triggers.js';
 import { activeCombatStances, isStaggered } from '../src/engine/concurrentStances.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins Poise-break mechanics with hand-sized hits
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 // `legacy` (the default) is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); `legacy: false` is the shipped

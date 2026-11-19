@@ -1,0 +1,49 @@
+{
+  "request": "Owner 2026-11-18: remove AR, DR and PR as stats everywhere (character sheet, card faces, tooltips, receipts, settings tables, inspector, stat projection): \"str dex and int is more intuitive\". Physical damage adds STR, Block adds DEX, magic damage adds max(INT, WIS).",
+  "success": "The character-creation sheet shows its attributes and resources (HP, Stamina, Mana, Poise, Ward, hand) with no AR, DR or PR chip or word, and the combat hand's cards and the player's inspector never print AR, DR or PR, at 1280x800 and 390x844, with no console errors.",
+  "failure": "Any AR, DR or PR chip, label or row is still on the character sheet, a hand card face or the player's combatant inspector, or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "character-sheet-stats",
+      "url": "?shot=customize",
+      "ready": "#cz-next",
+      "settleMs": 1500,
+      "actions": [
+        { "click": "#cz-next" },
+        { "wait": { "ms": 800 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The review's character card is drawn", "selector": ".screen" },
+        { "kind": "text", "label": "The card lists Stamina and Mana", "selector": ".screen", "matches": "Stamina[\\s\\S]*Mana|Mana[\\s\\S]*Stamina" },
+        { "kind": "text", "label": "The card lists the attributes STR and INT", "selector": ".screen", "matches": "STR[\\s\\S]*INT" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "The sheet still names AR, DR or PR", "selector": ".screen", "matches": "\\b(AR|DR|PR)\\b|Attack Rating|Defense Rating|Potency Rating" }
+      ]
+    },
+    {
+      "name": "combat-card-faces-and-inspector",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "hold": { "selector": ".combatant.player .combatant-stack", "ms": 800 } },
+        { "wait": { "ms": 400 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The hand is drawn", "selector": ".hand .card" },
+        { "kind": "visible", "label": "The player's inspector opens", "selector": ".combatant-door .combatant-inspector-body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "A card face names AR, DR or PR", "selector": ".hand", "matches": "\\b(AR|DR|PR)\\b|Attack Rating|Defense Rating|Potency Rating" },
+        { "kind": "text", "label": "The player's inspector names AR, DR or PR", "selector": ".combatant-door .combatant-inspector-body", "matches": "\\b(AR|DR|PR)\\b|Attack Rating|Defense Rating|Potency Rating" }
+      ]
+    }
+  ]
+}

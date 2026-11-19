@@ -3,6 +3,7 @@ import { gameContent, gameModule } from './gameProfile.js';
 import { armamentSalePlan, commitArmamentSale } from './armamentTrading.js';
 import { consumableSalePlan, commitConsumableSale } from './consumables.js';
 import { removeOwnedRelic, spendClassRewardItem } from './classRewardProvenance.js';
+import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { flaskKindOf } from './gracerefill.js';
 import { ownerItemRef } from './cardMounts.js';
@@ -95,6 +96,7 @@ export function commitGameProfileShopSale(registries, run, shopId, quote) {
     spendClassRewardItem(draft, 'armory', itemRef, 'sold');
   } else if (plan.kind === 'relics') {
     removeOwnedRelic(draft, plan.identity, { reason: 'sold' }); syncFlaskGrowth(registries, draft);
+    reconcileRunLoadoutHp(registries, draft); // a sold maxMana1 relic lowers the pools now
   } else if (plan.kind === 'potions') draft.flasks.splice(plan.identity, 1);
   else if (plan.kind === 'consumables') {
     commitConsumableSale(registries, draft, consumableSalePlan(registries, draft, plan.identity));

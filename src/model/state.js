@@ -428,6 +428,9 @@ export function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  // The cards the run BEGAN with (the deck editor never tags these REWARD; owner, 2026-11-18). A card id, not an instance,
+  // so a later copy of a starter stays a starter.
+  run.starterCardIds = [...new Set(run.deck.filter((card) => !card.grantedBy && !card.equipmentRole).map((card) => card.cardId))];
   // The projection, LAST: stampDeck and orderStartingDeck have just composed
   // the opening deck, and the collection is a copy of that deck.
   syncZones(run);
@@ -784,6 +787,8 @@ export function initializeRunDerivedStats(run, registries, {
  */
 export const RUN_SHAPE = [
   { key: 'collectedCardIds', type: 'array', optional: true },
+  { key: 'starterCardIds', type: 'array', optional: true },
+  { key: 'deckEditorOrder', type: 'object', optional: true },
   { key: 'gameProfile', type: 'object', optional: true },
   { key: 'rangePolicy', type: 'object', optional: true },
   // Weakness discovery (SPEC 5.3): { enemyId: ['piercing:damage'] }, set when the player triggers an enemy's weakness.

@@ -38,7 +38,8 @@
         "baseDamageMultiplier": 0.5,
         "playerDamageMultiplier": 0.7,
         "enemyDamageMultiplier": 0.7,
-        "blockGainMultiplier": 0.7,
+        "physicalDamageMultiplier": 0.7,
+        "blockGainMultiplier": 0.49,
         "spellPoiseDamageMultiplier": 2
       }
     },
@@ -283,7 +284,8 @@
       "module": "cards",
       "settings": {
         "handBase": "handBase",
-        "handAttribute": "handAttribute"
+        "handAttribute": "handAttribute",
+        "handPointsPerIncrease": "handPointsPerIncrease"
       }
     },
     {

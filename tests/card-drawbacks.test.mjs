@@ -137,6 +137,7 @@ async function tuningRegistries() {
   const { createRegistries } = await import('../src/model/registries.js');
   const Profile = await import('../src/model/gameProfile.js');
   const profile = structuredClone(Profile.resolveGameProfile('default'));
+  profile.modules.effects.physicalDamageMultiplier = 1;
   profile.modules.effects.playerDamageMultiplier = 1;
   profile.modules.effects.enemyDamageMultiplier = 1;
   delete profile.hash;

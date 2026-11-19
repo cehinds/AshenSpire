@@ -1,6 +1,8 @@
 {
-  "reason": "Wave 2 one-word wording: the Menu control row is new, and keeping it in the permanent shadow sweep stops a src/ui literal from repainting it.",
+  "reason": "Wave 2 one-word wording: the Menu control row is new, and keeping it in the permanent shadow sweep stops a src/ui literal from repainting it. The reward door's card-pick prompt (\"Select {count} card rewards\") is kept too: its lead \"Select\" is also the verb of combat.js's `Select ${name}` aria-label, an allowed different use.",
   "ids": [
-    "common.menu"
+    "common.menu",
+    "reward.picks.prompt.many",
+    "reward.picks.prompt.one"
   ]
 }

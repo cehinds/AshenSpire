@@ -12,6 +12,8 @@
     "serve": "node tools/serve.mjs --no-open",
     "dev": "node tools/serve.mjs --watch",
     "qa:sandbox": "node tools/qa-sandbox.mjs",
+    "balance:card-budget": "node tools/card-budget-report.mjs",
+    "qa:redraw-probe": "node tools/redraw-probe.mjs",
     "qa:combat-canvas": "node tools/combat-canvas-qa.mjs",
     "probe:enemy-turn": "node tools/verdict.mjs -- node tools/enemy-turn-probe.mjs",
     "probe:text-size": "node tools/verdict.mjs -- node tools/text-size-probe.mjs",

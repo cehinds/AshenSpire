@@ -13,8 +13,8 @@ test('the stance summary is still built, but the health row never carries a stan
     assert.match(stance.help, new RegExp(`^Stance: ${label}`));
     assert.equal(combatHealthModel({ defense: 5, precision: 2, stance }).badges.some(b => b.kind === 'stance'), false);
   }
-  assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ AR/);
-  assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ DR/);
+  assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ STR/);
+  assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ DEX/);
 });
 
 test('no stance, or a rules version without stances, gives no stance summary', () => {

@@ -45,16 +45,18 @@ test('every reward card carries a badge, and only the selected one is shown', ()
   assert.match(css, /\.reward-door \.reward-choice-face\.is-chosen > \.card-info-button \{ visibility:visible; pointer-events:auto; \}/);
 }));
 
-test('a face tap only selects, even on the selected face; it never opens the inspector', () => withGlobalDom(() => {
+test('a face tap only selects or deselects; it never opens the inspector', () => withGlobalDom(() => {
   const { faces } = mount();
   tap(faces[0]);
   assert.equal(modal(), null, 'first tap does not inspect');
   assert.ok(faces[0].classList.contains('reward-selected'));
   tap(faces[0]);
   assert.equal(modal(), null, 'a second tap on the selected face does not inspect');
-  assert.ok(faces[0].classList.contains('reward-selected'), 'and keeps it selected');
+  assert.ok(!faces[0].classList.contains('reward-selected'), 'it deselects (owner 2026-11-18)');
   tap(faces[2]);
   assert.equal(modal(), null, 'a tap on another card selects it, never inspects');
+  tap(faces[0]);
+  assert.deepEqual(faces.map(f => f.classList.contains('is-chosen')), [true, false, false], 'with one pick the choice moves to the tapped card');
 }));
 
 test('the (i) badge opens the inspector for that card and closing restores focus to it', () => withGlobalDom(() => {
@@ -92,13 +94,13 @@ test('face A then name B moves the (i) to B', () => withGlobalDom(() => {
   modal().querySelector('.modal-close').click();
 }));
 
-test('tapping B face after its name select keeps B chosen without inspecting; A face then selects', () => withGlobalDom(() => {
+test('tapping B face after its name select deselects B without inspecting; A face then selects', () => withGlobalDom(() => {
   const { app, faces } = mount();
   names(app)[1].click();
   assert.equal(modal(), null);
   tap(faces[1]);
   assert.equal(modal(), null, 'the chosen card does not inspect on a face tap');
-  assert.deepEqual(chosen(faces), [false, true, false]);
+  assert.deepEqual(chosen(faces), [false, false, false], 'a tap on the chosen card puts it back');
   tap(faces[0]);
   assert.equal(modal(), null, 'an unchosen face only selects');
   assert.deepEqual(chosen(faces), [true, false, false]);

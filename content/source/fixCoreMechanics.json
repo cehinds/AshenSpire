@@ -35,6 +35,7 @@
     "returnPerStack": 0.1,
     "consumePerHit": 1,
     "decayPerTurn": 1,
+    "decayClock": "ownerTurnStart",
     "advantageShare": 0,
     "stacksPerCard": 1,
     "stacksUpgradeBonus": 1,
