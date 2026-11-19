@@ -103,15 +103,6 @@
     "text": "CON +2, STR +1"
   },
   {
-    "id": "enemy.relic.titheBand",
-    "name": "Tithe_Band",
-    "modifiers": [
-      "self.wisdom=+1",
-      "self.constitution=+1"
-    ],
-    "text": "WIS +1, CON +1"
-  },
-  {
     "id": "enemy.relic.wickerAntlers",
     "name": "Wicker_Antlers",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.strength=+1"
     ],
     "text": "CON +3, STR +1"
+  },
+  {
+    "id": "enemy.relic.titheBand",
+    "name": "Tithe_Band",
+    "modifiers": [
+      "self.wisdom=+1",
+      "self.constitution=+1"
+    ],
+    "text": "WIS +1, CON +1"
   }
 ]

@@ -5104,8 +5104,8 @@
     ],
     "kind": "enemy",
     "tier": "minion",
-    "level": 2,
-    "attributePoints": 7,
+    "level": 1,
+    "attributePoints": 6,
     "attributes": {
       "strength": {
         "own": 1,
@@ -5142,7 +5142,7 @@
         "total": 3
       },
       "intelligence": {
-        "own": 2,
+        "own": 1,
         "bonuses": [
           {
             "source": "ashStaff",
@@ -5151,7 +5151,7 @@
             "amount": 1
           }
         ],
-        "total": 3
+        "total": 2
       }
     },
     "hp": {
@@ -5161,19 +5161,19 @@
         "strength": 5,
         "dexterity": 3,
         "wisdom": 6,
-        "intelligence": 3,
-        "level": 5
+        "intelligence": 2,
+        "level": 0
       },
-      "total": 52,
-      "formula": "10+20+5+3+6+3+5 = 52"
+      "total": 46,
+      "formula": "10+20+5+3+6+2+0 = 46"
     },
     "pools": {
-      "hp": 52,
+      "hp": 46,
       "sp": 2,
       "mp": 2,
       "ar": 1,
       "dr": 1,
-      "hand": 5
+      "hand": 4
     },
     "gear": [
       {

@@ -999,8 +999,8 @@
     ],
     "poiseMax": 9,
     "levelProfile": {
-      "min": 2,
-      "max": 4
+      "min": 1,
+      "max": 2
     },
     "art": "enemy",
     "artFaces": "left",
