@@ -30,7 +30,7 @@
   "equipment": [
     {
       "slot": "mainHand",
-      "ref": "gear:battleaxe"
+      "ref": "gear:beardedAxe"
     }
   ],
   "relics": [],

@@ -6539,8 +6539,8 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "battleaxe",
-            "name": "Battleaxe",
+            "source": "beardedAxe",
+            "name": "Bearded_Axe",
             "kind": "gear",
             "amount": 1
           }
@@ -6592,8 +6592,8 @@
     "gear": [
       {
         "key": "mainHand",
-        "id": "battleaxe",
-        "name": "Battleaxe"
+        "id": "beardedAxe",
+        "name": "Bearded_Axe"
       }
     ],
     "relics": [],

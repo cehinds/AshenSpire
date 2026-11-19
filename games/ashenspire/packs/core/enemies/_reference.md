@@ -301,7 +301,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:waxsealBailiff.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:carrionHeadsman.cleaveStroke | Cleave Stroke | attack | 1 | 0 | Deal {damage} damage. |
 | card:carrionHeadsman.rendingCut | Rending Cut | attack | 1 | 0 | Deal {damage} damage. Apply {bleed} Bleed to the enemy. |
-| card:carrionHeadsman.executionDrop | Execution Drop | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:carrionHeadsman.executionDrop | Execution Drop | attack | 2 | 0 | Deal {damage} damage. |
 | card:carrionHeadsman.hoodGuard | Hood Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:carrionHeadsman.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:knellcapSentinel.knellStrike | Knell Strike | attack | 1 | 0 | Deal {damage} damage. |
