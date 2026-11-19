@@ -1,0 +1,40 @@
+{
+  "request": "Gear pass mechanics (owner, 2026-11-18/19): armour types carry bonuses (Mail Counter +1, Leathers Evade +1, Plate Thorns 1, Robes +1 max MP, Poise by group), staves and sceptres give 1 Ward a turn, tomes 2, a Hammer Smash sends the target back only when it breaks Poise, a Bow keeps 1 Retreat stack at the end of a turn spent in Defend stance.",
+  "success": "The character sheet and a combat hand draw with the gear's bonuses and the player's inspector opens, at 1280x800 and 390x844, with no console errors.",
+  "failure": "A card face or the sheet prints a raw mod string or 'undefined' or 'NaN', or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "character-sheet-gear",
+      "url": "?shot=customize",
+      "ready": "#cz-next",
+      "settleMs": 1500,
+      "actions": [ { "click": "#cz-next" }, { "wait": { "ms": 800 } } ],
+      "success": [
+        { "kind": "visible", "label": "The review's character card is drawn", "selector": ".screen" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "The sheet prints undefined or NaN", "selector": ".screen", "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+=" }
+      ]
+    },
+    {
+      "name": "combat-hand-and-inspector",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [ { "hold": { "selector": ".combatant.player .combatant-stack", "ms": 800 } }, { "wait": { "ms": 400 } } ],
+      "success": [
+        { "kind": "visible", "label": "The hand is drawn", "selector": ".hand .card" },
+        { "kind": "visible", "label": "The player's inspector opens", "selector": ".combatant-door .combatant-inspector-body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "A card face or the inspector prints undefined or NaN", "selector": ".hand, .combatant-door .combatant-inspector-body", "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+=" }
+      ]
+    }
+  ]
+}
