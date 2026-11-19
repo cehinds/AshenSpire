@@ -4,12 +4,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readSourceTextSync } from './helpers/read-source.mjs';
 import { stripCssComments } from '../tools/css-strip.mjs';
 
-const stylesDir = new URL('../styles/', import.meta.url);
+const stylesDir = fileURLToPath(new URL('../styles/', import.meta.url));
 const sheets = readdirSync(stylesDir).filter(name => name.endsWith('.css'))
-  .map(name => ({ name, css: stripCssComments(readSourceTextSync(new URL(name, stylesDir))) }));
+  .map(name => ({ name, css: stripCssComments(readSourceTextSync(join(stylesDir, name))) }));
 
 // Innermost rules only: an @media / @container prelude is not part of the captured selector list.
 const rules = sheets.flatMap(({ name, css }) => [...css.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)]
