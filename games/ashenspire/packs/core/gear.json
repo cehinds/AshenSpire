@@ -1513,5 +1513,80 @@
       "id": "boneTalisman"
     },
     "range": "melee"
+  },
+  {
+    "id": "armor.cinderforgedPlate",
+    "name": "Cinderforged_Plate",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "rare",
+    "tags": [
+      "plate"
+    ],
+    "points": {},
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "cinderforgedPlate"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.wyrmscaleMail",
+    "name": "Wyrmscale_Mail",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "rare",
+    "tags": [
+      "mail"
+    ],
+    "points": {},
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "wyrmscaleMail"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.ringmailHauberk",
+    "name": "Ringmail_Hauberk",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "mail"
+    ],
+    "points": {},
+    "classes": [
+      "herald"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "ringmailHauberk"
+    },
+    "material": "metal"
+  },
+  {
+    "id": "armor.huntersHide",
+    "name": "Hunters_Hide",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "leathers"
+    ],
+    "points": {},
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "huntersHide"
+    }
   }
 ]

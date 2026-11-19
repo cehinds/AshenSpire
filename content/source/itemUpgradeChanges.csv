@@ -292,3 +292,11 @@ armament/boneTalisman,1,upgrade:cost:smithing-stone,1
 armament/boneTalisman,1,card:attack:effect:damage,3
 armament/boneTalisman,1,card:guard:effect:block,3
 armament/boneTalisman,1,card:technique:effect:block,2
+armor/reaver/cinderforgedPlate,1,upgrade:cost:smithing-stone,1
+armor/reaver/cinderforgedPlate,1,equipment:poise-threshold,1
+armor/reaver/wyrmscaleMail,1,upgrade:cost:smithing-stone,1
+armor/reaver/wyrmscaleMail,1,equipment:poise-threshold,1
+armor/herald/ringmailHauberk,1,upgrade:cost:smithing-stone,1
+armor/herald/ringmailHauberk,1,equipment:poise-threshold,1
+armor/rogue/huntersHide,1,upgrade:cost:smithing-stone,1
+armor/rogue/huntersHide,1,equipment:poise-threshold,1

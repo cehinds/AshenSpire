@@ -5020,3 +5020,17 @@ armament,,boneTalisman,source:weapon
 armament,,boneTalisman,delivery:melee
 armament,,boneTalisman,damage:blunt
 armament,,boneTalisman,classification.armament
+armour,reaver,cinderforgedPlate,item:armor
+armour,reaver,cinderforgedPlate,classification.armour
+armour,reaver,wyrmscaleMail,item:armor
+armour,reaver,wyrmscaleMail,guard
+armour,reaver,wyrmscaleMail,ash
+armour,reaver,wyrmscaleMail,classification.armour
+armour,herald,ringmailHauberk,item:armor
+armour,herald,ringmailHauberk,ritual
+armour,herald,ringmailHauberk,guard
+armour,herald,ringmailHauberk,classification.armour
+armour,rogue,huntersHide,item:armor
+armour,rogue,huntersHide,flourish
+armour,rogue,huntersHide,ash
+armour,rogue,huntersHide,classification.armour

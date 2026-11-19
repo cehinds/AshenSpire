@@ -181,6 +181,33 @@
       "traits": {
         "insulated": true
       }
+    },
+    "reaver:cinderforgedPlate": {
+      "armorClass": "heavy",
+      "flat": {
+        "fire": 1
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "reaver:wyrmscaleMail": {
+      "armorClass": "medium",
+      "flat": {
+        "frost": 1
+      }
+    },
+    "herald:ringmailHauberk": {
+      "armorClass": "medium",
+      "flat": {
+        "slashing": 1
+      }
+    },
+    "rogue:huntersHide": {
+      "armorClass": "light",
+      "flat": {
+        "piercing": 1
+      }
     }
   },
   "sharedArmour": {

@@ -156,7 +156,8 @@
         "rogue:nightweave",
         "rogue:gutterLeathers",
         "herald:nightweave",
-        "herald:gutterLeathers"
+        "herald:gutterLeathers",
+        "rogue:huntersHide"
       ]
     },
     "mediumArmor": {
@@ -170,7 +171,9 @@
         "reaver:oathsworn",
         "herald:default",
         "herald:ossuary",
-        "herald:pilgrim"
+        "herald:pilgrim",
+        "reaver:wyrmscaleMail",
+        "herald:ringmailHauberk"
       ]
     },
     "heavyArmor": {
@@ -184,7 +187,8 @@
         "reaver:wayfarerPlate",
         "starseer:wayfarerPlate",
         "rogue:wayfarerPlate",
-        "herald:wayfarerPlate"
+        "herald:wayfarerPlate",
+        "reaver:cinderforgedPlate"
       ]
     }
   },

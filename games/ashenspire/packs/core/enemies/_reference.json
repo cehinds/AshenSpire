@@ -3980,6 +3980,42 @@
       "rarity": "uncommon",
       "tags": [],
       "range": "melee"
+    },
+    "gear:armor.cinderforgedPlate": {
+      "name": "Cinderforged Plate",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "rare",
+      "tags": [
+        "plate"
+      ]
+    },
+    "gear:armor.wyrmscaleMail": {
+      "name": "Wyrmscale Mail",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "rare",
+      "tags": [
+        "mail"
+      ]
+    },
+    "gear:armor.ringmailHauberk": {
+      "name": "Ringmail Hauberk",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "common",
+      "tags": [
+        "mail"
+      ]
+    },
+    "gear:armor.huntersHide": {
+      "name": "Hunters Hide",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "common",
+      "tags": [
+        "leathers"
+      ]
     }
   },
   "relics": {

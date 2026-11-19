@@ -437,6 +437,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:prayerBook | Prayer Book | leftHand | shield | common |  |
 | gear:sunTalisman | Sun Talisman | leftHand | shield | uncommon | regen |
 | gear:boneTalisman | Bone Talisman | leftHand | shield | uncommon |  |
+| gear:armor.cinderforgedPlate | Cinderforged Plate | armor | armor | rare | plate |
+| gear:armor.wyrmscaleMail | Wyrmscale Mail | armor | armor | rare | mail |
+| gear:armor.ringmailHauberk | Ringmail Hauberk | armor | armor | common | mail |
+| gear:armor.huntersHide | Hunters Hide | armor | armor | common | leathers |
 
 ## Relics (relic:)
 
