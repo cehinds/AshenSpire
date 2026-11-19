@@ -4,13 +4,15 @@ import { resolveCard } from '../src/model/registries.js';
 import { core2Registries } from './helpers/core2.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
+import { dispatch, cardPlayCosts, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 import { rederivePools } from '../src/model/levelup.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
   return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
@@ -68,7 +70,9 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
 
 // Owner, 2026-11-15 (W25-F): every spell costs 1 more Mana, so Star Spark's printed 1 MP is paid as 2 (no Focus armament here; the Focus discount has its own test).
 test('Star Spark pays two MP (one printed, one spell surcharge) and actually applies two decaying Vulnerable stacks', () => {
-  const { combat, card } = fight('core.starseerSpecial', 'starseer');
+  // This intrinsic surcharge fixture predates armour-type discounts; current robe/Focus integration is exercised below.
+  const { combat, card } = fight('core.starseerSpecial', 'starseer', legacyGearRegistries(registries));
+  combat.player.maxMana = Math.max(combat.player.maxMana, 2); combat.player.mana = 2;
   // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
   // A deep pool keeps this test about the card's own two stacks.
   combat.enemies[0].persistentPoise = { value: 100, max: 100 };
@@ -78,5 +82,35 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and actually app
   assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 2);
   assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
+});
+
+test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
+  // Comet Lance prints 1 SP / 1 MP: +1 each spell surcharge, robe -1 MP,
+  // Ash Staff Focus -1 MP, Prepared -1 SP. Each resource floors at zero.
+  for (const [hand, prepared, expected] of [['greatsword', false, [2, 1]], ['ashStaff', false, [2, 0]], ['ashStaff', true, [1, 0]]]) {
+    const run = fresh('starseer');
+    run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
+    const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
+    assert.equal(combat.player.maxMana, 3, 'base 1 + Nightweave 1 + robe type 1');
+    assert.equal(getStacks(combat.player, 'ward'), hand === 'ashStaff' ? 1 : 0, 'staff type grants Ward at turn start');
+    combat.piles.hand = [{ instanceId: 'robe-focus', cardId: 'core.cometLance', upgraded: false }];
+    combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
+    combat.enemies[0].persistentPoise = { value: 100, max: 100 };
+    if (prepared) combat.player.combatStance = { maneuver: 'casting', camp: 'spell' };
+    const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
+    const costs = cardPlayCosts(combat, 'robe-focus'), preview = previewCard(combat, 'robe-focus', combat.enemies[0].id);
+    assert.deepEqual([costs.stamina, costs.mana], expected, `${hand}/${prepared}`);
+    assert.deepEqual([preview.staminaCost, preview.manaCost], expected);
+    assert.deepEqual(serializeCombatSnapshot(combat), before, 'quotes do not mutate combat');
+    assert.deepEqual(combat.rng.getCounters(), counters, 'quotes consume no RNG');
+    const restored = restoreCombatSnapshot({ registries, snapshot: before, rng: createRng(combat.rng.seed, counters), expectedGameProfile: combat.gameProfile });
+    const play = ctx => dispatch(ctx, { type: 'playCard', cardInstanceId: 'robe-focus', targetId: ctx.enemies[0].id });
+    const actual = play(combat), resumed = play(restored);
+    const paid = actual.events.find(event => event.type === 'cardPlayed' && event.cardInstanceId === 'robe-focus');
+    assert.deepEqual([paid.staminaSpent, paid.manaSpent], expected);
+    assert.deepEqual(actual, resumed, 'restored payment and events match');
+    assert.deepEqual(serializeCombatSnapshot(combat), serializeCombatSnapshot(restored));
+  }
 });
 

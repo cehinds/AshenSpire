@@ -11,6 +11,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
 import { ElementOfHit } from '../src/model/elementIdentityRules.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+const printedCostRegistries = legacyGearRegistries(reg);
 
 const NEW = {
   'core.pyreLash': { cls: 'starseer', rarity: 'uncommon', mana: 1, element: 'fire' },
@@ -48,7 +50,8 @@ const fights = new Map();
 function costsOf(id, { hand, stance, legacy = false }) {
   const key = `${hand}|${!!stance}|${legacy}`;
   if (!fights.has(key)) {
-    const { combat } = fight();
+    // Intrinsic W25-MS prices predate robe discounts; current gear/payment is retained in the play tests below.
+    const { combat } = fight({ registries: printedCostRegistries });
     if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
     combat.loadout.sets.rightHand[0] = hand;
     if (stance) combat.player.combatStance = { ...stance };
@@ -79,7 +82,7 @@ test('a card without the mark still pays the +1 Stamina surcharge (Comet Lance s
 });
 
 test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
-  const { combat } = fight();
+  const { combat } = fight({ registries: printedCostRegistries });
   combat.loadout.sets.rightHand[0] = 'greatsword';
   delete combat.fixCoreRules.spellCosts.manaOnlyTag;
   const card = combat.piles.hand[0]; card.cardId = 'core.pyreLash';
@@ -135,8 +138,10 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
   const stockHerald = live('herald', 1);
-  assert.equal(stockHerald.maxMana, 1);
-  assert.ok(!gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the stock Herald cannot pay its printed 2 MP');
+  assert.equal(stockHerald.maxMana, 1 + 1 + 1, 'base 1 + Rite Vestments 1 + robe type 1');
+  assert.ok(gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the geared Herald can pay its printed 2 MP');
+  const oneManaHerald = { ...stockHerald, maxMana: 1 };
+  assert.ok(!gameProfileRewardPools(reg, oneManaHerald).combatCards.includes('core.radiantVerdict'), 'the same class still cannot receive a card above its Mana capacity');
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
@@ -160,7 +165,7 @@ test('the element spells play for 0 SP, set their element as the flux and the ne
   const energy = combat.player.energy, mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: a.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Pyre Lash cost no Stamina');
-  assert.equal(mana - combat.player.mana, 1, 'with a Focus: printed 1 Mana + 1 surcharge - 1 Focus');
+  assert.equal(mana - combat.player.mana, Math.max(0, def('core.pyreLash').manaCost + 1 - 1 - 1), 'printed Mana + spell surcharge - Focus - current robe discount');
   assert.equal(combat.player.elementFlux, 'fire');
   const before = enemy.hp;
   dispatch(combat, { type: 'playCard', cardInstanceId: b.instanceId, targetId: enemy.id });
@@ -177,7 +182,7 @@ test('Open the Archive draws, restores Mana and exhausts (non-element: it clears
   combat.player.mana = 4;
   const mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.mana - mana, 2 - 3, 'costs 3 Mana, restores 2');
+  assert.equal(combat.player.mana - mana, 2 - Math.max(0, def('core.openArchive').manaCost + 1 - 1), 'printed Mana + spell surcharge - current robe discount, then restores 2');
   assert.equal(combat.player.elementFlux ?? null, null);
   assert.ok(combat.piles.exhaust.some(c => c.instanceId === card.instanceId));
 });
