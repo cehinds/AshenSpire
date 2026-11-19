@@ -1,6 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -915,6 +915,12 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
   // Rows (owner 2026-11-18): a back-row enemy holding Retreat stacks cannot close with the Advance an attack carries (that Advance
   // would only spend a stack), so a melee move that needs one is not played as if in range: the enemy plays its own step forward
   // (which spends one stack) when it can afford it, else the move is refused and spends nothing.
+  // A charged (prepaid) melee resolving from the back row cannot reach either: it spends one stack as its approach and fizzles (its SP was paid at the charge).
+  if (prepaid && BandsEnemyHeldBack(combat, enemy) && quoteRangeActions(combat, enemy, actions, { route: 'advance' })?.advanceSp > 0) {
+    BandsEnemyAdvance(combat, enemy, 'advance');
+    combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, required: totalSp, available: Rounds.enemyAvailableSp(enemy), resource: 'range' });
+    return 'refused';
+  }
   if (!prepaid && rangeQuote?.advanceSp > 0 && BandsEnemyHeldBack(combat, enemy)) {
     const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
     const closingEligible = closing && closingId !== moveId && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId))

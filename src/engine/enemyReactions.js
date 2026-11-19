@@ -15,6 +15,7 @@ import { enqueueExpandedAction } from './combatExpansionActions.js';
 // bundle's module order is unchanged.
 import './normalPreview.js';
 import { reactionPaused } from './reactionState.js';
+import { BandsEnemyHeldBack } from './bandRows.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
@@ -105,6 +106,7 @@ export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hoo
     const move = ctx.registries.enemies.get(enemy.enemyId).moves[moveId];
     const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx });
     if (quote.totalSp > Rounds.enemyAvailableSp(enemy)) return null;
+    if (quote.advanceSp > 0 && BandsEnemyHeldBack(ctx, enemy)) return null; // a held back-row enemy's melee reaction cannot reach (its Advance would only spend a stack)
     if (!Rounds.commitEnemySp(ctx, enemy, moveId, quote.sp)) return null;
     // SPEC §4.6b (owner, 2026-11-02): SP spent reacting in the player's turn comes out of the enemy's next turn. It is
     // owed once through pendingStaminaLoss (refill = max - loss at enemyOwnerTurnStart); the stamina spent now only
