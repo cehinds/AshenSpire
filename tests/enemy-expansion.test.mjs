@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { enemyExpansion } from '../src/content/enemyExpansion.js';
+import { enemyExpansion, conceptEnemyIds } from '../src/content/enemyExpansion.js';
 import { ENEMY_POSES } from '../src/content/enemyArt.js';
 import { enemyActionPose } from '../src/model/enemyActionPose.js';
 import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
@@ -9,8 +9,8 @@ import { installMockRaf, tickFrames } from './helpers/mock-raf.mjs';
 
 test('enemy expansion covers canonical enemies with complete 260ms sequences', () => {
   assert.deepEqual(Object.keys(enemyExpansion).sort(), [...ENEMY_POSES].sort());
-  for (const art of Object.values(enemyExpansion)) {
-    const concept = art.poses.length === 8;
+  for (const [id, art] of Object.entries(enemyExpansion)) {
+    const concept = conceptEnemyIds.includes(id);
     // Codex concept enemies (2026-11-18) commit 8 frames and name hit, wounded and defeated through actions as well.
     assert.equal(art.poses.length, concept ? 8 : 24);
     assert.equal(Object.keys(art.actions).length, concept ? 9 : 6);
