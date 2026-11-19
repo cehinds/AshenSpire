@@ -16,9 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-19 after combining Gear and stat rules: exactly 34 profile/runtime/snapshot/save hashes moved.
-// Frozen-source captures match the reviewed candidate and raw payloads; native/production events, RNG, receipts, continuations and historical archive provenance are unchanged.
-// Recaptured 2026-11-19 for stat allocation after Dev 6727a25530: exactly 27 current profile/runtime/snapshot/save hashes moved; historical values, events, RNG, receipts and continuations are unchanged. Native and production captures agree.
+// Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
+// The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
 // Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
 // Native and production agree; immutable-parent oracles explain historical metadata drift, with events, RNG, receipts, continuations and original profile provenance preserved.
 // Recaptured 2026-11-19 for the Strength call-map reanchor to finishAbilityPlay: only 27 current-profile/runtime/snapshot/save hashes moved.

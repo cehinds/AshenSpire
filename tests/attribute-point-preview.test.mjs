@@ -136,34 +136,43 @@ test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4
 });
 
 test('allocation preview and progression totals agree at threshold and nonthreshold points', () => {
-  // Fixed current-Heavy controls: raw DEX 3->4 is effective 2->3; raw 4->5 is effective 3->4.
-  const heavyDex = { 3: { before: 2, after: 3, stamina: 0 }, 4: { before: 3, after: 4, stamina: 1 } };
+  // Fixed current-Heavy controls: raw DEX 3->4 / 4->5 / 5->6 is effective 2->3 / 3->4 / 4->5.
+  const heavyDex = { 3: { before: 2, after: 3, stamina: 0 }, 4: { before: 3, after: 4, stamina: 1 }, 5: { before: 4, after: 5, stamina: 0 } };
   for (const attribute of ['constitution', 'wisdom', 'dexterity', 'intelligence']) {
-    for (const beforePoints of [3, 4]) {
+    const observedCadence = new Set();
+    for (const beforePoints of [3, 4, 5]) {
       const { registries, run } = build(character => {
         character.attributes[attribute] = beforePoints;
         character.level.unspentPoints = 1;
       });
       rederivePools(registries, run, 'test');
       if (attribute === 'dexterity') assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].before);
+      const effectiveBefore = gameProfileEffectiveAttributes(registries, run)[attribute];
+      const thresholdGain = Math.floor((effectiveBefore + 1) / 4) - Math.floor(effectiveBefore / 4);
+      observedCadence.add(thresholdGain);
       const predicted = new Map(attributePointGains(registries, run, attribute).map(gain => [gain.statId, gain.delta]));
       const before = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       const beforeUi = progressionStats(registries, run);
       assert.equal(beforeUi.rows.find(row => row.id === 'handSize').value, before.handSize);
       allocateAttributePoint(registries, run, attribute);
+      assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], effectiveBefore + 1);
       const after = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       for (const stat of Object.keys(before)) assert.equal(after[stat] - before[stat], predicted.get(stat) || 0, `${attribute} ${beforePoints}->${beforePoints + 1}: ${stat}`);
       const afterUi = progressionStats(registries, run);
       assert.equal(afterUi.rows.find(row => row.id === 'draw').value, after.handSize);
       if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, beforePoints === 3 ? 1 : 0);
       if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, beforePoints === 3 ? 1 : 0);
+      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, thresholdGain);
+      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, thresholdGain);
       if (attribute === 'dexterity') {
+        assert.equal(predicted.get('stamina') || 0, thresholdGain);
         assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].after);
         assert.equal(predicted.get('stamina') || 0, heavyDex[beforePoints].stamina);
         assert.equal(after.stamina - before.stamina, heavyDex[beforePoints].stamina, 'the real allocation crosses only the equipped fourth point');
       }
       if (attribute === 'constitution') assert.equal(predicted.get('hp'), 5);
     }
+    if (attribute !== 'constitution') assert.deepEqual([...observedCadence].sort(), [0, 1], `${attribute}: exercise both a real crossing and a non-crossing with current gear`);
   }
 });
 

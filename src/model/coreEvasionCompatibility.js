@@ -41,8 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
-  'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649',
   'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc',
+  'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649',
   'sha256:2a83899f7a10b415a18fb43d150034bcbf4e3ef92cc4ea4c19dfc9bd85fdecd3',
   'sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8',
   'sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9',
@@ -142,9 +142,9 @@ const PREVIOUS_RUNTIMES = new Set([
 // Merging dev (route spread #2847, stance fix #2843) into the rules pass (#2835): 0bf081... and 6ef5d3... are now in PREVIOUS_RUNTIMES.
 // The gear pass mechanics (2026-11-18/19: gear vocabulary, armour type bonuses, Poise bases) merged with dev's 58cd1d... moves it again; 58cd1d... and this branch's 0bf081... are now in PREVIOUS_RUNTIMES.
 // Merging dev (#2835 and the route spread) into the Force, Ward and Pierce rules pass (chore/ForceWardRules): dev's 58cd1d... and this branch's 404f18... are now in PREVIOUS_RUNTIMES.
-// Versioned casting traditions and WIS-Poise retain the preceding Dev runtime's saved profiles.
 // Canonical Stone Skin and Fire Thorns mechanic manifests regenerated after Dev integration.
 // Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
+// Combined Gear and versioned stat traditions; both parent runtimes remain readable above.
 const FIXED_EVASION_RUNTIME = 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME

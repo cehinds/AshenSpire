@@ -366,7 +366,8 @@ function faceDamageProfile(def, registries, rules) {
 }
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
-  // Live effects already contain gear and charges; the colour baseline starts from the same upgraded card as a face outside combat.
+  // A live definition already contains combat Gear and charged effects. Compare it with
+  // the same selected card before that projection, retaining its rank and upgrades.
   if (rules?.faceDefinition && rules.faceDefinition.id === def.id) def = rules.faceDefinition;
   // Owner, 2026-11-18: always-on gear (a Sword's +1, a Heavy set's Block) is in the baseline face; triggered gear is not (it colours in the fight).
   const gear = rules?.gearRules ? { rules: rules.gearRules, state: rules.gearState || {} } : rules?.loadout ? GearAlwaysOn(registries, rules) : null;

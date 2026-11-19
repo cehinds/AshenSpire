@@ -30,19 +30,26 @@ const precedingEquipment = JSON.parse(readFileSync(new URL('./fixtures/pre-codex
 // Archive SHA256: ce955c3da5182f89cd1e1e78fedbb2d8f4d92be84e63569468a0cbd827de5cbd.
 const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
 
-function fight([seed, classId], profile = legacyGearProfile(resolveGameProfile('default')), equipment = null) {
+function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
   if (equipment) run.combatExpansionRules.equipment = structuredClone(equipment);
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
   const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
-  // This immutable transaction baseline also predates built-in elemental Pierce and Stone Skin.
-  for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
 }
 function legacyFight(setup) {
-  return fight(setup, precedingDevProfile, precedingEquipment);
+  return withoutGearPierce(fight(setup, precedingDevProfile, precedingEquipment));
+}
+function withoutGearPierce(combat) {
+  // These immutable historical fixtures predate the three new Pierce snapshot fields.
+  for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
+  return combat;
+}
+function preGearFight(setup, profile = legacyGearProfile(resolveGameProfile('default'))) {
+  // Explicit pre-type-effects compatibility lane. The current stat policy remains enabled.
+  return withoutGearPierce(fight(setup, profile));
 }
 function answerReactions(combat) {
   for (let guard = 0; combat.pendingReaction && guard < 20; guard++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -251,7 +258,7 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
   });
 }
 // Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 207 and 195 -> 217; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
-// Stat allocation: the 16 legacy-policy lanes pin their exact preceding Dev profile and equipment table. Current lanes keep the new default.
+// Stat allocation: the 16 legacy-policy lanes pin their exact preceding Dev profile and equipment table. The next two lanes explicitly predate gear type effects.
 // After merging Dev 6727a25530, its archived profile with live equipment reproduces both incoming Dev state pins below.
 // Only their state digests move: the Poise row/base row replaces CON with WIS, its explicit override is recorded, and
 // fixCoreRules.spellTraditionsVersion is added. The control below restores exactly those fields and compares the entire
@@ -266,14 +273,14 @@ const PINNED = [
 ];
 for (const [index, [setup, expected]] of PINNED.entries()) {
   const seed = `${setup[0]}/${setup[1]}`;
-  test(`seeded fight ${seed} reproduces its log, final state and RNG position`, () => {
-    const current = play(fight(setup), 5);
+  test(`pre-gear seeded fight ${seed} reproduces its stat-policy log, final state and RNG position`, () => {
+    const current = play(preGearFight(setup), 5);
     const first = digest(current);
-    const second = digest(play(fight(setup), 5));
+    const second = digest(play(preGearFight(setup), 5));
     assert.deepEqual(second, first, 'two plays of one seed agree');
     assert.ok(first.events > 40 && first.turn >= 4, 'the fight did real work');
     assert.deepEqual(first, expected, 'digest matches the pinned profile and fight rules');
-    const previous = play(fight(setup, incomingDevProfile), 5);
+    const previous = play(preGearFight(setup, incomingDevProfile), 5);
     assert.deepEqual(digest(previous), PRE_STAT_PINNED[index], 'the exact prior profile retains its entire prior digest');
     assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
     assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');
@@ -283,6 +290,42 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
     delete restored.derivedStatRuleSnapshot.modifierOverride.rules.poise;
     delete restored.fixCoreRules.spellTraditionsVersion;
     assert.equal(JSON.stringify(restored), JSON.stringify(before), 'only saved Poise ownership and the tradition flag differ');
+  });
+}
+
+for (const setup of [['PERF1', 'reaver'], [4242, 'reaver']]) {
+  test(`current gear seeded fight ${setup[0]}/${setup[1]} keeps real stat ownership, preview receipts and deterministic play`, () => {
+    function scenario() {
+      const combat = fight(setup);
+      assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'exercise current gear, not the pre-gear fixture');
+      assert.equal(combat.fixCoreRules.spellTraditionsVersion, 1);
+      const poise = combat.derivedStatRuleSnapshot.rules.rules.poise;
+      assert.equal(poise.wisdom, 1);
+      for (const id of ['constitution', 'strength', 'dexterity', 'intelligence']) assert.equal(poise[id], 0);
+      assert.equal(combat.player.ratingSources.find(row => row.kind === 'attribute').poise, 1 + combat.player.attributes.wisdom, 'live attribute Poise counts effective WIS exactly once');
+      assert.ok(combat.player.itemProps.cardRules.length > 0, 'current worn gear contributes real rules');
+      const instanceId = 'current-gear-strike';
+      combat.piles.hand.push({ instanceId, cardId: 'core.strike', upgraded: false });
+      const before = digest(combat);
+      const quote = previewCard(combat, instanceId, combat.enemies[0].id);
+      assert.deepEqual(digest(combat), before, 'preview does not mutate combat or RNG');
+      const hits = quote.values.filter(row => row.op === 'damage').flatMap(row => row.perTargetHitDamages[combat.enemies[0].id]);
+      const mark = combat.eventLog.length;
+      dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: combat.enemies[0].id });
+      answerReactions(combat);
+      const events = combat.eventLog.slice(mark);
+      assert.deepEqual(events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.cardInstanceId === instanceId).map(event => event.hpLoss), hits, 'the current gear quote equals every live hit');
+      const paid = events.slice(0, events.findIndex(event => event.type === 'cardPlayed'));
+      const spent = type => paid.filter(event => event.type === type).reduce((sum, event) => sum + event.amount, 0);
+      assert.equal(spent('staminaSpent'), quote.staminaCost || 0);
+      assert.equal(spent('manaSpent'), quote.manaCost || 0);
+      return play(combat, 5);
+    }
+    const first = scenario(), second = scenario();
+    assert.deepEqual(digest(second), digest(first));
+    assert.deepEqual(second.eventLog, first.eventLog, 'the full current-gear logs agree');
+    assert.deepEqual(second.rng.getCounters(), first.rng.getCounters());
+    assert.ok(first.eventLog.length > 40 && first.turn >= 4);
   });
 }
 

@@ -4,8 +4,8 @@ import { gameContent } from '../model/gameProfile.js';
 // presentation, affordability and actual effect execution.
 import * as Triggers from './triggers.js';
 import { GearCardDefinition } from './gearHooks.js';
-export function projectCardBehavior(ctx, instance, def) {
-  let result=GearCardDefinition(ctx,def);
+export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {}) {
+  let result=applyGear ? GearCardDefinition(ctx,def) : def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};

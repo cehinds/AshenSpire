@@ -37,7 +37,7 @@ function build({ right, left, armor, classId = 'reaver', player } = {}) {
   dispatch(combat, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(combat, { count: 3 });
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { hp: 900, maxHp: 900, block: 0, statuses: {}, persistentPoise: { value: 0, max: 0 } });
+  Object.assign(enemy, { hp: 900, maxHp: 900, block: 0, statuses: {}, persistentPoise: { value: 0, max: persistentPoiseMaximum(combat, enemy) } });
   return { run, combat, enemy };
 }
 let serial = 0;

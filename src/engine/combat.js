@@ -81,7 +81,7 @@ import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers, evalPredicate } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
-import { gameModule, projectGameCard } from '../model/gameProfile.js';
+import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { focusManaDiscount, applyFocusManaDiscount } from '../model/focusMana.js';
@@ -2184,6 +2184,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const priceReceipt = resolvedCardPriceReceipt(combat, def);
   const paidCosts = priceReceipt.paid;
   def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
+  // Resolve the same upgraded/ranked variant before combat Gear projection. Face comparisons
+  // apply its always-on Gear once, independently of live triggered bonuses and charged effects.
+  const faceDefinition = configuredCombat(combat) && combat.gameProfile
+    ? selectCardVariant(combat, resolveCombatCard(combat, inst, { upcastRanks, applyGear: false }), paidCosts, targetId ? findEntity(combat, targetId) : null) : null;
   const displayCosts = priceReceipt.display;
   const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
@@ -2561,8 +2565,6 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   // quoted on the prompt when the return fires), so the face of a Counter in hand carries none.
   const advanceOnPlay = action.card.combatProfile?.maneuver === 'counter' ? 0 : range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0;
   const rangeCosts = advanceOnPlay === 0 && range ? paidCosts : range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
-  const faceDefinition = configuredCombat(combat) && combat.gameProfile ? projectGameCard(combat, inst) : null;
-  const faceVariant = faceDefinition?.effectVariants?.[def.activeEffectVariant];
   return {
     ...(range ? { range, costs: rangeCosts } : {}),
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
@@ -2572,8 +2574,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
       fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
-      faceDefinition: structuredClone(faceVariant ? { ...faceDefinition, effects: faceVariant.effects,
-        ...(faceVariant.textTemplate ? { textTemplate: faceVariant.textTemplate } : {}), activeEffectVariant: def.activeEffectVariant } : faceDefinition),
+      faceDefinition: structuredClone(faceDefinition),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,
       // Owner, 2026-11-18: the always-on gear rules are part of the baseline face; triggered ones are not (they colour in the fight).
