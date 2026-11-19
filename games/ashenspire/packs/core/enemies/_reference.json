@@ -4205,14 +4205,6 @@
         "self.sp=-1"
       ]
     },
-    "relic:enemy.relic.judgeSeal": {
-      "name": "Judge Seal",
-      "text": "STR +2, WIS +1",
-      "modifiers": [
-        "self.strength=+2",
-        "self.wisdom=+1"
-      ]
-    },
     "relic:enemy.relic.hearseFrame": {
       "name": "Hearse Frame",
       "text": "CON +3, STR +1, SP -1",
@@ -4253,6 +4245,14 @@
         "self.constitution=+3",
         "self.wisdom=+1",
         "self.sp=-2"
+      ]
+    },
+    "relic:enemy.relic.judgeSeal": {
+      "name": "Judge Seal",
+      "text": "STR +2, WIS +1",
+      "modifiers": [
+        "self.strength=+2",
+        "self.wisdom=+1"
       ]
     }
   }

@@ -1641,10 +1641,6 @@
         "to": "blunt",
         "effect": "stagger",
         "amount": 20
-      },
-      {
-        "to": "magic",
-        "effect": "damage"
       }
     ]
   },
