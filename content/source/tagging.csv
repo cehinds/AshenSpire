@@ -5018,7 +5018,6 @@ armament,,scythe,source:weapon
 armament,,scythe,delivery:melee
 armament,,scythe,damage:slashing
 armament,,scythe,classification.armament
-armament,,scythe,retreat
 armament,,reapersCrescent,item:blade
 armament,,reapersCrescent,blade
 armament,,reapersCrescent,heavy
@@ -5027,7 +5026,6 @@ armament,,reapersCrescent,source:weapon
 armament,,reapersCrescent,delivery:melee
 armament,,reapersCrescent,damage:slashing
 armament,,reapersCrescent,classification.armament
-armament,,reapersCrescent,retreat
 armament,,mace,item:blade
 armament,,mace,heavy
 armament,,mace,technique:heavy

@@ -422,14 +422,14 @@
     {
       "name": "Weapon card in play: beastClaws kit",
       "url": "?shot=combat&shotSeed=4&shotKit=1&shotClass=reaver&shotMainHand=beastClaws",
-      "ready": ".hand .card[data-card-id=\"fanOfKnives\"][data-instance-id=\"weaponArt:beastClaws:fanOfKnives\"]",
+      "ready": ".hand .card[data-card-id=\"twinbladeFlurry\"][data-instance-id=\"weaponArt:beastClaws:twinbladeFlurry\"]",
       "settleMs": 2000,
       "actions": [],
       "success": [
         {
           "kind": "count",
-          "label": "Hand holds fanOfKnives, the weapon art granted by beastClaws",
-          "selector": ".hand .card[data-card-id=\"fanOfKnives\"][data-instance-id=\"weaponArt:beastClaws:fanOfKnives\"]",
+          "label": "Hand holds twinbladeFlurry, the weapon art granted by beastClaws",
+          "selector": ".hand .card[data-card-id=\"twinbladeFlurry\"][data-instance-id=\"weaponArt:beastClaws:twinbladeFlurry\"]",
           "min": 1
         },
         {

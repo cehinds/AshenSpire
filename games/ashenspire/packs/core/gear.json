@@ -1090,8 +1090,7 @@
     "kind": "weapon",
     "rarity": "common",
     "tags": [
-      "spear",
-      "retreat"
+      "spear"
     ],
     "points": {},
     "source": {
@@ -1108,8 +1107,7 @@
     "kind": "weapon",
     "rarity": "uncommon",
     "tags": [
-      "polearm",
-      "retreat"
+      "polearm"
     ],
     "points": {},
     "source": {
@@ -1126,8 +1124,7 @@
     "kind": "weapon",
     "rarity": "rare",
     "tags": [
-      "polearm",
-      "retreat"
+      "polearm"
     ],
     "points": {},
     "source": {
@@ -1359,8 +1356,7 @@
     "kind": "weapon",
     "rarity": "common",
     "tags": [
-      "flurry",
-      "retreat"
+      "flurry"
     ],
     "points": {},
     "source": {
@@ -1378,7 +1374,6 @@
     "rarity": "uncommon",
     "tags": [
       "flurry",
-      "retreat",
       "bleed"
     ],
     "points": {},
