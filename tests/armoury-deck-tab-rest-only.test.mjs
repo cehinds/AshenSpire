@@ -32,14 +32,14 @@ function armouryDom(dom) {
   }
 }
 const textOf = node => String(node.outerHTML ?? "");
-function clickDeckTab(dom, run) {
+function clickDeckTab(dom, run, options = {}) {
   const app = dom.document.createElement('main');
   dom.document.body.replaceChildren(app);
-  mountEquipment(app, { registries: REG, run, meta: { settings: { equipView: 'hybrid' } }, inCombat: false, onClose() {}, onChange() {} });
+  mountEquipment(app, { registries: REG, run, meta: { settings: { equipView: 'hybrid' } }, inCombat: false, onClose() {}, onChange() {}, ...options });
   const tab = dom.document.body.querySelector('[data-modal-tab="deck"]');
   assert.ok(tab, 'the Deck tab exists');
   tab.click();
-  return textOf(dom.document.body);
+  return { text: textOf(dom.document.body), tab };
 }
 
 test('editorWhere "rest": the Deck tab names the rest-site rule', () => {
@@ -47,7 +47,15 @@ test('editorWhere "rest": the Deck tab names the rest-site rule', () => {
     armouryDom(dom);
     const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
     assert.equal(gameModule(run, 'cards')?.editorWhere, 'rest');
-    const text = clickDeckTab(dom, run);
+    const deckBefore = JSON.stringify(run.deck);
+    const { text, tab } = clickDeckTab(dom, run);
+    assert.equal(tab.textContent, 'View Deck');
+    assert.equal(tab.getAttribute('aria-disabled'), 'false');
+    const viewer = dom.document.body.querySelector('.deck-view-modal');
+    assert.ok(viewer, 'the read-only deck viewer opens');
+    assert.equal(viewer.querySelector('h2').textContent, 'View Deck');
+    assert.equal(viewer.querySelector('.modal-eyebrow'), null);
+    assert.equal(JSON.stringify(run.deck), deckBefore, 'viewing preserves the deck');
     assert.match(text, /You can edit your deck at a rest site\./);
     assert.doesNotMatch(text, /unavailable with the current settings/);
   });
@@ -58,9 +66,24 @@ test('any other profile keeps the settings text', () => {
     armouryDom(dom);
     const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
     run.gameProfile.modules.cards = { ...run.gameProfile.modules.cards, editorWhere: 'none' };
-    const text = clickDeckTab(dom, run);
+    const { text, tab } = clickDeckTab(dom, run);
+    assert.equal(tab.textContent, 'Edit Deck');
+    assert.equal(tab.getAttribute('aria-disabled'), 'true');
     assert.match(text, /Deck editing is unavailable with the current settings\./);
     assert.doesNotMatch(text, /edit your deck at a rest site/);
+  });
+});
+
+test('an available editor keeps the Edit Deck label and opens the editor', () => {
+  withKitDom(dom => {
+    armouryDom(dom);
+    const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+    let opened = 0;
+    const { tab } = clickDeckTab(dom, run, { onEditDeck() { opened++; } });
+    assert.equal(tab.textContent, 'Edit Deck');
+    assert.equal(tab.getAttribute('aria-disabled'), 'false');
+    assert.equal(opened, 1);
+    assert.equal(dom.document.body.querySelector('.deck-view-modal'), null);
   });
 });
 
