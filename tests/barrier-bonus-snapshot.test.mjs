@@ -43,3 +43,21 @@ test('Ward decay and a later attribute change keep the pool consistent', () => {
   assert.equal(player.persistentPoise.max, withWard - 5, 'only the decayed stack'+"'s +5 left");
   clean(combat);
 });
+
+test('a saved snapshot already holding barrierBonus above max loads repaired and can be saved again', () => {
+  const { combat, player } = fight({ classId: 'reaver' });
+  ward(combat, player, 4);
+  const saved = createCombatSnapshot(combat);
+  const bonus = saved.player.persistentPoise.barrierBonus;
+  assert.equal(bonus, 20);
+  const baseMax = saved.player.persistentPoise.max - bonus;
+  Object.assign(saved.player.persistentPoise, { max: baseMax, value: Math.min(saved.player.persistentPoise.value, baseMax) }); // the 0.7.4.216 state
+  assert.ok(combatSnapshotProblems(saved).some(p => /barrierBonus/.test(p)), 'the bad snapshot is what the validator refuses');
+  const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: saved });
+  assert.equal(restored.player.persistentPoise.barrierBonus, bonus);
+  assert.equal(restored.player.persistentPoise.max, baseMax + bonus);
+  assert.deepEqual(combatSnapshotProblems(createCombatSnapshot(restored)), []);
+  // A fractional bonus is floored.
+  const frac = structuredClone(saved); frac.player.persistentPoise.barrierBonus = 7.5;
+  assert.equal(restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: frac }).player.persistentPoise.barrierBonus, 7);
+});
