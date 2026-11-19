@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `7bf0fe7faa4aaa91469533200546973d53ee56dc`
+- Source commit: `e0ffb2d61b287784462ee7d664ba068490aca1c3`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
