@@ -32,6 +32,8 @@ const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixture
 // Genuine resolved Dev 4fc475a249 profile, with the Defend-only Smash rule and without stat traditions.
 // Archive SHA256: 0c4712d1748aa2424505d5ad40f2ba354deb988cda19bdee3abb3aeeec0cfbe6.
 const smashDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-4fc475a2.json.gz', import.meta.url))));
+// Genuine archived Gear parent stays unchanged; only the explicitly derived pre-Gear control below removes its type-effects opt-in.
+const gearParentProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/gear-profile-62323292.json.gz', import.meta.url))));
 
 function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -335,12 +337,33 @@ for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) 
   });
 }
 
+// Incoming Dev's exact current-Smash goldens use its preceding Gear stat policy, before type effects.
+// This is a derived control from the genuine archived parent, never a rewrite of that archive.
+const SMASH_PARENT_PINNED = [
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '643cecce794d5d7d', events: 207, turn: 6 }],
+  [[4242, 'reaver'], { log: 'd9f8ab14d3786fe3', state: 'c20d74fee88cb015', events: 217, turn: 6 }],
+];
+for (const [setup, expected] of SMASH_PARENT_PINNED) {
+  test(`derived Gear-parent pre-type fight ${setup[0]}/${setup[1]} preserves incoming Smash goldens`, () => {
+    const original = JSON.stringify(gearParentProfile);
+    assert.equal(gearParentProfile.hash, 'sha256:6980a72704c52d9d4f3849ed7a5387ed513f5a37f7f83802e2ab7ceaefce47d3');
+    const derived = legacyGearProfile(gearParentProfile);
+    assert.equal(derived.modules.gear.typeEffectsVersion, undefined);
+    assert.equal(derived.modules.effects.spellTraditionsVersion, undefined);
+    const combat = withoutGearPierce(fight(setup, derived));
+    assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5, 'the current override is active in this control');
+    assert.deepEqual(digest(play(combat, 5)), expected, 'preserve the exact incoming pin, without recapture');
+    assert.equal(JSON.stringify(gearParentProfile), original, 'the genuine parent profile remains untouched');
+  });
+}
+
 for (const setup of [['PERF1', 'reaver'], [4242, 'reaver']]) {
   test(`current gear seeded fight ${setup[0]}/${setup[1]} keeps real stat ownership, preview receipts and deterministic play`, () => {
     function scenario() {
       const combat = fight(setup);
       assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'exercise current gear, not the pre-gear fixture');
       assert.equal(combat.fixCoreRules.spellTraditionsVersion, 1);
+      assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5, 'the full current Gear/stat lane keeps the current Smash override');
       const poise = combat.derivedStatRuleSnapshot.rules.rules.poise;
       assert.equal(poise.wisdom, 1);
       for (const id of ['constitution', 'strength', 'dexterity', 'intelligence']) assert.equal(poise[id], 0);

@@ -18,6 +18,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
 // Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
 // Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
+// Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
+// Incoming Dev previously revalidated the same historical capture at runtime 04de9306 before combining stat traditions.
 // Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
 // Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
