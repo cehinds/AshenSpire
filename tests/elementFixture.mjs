@@ -14,9 +14,9 @@ export const reg = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 export const ATTRIBUTES = { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 };
 
 /** A fight with `enemies` plain enemies (500 HP, no Block, Poise `poise`), the player with `attributes`. */
-export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false } = {}) {
-  const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
+export function fight({ registries = reg, classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false } = {}) {
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
   for (const enemy of combat.enemies) {
     Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: poise, max: Math.max(20, poise) }, attributes: { ...ATTRIBUTES }, level: 1 });
     if (undead) enemy.tags = ['undead'];

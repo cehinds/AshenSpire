@@ -24,6 +24,7 @@ import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
+import { runMods, EQUIPMENT_POOL_FIELDS } from '../model/loadout.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
@@ -382,6 +383,11 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   run.flaskCharges = structuredClone(combat.player.flaskCharges);
   run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
   run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
+  // Attribute-derived pool changes already travel in the saved formulas; only raw equipment bonuses belong in this addend.
+  if (combat.equipmentChanged && run.loadout) {
+    const mods = runMods(combat.registries, run.loadout, run.class, run);
+    run.equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map(field => [field, mods[field]]));
+  }
   delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
     run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];

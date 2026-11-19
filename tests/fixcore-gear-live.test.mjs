@@ -50,7 +50,12 @@ test('equipped resolved values reach live pools/ratings once and survive restore
   initializeRunDerivedStats(run,reg);
   assert.equal(run.maxHp,before.maxHp);
   const ratings=gameProfileRatingReceipt(reg,run);
-  assert.equal(ratings.sources.filter(source=>source.resolved).length,gear.sources.length);
+  // Owner, 2026-11-18 (gear vocabulary, ruling 18): an armour group's stat rows (Heavy: Poise +2, DEX -1) are gear sources of their own, `type/<stat>`, with no resolved
+  // item behind them; each still reaches the ratings once, through its stat.
+  const itemSources=gear.sources.filter(source=>source.itemId!=='type'), typeSources=gear.sources.filter(source=>source.itemId==='type');
+  assert.ok(typeSources.length,'the worn armour group contributes stat sources');
+  assert.equal(ratings.sources.filter(source=>source.resolved).length,itemSources.length);
+  for (const source of typeSources) assert.ok(ratings.sources.some(row=>row.sourceId===source.sourceId),`${source.sourceId} reaches the ratings`);
   const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
   const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
   initializeRunDerivedStats(restored,reg);
@@ -75,7 +80,7 @@ test('previously earned Core attribute entitlement remains claimable and changes
 test('authored attribute gear reaches HP MP SP pools with one contribution on reload', () => {
   // +1 CON gives 5 HP, while +1 DEX and +1 WIS bring each effective attribute to 4 for the first SP and MP increases.
   const catalog=loadGameProfileCatalog();
-  const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='wayfarerPlate');
+  const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='vigil');
   armor.points={constitution:1,dexterity:1,wisdom:1};
   const selected=resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),catalog);
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
@@ -88,7 +93,7 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
   const unworn=[run.maxHp,run.maxMana,run.maxStamina];
   assert.deepEqual(unworn.slice(1),[1,3]);
   const unwornPoints=gameProfileEquipmentReceipt(registries,run).totals;
-  run.loadout.sets.armor[0]='wayfarerPlate';
+  run.loadout.sets.armor[0]='vigil'; // Medium: its type adds Poise only (Heavy would take 1 DEX, ruling 18), so the 3 authored points are the whole stat change
   rederivePools(registries,run,'test');
   const receipt=gameProfileEquipmentReceipt(registries,run);
   for (const attribute of ['constitution','dexterity','wisdom']) assert.equal(receipt.totals[attribute]-unwornPoints[attribute],1);
@@ -120,7 +125,9 @@ test('resolved gear suppresses duplicate legacy pool stats and retains independe
   const run=fresh();
   const registry={...reg,equipment:{...reg.equipment,armaments:reg.equipment.armaments.map(piece=>piece.id==='greatsword' ? {...piece,mods:[...(piece.mods || []),'self.maxHp=+999','self.regen=+2','self.swapCost=+1']} : piece)}};
   const baseline=runMods(reg,run.loadout,run.class,run), actual=runMods(registry,run.loadout,run.class,run);
-  assert.equal(actual.maxHp,baseline.maxHp);
+  // Owner, 2026-11-18 ("no hidden caps; balance through cost and consequence", a845a23): resolved gear replaces a legacy pool mod only where its own points supply that
+  // pool; the Greatsword's resolved hp is 0, so its authored +999 max HP is a real, uncapped bonus on top, counted once.
+  assert.equal(actual.maxHp,baseline.maxHp+999);
   assert.equal(actual.swapCostDelta,baseline.swapCostDelta+1);
   assert.equal(actual.startStatuses.find(row=>row.status==='regen')?.stacks,(baseline.startStatuses.find(row=>row.status==='regen')?.stacks || 0)+2);
 });

@@ -1,0 +1,26 @@
+{
+  "id": "status.fireVulnerable",
+  "tag": "status.fireVulnerable",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Fire Vulnerable",
+  "description": "Each stack: +5% Fire damage taken. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.fireVulnerable"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

@@ -12,6 +12,7 @@ import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { creationBrief } from '../src/model/creationBrief.js';
 import { gameModule, gameContent } from '../src/model/gameProfile.js';
 import { resolveGearItem } from '../engine/kernel/gameConfig.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 
 // Owner, 2026-11-18: "con should also increase poise by 1 point each level with HP." Each Constitution point is +5 HP (Core 2,
 // owner 2026-11-17) and +1 maximum Poise. The Poise term is the derived `poise` row (base 1, Constitution 1), read once through the
@@ -24,15 +25,18 @@ const fightPoise = (run) => createRunCombat({ registries: reg, run, rng: createR
 
 // Measured at level 1. Before the 2026-11-18 gear rule: reaver 8, starseer 5, rogue 8, herald 5 (every item floored at 1 Poise point).
 // After: a non-defensive one-hander (staff, dagger) adds 0, the Greatsword still adds its 6, and the starting armour is not a catalogue item.
-const LEVEL_ONE_POISE = { reaver: 8, starseer: 2, rogue: 2, herald: 2 };
+// 2026-11-18 (gear pass A): the four starting outfits now resolve to their gear items (Poise from their points) and every worn piece adds its type or group base (Heavy +2, Medium +1, Light 0, Shield +1; the items keep their own Poise).
+const LEVEL_ONE_POISE = { reaver: 17, starseer: 8, rogue: 5, herald: 8 };
+// A staff or sceptre grants 1 Ward at the start of each turn (owner, 2026-11-18), and a Ward stack is +5 maximum Poise while it lasts.
+const WARD_AT_FIGHT_START = { reaver: 0, starseer: 5, rogue: 0, herald: 5 };
 
 test('level-1 Poise per class is 1 + CON + the Poise the worn gear adds', () => {
   for (const [classId, expected] of Object.entries(LEVEL_ONE_POISE)) {
     const run = mk(classId);
-    assert.equal(fightPoise(run), expected, `${classId} opens a fight at ${expected} Poise`);
+    assert.equal(fightPoise(run), expected + WARD_AT_FIGHT_START[classId], `${classId} opens a fight at ${expected} Poise (+ its Ward)`);
     const receipt = gameProfileRatingReceipt(reg, run);
     const attribute = receipt.sources.filter((s) => s.kind === 'attribute').reduce((sum, s) => sum + s.poise, 0);
-    assert.equal(attribute, 1 + run.attributes.constitution, `${classId}: the attribute term is the row's base 1 plus CON, counted once`);
+    assert.equal(attribute, 1 + gameProfileEffectiveAttributes(reg, run).constitution, `${classId}: the attribute term is the row's base 1 plus CON, counted once`);
     assert.equal(receipt.totals.poise, expected);
   }
 });

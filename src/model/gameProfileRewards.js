@@ -13,6 +13,10 @@ import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
 import { carriedIds } from './loadout/ownership.js';
+import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
+import { GearTypeEffectsEnabled } from './gearEffects.js';
+import { GEAR_TYPES } from '../content/gearTypes.js';
+const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 
 // Group members are authored references because the legacy catalog's item tags
@@ -222,7 +226,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):kind==='weapons'||kind==='armor'?ThemedItemPick(rng,stream,ids,{classId:run.class,kind,enabled:GearTypeEffectsEnabled(run),rowOf:itemId=>kind==='weapons'?(registries.equipment.armaments||[]).find(row=>row.id===itemId):(registries.equipment.armour||[]).find(row=>row.id===itemId&&row.classId===run.class)}):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     // A card that is also a weapon art is one offer, never both a card and an art on the same screen.
     if(kind==='combatCards'||kind==='weaponArts')for(const other of ['combatCards','combatCardsLow','weaponArts'])available[other]=available[other].filter(value=>value!==id);
     options.push({kind,id});
@@ -367,7 +371,10 @@ export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool =
   const chosen = [];
   let left = candidates;
   while (chosen.length < wanted && left.length) {
-    const pick = spreadPick(rng, left, chosen, [row => row.type, row => row.family, row => row.sub]);
+    // Owner, 2026-11-18: each pick draws from the class-themed items 75% of the time (the whole pool otherwise, or when none is left).
+    const themed = left.filter(row => ItemIsThemed(row.kind === 'weapons' ? (registries.equipment.armaments || []).find(item => item.id === row.id) : (registries.equipment.armour || []).find(item => item.id === row.id && item.classId === run.class), run.class, row.kind));
+    const pool = GearTypeEffectsEnabled(run) && rng.int('cardRewards', 1, 100) <= GEAR_THEME_PERCENT && themed.length ? themed : left;
+    const pick = spreadPick(rng, pool, chosen, [row => row.type, row => row.family, row => row.sub]);
     chosen.push(pick);
     left = left.filter(row => row !== pick);
   }

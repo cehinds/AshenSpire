@@ -1,3 +1,5 @@
+import { GearManaCost, GearTypeEffectsEnabled, GearRuleTriggered } from '../model/gearEffects.js';
+import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp, RefreshGearItemProps } from './gearHooks.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
@@ -12,7 +14,7 @@ import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
 import { scaleOwnElementActions } from './elementRules.js';
-import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
+import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
@@ -69,7 +71,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
-import { ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
+import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
 import { persistentWardMaximum, persistentPoiseMaximum, BarrierPoisePerStack } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -529,6 +531,7 @@ function startPlayerTurn(combat) {
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
   p.counters.cardsPlayedThisTurn = 0;
+  if (combat.gameProfile?.modules?.gear?.typeEffectsVersion === 1) p.counters.spellsPlayedThisTurn = 0;
   const eqcfg = combat.registries.balance.equipment || {};
   combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
 
@@ -541,6 +544,7 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
   reconcileWardBlock(p);
+  if (p.earthBlock) p.earthBlock = Math.min(p.earthBlock, p.block);
   // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
   // retainBlock-style modifier keeps them.
   clearMeterGuards(p);
@@ -552,10 +556,12 @@ function startPlayerTurn(combat) {
     Blight.beginAshenBlightCycle(combat, p, String(p.combatOwnerCycle));
   }
   QueueItemTurnStart(combat, p); // W25 step 6: Block and a Poise guard from the player's item properties
+  QueueGearTurnGrants(combat, p, 'start'); // owner, 2026-11-18: gear grants at the start of your turn
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  if (combat.turn === 1) p.energy = Math.max(0, p.energy + GearFirstTurnSp(p)); // Encumbered: -1 SP on your first turn
   if (configuredCombat(combat)) {
     combat.gameProfileCommands = 0;
     const resources = configuredModule(combat, 'resources');
@@ -595,6 +601,7 @@ function endPlayerTurn(combat, discardIds = []) {
   BandsPlayerTurnEnd(combat); // rows (W25-BANDS): one turn end of the Advance is spent
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
+  QueueGearTurnGrants(combat, p, 'end'); // owner, 2026-11-18: gear grants at the end of your turn
   drainQueue(combat);
   ElementTurnEnd(combat, p); // element identity (W25): Necrotic build-up
   if (combat.result) return;
@@ -673,6 +680,7 @@ function enemyTurnStart(combat) {
   for (const e of combat.enemies) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
+    if (e.earthBlock) e.earthBlock = Math.min(e.earthBlock, e.block);
     reconcileWardBlock(e);
     clearMeterGuards(e);
     ExpireCombatCounterAtTurnStart(combat, e);
@@ -1380,6 +1388,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The hand now holds a different set: its old piece's properties leave with
   // it and the new piece's arrive (source ownership, engine/properties.js).
   syncLoadoutProperties(combat);
+  RefreshGearItemProps(combat);
   if (activeBefore !== combat.loadout.active[slotId]) {
     combat.equipmentChanged = true;
     const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -1516,6 +1525,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   // Unmount the outgoing piece's properties and mount the incoming piece's,
   // now that equipPiece has committed (engine/properties.js).
   syncLoadoutProperties(combat);
+  RefreshGearItemProps(combat);
   const poolAfter = combatEquipmentPoolProjection(combat);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;
@@ -1614,18 +1624,20 @@ function resolvedCardPriceReceipt(combat,def) {
  // Focus (owner, 2026-11-01): in the Prepared stance a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
  // affordability checks, the bot and the payment all read the same number.
  // Owner, 2026-11-15 (W25-F): a fight with `spellCosts` rules prices every spell through engine/spellCosts.js instead (+1 Mana, +1 Stamina unless a cantrip,
- // Prepared -1 Stamina, a Focus item -1 Mana in any stance); a fight created before the ruling keeps the Prepared-only Focus rule above.
+ // Prepared -1 Stamina; old saved gear keeps Focus in any stance). Current gear applies its Prepared-only Focus and robe rules once at the final Mana price.
  if(SpellCostRules(combat)) {
   const paid=SpellCostAdjust(combat,def,{stamina:result.paid.stamina,mana:result.paid.mana}),shown=SpellCostAdjust(combat,def,{stamina:result.display.stamina,mana:result.display.mana});
   result.paid={...result.paid,mana:paid.mana,stamina:paid.stamina,...(def.cost==='X' ? {} : {energy:paid.stamina})};
   result.display={...result.display,mana:shown.mana,stamina:shown.stamina,...(def.cost==='X' ? {} : {action:shown.stamina})};
   return result;
  }
- const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
+ const focus=GearTypeEffectsEnabled(combat) ? 0 : focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
  if(focus>0) {
   result.paid={...result.paid,mana:applyFocusManaDiscount(result.paid.mana,focus)};
   result.display={...result.display,mana:applyFocusManaDiscount(result.display.mana,focus)};
  }
+ result.paid={...result.paid,mana:GearManaCost(def,result.paid.mana)};
+ result.display={...result.display,mana:GearManaCost(def,result.display.mana)};
  return result;
 }
 function baseCardPriceReceipt(combat, def) {
@@ -1709,6 +1721,7 @@ function actionCardCarrier(combat, source, def, inst, kind, committed = false)
         type: kind,
         tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined),
         attack: def.attack,
+        ...(def.gear ? { gear: def.gear } : {}),
         sourceHand: inst.sourceHand,
         derivedTags,
         // Tactical projection can replace tags. Trigger predicates still read the authored row.
@@ -1956,6 +1969,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
+  const gearStrengthGrants = QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
+  if (gearStrengthGrants.length) combat.pendingAbilityPlay.gearStrengthGrants = gearStrengthGrants;
   drainQueue(combat);
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;
@@ -2000,6 +2015,7 @@ function enemyHalted(combat, enemy) {
 function finishAbilityPlay(combat) {
   const play = R.abilityResolved(combat);
   if (!play) return;
+  for (const amount of play.gearStrengthGrants || []) ChangeAttribute(combat, combat.player, 'strength', amount, { thisTurn: true });
   const inst = play.instance;
   const def = resolveCombatCard(combat, inst);
   FluxAfterPlay(combat, combat.player, play.ref, def); // the cast's element becomes the flux once its own effects have resolved (W25-F)
@@ -2230,7 +2246,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       if (effect.op === 'damage' || effect.target !== 'self') continue;
       sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
     }
+    // A Counter's stack grant is synthetic support (prepareTacticalCard arms it only live).
+    if (FixCoreCounterStacks(combat)) sim.queue.push({ effect: { op: 'gainCounterStacks', target: 'self' }, source: sim.player, owner: sim.player, target: sim.player, card: action.card });
     drainQueue(sim);
+    // The forecast reads the coming enemy phase. A reaction during that phase has no intervening owner turn end.
+    if (combat.phase === 'player') {
+      QueueGearTurnGrants(sim, sim.player, 'end');
+      drainQueue(sim);
+    }
     return (counterProjection = sim.player);
   };
   // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.
@@ -2432,7 +2455,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       }
       case 'applyStatus': {
         entry.status = eff.status;
-        entry.value = FluxScale(combat, p, action.card, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0));
+        const statusTarget = ['self', 'owner'].includes(eff.target) || !primary ? p : primary;
+        entry.value = A.ComputeStatusGrant(combat, action, eff, statusTarget, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary));
         break;
       }
       case 'heal':
@@ -2543,7 +2567,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
-      gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId } } : {}),
+      gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,
+      // Owner, 2026-11-18: the always-on gear rules are part of the baseline face; triggered ones are not (they colour in the fight).
+      gearRules: (combat.player?.itemProps?.cardRules || []).filter(rule => !GearRuleTriggered(rule)), gearState: { weaponType: combat.player?.itemProps?.mainWeaponType } } } : {}),
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
