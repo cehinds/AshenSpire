@@ -1,3 +1,4 @@
+import { GearReceiptAdd } from '../src/engine/gearReceipt.js';
 // Owner, 2026-11-18 (gear pass A): the gear vocabulary is data (equipMods.csv + equipmentTypes.json) and each effect has an engine consumer. Preview equals play.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -540,3 +541,14 @@ test('current Medium spell Counter forecast keeps Prepared and gives no Counter 
   assert.equal(actual.counterStacks, 6, 'Prepared gets the card gain, but no Counter stance end grant');
 });
 
+
+
+test('the current Greatsword second STR uses the configured channel weight', () => {
+  const { combat, enemy } = build({ right: 'greatsword' });
+  const def = resolveCombatCard(combat, { instanceId: addCard({ combat }, 'core.smash'), cardId: 'core.smash' });
+  const carrier = { ...def, combatProfile: { camp: 'physical', maneuver: 'smash' } };
+  assert.equal(carrier.gear.addStr, 1, 'the current worn Greatsword authored the second STR');
+  for (const weight of [0, 0.5, 1, 2]) {
+    assert.equal(GearReceiptAdd(combat, combat.player, enemy, carrier, { ratingId: 'ar', ar: 5, effects: { strengthDamageWeight: weight } }), 5 * weight);
+  }
+});
