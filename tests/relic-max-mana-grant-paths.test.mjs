@@ -10,6 +10,8 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { claimGameProfileReward } from '../src/model/gameProfileRewards.js';
 import { RUN_OPCODE_HANDLERS } from '../src/engine/actions.js';
+import { gameProfileShopStock } from '../src/model/gameProfileRewards.js';
+import { gameProfileShopSalePlan, commitGameProfileShopSale } from '../src/model/gameProfileShopSales.js';
 
 const shipped = Profile.resolveGameProfile('default');
 const registries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, shipped)), shipped);
@@ -40,5 +42,26 @@ for (const relic of RELICS) {
     const run = fresh(), before = structuredClone(run), mana = run.mana;
     RUN_OPCODE_HANDLERS.addRelic({ run, registries, rng: createRng(5), emit() {} }, {}, { op: 'addRelic', id: relic });
     assertRaised(run, before, mana, relic);
+  });
+}
+
+for (const relic of RELICS) {
+  test(`selling ${relic} lowers max Mana by 1 and clamps current Mana`, () => {
+    const run = fresh(), base = structuredClone(run);
+    RUN_OPCODE_HANDLERS.addRelic({ run, registries, rng: createRng(5), emit() {} }, {}, { op: 'addRelic', id: relic });
+    assert.equal(run.maxMana, base.maxMana + 1);
+    run.mana = run.maxMana; // full vessel: the sale must clamp it back down
+    run.cinders = 100000;
+    gameProfileShopStock(registries, run, createRng(31), { shopId: 'market' });
+    const hp = run.hp, maxHp = run.maxHp;
+    const quote = gameProfileShopSalePlan(registries, run, 'market', 'relics', relic);
+    assert.ok(quote.ok, quote.reason);
+    commitGameProfileShopSale(registries, run, 'market', quote);
+    assert.ok(!run.relics.includes(relic), `${relic} is sold`);
+    assert.equal(run.maxMana, base.maxMana, `${relic} sale restores run.maxMana`);
+    assert.ok(run.mana <= run.maxMana, 'current Mana is clamped to max');
+    assert.equal(run.mana, base.mana, 'current Mana returns to the pre-grant value');
+    assert.equal(run.hp, hp, 'current HP is unchanged');
+    assert.equal(run.maxHp, maxHp, 'max HP is unchanged');
   });
 }
