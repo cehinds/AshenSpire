@@ -5382,7 +5382,7 @@
         "total": 2
       },
       "wisdom": {
-        "own": 2,
+        "own": 3,
         "bonuses": [
           {
             "source": "enemy.relic.wickerAntlers",
@@ -5391,10 +5391,10 @@
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "intelligence": {
-        "own": 2,
+        "own": 1,
         "bonuses": [
           {
             "source": "goldboughBranch",
@@ -5403,7 +5403,7 @@
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 3
       }
     },
     "hp": {
@@ -5412,20 +5412,20 @@
         "constitution": 20,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 8,
-        "intelligence": 4,
+        "wisdom": 10,
+        "intelligence": 3,
         "level": 5
       },
-      "total": 55,
-      "formula": "10+20+5+3+8+4+5 = 55"
+      "total": 56,
+      "formula": "10+20+5+3+10+3+5 = 56"
     },
     "pools": {
-      "hp": 55,
-      "sp": 3,
+      "hp": 56,
+      "sp": 4,
       "mp": 3,
       "ar": 1,
       "dr": 1,
-      "hand": 7
+      "hand": 6
     },
     "gear": [
       {
