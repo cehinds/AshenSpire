@@ -3,22 +3,28 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { validateUnarmedFragmentCoverage, mergeUnarmedAnimationFragment as merge } from '../tools/unarmed-animation-import.mjs';
-import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, animationClip, animationTiming } from '../src/model/equipmentAnimation.js';
+import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, equipmentAnimationForLoadout, animationClip, animationTiming } from '../src/model/equipmentAnimation.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
 import { tagService } from '../src/model/tagService.js';
 import { resolveActionAnimation } from '../src/model/actionAnimation.js';
+import { createRunState } from '../src/model/state.js';
+import { withDeclaredOutfitAliases } from './helpers/animation-fixture-aliases.mjs';
 
 // The art studio's runtime fragment, kept as a fixture when art/ left for
 // cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13).
-const physical=JSON.parse(readFileSync(new URL('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json',import.meta.url)));
+const physicalExport=JSON.parse(readFileSync(new URL('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json',import.meta.url)));
+assert.equal(physicalExport.bindings.length,35,'the historical physical export contains 35 outfit bindings');
+assert.equal(Object.keys(physicalExport.sets).length,32,'the historical export contains 32 painted appearances');
+const physical=withDeclaredOutfitAliases(physicalExport);
 // The magic task's public fragment contract, exercising all physical skins.
 // File existence/real generated frames are checked by each pack's CLI and export.
-const magic={schemaVersion:1,motionProfile:'unarmed',ownedRoles:['cast','buff'],
+const magicExport={schemaVersion:1,motionProfile:'unarmed',ownedRoles:['cast','buff'],
   clips:{magicChannel:{frames:['MAGIC-STANCE-READY',...Array.from({length:7},(_,i)=>`MAGIC-ATK-0${i+1}`),'MAGIC-STANCE-READY'],frameMs:160,impactIndex:5},magicBuff:{frames:['MAGIC-BUFF'],frameMs:260,impactIndex:0}},
-  references:{cast:'magicChannel',buff:'magicBuff'},bindings:structuredClone(physical.bindings),
-  sets:Object.fromEntries(Object.entries(physical.sets).map(([id,set])=>[id,{frames:Object.fromEntries(Object.entries(set.frames).map(([pose,frame])=>['MAGIC-'+pose,{...frame,file:frame.file.replace('/unarmed/','/unarmed-magic/')}]))}]))};
+  references:{cast:'magicChannel',buff:'magicBuff'},bindings:structuredClone(physicalExport.bindings),
+  sets:Object.fromEntries(Object.entries(physicalExport.sets).map(([id,set])=>[id,{frames:Object.fromEntries(Object.entries(set.frames).map(([pose,frame])=>['MAGIC-'+pose,{...frame,file:frame.file.replace('/unarmed/','/unarmed-magic/')}]))}]))};
+const magic=withDeclaredOutfitAliases(magicExport);
 const base=structuredClone(EQUIPMENT_ANIMATIONS);
 delete base.motionProfiles.unarmed;
 base.bindings=base.bindings.filter(b=>!(b.rightGroup==='empty'&&b.leftGroup==='empty'));
@@ -27,6 +33,10 @@ const both=merge(merge(base,physical),magic);
 const selected=data=>selectEquipmentAnimation({classId:'reaver',armourId:'default',rightId:null,leftId:null},data);
 
 test('physical and magic import in either order, idempotently, without changing other profiles',()=>{
+  const historical=merge(merge(base,physicalExport),magicExport);
+  assert.deepEqual(historical,merge(merge(base,magicExport),physicalExport),'unchanged 35-binding exports still compose in either order');
+  assert.equal(historical.bindings.filter(b=>b.rightGroup==='empty'&&b.leftGroup==='empty').length,35);
+  assert.deepEqual(both.bindings.filter(b=>b.rightGroup!=='empty'||b.leftGroup!=='empty'),base.bindings,'all nonempty hand bindings are preserved');
   assert.deepEqual(both,merge(merge(base,magic),physical));
   assert.deepEqual(both,merge(merge(both,physical),magic));
   assert.equal(validateEquipmentAnimations(both),true);
@@ -86,6 +96,12 @@ test('importer rejects ownership and selector collisions rather than overwriting
 });
 
 test('all live armor entries have complete shipped physical frames',()=>{
+  const root=fileURLToPath(new URL('../',import.meta.url));
+  assert.throws(()=>validateUnarmedFragmentCoverage(physicalExport,root),/incomplete or duplicate catalog coverage/,'the unchanged historical fragment alone does not cover the expanded catalog');
+  assert.throws(()=>withDeclaredOutfitAliases(physicalExport,[...contentBundle.equipment.armour,{classId:'reaver',id:'unpainted'}]),/declared borrowed appearance/,'an undeclared missing appearance cannot borrow a painting');
+  assert.equal(physicalExport.bindings.length,35,'composing aliases never rewrites historical export data');
+  assert.equal(physical.bindings.length,contentBundle.equipment.armour.length);
+  const registries=createRegistries(contentBundle);
   validateUnarmedFragmentCoverage(physical,fileURLToPath(new URL('../',import.meta.url)));
   assert.equal(Object.keys(physical.sets).length,32);
   for(const set of Object.values(physical.sets))assert.equal(Object.keys(set.frames).length,16);
@@ -93,6 +109,10 @@ test('all live armor entries have complete shipped physical frames',()=>{
     const s=selectEquipmentAnimation({classId:b.classId,armourId:b.armourId,rightId:null,leftId:null});
     assert.equal(s.setId,b.setId);
     assert.equal(animationClip(s,'attack').frames.length,9);
+    const {loadout}=createRunState({seed:14,classId:b.classId,registries});
+    for(const slot of ['rightHand','leftHand'])loadout.sets[slot][loadout.active[slot]||0]=null;
+    loadout.sets.armor[loadout.active.armor||0]=b.armourId;
+    assert.equal(equipmentAnimationForLoadout(registries,loadout,b.classId)?.setId,b.setId,'every current real loadout selects its exported or declared borrowed appearance');
   }
 });
 
