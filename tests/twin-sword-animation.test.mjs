@@ -17,7 +17,22 @@ assert.equal(manifest.groups.length, 32);
 assert.deepEqual(manifest.coverage.missingAppearances, []);
 const registries = createRegistries(contentBundle);
 const rows = contentBundle.equipment.armour;
-assert.equal(rows.length, 35);
+// Preserve the export's 32 skins and three original aliases; Codex adds no paintings.
+const codexAppearanceAliases = [
+  ['reaver', 'cinderforgedPlate', 'warden'],
+  ['reaver', 'wyrmscaleMail', 'vigil'],
+  ['herald', 'ringmailHauberk', 'pilgrim'],
+  ['rogue', 'huntersHide', 'nightveil'],
+  ['starseer', 'sagesRobe', 'astral'],
+];
+const outfitKey = row => `${row.classId}/${row.id}`;
+const originalAliases = [['reaver', 'bastion', 'warden'], ['starseer', 'rimeweave', 'starlit'], ['rogue', 'waywatcher', 'nightveil']];
+const exportedOutfits = new Set([...manifest.groups.map(row => outfitKey({classId:row.classId,id:row.armourId})), ...originalAliases.map(([classId,id]) => outfitKey({classId,id}))]);
+assert.equal(manifest.coverage.catalogEntries, 35);
+assert.equal(exportedOutfits.size,manifest.coverage.catalogEntries);
+assert.deepEqual(rows.filter(row => exportedOutfits.has(outfitKey(row))).map(outfitKey).sort(), [...exportedOutfits].sort(), 'every historical export outfit remains covered');
+assert.deepEqual(rows.filter(row => !exportedOutfits.has(outfitKey(row))).map(row => [row.classId,row.id,row.artKey]).sort(), [...codexAppearanceAliases].sort(), 'only the five declared Codex appearance aliases extend the export');
+assert.equal(rows.length,manifest.coverage.catalogEntries+codexAppearanceAliases.length);
 const selectedSets = new Set();
 for (const row of rows) {
   const input = { classId: row.classId, armourId: row.id, rightId: 'straightSword', leftId: 'katana', grip: 'dual' };
@@ -47,9 +62,12 @@ for (const row of rows) {
   }
 }
 assert.equal(selectedSets.size, 32, 'only catalog-authorized aliases reuse paintings');
-for (const [classId, alias, original] of [['reaver', 'bastion', 'warden'], ['starseer', 'rimeweave', 'starlit'], ['rogue', 'waywatcher', 'nightveil']]) {
+for (const [classId, alias, original] of [...originalAliases, ...codexAppearanceAliases]) {
   const input = { classId, rightId: 'straightSword', leftId: 'katana', grip: 'dual' };
-  assert.equal(selectEquipmentAnimation({ ...input, armourId: alias }).setId, selectEquipmentAnimation({ ...input, armourId: original }).setId);
+  const borrowed = selectEquipmentAnimation({ ...input, armourId: alias });
+  const authored = selectEquipmentAnimation({ ...input, armourId: original });
+  assert.equal(borrowed.setId, authored.setId, alias + ' borrows its declared appearance');
+  assert.deepEqual(borrowed.frames, authored.frames, alias + ' reuses existing exported frames');
 }
 const changed = structuredClone(EQUIPMENT_ANIMATIONS);
 changed.motionProfiles.twinSword.clips.twinSwordAttack.frameMs = 200;
@@ -59,4 +77,4 @@ for (const invalid of [{ right: [], left: ['katana'] }, { right: ['missing'], le
   assert.throws(() => validateEquipmentAnimations(bad), /invalid supported hand items/);
 }
 assert.equal(validateEquipmentAnimations(EQUIPMENT_ANIMATIONS), true);
-console.log('PASS twin-sword: 35 armor entries, 32 appearances, 16 poses, shared timing, actual ordered loadouts, explicit fallback and validation.');
+console.log('PASS twin-sword: 35 exported outfits plus 5 Codex borrowers, 32 appearances, 16 poses, shared timing, all 40 actual ordered loadouts, explicit fallback and validation.');

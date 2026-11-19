@@ -23,17 +23,23 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 // Exact resolved Dev profile at a1d31db6b5, runtime 521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772.
 // Archive SHA256: 40c87e9a705457ca0504cd44677f7e1a8cb630edb6a3ff5067439af7a6ca0324.
 const precedingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-521250.json.gz', import.meta.url))));
+// Exact equipment table at a1d31db6b5; SHA256 fa0d4d53ecb59a9020a909b1f40fade5b156131f81db0a8fc7f4b3abf0989990.
+const precedingEquipment = JSON.parse(readFileSync(new URL('./fixtures/pre-codex-equipment-a1d31db6.json', import.meta.url), 'utf8'));
+// Exact resolved Dev profile at 6727a25530, before the stat changes and after the Codex content merge.
+// Archive SHA256: ce955c3da5182f89cd1e1e78fedbb2d8f4d92be84e63569468a0cbd827de5cbd.
+const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
 
-function fight([seed, classId], profile = resolveGameProfile('default')) {
+function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
+  if (equipment) run.combatExpansionRules.equipment = structuredClone(equipment);
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
   const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
 }
 function legacyFight(setup) {
-  return fight(setup, precedingDevProfile);
+  return fight(setup, precedingDevProfile, precedingEquipment);
 }
 function answerReactions(combat) {
   for (let guard = 0; combat.pendingReaction && guard < 20; guard++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -242,17 +248,18 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
   });
 }
 // Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 207 and 195 -> 217; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
-// Stat allocation: the 16 legacy-policy lanes now pin their exact preceding Dev profile. Current lanes keep the new default.
+// Stat allocation: the 16 legacy-policy lanes pin their exact preceding Dev profile and equipment table. Current lanes keep the new default.
+// After merging Dev 6727a25530, its archived profile with live equipment reproduces both incoming Dev state pins below.
 // Only their state digests move: the Poise row/base row replaces CON with WIS, its explicit override is recorded, and
 // fixCoreRules.spellTraditionsVersion is added. The control below restores exactly those fields and compares the entire
 // serialized state; full logs, event counts, turns and every RNG counter are unchanged. The prior current pins remain controls.
 const PRE_STAT_PINNED = [
-  { log: 'fb4f923cd562413e', state: 'bbb64c8f26459e66', events: 207, turn: 6 },
-  { log: '872df8f1e3aee8e3', state: '5c9def4a8c9d283d', events: 217, turn: 6 },
+  { log: 'fb4f923cd562413e', state: '36e3a5b7cdc00165', events: 207, turn: 6 },
+  { log: '872df8f1e3aee8e3', state: 'ccaaf6aac67933c5', events: 217, turn: 6 },
 ];
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '44f38aa443dd3992', events: 207, turn: 6 }],
-  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: 'd90bb37e12ee947d', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: 'fab8c6a9fa4c1e58', events: 207, turn: 6 }],
+  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: '8ce9e14daf8cf0d5', events: 217, turn: 6 }],
 ];
 for (const [index, [setup, expected]] of PINNED.entries()) {
   const seed = `${setup[0]}/${setup[1]}`;
@@ -263,7 +270,7 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
     assert.deepEqual(second, first, 'two plays of one seed agree');
     assert.ok(first.events > 40 && first.turn >= 4, 'the fight did real work');
     assert.deepEqual(first, expected, 'digest matches the pinned profile and fight rules');
-    const previous = play(legacyFight(setup), 5);
+    const previous = play(fight(setup, incomingDevProfile), 5);
     assert.deepEqual(digest(previous), PRE_STAT_PINNED[index], 'the exact prior profile retains its entire prior digest');
     assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
     assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');

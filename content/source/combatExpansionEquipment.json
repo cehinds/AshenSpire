@@ -181,6 +181,39 @@
       "traits": {
         "insulated": true
       }
+    },
+    "reaver:cinderforgedPlate": {
+      "armorClass": "heavy",
+      "flat": {
+        "fire": 1
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "reaver:wyrmscaleMail": {
+      "armorClass": "medium",
+      "flat": {
+        "frost": 1
+      }
+    },
+    "herald:ringmailHauberk": {
+      "armorClass": "medium",
+      "flat": {
+        "slashing": 1
+      }
+    },
+    "rogue:huntersHide": {
+      "armorClass": "light",
+      "flat": {
+        "piercing": 1
+      }
+    },
+    "starseer:sagesRobe": {
+      "armorClass": "light",
+      "flat": {
+        "arcane": 1
+      }
     }
   },
   "sharedArmour": {
@@ -391,6 +424,168 @@
       "traits": {
         "caster": true,
         "conductive": true
+      }
+    },
+    "kris": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "stiletto": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "broadsword": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "flamberge": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "fire": 1
+      }
+    },
+    "rapier": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "estoc": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "duelistsFoil": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "ashenClaymore": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "zweihander": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "pike": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "frost": 1
+      }
+    },
+    "scythe": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "reapersCrescent": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "mace": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "morningStar": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "flail": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "maul": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "thunderMallet": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "lightning": 1
+      }
+    },
+    "beardedAxe": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "moonlitKatana": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "frost": 1
+      }
+    },
+    "moonGlaives": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "longbow": {},
+    "huntersRecurve": {},
+    "handCrossbow": {},
+    "arbalest": {},
+    "leatherWhip": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "thornWhip": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "ironKnuckles": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "beastClaws": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "stormSceptre": {
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "grimoire": {
+      "flat": {
+        "fire": 1
+      }
+    },
+    "prayerBook": {
+      "flat": {
+        "decay": 1
+      }
+    },
+    "sunTalisman": {
+      "flat": {
+        "frost": 1
+      }
+    },
+    "boneTalisman": {
+      "flat": {
+        "frost": 1
       }
     }
   },
@@ -763,6 +958,327 @@
       },
       "traits": {
         "caster": true
+      }
+    },
+    "brackenTusker": {
+      "armorClass": "medium",
+      "weak": {
+        "lightning": 25,
+        "slashing": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "fenwickToad": {
+      "armorClass": "light",
+      "weak": {
+        "fire": 25
+      }
+    },
+    "reedpipePoacher": {
+      "armorClass": "light",
+      "weak": {
+        "slashing": 25,
+        "blunt": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "wickerTitheman": {
+      "armorClass": "light",
+      "weak": {
+        "fire": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "siltCrownNewt": {
+      "armorClass": "medium",
+      "weak": {
+        "lightning": 25,
+        "fire": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "wickerHind": {
+      "armorClass": "light",
+      "weak": {
+        "lightning": 25,
+        "fire": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "blackrushStork": {
+      "armorClass": "light",
+      "weak": {
+        "lightning": 25,
+        "blunt": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "pearlbackSnail": {
+      "armorClass": "heavy",
+      "weak": {
+        "lightning": 25,
+        "slashing": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "alderMaskHarvester": {
+      "armorClass": "medium",
+      "weak": {
+        "sacred": 25,
+        "fire": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "woundwoodTusker": {
+      "armorClass": "heavy",
+      "weak": {
+        "lightning": 25,
+        "slashing": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "mireProcessional": {
+      "armorClass": "light",
+      "weak": {
+        "sacred": 25,
+        "fire": 25
+      },
+      "traits": {
+        "caster": true,
+        "mindless": true
+      }
+    },
+    "quarryRam": {
+      "armorClass": "medium",
+      "weak": {
+        "lightning": 25,
+        "slashing": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "tollgateHookman": {
+      "armorClass": "medium",
+      "weak": {
+        "blunt": 25,
+        "lightning": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "waxsealBailiff": {
+      "armorClass": "light",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "carrionHeadsman": {
+      "armorClass": "medium",
+      "weak": {
+        "blunt": 25,
+        "lightning": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "knellcapSentinel": {
+      "armorClass": "heavy",
+      "weak": {
+        "lightning": 25,
+        "slashing": 25
+      },
+      "traits": {
+        "conductive": true,
+        "mindless": true
+      }
+    },
+    "pallidOathCamel": {
+      "armorClass": "heavy",
+      "weak": {
+        "slashing": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "inkveilNautilus": {
+      "armorClass": "light",
+      "weak": {
+        "piercing": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "mirrorFanAbbess": {
+      "armorClass": "medium",
+      "weak": {
+        "blunt": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "saltChoirWalrus": {
+      "armorClass": "heavy",
+      "weak": {
+        "fire": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "rimewheelPenitent": {
+      "armorClass": "medium",
+      "weak": {
+        "fire": 25,
+        "blunt": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "veiledJusticiar": {
+      "armorClass": "heavy",
+      "weak": {
+        "blunt": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "sixleggedHearse": {
+      "armorClass": "heavy",
+      "weak": {
+        "sacred": 25,
+        "fire": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true,
+        "mindless": true
+      }
+    },
+    "kilnshellTortoise": {
+      "armorClass": "heavy",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "slagtongImp": {
+      "armorClass": "light",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "sootwingBat": {
+      "armorClass": "light",
+      "weak": {
+        "blunt": 25,
+        "piercing": 25
+      }
+    },
+    "brassThroatIbex": {
+      "armorClass": "light",
+      "weak": {
+        "frost": 25,
+        "blunt": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "kilnbackTerrapin": {
+      "armorClass": "heavy",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "slagwingHeron": {
+      "armorClass": "light",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "conductive": true
+      }
+    },
+    "ashSilkWeaver": {
+      "armorClass": "light",
+      "weak": {
+        "fire": 25
+      },
+      "traits": {
+        "caster": true
+      }
+    },
+    "ferrumVotary": {
+      "armorClass": "heavy",
+      "weak": {
+        "frost": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
+    },
+    "crucibleNewt": {
+      "armorClass": "heavy",
+      "weak": {
+        "blunt": 25,
+        "frost": 25
+      },
+      "traits": {
+        "caster": true,
+        "conductive": true
       }
     }
   }

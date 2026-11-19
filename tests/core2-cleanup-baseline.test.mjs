@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-19 for stat allocation after Dev 6727a25530: exactly 27 current profile/runtime/snapshot/save hashes moved; historical values, events, RNG, receipts and continuations are unchanged. Native and production captures agree.
+// Recaptured 2026-11-18 after merging origin/dev into the Codex branch (32 enemies, 38 weapons and armour): only the profile, snapshot and save hashes moved; events, RNG, continuations and runtime hashes are identical.
 // Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.
 // Runtime, event digests, RNG, receipts, continuations and the complete historical scenario are unchanged; native and production captures agree.
 // Recaptured 2026-11-19 (owner rulings 20-23 on chore/ForceWardRules: Force, Ward, Pierce, break statuses): every current-profile hash and the events they price moved; measured with this test's own output.

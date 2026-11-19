@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "a1d31db6b57bcd18201b226d455159740ee9c27c",
+  "sourceRefAtSandboxStart": "origin/dev",
+  "captureKind": "Source tree served by the required qa-sandbox before/after run; not a compiled artifact",
+  "recordedBuildVersion": "0.7.4.203",
+  "recordedSourceDigest": "69e1693f0d",
+  "metadataSource": "git show a1d31db6:buildordinal.json",
+  "renderedTitleStamp": null,
+  "note": "The original sandbox did not collect title-stamp DOM; this record does not claim that the source screenshot rendered a full compiled build number.",
+  "pose": "Existing shot=rest&shotRestPoints=1 fixture plus real Armoury Character > Progression > allocation controls, one earned point via production XP ledger. Not a campaign playthrough.",
+  "files": [
+    {
+      "file": "before-desktop.png",
+      "width": 1280,
+      "height": 800,
+      "original": "sandbox/desktop-allocation-compact-before.png"
+    },
+    {
+      "file": "before-phone.png",
+      "width": 390,
+      "height": 844,
+      "original": "sandbox/phone-allocation-compact-before.png"
+    }
+  ]
+}

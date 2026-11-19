@@ -1,0 +1,726 @@
+{
+  "request": "Codex recently added a lot of new card art and sprites on dev, including new enemies and weapons. Finish building out the enemies and cards those assets were made for, so each new asset is used by real, playable game content.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Combat: Weald normals (brackenTusker, fenwickToad, reedpipePoacher)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=brackenTusker,fenwickToad,reedpipePoacher",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "brackenTusker pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "brackenTusker concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "brackenTusker stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "fenwickToad stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "reedpipePoacher stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "brackenTusker shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "brackenTusker stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Weald elites (pearlbackSnail, mirrorFanAbbess)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=pearlbackSnail,mirrorFanAbbess",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "pearlbackSnail stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "mirrorFanAbbess stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Weald boss (woundwoodTusker)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=woundwoodTusker",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "woundwoodTusker stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Reach normals (slagtongImp, sootwingBat, kilnshellTortoise)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=slagtongImp,sootwingBat,kilnshellTortoise",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "slagtongImp pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "slagtongImp concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "slagtongImp stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "sootwingBat stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "kilnshellTortoise stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "slagtongImp shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "slagtongImp stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Reach boss (crucibleNewt)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=crucibleNewt",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "crucibleNewt pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "crucibleNewt concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "crucibleNewt stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "crucibleNewt shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "crucibleNewt stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Weapon card in play: rapier kit",
+      "url": "?shot=combat&shotSeed=4&shotKit=1&shotClass=reaver&shotMainHand=rapier",
+      "ready": ".hand .card[data-card-id=\"riposte\"][data-instance-id=\"weaponArt:rapier:riposte\"]",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Hand holds riposte, the weapon art granted by rapier",
+          "selector": ".hand .card[data-card-id=\"riposte\"][data-instance-id=\"weaponArt:rapier:riposte\"]",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown on the hand",
+          "selector": ".hand [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Weapon card in play: beastClaws kit",
+      "url": "?shot=combat&shotSeed=4&shotKit=1&shotClass=reaver&shotMainHand=beastClaws",
+      "ready": ".hand .card[data-card-id=\"twinbladeFlurry\"][data-instance-id=\"weaponArt:beastClaws:twinbladeFlurry\"]",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Hand holds twinbladeFlurry, the weapon art granted by beastClaws",
+          "selector": ".hand .card[data-card-id=\"twinbladeFlurry\"][data-instance-id=\"weaponArt:beastClaws:twinbladeFlurry\"]",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown on the hand",
+          "selector": ".hand [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Claim and equip weapon inventory icon: rapier",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=133",
+      "ready": ".reward-choice-face[data-item=\"rapier\"]",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".reward-choice-face[data-item=\"rapier\"]"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "click": "#reward-equip-now"
+        },
+        {
+          "click": "[data-slot-option=\"rightHand:0\"]"
+        },
+        {
+          "click": ".equip-slot-choice button:has-text(\"Choose\")"
+        },
+        {
+          "click": ".equip-compare-equip"
+        },
+        {
+          "click": "#armoury-close"
+        },
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "click": ".armoury-head [data-modal-tab=\"armory\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The held rapier equipment card is rendered in the right-hand slot",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"rapier\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The held rapier uses its v28 inventory icon",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"rapier\"] img[src*=\"icon_rapier.webp\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown for the held rapier",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"rapier\"] [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Claim and equip weapon inventory icon: beastClaws",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=102",
+      "ready": ".reward-choice-face[data-item=\"beastClaws\"]",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".reward-choice-face[data-item=\"beastClaws\"]"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "click": "#reward-equip-now"
+        },
+        {
+          "click": "[data-slot-option=\"rightHand:0\"]"
+        },
+        {
+          "click": ".equip-slot-choice button:has-text(\"Choose\")"
+        },
+        {
+          "click": ".equip-compare-equip"
+        },
+        {
+          "click": "#armoury-close"
+        },
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "click": ".armoury-head [data-modal-tab=\"armory\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The held beastClaws equipment card is rendered in the right-hand slot",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"beastClaws\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The held beastClaws uses its v28 inventory icon",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"beastClaws\"] img[src*=\"icon_beastClaws.webp\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown for the held beastClaws",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"beastClaws\"] [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Claim and equip weapon inventory icon: handCrossbow",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=88",
+      "ready": ".reward-choice-face[data-item=\"handCrossbow\"]",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".reward-choice-face[data-item=\"handCrossbow\"]"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "click": "#reward-equip-now"
+        },
+        {
+          "click": "[data-slot-option=\"rightHand:0\"]"
+        },
+        {
+          "click": ".equip-slot-choice button:has-text(\"Choose\")"
+        },
+        {
+          "click": ".equip-compare-equip"
+        },
+        {
+          "click": "#armoury-close"
+        },
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "click": ".armoury-head [data-modal-tab=\"armory\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The held handCrossbow equipment card is rendered in the right-hand slot",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"handCrossbow\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The held handCrossbow uses its v28 inventory icon",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"handCrossbow\"] img[src*=\"icon_handCrossbow.webp\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown for the held handCrossbow",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"handCrossbow\"] [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Claim and equip weapon inventory icon: scythe",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=49",
+      "ready": ".reward-choice-face[data-item=\"scythe\"]",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".reward-choice-face[data-item=\"scythe\"]"
+        },
+        {
+          "click": "#reward-card-confirm"
+        },
+        {
+          "click": "#reward-equip-now"
+        },
+        {
+          "click": "[data-slot-option=\"rightHand:0\"]"
+        },
+        {
+          "click": ".equip-slot-choice button:has-text(\"Choose\")"
+        },
+        {
+          "click": ".equip-compare-equip"
+        },
+        {
+          "click": "#armoury-close"
+        },
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "click": ".armoury-head [data-modal-tab=\"armory\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The held scythe equipment card is rendered in the right-hand slot",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"scythe\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "The held scythe uses its v28 inventory icon",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"scythe\"] img[src*=\"icon_scythe.webp\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown for the held scythe",
+          "selector": ".armoury-position-card[data-slot-position=\"rightHand:0\"] [data-item=\"scythe\"] [data-art-placeholder]"
+        }
+      ]
+    }
+  ]
+}

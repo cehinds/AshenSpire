@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Codex art buildout
+
+[Download the playable feature build](https://github.com/cehinds/AshenSpire/actions/runs/44482212940/artifacts/14509066914)
+
+Successful CI build of source `6a7378b6a0`: extract the archive and open `AshenSpire.html`. The Pages browser endpoint returned HTTP 503 during verification. This build contains the 32 Codex enemies and 38 equipment items; [verification and limits](docs/content/codex-art-buildout-verification.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: new Codex enemies](docs/preview/features/codex-art-buildout/mobile.png) | ![Desktop: new Codex enemies](docs/preview/features/codex-art-buildout/desktop.png) | ![Wide: new Codex enemies](docs/preview/features/codex-art-buildout/wide.png) | ![Tablet: new Codex enemies](docs/preview/features/codex-art-buildout/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
