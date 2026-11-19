@@ -299,8 +299,7 @@
   {
     "id": "a3_eliteOathCamel",
     "enemies": [
-      "pallidOathCamel",
-      "sootwingBat"
+      "pallidOathCamel"
     ],
     "weight": 1,
     "pool": "elite",
