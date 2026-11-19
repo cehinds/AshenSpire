@@ -389,13 +389,16 @@ test('a target with an Evade stack is priced at 0 and spends one stack per hit',
   check(combat, card, 'e1', 'Evade');
 });
 
-test('a Broken target: the face already holds the x1.5 and the hit lands for it', () => {
+// Owner 2026-11-18 (§3a): a break no longer multiplies by 1.5; it grants 2 stacks each of Staggered, Vulnerable, Weak and Frail (poise.breakStatusStacks), so the Broken
+// states below carry the break's own Vulnerable and a damage multiplier of 1.
+test('a Broken target: the face already holds the break\'s Vulnerable x1.25 and the hit lands for it', () => {
   for (const hand of ['core.strike', 'supernova']) {
     const classId = hand === 'supernova' ? 'starseer' : 'reaver';
     const plain = fixture({ classId, hand }), broken = fixture({ classId, hand });
     for (const row of [plain, broken]) { row.combat.player.energy = 3; row.combat.player.stamina = 3; row.combat.player.mana = 9; }
     broken.combat.enemies[0].broken = { since: 1, endTurn: 1 };
-    broken.combat.enemies[0].combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+    broken.combat.enemies[0].combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1 };
+    broken.combat.enemies[0].statuses = { ...broken.combat.enemies[0].statuses, vulnerable: { stacks: 2 } };
     const before = faceOf(plain.combat, plain.card.instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(broken.combat, broken.card.instanceId, 'e1').perEnemy.get('e1')[0];
     assert.ok(shown > before, `${hand}: Broken is in the number (${shown} > ${before})`);
@@ -403,7 +406,7 @@ test('a Broken target: the face already holds the x1.5 and the hit lands for it'
   }
 });
 
-test('a Broken player: the intent number holds the x1.5 and the enemy then costs the player exactly that', () => {
+test('a Broken player: the intent number holds the break\'s Vulnerable x1.25 and the enemy then costs the player exactly that', () => {
   const run = () => {
     const { combat } = fixture();
     const enemy = combat.enemies[0];
@@ -414,7 +417,8 @@ test('a Broken player: the intent number holds the x1.5 and the enemy then costs
   const shownFor = combat => projectCombatIntent(combat, 'e1')?.projectedDamage?.max;
   const bare = run(), brokenFight = run();
   brokenFight.player.broken = { since: 1, endTurn: 2 };
-  brokenFight.player.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+  brokenFight.player.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1 };
+  brokenFight.player.statuses = { vulnerable: { stacks: 2 } };
   const [plainShown, brokenShown] = [shownFor(bare), shownFor(brokenFight)];
   assert.ok(brokenShown > plainShown, `the intent prices the Broken player: ${brokenShown} > ${plainShown}`);
   const hp = brokenFight.player.hp;

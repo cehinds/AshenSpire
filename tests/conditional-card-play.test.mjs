@@ -185,7 +185,8 @@ test('the stance payoffs land at 1.5–2× an ordinary hit, and the preview equa
       const ordinary = hit('sweep'), matched = hit(matching);
       const ratio = matched.lost / ordinary.lost;
       assert.ok(ratio >= 1.5 && ratio <= 2, `${cardId}${upgraded ? '+' : ''}: ${matched.lost} vs ${ordinary.lost} is ${ratio.toFixed(2)}×`);
-      assert.equal(matched.vulnerable, 0, `${cardId}: no Vulnerable on top of the stance weakness`);
+      // Owner 2026-11-18 (§3a): the fixture's 5-Poise enemy breaks on either hit, and a break grants 2 Vulnerable (poise.breakStatusStacks). The stance payoff adds none beyond that.
+      assert.equal(matched.vulnerable, ordinary.vulnerable, `${cardId}: no Vulnerable on top of the stance weakness and the break's own`);
       assert.equal(matched.rows.reduce((sum, value) => sum + value, 0), matched.lost, `${cardId}: preview rows add up to the live HP lost`);
       assert.equal(ordinary.rows[0], ordinary.lost, `${cardId}: unmatched, only the hit lands`);
     }
@@ -221,7 +222,8 @@ test('Pyre Brand, Dirty Strike and Rime Lance read the target status', () => {
     play(world.combat, 'rimeLance', world.enemy);
     return world.enemy.statuses.vulnerable?.stacks || 0;
   });
-  assert.ok(vulnerable[0] > 0 && vulnerable[1] === 0, `Vulnerable only on a Frosted target (${vulnerable})`);
+  // Owner 2026-11-18 (§3a): the fixture's low-Poise target breaks on the hit and a break grants 2 Vulnerable (poise.breakStatusStacks) either way, so the card's own Vulnerable is the difference.
+  assert.equal(vulnerable[0] - vulnerable[1], 1, `the card adds its Vulnerable only on a Frosted target (${vulnerable})`);
 });
 
 test('Lunging Thrust and Distant Star play only at Reach', () => {
