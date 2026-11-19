@@ -1719,11 +1719,12 @@ export function mountEquipment(host, {
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
+    const readOnlyDeck = !onEditDeck && !inCombat && RestOpensDeckEditor(run);
     const rendered = renderArmouryPanel(panelModel, wrap, { back,
       tabs: [
         { id: 'character', label: t('progression.tab.character'), selected: view === 'grid' },
         { id: 'armory', label: t('armoury.hub.armory'), selected: view !== 'grid' },
-        { id: 'deck', label: t('armoury.hub.deck'), selected: false },
+        { id: 'deck', label: t(readOnlyDeck ? 'armoury.hub.viewDeck' : 'armoury.hub.deck'), selected: false },
       ],
       onTab: id => {
         hideTooltip();
@@ -1735,7 +1736,7 @@ export function mountEquipment(host, {
             notice = inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.';
             draw();
             // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
-            if (restOnly) openPileModal(registries, t('armoury.hub.deck'), run.deck || []);
+            if (restOnly) openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], { deckView: true });
           }
           return;
         }
@@ -1747,7 +1748,7 @@ export function mountEquipment(host, {
       },
     });
     const deckTab = rendered.panel.querySelector('[data-modal-tab="deck"]');
-    deckTab?.setAttribute('aria-disabled', String(!onEditDeck));
+    deckTab?.setAttribute('aria-disabled', String(!onEditDeck && !readOnlyDeck));
     if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : RestOpensDeckEditor(run) ? t('armoury.deck.restOnly') : 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
     const panel = rendered.panel;
