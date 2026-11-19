@@ -8,7 +8,8 @@ import { SwapEnemyRows } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, fixCorePierceRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -73,7 +74,7 @@ import { gameProfileServiceActive, withGameProfileService } from '../model/gameP
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { ratingValue, isMagicalAttack, ratingDamageMultiplier, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit, schoolOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -349,7 +350,9 @@ function fixCorePoiseBreak(ctx, source, target, carrier = null) {
   ctx.emit('poiseBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
-  OnPoiseBreak(ctx, source, target, ctx.elementHit); // element identity (W25): Burn, Shock, Freeze, Smite, Knockback
+  OnPoiseBreak(ctx, source, target, ctx.elementHit); // element identity (W25): Burn, Shock, Freeze, Smite
+  // Owner, 2026-11-18: Poise at 0 breaks Ward: every stack goes, and the maximum Poise it gave goes with it (removeStatus re-syncs the pool).
+  if (FixCoreWardBreaksAtZeroPoise(ctx) && target.statuses?.ward?.stacks > 0) statuses.removeStatus(ctx, target, 'ward', { reason: 'poiseBroken' });
   GearBreakRiders(ctx, source, target, carrier);
 }
 
@@ -588,7 +591,7 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 // non-damage things (Ward-first Barrier gains, mana, tags).
 // The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
-  return magicShareOf(profile);
+  return FightMagicShare(ctx, profile);
 }
 
 // The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
@@ -687,9 +690,11 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
   // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
   // Arcane is negated whole.
+  // A Force-school hit with no component list is Force whole (owner, 2026-11-18: Force is physical, so its parts are Blunt, not Arcane): every part is negated.
+  const wholeForce = receipt.profiles.map(profile => ForceRules(ctx).magicShare === 0 && schoolOf(profile) === 'force' && !componentPartsOf(profile));
   receipt.forceImmuneAmounts = hits.map(() => 0);
   for (let p = parts.length - 1; p >= 0; p--) {
-    if (!receipt.silencedImmune[parts[p].index] || parts[p].type !== 'arcane') continue;
+    if (!receipt.silencedImmune[parts[p].index] || (parts[p].type !== 'arcane' && !wholeForce[parts[p].index])) continue;
     receipt.forceImmuneAmounts[parts[p].index] += parts[p].amount;
     parts.splice(p, 1);
   }
@@ -857,6 +862,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
     ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
       immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0,
+      ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
       magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
       ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
     spendSilencedStack(ctx, target);

@@ -64,10 +64,17 @@ export function siteReader(site, { fetchImpl = fetch, pause = ms => new Promise(
       if (response.status === 404 && missing) { await response.body?.cancel(); return null; }
       requireThat(response.status === 200, `${path}: HTTP ${response.status} (redirects are refused)`);
       const chunks = []; let size = 0;
-      for await (const chunk of response.body) {
-        size += chunk.length;
-        requireThat(size <= limit, `${path}: exceeds expected byte limit ${limit}`);
-        chunks.push(chunk);
+      try {
+        for await (const chunk of response.body) {
+          size += chunk.length;
+          requireThat(size <= limit, `${path}: exceeds expected byte limit ${limit}`);
+          chunks.push(chunk);
+        }
+      } catch (error) {
+        // A byte-limit refusal is terminal; only an interrupted download retries.
+        if (size > limit) throw error;
+        if (attempt === 2) throw new Error(`${path}: download failed: ${error.message}`);
+        await pause(250 * 2 ** attempt); continue;
       }
       return Buffer.concat(chunks);
     }

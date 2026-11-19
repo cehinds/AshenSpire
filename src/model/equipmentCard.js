@@ -2,6 +2,7 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { parseMod } from './loadout.js';
 import { GearIdOf } from './gearIds.js';
+import { GearTypeEffectsEnabled, GearVocabularyEnabled } from './gearEffects.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
@@ -44,7 +45,7 @@ export function equipmentCardModel(registries, piece) {
   let facts = armor
     ? [field('Block', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armour bonus to Defense cards: adds this much Block. This is not damage reduction.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
     : [field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
-  let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
+  let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return GearVocabularyEnabled(registries, registries.equipment.modFields[m.field]) && !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
     const mod = parseMod(raw);
     const spec = registries.equipment.modFields[mod.field];
     const target = mod.prefix === 'self' ? '' : mod.prefix === 'power' ? 'Class power: ' : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)}: `;
@@ -54,7 +55,7 @@ export function equipmentCardModel(registries, piece) {
   });
   const configuredGear = gameModule(registries,'gear');
   const item = configuredGear?.armorBudget && (gameContent(registries,'gear') || []).find(row =>
-    (row.source?.id || row.id) === GearIdOf(piece) && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
+    (row.source?.id || row.id) === (GearTypeEffectsEnabled(registries) ? GearIdOf(piece) : piece.id) && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
     const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'STR',dr:'DEX',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};

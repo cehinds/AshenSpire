@@ -6,7 +6,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { profileDamageReceipt, PierceBypass } from '../src/engine/gameProfileCombat.js';
+import { profileDamageReceipt, PierceBlockIgnored, PierceStacks } from '../src/engine/gameProfileCombat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { applyStatus, decayAtTurnStart } from '../src/engine/statuses.js';
@@ -25,8 +25,8 @@ const plain = { tags: ['camp:physical', 'maneuver:attack', 'classification.attac
 
 test('Lightning carries Pierce without a tag; a plain hit does not', () => {
   const { combat, enemy, player } = world();
-  assert.ok(PierceBypass(combat, enemy, lightning.combatProfile, lightning, 20, 20) > 0);
-  assert.equal(PierceBypass(combat, enemy, {}, plain, 20, 20), 0);
+  assert.ok(PierceBlockIgnored(combat, enemy, lightning, lightning.combatProfile, 20, 20) > 0);
+  assert.equal(PierceBlockIgnored(combat, enemy, plain, {}, 20, 20), 0);
   const a = profileDamageReceipt(combat, player, enemy, 20, lightning);
   const b = profileDamageReceipt(combat, player, enemy, 20, plain);
   assert.ok(a.pierceBypassed > 0, 'a Lightning hit passes some Block');
@@ -36,7 +36,7 @@ test('Lightning carries Pierce without a tag; a plain hit does not', () => {
 test('Block an Earth card laid is not bypassed by a built-in Pierce', () => {
   const { combat, enemy, player } = world();
   enemy.earthBlock = 50;
-  assert.equal(PierceBypass(combat, enemy, lightning.combatProfile, lightning, 40, 40), 0);
+  assert.equal(PierceBlockIgnored(combat, enemy, lightning, lightning.combatProfile, 40, 40), 0);
   assert.equal(profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed, 0);
   enemy.earthBlock = 0;
   assert.ok(profileDamageReceipt(combat, player, enemy, 40, lightning).pierceBypassed > 0);
@@ -48,9 +48,14 @@ function spend(skin, pierce) {
   const { combat, enemy, player } = world();
   enemy.block = 50;
   if (skin) applyStatus(combat, enemy, 'stoneHide', skin, enemy);
-  const quoted = profileDamageReceipt(combat, player, enemy, 40, piercing(pierce));
+  const carrier = { ...plain, tags: [...plain.tags, 'pierce'], pierceStacks: pierce };
+  const quoted = profileDamageReceipt(combat, player, enemy, 40, carrier);
+  assert.equal(PierceStacks(combat, enemy, carrier), Math.max(0, pierce - skin));
+  assert.deepEqual(profileDamageReceipt(combat, player, enemy, 40, carrier), quoted, 'repeated preview is pure');
   assert.equal(enemy.statuses.stoneHide?.stacks || 0, skin, 'a quote spends nothing');
-  applyAttackDamage(combat, player, enemy, 40, piercing(pierce).tags, piercing(pierce));
+  const before = enemy.hp;
+  applyAttackDamage(combat, player, enemy, 40, carrier.tags, carrier);
+  assert.equal(before - enemy.hp, quoted.hpLoss, 'preview equals live');
   return { bypass: quoted.pierceBypassed, left: enemy.statuses.stoneHide?.stacks || 0 };
 }
 
@@ -77,7 +82,7 @@ test('preview equals play: the quoted HP loss is what the hit then costs', () =>
   const before = enemy.hp;
   applyAttackDamage(combat, player, enemy, 20, lightning.tags, lightning);
   assert.equal(before - enemy.hp, quote.hpLoss);
-  assert.ok(quote.hpLoss > 0, 'the fixture reaches HP through the Pierce');
+  assert.equal(quote.hpLoss, 0, 'Stone Skin cancels the single Lightning Pierce stack');
 });
 
 test('Stone Skin is gone at the start of its owner\'s turn', () => {
@@ -105,4 +110,11 @@ test('a three-hit card spends Stone Skin hit by hit in the quote too: Pierce 1, 
   assert.equal(quote.hpLoss, before - live.enemy.hp, 'the quote equals the three hits');
   assert.equal(live.enemy.statuses.stoneHide?.stacks || 0, 0);
   assert.equal(quoted.enemy.statuses.stoneHide.stacks, 2, 'the quote spent nothing on the real target');
+});
+
+test('Diamond Skin retains Block and Stone Skin cancels Pierce under their original save keys', () => {
+  assert.equal(registries.statuses.get('stoneskin').name, 'Diamond Skin');
+  assert.equal(registries.statuses.get('stoneskin').modifiers.retainBlock, true);
+  assert.equal(registries.statuses.get('stoneHide').name, 'Stone Skin');
+  assert.equal(registries.statuses.get('stoneHide').stackMode, 'add');
 });

@@ -1,7 +1,7 @@
 // src/engine/gearHooks.js — what a fight does with the gear vocabulary (`player.itemProps`, built by model/gearEffects.js GearSummary).
 // Headless. Card numbers change on the card DEFINITION (GearCardDefinition), so the face, the quote and the play read one number; turn and play
 // grants queue ordinary effect ops, as engine/itemPropertyHooks.js does.
-import { ApplyGearCardRules, GearStatusRules, GearCondMet, GearSelectorMatches } from '../model/gearEffects.js';
+import { ApplyGearCardRules, GearStatusRules, GearCondMet, GearSelectorMatches, GearSummary, GearItemProps, GearTypeEffectsEnabled } from '../model/gearEffects.js';
 import { GearState, GearProps } from './gearReceipt.js';
 import { ChangeAttribute } from './liveStats.js';
 
@@ -61,7 +61,16 @@ export function QueueGearCardPlayed(ctx, player, def) {
     if (grant.grant === 'strength') after.push(() => ChangeAttribute(ctx, player, 'strength', grant.amount, { thisTurn: true }));
     else { const effect = grantEffect(grant); if (effect && grant.amount > 0) queue(ctx, player, effect); }
   }
-  if (spell && player?.counters) player.counters.spellsPlayedThisTurn = (player.counters.spellsPlayedThisTurn || 0) + 1;
+  if (GearTypeEffectsEnabled(ctx) && spell && player?.counters) player.counters.spellsPlayedThisTurn = (player.counters.spellsPlayedThisTurn || 0) + 1;
   return () => { for (const run of after) run(); };
 }
 
+
+/** Rebuild only the equipment-owned fields after a successful mid-fight equipment change. */
+export function RefreshGearItemProps(ctx) {
+  if (!GearTypeEffectsEnabled(ctx) || !ctx.player || !ctx.loadout) return;
+  const props = { ...ctx.player.itemProps };
+  for (const key of ['cardRules', 'hitRules', 'turnGrants', 'playGrants', 'gearResist', 'firstTurnSp', 'vulnMelee', 'twoHanded', 'gainBonus', 'mainWeaponType']) delete props[key];
+  const summary = GearSummary(ctx.registries, ctx.loadout, ctx.player.classId, ctx);
+  ctx.player.itemProps = { ...props, ...GearItemProps(summary) };
+}

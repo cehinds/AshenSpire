@@ -229,7 +229,7 @@ async function until(expression, what, ms = 20000) {
 }
 function visibleRewardChoice(doc, selector) {
   return Array.from(doc.querySelectorAll(selector)).find((choice) => {
-    if (choice.disabled || choice.getAttribute('aria-disabled') === 'true') return false;
+    if (choice.disabled || choice.getAttribute('aria-disabled') === 'true' || choice.getAttribute('aria-checked') === 'true') return false;
     const { width, height } = choice.getBoundingClientRect();
     return width > 0 && height > 0 && doc.defaultView.getComputedStyle(choice).visibility === 'visible';
   });
@@ -459,8 +459,15 @@ const DOORS = {
   rewardVeil: `.reward-veil`,
   levelOffer: `.reward-menu .reward-level-offer`,
   levelContinue: `#reward-level-continue`,
+  confirmationOpen: `.confirmation-modal`,
+  confirmationAccept: `.confirmation-modal .confirmation-confirm:not([hidden]):not([disabled])`,
+  rankUpOpen: `.rank-up-pick`,
+  rankUpChoice: `.rank-up-pick .rank-up-option:not([disabled])`,
+  rankUpCommit: `.rank-up-pick button[data-control-role="primary"]:not([disabled])`,
+  rewardPicks: `.reward-pick-prompt`,
+  rewardPicksReady: `#reward-card-confirm.primary:not([disabled])`,
   chooserConfirm: `#reward-card-confirm:not([disabled])`,
-  chooserFace: `.reward-row .reward-choice-face[role="radio"]`,
+  chooserFace: `.reward-row .reward-choice-face:is([role="radio"], [role="checkbox"])`,
   chooserName: `.reward-row button.reward-pick`,
   levelUp: `.reward-level-up:not([disabled])`,
   rewardBack: `#reward-back`,
@@ -490,8 +497,22 @@ function pickDoor(d) {
   if (d.map && !d.veil) return { done: 'map' };
   if (d.gameover) return { done: 'gameover' };
   if (d.classMastery) return { press: DOORS.classMastery };
+  if (d.confirmationOpen) {
+    return d.confirmationAccept ? { press: DOORS.confirmationAccept } : { wait: 'the confirmation to accept input' };
+  }
+  if (d.rankUpOpen) {
+    if (d.rankUpCommit) return { press: DOORS.rankUpCommit };
+    if (d.rankUpChoice) return { press: DOORS.rankUpChoice };
+    return { wait: 'the rank-up choices' };
+  }
   if (d.combat) return { done: 'combat' };
   if (d.rewardVeil) {
+    // Multi-pick Continue opens a confirmation even with unused picks.
+    // Select each available card once before opening that confirmation.
+    if (d.rewardPicks && !d.rewardPicksReady) {
+      if (d.chooserFace) return { press: DOORS.chooserFace };
+      if (d.chooserName) return { press: DOORS.chooserName };
+    }
     // An open chooser (a level card or draft the walk opened from the menu):
     // its first offer, then Confirm.
     if (d.chooserConfirm) return { press: DOORS.chooserConfirm };
@@ -566,6 +587,12 @@ if (argv.includes('--selftest')) {
     ['a face-only level chooser: the card radio', D({ rewardVeil: true, veil: true, chooserFace: true, rewardBack: true }), DOORS.chooserFace],
     ['a named level chooser: the name button', D({ rewardVeil: true, veil: true, chooserName: true, rewardBack: true }), DOORS.chooserName],
     ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserFace: true, chooserName: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
+    ['a multi-pick reward with enabled Continue: select an unpicked card first', D({ rewardVeil: true, rewardPicks: true, chooserFace: true, chooserConfirm: true }), DOORS.chooserFace],
+    ['a multi-pick reward with all picks made: Continue', D({ rewardVeil: true, rewardPicks: true, rewardPicksReady: true, chooserFace: true, chooserConfirm: true }), DOORS.chooserConfirm],
+    ['a reward confirmation owns the press over the original Continue', D({ rewardVeil: true, chooserConfirm: true, confirmationOpen: true, confirmationAccept: true }), DOORS.confirmationAccept],
+    ['a disabled confirmation shields the original Continue', D({ rewardVeil: true, chooserConfirm: true, confirmationOpen: true }), 'wait'],
+    ['a rank-up step selects and confirms inside its own picker', D({ rewardVeil: true, chooserConfirm: true, rankUpOpen: true, rankUpChoice: true }), DOORS.rankUpChoice],
+    ['a selected rank-up row enables the picker action', D({ rewardVeil: true, rankUpOpen: true, rankUpChoice: true, rankUpCommit: true }), DOORS.rankUpCommit],
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
@@ -573,21 +600,21 @@ if (argv.includes('--selftest')) {
     ['a mastery choice over the map owns the next input', D({ classMastery: true, map: true, veil: true }), DOORS.classMastery],
     ['the map under no veil', D({ map: true }), 'map'],
   ];
-  const rewardChoice = (id, { disabled = false, spent = false, width = 150, visibility = 'visible' } = {}) => ({
+  const rewardChoice = (id, { disabled = false, spent = false, checked = false, width = 150, visibility = 'visible' } = {}) => ({
     id, disabled, visibility,
-    getAttribute: (attr) => attr === 'aria-disabled' && spent ? 'true' : null,
+    getAttribute: (attr) => (attr === 'aria-disabled' && spent) || (attr === 'aria-checked' && checked) ? 'true' : null,
     getBoundingClientRect: () => ({ width, height: width }),
   });
   const chooser = (faces, names) => ({
     querySelectorAll: (selector) => selector === DOORS.chooserFace ? faces : names,
     defaultView: { getComputedStyle: (choice) => ({ visibility: choice.visibility }) },
   });
-  const faceOnly = chooser([rewardChoice('spent face', { spent: true }), rewardChoice('live face')],
+  const faceOnly = chooser([rewardChoice('spent face', { spent: true }), rewardChoice('chosen face', { checked: true }), rewardChoice('live face')],
     [rewardChoice('hidden name', { width: 0 })]);
   const named = chooser([], [rewardChoice('spent name', { disabled: true }),
     rewardChoice('invisible name', { visibility: 'hidden' }), rewardChoice('live name')]);
   plants.push(
-    ['chooser: skips a spent radio', 'live face', null, visibleRewardChoice(faceOnly, DOORS.chooserFace)?.id],
+    ['chooser: skips spent and already chosen cards', 'live face', null, visibleRewardChoice(faceOnly, DOORS.chooserFace)?.id],
     ['chooser: a zero-size name has no pointer target', false, null, Boolean(visibleRewardChoice(faceOnly, DOORS.chooserName))],
     ['chooser: skips disabled and invisible names', 'live name', null, visibleRewardChoice(named, DOORS.chooserName)?.id],
   );

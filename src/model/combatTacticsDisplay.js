@@ -4,6 +4,7 @@
 // rail, the active-skills list and the inspector read one answer.
 import { ACTION_SIGILS } from '../content/combatSigils.js';
 import { helpText } from './tooltipSettings.js';
+import { tFull } from './strings.js';
 
 const titleCase = value => String(value || '').replace(/\b\w/g, letter => letter.toUpperCase());
 
@@ -34,7 +35,8 @@ export function combatStanceRow(entity) {
   // Wave 3: a Poise break is Broken (poise.breakRule "broken"): the owner loses its next action and takes x1.5 until it ends, then Poise refills.
   if (stance.broken) return {
     id: 'combat-stance', kind: 'stance', maneuver: 'staggered', name: 'Broken',
-    detail: `Poise broke. Loses its next action. Takes ×${stance.damageMultiplier ?? 1.5} damage until it ends, then Poise refills to full.`,
+    // Owner, 2026-11-18 (3a): a multiplier of 1 means the break's Vulnerable stacks do the work, so the row names no multiplier.
+    detail: (stance.damageMultiplier ?? 1.5) === 1 ? tFull('poise.broken.stanceRow') : `Poise broke. Loses its next action. Takes ×${stance.damageMultiplier ?? 1.5} damage until it ends, then Poise refills to full.`,
   };
   if (stance.staggered) return {
     id: 'combat-stance', kind: 'stance', maneuver: 'staggered', name: 'Staggered stance',

@@ -16,7 +16,11 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-19 on the merge of dev (#2847, #2843, #2835) into the gear pass: the runtime hash moved to 6ef2ef...; only digests moved, no scenario depends on the hammer or bow rules.
+// Recaptured 2026-11-19 after combining GearPass and Force/Ward: only 34 profile/runtime/snapshot/save hashes moved.
+// JS01 explicitly predates equipment type effects. Event digests, RNG, receipts and continuations match origin/dev exactly, including the historical profile.
+// Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.
+// Runtime, event digests, RNG, receipts, continuations and the complete historical scenario are unchanged; native and production captures agree.
+// Recaptured 2026-11-19 (owner rulings 20-23 on chore/ForceWardRules: Force, Ward, Pierce, break statuses): every current-profile hash and the events they price moved; measured with this test's own output.
 // Recaptured 2026-11-18 (green-discovered pass): runtime hash moved by the Retreat mechanic folder; the historical scenario moved with the same-day gear rulings (see the fixture's recapture note).
 // Recaptured 2026-11-18 for the physical cut on top of the ratings removal (physicalDamageMultiplier 0.7, blockGainMultiplier 0.49): the three current-profile scenarios' events and continuations move by design;
 // the historical scenario's events, RNG and continuation are identical and only its snapshot, stored and loaded hashes moved (the new effects setting's module default joins the profile).
@@ -67,7 +71,14 @@ function openFight(api, enemyId, encounterId, profileId) {
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
     assert.equal(profile.hash, historicalHash);
   } else {
-    profile = api.resolveGameProfile('default');
+    profile = plain(api.resolveGameProfile('default'));
+    // JS01 pins combat before equipment type effects; current rules are covered by the gear suites.
+    delete profile.modules.gear.typeEffectsVersion;
+    const { hash: _hash, ...payload } = profile;
+    profile.hash = `sha256:${hashJson(payload)}`;
+    const storage = memoryStorage();
+    storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
+    profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
   const content = api.applyGameProfileToContent(api.contentBundle, profile);
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);

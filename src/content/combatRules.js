@@ -24,13 +24,13 @@ export const combatRules = {
     earth: { tag: 'damage:earth', physical: false, magicShare: 0 },
   },
   // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
-  // Force splits (0.5): its physical part is the card's physical tag, else the
+  // Force is physical (0, owner 2026-11-18): it meets Block first, then Poise. Its physical type is the card's physical tag, else the
   // physicalType. Alteration is a spell whose damage is all physical (0): it still
   // carries the spell tags, but deals no magic damage. A school not listed here
   // (illusion) is all magic of its damage type. magicType is the Ward/Barrier type
   // the school's magic part deals.
   schools: {
-    force: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
+    force: { magicShare: 0, magicType: 'arcane', physicalType: 'blunt' },
     alteration: { magicShare: 0, magicType: 'arcane', physicalType: 'blunt' },
     // Earth is a magic school whose damage is physical (owner, 2026-10-13), like alteration.
     earth: { magicShare: 0, magicType: 'arcane', physicalType: 'earth' },

@@ -10,6 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { equipPiece, validateEquipment, runMods } from '../src/model/loadout.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { applyStatus } from '../src/engine/statuses.js';
@@ -414,3 +415,27 @@ test('Bow end of turn in Defend: 0 Retreat stacks becomes 1', () => assert.equal
 test('Bow end of turn in Defend: 1 Retreat stack stays 1, no extra stack', () => assert.equal(bowEnd({ stacks: 1, stance: 'defend' }), 1));
 test('Bow end of turn in Defend: 2 Retreat stacks stay 2', () => assert.equal(bowEnd({ stacks: 2, stance: 'defend' }), 2));
 test('Bow end of turn outside Defend gives no Retreat stack', () => assert.equal(bowEnd({ stacks: 0, stance: 'counter' }), 0));
+
+for (const intent of ['swapArmament', 'changeEquipment']) {
+  test(`${intent} refreshes gear effects, removes the old type, and survives a snapshot`, () => {
+    const { combat } = build({ right: 'greatsword' });
+    combat.registries = { ...registries, balance: { ...registries.balance, equipment: { ...registries.balance.equipment, swapCostKind: 'allowance', allowChangesInCombat: true, swapEndsTurn: false } }, equipment: { ...registries.equipment, slots: registries.equipment.slots.map(row => row.id === 'rightHand' ? { ...row, sets: 2 } : row) } };
+    combat.swapsLeft = 10;
+    combat.loadout.sets.rightHand[1] = 'shortbow';
+    combat.loadout.storage.push('shortbow');
+    combat.player.itemProps.testRelic = 7;
+    combat.player.counters.spellsPlayedThisTurn = 2;
+    assert.ok(combat.player.itemProps.cardRules.some(row => row.stat === 'addStr'));
+    dispatch(combat, intent === 'swapArmament'
+      ? { type: intent, slotId: 'rightHand', setIndex: 1 }
+      : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: 'shortbow' });
+    assert.equal(combat.player.itemProps.mainWeaponType, 'bow');
+    assert.ok(!combat.player.itemProps.cardRules.some(row => row.stat === 'addStr'));
+    assert.ok(combat.player.itemProps.cardRules.some(row => row.stat === 'reach'));
+    assert.ok(combat.player.itemProps.turnGrants.some(row => row.grant === 'retreat'));
+    assert.equal(combat.player.itemProps.testRelic, 7);
+    assert.equal(combat.player.counters.spellsPlayedThisTurn, 2);
+    const restored = restoreCombatSnapshot({ registries: combat.registries, snapshot: serializeCombatSnapshot(combat), rng: createRng(31), expectedGameProfile: combat.gameProfile });
+    assert.deepEqual(restored.player.itemProps, combat.player.itemProps);
+  });
+}

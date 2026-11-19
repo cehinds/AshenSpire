@@ -1,5 +1,5 @@
 # Stone Skin (`status.stoneHide`)
-Each stack reduces Pierce damage by 1, from any Pierce source. Gone at the start of its owner's turn, like Block.
+Each stack cancels 1 Pierce stack; both stacks are spent. Gone at the start of its owner's turn, like Block.
 - Carried by: statuses on any entity.
 - Lives in: `src/content/statuses.js`.
 - Defined in: `content/source/statuses.json`.
