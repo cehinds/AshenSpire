@@ -4241,14 +4241,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.wickerAntlers": {
-      "name": "Wicker Antlers",
-      "text": "WIS +2, CON +1",
-      "modifiers": [
-        "self.wisdom=+2",
-        "self.constitution=+1"
-      ]
-    },
     "relic:enemy.relic.knellcapHelm": {
       "name": "Knellcap Helm",
       "text": "CON +2, SP -1",
@@ -4263,6 +4255,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.intelligence=+1"
+      ]
+    },
+    "relic:enemy.relic.wickerAntlers": {
+      "name": "Wicker Antlers",
+      "text": "WIS +2, CON +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.constitution=+1"
       ]
     }
   }

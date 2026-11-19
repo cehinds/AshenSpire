@@ -185,15 +185,6 @@
     "text": "CON +3, STR +1"
   },
   {
-    "id": "enemy.relic.wickerAntlers",
-    "name": "Wicker_Antlers",
-    "modifiers": [
-      "self.wisdom=+2",
-      "self.constitution=+1"
-    ],
-    "text": "WIS +2, CON +1"
-  },
-  {
     "id": "enemy.relic.knellcapHelm",
     "name": "Knellcap_Helm",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.intelligence=+1"
     ],
     "text": "WIS +2, INT +1"
+  },
+  {
+    "id": "enemy.relic.wickerAntlers",
+    "name": "Wicker_Antlers",
+    "modifiers": [
+      "self.wisdom=+2",
+      "self.constitution=+1"
+    ],
+    "text": "WIS +2, CON +1"
   }
 ]
