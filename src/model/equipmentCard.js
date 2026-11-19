@@ -2,7 +2,7 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { parseMod } from './loadout.js';
 import { GearIdOf } from './gearIds.js';
-import { GearTypeEffectsEnabled, GearVocabularyEnabled } from './gearEffects.js';
+import { GearTypeEffectsEnabled, GearVocabularyEnabled, GearPieceMods, GearModText, GearTypeRow } from './gearEffects.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
@@ -54,10 +54,12 @@ export function equipmentCardModel(registries, piece) {
     return field(`${target}${value} ${label}`, raw, `${mod.mode === 'set' ? 'Replaces the value' : 'Adjusts the value'} ${mod.prefix === 'self' ? 'on the wearer' : `on ${mod.prefix === 'power' ? 'the class power card' : mod.prefix}`}. ${spec.blurb}`);
   });
   const configuredGear = gameModule(registries,'gear');
+  let resolvedValues = null;
   const item = configuredGear?.armorBudget && (gameContent(registries,'gear') || []).find(row =>
     (row.source?.id || row.id) === (GearTypeEffectsEnabled(registries) ? GearIdOf(piece) : piece.id) && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
+    resolvedValues = receipt.values;
     const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'STR',dr:'DEX',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
     // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule), except under `statPoints`,
     // where the tier is attribute points already in the receipt (owner, 2026-11-17).
@@ -68,10 +70,26 @@ export function equipmentCardModel(registries, piece) {
     const effect = GearEffectText(registries, receipt.values, labels, piece.blurb);
     bonuses = armor || piece.kind === 'shield' ? [field(effect.text, effect.text, effect.explanation)] : [];
   }
+  const typeEffects = GearTypeEffectsEnabled(registries), typeRow = typeEffects ? GearTypeRow(piece) : null;
+  if (typeEffects) {
+    // Keep resolved item stats, then show the same type/group and signature rules the runtime reads.
+    // A pool mod replaced by a nonzero configured pool is already represented by that receipt.
+    const rules = GearPieceMods(piece).flatMap((raw, index) => {
+      const mod = parseMod(raw), spec = mod && registries.equipment.modFields[mod.field];
+      if (!spec) return [];
+      const pool = {maxHp:'hp',maxMana:'mp',maxStamina:'sp'}[spec.apply];
+      if (pool && (resolvedValues?.[pool] || 0) > 0) return [];
+      const text = GearModText(registries, raw);
+      const source = index < (typeRow?.mods.length || 0) ? `${typeRow.label} ${typeRow.group ? 'group' : 'type'}` : 'Item signature';
+      return [field(text, text, `${source}. ${spec.blurb}`)];
+    });
+    bonuses = [...(item ? bonuses : []), ...rules];
+  }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
     tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),
-    typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
+    typeExplanation: typeEffects ? `${typeRow?.label || type}. Compatibility is determined by the equipment position.`
+      : (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
     flavor: piece.blurb || 'No flavor text authored.',
     requirement: requirements ? `Requires ${requirements}` : armor ? `${className} outfit` : 'Either hand',
     requirementExplanation: requirements ? `Minimum attributes to use this item: ${requirements}. The live equip action checks current requirements.` : armor ? `An armour set for ${className}.` : 'No minimum attributes authored. Hand placement still follows slot compatibility and two-handed restrictions.',

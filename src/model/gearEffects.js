@@ -254,6 +254,7 @@ export function GearAlwaysOn(registries, run) {
 
 const humanize = id => String(id).replace(/([a-z\d])([A-Z])/g, '$1 $2').toLowerCase();
 const COND_WORDS = { stance: arg => `in ${arg[0].toUpperCase()}${arg.slice(1)} stance`, first: arg => (arg === 'fight' ? 'the first one each fight' : 'the first one each turn'),
+  holding: arg => `while holding ${arg[0].toUpperCase()}${arg.slice(1)}`,
   weapon: arg => `with a ${humanize(arg)}`, breaks: () => 'that break Poise', target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
 const SELECTOR_WORDS = { any: 'cards', attack: 'attacks', sweep: 'Sweeps', smash: 'Smashes', counter: 'Counter cards', defend: 'Defend cards', anyAttack: 'physical attacks',
   zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells' };
