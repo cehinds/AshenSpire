@@ -4584,14 +4584,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.inkVeil": {
-      "name": "Ink Veil",
-      "text": "WIS +2, INT +1",
-      "modifiers": [
-        "self.wisdom=+2",
-        "self.intelligence=+1"
-      ]
-    },
     "relic:enemy.relic.judgeSeal": {
       "name": "Judge Seal",
       "text": "STR +2, WIS +1",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.wisdom=+1"
+      ]
+    },
+    "relic:enemy.relic.inkVeil": {
+      "name": "Ink Veil",
+      "text": "WIS +2, INT +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.intelligence=+1"
       ]
     }
   }

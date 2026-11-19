@@ -6915,13 +6915,27 @@
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "grimoire",
+            "name": "Grimoire",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "grimoire",
+            "name": "Grimoire",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "wisdom": {
         "own": 3,
@@ -6957,22 +6971,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
+        "constitution": 20,
         "strength": 5,
-        "dexterity": 3,
+        "dexterity": 6,
         "wisdom": 10,
         "intelligence": 5,
         "level": 10
       },
-      "total": 53,
-      "formula": "10+10+5+3+10+5+10 = 53"
+      "total": 66,
+      "formula": "10+20+5+6+10+5+10 = 66"
     },
     "pools": {
-      "hp": 53,
+      "hp": 66,
       "sp": 5,
       "mp": 3,
       "ar": 1,
-      "dr": 1,
+      "dr": 2,
       "hand": 8
     },
     "gear": [
@@ -6980,6 +6994,11 @@
         "key": "mainHand",
         "id": "wyrmhornStaff",
         "name": "Wyrmhorn_Staff"
+      },
+      {
+        "key": "offHand",
+        "id": "grimoire",
+        "name": "Grimoire"
       }
     ],
     "relics": [

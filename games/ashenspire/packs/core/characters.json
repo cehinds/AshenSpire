@@ -5311,6 +5311,10 @@
       {
         "key": "mainHand",
         "id": "wyrmhornStaff"
+      },
+      {
+        "key": "offHand",
+        "id": "grimoire"
       }
     ],
     "defaultRelics": [

@@ -34,6 +34,10 @@
     {
       "slot": "mainHand",
       "ref": "gear:wyrmhornStaff"
+    },
+    {
+      "slot": "offHand",
+      "ref": "gear:grimoire"
     }
   ],
   "relics": [
