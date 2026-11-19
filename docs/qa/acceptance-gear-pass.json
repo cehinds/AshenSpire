@@ -1,10 +1,12 @@
 {
   "request": "Gear pass mechanics (owner, 2026-11-18/19): armour types carry bonuses (Mail Counter +1, Leathers Evade +1, Plate Thorns 1, Robes +1 max MP, Poise by group), staves and sceptres give 1 Ward a turn, tomes 2, a Hammer Smash sends the target back only when it breaks Poise, a Bow keeps 1 Retreat stack at the end of a turn spent in Defend stance.",
-  "success": "The character sheet and a combat hand draw with the gear's bonuses and the player's inspector opens, at 1280x800 and 390x844, with no console errors.",
+  "success": "Starting equipment names and Poise are shown; the plate-wearing Reaver starts with 17 Poise and Thorns 1; an Ash Staff grants Ward 1. The real combat hand and player's inspector remain usable at desktop, phone, wide and tablet sizes with no console errors.",
   "failure": "A card face or the sheet prints a raw mod string or 'undefined' or 'NaN', or the page logs a console error.",
   "viewports": [
     { "name": "desktop", "width": 1280, "height": 800 },
-    { "name": "phone", "width": 390, "height": 844 }
+    { "name": "phone", "width": 390, "height": 844 },
+    { "name": "wide", "width": 1920, "height": 1080 },
+    { "name": "tablet", "width": 1024, "height": 768 }
   ],
   "scenes": [
     {
@@ -12,10 +14,15 @@
       "url": "?shot=customize",
       "ready": "#cz-next",
       "settleMs": 1500,
-      "actions": [ { "click": "#cz-next" }, { "wait": { "ms": 800 } } ],
+      "actions": [ { "click": "#cz-next" }, { "wait": { "ms": 800 } }, { "click": "[data-summary-slot=\"character\"] > .as-eyebrow" }, { "wait": { "ms": 200 } } ],
       "success": [
-        { "kind": "visible", "label": "The review's character card is drawn", "selector": ".screen" },
-        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+        { "kind": "visible", "label": "The review's character card is drawn", "selector": "[data-summary-slot=\"character\"]" },
+        { "kind": "text", "label": "Starting armour is Wayfarer Plate", "selector": "[data-summary-slot=\"armour\"]", "includes": "Wayfarer Plate" },
+        { "kind": "text", "label": "Plate shows its six item Poise", "selector": "[data-summary-slot=\"armour\"]", "matches": "6\\s*Poise" },
+        { "kind": "text", "label": "Starting main hand is the Greatsword", "selector": "[data-summary-slot=\"rightHand\"]", "includes": "Greatsword" },
+        { "kind": "text", "label": "Greatsword shows its six item Poise", "selector": "[data-summary-slot=\"rightHand\"]", "matches": "6\\s*Poise" },
+        { "kind": "count", "label": "The starter deck has real card faces", "selector": ".cc-starter-deck .card", "min": 4 },
+        { "kind": "consoleErrors", "label": "No console or missing-resource errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
       ],
       "failure": [
         { "kind": "text", "label": "The sheet prints undefined or NaN", "selector": ".screen", "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+=" }
@@ -26,14 +33,33 @@
       "url": "?shot=combat&shotSeed=4",
       "ready": ".hand .card",
       "settleMs": 1500,
-      "actions": [ { "hold": { "selector": ".combatant.player .combatant-stack", "ms": 800 } }, { "wait": { "ms": 400 } } ],
+      "actions": [ { "hold": { "selector": ".combatant.player .combatant-stack", "ms": 800 } }, { "wait": { "ms": 400 } }, { "click": ".combatant-door .modal-head-id" }, { "scrollTo": { "selector": ".combatant-door .combatant-inspector-details", "top": 250 } }, { "wait": { "ms": 200 } } ],
       "success": [
         { "kind": "visible", "label": "The hand is drawn", "selector": ".hand .card" },
         { "kind": "visible", "label": "The player's inspector opens", "selector": ".combatant-door .combatant-inspector-body" },
-        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+        { "kind": "text", "label": "Heavy armour starts combat with one Thorns stack", "selector": ".combatant-door [data-ability-id=\"thorns\"] > summary", "matches": "Thorns\\s*×\\s*1" },
+        { "kind": "text", "label": "Reaver's item and armour-group Poise reach the live pool", "selector": ".combatant-door [data-section=\"state\"]", "matches": "Poise\\s*17\\s*/\\s*17" },
+        { "kind": "consoleErrors", "label": "No console or missing-resource errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
       ],
       "failure": [
         { "kind": "text", "label": "A card face or the inspector prints undefined or NaN", "selector": ".hand, .combatant-door .combatant-inspector-body", "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+=" }
+      ]
+    },
+    {
+      "name": "staff-starts-with-ward",
+      "url": "?shot=combat&shotSeed=4&shotKit=1&shotMainHand=ashStaff",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [ { "hold": { "selector": ".combatant.player .combatant-stack", "ms": 800 } }, { "wait": { "ms": 400 } }, { "click": ".combatant-door .modal-head-id" }, { "scrollTo": { "selector": ".combatant-door .combatant-inspector-details", "top": 500 } }, { "wait": { "ms": 200 } } ],
+      "success": [
+        { "kind": "visible", "label": "The staff kit produces a real hand", "selector": ".hand .card" },
+        { "kind": "visible", "label": "The staff wielder's inspector opens", "selector": ".combatant-door .combatant-inspector-body" },
+        { "kind": "text", "label": "Ash Staff grants one Ward at turn start", "selector": ".combatant-door [data-ability-id=\"ward\"] > summary", "matches": "Ward\\s*×\\s*1" },
+        { "kind": "text", "label": "Ward explains its five-Poise grant", "selector": ".combatant-door [data-ability-id=\"ward\"]", "matches": "5.*Poise|Poise.*5" },
+        { "kind": "consoleErrors", "label": "No console or missing-resource errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "Staff cards or inspector print undefined, NaN or raw gear mods", "selector": ".hand, .combatant-door .combatant-inspector-body", "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+=" }
       ]
     }
   ]
