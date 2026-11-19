@@ -35,7 +35,7 @@ export function stanceForCard(card = {}) {
   // Player-only reviewed counter/sweep families; public enemy intent stays broad.
   if (profile.maneuver === 'counter') return 'counter';
   if (defensive.has(profile.maneuver)) return 'defensive';
-  if (profile.camp === 'spell') return 'casting';
+  if (profile.camp === 'spell' || profile.maneuver === 'casting') return 'casting';
   if (profile.maneuver === 'sweep') return 'sweep';
   // Owner (2026-10-12): smash holds its own painted wind-up, not the offensive frame.
   if (profile.maneuver === 'smash') return 'smash';
@@ -46,6 +46,39 @@ export function stanceForCard(card = {}) {
   if (card.type === 'attack') return 'offensive';
   // Prepare: spells and any card with no attack/smash/sweep/defend/counter maneuver.
   return 'casting';
+}
+
+/**
+ * A card that enters a stance (an `enterStance` effect) leaves the figure in the combat stance the engine ended on, so the
+ * figure's pose and the action glyph read that one stance, not the card's own kind. `events` are the receipts holding
+ * `played` (the cardPlayed receipt); the last `combatStanceChanged` for the player's seat that the play's effect caused wins. Other cards,
+ * and a play that changed no stance, return the card untouched.
+ */
+export function CardAsEnteredStance(card = {}, events = [], played = {}) {
+  if (!card?.effects?.some?.(effect => effect.op === 'enterStance')) return card;
+  const actor = played.playerId || played.sourceId || 'player';
+  const ofActor = event => event.type === 'combatStanceChanged' && (event.targetId ?? event.sourceId) === actor;
+  // The engine names the play that caused a stance change made by an effect (cardInstanceId): read those. A log from before
+  // that field has none, so it falls back to the receipts between this cardPlayed and the next (a card's own maneuver
+  // change is emitted before its own cardPlayed, so that window is only a best guess).
+  const tagged = events.some(event => event.type === 'combatStanceChanged' && event.cardInstanceId !== undefined);
+  let changed;
+  if (tagged) {
+    // Only this play's own tagged changes: after its cardPlayed, before the same card instance is played again.
+    const from = events.indexOf(played) + 1;
+    const again = events.findIndex((event, index) => index >= from && event.type === 'cardPlayed' && event.cardInstanceId === played.cardInstanceId);
+    changed = events.slice(from, again < 0 ? undefined : again).filter(event => ofActor(event) && event.cardInstanceId === played.cardInstanceId).pop();
+  }
+  else {
+    const start = events.indexOf(played) + 1;
+    const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
+    changed = events.slice(start, next < 0 ? undefined : next).filter(ofActor).pop();
+  }
+  // Core 2 reports a Prepare as 'prepared'; the tag family spells it 'casting'.
+  const maneuver = changed?.maneuver === 'prepared' ? 'casting' : changed?.maneuver;
+  if (!maneuver || maneuver === 'staggered' || maneuver === 'neutral') return card;
+  const tags = (card.cardTags ?? card.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
+  return { ...card, cardTags: [...tags.filter(tag => !tag.startsWith('maneuver:')), `maneuver:${maneuver}`] };
 }
 
 /** Accept ONLY previewIntent()/coopEnemyIntent() output, never an enemy or private move. */
