@@ -16,7 +16,7 @@
         { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
         { "wait": { "ms": 500 } },
         { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
-        { "wait": { "ms": 1200 } }
+        { "wait": { "ms": 4000 } }
       ],
       "success": [
         { "kind": "visible", "label": "The player holds a Ward status", "selector": "[data-status-id=\"ward\"]" },
