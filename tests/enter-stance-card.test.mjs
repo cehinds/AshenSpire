@@ -111,19 +111,28 @@ test('non-Core: Enter Gorefire pays no unquoted Precision entry grant', async ()
   assert.equal(gorefire.block ?? 0, 2, 'dev number');
 });
 
-test('entered-stance helper: only this play\'s receipts count, and Prepared reads as casting', async () => {
+test('entered-stance helper reads the play that caused the change, live and from the whole restored log', async () => {
   const { CardAsEnteredStance, kindForCard } = await import('../src/model/alternativeStance.js');
   const card = reg.cards.get('enterGorefire');
-  const played = { type: 'cardPlayed', sourceId: 'player' }, later = { type: 'cardPlayed', sourceId: 'player' };
-  const change = maneuver => ({ type: 'combatStanceChanged', sourceId: 'player', maneuver });
-  // A restored log holds the whole fight: a later play's stance change is not this card's.
+  // The real engine log: Enter: Gorefire, then a Defend card whose own stance change is emitted BEFORE its cardPlayed.
+  const combat = liveCore();
+  play(combat, give(combat, 'enterGorefire', 'eg1'));
+  play(combat, give(combat, 'core.defend', 'd1'));
+  const log = combat.eventLog;
+  const gorefirePlay = log.find(e => e.type === 'cardPlayed' && e.cardInstanceId === 'eg1');
+  assert.ok(log.filter(e => e.type === 'combatStanceChanged').some(e => e.cardInstanceId === 'eg1'), 'the effect\'s change names its play');
+  assert.equal(combat.player.combatStance.maneuver, 'defend');
+  assert.equal(CardAsEnteredStance(card, log, gorefirePlay).cardTags.at(-1), 'maneuver:attack', 'the later Defend play does not leak in');
+  // Synthetic receipts: a log from before the field falls back to the receipts after this cardPlayed.
+  const played = { type: 'cardPlayed', sourceId: 'player', cardInstanceId: 'x' }, later = { type: 'cardPlayed', sourceId: 'player', cardInstanceId: 'y' };
+  const change = (maneuver, extra = {}) => ({ type: 'combatStanceChanged', sourceId: 'player', maneuver, ...extra });
   assert.equal(CardAsEnteredStance(card, [played, change('attack'), later, change('defend')], played).cardTags.at(-1), 'maneuver:attack');
-  assert.equal(CardAsEnteredStance(card, [played, later, change('defend')], played), card);
+  assert.equal(CardAsEnteredStance(card, [played, later, change('defend', { cardInstanceId: 'y' })], played), card, 'tagged log: no change by this play');
   // An enemy broken by the hit reports its own stance change (sourced from the player, aimed at the enemy): not the figure's.
-  const broken = { type: 'combatStanceChanged', sourceId: 'player', targetId: 'e1', maneuver: 'staggered' };
-  assert.equal(CardAsEnteredStance(card, [played, { ...change('defend'), targetId: 'player' }, broken], played).cardTags.at(-1), 'maneuver:defend');
+  const broken = { type: 'combatStanceChanged', sourceId: 'player', targetId: 'e1', maneuver: 'staggered', cardInstanceId: 'x' };
+  assert.equal(CardAsEnteredStance(card, [played, change('defend', { targetId: 'player', cardInstanceId: 'x' }), broken], played).cardTags.at(-1), 'maneuver:defend');
   // Prepared (an immediate-transition Prepare) must not become an unknown maneuver tag.
-  const prepared = CardAsEnteredStance(card, [played, change('prepared')], played);
+  const prepared = CardAsEnteredStance(card, [played, change('prepared', { cardInstanceId: 'x' })], played);
   assert.equal(prepared.cardTags.at(-1), 'maneuver:casting');
   assert.doesNotThrow(() => kindForCard(prepared));
 });
@@ -152,15 +161,15 @@ test('Strike and Settle: the pick, not the card\'s attack maneuver, is the stanc
   }
 });
 
-test('Strike and Settle: the hit is the same whatever is picked, and equals its preview', () => {
-  const hits = ['attack', 'defend', 'counter', 'casting'].map(pick => {
+test('Strike and Settle: the hit does not depend on the pick (the preview-vs-dealt gap is dev\'s and is not tested here)', () => {
+  const amounts = ['attack', 'defend', 'counter', 'casting'].map(pick => {
     const { combat, out, quoted } = strikeAndSettle(pick);
     const hit = out.events.find(e => e.type === 'damageDealt' && e.targetId === combat.enemies[0].id);
     assert.ok(hit, pick);
-    return { quoted, amount: hit.amount };
+    assert.ok(quoted > 0, 'a preview is quoted');
+    return hit.amount;
   });
-  assert.ok(hits.every(h => h.amount === hits[0].amount), 'the pick follows the hit');
-  assert.ok(hits[0].quoted >= hits[0].amount - 1 || hits[0].quoted > 0, 'a preview was quoted');
+  assert.ok(amounts.every(amount => amount === amounts[0]), 'the pick follows the hit');
 });
 
 test('non-Core Strike and Settle keeps dev numbers: Defend pick Block 8, Counter pick Block 3, Attack pick none', async () => {

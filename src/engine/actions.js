@@ -2091,7 +2091,7 @@ export const OPCODE_HANDLERS = Object.freeze({
           // that resolved in Defend): nothing to change, so the per-card Defend restore does not run twice. A different pick
           // keeps the entry grant of the stance entered: choosing the stance is the card's point (numbers as on dev).
           if(stanceOf(entity.combatStance)?.maneuver===(maneuver==='prepared'?'casting':maneuver)) continue;
-          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'},stanceFromEffect:true};
           Matchups.setCombatStance(ctx,entity,carrier);
         }
         return;
@@ -2114,7 +2114,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         const carrier = { ...action.card, combatProfile: { ...action.card?.combatProfile, maneuver: def.maneuver, stanceTrigger: true,
           range: action.card?.combatProfile?.range || 'melee', camp: action.card?.combatProfile?.camp || 'physical' },
           // A registry stance entry pays no maneuver entry grant (the card does not show one): only the stance changes.
-          registryStanceEntry: true };
+          registryStanceEntry: true, stanceFromEffect: true };
         Matchups.setCombatStance(ctx, ctx.player, carrier);
       };
       if (ctx.player.stanceId === stanceId) { followCombatStance(); return; } // already in it: no registry change (StS)

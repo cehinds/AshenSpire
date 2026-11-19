@@ -56,7 +56,8 @@ export function setProfileStance(ctx, entity, carrier) {
     { tags: carrier.cardTags || carrier.tags || [] });
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
-  ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
+  ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver,
+    ...(carrier?.stanceFromEffect ? { cardInstanceId: carrier.instanceId } : {}) });
   if (entering && entity.combatStance.maneuver !== 'neutral') QueueItemStanceEntry(ctx, entity); // W25 step 6
 
   return true;

@@ -50,17 +50,25 @@ export function stanceForCard(card = {}) {
 
 /**
  * A card that enters a stance (an `enterStance` effect) leaves the figure in the combat stance the engine ended on, so the
- * figure's pose and the action glyph read that one stance, not the card's own kind. `events` are the play's receipts in
- * order after `played` (the cardPlayed receipt); the last `combatStanceChanged` for the player's seat wins. Other cards,
+ * figure's pose and the action glyph read that one stance, not the card's own kind. `events` are the receipts holding
+ * `played` (the cardPlayed receipt); the last `combatStanceChanged` for the player's seat that the play's effect caused wins. Other cards,
  * and a play that changed no stance, return the card untouched.
  */
 export function CardAsEnteredStance(card = {}, events = [], played = {}) {
   if (!card?.effects?.some?.(effect => effect.op === 'enterStance')) return card;
   const actor = played.playerId || played.sourceId || 'player';
-  const start = events.indexOf(played) + 1;
-  const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
-  const after = events.slice(start, next < 0 ? undefined : next);
-  const changed = after.filter(event => event.type === 'combatStanceChanged' && (event.targetId ?? event.sourceId) === actor).pop();
+  const ofActor = event => event.type === 'combatStanceChanged' && (event.targetId ?? event.sourceId) === actor;
+  // The engine names the play that caused a stance change made by an effect (cardInstanceId): read those. A log from before
+  // that field has none, so it falls back to the receipts between this cardPlayed and the next (a card's own maneuver
+  // change is emitted before its own cardPlayed, so that window is only a best guess).
+  const tagged = events.some(event => event.type === 'combatStanceChanged' && event.cardInstanceId !== undefined);
+  let changed;
+  if (tagged) changed = events.filter(event => ofActor(event) && event.cardInstanceId === played.cardInstanceId).pop();
+  else {
+    const start = events.indexOf(played) + 1;
+    const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
+    changed = events.slice(start, next < 0 ? undefined : next).filter(ofActor).pop();
+  }
   // Core 2 reports a Prepare as 'prepared'; the tag family spells it 'casting'.
   const maneuver = changed?.maneuver === 'prepared' ? 'casting' : changed?.maneuver;
   if (!maneuver || maneuver === 'staggered' || maneuver === 'neutral') return card;

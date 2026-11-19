@@ -407,7 +407,9 @@ export function setCombatStance(ctx, entity, carrier) {
     entity.combatTraitGuard = { poise: Math.max(armed.poise, trait.impact || 0), ward: Math.max(armed.ward, trait.flux || 0) };
   }
   if (changed) ctx.emit?.('combatStanceChanged', { sourceId: entity.id,
-    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance });
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance,
+    // An enterStance effect names the play that caused the change, so a reader can tell it from the card's own maneuver.
+    ...(carrier?.stanceFromEffect ? { cardInstanceId: carrier.instanceId } : {}) });
   return entity.combatStance;
 }
 
