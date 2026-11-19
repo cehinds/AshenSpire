@@ -320,3 +320,4 @@ Every item of a type carries its type's base effect. An item's own signature (se
 
 ## 24. Buff-card drawbacks (owner, 2026-11-19)
 - Most buff cards carry a drawback before upgrade: Exhaust, a high cost, an escalating cost, Ethereal, a buff to an enemy, a discard, Wound/Dazed status cards added to the deck, or a negative status on the user. Upgrades can remove or soften the drawback as an option.
+- Upgrade options favour easing the drawback or improving effectiveness/cost: at early upgrade levels they are offered about 3:1 against new-effect options; additional effects come mostly at later levels.
