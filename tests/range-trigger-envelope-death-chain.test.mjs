@@ -36,3 +36,29 @@ test('the same state plays without refusal and kills the lone enemy once', () =>
   assert.doesNotThrow(() => dispatch(ctx, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' }));
   assert.equal(ctx.eventLog.filter(event => event.type === 'enemyDied').length, 1);
 });
+
+function three(ctx) {
+  const base = ctx.enemies[0];
+  ctx.enemies = ['e1', 'e2', 'e3'].map(id => ({ ...structuredClone(base), id, rangeActorKey: `enemy:${id}`, hp: 1 }));
+  for (const id of ['e1', 'e2', 'e3']) ctx.rangeState.engagements[rangePairKey('player:player', `enemy:${id}`)] = 2;
+}
+
+test('every Talon shot lands on a living enemy when all enemies have 1 HP', () => {
+  for (let seed = 1; seed <= 12; seed++) {
+    const ctx = live(), card = strike(ctx);
+    three(ctx);
+    mount(ctx, [TALON]);
+    ctx.player.stamina = 20;
+    for (let i = 0; i < seed; i++) ctx.rng.float('misc');
+    primeAccuracyRolls(ctx, { count: 2 });
+    dispatch(ctx, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+    const dead = new Set(), shots = [];
+    for (const event of ctx.eventLog) {
+      if (event.type === 'damageDealt') { assert.ok(!dead.has(event.targetId), `seed ${seed}: shot at already dead ${event.targetId}`); shots.push(event.targetId); }
+      if (event.type === 'enemyDied') dead.add(event.targetId ?? event.enemyId ?? event.id);
+    }
+    // The planned random pick must never be spent on the dead enemy: with two
+    // living enemies left, Talon's shot is not silently lost.
+    assert.ok(shots.length >= 2, `seed ${seed}: Talon shot was dropped (${shots.join(',')})`);
+  }
+});
