@@ -7928,17 +7928,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // exported weights), so the face gains a Mana fact and Stamina's cadence
     // halves — derived, so the card followed the row with no prose edit.
     // Owner, 2026-11-18: Mana is WIS in fours and Stamina is DEX in fours, so Constitution feeds neither any more.
-    eq(constitution.face.summary, '+1 HP per pt',
+    eq(constitution.face.summary, '+1 HP per pt · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
     eq(constitution.reveal.flavour, REG.attributes.get('constitution').sense,
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+1 every 1 point$/.test(line))
       && !constitution.reveal.lines.some((line) => /^Mana /.test(line))
       && !constitution.reveal.lines.some((line) => /^Stamina /.test(line))
-      && !constitution.reveal.lines.some((line) => /^Poise /.test(line)),
-    'Constitution projects Health without the retired Poise contribution');
-    assert(cards.find(card => card.id === 'wisdom').reveal.lines.some(line => /^Poise \+1 every 1 point$/.test(line)),
-      'Wisdom projects its own one-point Poise contribution');
+      && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
+    'multiple mechanical benefits are projected as separate bullets');
     // Since ruleset 7 AR is the `ar` row of the derived-stat table and there
     // is no global multiplier to state: the line is the row's own weight.
     assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical damage: floor(1 × STR)'),
@@ -9713,7 +9711,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const { poise: _noPoise, ...sansPoise } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansPoise })).some((e) => /^balance\.poise:/.test(e)), 'a bundle without the poise block is refused by name');
 
-    // THE VESSEL'S MAX: Wisdom through the DERIVED POISE ROW (plan
+    // THE VESSEL'S MAX: Constitution through the DERIVED POISE ROW (plan
     // phase 9 moved the coefficient out of balance and into the ruleset), the
     // body armour, the relics.
     const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
@@ -9721,15 +9719,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
-    // The 2026-11-18 default gives Poise base 1 plus one per WIS. Reaver's
-    // WIS 1 gives two attribute Poise before equipment and relics.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
+    // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
+    // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
     eq(receipt.attribute, poiseRow.base + attributeTerms(poiseRow, run.attributes),
-      'Wisdom through derivedStatRules.rules.poise');
-    eq(receipt.attribute, 2, 'the worked Reaver number: base 1 + WIS 1');
+      'Constitution through derivedStatRules.rules.poise');
+    eq(receipt.attribute, 3, 'the worked Reaver number: base 1 + CON 2');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerPerConstitution: 1 } } })).some((e) => /balance\.poise\.playerPerConstitution/.test(e)),
       'and the retired balance copy is refused by name, so the coefficient cannot regrow a second home');
-    assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id.split('+').includes('wisdom')), 'and the receipt names Wisdom');
+    assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id.split('+').includes('constitution')), 'and the receipt names it');
     assert(receipt.sources.filter((s) => s.kind === 'equipment').every((s) => s.classId), 'only the body armour counts among the equipment — a weapon\'s poiseThreshold is its weight');
     eq(receipt.value, receipt.attribute + receipt.equipment + receipt.relic, 'the three sum to the max');
     assert(receipt.active, 'and the receipt is live: the combat entity stamps it and impact fills it');
@@ -9838,9 +9840,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A tier-size layer (the Advanced dial's shape) divides the floored
     // weighted total — the carrier ruleset 6 keeps for exactly this.
     eq(tunedRow.pointsPerIncrease, 2, 'the layer reached the run-owned row');
-    eq(tunedRow.wisdom, 1, 'Wisdom owns new Poise growth');
-    eq(tunedRow.constitution, undefined, 'Constitution no longer contributes to the default Poise row');
-    const owed = tunedRow.base + Math.floor(Math.floor(tuned.attributes.wisdom * tunedRow.wisdom + 1e-9) / tunedRow.pointsPerIncrease);
+    const owed = tunedRow.base + Math.floor(Math.floor(tuned.attributes.constitution * tunedRow.constitution + 1e-9) / tunedRow.pointsPerIncrease);
     eq(playerPoiseThresholdReceipt(REG, tuned).attribute, owed, 'the meter reads the run-owned row, tier size and all');
     // AND THE RULE TRAVELS INTO THE FIGHT. The receipt reading the snapshot
     // is no use if every combat adapter hands it a run object without one:
