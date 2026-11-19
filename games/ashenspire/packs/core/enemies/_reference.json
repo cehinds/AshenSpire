@@ -4207,14 +4207,6 @@
         "self.constitution=+1"
       ]
     },
-    "relic:enemy.relic.siltCrown": {
-      "name": "Silt Crown",
-      "text": "CON +2, STR +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.wickerAntlers": {
       "name": "Wicker Antlers",
       "text": "WIS +2, CON +1",
@@ -4249,6 +4241,14 @@
     },
     "relic:enemy.relic.kilnbackFurnace": {
       "name": "Kilnback Furnace",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.siltCrown": {
+      "name": "Silt Crown",
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",

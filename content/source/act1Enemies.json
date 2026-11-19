@@ -1047,6 +1047,7 @@
   },
   {
     "id": "siltCrownNewt",
+    "equipmentSp": 2,
     "attributes": {
       "strength": 5,
       "dexterity": 2,
