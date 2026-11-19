@@ -248,7 +248,7 @@
     "id": "a2_headsman",
     "enemies": [
       "carrionHeadsman",
-      "gildedKnight"
+      "livingArmor"
     ],
     "weight": 15,
     "pool": "normal",
