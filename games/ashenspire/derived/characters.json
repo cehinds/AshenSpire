@@ -8113,10 +8113,10 @@
         "own": 3,
         "bonuses": [
           {
-            "source": "duskChime",
-            "name": "Dusk_Chime",
+            "source": "stormSceptre",
+            "name": "Storm_Sceptre",
             "kind": "gear",
-            "amount": 2
+            "amount": 1
           },
           {
             "source": "enemy.relic.brassThroat",
@@ -8125,12 +8125,19 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 6
       },
       "intelligence": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "stormSceptre",
+            "name": "Storm_Sceptre",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
       }
     },
     "hp": {
@@ -8139,26 +8146,26 @@
         "constitution": 30,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 14,
-        "intelligence": 2,
+        "wisdom": 12,
+        "intelligence": 3,
         "level": 15
       },
-      "total": 79,
-      "formula": "10+30+5+3+14+2+15 = 79"
+      "total": 78,
+      "formula": "10+30+5+3+12+3+15 = 78"
     },
     "pools": {
-      "hp": 79,
+      "hp": 78,
       "sp": 4,
       "mp": 4,
       "ar": 1,
       "dr": 1,
-      "hand": 5
+      "hand": 6
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "duskChime",
-        "name": "Dusk_Chime"
+        "id": "stormSceptre",
+        "name": "Storm_Sceptre"
       }
     ],
     "relics": [

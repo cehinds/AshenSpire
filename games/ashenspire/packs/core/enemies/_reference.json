@@ -3150,7 +3150,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:brassThroatIbex.stormPeal": {
@@ -4535,14 +4535,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.brassThroat": {
-      "name": "Brass Throat",
-      "text": "WIS +2, CON +1",
-      "modifiers": [
-        "self.wisdom=+2",
-        "self.constitution=+1"
-      ]
-    },
     "relic:enemy.relic.ironVow": {
       "name": "Iron Vow",
       "text": "CON +2, STR +1",
@@ -4663,6 +4655,14 @@
         "self.constitution=+3",
         "self.strength=+1",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.brassThroat": {
+      "name": "Brass Throat",
+      "text": "WIS +2, CON +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.constitution=+1"
       ]
     }
   }
