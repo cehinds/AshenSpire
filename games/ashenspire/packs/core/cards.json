@@ -398,8 +398,8 @@
     "name": "Retreat",
     "class": "colorless",
     "rarity": "special",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 0,
+    "staminaCost": 0,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -420,7 +420,14 @@
       "maneuver:defend",
       "classification.skill"
     ],
-    "textTemplate": "Retreat foes."
+    "textTemplate": "Retreat foes. Costs 1 more each play.",
+    "faceTemplate": ["Retreat foes.", "Costs 1 more each play."],
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "perCard": true,
+      "uncapped": true
+    }
   },
   {
     "id": "core.upsetRanks",
@@ -532,6 +539,12 @@
             1
           ]
         }
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "frail",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -544,10 +557,10 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust.",
+    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Gain {frail} Frail. Exhaust.",
     "upgrade": {
       "keywords": [],
-      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",
+      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Gain {frail} Frail.",
       "effects": [
         {
           "op": "applyStatus",
@@ -575,6 +588,12 @@
               1
             ]
           }
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "frail",
+          "stacks": 1
         }
       ]
     }
@@ -1059,7 +1078,7 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
     "mirrors": "attack",
@@ -1101,7 +1120,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 5
   },
   {
     "id": "core.galePull",
@@ -1613,7 +1632,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "damage",
@@ -1633,9 +1654,10 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card.",
+    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card. Exhaust.",
     "upgrade": {
       "effects": [
         {

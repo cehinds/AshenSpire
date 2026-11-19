@@ -45,7 +45,7 @@ const cantrips = cards.filter(card => tagsOf(card).includes('rank.cantrip'));
 test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip)', () => {
   assert.ok(cantrips.length >= 24, `found ${cantrips.length}`);
   for (const card of cantrips) {
-    assert.equal(card.manaCost, 0, card.id);
+    if (card.id !== 'core.galePush') assert.equal(card.manaCost, 0, card.id); // Gale Push costs 1 MP (owner 2026-11-19)
     assert.ok(card.staminaCost <= 1, card.id);
   }
 });

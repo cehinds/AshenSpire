@@ -16,10 +16,11 @@ test('every bow, the halberd and the sceptres carry the retreat tag, and no othe
   for (const g of gear.filter(g => (g.tags || []).includes('bow') || (g.tags || []).includes('sceptre'))) assert.ok((g.tags || []).includes('retreat'), g.id);
 });
 
-test('the Retreat card costs 1 Stamina, is a Defense card, Ethereal and Exhaust, and moves nothing but the Advance', () => {
+test('the Retreat card costs 0 Stamina the first time (owner 2026-11-19; it rises 1 per use in a fight), is a Defense card, Ethereal and Exhaust, and moves nothing but the Advance', () => {
   const card = registries.cards.get('core.retreat');
-  assert.equal(card.cost, 1);
-  assert.equal(card.staminaCost, 1);
+  assert.equal(card.cost, 0);
+  assert.equal(card.staminaCost, 0);
+  assert.equal(card.costGrowth.stamina, 1);
   assert.equal(cardClassification(card).stanceType, 'defense', 'resolves as Defense');
   assert.ok(card.keywords.includes('exhaust'));
   assert.ok(card.keywords.includes('ethereal'));
@@ -46,16 +47,16 @@ test('a weapon without the tag grants none', () => {
   assert.equal(GrantRetreatCard(combat), false);
 });
 
-test('playing Retreat ends the Advance and costs 1 Stamina (shown = paid); an unplayed one exhausts at end of turn', () => {
+test('playing Retreat ends the Advance and costs 0 Stamina the first time (shown = paid); an unplayed one exhausts at end of turn', () => {
   const combat = withWeapon('shortbow', ['core.advance']);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: 'e2' }); // the Advance card at the back row: Advanced
   assert.ok(combat.player.advanced > 0);
   GrantRetreatCard(combat);
   const retreat = combat.piles.hand.find(c => c.cardId === 'core.retreat');
   const stamina = combat.player.stamina;
-  assert.equal(previewCard(combat, retreat.instanceId).cost, 1, 'the quote shows 1');
+  assert.equal(previewCard(combat, retreat.instanceId).cost, 0, 'the quote shows 0');
   dispatch(combat, { type: 'playCard', cardInstanceId: retreat.instanceId });
-  assert.equal(combat.player.stamina, stamina - 1, 'paid 1');
+  assert.equal(combat.player.stamina, stamina, 'paid 0');
   assert.equal(combat.player.advanced, 0);
   assert.equal(combat.rangeState.engagements[pairOf('e2')], 1, 'the back row is out of reach again');
   const again = withWeapon('shortbow'); GrantRetreatCard(again);

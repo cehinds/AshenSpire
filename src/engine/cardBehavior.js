@@ -10,12 +10,15 @@ export function projectCardBehavior(ctx, instance, def) {
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (def.costGrowth) {
     // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
-    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=def.costGrowth;
-    const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
+    // `perCard` (core.retreat, owner 2026-11-19): the count is the plays of this card id in the fight, not of one copy, since each granted copy is a fresh Exhausting
+    // instance. `uncapped` drops the default three-step ceiling (section 23: no hidden caps). Both live in the fight's saved rider counters.
+    const riders=ctx.player.abilityRiders, growth=def.costGrowth;
+    const plays=((instance.instanceId && !growth.perCard) ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0;
+    const steps=Math.floor(plays/(growth.perUse || 1)) > 0 ? (growth.uncapped ? Math.floor(plays/(growth.perUse || 1)) : Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)))) : 0;
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;
     const mana=Math.max(0,(result.manaCost || 0)+steps*(growth.mana || 0));
-    result={...result,cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
+    result={...result,costGrowthApplied:{stamina:steps*(growth.stamina || 0)},cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
   }
   return result;
 }
