@@ -384,7 +384,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:slagwingHeron.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:ashSilkWeaver.venomFang | Venom Fang | attack | 1 | 0 | Deal {damage} damage. |
 | card:ashSilkWeaver.silkSnare | Silk Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
-| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 2 | 0 | Deal {damage} damage. |
 | card:ashSilkWeaver.ashSilkVolley | Ash-Silk Volley | attack | 3 | 1 | Deal {damage} damage. |
 | card:ashSilkWeaver.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashSilkWeaver.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
