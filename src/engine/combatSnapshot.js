@@ -191,6 +191,19 @@ function restoredPoolDeck(saved, fallback) {
   return saved === true || fallback === true;
 }
 
+/**
+ * A fight saved by build 0.7.4.216 can hold persistentPoise.barrierBonus (Ward/Barrier Poise) above its maximum: a stat change rebuilt the
+ * maximum without the bonus. Such a save was refused on every dispatch. Load gives the bonus back to the maximum (a fractional one is floored),
+ * so the run goes on; a healthy snapshot is untouched.
+ */
+function repairPoiseBonus(entity) {
+  const poise = entity?.persistentPoise;
+  if (!poise || typeof poise !== 'object' || poise.barrierBonus === undefined || !Number.isFinite(poise.barrierBonus)) return;
+  const bonus = Math.max(0, Math.floor(poise.barrierBonus));
+  if (bonus !== poise.barrierBonus) { if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus; }
+  if (bonus > poise.max && Number.isSafeInteger(poise.max)) poise.max += bonus;
+}
+
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck, expectedGameProfile = null }) {
   // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
   // the caller's object is left as saved.
@@ -199,7 +212,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
   const enemies = Array.isArray(saved?.enemies) ? saved.enemies : [];
-  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none');
+  for (const entity of [saved?.player, ...enemies]) { clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none'); repairPoiseBonus(entity); }
   if (saved?.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
