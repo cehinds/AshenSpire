@@ -16,6 +16,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { CounterHitAnswers, counterReturnForReceipt } from '../src/engine/counterRule.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
 // Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
@@ -94,7 +95,8 @@ test('one stack fades at the owner turn start (5 -> 4 -> 3 -> 2 -> 1 -> 0)', () 
 });
 
 test('the Counter stance returns nothing of its own: a hit that costs HP in Counter stance deals no stance return', () => {
-  const { combat, enemy } = live();
+  // This no-retaliation control predates plate Thorns; the current combined forecast below keeps that retaliation.
+  const { combat, enemy } = live({ registries: legacyGearRegistries(reg) });
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   combat.player.block = 0;
   const hp = enemy.hp;
@@ -106,12 +108,16 @@ test('the Counter stance returns nothing of its own: a hit that costs HP in Coun
 
 test('shown = dealt: the card face and the per-root forecast quote the return the exchange deals', () => {
   const { combat } = live({ registries: reg3, hits: 3 });
+  assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'current gear remains active in this combined Counter forecast');
+  assert.equal(combat.player.statuses.thorns.stacks, 1, 'plate contributes its Thorns independently of Counter');
   combat.player.counterStacks = 4; give(combat, 'c');
   const forecast = previewCard(combat, 'c').counterReturn;
   play(combat, 'c');
-  const trig = endTurn(combat).find(e => e.type === 'combatCounterTriggered');
+  const events = endTurn(combat);
+  const trig = events.find(e => e.type === 'combatCounterTriggered');
   assert.ok(forecast.hp > 0);
   assert.equal(forecast.hp, trig.amount);
+  assert.equal(events.filter(event => event.type === 'thornsReturned').reduce((sum, event) => sum + event.amount, 0), 3, 'three landed hits each return one plate Thorns as well');
 });
 
 test('a fight saved before the ruling keeps the Block-as-stacks rule: stacks = the Block held, a single return, 2 fade a turn', () => {

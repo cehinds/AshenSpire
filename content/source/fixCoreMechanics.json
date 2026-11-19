@@ -57,7 +57,10 @@
     "handCostDiscount": 1
   },
   "pierce": {
-    "blockIgnoredPerStack": 1
+    "blockIgnoredPerStack": 1,
+    "builtInElements": ["lightning"],
+    "skinStatus": "stoneHide",
+    "earthSource": "earth"
   },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,

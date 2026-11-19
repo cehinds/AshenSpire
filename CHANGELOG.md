@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
+- **Your equipment bonuses now match the fight** ([#2865](https://github.com/cehinds/AshenSpire/pull/2865), `0.7.4.207`). Stone Skin cancels Pierce stack for stack, swapping gear refreshes its bonuses, and older saves keep their original equipment rules. Block-retaining Stoneskin is now called Diamond Skin.
 - **Smash stance contract clarified** ([#2874](https://github.com/cehinds/AshenSpire/pull/2874), `0.7.4.207`). The rules handbook specifies the Defend, Prepared and Counter multipliers and how older saved rules keep their behavior. Gameplay implementation follows in a separate fix.
 - **Codex enemies and equipment enter the climb** ([#2871](https://github.com/cehinds/AshenSpire/pull/2871), `0.7.4.205`). Meet 32 new enemies across all three acts and find 38 weapons, off-hands and outfits with their inventory artwork. New enemy Smashes fit their Stamina pools; older saved rosters and existing card prices stay intact.
 - **Readable reward and hand cards** ([#2867](https://github.com/cehinds/AshenSpire/pull/2867), `0.7.4.203`). Ability cards, equipment, relics and consumables now share a reward size. Reward cards are 20% larger than the former compact playing-card size, with tighter rows and smaller rules text so up to four fit in the tested views. Hover enlarges every reward face; selection only lifts. Combat hand rules use the same text adjustment without changing hand layout, names or costs, and the existing phone reduction is preserved.

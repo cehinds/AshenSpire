@@ -3482,10 +3482,10 @@
       "exhaust"
     ],
     "icon": "shield",
-    "textTemplate": "Gain {block} Block and {stoneskin} Stoneskin. Exhaust.",
+    "textTemplate": "Gain {block} Block and {stoneskin} Diamond Skin. Exhaust.",
     "faceTemplate": [
       "Gain {block} Block.",
-      "Gain {stoneskin} Stoneskin."
+      "Gain {stoneskin} Diamond Skin."
     ],
     "effects": [
       {
@@ -3502,7 +3502,7 @@
     ],
     "upgrade": {
       "keywords": [],
-      "textTemplate": "Gain {block} Block and {stoneskin} Stoneskin."
+      "textTemplate": "Gain {block} Block and {stoneskin} Diamond Skin."
     },
     "minCombatExpansionVersion": 2
   },

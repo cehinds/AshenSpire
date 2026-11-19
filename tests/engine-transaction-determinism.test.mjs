@@ -16,14 +16,17 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
 import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults, withoutQuickstepCounterStacks, withoutThemeBRules } from './legacyHitRules.mjs';
+import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
-  const profile = resolveGameProfile('default');
+  const profile = legacyGearProfile(resolveGameProfile('default')); // The pinned log/state digests predate equipment type effects.
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
   const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
+  // This immutable transaction baseline also predates built-in elemental Pierce and Stone Skin.
+  for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
 }
