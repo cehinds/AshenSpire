@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -25,6 +25,39 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   'fx:unethereal': 12, 'fx:steady': 12,
   // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
   attr: 2 });
+// The roll's groups (owner, 2026-11-19; docs/balance/buff-drawbacks-proposal-2026-11-19.md section 6). A roll picks the group by
+// the upgrade number, then a kind inside the group by WEIGHTS. `ease` lowers a drawback, `eff` (effectiveness / cost) makes the
+// card's own numbers better, `new` adds an effect, `identity` reshapes what the card is (inside "new effect").
+export const UPGRADE_GROUPS = Object.freeze(['ease', 'eff', 'new', 'identity']);
+const GROUP_OF = Object.freeze({
+  'fx:unexhaust': 'ease', 'fx:unethereal': 'ease', 'fx:steady': 'ease',
+  dmg: 'eff', blk: 'eff', stk: 'eff', cost: 'eff', hits: 'eff', poise: 'eff', element: 'eff', rankDown: 'eff',
+  range: 'identity', targeting: 'identity', maneuver: 'identity', school: 'identity',
+});
+/** The group an option kind belongs to; every `fx:` effect and `addStatus` / `attr` is a new effect. */
+export const upgradeGroupOf = (kind) => GROUP_OF[kind] || 'new';
+// Share of each group by upgrade number (upTo is inclusive). New effect and identity are listed apart: identity sits inside the
+// brief's "new effect" total (25 / 40 / 50 / 65).
+const GROUP_SHARES = Object.freeze([
+  { upTo: 3, ease: 40, eff: 35, new: 20, identity: 5 },
+  { upTo: 5, ease: 30, eff: 30, new: 30, identity: 10 },
+  { upTo: 7, ease: 20, eff: 30, new: 35, identity: 15 },
+  { upTo: MAX_CARD_UPGRADES, ease: 15, eff: 20, new: 45, identity: 20 },
+]);
+export const upgradeGroupShares = (upgradeNumber) => GROUP_SHARES.find((row) => upgradeNumber <= row.upTo) || GROUP_SHARES[GROUP_SHARES.length - 1];
+
+/** Pick a key by weight from `u` in [0, 1): { key, rest } where `rest` is `u` rescaled inside the picked slice, for the next level of the roll. */
+function pickByWeight(entries, u) {
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll = u * total;
+  for (const [key, weight] of entries) {
+    if (roll < weight) return { key, rest: weight > 0 ? roll / weight : 0 };
+    roll -= weight;
+  }
+  const [key] = entries[entries.length - 1];
+  return { key, rest: 0 };
+}
+
 /** Every option kind a rolled upgrade can be; a card's `upgradeMenu` names a subset of these (theme C, playtest 2026-11-17). */
 export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
 // A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
@@ -342,17 +375,18 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     : Array.isArray(baseDef.gradeProfiles) ? DrawbackSteps.map((fx) => `fx:${fx}`) : null;
   const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)));
   const out = [];
-  // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
+  const shares = upgradeGroupShares(stepIndex + 1);
+  // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream. `pick` is split by
+  // rescaling: first it picks the group, the rest of it picks the kind inside the group.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {
     const pick = rng();
     const choice = rng();
     if (!kinds.length) break;
-    let roll = pick * kinds.reduce((sum, kind) => sum + WEIGHTS[kind], 0);
-    let kind = kinds[kinds.length - 1];
-    for (const candidate of kinds) {
-      roll -= WEIGHTS[candidate];
-      if (roll < 0) { kind = candidate; break; }
-    }
+    // A group with no eligible kind gives its share to the others pro rata (they are renormalised by the pick).
+    const groups = UPGRADE_GROUPS.filter((group) => kinds.some((kind) => upgradeGroupOf(kind) === group)).map((group) => [group, shares[group]]);
+    const { key: group, rest } = pickByWeight(groups, pick);
+    const inGroup = kinds.filter((kind) => upgradeGroupOf(kind) === group);
+    const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), rest);
     out.push(stepOf(kind, found[kind], choice));
     kinds.splice(kinds.indexOf(kind), 1);
   }

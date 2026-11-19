@@ -124,7 +124,7 @@ test('the Core rest model lists Upgrade Card with a preview per upgradable deck 
 
 test('a procedural step the template does not mention (an added status) still shows in the preview', () => {
   let found = 0;
-  for (let seed = 1; seed <= 40 && !found; seed += 1) {
+  for (let seed = 1; seed <= 400 && !found; seed += 1) {
     const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
     const model = cardUpgradeModel(registries, run, strike(run).instanceId);
     if (model.selected.plan.step.k !== 'addStatus') continue;
