@@ -2190,7 +2190,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:woundwoodTusker.rootPlow": {
@@ -2230,7 +2230,7 @@
         "stamina": 3,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:woundwoodTusker.advance": {
@@ -4567,14 +4567,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.woundwoodHeart": {
-      "name": "Woundwood Heart",
-      "text": "CON +3, STR +1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.funeralPall": {
       "name": "Funeral Pall",
       "text": "CON +3, WIS +1, SP -2",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.constitution=+3",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.woundwoodHeart": {
+      "name": "Woundwood Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.strength=+1"
       ]
     }
   }

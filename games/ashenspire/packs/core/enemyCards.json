@@ -5421,11 +5421,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 20
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 10
       }
     ],
     "tags": [
@@ -5433,7 +5428,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5542,11 +5537,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 30
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 15
       }
     ],
     "tags": [
@@ -5554,7 +5544,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },

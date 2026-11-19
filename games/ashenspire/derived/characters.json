@@ -5894,24 +5894,25 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "warhammer",
-            "name": "Warhammer",
-            "kind": "gear",
-            "amount": 2
-          },
-          {
             "source": "enemy.relic.woundwoodHeart",
             "name": "Woundwood_Heart",
             "kind": "relic",
             "amount": 1
           }
         ],
-        "total": 5
+        "total": 3
       },
       "dexterity": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "beastClaws",
+            "name": "Beast_Claws",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
       },
       "constitution": {
         "own": 2,
@@ -5940,28 +5941,28 @@
       "terms": {
         "base": 10,
         "constitution": 50,
-        "strength": 25,
-        "dexterity": 6,
+        "strength": 15,
+        "dexterity": 12,
         "wisdom": 2,
         "intelligence": 1,
         "level": 10
       },
-      "total": 104,
-      "formula": "10+50+25+6+2+1+10 = 104"
+      "total": 100,
+      "formula": "10+50+15+12+2+1+10 = 100"
     },
     "pools": {
-      "hp": 104,
-      "sp": 4,
+      "hp": 100,
+      "sp": 5,
       "mp": 2,
-      "ar": 5,
-      "dr": 2,
+      "ar": 3,
+      "dr": 4,
       "hand": 5
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "warhammer",
-        "name": "Warhammer"
+        "id": "beastClaws",
+        "name": "Beast_Claws"
       }
     ],
     "relics": [

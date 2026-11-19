@@ -270,11 +270,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:alderMaskHarvester.alderVeil | Alder Veil | skill | 1 | 0 | Gain {block} Block. |
 | card:alderMaskHarvester.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:woundwoodTusker.woundGore | Wound Gore | attack | 1 | 0 | Deal {damage} damage. |
-| card:woundwoodTusker.timberCharge | Timber Charge | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:woundwoodTusker.timberCharge | Timber Charge | attack | 2 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.rootPlow | Root Plow | attack | 2 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.barkHide | Bark Hide | skill | 1 | 0 | Gain {block} Block. |
 | card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
-| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:mireProcessional.pallLash | Pall Lash | attack | 1 | 0 | Deal {damage} damage. |
 | card:mireProcessional.bogCandle | Bog Candle | attack | 1 | 1 | Deal {damage} damage. |
@@ -507,7 +507,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
 | relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
-| relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
@@ -519,3 +518,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
 | relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
+| relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
