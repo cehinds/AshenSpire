@@ -1,0 +1,307 @@
+{
+  "sourceCommit": "c9e25d8863a0c4a8905263713bd7594adaae7f11",
+  "sourceDigest": "d00f2f55a6",
+  "coreProfileHash": "sha256:c3f1e334e50486a3b4825aced9d99785f11f0eb9d03d741f07b36e95cc96c46a",
+  "profilePayloadVerified": "Exact encoded generated profile catalog is present byte-for-byte in compiled artifact",
+  "runtime": "sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc",
+  "spellTraditionsVersion": 1,
+  "recordedBaseVersion": "0.7.4.203",
+  "artifactPath": "C:\\Users\\const\\.codex\\worktrees\\stat-allocation-integration\\AshenSpire\\build\\AshenSpire.html",
+  "artifactSha256": "a0664533a5032db1865a741d6001cec671a877fb430a6ef891e76fcbb21df01b",
+  "playableFeatureUrl": null,
+  "capturedAtUTC": "2026-11-19T08:54:52.000Z",
+  "timeZone": "America/Anchorage",
+  "capturedAtLocal": "2026-11-18 23:54:52 GMT−9",
+  "mode": "Exact compiled local artifact",
+  "route": "shot=rest&shotRestPoints=1&shotClass=reaver",
+  "pose": "Existing screenshot fixture earns one attribute point via the production XP ledger, then actual Armoury Character > Progression > allocation. Posed capture, not an earned campaign playthrough.",
+  "browser": "Headless Chromium through repository browser helper",
+  "screenshots": [
+    {
+      "file": "desktop.png",
+      "viewport": "desktop",
+      "width": 1280,
+      "height": 800,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    },
+    {
+      "file": "phone.png",
+      "viewport": "phone",
+      "width": 390,
+      "height": 844,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    },
+    {
+      "file": "phone-wisdom.png",
+      "viewport": "phone",
+      "width": 390,
+      "height": 844,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    },
+    {
+      "file": "phone-intelligence.png",
+      "viewport": "phone",
+      "width": 390,
+      "height": 844,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    },
+    {
+      "file": "wide.png",
+      "viewport": "wide",
+      "width": 1920,
+      "height": 1080,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    },
+    {
+      "file": "tablet.png",
+      "viewport": "tablet",
+      "width": 1024,
+      "height": 768,
+      "buildVersion": "0.7.4.204",
+      "sourceDigest": "d00f2f55a6"
+    }
+  ],
+  "checks": [
+    {
+      "name": "desktop: current compact labels",
+      "pass": true,
+      "detail": [
+        "Physical damage",
+        "Block",
+        "Health",
+        "Poise · Divine magic",
+        "Arcane magic"
+      ]
+    },
+    {
+      "name": "desktop: full compiled build stamp authenticated on title",
+      "pass": true,
+      "detail": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "desktop: compiled source matches committed source",
+      "pass": true,
+      "detail": {
+        "rendered": "d00f2f55a6",
+        "computed": "d00f2f55a6"
+      }
+    },
+    {
+      "name": "desktop: no visible broken images",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "desktop: no page errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "desktop: no console errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "phone: current compact labels",
+      "pass": true,
+      "detail": [
+        "Physical damage",
+        "Block",
+        "Health",
+        "Poise · Divine magic",
+        "Arcane magic"
+      ]
+    },
+    {
+      "name": "phone: full compiled build stamp authenticated on title",
+      "pass": true,
+      "detail": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "phone: compiled source matches committed source",
+      "pass": true,
+      "detail": {
+        "rendered": "d00f2f55a6",
+        "computed": "d00f2f55a6"
+      }
+    },
+    {
+      "name": "phone: capture version stays fixed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "phone: wisdom current detail",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "phone: intelligence current detail",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "phone: no visible broken images",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "phone: no page errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "phone: no console errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "wide: current compact labels",
+      "pass": true,
+      "detail": [
+        "Physical damage",
+        "Block",
+        "Health",
+        "Poise · Divine magic",
+        "Arcane magic"
+      ]
+    },
+    {
+      "name": "wide: full compiled build stamp authenticated on title",
+      "pass": true,
+      "detail": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "wide: compiled source matches committed source",
+      "pass": true,
+      "detail": {
+        "rendered": "d00f2f55a6",
+        "computed": "d00f2f55a6"
+      }
+    },
+    {
+      "name": "wide: capture version stays fixed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "wide: no visible broken images",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "wide: no page errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "wide: no console errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "tablet: current compact labels",
+      "pass": true,
+      "detail": [
+        "Physical damage",
+        "Block",
+        "Health",
+        "Poise · Divine magic",
+        "Arcane magic"
+      ]
+    },
+    {
+      "name": "tablet: full compiled build stamp authenticated on title",
+      "pass": true,
+      "detail": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "tablet: compiled source matches committed source",
+      "pass": true,
+      "detail": {
+        "rendered": "d00f2f55a6",
+        "computed": "d00f2f55a6"
+      }
+    },
+    {
+      "name": "tablet: capture version stays fixed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "tablet: no visible broken images",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "tablet: no page errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "tablet: no console errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "source HEAD unchanged through capture",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "source digest unchanged through capture",
+      "pass": true,
+      "detail": null
+    }
+  ],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "renderedBuildStamp": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "renderedBuildStamp": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "renderedBuildStamp": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768,
+      "renderedBuildStamp": [
+        "BUILD 0.7.4.204 · src d00f2f55a6"
+      ]
+    }
+  ],
+  "buildVersion": "0.7.4.204",
+  "buildStamp": "BUILD 0.7.4.204 · src d00f2f55a6",
+  "passed": true
+}
