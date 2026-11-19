@@ -402,8 +402,21 @@ export function anyCombatantFlag(ctx, key) {
 export function statusDefinition(ctx, id, holder = null) {
   return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id), holder);
 }
+/**
+ * ExpireBreakStatuses(ctx, entity) — the statuses a Poise break added last until the start of the owner's next turn (owner, 2026-11-18, 3a): a player's
+ * next turn starts after the turn it broke in; an enemy broken during the player's phase starts its next turn later in the same round.
+ * Broken itself (the lost action) runs on to EndBrokenWhenDue.
+ */
+export function ExpireBreakStatuses(ctx, entity) {
+  const record = entity?.broken;
+  if (!record?.statusGrants) return;
+  if (!((ctx.turn || 0) > record.since || (entity.kind === 'enemy' && record.phase === 'player'))) return;
+  RemoveBreakGrants(ctx, entity, record.statusGrants);
+  delete record.statusGrants;
+}
 export function decayAtTurnStart(ctx, entity) {
   if (!fixCoreEnabled(ctx) || entity.fixCoreDecayRound === ctx.turn) return;
+  ExpireBreakStatuses(ctx, entity);
   entity.fixCoreDecayRound = ctx.turn;
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {

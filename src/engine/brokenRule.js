@@ -86,7 +86,7 @@ export function BreakCombatant(ctx, entity, rules) {
   entity.broken = record;
   if (rules.statusStacks > 0) {
     // What the break added, and what the owner held before it (the ClearTurnBoosts pattern): only the grant leaves with Broken, never stacks from another source.
-    record.statusGrants = {};
+    record.statusGrants = {}; record.phase = ctx.phase;
     for (const id of BREAK_STATUS_IDS) {
       const base = Statuses.getStacks(entity, id);
       Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);

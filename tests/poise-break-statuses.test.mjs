@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { EndBrokenWhenDue, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
-import { getStacks } from '../src/engine/statuses.js';
+import { getStacks, decayAtTurnStart } from '../src/engine/statuses.js';
+import { drainFixCorePoise } from '../src/engine/actions.js';
 
 test('the break status stacks are a config value: 2', () => {
   assert.equal(fixCoreMechanics.poise.breakStatusStacks, 2);
@@ -50,4 +51,27 @@ test('only what the break added leaves with Broken: 3 Vulnerable from Bash, a br
   assert.equal(getStacks(enemy, 'weak'), 1);
   assert.equal(getStacks(enemy, 'frail'), 4, 'the 4 added while Broken stay; only the break\'s 2 went');
   assert.equal(getStacks(enemy, 'staggered'), 0);
+});
+
+test('the break statuses leave at the start of the owner\'s next turn: a player\'s next turn, an enemy\'s own turn later in the same round; Broken itself stays', () => {
+  const { combat, player, enemy } = fight({ enemies: 1, poise: 0 });
+  enemy.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', enemy.id);
+  assert.ok(enemy.broken);
+  assert.equal(getStacks(enemy, 'vulnerable'), 2);
+  enemy.fixCoreDecayRound = -1; combat.phase = 'enemy';
+  decayAtTurnStart(combat, enemy);
+  for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(enemy, id), 0, `${id} gone at the enemy's next turn start`);
+  assert.ok(enemy.broken, 'the enemy is still Broken until its lost action is spent');
+  // The player broken on its own turn: the statuses stay through the enemy phase and go when its next turn starts.
+  combat.phase = 'player'; player.persistentPoise.value = 1;
+  drainFixCorePoise(combat, enemy, player, 99);
+  assert.ok(player.broken);
+  assert.equal(getStacks(player, 'vulnerable'), 2);
+  combat.phase = 'enemy';
+  assert.equal(getStacks(player, 'vulnerable'), 2, 'they stay through the enemy phase');
+  combat.turn += 1; combat.phase = 'player';
+  player.fixCoreDecayRound = -1; decayAtTurnStart(combat, player);
+  for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(player, id), 0, `${id} gone at the player's next turn start`);
+  assert.ok(player.broken, 'the player stays Broken through the short turn');
 });
