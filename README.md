@@ -1,16 +1,20 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — Codex art buildout
+## Feature preview — Stat descriptions and allocation
 
-[Download the playable feature build](https://github.com/cehinds/AshenSpire/actions/runs/44482212940/artifacts/14509066914)
+[Play the hosted feature preview](https://cehinds.github.io/AshenSpire/branches/fix/StatAllocationRules/latest/) · [Download the exact captured CI build](https://github.com/cehinds/AshenSpire/actions/runs/44505470908/artifacts/14518942631)
 
-Successful CI build of source `6a7378b6a0`: extract the archive and open `AshenSpire.html`. The Pages browser endpoint returned HTTP 503 during verification. This build contains the 32 Codex enemies and 38 equipment items; [verification and limits](docs/content/codex-art-buildout-verification.md).
+Full attribute names and current benefits fit beside the allocation controls. Expanded details explain Stamina, Mana and hand-size thresholds, and Wisdom owns new Core Poise. These posed captures show the verified CI build **0.7.4.210**, digest **81e1d00460**, source **05ce386410**. See the [capture record](docs/preview/features/stat-allocation/README.md) for provenance and before views.
+
+Character Sheet pools include equipped, deck and Blight bonuses once. Desktop and phone checks verify Health 60, Constitution allocation to 65, and Wisdom allocation retaining 60 after closing and reopening the normal overlays. Hosted previews refresh asynchronously; the exact captured build is linked above.
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
-| ![Mobile: new Codex enemies](docs/preview/features/codex-art-buildout/mobile.png) | ![Desktop: new Codex enemies](docs/preview/features/codex-art-buildout/desktop.png) | ![Wide: new Codex enemies](docs/preview/features/codex-art-buildout/wide.png) | ![Tablet: new Codex enemies](docs/preview/features/codex-art-buildout/tablet.png) |
+| ![Mobile: all five attribute rows fit beside the controls](docs/preview/features/stat-allocation/phone.png) | ![Desktop: clear attribute allocation benefits](docs/preview/features/stat-allocation/desktop.png) | ![Wide: compact allocation modal](docs/preview/features/stat-allocation/wide.png) | ![Tablet: readable allocation rows](docs/preview/features/stat-allocation/tablet.png) |
 <!-- feature-preview:end -->
+
+
 
 
 
