@@ -44,25 +44,25 @@ test('live: Cinder Dart reaches both enemies, each loses exactly what the quote 
   assert.ok(before.lost.e1 > played.lost.e1, 'and no x0.6');
 });
 
-test('fire ignores 1 Poise per point of WIS + INT: the ignored Poise never absorbs and leaves the pool', () => {
+test('fire ignores Poise from the greater of WIS and INT: the ignored Poise never absorbs and leaves the pool', () => {
   const { combat, enemies } = fight({ enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
   const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] });
   const fire = hit(combat, target);
   assert.equal(plain.poiseMitigated, 10, 'a spell meets Poise first, 1:1');
-  assert.equal(fire.poiseMitigated, 10, 'the 14 Poise above the 6 ignored ones still absorb the whole hit');
-  assert.equal(fire.poiseDrain, 6, 'the six ignored points leave the pool, so fire can still break it');
+  assert.equal(fire.poiseMitigated, 10, 'the 16 Poise above the four ignored points still absorb the whole hit');
+  assert.equal(fire.poiseDrain, 4, 'the higher casting stat supplies four ignored points');
   assert.equal(target.persistentPoise.value, 20, 'a receipt never edits the pool');
   target.persistentPoise.value = 8;
   const small = hit(combat, target);
-  assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [2, 6, 8], 'a pool of 8: 2 absorb (the other 6 are ignored), so 8 of the 10 reaches HP and the pool is emptied');
+  assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [4, 4, 6], 'a pool of 8: four absorb and four are bypassed, so six damage reaches HP');
 });
 
-test('breaking Poise with fire inflicts Burn equal to the attacker INT (at least 1)', () => {
+test('breaking Poise with fire inflicts Burn equal to the greater casting attribute (at least 1)', () => {
   const { combat: c2, enemies: e2 } = fight({ enemies: 1, poise: 3, attributes: { intelligence: 4 } });
   play(c2, 'core.emberFlick', e2[0].id);
   assert.equal(e2[0].persistentPoise.value, 0, 'the hit broke Poise');
   assert.equal(getStacks(e2[0], 'burn'), 2 + 4, 'the card prints 2 Burn, the break adds INT');
-  const { combat: c3, enemies: e3 } = fight({ enemies: 1, poise: 3, attributes: { intelligence: 0 } });
+  const { combat: c3, enemies: e3 } = fight({ enemies: 1, poise: 3, attributes: { intelligence: 0, wisdom: 0 } });
   play(c3, 'core.emberFlick', e3[0].id);
   assert.equal(getStacks(e3[0], 'burn'), 2 + 1, 'INT 0 still inflicts 1');
 });

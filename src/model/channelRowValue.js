@@ -3,9 +3,11 @@
 import { statRow } from './statRows.js';
 import { statRowValue } from './derivedStats.js';
 import { PrAttributeView } from './fixCoreMechanics.js';
+import { spellScalingValue, spellTraditionsActive } from './spellTraditions.js';
 
 /** ChannelRowValue(ctx, entity, id, attributes) -> the stat row `id` priced at `attributes` (PR reads the highest of its attributes). */
-export function ChannelRowValue(ctx, entity, id, attributes) {
+export function ChannelRowValue(ctx, entity, id, attributes, carrier = null) {
+  if (id === 'pr' && carrier && spellTraditionsActive(ctx)) return spellScalingValue(attributes, carrier);
   const run = { derivedStatRuleSnapshot: entity.kind === 'enemy' ? null : ctx.derivedStatRuleSnapshot, class: entity.kind === 'enemy' ? null : entity.classId };
   const row = statRow(ctx.registries, run, id);
   if (!row) return 0;

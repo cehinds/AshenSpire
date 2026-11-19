@@ -16,7 +16,12 @@ export function play(cardId, instExtra = {}, { classId = 'reaver', enemies = ['w
   // filler so draw has something
   const filler = (n) => ({ instanceId: 'f' + n, cardId: 'core.strike', upgraded: false });
   for (let i = 0; i < 6; i++) combat.piles.draw.push(filler(i));
-  for (const e of combat.enemies) Object.assign(e, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 80, max: 80 } });
+  for (const e of combat.enemies) {
+    Object.assign(e, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 80, max: 80 } });
+    // Status application reconciles maximum Poise from the rating. Keep the
+    // probe's enlarged pool and its rating consistent across Frost/Chill hits.
+    e.ratings.poise = 80;
+  }
   combat.player.hp = 30; combat.player.stamina = combat.player.maxStamina = 20;
   if ('mana' in combat.player) combat.player.mana = combat.player.maxMana = Math.max(20, combat.player.maxMana || 0);
   primeAccuracyRolls(combat, { count: 3 });

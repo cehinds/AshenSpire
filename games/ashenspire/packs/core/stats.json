@@ -11,7 +11,8 @@
       "hp": 5
     },
     "wisdom": {
-      "mp": 1
+      "mp": 1,
+      "poise": 1
     },
     "intelligence": {}
   },

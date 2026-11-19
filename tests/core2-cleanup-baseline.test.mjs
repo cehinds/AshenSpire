@@ -16,6 +16,10 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
+// Only profile/runtime pins and snapshot/save digests move; events, RNG,
+// receipts and continuations match the preserved preceding 521250 capture.
+// Historical profiles normalize the new effects marker to 0 and retain their rules.
 // Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.
 // Runtime, event digests, RNG, receipts, continuations and the complete historical scenario are unchanged; native and production captures agree.
 // Recaptured 2026-11-19 (owner rulings 20-23 on chore/ForceWardRules: Force, Ward, Pierce, break statuses): every current-profile hash and the events they price moved; measured with this test's own output.
@@ -42,6 +46,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-15 (ci-fixes added the core.retreat and core.upsetRanks resource variants, which moved the profile hash and so only the snapshot, stored and loaded hashes; with those entries reverted and the config regenerated the earlier values return). Earlier: (W25-BANDS merge with batch 5: the fights are made without `bands`, so every events, rng and continuation hash equals dev's; only the profile, runtime, snapshot, stored and loaded hashes moved). Earlier note (Wave 2 batch 5, the Counter-stack rule moved the runtime hash): only the profile hash and the snapshot, stored and loaded hashes moved
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
+const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -242,6 +247,21 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+});
+
+test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
+  for (const [name, current] of Object.entries(fixture.scenarios)) {
+    const previous = previousFixture.scenarios[name];
+    assert.deepEqual(current.receipt, previous.receipt, `${name}: same receipt`);
+    assert.equal(current.profile.actionPolicy, previous.profile.actionPolicy);
+    for (const key of ['start', 'pending', 'restored', 'live', 'afterRestore']) {
+      const { snapshot: oldSnapshot, ...oldBehavior } = previous[key];
+      const { snapshot: newSnapshot, ...newBehavior } = current[key];
+      assert.deepEqual(newBehavior, oldBehavior, `${name}: ${key} behavior`);
+    }
+    if (name === 'historical action policy') assert.deepEqual(current.profile, previous.profile);
+    else assert.equal(previous.profile.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  }
 });
 
 for (const [name, ...scenario] of scenarios) {

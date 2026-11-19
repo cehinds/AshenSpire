@@ -1,5 +1,6 @@
 {
   "mode": "configured",
+  "spellTraditionsVersion": 0,
   "damageModel": "unified",
   "elements": false,
   "spellRanks": false,

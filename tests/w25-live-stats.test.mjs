@@ -42,14 +42,14 @@ test('the quote rises by the AR gained (shown = dealt)', () => {
   assert.equal(boosted, plain + 2);
 });
 
-test('+2 CON raises max HP, Stamina and Poise at once; the fight restores them and HP is trimmed', () => {
+test('+2 CON raises max HP without Poise; the fight restores Health and HP is trimmed', () => {
   const { combat } = live();
   const p = combat.player;
   const start = { maxHp: p.maxHp, hp: p.hp, maxStamina: p.maxStamina, energyMax: p.energyMax, poise: p.ratings.poise, pMax: p.persistentPoise.max };
   ChangeAttribute(combat, p, 'constitution', 2);
   assert.ok(p.maxHp > start.maxHp, 'max HP follows the HP row');
   assert.equal(p.hp, start.hp, 'a higher maximum does not heal');
-  assert.equal(p.ratings.poise, start.poise + 2, 'Poise rises with Constitution');
+  assert.equal(p.ratings.poise, start.poise, 'Constitution no longer raises Poise');
   assert.equal(p.persistentPoise.max, p.ratings.poise);
   assert.ok(p.maxStamina >= start.maxStamina);
   p.hp = p.maxHp; // full on the raised maximum

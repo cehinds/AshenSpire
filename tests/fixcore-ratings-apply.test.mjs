@@ -95,7 +95,7 @@ const sources = {
     ['staff (Emberlight Sceptre)', 'reaver', run => { run.loadout.sets.rightHand[0] = 'emberlightSceptre'; }],
   ],
   poise: [
-    ['CON (stat)', 'reaver', stat('constitution')],
+    ['WIS (stat)', 'reaver', stat('wisdom')],
     ['armor (Warden)', 'reaver', run => { run.loadout.sets.armor[0] = 'warden'; }],
     ['shield (Tower Shield)', 'reaver', run => { run.loadout.sets.leftHand[0] = 'towerShield'; }],
   ],
@@ -231,6 +231,7 @@ test('AR bonus keeps its routing on a physical card (physical part)', () => {
 });
 test('an enemy spell-camp attack keeps reading AR (its PR is 0), exactly as before', () => {
   const { combat, target } = world('starseer');
+  delete combat.fixCoreRules.spellTraditionsVersion;
   const enemy = combat.enemies[0];
   enemy.ratings = { ...enemy.ratings, ar: 4, pr: 0 };
   const carrier = { cardId: 'core.cantrip', damageSchool: 'magic', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'melee' } };

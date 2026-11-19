@@ -56,6 +56,8 @@ import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './l
 import { orderedAttributes } from './attributes.js';
 import { HAND_STAT_IDS, isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
 import { handRow } from './handRules.js';
+import { FixCorePrAttributes, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { spellTraditionsActive } from './spellTraditions.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -188,28 +190,22 @@ function attributeCycle(weight, perIncrease) {
 
 // The compact face names the main benefit; the disclosure keeps every
 // secondary contribution. Values still come from the active run's rules.
-const MAIN_BENEFITS = {
-  strength: [['ar', 'Physical damage']],
-  dexterity: [['dr', 'Block']],
-  constitution: [['hp', 'Health'], ['poise', 'Poise']],
-  wisdom: [['ward', 'Ward']],
-  intelligence: [['pr', 'Magic damage']],
-};
+const MAIN_BENEFITS = [['ar', 'Physical damage'], ['dr', 'Defense'], ['hp', 'Health'], ['poise', 'Poise']];
 
-function mainBenefitSummary(attributeId, feeds, ratings) {
-  return (MAIN_BENEFITS[attributeId] || []).flatMap(([id, label]) => {
+function mainBenefitSummary(attributeId, feeds, ratings, context) {
+  const labels = MAIN_BENEFITS.flatMap(([id, label]) => {
     const feed = feeds.find((fact) => fact.id === id);
     const rating = ratings.find((fact) => fact.id === id);
     if (!feed && !rating) return [];
     const points = feed ? feed.points : attributeCycle(rating.weight, 1);
     const gain = feed ? feed.perTier : points && Math.round(points * rating.weight * 100) / 100;
-    const cap = (feed || rating).cap;
-    // Legacy global multipliers floor the combined total, so a per-attribute
-    // promise would be misleading. Their exact formula remains in the reveal.
-    const simple = !rating || !Number.isFinite(rating.multiplier) || rating.multiplier === 1;
-    const cadence = points === 1 ? 'per point' : `every ${points} points`;
-    return [`${label} ${simple && Number.isFinite(gain) && points ? `+${gain} ${cadence}` : 'scales with points'}${cap != null ? ` (max ${cap})` : ''}`];
-  }).join(' · ');
+    return points === 1 && gain >= 1 ? [label] : [];
+  });
+  if (spellTraditionsActive(context)) {
+    if (attributeId === 'wisdom') labels.push('Divine magic');
+    if (attributeId === 'intelligence') labels.push('Arcane magic');
+  } else if (ratings.some(fact => fact.id === 'pr') || FixCorePrAttributes(context)?.includes(attributeId)) labels.push('Magic damage');
+  return labels.join(' · ');
 }
 
 /**
@@ -222,6 +218,7 @@ function mainBenefitSummary(attributeId, feeds, ratings) {
  * from its owning registry row.
  */
 export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null, gainContext = null } = {}) {
+  const context = gainContext?.run || { gameProfile: registries.gameProfile, combatExpansionVersion: 2 };
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
@@ -240,12 +237,22 @@ export function attributeCardModels(registries, attributes, { projection = null,
       projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1, max: row.max });
     }
   }
+  // Configured combat bypasses the legacy hand rows. Its opening hand, turn
+  // draw and capacity all follow the saved cards module's one formula.
+  const cardsModule = context.gameProfile?.modules?.cards;
+  if (cardsModule?.mode === 'configured') {
+    for (const id of HAND_STAT_IDS) projected.set(id, {
+      weights: { [cardsModule.handAttribute || 'intelligence']: 1 },
+      pointsPerIncrease: Math.max(1, cardsModule.handPointsPerIncrease || 1), gain: 1,
+    });
+  }
   // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
   // its rating formula's Poise, not its pool row, so that is the one its cards
   // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
   const legacyPoise = !!projection?.ratingRows && !isStatRowRuleset(projection.rulesetVersion)
     && !!registries.balance?.combatRatings?.enabled;
-  const ratingIds = legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS;
+  const ratingIds = (legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS)
+    .filter(id => id !== 'ward' || !fixCoreWardDisabled(context));
   return orderedAttributes(registries).map((authored) => {
     const def = { ...authored, value: attributes?.[authored.id] };
     // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
@@ -305,7 +312,11 @@ export function attributeCardModels(registries, attributes, { projection = null,
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
-    const scaling = ratingFacts.map(({ line }) => line);
+    const scaling = ratingFacts.filter(fact => !spellTraditionsActive(context) || fact.id !== 'pr').map(({ line }) => line);
+    if (spellTraditionsActive(context) && ['wisdom', 'intelligence'].includes(def.id)) {
+      scaling.push(def.id === 'wisdom' ? 'Divine magic scales with Wisdom.' : 'Arcane magic scales with Intelligence.');
+      scaling.push('Shared elemental spells use the higher of Intelligence and Wisdom.');
+    }
     const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
       : `${label} scales with ${def.label}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`));
@@ -345,7 +356,8 @@ export function attributeCardModels(registries, attributes, { projection = null,
       gains,
       mainGain: gains[0] || null,
       face: { label: def.shortLabel, summary: faceSummary,
-        mainSummary: mainBenefitSummary(def.id, feedFacts, ratingFacts) || faceSummary, value: def.value },
+        mainSummary: mainBenefitSummary(def.id, feedFacts, ratingFacts,
+          context), value: def.value },
       reveal: {
         title: def.label,
         sense: def.sense,

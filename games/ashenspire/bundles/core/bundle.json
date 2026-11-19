@@ -34,6 +34,7 @@
       "version": "1.0.0",
       "settings": {
         "fixCoreVersion": 1,
+        "spellTraditionsVersion": 1,
         "core2ActionRulesVersion": 2,
         "baseDamageMultiplier": 0.5,
         "playerDamageMultiplier": 0.7,

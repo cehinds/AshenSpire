@@ -1,6 +1,7 @@
 {
   "type": "object",
   "properties": {
+    "spellTraditionsVersion": { "enum": [0, 1] },
     "mode": {
       "enum": [
         "legacy",

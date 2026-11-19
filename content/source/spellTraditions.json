@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "offensiveStatuses": ["burn", "shock", "necroticBuildup", "bleed", "venom"],
+  "classTraditions": { "starseer": "arcane", "herald": "divine" },
+  "traditions": {
+    "arcane": { "label": "Arcane", "attribute": "intelligence", "offense": 2, "support": 1 },
+    "divine": { "label": "Divine", "attribute": "wisdom", "offense": 1, "support": 3 }
+  },
+  "schools": {
+    "arcane": ["arcane", "divine"],
+    "fire": ["arcane", "divine"],
+    "earth": ["arcane", "divine"],
+    "lightning": ["arcane", "divine"],
+    "frost": ["arcane", "divine"],
+    "force": ["arcane"],
+    "illusion": ["arcane"],
+    "alteration": ["arcane"],
+    "divine": ["divine"],
+    "decay": ["divine"],
+    "necrotic": ["divine"]
+  }
+}

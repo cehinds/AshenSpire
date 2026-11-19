@@ -106,6 +106,12 @@ function playChecked(combat, card, targetId, tally, label) {
     const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
       if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
+      // Divine's Poise-break Smite belongs to the preceding contact. The quote
+      // includes this direct HP rider, emitted separately from damageDealt.
+      if (event.type === 'elementSmite' && event.sourceId === 'player') {
+        const hits = dealt.get(event.targetId);
+        if (hits?.length) hits[hits.length - 1] += event.amount;
+      }
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
       if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);

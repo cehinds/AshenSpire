@@ -40,8 +40,9 @@ import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits } from '../
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
+import { sigilHtml } from '../components/combatSigilView.js';
 import { cardClassification } from '../../model/cardClassification.js';
-import { playingCardModel, playingCardDefinition } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, cardPresentationSigils } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
@@ -479,9 +480,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return identity.stanceType || identity.cardCategory;
   };
   const stanceName = row => {
-    const identity = cardClassification(combatDef(row));
+    const def = combatDef(row);
+    const identity = cardClassification(def);
+    const presentation = cardPresentationSigils(def, { registries, rules: run });
     const title = value => value[0].toUpperCase() + value.slice(1);
-    return [title(identity.cardCategory), identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
+    return [presentation.displayLabel || title(identity.cardCategory),
+      presentation.displayLabel && identity.cardCategory === 'power' ? 'Power' : null,
+      identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
   };
   const stanceNode = row => el('span', { class: 'deck-editor-stance',
     dataset: { stance: stanceKey(row) }, text: stanceName(row) });
@@ -489,7 +494,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // has a name: a spell's is Cantrip, a maneuver's is Basic, except a class special's, which is Weapon art.
   const rankNode = (row) => {
     const def = combatDef(row);
-    const card = playingCardModel(registries, row.ref, { definition: def });
+    const card = playingCardModel(registries, row.ref, { definition: def, rules: run });
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
     const rank = Number.isInteger(ranked) ? ranked
@@ -508,12 +513,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const range = combatCardRange(combatDef(row), run.rangePolicy?.maxRange);
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs: the Physical shield in gold
-  // for physical cards, the outlined Spell sparkle in gold for magical ones.
+  // The same tradition icons as the face, before the resource costs.
   const campNode = (row) => {
-    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
-    const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
+    const def = combatDef(row);
+    const camp = combatProfileFor(def).camp === 'spell' ? 'magical' : 'physical';
+    const presentation = cardPresentationSigils(def, { registries, rules: run });
+    const traditions = presentation.traditions || [];
+    const label = traditions.length ? traditions.map(value => value[0].toUpperCase() + value.slice(1)).join(' and ') : t(`deckEditor.camp.${camp}`);
+    const node = el('span', { class: 'deck-editor-camp', dataset: { camp, traditions: traditions.join(' ') }, role: 'img', title: traditions.length ? label : tFull(`deckEditor.camp.${camp}`), 'aria-label': label });
+    node.innerHTML = traditions.length ? traditions.map(id => sigilHtml(id, 'tradition')).join('')
+      : cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);

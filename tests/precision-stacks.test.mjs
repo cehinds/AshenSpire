@@ -105,9 +105,9 @@ test('Persistent Precision stacks are exempt from decay', () => {
 });
 
 // Owner, 2026-11-14: Precision does nothing without the roll, so Glimpse, Warding Glance, Steady Guard and Palm Flame no longer grant it;
-// Guiding Whisper keeps its definition for saved decks.
-test('the cards that granted Precision no longer do, and the one left still prints and grants it', () => {
-  for (const id of ['core.glimpse', 'core.wardingGlance', 'core.steadyGuard', 'core.palmFlame']) {
+// Guiding Whisper now regenerates and clears Weak; saved profiles retain their original card definition.
+test('current cards no longer print or grant the retired Precision effect', () => {
+  for (const id of ['core.glimpse', 'core.wardingGlance', 'core.steadyGuard', 'core.palmFlame', 'core.guidingWhisper']) {
     const def = reg.cards.get(id);
     assert.ok(![...def.effects, ...(def.upgrade?.effects || [])].some(e => e.status === 'precision'), id);
     // The stance-entry grant (Entry: +1 Precision) is a separate rule and is left alone; the authored effect is what was removed.
@@ -115,25 +115,23 @@ test('the cards that granted Precision no longer do, and the one left still prin
   }
 });
 
-test('buff cards grant their authored Precision, the face prints +N Precision, and the badge shows N', () => {
-  const grants = { 'core.guidingWhisper': 3 };
+test('Guiding Whisper prints and grants its regeneration buff, clears Weak, and shows the actual badge value', () => {
+  const grants = { 'core.guidingWhisper': 2 };
   for (const [id, n] of Object.entries(grants)) {
     const def = reg.cards.get(id);
-    assert.ok(def.effects.some(e => e.op === 'applyStatus' && e.status === 'precision' && e.target === 'self' && e.stacks === n), id);
+    assert.ok(def.effects.some(e => e.op === 'applyStatus' && e.status === 'regen' && e.target === 'self' && e.stacks === n), id);
     assert.ok(n >= 1 && n <= 3);
-    assert.ok(plain(cardFaceLines(def, null, reg)).join(' | ').includes(`+${n} Precision`), `${id} face`);
+    assert.match(plain(cardFaceLines(def, null, reg)).join(' | '), new RegExp(`(?:${n} Regen|Regen ${n})`), `${id} face`);
     const { combat, player, enemy } = live();
-    player.energy = 10; player.stamina = 10; player.statuses = {};
+    player.energy = 10; player.stamina = 10; player.statuses = { weak: { stacks: 2 } };
     combat.piles.hand.push({ cardId: id, instanceId: 'buff', upgraded: false });
-    // A card that also changes stance adds the one-stack entry grant on top of its authored buff.
-    const entry = previewCard(combat, 'buff', enemy.id).entryPrecision || 0;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'buff', ...(reg.cards.get(id).effects.some(e => e.target === 'enemy') ? { targetId: enemy.id } : {}) });
-    const stacks = player.statuses.precision?.stacks;
-    assert.equal(stacks, n + entry, `${id} live grant (${n} authored + ${entry} entry)`);
-    assert.ok(entry <= 1);
-    const view = statusInstancePresentation(reg.statuses.get('precision'), player.statuses.precision, combat);
+    const stacks = player.statuses.regen?.stacks;
+    assert.equal(stacks, n, `${id} authored regeneration reaches combat`);
+    assert.equal(player.statuses.weak, undefined, `${id} clears Weak`);
+    const view = statusInstancePresentation(reg.statuses.get('regen'), player.statuses.regen, combat);
     assert.equal(view.valueText, String(stacks), `${id} badge value`);
-    assert.match(view.tooltip, /^Each stack adds 1 Precision\. Loses 3 stacks at the start of your turn\./);
+    assert.match(view.tooltip, /heal|HP/i);
   }
 });
 

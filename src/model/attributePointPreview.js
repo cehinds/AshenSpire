@@ -11,7 +11,9 @@
 // Perception's roll bonus is the observer's Wisdom (rollKnowledgeRead).
 import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
-import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreWardDisabled, FixCoreHitRollOff, FixCorePerceptionRollOff } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
+import { spellTraditionsActive } from './spellTraditions.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
 import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
@@ -24,11 +26,12 @@ export const POOL_SCALE = 5;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
 // Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+5 HP and +1 Poise both score 1, HP first).
 // WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
-export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
+export const GAIN_ORDER = Object.freeze(['hp', 'poise', 'arcaneMagic', 'divineMagic', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'ward', 'evasion', 'precision']);
 const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
   energy: 'progression.gain.label.energy', hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
+  arcaneMagic: 'progression.gain.label.arcaneMagic', divineMagic: 'progression.gain.label.divineMagic',
   openingHand: 'progression.gain.label.openingHand', handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
   evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
   perception: 'progression.gain.label.perception',
@@ -40,6 +43,7 @@ function previewContext(registries, run, attributes) {
   const ctx = {
     registries, player: entity, loadout: run.loadout, attributes, characterLevel: run.level?.level,
     combatExpansionVersion: run.combatExpansionVersion, gameProfile: run.gameProfile || registries.gameProfile,
+    ...(run.fixCoreRules ? { fixCoreRules: run.fixCoreRules } : {}),
   };
   return { ctx, entity };
 }
@@ -65,7 +69,9 @@ export function attributePointGains(registries, run, attributeId, { settings = {
   };
   const { ctx, entity } = previewContext(registries, run, current);
   const fixCore = fixCoreEnabled(ctx);
+  const traditions = spellTraditionsActive(ctx);
   for (const statId of ROW_IDS) {
+    if (traditions && statId === 'pr') continue;
     if (statId === 'ward' && fixCoreWardDisabled(ctx)) continue;
     // Under combatExpansionVersion 2 energy is stamina (rederivePools skips it); only a legacy run has its own pool.
     if (statId === 'energy' && run.combatExpansionVersion === 2) continue;
@@ -75,6 +81,10 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     push(statId, value(current), value(raised));
   }
   const after = previewContext(registries, run, raised);
+  if (traditions) {
+    push('arcaneMagic', Number(current.intelligence) || 0, Number(raised.intelligence) || 0);
+    push('divineMagic', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
+  }
   if (configuredCombat(ctx)) {
     // A configured (Core 2) fight deals handBase + INT for the opening hand, every turn draw and the capacity
     // (turnDrawCount -> profileHandSize); the hand rows below are not read. Call the engine's own function.
@@ -90,12 +100,13 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     push('openingHand', handBefore.opening.value, handAfter.opening.value);
     push('handSize', handBefore.capacity.value, handAfter.capacity.value);
   }
-  push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
+  const rules = fixCore ? fixCoreRules(ctx) : null;
+  if (!traditions || !FixCoreHitRollOff(rules)) push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
   if (fixCore) {
-    push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));
+    if (!traditions || !FixCoreHitRollOff(rules)) push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));
     // rollKnowledgeRead: the observer rolls d20 + own Wisdom, so a point of Wisdom is a point of Perception.
     // (push skips a zero delta, so only the +1 that raises Wisdom shows.)
-    push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
+    if (!traditions || !FixCorePerceptionRollOff(rules)) push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
   }
   return gains;
 }

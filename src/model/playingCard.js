@@ -1,5 +1,6 @@
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
+import { cardSpellTraditions, spellTraditionLabel, spellScalingValue, spellTraditionsActive } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
@@ -138,6 +139,20 @@ export function combatCardType(def) {
   return type[0].toUpperCase() + type.slice(1);
 }
 
+/** The same profile-aware type identity for a card face and compact list rows. */
+export function cardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
+  // Saved profiles retain their historical shared scaling and generic label.
+  // A catalog without a selected profile describes the current rules.
+  const presentationRules = rules?.gameProfile ? rules : preview?.faceRules?.gameProfile ? preview.faceRules
+    : registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  const profile = combatProfileFor(def);
+  const identity = cardSigilIdentity(combatCardType(def), profile);
+  if (presentationRules && !spellTraditionsActive(presentationRules)
+    || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
+  const card = { ...def, combatProfile: profile };
+  return freeze({ ...identity, traditions: freeze(cardSpellTraditions(card)), displayLabel: spellTraditionLabel(card) });
+}
+
 /**
  * The shared read of one card for its text: the numbers a preview or the authored
  * definition gives each effect (`value`), the status display name (`title`), the
@@ -274,6 +289,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
+      case 'restorePoise': text = `Restore ${n} Poise`; break;
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
@@ -380,13 +396,16 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
   const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
-  // physical damage adds STR, a finesse hit DEX, magic damage max(INT, WIS), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
+  // physical damage adds STR, a finesse hit DEX; new magic reads its tradition's INT/WIS, shared spells the higher. Saved profiles
+  // without the tradition marker keep max(INT,WIS). Each uses its effects weight; Block adds DEX. No stance, status or enemy defence.
   // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
-  const damageStat = attributes ? (magicHit ? Math.max(attributes.intelligence || 0, attributes.wisdom || 0) : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
+  const magicStat = attributes && spellTraditionsActive(holder)
+    ? spellScalingValue(attributes, def) : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
+  const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
   // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
   const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : 'ar');
   const blockBonus = attributes ? (attributes.dexterity || 0) * ChannelWeight(faceEffects, 'dr') : 0;
@@ -588,6 +607,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
     : rankBadge || '';
+  const sigils = cardPresentationSigils(def, { registries, rules, preview });
+  const traditionType = sigils.displayLabel || null;
 
   return freeze({
     id: def.id,
@@ -604,9 +625,10 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankHelp,
     type: freeze({
       id: classification.cardCategory,
-      label: classification.cardCategory.toUpperCase(),
-      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
-      abilityLabel,
+      label: traditionType ? traditionType.toUpperCase() : classification.cardCategory.toUpperCase(),
+      subtype: traditionType ? classification.cardCategory === 'power' ? 'Power' : null
+        : classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel: traditionType ? abilityRank === 0 ? 'Cantrip' : null : abilityLabel,
       weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
@@ -615,7 +637,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     legacyType: def.type,
     costs,
     tags,
-    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
+    sigils,
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,

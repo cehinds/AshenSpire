@@ -142,7 +142,7 @@ test('weapon cards add their source equipment rating without a tier', async () =
   assert.doesNotMatch(ratingHtml, /\b(AR|DR|PR)\b/);
   assert.deepEqual([surface.poise.ratings.ar, surface.poise.ratings.dr, surface.poise.ratings.pr], [3, 1, 1], 'STR, DEX and INT alone');
   // Wayfarer Plate adds Poise 8.
-  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>11<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>10<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
 

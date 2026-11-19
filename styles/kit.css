@@ -1958,9 +1958,11 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 .as-row.setting.se-row > .as-row-fold,
 .as-row.setting.se-row > .as-row-fold > .disc-fold-row { display: block; width: 100%; }
 .as-row.setting.se-row .disc-face { width: 100%; }
-.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
+.as-row.setting.se-row .disc-face > .as-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.as-row.setting.se-row .disc-face > .as-row > .as-labelstack { display: flex; flex-direction: column; gap: .25rem; }
+.as-row.setting.se-row .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
 .as-row.setting.se-row .se-controls { flex: 0 0 auto; margin-left: auto; }
-.as-row.setting.se-row .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-row.setting.se-row .disc-summary { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; }
 .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }

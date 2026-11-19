@@ -1,5 +1,5 @@
 // W25 (owner, 2026-11-14) Necrotic: x0.7 damage; ignores Poise entirely (Block then HP; Poise neither absorbs nor drops); each necrotic hit that lands while the target's Poise is broken adds Necrotic build-up
-// equal to the attacker INT (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
+// equal to the attacker WIS (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
@@ -25,25 +25,25 @@ test('necrotic deals x0.7 and ignores Poise: the pool neither absorbs nor drops,
 
 test('live: a necrotic hit never touches Poise, and the quote is what is lost', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 4 });
-  const played = play(combat, 'core.graveToll', enemy.id);
+  const played = play(combat, 'core.venomSpray', enemy.id);
   const dealt = combat.eventLog.find(event => event.type === 'damageDealt');
   assert.deepEqual([dealt.poiseMitigated, dealt.poiseDamage ?? 0], [0, 0], 'the hit neither met Poise nor drained it (the card prints a status whose own strain is not the hit)');
   assert.equal(played.lost.e1, played.row.faceValue);
   assert.ok(played.lost.e1 > 0);
 });
 
-test('a hit on a target whose Poise is broken adds build-up equal to the attacker INT, at least 1; with Poise left it adds none', () => {
-  for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
-    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { intelligence } });
-    play(combat, 'core.graveToll', enemy.id);
-    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `INT ${intelligence}`);
+test('a hit on a target whose Poise is broken adds build-up equal to Wisdom, at least 1; with Poise left it adds none', () => {
+  for (const [wisdom, stacks] of [[4, 4], [0, 1]]) {
+    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { wisdom } });
+    play(combat, 'core.venomSpray', enemy.id, { upgraded: true });
+    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `WIS ${wisdom}`);
   }
   const held = fight({ enemies: 1, poise: 50 });
-  const played = play(held.combat, 'core.graveToll', held.enemy.id);
+  const played = play(held.combat, 'core.venomSpray', held.enemy.id);
   assert.equal(getStacks(held.enemy, 'necroticBuildup'), 0, 'Poise left: no build-up');
   assert.equal(played.lost.e1, played.row.faceValue, 'the damage still ignores Poise');
   const old = fight({ enemies: 1, legacy: true });
-  play(old.combat, 'core.graveToll', old.enemy.id);
+  play(old.combat, 'core.venomSpray', old.enemy.id);
   assert.equal(getStacks(old.enemy, 'necroticBuildup'), 0, 'an old fight builds nothing');
 });
 
@@ -74,7 +74,7 @@ test('against an undead target necrotic heals it by the damage, adds no build-up
   enemy.hp = 400;
   const receipt = hit(combat, enemy);
   assert.deepEqual([receipt.hpLoss, receipt.element.heal], [0, 7]);
-  const played = play(combat, 'core.graveToll', enemy.id);
+  const played = play(combat, 'core.venomSpray', enemy.id);
   assert.equal(played.row.faceValue, 0);
   assert.ok(enemy.hp > 400, 'healed');
   assert.equal(getStacks(enemy, 'necroticBuildup'), 0);

@@ -21,8 +21,8 @@ test('Core 2 largest per-point gains read from the live formulas', () => {
   assert.equal(text('strength'), '+1 Physical damage');
   assert.equal(text('dexterity'), '+1 Block');
   assert.equal(text('constitution'), '+5 HP');
-  assert.equal(text('wisdom'), '+1 Perception');
-  assert.equal(text('intelligence'), '+1 Magic damage');
+  assert.equal(text('wisdom'), '+1 Poise');
+  assert.equal(text('intelligence'), '+1 Arcane magic');
 });
 
 test('the full list names every non-zero gain and skips Ward while Core switches it off', () => {
@@ -30,11 +30,15 @@ test('the full list names every non-zero gain and skips Ward while Core switches
   const con = attributePointGains(registries, run, 'constitution');
   assert.ok(con.some(g => g.statId === 'hp' && g.delta === 5));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
-  assert.match(attributeGainSummary(con), /^\+5 HP, /);
+  assert.match(attributeGainSummary(con), /^\+5 HP(?:,|$)/);
   // Owner, 2026-11-18: the hand is 5 + floor(INT / 4), so the card arrives at INT 4, not with every point.
   run.attributes.intelligence = 3;
   assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
-  assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
+  assert.ok(attributePointGains(registries, run, 'dexterity').every(g => !['evasion', 'precision'].includes(g.statId)), 'inactive hit-roll traits are omitted');
+  const wisdom = attributePointGains(registries, run, 'wisdom');
+  assert.ok(wisdom.some(g => g.statId === 'poise' && g.delta === 1));
+  assert.ok(wisdom.some(g => g.statId === 'divineMagic' && g.delta === 1));
+  assert.ok(wisdom.every(g => g.statId !== 'perception'), 'inactive perception roll is omitted');
 });
 
 test('a changed authored gain changes the text: nothing is hard-coded', () => {
@@ -52,7 +56,7 @@ import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 
-test('the Victory receipt opens the Level up modal, which shows the largest gain on every attribute row', () => {
+test('the Victory receipt opens the Level up modal with current benefit labels', () => {
   const { registries, run } = build();
   run.level.unspentPoints = 1;
   withModalDom(() => {
@@ -63,21 +67,21 @@ test('the Victory receipt opens the Level up modal, which shows the largest gain
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     assert.equal(app.querySelector('.reward-stat-allocation'), null, 'no inline panel (owner, 2026-11-17)');
     app.querySelector('#reward-stat-points').click();
-    const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
-    assert.ok(chips.length >= 5, 'one gain span per attribute row');
-    assert.ok(chips.map(c => c.textContent).includes('+5 HP'));
+    assert.equal(document.querySelectorAll('.cc-stat-modal .se-gain').length, 0);
+    assert.deepEqual([...document.querySelectorAll('.cc-stat-modal .disc-summary')].map(node => node.textContent),
+      ['Physical damage', 'Defense', 'Health', 'Poise · Divine magic', 'Arcane magic']);
   });
 });
 
-test('the Armoury allocation modal shows the same span, and the Rest card model carries mainGain', () => {
+test('allocation uses benefit names while the model retains exact gains', () => {
   const { registries, run } = build();
   run.level.unspentPoints = 1;
   withModalDom(() => {
     const sheet = openCharacterSheet({ registries, run, onChange() {} });
     sheet.panel.querySelector('.progression-points').click();
-    const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
-    assert.ok(chips.length >= 5, 'one gain span per attribute row');
-    assert.ok(chips.map(c => c.textContent).includes('+5 HP'));
+    assert.equal(document.querySelectorAll('.cc-stat-modal .se-gain').length, 0);
+    const summaries = [...document.querySelectorAll('.cc-stat-modal .disc-summary')].map(node => node.textContent);
+    assert.deepEqual(summaries, ['Physical damage', 'Defense', 'Health', 'Poise · Divine magic', 'Arcane magic']);
     sheet.close();
   });
   const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
@@ -125,8 +129,8 @@ test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4
   for (const id of ['draw', 'openingHand', 'handSize']) assert.equal(gains.find(g => g.statId === id)?.delta, 1, `${id} +1`);
   assert.equal(gains.find(g => g.statId === 'draw').before, 5);
   assert.equal(gains.find(g => g.statId === 'draw').after, 6);
-  assert.ok(gains.some(g => g.statId === 'pr' && g.delta === 1));
-  assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'pr', 'tie-break keeps PR as mainGain');
+  assert.ok(gains.some(g => g.statId === 'arcaneMagic' && g.delta === 1));
+  assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'arcaneMagic', 'the per-point benefit remains Arcane magic');
 });
 
 test('a legacy run still counts Draw and Opening hand through the hand rows: capacity caps them', () => {

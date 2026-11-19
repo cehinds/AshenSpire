@@ -98,7 +98,7 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586'), saved.lock.runtimeHash);
 });
 
 test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) still validate on the merged runtime', () => {
@@ -107,7 +107,7 @@ test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules
     saved.lock.runtimeHash = hash;
     digest(saved);
     assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772'), hash);
+    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586'), hash);
   }
 });
 
@@ -155,7 +155,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  assert.equal(profile.lock.runtimeHash, 'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

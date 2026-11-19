@@ -151,3 +151,7 @@ enemyMove,trait
 effect,range
 effect,targeting
 effect,trait
+
+card,tradition
+
+enemyMove,tradition

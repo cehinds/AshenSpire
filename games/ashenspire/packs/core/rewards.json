@@ -1,6 +1,10 @@
 {
   "offerCount": 3,
-  "combatOfferCount": { "min": 3, "max": 5, "appliesAtOfferCount": 3 },
+  "combatOfferCount": {
+    "min": 3,
+    "max": 5,
+    "appliesAtOfferCount": 3
+  },
   "takeCount": 1,
   "categories": [
     "weapons",
@@ -158,7 +162,6 @@
   "eligibility": {
     "playableOnly": true,
     "excludeCardIds": [
-      "core.guidingWhisper",
       "base.evade",
       "base.buff-ally",
       "base.drain-allies",
@@ -247,8 +250,16 @@
   },
   "armamentReward": {
     "$note": "Owner 2026-11-18: a won elite may drop an armament choice (chancePct), a won boss always does; the door offers min..max unowned weapons or armour, spread over weapon and armour groups, after the elite relic door. chancePct is 0-100.",
-    "elite": { "chancePct": 35, "min": 1, "max": 3 },
-    "boss": { "chancePct": 100, "min": 2, "max": 4 }
+    "elite": {
+      "chancePct": 35,
+      "min": 1,
+      "max": 3
+    },
+    "boss": {
+      "chancePct": 100,
+      "min": 2,
+      "max": 4
+    }
   },
   "rewardGroups": [
     {

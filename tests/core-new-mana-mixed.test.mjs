@@ -31,6 +31,8 @@ const def = id => profile.content.cards.find(card => card.id === id);
 
 // Owner 2026-11-14 (playableOnly): a class is never offered a card whose mana cost is above its maximum MP. Owner 2026-11-17:
 // the Reaver's class mana base is 1 (its 1-MP starter card), so a 1-MP card is payable and offered; a dearer one is not.
+const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
+  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -147,14 +149,14 @@ test('every class sees its new cards more often at depth 4+ than at depth 1-3 (6
   console.log(`new-card share of card offers: ${report.join('; ')}`);
 });
 
-test('offers never cross classes: class cards only reach their own class, colorless reach everyone', () => {
+test('offers respect class, affordability and the stock class spell tradition', () => {
   for (const classId of CLASSES) {
     const seen = new Set(), counts = new Map();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     // The Core 2 starter decks hold one of the class's own mana cards (Rogue: Venomed Edge); a basic the class already owns is never offered again.
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
-      if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
+      if (!payable(classId, id) || !matchesTradition(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ineligible ${id}`);
       // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): far rarer than a card the class does not own.
       else if (starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other) && payable(classId, other)).map(other => counts.get(other) || 0), Infinity), `${classId} was offered ${id} from its own starter deck as often as a card it does not own`);
       else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);

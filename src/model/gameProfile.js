@@ -8,6 +8,7 @@ import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } f
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
+import { cardSpellTraditions, spellTraditionsActive } from './spellTraditions.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -49,6 +50,9 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  if (spellTraditionsActive({ gameProfile: subject.gameProfile || subject }) && chosen.tags?.includes('camp:spell')) {
+    chosen.tags = [...new Set([...chosen.tags, ...cardSpellTraditions(chosen).map(id => 'tradition:' + id)])];
+  }
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
   // A ranked ability card keeps its grade numbers; only a drawback-removal step applies to it (review of #2819).
@@ -145,6 +149,24 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
   }
   if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
     ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);
+  }
+  if (spellTraditionsActive({ gameProfile: profile })) {
+    // Base-library and enemy-projected cards also use the canonical tag join.
+    // Derive their membership from authored school identity, in the same way
+    // as profile cards, rather than leaving their visible icons unregistered.
+    const tagsByCard = new Map();
+    for (const row of bundle.tagging || []) if (row.family === 'card') {
+      if (!tagsByCard.has(row.objectId)) tagsByCard.set(row.objectId, []);
+      tagsByCard.get(row.objectId).push(row.tagId);
+    }
+    for (const card of bundle.cards || []) {
+      const tags = tagsByCard.get(card.id) || [];
+      if (!tags.includes('camp:spell')) continue;
+      for (const id of cardSpellTraditions({ ...card, tags })) {
+        const tagId = 'tradition:' + id;
+        if (!tags.includes(tagId)) bundle.tagging.push({ family: 'card', objectId: card.id, tagId });
+      }
+    }
   }
   return bundle;
 }

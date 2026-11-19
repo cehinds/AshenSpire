@@ -21,7 +21,7 @@
     "shortLabel": "CON",
     "order": 3,
     "disclosure": "face",
-    "sense": "What your body takes before the climb ends."
+    "sense": "Health and physical endurance for the climb."
   },
   {
     "id": "wisdom",
@@ -29,7 +29,7 @@
     "shortLabel": "WIS",
     "order": 4,
     "disclosure": "face",
-    "sense": "What you hold in mind, and can pour back out."
+    "sense": "Spiritual resolve: Poise and Divine magic."
   },
   {
     "id": "intelligence",
@@ -37,6 +37,6 @@
     "shortLabel": "INT",
     "order": 5,
     "disclosure": "face",
-    "sense": "How much of the Spire you read at once."
+    "sense": "Arcane understanding and spellcraft."
   }
 ]

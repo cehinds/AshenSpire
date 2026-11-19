@@ -31,6 +31,14 @@ export const SCHOOL_SIGILS = Object.freeze({
   decay: mark('Decay', '<path d="M26 5C9 2 3 10 7 22c12 4 20-2 19-17ZM7 25l14-14M12 20l-1-7m6 2 6 1M4 28h.01M27 25h.01"/>', 'Decay magic.'),
 });
 
+// Original scalable silhouettes: a geometric casting seal and a radiant sun.
+// Kept separate from action identities so costs, stances and spell triggers
+// retain the canonical spell camp.
+export const TRADITION_SIGILS = Object.freeze({
+  arcane: mark('Arcane', '<path d="M16 1 30 9v14L16 31 2 23V9Zm0 5L6 12v8l10 6 10-6v-8Zm0 3 7 12H9Zm0 5-3 5h6Z"/>', 'Arcane magic scales with Intelligence.', true),
+  divine: mark('Divine', '<path d="M14 1h4v6h-4Zm0 24h4v6h-4ZM1 14h6v4H1Zm24 0h6v4h-6ZM4 6l2-2 5 5-2 2Zm17 17 2-2 5 5-2 2ZM4 26l5-5 2 2-5 5ZM21 9l5-5 2 2-5 5ZM16 8a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>', 'Divine magic scales with Wisdom.', true),
+});
+
 // A mirror's mark and word. Technique has no mark of its own: it wears the Skill mark under its own word.
 export function mirrorSigil(id) {
   return id === 'technique' ? { id: 'skill', mark: Object.freeze({ ...ACTION_SIGILS.skill, label: 'Technique', help: 'A basic technique.' }) } : { id, mark: ACTION_SIGILS[id] };

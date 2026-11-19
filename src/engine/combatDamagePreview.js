@@ -110,6 +110,7 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
+  const hpBefore = defender.previewHpRemaining ?? defender.hp;
   // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
   defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
@@ -120,12 +121,15 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
     defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+    // Live play breaks Poise only when the direct hit leaves the target alive.
+    // Keep a detached HP timeline too: a lethal Divine contact cannot add Smite.
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0 && (!Number.isFinite(hpBefore) || hpBefore > receipt.hpLoss)) {
       previewPoiseBreak(ctx, defender);
       // Shown = dealt: a divine hit that breaks Poise also Smites (live: elementIdentity OnPoiseBreak), so the quoted HP carries it.
       if (!receipt.evaded) receipt.hpLoss += ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id, receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount) || 0;
     }
   }
+  if (Number.isFinite(hpBefore)) defender.previewHpRemaining = Math.max(0, hpBefore - receipt.hpLoss);
 }
 
 /** A detached copy of an attacker whose HP and defenses a previewed reflected return may spend. */
@@ -157,6 +161,7 @@ export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
     if (token) {
       adjustCount(attacker.previewConsumables, token.id, -1);
       attacker.hp = reviveHp(attacker.maxHp, token.hpPct);
+      attacker.previewHpRemaining = attacker.hp;
       return false;
     }
   }
