@@ -296,7 +296,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:tollgateHookman.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:waxsealBailiff.waxBrand | Wax Brand | attack | 1 | 0 | Deal {damage} damage. |
 | card:waxsealBailiff.writOfDebt | Writ of Debt | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
-| card:waxsealBailiff.sealPress | Seal Press | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:waxsealBailiff.sealPress | Seal Press | attack | 2 | 0 | Deal {damage} damage. |
 | card:waxsealBailiff.ledgerGuard | Ledger Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:waxsealBailiff.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:carrionHeadsman.cleaveStroke | Cleave Stroke | attack | 1 | 0 | Deal {damage} damage. |

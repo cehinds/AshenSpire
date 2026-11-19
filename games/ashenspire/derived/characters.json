@@ -6421,8 +6421,8 @@
         "own": 1,
         "bonuses": [
           {
-            "source": "straightSword",
-            "name": "Straight_Sword",
+            "source": "rapier",
+            "name": "Rapier",
             "kind": "gear",
             "amount": 1
           }
@@ -6481,8 +6481,8 @@
     "gear": [
       {
         "key": "mainHand",
-        "id": "straightSword",
-        "name": "Straight_Sword"
+        "id": "rapier",
+        "name": "Rapier"
       },
       {
         "key": "offHand",
