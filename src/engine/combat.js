@@ -71,7 +71,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
-import { ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
+import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
 import { persistentWardMaximum, persistentPoiseMaximum, BarrierPoisePerStack } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -1969,9 +1969,9 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
-  const afterGear = QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
+  const gearStrengthGrants = QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
+  if (gearStrengthGrants.length) combat.pendingAbilityPlay.gearStrengthGrants = gearStrengthGrants;
   drainQueue(combat);
-  afterGear();
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;
 
@@ -2015,6 +2015,7 @@ function enemyHalted(combat, enemy) {
 function finishAbilityPlay(combat) {
   const play = R.abilityResolved(combat);
   if (!play) return;
+  for (const amount of play.gearStrengthGrants || []) ChangeAttribute(combat, combat.player, 'strength', amount, { thisTurn: true });
   const inst = play.instance;
   const def = resolveCombatCard(combat, inst);
   FluxAfterPlay(combat, combat.player, play.ref, def); // the cast's element becomes the flux once its own effects have resolved (W25-F)

@@ -3,7 +3,6 @@
 // grants queue ordinary effect ops, as engine/itemPropertyHooks.js does.
 import { ApplyGearCardRules, GearStatusRules, GearCondMet, GearSelectorMatches, GearSummary, GearItemProps, GearTypeEffectsEnabled } from '../model/gearEffects.js';
 import { GearState, GearProps } from './gearReceipt.js';
-import { ChangeAttribute } from './liveStats.js';
 
 const queue = (ctx, entity, effect) => ctx.enqueue({ effect: { target: 'self', ...effect }, source: entity, owner: entity, target: entity,
   // A Block grant is the same flat Block an item property lays (itemPropertyHooks.js QueueItemTurnStart): it keeps its printed floor.
@@ -49,7 +48,7 @@ export function QueueGearTurnGrants(ctx, player, phase) {
   if (missing > 0) queue(ctx, player, { op: 'applyStatus', status: 'retreat', stacks: missing, noGainBonus: true });
 }
 
-/** QueueGearCardPlayed(ctx, player, def): what playing a matching card grants (Evade on a Defend, Ward on a spell, a draw, STR until end of turn). */
+/** Queue gear play effects and return separate Strength amounts for the pending card's eventual resolution. */
 export function QueueGearCardPlayed(ctx, player, def) {
   const after = [];
   const props = GearProps(player);
@@ -58,11 +57,11 @@ export function QueueGearCardPlayed(ctx, player, def) {
   if (props?.playGrants) for (const grant of props.playGrants) {
     if (!GearSelectorMatches(grant.selector, grant.arg, def) || !grant.conds.every(cond => GearCondMet(cond, state))) continue;
     // STR until the end of the turn lands once the card's own effects have resolved, so the play that earns it does not quote or deal it.
-    if (grant.grant === 'strength') after.push(() => ChangeAttribute(ctx, player, 'strength', grant.amount, { thisTurn: true }));
+    if (grant.grant === 'strength') after.push(grant.amount);
     else { const effect = grantEffect(grant); if (effect && grant.amount > 0) queue(ctx, player, effect); }
   }
   if (GearTypeEffectsEnabled(ctx) && spell && player?.counters) player.counters.spellsPlayedThisTurn = (player.counters.spellsPlayedThisTurn || 0) + 1;
-  return () => { for (const run of after) run(); };
+  return after;
 }
 
 
