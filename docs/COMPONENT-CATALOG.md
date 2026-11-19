@@ -21,7 +21,12 @@ per-hit count or sequence prominent and labels total HP separately; a reaction
 refreshes the next-contact quote from its current defenses.
 
 `fitIllustratedCards` treats compact effects as semantic rows that may wrap,
-shrinks fonts inside the fixed authored parchment, and keeps an 11 physical pixel rules floor.
+shrinks fonts inside the fixed authored parchment, and uses the configured rules floor.
+Reward choices and combat hand cards reduce rules type by 2 physical pixels;
+phones retain their existing stronger reduction instead of stacking both.
+Names, costs and hand geometry retain their existing layout. All reward types
+share a base width 20% above the former compact playing-card size, with 12px
+row gaps. Hover enlarges reward faces; selection and keyboard focus only lift.
 Standard Counter faces show Gain Block and Counter values; tag help and inspection retain the mechanics.
 Complete rules remain accessible when the panel cannot contain them. Editable
 source names icons through `src/content/uiIcons.js`; the shared engraved renderer
