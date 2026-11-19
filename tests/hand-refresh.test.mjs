@@ -18,7 +18,7 @@ const rules = () => resolveHandRules({}, { ...handStatRows(registries, null), ha
 function fight(options = {}) {
   return createCombat({ registries, rng: createRng(2309), handRules: rules(),
     player: { classId: 'reaver', maxHp: 10000, hp: 10000, maxMana: 10, mana: 10,
-      maxStamina: 10, stamina: 10, energyMax: 3, drawPerTurn: 4, attributes: { intelligence: 4 },
+      maxStamina: 10, stamina: 10, energyMax: 3, drawPerTurn: 4, attributes: { intelligence: 0 }, // ruling 2026-11-18 §9: draw = base + floor(INT/4), so INT 0 keeps the row's own base
       deck: Array.from({ length: 30 }, (_, i) => card(`c${i}`)), relicIds: [] },
     enemyIds: ['wanderingSoldier'], ...options,
   });
@@ -46,7 +46,7 @@ test('refresh shuffles ordinary unplayed cards, keeps Retain, exhausts Ethereal,
   c.piles.discard = [card('played')];
   const before = c.rng.getCounters().shuffle;
   dispatch(c, { type: 'endTurn' });
-  assert.equal(c.piles.hand.length, 5);
+  assert.equal(c.piles.hand.length, 6, 'the Retained card plus the 5 a turn draws (ruling 2026-11-18 §9)');
   assert(ids(c.piles.hand).includes('prepared'));
   assert(ids([...c.piles.draw, ...c.piles.hand]).includes('ordinary'));
   assert.deepEqual(ids(c.piles.discard), ['played']);
@@ -72,7 +72,8 @@ test('every added Retain keyword survives upgrades; playing a retained spell sti
 });
 
 test('draw scaling is unchanged and the absolute capacity does not scale', () => {
-  for (const [intelligence, expected] of [[1,4],[4,4],[8,4],[9,5],[14,6],[99,10]]) {
+  // Owner 2026-11-18 (§9, §12): the draw per turn and the opening hand are 5 + floor(INT/4), capped at 10.
+  for (const [intelligence, expected] of [[1,5],[4,6],[8,7],[9,7],[14,8],[99,10]]) {
     const r = rules();
     for (const opening of [false, true]) {
       const draw = handDrawCount(r, { intelligence }, { opening });

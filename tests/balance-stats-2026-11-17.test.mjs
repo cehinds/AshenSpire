@@ -70,6 +70,7 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
   const previous = structuredClone(run.gameProfile);
   delete previous.modules.effects.baseDamageMultiplier;
   delete previous.modules.effects.playerDamageMultiplier;
+  delete previous.modules.effects.physicalDamageMultiplier;
   delete previous.hash;
   previous.hash = gameDigest(previous);
   const beforeBalance = { ...run, gameProfile: previous };
@@ -77,8 +78,11 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
     .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
 
   // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
-  assert.equal(damageLine(strike, run), '2 damage');
-  assert.equal(damageLine(ranked, run), '2 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), then floor(4 x 0.7)');
+  // Owner, 2026-11-18 (second cut): the physical share takes another x0.7 first: floor(3 x 0.7 x 0.7) = 1.
+  // Owner, 2026-11-18 (static faces): the run's always-on STR joins before the cuts, as a neutral-stance hit does. A new Reaver's effective STR is 5 (class, gear and level):
+  // floor((3 + 5) x 0.7 x 0.7) = 3, and rank 2: floor((4 + 5) x 0.7 x 0.7) = 4.
+  assert.equal(damageLine(strike, run), '3 damage');
+  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), adds STR, then the cuts');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
@@ -132,10 +136,11 @@ test('item 1: player and enemy Counters scale their authored base once before th
   knight.combat.piles.hand.push({ instanceId: 'into-parry', cardId: 'core.strike' });
   assert.equal(previewIntent(knight.combat, knight.enemy.id).counterDamage, 3, 'the enemy intent shows half of the 6 authored damage');
   dispatch(knight.combat, { type: 'playCard', cardInstanceId: 'into-parry', targetId: knight.enemy.id });
-  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) > 3, 'the share of the incoming hit stays intact');
+  // Owner, 2026-11-18 (second cut): the Strike's hit is small enough now that the stack share rounds to 0; the return still carries the whole counter base.
+  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) >= 3, 'the return keeps its counter base');
 });
 
-test('item 5 (owner, 2026-11-17): SP = 3 + floor((DEX - 1) / 3) and MP = 1 + floor((max(INT, WIS) - 1) / 3), at every level', () => {
+test('item 5 (owner, 2026-11-18): SP = 3 + floor(DEX / 4) and MP = 1 + floor(WIS / 4), at every level', () => {
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
     const run = newRun(classId);
     const rules = run.derivedStatRuleSnapshot.rules, classDef = registries.classes.get(classId);
@@ -145,13 +150,18 @@ test('item 5 (owner, 2026-11-17): SP = 3 + floor((DEX - 1) / 3) and MP = 1 + flo
     const at = (id, attributes, level = 1) => deriveStat(rules, id, { attributes: { ...ones, ...attributes }, classDef, level }).value;
     relic.stamina = at('stamina', {}) - 3; relic.mana = at('mana', {}) - 1;
     for (const level of [1, 5, 10]) {
-      for (const dex of [0, 1, 3, 4, 6, 7, 10]) assert.equal(at('stamina', { dexterity: dex }, level), 3 + Math.floor(Math.max(0, dex - 1) / 3) + relic.stamina, `${classId} SP at DEX ${dex}, level ${level}`);
-      for (const [int, wis] of [[1, 1], [4, 1], [1, 4], [3, 6], [7, 2], [10, 10]]) {
-        assert.equal(at('mana', { intelligence: int, wisdom: wis }, level), 1 + Math.floor((Math.max(int, wis) - 1) / 3) + relic.mana, `${classId} MP at INT ${int} WIS ${wis}, level ${level}`);
+      // The boundaries: 3 and 4, 7 and 8 (each +1 needs 4 points).
+      for (const dex of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('stamina', { dexterity: dex }, level), 3 + Math.floor(dex / 4) + relic.stamina, `${classId} SP at DEX ${dex}, level ${level}`);
+      for (const wis of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('mana', { wisdom: wis }, level), 1 + Math.floor(wis / 4) + relic.mana, `${classId} MP at WIS ${wis}, level ${level}`);
+      // INT does not buy Mana any more, and the hand and the draw are 5 + floor(INT / 4).
+      for (const int of [0, 3, 4, 7, 8, 12]) {
+        assert.equal(at('mana', { intelligence: int }, level), at('mana', {}, level), `${classId} MP ignores INT ${int}`);
+        assert.equal(at('draw', { intelligence: int }, level), Math.min(10, 5 + Math.floor(int / 4)), `${classId} draw at INT ${int}`);
+        assert.equal(at('openingHand', { intelligence: int }, level), Math.min(10, 5 + Math.floor(int / 4)), `${classId} opening hand at INT ${int}`);
       }
     }
     for (const other of ['strength', 'constitution', 'wisdom', 'intelligence']) assert.equal(at('stamina', { [other]: 12 }), at('stamina', {}), `${classId} SP ignores ${other}`);
-    for (const other of ['strength', 'dexterity', 'constitution']) assert.equal(at('mana', { [other]: 12 }), at('mana', {}), `${classId} MP ignores ${other}`);
+    for (const other of ['strength', 'dexterity', 'constitution', 'intelligence']) assert.equal(at('mana', { [other]: 12 }), at('mana', {}), `${classId} MP ignores ${other}`);
     assert.ok(relic.stamina >= 0 && relic.mana >= 0, `${classId}: a starting relic never lowers SP or MP`);
   }
 });
@@ -181,14 +191,16 @@ test('item 2: the attribute part of AR, DR and PR reads one stat each (STR, DEX,
 test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2) and a Poise value, never AR or DR', async () => {
   const { resolveGearItem } = await import('../engine/kernel/gameConfig.js');
   const settings = profile.modules.gear;
-  const totals = [];
+  const totals = [], guarding = [];
   for (const item of profile.content.gear) {
     const resolved = resolveGearItem(item, settings);
     const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + resolved.points[id], 0);
     assert.equal(resolved.values.ar, 0, `${item.id} AR`);
     assert.equal(resolved.values.dr, 0, `${item.id} DR`);
     assert.ok(attributes >= 1 && attributes <= 3, `${item.id}: ${attributes} attribute points`);
-    assert.ok(resolved.values.poise > 0, `${item.id} has a Poise value`);
+    // Owner, 2026-11-18 (con-poise): Poise comes from guarding gear only; a weapon or shield with no Poise weight (dagger, buckler, staffs) grants none.
+    assert.ok(resolved.values.poise >= 0, `${item.id} has a non-negative Poise value`);
+    if (resolved.values.poise > 0) guarding.push(item.id);
     totals.push(attributes);
     // A Smith tier adds an attribute point, still never AR or DR.
     const tiered = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + 2 });
@@ -197,6 +209,7 @@ test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2)
   }
   const average = totals.reduce((a, b) => a + b, 0) / totals.length;
   assert.ok(average >= 1 && average <= 2, `average ${average}`);
+  assert.ok(guarding.length > 0 && guarding.includes('armor.wayfarerPlate'), 'guarding gear (body armour, tower shield) still carries Poise');
 });
 
 test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective STR', async () => {

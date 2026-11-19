@@ -17,7 +17,7 @@ import { cardTargetPlan, forbiddenCardDrop } from '../src/model/cardTargets.js';
 import { ResolveTargetHudAction } from '../src/ui/models/CombatTargetingModel.js';
 import { targetLayer } from '../src/ui/models/TargetLayerModel.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
 export const SELF_BUFF_CARDS = Object.freeze({

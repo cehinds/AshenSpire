@@ -19,17 +19,20 @@ import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
 import { gameModule } from './../model/gameProfile.js';
+import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { mountDeckEditor } from './../ui/screens/deckEditor.js';
+import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
 export function createShotStates(ctx) {
   const {
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
-    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
-    showSettings, showStartupGate, showCustomize,
+    beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    showSettings, showStartupGate, showCustomize, poseActNumber,
   } = ctx;
 
   // The posed states that need a started run: shared preamble, then the per-state
@@ -205,17 +208,35 @@ export function createShotStates(ctx) {
         run.itemRanks[ref] = 1 + (at % 2);
       });
     }
+    // `?shotAct=<n>` — the map of act n (2 or 3 open on a Rest), built the way advanceAct builds it. Poses before `?shotAt`.
+    const shotAct = name === 'map' ? shotParams.get('shotAct') : null;
+    if (shotAct) {
+      const act = Number(shotAct);
+      if (!Number.isInteger(act) || act < 1 || act > 3) throw new Error(`?shotAct=${shotAct}: an act is 1, 2 or 3.`);
+      poseActNumber(act);
+      showMap();
+    }
     const shotAt = name === 'map' ? shotParams.get('shotAt') : null;
     if (shotAt) {
       const g = run.mapGraph;
       const byFloor = /^floor:(\d+)$/.exec(shotAt);
+      // `?shotAt=type:shop` stands on the first node of that type (shop, shrine, boss ...) in id order; `floor:last` is the pre-boss depth.
+      const byType = /^type:(\w+)$/.exec(shotAt);
+      const lastFloor = shotAt === 'floor:last' ? g.floors - 1 : null;
       const at = byFloor
         ? Object.values(g.nodes).filter((n) => n.floor === Number(byFloor[1])).map((n) => n.id)[0]
+        : byType ? Object.values(g.nodes).find((n) => n.actualType === byType[1] || n.type === byType[1])?.id
+        : lastFloor !== null ? Object.values(g.nodes).filter((n) => n.floor === lastFloor)[0]?.id
         : (g.nodes[shotAt] ? shotAt : null);
       if (!at) throw new Error(`?shotAt=${shotAt}: no such node in this act. Use a node id (n4_2) or floor:N — a silent fallback here would report a framing measured somewhere else.`);
       run.mapNodeId = at;
       run.floor = g.nodes[at].floor;
-      run.path = [at];
+      // The posed trail is the way to it, so fog and the committed branch read as they would in play.
+      const parent = { [g.startIds[0]]: null }, queue = [g.startIds[0]];
+      while (queue.length) { const id = queue.shift(); for (const next of g.nodes[id].next || []) if (!(next in parent)) { parent[next] = id; queue.push(next); } }
+      run.path = shotParams.get('shotTrail') === '1' && at in parent ? (() => { const trail = []; for (let id = at; id; id = parent[id]) trail.unshift(id); return trail; })() : [at];
+      // `?shotRevisit=shop` — the trader (or rest) you stand on was left: its node re-opens from the map (restRevisit.js).
+      if (shotParams.get('shotRevisit')) { OpenSiteRecord(run, shotParams.get('shotRevisit')); markRestLeft(run); }
       showMap();
     }
     // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.
@@ -257,6 +278,11 @@ export function createShotStates(ctx) {
       run.floor = g.nodes[id].floor;
       run.path = walked;
       showMap();
+    }
+    // `?shotDeckEditor=1` — the deck editor open over the map, on this run's deck, so a sandbox check can add and
+    // remove a card and see which nodes the editor rebuilds (docs/perf/redraw-2026-11-18.md). Memory-only like every lever.
+    if (name === 'map' && shotParams.get('shotDeckEditor') === '1') {
+      mountDeckEditor(document.body, { registries: ctx.getRegistries(), run, settings: {}, onDone() {}, onCancel() {} });
     }
     if (name === 'death') {
       // A run that ended on floor 4 with a few fights behind it, so the stats
@@ -390,13 +416,24 @@ export function createShotStates(ctx) {
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
       // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
       if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
       // attribute point waiting, paid through the production XP ledger, so its level-up modal can be reached.
+      // `?shotArmament=boss` (or `elite`, only when its chance roll lands for the seed) — the won fight's armament reward door itself,
+      // built by the production offer and mounted by the production door, so its choices, claim and Armoury hand-off can be photographed.
+      const armamentPool = shotParams.get('shotArmament');
+      if (['elite', 'boss'].includes(armamentPool)) {
+        const offerId = `${run.actNumber}:${run.mapNodeId}:combat:armament`;
+        if (!GameProfileArmamentOffer(ctx.getRegistries(), run, ctx.getRng(), { offerId, pool: armamentPool })) throw new Error(`No armament reward for a ${armamentPool} on this seed.`);
+        run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
+        persist(); return showGameProfileReward();
+      }
+      const shotTake = Math.floor(Number(shotParams.get('shotTake')));
       const victory = shotParams.get('shotVictory') === 'points';
       if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
         pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
-      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
+      beginGameProfileReward({ source: 'combat', after: 'map', takeCount: shotTake >= 1 ? Math.min(5, shotTake) : null, pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
         ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the

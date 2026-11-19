@@ -112,8 +112,6 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       // Core item ratings come from the tier receipt below, not the legacy
       // equipment definition's unrelated base AR/DEF values.
       intrinsicStats: candidate.core ? null : freeze({
-        attackRating: piece.attackRating ?? null,
-        defenseRating: piece.defenseRating ?? null,
         // The load weight (itemWeightScale applied), as the Armoury shows it.
         weight: piece.weight == null ? null : pieceWeight(piece),
         weaponArtManaCost: piece.weaponArtManaCost ?? null,

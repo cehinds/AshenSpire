@@ -141,7 +141,8 @@ function foldedSummary(sense) {
 
 // The combat ratings are rows of the derived-stat table (ruleset 7) and read
 // the same way; they are listed as scaling rather than as a pool a point buys.
-const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
+const RATING_ROWS = ['ar', 'dr', 'pr', 'ward']; // `ar`, `dr`, `pr` are the damage channels (STR, DEX, max(INT, WIS)): never named as stats
+const CHANNEL_TEXT = Object.freeze({ ar: 'Physical damage', dr: 'Block', pr: 'Magic damage' });
 const FEED_EXCLUDED = new Set(RATING_ROWS);
 
 // THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
@@ -154,7 +155,7 @@ function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING
     .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
     .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
-      const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : CHANNEL_TEXT[id];
       // A rating row's Max is where its points stop paying, as for every
       // other bounded fact (Codex, #1321).
       const cap = Number.isFinite(rule.max) ? rule.max : null;
@@ -188,11 +189,11 @@ function attributeCycle(weight, perIncrease) {
 // The compact face names the main benefit; the disclosure keeps every
 // secondary contribution. Values still come from the active run's rules.
 const MAIN_BENEFITS = {
-  strength: [['ar', 'Physical damage / Attack Rating (AR)']],
-  dexterity: [['dr', 'Defense / Defense Rating (DR)']],
+  strength: [['ar', 'Physical damage']],
+  dexterity: [['dr', 'Block']],
   constitution: [['hp', 'Health'], ['poise', 'Poise']],
   wisdom: [['ward', 'Ward']],
-  intelligence: [['pr', 'Magic damage / Potency Rating (PR)']],
+  intelligence: [['pr', 'Magic damage']],
 };
 
 function mainBenefitSummary(attributeId, feeds, ratings) {

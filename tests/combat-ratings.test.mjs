@@ -56,25 +56,25 @@ test('every rating is the sum of its floored attribute terms', async () => {
   run.attributes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 8 };
 
   const rules = resolveCombatRatings({
-    'gameConfig.derivedStatRules.rules.ar.strength': 1,
-    'gameConfig.derivedStatRules.rules.ar.dexterity': 0.5,
-    'gameConfig.derivedStatRules.rules.ar.constitution': 0,
-    'gameConfig.derivedStatRules.rules.ar.wisdom': 0.25,
-    'gameConfig.derivedStatRules.rules.ar.intelligence': 0.25,
+    'gameConfig.derivedStatRules.rules.ward.strength': 1,
+    'gameConfig.derivedStatRules.rules.ward.dexterity': 0.5,
+    'gameConfig.derivedStatRules.rules.ward.constitution': 0,
+    'gameConfig.derivedStatRules.rules.ward.wisdom': 0.25,
+    'gameConfig.derivedStatRules.rules.ward.intelligence': 0.25,
   }, contentBundle);
-  // floor(1×1) + floor(0.5×1) + 0 + floor(0.25×1) + floor(0.25×8) = 1 + 0 + 0 + 0 + 2
-  assert.equal(ratingReceipt(registries, run, rules).totals.ar, 3);
+  // base 1 + floor(1×1) + floor(0.5×1) + 0 + floor(0.25×1) + floor(0.25×8) = 1 + 1 + 0 + 0 + 0 + 2 (Ward: AR, DR and PR are not rows)
+  assert.equal(ratingReceipt(registries, run, rules).totals.ward, 4);
 
   // A NON-EMPTY POOL IS NOT A TERM. Three attributes at 1 under a 0.5 weight
-  // contribute nothing each and nothing together.
+  // contribute nothing each and nothing together (the base 1 remains).
   const halves = resolveCombatRatings({
-    'gameConfig.derivedStatRules.rules.ar.strength': 0.5,
-    'gameConfig.derivedStatRules.rules.ar.dexterity': 0.5,
-    'gameConfig.derivedStatRules.rules.ar.constitution': 0.5,
-    'gameConfig.derivedStatRules.rules.ar.wisdom': 0,
-    'gameConfig.derivedStatRules.rules.ar.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.ward.strength': 0.5,
+    'gameConfig.derivedStatRules.rules.ward.dexterity': 0.5,
+    'gameConfig.derivedStatRules.rules.ward.constitution': 0.5,
+    'gameConfig.derivedStatRules.rules.ward.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.ward.intelligence': 0,
   }, contentBundle);
-  assert.equal(ratingReceipt(registries, run, halves).totals.ar, 0);
+  assert.equal(ratingReceipt(registries, run, halves).totals.ward, 1);
 
   // A new config has no global multiplier: the row is the whole formula.
   assert.equal(resolveCombatRatings({}, contentBundle).multiplier, undefined);
@@ -82,7 +82,7 @@ test('every rating is the sum of its floored attribute terms', async () => {
 
   const zeroWeights = resolveCombatRatings(Object.fromEntries(
     ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
-      .map(id => [`gameConfig.derivedStatRules.rules.ar.${id}`, 0]),
+      .map(id => [`gameConfig.derivedStatRules.rules.ward.${id}`, 0]),
   ), contentBundle);
   const zeroReceipt = ratingReceipt(registries, run, zeroWeights);
   const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
@@ -92,7 +92,7 @@ test('every rating is the sum of its floored attribute terms', async () => {
     ratingAttributes: zeroReceipt.attributeReceipts,
     note: '',
   });
-  assert.match(zeroHtml, /data-rating-id="ar"[\s\S]*?No weighted attributes[\s\S]*?\(<b>0<\/b>\)/);
+  assert.match(zeroHtml, /data-rating-id="ward"[\s\S]*?No weighted attributes[\s\S]*?\(<b>0<\/b>\)/);
   assert.doesNotMatch(zeroHtml, /\(\)/);
   // The one row formula has no global multiplier to print (ruleset 7).
   assert.doesNotMatch(zeroHtml, /global ×/);
@@ -112,34 +112,36 @@ test('weapon cards add their source equipment rating without a tier', async () =
   const technique = surface.roles.find(row => row.role === 'technique');
   assert.deepEqual(
     [attack.receipt.base, attack.receipt.rating.equipmentBase, attack.receipt.rating.attributeValue, attack.receipt.rating.value, attack.receipt.rarityBonus, attack.receipt.value],
-    [5, 2, 3, 5, 0, 10],
-    'Slashing Strike is 5 base + (2 sword base AR + 3 attribute AR) + 0 rarity',
+    [5, 0, 3, 3, 0, 8],
+    'Slashing Strike is 5 base + 3 STR + 0 rarity (the sword has no AR of its own: owner, 2026-11-18)',
   );
   assert.deepEqual(
     [guard.receipt.base, guard.receipt.rating.equipmentBase, guard.receipt.rating.attributeValue, guard.receipt.rating.value, guard.receipt.rarityBonus, guard.receipt.value],
-    [3, 5, 1, 6, 0, 9],
-    'Shield Defend is 3 base + (5 shield base DR + 1 attribute DR) + 0 rarity',
+    [3, 0, 1, 1, 0, 4],
+    'Shield Defend is 3 base + 1 DEX + 0 rarity (the shield has no DR of its own)',
   );
   assert.deepEqual(
     [technique.receipt.base, technique.receipt.rating.id, technique.receipt.rating.value, technique.receipt.value],
-    [0, 'ar', 5, 5],
-    'Weapon Technique explicitly uses its source weapon AR',
+    [0, 'ar', 3, 3],
+    'Weapon Technique reads the STR channel',
   );
 
   const html = renderRoleCopies(surface);
   assert.doesNotMatch(html, /\btier\b/i);
   assert.doesNotMatch(html, /pointsPerTier/);
-  assert.match(html, /5 base \+ 5 AR \(weapon\) \+ 0 rarity =/);
-  assert.match(html, /3 base \+ 6 DR \(shield\) \+ 0 rarity =/);
+  assert.match(html, /5 base \+ 3 STR \(weapon\) \+ 0 rarity =/);
+  assert.match(html, /3 base \+ 1 DEX \(shield\) \+ 0 rarity =/);
+  assert.doesNotMatch(html, /\b(AR|DR|PR)\b/);
 
   const ratingHtml = renderPlayerPoise(surface.poise);
   assert.deepEqual(surface.poise.ratingAttributes.ar.values,
     { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 });
-  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
-  // Each primary bonus contributes once. Wayfarer Plate adds DR 1 and Poise 8.
-  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 1 → floor = <b>3<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>5<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Dexterity <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?<b>1<\/b> Wayfarer Plate[\s\S]*?= <strong>9<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Intelligence <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?= <strong>1<\/strong>/);
+  for (const id of ['poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
+  // AR, DR and PR are not ratings: the panel draws only Poise and Ward, and no item adds to either damage channel.
+  for (const id of ['ar', 'dr', 'pr']) assert.doesNotMatch(ratingHtml, new RegExp(`data-rating-id="${id}"`));
+  assert.doesNotMatch(ratingHtml, /\b(AR|DR|PR)\b/);
+  assert.deepEqual([surface.poise.ratings.ar, surface.poise.ratings.dr, surface.poise.ratings.pr], [3, 1, 1], 'STR, DEX and INT alone');
+  // Wayfarer Plate adds Poise 8.
   assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>11<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
@@ -234,48 +236,36 @@ test('a run born on the lean pool is rated on the attributes it shows', async ()
 test('an item rating setting IS the item’s rating, on the card and in combat', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { equipmentCardModel } = await import('../src/model/equipmentCard.js');
-  const settings = { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 4 };
-  const authored = contentBundle.equipment.armaments.find(p => p.id === 'straightSword');
-  assert.notEqual(authored.attackRating, 4, 'the authored sword is the thing being moved');
-
+  // Armour Poise is the one rating an item still authors (owner, 2026-11-18: AR, DR and PR are gone from every item).
+  const settings = { 'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 5 };
+  const authored = contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
+  assert.notEqual(authored.poiseThreshold, 5, 'the authored set is the thing being moved');
   const configured = configuredContentBundle(contentBundle, settings);
-  const sword = configured.equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(sword.attackRating, 4, 'the column the card prints carries the configured number');
+  const set = configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
+  assert.equal(set.poiseThreshold, 5, 'the column the card prints carries the configured number');
   const tuned = createRegistries(configured);
-  assert.equal(equipmentCardModel(tuned, sword).facts.find(f => f.label === 'Attack').value, 4);
-
+  assert.equal(equipmentCardModel(tuned, set).facts.find(f => f.label === 'Poise').value, 5);
   const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
-  const rules = resolveCombatRatings(settings, contentBundle);
-  const receipt = ratingReceipt(tuned, run, rules);
-  const source = receipt.sources.find(s => s.name === 'Straight Sword');
-  assert.equal(source.ar, 4, `not ${authored.attackRating}, and not ${authored.attackRating} + 4`);
-  assert.equal(source.effectiveRatings.ar, 4, 'and a card sourced from the sword reads the same number');
-  const attributes = receipt.sources.find(s => s.name === 'Attributes').ar;
-  assert.equal(receipt.totals.ar, attributes + 4, 'the item’s own AR, with the attribute bonus on top');
+  const receipt = ratingReceipt(tuned, run, resolveCombatRatings(settings, contentBundle));
+  assert.equal(receipt.sources.find(s => s.name === set.name).poise, 5, `not ${authored.poiseThreshold}, and not ${authored.poiseThreshold} + 5`);
 });
 
 // "if a staff says PR of 1 then my wizard with a +2 to PR should have a PR of
 // +3 for all cards that scale off PR" — the magical weapon's Attack Rating is
 // PR, so the PR row is the one that moves its column. The staff is authored at
 // 1 now, so the row moves it to 3 and the caster's +2 makes 5.
-test('a magical weapon’s PR row is its Attack Rating, and attribute PR adds to it', async () => {
+test('no armament has an AR, DR or PR row, and a staff adds nothing to the magic channel', async () => {
   const { createRunState } = await import('../src/model/state.js');
-  const settings = { 'gameConfig.combatRatings.itemRatings.armament:ashStaff.pr': 3 };
-  assert.notEqual(contentBundle.equipment.armaments.find(p => p.id === 'ashStaff').attackRating, 3);
-  const configured = configuredContentBundle(contentBundle, settings);
-  const staff = configured.equipment.armaments.find(p => p.id === 'ashStaff');
-  assert.equal(staff.attackRating, 3);
-  const tuned = createRegistries(configured);
-  const run = createRunState({ seed: 7, classId: 'starseer', registries: tuned });
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const keys = advancedConfigRows(contentBundle).map(row => row.key);
+  assert.deepEqual(keys.filter(key => /combatRatings\.itemRatings\.[^.]+\.(ar|dr|pr)$/.test(key)), [], 'no item rating row for AR, DR or PR');
+  assert.deepEqual(keys.filter(key => /derivedStatRules\.rules\.(ar|dr|pr)\./.test(key)), [], 'no stat row for AR, DR or PR');
+  const run = createRunState({ seed: 7, classId: 'starseer', registries });
   run.loadout.sets.rightHand[0] = 'ashStaff';
   run.attributes = { ...run.attributes, wisdom: 2, intelligence: 2 };
-  const rules = resolveCombatRatings(settings, contentBundle);
-  const receipt = ratingReceipt(tuned, run, rules);
-  assert.equal(receipt.sources.find(s => s.name === 'Ash Staff').pr, 3);
-  assert.equal(receipt.totals.pr, 5, 'WIS 2 and INT 2 at 0.5 each is +2, and the staff says 3');
-  // …and the card the staff lends reads the same sum (#1246's direct rating).
-  const { effectiveEquipmentRating } = await import('../src/model/ratingFormula.js');
-  assert.equal(effectiveEquipmentRating(tuned.balance.combatRatings, run.attributes, staff, { ratingId: 'pr' }, 'pr').value, 5);
+  const receipt = ratingReceipt(registries, run, resolveCombatRatings({}, contentBundle));
+  assert.equal(receipt.sources.find(s => s.name === 'Ash Staff').pr || 0, 0, 'the staff is not a PR source');
+  assert.equal(receipt.totals.pr, 2, 'INT 2, nothing from the staff');
 });
 
 // A rating no item column can hold is still the item's rating: it travels in
@@ -296,7 +286,7 @@ test('a stored per-item bonus is dropped with a warning and nothing is converted
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /per-item rating bonuses are retired/);
   const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(sword.attackRating, 2, 'the authored value stands: the plus is not added');
+  assert.equal(sword.attackRating, undefined, 'the sword authors no rating and the plus is not added');
 });
 
 // One number, one row, wherever it is read: the profile itself is brought
@@ -317,7 +307,7 @@ test('a stored profile drops the retired per-item bonus and keeps the rest', asy
 // ARMOUR, which every test above left alone: a set authors one rating column
 // (its Poise threshold, which is also its weight), keys itself by class, and
 // authors no attack rating at all.
-test('a set’s Poise is its own value, its weight follows it, and it has no AR column', async () => {
+test('a set’s Poise is its own value, its weight follows it, and it has no AR, DR or PR column', async () => {
   const { itemRatingColumn, authoredItemRatings } = await import('../src/model/combatRatings.js');
   const { createRunState } = await import('../src/model/state.js');
   const { pieceWeight } = await import('../src/model/statProjection.js');
@@ -341,9 +331,9 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR 
   // A rating a set has no column for still reaches combat, through the rules.
   const tuned = createRegistries(configured);
   const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
-  const rules = resolveCombatRatings({ ...settings, 'gameConfig.combatRatings.itemRatings.armor:reaver:default.ar': 4 }, contentBundle);
-  assert.deepEqual(rules.itemRatings['armor:reaver:default'], { ar: 4 }, 'Poise has a column and is not kept twice');
-  assert.equal(ratingReceipt(tuned, run, rules).sources.find(s => s.name === set.name).ar, 4);
+  const rules = resolveCombatRatings({ ...settings, 'gameConfig.combatRatings.itemRatings.armor:reaver:default.ward': 4 }, contentBundle);
+  assert.deepEqual(rules.itemRatings['armor:reaver:default'], { ward: 4 }, 'Poise has a column and is not kept twice');
+  assert.equal(ratingReceipt(tuned, run, rules).sources.find(s => s.name === set.name).ward, 4);
 });
 
 // Switching the ratings system off switches its rows off with it. It matters
@@ -352,17 +342,15 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR 
 test('with ratings off, an item rating moves nothing', () => {
   const settings = {
     'gameConfig.combatRatings.enabled': false,
-    'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 1,
     'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 99,
   };
   const configured = configuredContentBundle(contentBundle, settings);
   assert.equal(configured.balance.combatRatings.enabled, false);
-  assert.equal(configured.equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
   assert.equal(configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
   // And an older run, which `configuredContentBundle` forces off by version.
-  const older = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 1 } });
+  const older = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: { 'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 1 } });
   assert.equal(older.balance.combatRatings.enabled, false);
-  assert.equal(older.equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
+  assert.equal(older.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
 });
 
 // ONE STORED NUMBER, ONE ANSWER. A hand-edited profile can hold anything; the
@@ -372,19 +360,19 @@ test('with ratings off, an item rating moves nothing', () => {
 test('a stored number reads the same in the panel and on the item', async () => {
   const { resolveNumberRow } = await import('../src/ui/screens/settings.js');
   const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
-  const key = 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar';
+  const key = 'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise';
   const row = advancedConfigRows(contentBundle).find(r => r.key === key);
   for (const raw of [2.7, 1500, -4, '3', 0]) {
     const settings = { [key]: raw };
     const shown = resolveNumberRow(settings, row);
-    const onItem = configuredContentBundle(contentBundle, settings).equipment.armaments.find(p => p.id === 'straightSword').attackRating;
+    const onItem = configuredContentBundle(contentBundle, settings).equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold;
     assert.equal(onItem, shown, `stored ${JSON.stringify(raw)}: the panel shows ${shown} and the sword carries ${onItem}`);
   }
   // Unreadable is unset, in both, which is the authored value.
   for (const raw of ['', null, 'lots']) {
     const settings = { [key]: raw };
-    assert.equal(resolveNumberRow(settings, row), 2);
-    assert.equal(configuredContentBundle(contentBundle, settings).equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
+    assert.equal(resolveNumberRow(settings, row), 8);
+    assert.equal(configuredContentBundle(contentBundle, settings).equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
   }
 });
 

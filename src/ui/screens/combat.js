@@ -113,7 +113,7 @@ import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { DragFaceQuote, DragFaceTargetId } from '../models/DragFaceModel.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
+import { CardAsEnteredStance, createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -398,7 +398,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const heldKinds = createStanceLedger(kindForCard);
   const heldCards = createStanceLedger(card => card);
   // A loaded fight starts with empty ledgers: rebuild each seat's last stance from the restored cardPlayed receipts.
-  heldKinds.replay(combat.eventLog, receipt => receipt.cardInstance ? resolveCombatCard(combat, receipt.cardInstance) : undefined);
+  heldKinds.replay(combat.eventLog, receipt => receipt.cardInstance ? CardAsEnteredStance(resolveCombatCard(combat, receipt.cardInstance), combat.eventLog, receipt) : undefined);
   // The replay has no turn-start reset: a reload after a Poise break must not bring back the stance the engine already ended.
   if (!holdsChosenStance(combat.player)) heldKinds.reset('player');
   function smashProfile() {
@@ -1174,7 +1174,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
           ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
-          ...(entity.ratings ? (combat.breakMeterVersion === 1 ? ['ar', 'dr', 'pr', 'ward'] : ['ar', 'dr', 'pr']).map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
+          ...(entity.ratings && combat.breakMeterVersion === 1 ? ['ward'].map(id => ({ label: t('combat.protection.ward'), value: ratingValue(combat, entity, id) })) : []),
           ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
@@ -3630,7 +3630,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, combatExpansionVersion: combat.combatExpansionVersion, action }) }];
+      return [event.cardInstanceId, { stanceCard: CardAsEnteredStance({ ...definition, cardTags: tags }, events, event), aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, combatExpansionVersion: combat.combatExpansionVersion, action }) }];
     })); } catch (e) { visualPlans = new Map(); console.warn('[combat] visual plan failed:', e && e.message); }
     // The fight is final until the next dispatch: quote the finish render's hand and intents in idle time.
     try { previewMemo.prewarm(fightPrewarmJobs({ combat, previewCard, projectIntent: projectCombatIntent, upcastRanks: id => upcastRanksByCard.get(id) })); } catch (e) { /* the finish render quotes as before */ }

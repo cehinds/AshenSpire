@@ -8,7 +8,8 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 
 // Shape of the Core 2 Act 1 map over many seeds (owner, 2026-11-14: a visible, forking act map).
-const SEEDS = 300, WALKS = 20, FREE_DEPTHS = new Set([2, 4, 5, 7, 8]);
+// Act 1 opens on a fight (depth 1) and rests at one mid depth (5 or 6) and at the pre-boss depth 11 (owner, 2026-11-18).
+const SEEDS = 300, WALKS = 20;
 const FIGHTS = new Set(['fight', 'elite', 'boss']);
 
 const profile = resolveGameProfile('core');
@@ -31,14 +32,16 @@ function measure() {
     const stack = [...map.startIds];
     while (stack.length) for (const t of map.nodes[stack.pop()].next) if (!seen.has(t)) { seen.add(t); stack.push(t); }
     bad.unreachable += ids.length - seen.size;
-    // No two edges in one gap swap column order, rests fill depths 3, 6, 9 in every lane, and every lane that could hold an elite does.
+    // No two edges in one gap swap column order, a rest depth is rests throughout, and every lane that could hold an elite does.
+    const restDepths = new Set(ids.filter(id => map.nodes[id].actualType === 'rest').map(id => map.nodes[id].floor));
+    const freeDepths = new Set(ids.map(id => map.nodes[id].floor).filter(floor => floor >= 2 && floor <= 10 && !restDepths.has(floor)));
     for (const floor of new Set(ids.map(id => map.nodes[id].floor))) {
       const edges = ids.filter(id => map.nodes[id].floor === floor).flatMap(id => map.nodes[id].next.map(t => [map.nodes[id].col, map.nodes[t].col]));
       for (const a of edges) for (const b of edges) if ((a[0] - b[0]) * (a[1] - b[1]) < 0) bad.crossings++;
     }
-    for (const id of ids) { const n = map.nodes[id]; if ([3, 6, 9].includes(n.floor) !== (n.actualType === 'rest') && n.actualType !== 'boss') bad.restMisplaced++; }
-    for (const b of branches) for (let col = 0; col < map.columns; col++) {
-      const lane = ids.map(id => map.nodes[id]).filter(n => n.branch === b && n.col === col && n.floor >= 3 && n.actualType !== 'rest' && n.actualType !== 'boss');
+    for (const id of ids) { const n = map.nodes[id]; if (restDepths.has(n.floor) !== (n.actualType === 'rest') && n.actualType !== 'boss') bad.restMisplaced++; }
+    for (const b of branches) for (let col = 0; col < map.bossIds.length * 6; col++) {
+      const lane = ids.map(id => map.nodes[id]).filter(n => n.branch === b && Number(n.id.split('_')[1]) === col && n.floor >= 3 && n.actualType !== 'rest' && n.actualType !== 'boss');
       if (lane.length && !lane.some(n => n.actualType === 'elite')) bad.laneNoElite++;
     }
     for (let w = 0; w < WALKS; w++) {
@@ -46,7 +49,7 @@ function measure() {
       while (node.next.length) {
         const standing = node;
         node = map.nodes[node.next[rng.int('map', 0, node.next.length - 1)]];
-        if (FREE_DEPTHS.has(node.floor)) { stepsIn++; if (standing.next.length >= 2 && new Set(standing.next.map(t => map.nodes[t].actualType)).size >= 2) forkSteps++; }
+        if (freeDepths.has(node.floor)) { stepsIn++; if (standing.next.length >= 2 && new Set(standing.next.map(t => map.nodes[t].actualType)).size >= 2) forkSteps++; }
         if (FIGHTS.has(node.actualType)) fights++;
       }
       if (node.actualType !== 'boss') bad.deadWalks++;
@@ -66,7 +69,7 @@ test('Core act 1 map shape measurement', () => {
   assert.equal(m.unreachable, 0, 'every node is reachable from the start');
   assert.equal(m.deadWalks, 0, 'every walk ends at a boss');
   assert.equal(m.crossings, 0, 'no crossing edges');
-  assert.equal(m.restMisplaced, 0, 'rests exactly on depths 3, 6, 9');
+  assert.equal(m.restMisplaced, 0, 'every rest depth is rests throughout, and no other depth holds one');
   assert.equal(m.laneNoElite, 0, 'every lane with an eligible depth holds an elite');
   assert.equal(m.shopShare, 1, 'every branch has a shop on depths 2-8');
   assert.equal(m.hiddenShare, 0, 'no node is hidden');

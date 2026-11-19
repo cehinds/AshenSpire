@@ -146,6 +146,83 @@ test('transient download failures retry within a bound, and permanent errors do 
   assert.equal(failures, 3);
 });
 
+function interruptedResponse() {
+  let pulls = 0;
+  return new Response(new ReadableStream({
+    pull(controller) {
+      if (pulls++ === 0) controller.enqueue(Buffer.from('partial bytes'));
+      else controller.error(new TypeError('terminated'));
+    },
+  }));
+}
+
+test('an interrupted response body retries and discards its partial bytes', async () => {
+  let calls = 0; const waits = [];
+  const reader = siteReader(site, {
+    pause: async ms => { waits.push(ms); },
+    fetchImpl: async () => ++calls === 1 ? interruptedResponse() : new Response('complete payload'),
+  });
+  assert.deepEqual(await reader('objects/test.webp'), Buffer.from('complete payload'));
+  assert.equal(calls, 2); assert.deepEqual(waits, [250]);
+});
+
+test('repeated interrupted response bodies stop after three downloads and name the path', async () => {
+  let calls = 0; const waits = [];
+  const reader = siteReader(site, {
+    pause: async ms => { waits.push(ms); },
+    fetchImpl: async () => { calls++; return interruptedResponse(); },
+  });
+  await assert.rejects(reader('objects/test.webp'), /objects\/test\.webp: download failed: terminated/);
+  assert.equal(calls, 3); assert.deepEqual(waits, [250, 500]);
+});
+
+test('an oversized streamed response fails on its first download', async () => {
+  let calls = 0; const waits = [];
+  const reader = siteReader(site, {
+    pause: async ms => { waits.push(ms); },
+    fetchImpl: async () => {
+      calls++;
+      return new Response(new ReadableStream({
+        start(controller) { controller.enqueue(Buffer.from('too large')); controller.close(); },
+      }));
+    },
+  });
+  await assert.rejects(reader('objects/test.webp', { limit: 3 }), /objects\/test\.webp: exceeds expected byte limit 3/);
+  assert.equal(calls, 1); assert.deepEqual(waits, []);
+});
+
+for (const headerFailure of ['fetch rejection', 'HTTP 503']) {
+test(`${headerFailure} and body failures share the same three-download transport budget`, async () => {
+  let calls = 0; const waits = [];
+  const reader = siteReader(site, {
+    pause: async ms => { waits.push(ms); },
+    fetchImpl: async () => {
+      calls++;
+      if (calls === 1) {
+        if (headerFailure === 'fetch rejection') throw new TypeError('fetch failed');
+        return new Response(null, { status: 503 });
+      }
+      return calls === 2 ? interruptedResponse() : new Response('complete payload');
+    },
+  });
+  assert.deepEqual(await reader('objects/test.webp'), Buffer.from('complete payload'));
+  assert.equal(calls, 3); assert.deepEqual(waits, [250, 500]);
+});
+}
+
+test('mixed header and body failures cannot restart the transport budget', async () => {
+  let calls = 0; const waits = [];
+  const reader = siteReader(site, {
+    pause: async ms => { waits.push(ms); },
+    fetchImpl: async () => {
+      if (++calls === 2) throw new TypeError('fetch failed');
+      return interruptedResponse();
+    },
+  });
+  await assert.rejects(reader('objects/test.webp'), /objects\/test\.webp: download failed: terminated/);
+  assert.equal(calls, 3); assert.deepEqual(waits, [250, 500]);
+});
+
 test('HTTP 429 backs off (honouring Retry-After) for more tries than other transient errors, then fails', async () => {
   let n = 0; const waits = [];
   const ok = () => new Response('x', { status: 200 });

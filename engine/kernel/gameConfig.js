@@ -261,7 +261,11 @@ function resolveStatPointGear(item, settings, rank) {
   const ratingsWeights = gearWeights(item, settings, 'ratings');
   const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
   const ratingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
-  const poise = authored.poise || Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * (ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0)));
+  // Owner, 2026-11-18: max Poise = 1 + CON + other Poise bonuses. Gear that guards (armour, shields, defensive two-handers) simply ADDS
+  // its Poise; an item whose ratings weights name no Poise (a dagger, a bow, a staff) adds 0 unless it authors some, so `poiseMin`
+  // is the floor only for an item that has a Poise share at all.
+  const poiseShare = ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0;
+  const poise = authored.poise || (poiseShare > 0 ? Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * poiseShare)) : 0);
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
   const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
@@ -509,7 +513,7 @@ export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
 }
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
-  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
   const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, enemyAttributeTotal(row, settings, id, own[id], bonus)]));
   const pools = {};
@@ -728,6 +732,9 @@ function verifySettings(modules, instances = {}) {
     const {restFloors,restsPerAct,prebossNodes,minimumThreatFloor} = modules.routes;
     if (prebossNodes + 1 < minimumThreatFloor) fail('$/modules/routes/prebossNodes', 'boss depth must reach minimumThreatFloor');
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
+    const {restGap,startRestFromAct} = modules.routes;
+    if (restGap && restGap.min > restGap.max) fail('$/modules/routes/restGap', 'min must not exceed max');
+    if (startRestFromAct != null && startRestFromAct > modules.routes.acts) fail('$/modules/routes/startRestFromAct', 'must not exceed acts');
     if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
   // A one-service visit needs a deck-free fallback so a visit can always be spent; "all" visits heal on arrival, so any list will do.
@@ -743,7 +750,7 @@ function verifyRouteFirstFloor(modules, content) {
   const {firstFloor = null, restFloors, minimumThreatFloor} = routes;
   if (firstFloor === null) return;
   const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
-  if (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
+  if (!alternatives.includes(firstFloor) || (restFloors.includes(1) && !(routes.startRestFromAct > 1)) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
 }
 function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;
@@ -810,7 +817,7 @@ export function resolveGameAuthor(author, catalog) {
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
-    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
+    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + Math.floor(row.attributes.intelligence / Math.max(1, content.stats.handPointsPerIncrease || 1))]));
   }
   const artifacts = [...catalog.runtimeArtifacts, ...bundle.artifacts,
     ...Object.entries(modules).filter(([,v]) => v).flatMap(([id]) => catalog.modules[id].artifacts),

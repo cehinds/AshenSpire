@@ -122,8 +122,8 @@ function fallbackOnError(well, glyphText) {
 export function renderInventoryItemCard(model) {
   const row = model.properties;
   const equipped = row.equippedLabels.length
-    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
-      ? 'Equipped'
+    ? (row.equippedLabels.length === 1 && row.equippedPlain === true
+      ? t('deckEditor.tag.equipped')
       : `Equipped: ${row.equippedLabels.join(' / ')}`)
     : '';
   const element = face({

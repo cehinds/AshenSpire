@@ -4,7 +4,7 @@ import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfi
 import { ItemStatBonus } from './itemPicks.js';
 import { ClassLevelAttributeBonus } from './classLevelBonus.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
-const STATS = ['hp','mp','sp','ar','dr','poise','ward','evasion','precision',...ATTRIBUTES];
+const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
 export function gameProfileEquipmentReceipt(registries, run) {
   const settings = gameModule(run,'gear');

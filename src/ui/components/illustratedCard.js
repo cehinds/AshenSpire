@@ -13,9 +13,9 @@ import {FACE_EFFECT_LINES} from '../../model/cardFaceProjection.js';
 import {uiConfig} from '../../config/generated/ui.js';
 import {cardArtStyle,CARD_ART_LEGACY,CARD_ART_REVIEWED} from '../cardArtStyle.js';
 
-export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,registries,style}={}) {
+export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,preview,registries,style}={}) {
   const override=CARD_COMPONENTS.cards[id]?.layers.find(l=>l.bind==='artwork')?.href;
-  const existing=playingCardArt(ref,{large,extended,definition,registries,style});
+  const existing=playingCardArt(ref,{large,extended,definition,preview,registries,style});
   const mode=style??cardArtStyle();
   if(!existing&&definition&&Object.hasOwn(definition,'cardTags')&&mode!==CARD_ART_LEGACY&&mode!==CARD_ART_REVIEWED)return null;
   // The shipped layout's older painting is part of Legacy. User component

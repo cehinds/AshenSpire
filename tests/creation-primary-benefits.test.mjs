@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
-import { statRowValue } from '../src/model/derivedStats.js';
+import { statRowValue, resolvedRuleRow } from '../src/model/derivedStats.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { resourceStrip } from '../src/ui/components/creationCards.js';
 import { withKitDom } from './helpers/dom.mjs';
@@ -17,7 +17,8 @@ const cards = (reg, character) => attributeCardModels(reg, character.attributes,
 test('each primary point adds one to its main stats and no other main stat', () => {
   const mains = { ar: 'strength', dr: 'dexterity', hp: 'constitution', poise: 'constitution', ward: 'wisdom', pr: 'intelligence' };
   for (const [id, owner] of Object.entries(mains)) {
-    const row = contentBundle.derivedStatRules.rules[id];
+    // AR, DR and PR have no table row any more: their channel is the attribute itself (resolvedRuleRow).
+    const row = resolvedRuleRow(contentBundle.derivedStatRules, id);
     const value = (attributes) => statRowValue(row, { attributes, level: 1, statId: id }).value;
     for (const attribute of Object.keys(run.attributes)) {
       assert.equal(value({ ...run.attributes, [attribute]: run.attributes[attribute] + 1 }) - value(run.attributes), attribute === owner ? 1 : 0, `${attribute} -> ${id}`);
@@ -28,9 +29,9 @@ test('each primary point adds one to its main stats and no other main stat', () 
 
 test('primary faces name the main bonus while secondary benefits remain inspectable', () => {
   const rows = cards(registries, run);
-  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage / Attack Rating (AR) +1 per point');
+  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage +1 per point');
   assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health +1 per point · Poise +1 per point');
-  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage / Potency Rating (PR) +1 per point');
+  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage +1 per point');
   assert.ok(rows.find((row) => row.id === 'wisdom').reveal.lines.some((line) => line.startsWith('Mana ')));
 });
 
@@ -48,21 +49,22 @@ test('one allocated point changes the actual character projection by one', () =>
 
 test('custom fractional bonuses and caps use the saved rules after live config changes', () => {
   const bundle = { ...contentBundle, derivedStatRules: structuredClone(contentBundle.derivedStatRules) };
-  bundle.derivedStatRules.rules.ar = { base: 0, strength: 0.5, max: 9 };
+  bundle.derivedStatRules.rules.ward = { base: 1, wisdom: 0.5, max: 9 };
   bundle.derivedStatRules.rules.hp = { base: 51, constitution: 4, perLevel: 2 };
   const custom = createRegistries(configuredContentBundle(bundle, {}));
   const saved = createRunState({ registries: custom, classId: 'reaver', seed: 8 });
   const rows = cards(registries, saved);
-  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage / Attack Rating (AR) +1 every 2 points (max 9)');
+  assert.equal(rows.find((row) => row.id === 'wisdom').face.mainSummary, 'Ward +1 every 2 points (max 9)');
   assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health +4 per point · Poise +1 per point');
 });
 
 test('resource rows show each total once in readable groups', () => withKitDom(() => {
   const projection = statProjection(registries, run);
   const poise = playerPoiseThresholdReceipt(registries, run);
-  const strip = resourceStrip([...projection.derived, { id: 'attackRating', faceLabel: 'AR', value: 999 }], poise);
+  const strip = resourceStrip([...projection.derived, { id: 'attackRating', faceLabel: 'Attack', value: 999 }], poise);
   const ids = [...strip.querySelectorAll('[data-stat]')].map((node) => node.dataset.stat);
-  assert.deepEqual(ids, ['hp', 'stamina', 'mana', 'ar', 'pr', 'dr', 'poise', 'ward', 'handSize', 'draw', 'openingHand']);
+  assert.deepEqual(ids, ['hp', 'stamina', 'mana', 'poise', 'ward', 'handSize', 'draw', 'openingHand']);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(strip.querySelector('[data-stat="ar"]').querySelector('.cv').textContent, String(poise.ratings.ar));
+  assert.equal(strip.querySelector('[data-stat="ar"]'), null, 'no AR chip');
+  assert.equal(strip.querySelector('[data-stat="ward"]').querySelector('.cv').textContent, String(poise.ratings.ward));
 }));

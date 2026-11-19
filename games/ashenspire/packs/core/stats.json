@@ -1,13 +1,10 @@
 {
-  "handBase": 4,
+  "handBase": 5,
   "handAttribute": "intelligence",
+  "handPointsPerIncrease": 4,
   "attributePointTotal": 6,
   "levelGains": {
-    "strength": {
-      "ar": 1
-    },
     "dexterity": {
-      "dr": 1,
       "sp": 1
     },
     "constitution": {
@@ -16,10 +13,7 @@
     "wisdom": {
       "mp": 1
     },
-    "intelligence": {
-      "draw": 1,
-      "mp": 1
-    }
+    "intelligence": {}
   },
   "poolBases": {
     "hp": 35,
@@ -32,18 +26,12 @@
     "stamina": 0
   },
   "pointsPerIncrease": {
-    "sp": 3,
-    "mp": 3
+    "sp": 4,
+    "mp": 4
   },
   "attributeBaseline": {
-    "sp": 1,
-    "mp": 1
-  },
-  "maxOf": {
-    "mp": [
-      "intelligence",
-      "wisdom"
-    ]
+    "sp": 0,
+    "mp": 0
   },
   "secondaryPolicy": "primaryOnly"
 }

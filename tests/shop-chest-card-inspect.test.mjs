@@ -106,14 +106,14 @@ test('chest card picks: the (i) shows on the selected card only, and opens that 
   assert.deepEqual(claims, [], 'the (i) never claims');
 }));
 
-// Owner 2026-11-18: a face tap only ever selects, even on the selected face; the (i) badge inspects.
-test('chest card picks: a tap on a face only selects, even a second tap on the selected face', () => withGlobalDom(() => {
+// Owner 2026-11-18: a face tap only ever selects or deselects, even on the selected face; the (i) badge inspects.
+test('chest card picks: a tap on a face only selects or deselects, never inspects', () => withGlobalDom(() => {
   const { faces, claims } = mountChest();
   tap(faces[0]);
   assert.equal(modal(), null);
   tap(faces[0]);
   assert.equal(modal(), null, 'a second tap on the selected face does not inspect');
-  assert.deepEqual(chosen(faces), [true, false, false], 'and keeps it chosen');
+  assert.deepEqual(chosen(faces), [false, false, false], 'it puts the chosen card back');
   tap(faces[2]);
   assert.equal(modal(), null, 'another card only selects');
   assert.deepEqual(chosen(faces), [false, false, true]);

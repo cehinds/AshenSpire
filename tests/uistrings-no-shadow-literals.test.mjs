@@ -48,6 +48,7 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/screens/combat.js', 'Select', 'an aria-label that starts with the verb (`Select ${name}`), not the reward.picks.prompt rows ("Select {count} card rewards")'],
   ['src/ui/components/creationCards.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/components/creationCards.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/components/footerArt.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],

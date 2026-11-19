@@ -876,6 +876,10 @@ backgrounds and effects remain separate components.
 
 The 73 additional status/mineral cutouts reuse existing project proposal PNGs byte-for-byte. Source URLs, SHA-256 hashes and original component labels are recorded in `asset-data/card-art/reviewed-library.json` and [AI-Art provenance](https://github.com/cehinds/AI-Art/blob/ashenspire-hd-assets-v25/provenance/AshenSpire/reviewed-card-cutouts.json). Existing authorship and unresolved provenance remain unchanged; reuse does not establish a new license.
 
+The default physical Skill object, `assets-display/card-cutouts/skill.object.png`, is first-party artwork generated with OpenAI image generation and selected by the project owner. The game uses the approved PNG bytes. The SHA-256 is recorded in [the reviewed card-art library](asset-data/card-art/reviewed-library.json).
+
+The stat modifier cutouts at `assets-display/card-cutouts/stat.*.png` are project-directed OpenAI ImageGen artwork selected by the project owner. The game uses the original transparent PNG bytes. The [reviewed card-art library](asset-data/card-art/reviewed-library.json) records their dimensions and SHA-256 hashes. AI-Art records the generation provenance in `provenance/AshenSpire/stat-buff-cutouts.json`.
+
 ### Recipient impact, casting and reaction sprites (2026-11-18)
 
 | Asset path | Source | Rights |

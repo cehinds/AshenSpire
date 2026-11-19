@@ -19,11 +19,12 @@ const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intellig
 const at = (n, overrides = {}) => ({ ...Object.fromEntries(ATTRIBUTES.map((id) => [id, n])), ...overrides });
 const table = contentBundle.derivedStatRules;
 
-test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, min, max', () => {
-  assert.equal(table.rulesetVersion, 7);
-  const ids = ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw', 'handSize', 'ar', 'dr', 'pr', 'ward', 'poise'];
+test('ruleset 8 carries nine rows in ONE shape: base, five weights, perLevel, min, max (no AR, DR or PR row)', () => {
+  assert.equal(table.rulesetVersion, 8);
+  const ids = ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw', 'handSize', 'ward', 'poise'];
   assert.deepEqual(Object.keys(table.rules).sort(), [...ids].sort());
-  assert.deepEqual([...DERIVED_STAT_IDS].sort(), [...ids].sort());
+  // The id list still names the three retired rows, which a ruleset-7 save carries; a ruleset-8 table has none.
+  assert.deepEqual([...DERIVED_STAT_IDS].sort(), [...ids, 'ar', 'dr', 'pr'].sort());
   // The three hand rows count from a baseline (the retired groups' "points
   // before bonuses", restated exactly), and the opening hand alone adds its
   // per-class form (#1294's "class base 3–5, +1 from stats"); each class
@@ -41,16 +42,15 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   }
 });
 
-test("Mana weights sum to 1; Stamina scales from base 3; each combat rating has one primary point", () => {
+test("Mana is 1 + floor(WIS / 4); Stamina is 3 + floor(DEX / 4); each remaining rating has one primary point (owner, 2026-11-18)", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
-  assert.equal(sum('mana'), 1);
-  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0.125, 0, 0.25, 0.5, 0.125]);
+  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0, 0, 0, 0.25, 0]);
   assert.equal(table.rules.mana.base, 1);
-  assert.ok(Math.abs(sum('stamina') - 0.9) < 1e-9);
-  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0.25, 0.2, 0.2]);
+  assert.equal(sum('stamina'), 0.25);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0, 0, 0]);
   assert.equal(table.rules.stamina.perLevel, 0.1);
   assert.equal(table.rules.stamina.base, 3);
-  for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
+  for (const id of ['ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
 });
 
 test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8, and min/max clamp', () => {
@@ -65,7 +65,7 @@ test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8
 
 test('hand scaling remains preserved while ratings use their single primary bonus', () => {
   for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
-    const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
+    const draw = Math.min(10, 5 + Math.floor(attrs.intelligence / 4));
     assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 7 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5)));
@@ -144,9 +144,9 @@ test('a hand holds at least one card: a hand size under 1 is refused before a fi
 });
 
 test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with its level and bounds', async () => {
-  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 999, 'gameConfig.derivedStatRules.rules.ar.max': 999 });
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 999, 'gameConfig.derivedStatRules.rules.ward.max': 999 });
   assert.equal(configured.derivedStatRules.rules.hp.max, undefined);
-  assert.equal(configured.balance.combatRatings.ratings.ar.max, undefined);
+  assert.equal(configured.balance.combatRatings.ratings.ward.max, undefined);
   assert.equal(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 500 }).derivedStatRules.rules.hp.max, 500);
   const { playerPoiseThresholdReceipt } = await import('../src/model/statProjection.js');
   const registries = createRegistries(configuredContentBundle(contentBundle, {}));
@@ -163,9 +163,9 @@ test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with 
 test('rating receipts show a row bound', async () => {
   const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
   const { attributeRatingReceipt: receiptOf } = await import('../src/model/ratingFormula.js');
-  const config = { ratings: { ar: { base: 0, strength: 1, max: 1 }, dr: { base: 0 }, pr: { base: 0 }, poise: { base: 0 }, ward: { base: 0 } } };
-  const ar = receiptOf(config, { strength: 2 }, 'ar');
-  const html = renderPlayerPoise({ ratings: { ar: 3 }, ratingAttributes: { ar }, ratingSources: [{ kind: 'equipment', name: 'Sword', ar: 2 }], note: '' });
+  const config = { ratings: { ar: { base: 0 }, dr: { base: 0 }, pr: { base: 0 }, poise: { base: 0 }, ward: { base: 0, wisdom: 1, max: 1 } } };
+  const ward = receiptOf(config, { wisdom: 2 }, 'ward');
+  const html = renderPlayerPoise({ ratings: { ward: 3 }, ratingAttributes: { ward }, ratingSources: [{ kind: 'equipment', name: 'Charm', ward: 2 }], note: '' });
   assert.match(html, /<b>-1<\/b> held to its max/);
 });
 
@@ -202,11 +202,11 @@ test('bounds are said; saved levels and Mana ceilings are held', async () => {
   const con = attributeCardModels(capped, cappedRun.attributes, { projection: statProjection(capped, cappedRun) }).find((card) => card.id === 'constitution');
   assert.match(con.face.summary, /HP per pt \(max 40\)/);
   // ...and a rating row's Max reaches its fact too (Codex, #1321).
-  const arCapped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.ar.max': 3 }));
+  const arCapped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.ward.max': 3 }));
   const arRun = createRunState({ seed: 6, classId: 'reaver', registries: arCapped });
-  const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'strength');
-  assert(str.reveal.lines.some((line) => /^AR: floor\(1 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
-  assert.match(str.face.summary, /AR weight 1 \(max 3\)/, 'the cap reaches the face beside the other feeds');
+  const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'wisdom');
+  assert(str.reveal.lines.some((line) => /^Ward: floor\(1 × WIS\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
+  assert.match(str.face.summary, /Ward weight 1 \(max 3\)/, 'the cap reaches the face beside the other feeds');
   assert.doesNotMatch(con.face.summary, /weight/, 'an uncapped rating stays off a face that has feeds');
   // A weight with no exact cycle still says its cap (Codex, #1321).
   const odd = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.strength': 0.3333, 'gameConfig.derivedStatRules.rules.hp.max': 40 }));

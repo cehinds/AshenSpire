@@ -1,3 +1,4 @@
+import { ChannelLabel } from './damageChannels.js';
 import { gameModule } from './gameProfile.js';
 import { uiSentence } from './blacksmithConfig.js';
 import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
@@ -179,7 +180,7 @@ export function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
   const after = resolveCard(registries, { ...instance, upgraded: false, smithingLevel: nextLevel });
   const liveProfile = (registries.equipment.basicCardProfiles || []).find((row) => row.id === instance.profileId);
   const profile = run.equipmentProfileRuleSnapshot?.profiles?.[instance.profileId] || liveProfile || null;
-  const rating = profile ? Object.freeze({ id: profile.ratingId, label: profile.ratingId.toUpperCase() }) : null;
+  const rating = profile ? Object.freeze({ id: profile.ratingId, label: ChannelLabel(profile.ratingId) }) : null;
   return Object.freeze({
     instanceId: instance.instanceId,
     cardId: instance.cardId,

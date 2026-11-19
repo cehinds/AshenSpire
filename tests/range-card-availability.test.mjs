@@ -14,7 +14,8 @@ import { recordCollectedCards } from '../src/model/collectedCards.js';
 const profile = structuredClone(resolveGameProfile('core'));
 const template = profile.content.cards.find(card => card.id === 'core.defend');
 const movement = { ...template, id: 'fixture.advance', name: 'Advance fixture', rarity: 'common', rank: 1,
-  tags: [], effects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] };
+  // The deck editor reads the face's cost profile, which needs the card's one classification row (tagging.csv), so the fixture states it.
+  tags: ['classification.skill'], effects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] };
 const mixed = { ...movement, id: 'fixture.closingDodge', name: 'Closing Dodge fixture', effects: [
   { op: 'applyStatus', target: 'self', status: 'evade', stacks: 1 }, ...movement.effects] };
 profile.content.cards.push(movement, mixed);

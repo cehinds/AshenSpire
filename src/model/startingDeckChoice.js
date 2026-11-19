@@ -61,6 +61,8 @@ export function ApplyStartingDeckChoice(run, counts, settings = {}) {
   };
   const chosen = pool.flatMap((id) => Array.from({ length: counts?.[id] || 0 }, () => ({ instanceId: mint(), cardId: id, upgraded: false })));
   run.deck = [...chosen, ...rest];
+  // The chosen opening cards are starters too (the deck editor tags only cards collected later REWARD).
+  run.starterCardIds = [...new Set([...(run.starterCardIds || []), ...chosen.map((card) => card.cardId)])];
   recordCollectedCards(run);
   return run;
 }

@@ -12,8 +12,22 @@ import { actorRangeKey, bandCap, rangePairKey } from '../model/combatEngagement.
 import { equippedIn } from '../model/loadout.js';
 import { FORMATION_ROWS, formationDimensions, perspectiveEnemyCellOrder } from '../model/formationLayout.js';
 import { attackDescriptor } from '../model/attackTags.js';
+import * as S from '../framework/statusSemantics.js';
 
 export const BandRows = Object.freeze(['front', 'back']);
+
+// The Retreat status (owner 2026-11-18): an enemy the player sent back carries Retreat stacks and stays in the back row while it has one.
+// A stack is removed by one Advance, the player's (every enemy loses one) or the enemy's own (its approach spends the stack instead of moving it).
+// Advancing costs `range.advanceSpPerBand` (1) Stamina for the player, as the range policy states; the stack counts are the bands block's
+// optional `retreatStacks` (given per Retreat or push, default 1) and `advanceRemovesStacks` (default 1).
+export const RETREAT_STATUS = 'retreat';
+export const RetreatStacks = enemy => S.getStacks(enemy, RETREAT_STATUS);
+function addRetreat(ctx, enemy) {
+  S.applyStatus(ctx, enemy, 'retreat', BandsActive(ctx)?.retreatStacks ?? 1, null);
+}
+function spendRetreat(ctx, enemy, amount) {
+  if (RetreatStacks(enemy) > 0) S.removeStatus(ctx, enemy, RETREAT_STATUS, { amount, reason: 'consumed' });
+}
 
 /** BandsActive(ctx) -> the band rules when the fight has rows and engagement is on, else null. */
 export function BandsActive(ctx) {
@@ -75,6 +89,7 @@ export function InitBandRows(ctx, placements = []) {
 export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   if (!BandsActive(ctx) || !BandRows.includes(row) || enemy.row === row) return false;
   enemy.row = row;
+  if (row === 'front') S.removeStatus(ctx, enemy, RETREAT_STATUS, { reason: 'consumed' });
   placeInRow(ctx, enemy);
   for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, row === 'back' ? 1 : 0);
   SyncBandRows(ctx);
@@ -98,7 +113,14 @@ export function SwapEnemyRows(ctx, target) {
   return true;
 }
 
+// The card play (its range root id) whose own Advance stepped the entity in, so a push in that same play (Hit and Run) steps it back out, while a
+// push in a play that did not advance (Gale Push while already Advanced) leaves the Advance alone (SPEC: Advanced lasts until your next turn ends or you play Retreat).
+const advancedByPlay = new WeakMap();
+/** MarkAdvancedByPlay(entity, rootId): the play with this root advanced the entity in. */
+export function MarkAdvancedByPlay(entity, rootId) { if (entity && rootId) advancedByPlay.set(entity, rootId); }
+
 function endAdvance(ctx, entity) {
+  advancedByPlay.delete(entity);
   entity.advanced = 0;
   for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'back') setPair(ctx, entity, enemy, 1);
   SyncBandRows(ctx);
@@ -109,8 +131,12 @@ export function SetAdvanced(ctx, entity, on) {
   const rules = BandsActive(ctx);
   if (!rules || !entity) return false;
   if (!on) { if (!(entity.advanced > 0)) return false; endAdvance(ctx, entity); return true; }
-  if (entity.advanced === rules.advancedTurnEnds) return false;
+  // Each Advance of the player removes Retreat stacks from every enemy (one each by default), even when the Advance is already
+  // at its full duration (Codex on PR #2835: a second Advance in a turn still spends a stack).
+  const holding = ctx.enemies.some(enemy => enemy.alive && RetreatStacks(enemy) > 0);
+  if (entity.advanced === rules.advancedTurnEnds && !holding) return false;
   entity.advanced = rules.advancedTurnEnds;
+  for (const enemy of ctx.enemies) if (enemy.alive) spendRetreat(ctx, enemy, rules.advanceRemovesStacks ?? 1);
   SyncBandRows(ctx);
   ctx.emit?.('combatAdvancedChanged', { sourceId: entity.id, advanced: true, turnEnds: entity.advanced });
   return true;
@@ -122,11 +148,11 @@ export function BandsPlayerTurnEnd(ctx) {
   for (const player of playerEntities(ctx)) if (player.advanced > 0 && --player.advanced === 0) endAdvance(ctx, player);
 }
 
-/** BandsEnemyPhaseStart(ctx): with no front-row enemy alive, every back-row enemy steps forward. */
+/** BandsEnemyPhaseStart(ctx): with no front-row enemy alive, every back-row enemy steps forward, except one still holding Retreat stacks (a retreated enemy stays back). */
 export function BandsEnemyPhaseStart(ctx) {
   if (!BandsActive(ctx)) return;
   const living = ctx.enemies.filter(enemy => enemy.alive);
-  if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
+  if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) if (!(RetreatStacks(enemy) > 0)) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
 }
 
 /** BandsFormationBlock(ctx, enemy): the Block an enemy gains at its turn start for standing in a row with another living enemy (0 when alone or without rows). */
@@ -136,20 +162,43 @@ export function BandsFormationBlock(ctx, enemy) {
   return ctx.enemies.some(other => other !== enemy && other.alive && other.row === enemy.row) ? rules.formationBlock : 0;
 }
 
+/** BandsEnemyAdvance(ctx, enemy, reason): a back-row enemy's own Advance (owner 2026-11-18): while it holds Retreat stacks it spends ONE and stays back; with none it steps to the front. Returns true when it moved. */
+export function BandsEnemyAdvance(ctx, enemy, reason = 'advance') {
+  if (RetreatStacks(enemy) > 0) { spendRetreat(ctx, enemy, 1); return false; }
+  SetEnemyRow(ctx, enemy, 'front', reason);
+  return true;
+}
+
+/** BandsEnemyHeldBack(ctx, enemy): true when the enemy stands in the back row holding Retreat stacks, so an Advance of its own spends a stack and does not close the distance. */
+export const BandsEnemyHeldBack = (ctx, enemy) => Boolean(BandsActive(ctx)) && enemy?.row === 'back' && RetreatStacks(enemy) > 0;
+
 /** BandsMoveEngagement(ctx, source, target, bands): a moveEngagement effect under rows. Returns true when rows handled it (the pair band is not moved by the caller). */
-export function BandsMoveEngagement(ctx, source, target, bands) {
+export function BandsMoveEngagement(ctx, source, target, bands, rootId = null) {
   if (!BandsActive(ctx)) return false;
   if (source.kind === 'enemy') {
     if (bands > 0) { SetEnemyRow(ctx, source, 'back', 'retreat'); return true; }
-    if (source.row === 'back') { SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
+    // A retreated enemy's approach removes one of its Retreat stacks instead of moving it forward; with none it steps forward as normal.
+    // The move is spent either way, so the intent shown (the step forward) is the move played.
+    if (source.row === 'back') { BandsEnemyAdvance(ctx, source, 'approach'); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
+  // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
+  // The push ends the pusher's Advance only when this same play advanced in first (Hit and Run steps back out); any other push leaves the Advance on.
+  if (bands > 0 && target?.kind === 'enemy') { if (rootId && advancedByPlay.get(source) === rootId) SetAdvanced(ctx, source, false); SetEnemyRow(ctx, target, 'back', 'push'); addRetreat(ctx, target); return true; }
   if (bands < 0) {
     if (target?.row === 'back') { SetAdvanced(ctx, source, true); return true; }
     return false; // a front enemy held at reach by a Backstep: the ordinary pair move closes it
   }
   SetAdvanced(ctx, source, false); // Backstep: you step back out of every reach you closed
   return false;
+}
+
+/** PlayerRetreat(ctx, entity): the player's Retreat (owner 2026-11-18): the Advance ends if there is one, and every living front-row enemy steps back (band +1). Works Advanced or not. */
+export function PlayerRetreat(ctx, entity) {
+  if (!BandsActive(ctx)) return false;
+  SetAdvanced(ctx, entity, false);
+  for (const enemy of ctx.enemies) if (enemy.alive && enemy.row === 'front') { SetEnemyRow(ctx, enemy, 'back', 'retreat'); addRetreat(ctx, enemy); }
+  return true;
 }
 
 const pieceTags = piece => [...(piece?.tags || []), ...(piece?.propertyTags || [])];
@@ -178,7 +227,7 @@ export function GrantRetreatCard(ctx) {
 /** BandsEnemyBackAtPhase(ctx, enemy): true when the enemy will still stand in the back row when the coming enemy phase begins (an empty front row steps it forward first). */
 export function BandsEnemyBackAtPhase(ctx, enemy) {
   if (!BandsActive(ctx) || enemy?.row !== 'back') return false;
-  return ctx.enemies.some(other => other.alive && other.row === 'front');
+  return RetreatStacks(enemy) > 0 || ctx.enemies.some(other => other.alive && other.row === 'front');
 }
 
 /**
@@ -196,7 +245,7 @@ export function BandsEnemyPhaseRangeState(ctx) {
     const key = rangePairKey(actorRangeKey(ctx, player), actorRangeKey(ctx, enemy));
     if (!Object.hasOwn(copy.engagements, key)) continue;
     const advanced = player.advanced > 1;
-    const staysBack = enemy.row === 'back' && frontHeld;
+    const staysBack = enemy.row === 'back' && (frontHeld || RetreatStacks(enemy) > 0);
     if (advanced) copy.engagements[key] = 0;
     else if (enemy.row === 'back') copy.engagements[key] = staysBack ? Math.min(Math.max(1, copy.engagements[key]), bandCap(view.rangeState.policy)) : 0;
   }

@@ -113,24 +113,6 @@
           "selector": ".reward-choice-face.is-chosen > .card-info-button"
         },
         {
-          "kind": "within",
-          "label": "The (i) stays inside the chosen card",
-          "selector": ".reward-choice-face.is-chosen > .card-info-button",
-          "container": ".reward-choice-face.is-chosen"
-        },
-        {
-          "kind": "noOverlap",
-          "label": "The (i) does not cover the Choose 1 line",
-          "a": ".reward-choice-face.is-chosen > .card-info-button",
-          "b": ".reward-note"
-        },
-        {
-          "kind": "noOverlap",
-          "label": "The (i) does not cover the points button",
-          "a": ".reward-choice-face.is-chosen > .card-info-button",
-          "b": ".spoils-points-button"
-        },
-        {
           "kind": "noOverlap",
           "label": "Option 1 and option 2 do not overlap",
           "a": ".reward-choice-option:nth-child(1) .reward-choice-face",

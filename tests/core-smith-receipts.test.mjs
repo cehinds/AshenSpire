@@ -24,7 +24,7 @@ import { previewCard, dispatch } from '../src/engine/combat.js';
 // These suites measure what a smithed tier adds to a card's printed face. The Core player side scale (x0.7, floored; owner, 2026-11-18) hides a +1 tier behind
 // its rounding on most cards, so the author is pinned to 1 here, as the other suites that pin other rules' arithmetic do.
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
-author.modules = { ...author.modules, effects: { ...author.modules?.effects, playerDamageMultiplier: 1 } };
+author.modules = { ...author.modules, effects: { ...author.modules?.effects, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, blockGainMultiplier: 1 } };
 const profile = resolveGameProfile(author);
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // The Core Reaver starting deck (#2199) holds its Smash as the weapon art, not core.smash; these tests measure a plain
@@ -34,7 +34,7 @@ const fresh = () => {
   if (!run.deck.some((card) => card.cardId === 'core.smash')) run.deck.push(createCardInstance('core.smash', false, () => 'smash-fixture'));
   return run;
 };
-const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
+const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
 const fight = (run) => {
   const combat = createRunCombat({ registries: reg, run, rng: createRng(17), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
@@ -265,7 +265,7 @@ test('an armor tier that adds DEX raises DR, and Defend block preview equals the
   commitGameProfileRest(reg, run, 'smith', { itemRef: NIGHTVEIL });
   const after = gameProfileRatingReceipt(reg, run).totals.dr;
   assert.equal(after, dr + 1);
-  const weight = run.gameProfile.modules.defenses?.defenseRatingWeight ?? 1;
+  const weight = run.gameProfile.modules.defenses?.dexterityBlockWeight ?? 1;
   const now = defendBlock(withoutStanceBenefits(fight(run)));
   assert.ok(now > was);
   assert.equal(now - was, Math.floor((after - dr) * weight));
