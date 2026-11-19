@@ -1,3 +1,4 @@
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 // Owner ruling 2026-10-19 (Core): equipped gear grants cards; the Bone Sceptre grants Mana Surge
 // (1 SP, gain 2 Mana) to any class holding it.
 import test from 'node:test';
@@ -133,9 +134,11 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 // As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
 for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
-    const run = start('herald');
-    if (intelligencePoints) spendEarnedPoints(reg, run, 'wisdom', intelligencePoints);
-    const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    // These 1/2 MP cap examples predate robe-type capacity; the swap/save integration below keeps current gear.
+    const historical = legacyGearRegistries(reg);
+    const run = createRunState({ registries: historical, classId: 'herald', seed: 511, profileMeta: meta });
+    if (intelligencePoints) spendEarnedPoints(historical, run, 'wisdom', intelligencePoints);
+    const combat = createRunCombat({ registries: historical, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.player.maxMana, maxMana);
     const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
     assert.ok(card, 'Mana Surge reaches the fight piles');

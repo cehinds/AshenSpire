@@ -32,7 +32,8 @@ test('Strike and Defend add STR and DEX through the shipped multipliers', () => 
     const attributes = gameProfileEffectiveAttributes(registries, run);
     const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes.strength * effects.strengthDamageWeight)
       * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
-    const defend = Math.floor((10 + attributes.dexterity * effects.dexterityBlockWeight) * effects.blockGainMultiplier);
+    const armourBlock = classId === 'reaver' ? 3 : 1; // Heavy +3, Light +1 on Block cards.
+    const defend = Math.floor((10 + armourBlock + attributes.dexterity * effects.dexterityBlockWeight) * effects.blockGainMultiplier);
     assert.equal(number(face(run, 'core.strike')), strike, `${classId} Strike`);
     assert.equal(number(face(run, 'core.defend')), defend, `${classId} Defend`);
   }
@@ -42,9 +43,9 @@ test('a magic hit adds max(INT, WIS) and takes no physical cut', () => {
   const run = newRun('starseer');
   const attributes = gameProfileEffectiveAttributes(registries, run);
   const stat = Math.max(attributes.intelligence, attributes.wisdom);
-  const cantrip = registries.cards.get('core.cantrip').effects.find(effect => effect.op === 'damage').amount;
-  const expected = Math.floor((Math.ceil(cantrip * effects.baseDamageMultiplier) + stat * effects.magicStatWeight) * effects.playerDamageMultiplier);
-  assert.equal(number(face(run, 'core.cantrip')), expected);
+  const cantrip = registries.cards.get('core.cinderDart').effects.find(effect => effect.op === 'damage').amount;
+  const expected = Math.floor((Math.ceil((cantrip + 1) * effects.baseDamageMultiplier) + stat * effects.magicStatWeight) * effects.playerDamageMultiplier);
+  assert.equal(number(face(run, 'core.cinderDart')), expected, 'Sceptre adds 1 authored magic damage before the base scale');
 });
 
 test('the face equals the combat receipt amount before any stance stage', () => {
@@ -83,7 +84,9 @@ test('an untyped spell face reads the wielded armament type, as the combat carri
     const attributed = hit.sources.find(source => source.id === 'pr:0' || source.id === 'pr');
     assert.ok(attributed, 'the receipt names the magic-stat stage');
     const share = magicShareOf(tacticalCarrier(registries.cards.get('core.cantrip'), {}, combat, combat.player).combatProfile);
-    const physical = attributed.effective * (1 - share);
+    // The INT/WIS bonus belongs to the magic channel; only the scaled authored base has a physical share.
+    const base = Math.ceil(hit.sources.find(source => source.id === 'base').amount * effects.baseDamageMultiplier);
+    const physical = base * (1 - share);
     const expected = Math.floor((attributed.effective - physical + physical * effects.physicalDamageMultiplier) * effects.playerDamageMultiplier);
     assert.equal(number(face(run, 'core.cantrip')), expected, `${classId} Arcane Spark outside combat`);
     assert.equal(number(face(combat, 'core.cantrip')), expected, `${classId} Arcane Spark in the pile viewer`);
