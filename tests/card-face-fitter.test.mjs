@@ -82,3 +82,51 @@ test('resizing a face re-fits it and never swaps in the Inspect text', () => {
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
 });
+
+test('a scoped rules font reduction refits the same face and clears clipping, then restores the normal floor', () => withKitDom(() => {
+  const f = faceFixture([20, 10]);
+  const readStyle = globalThis.getComputedStyle;
+  let reduction = '';
+  globalThis.getComputedStyle = node => node === f.face
+    ? { getPropertyValue: key => key === '--card-rules-font-reduction-px' ? reduction : '' }
+    : readStyle(node);
+  try {
+    invalidateLayoutMetrics();
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), 13);
+    assert.equal(f.text.dataset.rulesComplete, 'false');
+    reduction = '2';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), 11);
+    assert.equal(f.text.dataset.rulesComplete, 'true', 'the same words fit once the scoped reduction changes');
+    assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
+    reduction = '';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), 13, 'non-reward styling keeps its original readable floor');
+    assert.equal(f.text.dataset.rulesComplete, 'false');
+  } finally {
+    globalThis.getComputedStyle = readStyle;
+  }
+}));
+
+test('phone rules retain their existing readable floor when a hand or reward surface also reduces type', () => withKitDom(() => {
+  const f = faceFixture([80, 10]);
+  document.documentElement = { dataset: { formFactor: 'mobile' } };
+  const readStyle = globalThis.getComputedStyle;
+  let reduction = '';
+  globalThis.getComputedStyle = node => node === f.face
+    ? { getPropertyValue: key => key === '--card-rules-font-reduction-px' ? reduction : '' }
+    : readStyle(node);
+  try {
+    invalidateLayoutMetrics();
+    fitCards([f.card]);
+    const phoneFloor = parseFloat(f.text.style.fontSize);
+    assert.ok(Math.abs(phoneFloor - (13 - 8 / 3)) < 0.001);
+    reduction = '2';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), phoneFloor, 'the surface does not stack another reduction onto the phone floor');
+    assert.ok(f.clauses.every(clause => clause.style.display === ''), 'all authored clauses remain on the face');
+  } finally {
+    globalThis.getComputedStyle = readStyle;
+  }
+}));
