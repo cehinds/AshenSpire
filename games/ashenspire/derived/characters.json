@@ -7332,22 +7332,15 @@
     "attributes": {
       "strength": {
         "own": 2,
-        "bonuses": [
-          {
-            "source": "katana",
-            "name": "Katana",
-            "kind": "gear",
-            "amount": 1
-          }
-        ],
-        "total": 3
+        "bonuses": [],
+        "total": 2
       },
       "dexterity": {
         "own": 2,
         "bonuses": [
           {
-            "source": "katana",
-            "name": "Katana",
+            "source": "leatherWhip",
+            "name": "Leather_Whip",
             "kind": "gear",
             "amount": 1
           }
@@ -7388,28 +7381,28 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 15,
+        "strength": 10,
         "dexterity": 9,
         "wisdom": 4,
         "intelligence": 2,
         "level": 10
       },
-      "total": 70,
-      "formula": "10+20+15+9+4+2+10 = 70"
+      "total": 65,
+      "formula": "10+20+10+9+4+2+10 = 65"
     },
     "pools": {
-      "hp": 70,
+      "hp": 65,
       "sp": 3,
       "mp": 2,
-      "ar": 3,
+      "ar": 2,
       "dr": 3,
       "hand": 5
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "katana",
-        "name": "Katana"
+        "id": "leatherWhip",
+        "name": "Leather_Whip"
       },
       {
         "key": "armor",
