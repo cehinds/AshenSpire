@@ -4199,14 +4199,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.knellcapHelm": {
-      "name": "Knellcap Helm",
-      "text": "CON +2, SP -1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.sp=-1"
-      ]
-    },
     "relic:enemy.relic.titheBand": {
       "name": "Tithe Band",
       "text": "WIS +1, CON +1",
@@ -4263,6 +4255,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.knellcapHelm": {
+      "name": "Knellcap Helm",
+      "text": "CON +2, SP -1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.sp=-1"
       ]
     }
   }

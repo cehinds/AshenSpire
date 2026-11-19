@@ -138,15 +138,6 @@
     "text": "CON +2, STR +1"
   },
   {
-    "id": "enemy.relic.knellcapHelm",
-    "name": "Knellcap_Helm",
-    "modifiers": [
-      "self.constitution=+2",
-      "self.sp=-1"
-    ],
-    "text": "CON +2, SP -1"
-  },
-  {
     "id": "enemy.relic.titheBand",
     "name": "Tithe_Band",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.constitution=+1"
     ],
     "text": "WIS +2, CON +1"
+  },
+  {
+    "id": "enemy.relic.knellcapHelm",
+    "name": "Knellcap_Helm",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.sp=-1"
+    ],
+    "text": "CON +2, SP -1"
   }
 ]
