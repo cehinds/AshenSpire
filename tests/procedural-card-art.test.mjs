@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { proceduralCardArt, PROCEDURAL_BACKGROUND_COLORS } from '../src/ui/proceduralCardArt.js';
 import { cardArtLayersHtml } from '../src/ui/cardArtLayers.js';
+import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 import { layeredCardArtCatalog as base } from '../src/content/layeredCardArt.generated.js';
 import { reviewedCardArtCatalog as reviewed } from '../src/content/reviewedCardArt.generated.js';
 import { proceduralDefinitionArt } from '../src/ui/cardArtComposition.js';
@@ -36,17 +37,17 @@ test('configured stat cutouts render with fixed neutral objects and light direct
   for (const camp of ['physical', 'spell']) for (const [stat, entry] of Object.entries(config.stats)) {
     if (!entry.assetId) continue;
     for (const [polarity, direction] of [['buff', 180], ['debuff', 0]]) {
-      const tags = [`camp:${camp}`, `${polarity}:${stat}`, 'maneuver:defend', 'element:fire'];
+      const tags = [`camp:${camp}`, `${polarity}:${stat}`, 'element:fire'];
       const art = recipe('power', tags);
-      const [aura, chevrons, object] = modifierSprites(art);
-      assert.equal(art.maneuver, 'defend');
+      const [chevrons, aura, object] = modifierSprites(art);
+      assert.equal(art.maneuver, 'skill');
       assert.ok(!art.componentArt.sprites.some(sprite => sprite.id === 'object'));
       assert.equal(object.assetId, entry.assetId);
       assert.equal(object.path, reviewed.assets[entry.assetId].path);
       assert.deepEqual(object.modifierTint, { polarity, strength: config.object.tintStrength });
       assert.equal(aura.assetId, entry.assetId);
       assert.equal(chevrons.assetId, config.chevrons.assetId);
-      assert.ok(aura.zIndex < chevrons.zIndex && chevrons.zIndex < object.zIndex);
+      assert.ok(chevrons.zIndex < aura.zIndex && aura.zIndex < object.zIndex);
       assert.ok(object.transform.width >= chevrons.transform.width);
       assert.ok(chevrons.transform.y < object.transform.y);
       assert.equal(chevrons.transform.rotation, direction);
@@ -56,7 +57,7 @@ test('configured stat cutouts render with fixed neutral objects and light direct
       assert.notEqual(config.polarities.buff.tint, config.polarities.debuff.tint);
       assert.deepEqual([aura, object, chevrons].map(sprite => +sprite.css.opacity), [0.25, 0.9, config.chevrons.opacity]);
       const higherRank = recipe('power', tags, 5);
-      assert.deepEqual(modifierSprites(higherRank), [aura, chevrons, object]);
+      assert.deepEqual(modifierSprites(higherRank), [chevrons, aura, object]);
       const element = composition => composition.componentArt.sprites.find(sprite => sprite.id === 'element-cue');
       assert.notEqual(element(art).css.opacity, element(higherRank).css.opacity);
       assert.ok(Object.isFrozen(object.css));
@@ -65,29 +66,76 @@ test('configured stat cutouts render with fixed neutral objects and light direct
   assert.equal(JSON.stringify(config), before);
 });
 
-test('the configured attribute priority selects one object while retaining both directions for that stat', () => {
-  const buffs = ['debuff:STR', 'buff:strength', 'buff:wisdom', 'debuff:hp', 'buff:gold'];
-  const objects = art => art.componentArt.sprites.filter(sprite => /^(object|secondaryObject|foreground)$/.test(sprite.id));
-  for (const camp of ['physical', 'spell']) for (const type of ['attack', 'smash', 'sweep', 'counter']) {
-    const tags = [`camp:${camp}`, 'range:reach', 'element:fire'];
+const artObject = art => art.componentArt.sprites.find(sprite => sprite.id === 'object' || sprite.id.endsWith('-object'));
+const artLayer = (art, id) => art.componentArt.sprites.find(sprite => sprite.id === id);
+
+test('secondary and main objects follow configured priority, with explicit roles and stat aliases', () => {
+  const camp = ['camp:physical'];
+  assert.equal(recipe('skill', ['main:camp:physical', 'secondary:buff:hp']), null);
+  assert.deepEqual(reviewed.proceduralModifiers.priority, [
+    'hp', 'mp', 'sp', 'damage', 'poise', 'handsize', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'gold', 'xp',
+  ]);
+  const main = recipe('skill', [...camp, 'buff:STR', 'main:buff:hp']);
+  const secondary = recipe('skill', [...camp, 'secondary:buff:STR', 'main:buff:hp']);
+  assert.equal(artObject(main).assetId, 'stat.hp');
+  assert.equal(artObject(secondary).assetId, 'stat.str');
+  assert.equal(artObject(recipe('skill', [...camp, 'main:buff:mp', 'secondary:buff:INT'])).assetId, 'stat.int');
+  assert.equal(artObject(recipe('skill', [...camp, 'secondary:buff:hp', 'secondary:buff:str', 'main:buff:hp'])).assetId, 'stat.hp');
+  assert.strictEqual(secondary, recipe('skill', ['main:buff:hp', 'secondary:buff:strength', ...camp]));
+  assert.equal(artObject(recipe('skill', [...camp, 'main:buff:hp', 'secondary:effect:heal'])).assetId, 'G.object.0');
+  assert.equal(artObject(recipe('skill', [...camp, 'main:effect:heal', 'secondary:status:grounded'])).assetId,
+    artObject(recipe('skill', [...camp, 'status:grounded'])).assetId);
+});
+
+test('a stance keeps its authored assembly and replaces the smaller stat object with centered chevrons', () => {
+  const cases = [
+    ['attack', 'attack'], ['smash', 'smash'], ['sweep', 'sweep'],
+    ['attack', 'counter'], ['skill', 'defend'], ['skill', 'evade'],
+  ];
+  for (const camp of ['physical', 'spell']) for (const [type, maneuver] of cases) {
+    const tags = [`camp:${camp}`, `maneuver:${maneuver}`, 'range:reach', 'element:fire'];
     const plain = recipe(type, tags, 3);
-    const art = recipe(type, [...tags, ...buffs, 'status:strength'], 3);
-    assert.deepEqual(objects(art), objects(plain));
-    assert.strictEqual(art, recipe(type, [...tags, ...buffs, { id: 'buff:str' }].reverse(), 3));
-    assert.notStrictEqual(art, recipe(type, [...tags, 'buff:strength'], 3));
-    const [aura, up, down, stat] = modifierSprites(art);
-    assert.equal(aura.id, 'modifier-mixed-strength-aura');
-    assert.deepEqual([up.id, down.id, stat.id], [
-      'modifier-buff-strength-chevrons', 'modifier-debuff-strength-chevrons', 'modifier-mixed-strength-object',
-    ]);
-    assert.deepEqual([up.transform.rotation, down.transform.rotation], [180, 0]);
-    assert.equal(stat.assetId, 'stat.str');
-    assert.equal(stat.modifierTint, undefined);
-    assert.ok(up.transform.x < stat.transform.x && stat.transform.x < down.transform.x);
-    assert.ok(stat.transform.x >= reviewed.proceduralModifiers.corner.x);
+    const art = recipe(type, [...tags, 'buff:STR'], 3);
+    const assembly = composition => composition.componentArt.sprites
+      .filter(sprite => ['object', 'secondaryObject'].includes(sprite.id))
+      .map(sprite => [sprite.id, sprite.assetId, sprite.transform]);
+    assert.deepEqual(assembly(art), assembly(plain));
+    assert.strictEqual(art, recipe(type, [{ id: 'buff:strength' }, ...tags].reverse(), 3));
+    const [arrow, aura] = modifierSprites(art);
+    assert.equal(modifierSprites(art).length, 2);
+    assert.equal(arrow.css.left, '50%');
+    assert.equal(arrow.assetId, 'stat.chevrons');
+    assert.ok(arrow.zIndex < aura.zIndex && aura.zIndex < artObject(art).zIndex);
+    assert.equal(aura.assetId, artObject(art).assetId);
   }
-  assert.equal(modifierSprites(recipe('skill', ['camp:physical', 'buff:gold', 'debuff:DEX'])).at(-1).id,
-    'modifier-debuff-dexterity-object');
+});
+
+test('opposing scoped effects keep both directions centered as a group behind one object', () => {
+  const tags = ['camp:physical', 'secondary:debuff:STR', 'main:buff:str', 'main:buff:hp'];
+  const art = recipe('skill', tags);
+  const [up, down, aura, object] = modifierSprites(art);
+  assert.deepEqual([up.transform.rotation, down.transform.rotation], [180, 0]);
+  assert.equal((up.transform.x + down.transform.x) / 2, object.transform.x);
+  assert.equal(object.assetId, 'stat.str');
+  assert.equal(aura.id, 'modifier-mixed-strength-aura');
+  assert.equal(object.modifierTint, undefined);
+});
+
+test('Core 2 Rending Hex keeps its staff, with Weak chevrons behind and projectile and Bleed above', () => {
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const context = { gameProfile: profile, combatExpansionVersion: 2 };
+  const combatRegistries = combatStatusPresentationRegistries(registries, context);
+  const def = playingCardDefinition(registries, { cardId: 'core.rendingHex' });
+  const art = proceduralDefinitionArt(def, { registries: combatRegistries });
+  const object = artObject(art);
+  const arrow = artLayer(art, 'modifier-debuff-damage-chevrons');
+  assert.equal(object.assetId, 'V.object.0');
+  assert.equal(arrow.css.left, '50%');
+  assert.ok(arrow.zIndex < object.zIndex);
+  assert.ok(artLayer(art, 'status-bleed-mark').zIndex > object.zIndex);
+  assert.ok(artLayer(art, 'foreground').zIndex > artLayer(art, 'status-bleed-mark').zIndex);
+  assert.ok(!art.componentArt.sprites.some(sprite => sprite.assetId === 'stat.damage'));
 });
 
 test('the stat object replaces matching status art while unrelated status cues and pending fallbacks remain available', () => {
@@ -626,12 +674,12 @@ test('a mounted card repaints the live modifier and leaves compatible layers int
   const registries = createRegistries(contentBundle);
   const ref = { cardId: 'strike', instanceId: 'live-art' };
   const base = registries.cards.get(ref.cardId);
-  const definition = { ...base, range: 'melee', cardTags: ['camp:physical', 'maneuver:attack', 'range:melee', 'element:fire', 'buff:hp'] };
+  const definition = { ...base, range: 'melee', cardTags: ['camp:physical', 'maneuver:attack', 'range:melee', 'element:fire', 'main:buff:hp'] };
   const opts = (range, chargedEffects) => ({
     preview: { resolvedDefinition: { ...definition, range }, chargedEffects },
     inspection: false, artStyle: 'Simple',
   });
-  const dexterity = [{ op: 'changeAttribute', target: 'self', attribute: 'dexterity', amount: -2 }];
+  const dexterity = [...base.effects, { op: 'changeAttribute', target: 'self', attribute: 'dexterity', amount: -2 }];
   const initial = opts('melee', dexterity);
   const card = renderCard(registries, ref, initial);
   document.body.append(card);
@@ -640,23 +688,24 @@ test('a mounted card repaints the live modifier and leaves compatible layers int
   ]);
   const melee = layers();
   const weapon = rows => rows.find(([role]) => role === 'object');
-  const compatible = rows => rows.filter(([role]) => role !== 'object');
+  const compatible = rows => rows.filter(([role]) => role !== 'object' && !role.endsWith('-aura'));
   assert.equal(weapon(melee)[1], 'O.object.0');
-  assert.ok(melee.some(([role]) => role === 'modifier-debuff-dexterity-object'));
+  assert.ok(melee.some(([role]) => role === 'modifier-debuff-dexterity-chevrons'));
   assert.ok(melee.some(([role]) => role === 'element-cue'));
   assert.equal(refreshCard(card, opts('reach', dexterity)), true);
   const reach = layers();
   assert.equal(weapon(reach)[1], 'weapon.spear');
   assert.deepEqual(compatible(reach), compatible(melee));
+  assert.equal(reach.find(([role]) => role.endsWith('-aura'))[1], 'weapon.spear');
 
-  const strength = [{ op: 'changeAttribute', target: 'self', attribute: 'strength', amount: 2 }];
+  const strength = [...base.effects, { op: 'changeAttribute', target: 'self', attribute: 'strength', amount: 2 }];
   assert.equal(refreshCard(card, opts('reach', strength)), true);
-  assert.ok(layers().some(([role]) => role === 'modifier-buff-strength-object'));
-  assert.ok(!layers().some(([role]) => role === 'modifier-debuff-dexterity-object'));
+  assert.ok(layers().some(([role]) => role === 'modifier-buff-strength-chevrons'));
+  assert.ok(!layers().some(([role]) => role === 'modifier-debuff-dexterity-chevrons'));
 
   assert.equal(refreshCard(card, opts('melee', [])), true);
   assert.equal(weapon(layers())[1], 'O.object.0');
-  assert.ok(layers().some(([role]) => role === 'modifier-buff-hp-object'));
+  assert.ok(layers().some(([role]) => role === 'modifier-buff-hp-chevrons'));
   assert.equal(refreshCard(card, initial), true);
   assert.deepEqual(layers(), melee);
 }));
