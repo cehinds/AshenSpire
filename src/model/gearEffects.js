@@ -126,6 +126,7 @@ export function GearCondMet(cond, state = {}) {
   const kind = GEAR_TYPES.conditions[cond.name]?.kind;
   if (kind === 'stance') return state.stance === cond.arg;
   if (kind === 'weapon') return state.weaponType === cond.arg;
+  if (kind === 'break') return state.poiseBreak === true; // only the hit that Poise-breaks its target (engine/actions.js GearBreakRiders)
   if (kind === 'holding') return (state.holding?.[cond.arg] || 0) >= 1; // holding 0 stacks gives nothing
   if (kind === 'first') return cond.arg === 'fight' ? (state.attacksPlayedThisCombat || 0) === 0 : (state.spellsPlayedThisTurn || 0) === 0;
   return true;
@@ -221,6 +222,7 @@ export function GearHitAdds(rules, carrier, target, state = {}) {
 export function GearHitRiders(rules, carrier, target, state = {}) {
   const applies = [], removes = [], pushes = [];
   for (const rule of rules || []) {
+    if (state.poiseBreak && !rule.conds.some(cond => cond.name === 'breaks')) continue; // the break pass runs the break riders only
     if (!GearSelectorMatches(rule.selector, rule.arg, carrier)) continue;
     if (!rule.conds.every(cond => (GEAR_TYPES.conditions[cond.name]?.kind === 'target' ? GearTargetCondMet(cond, target) : GearCondMet(cond, state)))) continue;
     if (rule.push) pushes.push({ bands: rule.push });
@@ -243,7 +245,7 @@ export function GearAlwaysOn(registries, run) {
 
 const humanize = id => String(id).replace(/([a-z\d])([A-Z])/g, '$1 $2').toLowerCase();
 const COND_WORDS = { stance: arg => `in ${arg[0].toUpperCase()}${arg.slice(1)} stance`, first: arg => (arg === 'fight' ? 'the first one each fight' : 'the first one each turn'),
-  weapon: arg => `with a ${humanize(arg)}`, target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
+  weapon: arg => `with a ${humanize(arg)}`, breaks: () => 'that break Poise', target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
 const SELECTOR_WORDS = { any: 'cards', attack: 'attacks', sweep: 'Sweeps', smash: 'Smashes', counter: 'Counter cards', defend: 'Defend cards', anyAttack: 'physical attacks',
   zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells' };
 

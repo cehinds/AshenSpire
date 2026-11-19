@@ -1,5 +1,6 @@
 import { ChannelWeight } from '../model/damageChannels.js';
-import { GearGainBonus } from './gearReceipt.js';
+import { GearGainBonus, GearProps, GearState } from './gearReceipt.js';
+import { GearHitRiders } from '../model/gearEffects.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -340,7 +341,7 @@ function claimStagger(ctx, target) {
 }
 
 // A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
-function fixCorePoiseBreak(ctx, source, target) {
+function fixCorePoiseBreak(ctx, source, target, carrier = null) {
   // `poiseBreak` marks a Core break that staggers, for the break haptic (fx.enemyPoiseBroken) and the log; Core breaks interrupt
   // nothing. A break the target's Impact protection refuses carries `poiseBreak: false`: the pool broke, nobody was staggered.
   const staggers = !(target.kind === 'enemy' && staggerRefused(ctx, target));
@@ -348,6 +349,21 @@ function fixCorePoiseBreak(ctx, source, target) {
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
   OnPoiseBreak(ctx, source, target, ctx.elementHit); // element identity (W25): Burn, Shock, Freeze, Smite, Knockback
+  GearBreakRiders(ctx, source, target, carrier);
+}
+
+// Owner, 2026-11-19: gear riders that read the break (a Hammer Smash sends the target back with a Retreat stack only when the hit breaks its Poise).
+// Run once per break, through the same plan queue the other hit riders use; the unconditional riders ran with the hit.
+function GearBreakRiders(ctx, source, target, carrier) {
+  const rules = GearProps(source)?.hitRules;
+  if (!rules || !carrier || target.kind !== 'enemy' || !target.alive) return;
+  const riders = GearHitRiders(rules, carrier, target, { ...GearState(ctx, source), poiseBreak: true });
+  const ids = { sourceId: ctx.playerIdForEntity?.(source) || source.id, targetId: ctx.playerIdForEntity?.(target) || target.id };
+  const effects = [
+    ...riders.applies.map(b => ({ ...ids, op: 'applyStatus', status: b.status, stacks: b.stacks })),
+    ...riders.pushes.map(b => ({ ...ids, op: 'moveEngagement', target: 'enemy', bands: b.bands })),
+    ...riders.removes.map(b => ({ ...ids, op: 'removeStatus', target: 'enemy', status: b.status, amount: b.stacks })) ];
+  if (effects.length) applyProposalPlan(ctx, { effects }, source, target, carrier);
 }
 
 /**
@@ -367,7 +383,7 @@ export function drainFixCorePoise(ctx, source, target, amount, carrier = null, b
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   ctx.emit('persistentPoiseChanged', { targetId: target.id, spent, value: poise.value, max: poise.max, source: 'poiseDamage', ...seatOf(ctx, target) });
-  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target);
+  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target, carrier);
   return spent;
 }
 
@@ -450,7 +466,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   ApplyElementReceipt(ctx, source, target, receipt, carrier); // element identity (W25): what a landed hit of its element does
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
   const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
-  if (poiseBroke) fixCorePoiseBreak(ctx, source, target);
+  if (poiseBroke) fixCorePoiseBreak(ctx, source, target, carrier);
   // One break is one stagger: a hit that already broke Poise has staggered the target.
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);

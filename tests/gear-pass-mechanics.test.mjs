@@ -265,18 +265,31 @@ test('the face baseline holds always-on gear only; a first-attack trigger turns 
   assert.ok(faceClasses(calm, 'core.sweep').every(entry => entry.startsWith('black')), 'with nothing triggered the face is black');
 });
 
-test('a Hammer Smash sends a front-row enemy back with 1 Retreat stack, as a push does', () => {
+// Owner, 2026-11-19: a Hammer Smash sends the target back with 1 Retreat stack only when the hit breaks its Poise.
+function hammerSmash(poise) {
   const world = build({ right: 'warhammer' });
   const { combat, enemy } = world;
-  assert.ok(combat.player.itemProps.hitRules.some(rule => rule.selector === 'smash' && rule.push === 1), 'the Hammer type carries the push');
+  assert.ok(combat.player.itemProps.hitRules.some(rule => rule.selector === 'smash' && rule.push === 1 && rule.conds.some(c => c.name === 'breaks')), 'the Hammer type carries the push on a break');
   assert.equal(enemy.row, 'front', 'fixture: the soldier opens in the front row');
-  assert.equal(enemy.statuses.retreat?.stacks || 0, 0);
+  enemy.persistentPoise = { value: poise, max: poise };
   const id = addCard(world, 'core.smash');
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
+  return world;
+}
+
+test('a Hammer Smash that breaks Poise sends the enemy back with 1 Retreat stack', () => {
+  const { enemy, combat } = hammerSmash(1);
+  assert.ok(combat.eventLog.some(e => e.type === 'poiseBroken' && e.targetId === enemy.id), 'fixture: the Smash broke Poise');
   assert.equal(enemy.statuses.retreat?.stacks, 1, 'one Retreat stack');
   assert.equal(enemy.row, 'back', 'in the back row');
 });
 
+test('a Hammer Smash that leaves Poise standing sends nothing back', () => {
+  const { enemy, combat } = hammerSmash(900);
+  assert.ok(!combat.eventLog.some(e => e.type === 'poiseBroken' && e.targetId === enemy.id), 'fixture: no break');
+  assert.equal(enemy.statuses.retreat?.stacks || 0, 0, 'no Retreat stack');
+  assert.equal(enemy.row, 'front', 'still in the front row');
+});
 
 // Owner, 2026-11-18: Medium and Light armour. Every Counter (or Evade) gain gives +1 more stack; ending your turn in Counter (or Defend) stance while
 // holding at least 1 of them gives +1. Holding none gives nothing from the end-of-turn part.
