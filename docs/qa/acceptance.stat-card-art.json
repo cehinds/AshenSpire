@@ -51,9 +51,18 @@
           "equals": "0.73"
         },
         {
-          "kind": "visible",
-          "label": "Red chevrons reference their steel tint filter",
-          "selector": "[data-art-layer=\"modifier-debuff-poise-chevrons\"][style*=\"card-stat-tint-debuff-chevrons\"]"
+          "kind": "style",
+          "label": "Buff has a computed green tint in Full and Lite",
+          "selector": "[data-art-layer=\"modifier-buff-strength-chevrons\"]",
+          "prop": "filter",
+          "equals": "url(\"#card-stat-tint-buff-chevrons\") drop-shadow(rgb(117, 255, 144) 0px 0px 5px)"
+        },
+        {
+          "kind": "style",
+          "label": "Debuff has a computed red tint in Full and Lite",
+          "selector": "[data-art-layer=\"modifier-debuff-poise-chevrons\"]",
+          "prop": "filter",
+          "equals": "url(\"#card-stat-tint-debuff-chevrons\") drop-shadow(rgb(255, 85, 91) 0px 0px 5px)"
         },
         {
           "kind": "consoleErrors",
