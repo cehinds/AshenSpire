@@ -242,7 +242,8 @@ export function GearHitRiders(rules, carrier, target, state = {}) {
  */
 export function GearAlwaysOn(registries, run) {
   if (!run?.loadout || !registries) return { rules: [], state: {} };
-  const summary = GearSummary(registries, run.loadout, run.class, run);
+  const classId = run.class ?? run.player?.classId;
+  const summary = GearSummary(registries, run.loadout, classId, run);
   return { rules: summary.cardRules.filter(rule => !GearRuleTriggered(rule)), state: { weaponType: summary.mainWeaponType } };
 }
 

@@ -62,7 +62,7 @@ test('the face equals the combat receipt amount before any stance stage', () => 
 
 // Codex review on PR #2835: the in-combat pile viewer passes the combat as `rules`; its faces keep the player's always-on attributes.
 test('a face rendered with the combat as rules matches the same card outside combat', () => {
-  for (const classId of ['reaver', 'rogue']) {
+  for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
     const run = newRun(classId);
     const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
     assert.equal(number(face(combat, 'core.strike')), number(face(run, 'core.strike')), `${classId} Strike in the pile viewer`);
