@@ -5952,10 +5952,6 @@
         {
           "to": "sacred",
           "effect": "damage"
-        },
-        {
-          "to": "fire",
-          "effect": "damage"
         }
       ]
     }
