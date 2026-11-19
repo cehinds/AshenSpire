@@ -86,7 +86,8 @@ export function BreakCombatant(ctx, entity, rules) {
   entity.broken = record;
   if (rules.statusStacks > 0) {
     // What the break added, and what the owner held before it (the ClearTurnBoosts pattern): only the grant leaves with Broken, never stacks from another source.
-    record.statusGrants = {}; record.phase = ctx.phase;
+    // Whether the owner's turn start for this round has already happened: if not (an enemy broken during the player's phase, or by another enemy's action earlier in the enemy phase), its next turn starts this round.
+    record.statusGrants = {}; record.ownerTurnStarted = entity.fixCoreDecayRound === ctx.turn;
     for (const id of BREAK_STATUS_IDS) {
       const base = Statuses.getStacks(entity, id);
       Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);

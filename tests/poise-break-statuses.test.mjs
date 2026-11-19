@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { EndBrokenWhenDue, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
-import { getStacks, decayAtTurnStart } from '../src/engine/statuses.js';
+import { getStacks, decayAtTurnStart, removeStatus } from '../src/engine/statuses.js';
 import { drainFixCorePoise } from '../src/engine/actions.js';
 
 test('the break status stacks are a config value: 2', () => {
@@ -53,18 +53,38 @@ test('only what the break added leaves with Broken: 3 Vulnerable from Bash, a br
   assert.equal(getStacks(enemy, 'staggered'), 0);
 });
 
-test('the break statuses leave at the start of the owner\'s next turn: a player\'s next turn, an enemy\'s own turn later in the same round; Broken itself stays', () => {
-  const { combat, player, enemy } = fight({ enemies: 1, poise: 0 });
-  enemy.persistentPoise = { value: 2, max: 20 };
-  play(combat, 'cometFragment', enemy.id);
-  assert.ok(enemy.broken);
-  assert.equal(getStacks(enemy, 'vulnerable'), 2);
-  enemy.fixCoreDecayRound = -1; combat.phase = 'enemy';
-  decayAtTurnStart(combat, enemy);
-  for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(enemy, id), 0, `${id} gone at the enemy's next turn start`);
-  assert.ok(enemy.broken, 'the enemy is still Broken until its lost action is spent');
+test('the break statuses leave at the start of the owner\'s next turn: this round if it has not started yet, else the next round; Broken itself stays', () => {
+  const { combat, player, enemy } = fight({ enemies: 2, poise: 0 });
+  const [a, b] = combat.enemies;
+  // Enemy A broken in the player's phase: its turn has not started this round, so its statuses go at its turn start in the same round.
+  a.fixCoreDecayRound = combat.turn - 1;
+  a.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', a.id);
+  assert.ok(a.broken);
+  assert.equal(getStacks(a, 'vulnerable'), 2);
+  combat.phase = 'enemy';
+  decayAtTurnStart(combat, a);
+  for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(a, id), 0, `${id} gone at the enemy's turn start that round`);
+  assert.ok(a.broken, 'still Broken until its lost action is spent');
+  // Enemy B broken by a hit during enemy A's action (the enemy phase, before B's own turn starts): gone at B's turn start that same round.
+  b.fixCoreDecayRound = combat.turn - 1;
+  b.persistentPoise = { value: 1, max: 20 };
+  drainFixCorePoise(combat, a, b, 99);
+  assert.ok(b.broken);
+  assert.equal(getStacks(b, 'vulnerable'), 2);
+  decayAtTurnStart(combat, b);
+  for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(b, id), 0, `${id} gone at B's turn start that round, not a round later`);
+  // An enemy broken after its own turn started waits for the next round.
+  const c = fight({ enemies: 1, poise: 0 });
+  c.enemy.fixCoreDecayRound = c.combat.turn; c.enemy.persistentPoise = { value: 1, max: 20 };
+  drainFixCorePoise(c.combat, c.player, c.enemy, 99);
+  assert.equal(getStacks(c.enemy, 'vulnerable'), 2);
+  c.enemy.fixCoreDecayRound = -1; decayAtTurnStart(c.combat, c.enemy);
+  assert.equal(getStacks(c.enemy, 'vulnerable'), 1, 'same round: only the ordinary decay');
+  c.combat.turn += 1; c.enemy.fixCoreDecayRound = -1; decayAtTurnStart(c.combat, c.enemy);
+  assert.equal(getStacks(c.enemy, 'vulnerable'), 0, 'gone at the next round\'s turn start');
   // The player broken on its own turn: the statuses stay through the enemy phase and go when its next turn starts.
-  combat.phase = 'player'; player.persistentPoise.value = 1;
+  player.fixCoreDecayRound = combat.turn; combat.phase = 'player'; player.persistentPoise.value = 1;
   drainFixCorePoise(combat, enemy, player, 99);
   assert.ok(player.broken);
   assert.equal(getStacks(player, 'vulnerable'), 2);
@@ -74,4 +94,27 @@ test('the break statuses leave at the start of the owner\'s next turn: a player\
   player.fixCoreDecayRound = -1; decayAtTurnStart(combat, player);
   for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(player, id), 0, `${id} gone at the player's next turn start`);
   assert.ok(player.broken, 'the player stays Broken through the short turn');
+});
+
+test('a cleanse that empties a status the break added does not make a later gain from another source look like the grant', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 0 });
+  enemy.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', enemy.id);
+  assert.equal(getStacks(enemy, 'vulnerable'), 2);
+  removeStatus(combat, enemy, 'vulnerable', { reason: 'cleansed' }); // a cleanse takes it to 0
+  assert.equal(getStacks(enemy, 'vulnerable'), 0);
+  enemy.statuses.vulnerable = { stacks: 3 }; // another source adds stacks before Broken ends
+  combat.turn = enemy.broken.endTurn; delete enemy.broken.loseNext;
+  EndBrokenWhenDue(combat, enemy);
+  assert.equal(getStacks(enemy, 'vulnerable'), 3, 'the other source\'s stacks stay');
+  // A partial loss shrinks the grant first: 2 granted, 1 decayed, the last grant stack leaves, the held stacks stay.
+  const second = fight({ enemies: 1, poise: 0 });
+  second.enemy.statuses.vulnerable = { stacks: 3 };
+  second.enemy.persistentPoise = { value: 2, max: 20 };
+  play(second.combat, 'cometFragment', second.enemy.id);
+  assert.equal(getStacks(second.enemy, 'vulnerable'), 5);
+  removeStatus(second.combat, second.enemy, 'vulnerable', { amount: 1, reason: 'ownerTurnStart' });
+  second.combat.turn = second.enemy.broken.endTurn; delete second.enemy.broken.loseNext;
+  EndBrokenWhenDue(second.combat, second.enemy);
+  assert.equal(getStacks(second.enemy, 'vulnerable'), 3, 'the loss took the grant first');
 });

@@ -220,6 +220,7 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
   const result = removeStatusRaw(ctx, target, statusId, opts);
+  TrackBreakGrant(target, statusId);
   syncPoolsAfterStatus(ctx, target);
   return result;
 }
@@ -261,6 +262,15 @@ export function ClearTurnBoosts(ctx, entity) {
   }
   delete entity.turnBoosts;
   delete entity.turnBoostBases;
+}
+
+/** A loss (decay, a cleanse) takes the break's grant first and then the stacks the owner held: the record shrinks so a later gain from another source is never mistaken for the grant. */
+function TrackBreakGrant(target, statusId) {
+  const grant = target?.broken?.statusGrants?.[statusId];
+  if (!grant) return;
+  const remaining = getStacks(target, statusId);
+  grant.granted = Math.max(0, Math.min(grant.granted, remaining - grant.base));
+  grant.base = Math.min(grant.base, remaining);
 }
 
 /**
@@ -403,14 +413,15 @@ export function statusDefinition(ctx, id, holder = null) {
   return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id), holder);
 }
 /**
- * ExpireBreakStatuses(ctx, entity) — the statuses a Poise break added last until the start of the owner's next turn (owner, 2026-11-18, 3a): a player's
- * next turn starts after the turn it broke in; an enemy broken during the player's phase starts its next turn later in the same round.
+ * ExpireBreakStatuses(ctx, entity) — the statuses a Poise break added last until the start of the owner's next turn (owner, 2026-11-18, 3a). The break records
+ * whether the owner's turn start for its round had already happened: if not (an enemy broken in the player's phase, or by another enemy's action before its own
+ * turn), the next turn start is this round's; if so, it is the next round's.
  * Broken itself (the lost action) runs on to EndBrokenWhenDue.
  */
 export function ExpireBreakStatuses(ctx, entity) {
   const record = entity?.broken;
   if (!record?.statusGrants) return;
-  if (!((ctx.turn || 0) > record.since || (entity.kind === 'enemy' && record.phase === 'player'))) return;
+  if (record.ownerTurnStarted && !((ctx.turn || 0) > record.since)) return;
   RemoveBreakGrants(ctx, entity, record.statusGrants);
   delete record.statusGrants;
 }
