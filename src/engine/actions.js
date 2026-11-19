@@ -489,7 +489,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
  * Constant, no decay. A row with `onBlockOnly` (Fire Thorns, the Lantern) answers only a hit that met Block. The return is plain HP loss, never an attack, so it
  * cannot trigger Thorns, Reflect or a Counter; a reflected, countered or reactive hit is not an attacker landing a hit.
  */
-export function ThornsReturn(ctx, source, target, carrier, receipt) {
+export function ThornsDamage(ctx, source, target, carrier, receipt) {
   if (!source?.alive || !target || source === target || source.kind === target.kind || receipt?.evaded || carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return 0;
   let total = 0;
   for (const [id, inst] of Object.entries(target.statuses || {})) {
@@ -502,6 +502,10 @@ export function ThornsReturn(ctx, source, target, carrier, receipt) {
     }
     total += amount;
   }
+  return total;
+}
+export function ThornsReturn(ctx, source, target, carrier, receipt) {
+  const total = ThornsDamage(ctx, source, target, carrier, receipt);
   if (total > 0) {
     ctx.emit('thornsReturned', { sourceId: target.id, targetId: source.id, amount: total });
     applyLoseHp(ctx, source, total, 'thorns', { sourceId: target.id });
