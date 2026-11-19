@@ -2,6 +2,7 @@ import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -364,8 +365,8 @@ function faceDamageProfile(def, registries, rules) {
 }
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
-  // A live preview carries only the always-on attributes (`faceAttributes`); the profile pin is the registries' own.
-  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  // Keep any saved combat policy with the always-on attributes; an explicit profile pin wins over the registries' own.
+  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);
   const baseDamageMultiplier = holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
   // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
@@ -380,13 +381,15 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
   const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
-  // physical damage adds STR, a finesse hit DEX, magic damage max(INT, WIS), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
+  // physical damage adds STR, a finesse hit DEX, and magic its saved tradition's attribute (legacy: max(INT, WIS)), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
   // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
-  const damageStat = attributes ? (magicHit ? Math.max(attributes.intelligence || 0, attributes.wisdom || 0) : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
+  const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
+    : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
+  const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
   // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
   const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : 'ar');
   const blockBonus = attributes ? (attributes.dexterity || 0) * ChannelWeight(faceEffects, 'dr') : 0;

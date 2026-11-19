@@ -209,21 +209,42 @@ function forecastBeforeTurn(combat) {
   if (combat.player.combatCounter?.charges > 0) return out;
   for (const enemy of livingEnemies(combat)) {
     if (enemy.intent?.kind !== 'attack' || enemy.intent.damage == null) continue;
-    const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage;
-    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, { moveId: enemy.intent.moveId, shown: shown.max });
+    const projection = projectCombatIntent(combat, enemy.id);
+    const shown = projection?.projectedDamage;
+    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, {
+      moveId: enemy.intent.moveId, shown: shown.max, hits: projection.hitDamages, playerHp: combat.player.hp,
+    });
   }
   return out;
 }
 function checkForecast(forecast, events, tally, label) {
-  for (const [id, { moveId, shown }] of forecast) {
+  for (const [id, { moveId, shown, hits, playerHp }] of forecast) {
     const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.sourceId === id);
     if (start < 0 || events[start].moveId !== moveId) continue;
-    let lost = 0;
+    const contacts = [];
     for (const event of events.slice(start + 1)) {
       if (event.type === 'enemyMoveEnded' && event.sourceId === id) break;
-      if (event.type === 'damageDealt' && event.sourceId === id && event.targetId === 'player') lost += event.hpLoss;
+      if (event.type === 'damageDealt' && event.sourceId === id && event.targetId === 'player') contacts.push(event);
     }
-    assert.equal(lost, shown, `${label}: ${id} ${moveId} was shown at ${shown} and cost the player ${lost}`);
+    const lost = contacts.reduce((total, event) => total + event.hpLoss, 0);
+    if (lost !== shown && events.some(event => event.type === 'combatEnd' && event.victory === false)) {
+      // Like a player multi-hit killing its target, defeat cancels the remaining contacts.
+      // Require the exact promised prefix and prove its final contact took the player's remaining HP.
+      assert.ok(hits?.length > 1 && contacts.length > 0 && contacts.length < hits.length, `${label}: defeat cut a multi-hit action short`);
+      assert.equal(hits.reduce((total, hit) => total + hit, 0), shown, `${label}: per-hit forecast accounts for the full intent`);
+      assert.deepEqual(contacts.map(event => event.hpLoss), hits.slice(0, contacts.length), `${label}: every executed contact matches its forecast`);
+      const final = contacts.at(-1);
+      let remaining = playerHp;
+      for (const event of events.slice(0, events.indexOf(final))) {
+        if (event.targetId !== 'player') continue;
+        if (event.type === 'damageDealt') remaining -= event.hpRemoved;
+        else if (event.type === 'hpLost' && event.cause !== 'attack') remaining -= event.amount;
+        else if (event.type === 'healed') remaining += event.amount;
+      }
+      assert.ok(remaining > 0 && final.hpRemoved > 0 && final.hpLoss >= remaining, `${label}: the final contact is lethal`);
+      assert.equal(final.hpRemoved, remaining, `${label}: the final contact removes exactly the remaining HP`);
+      assert.equal(events.filter(event => event.type === 'damageDealt' && event.targetId === 'player').at(-1), final, `${label}: no contact follows defeat`);
+    } else assert.equal(lost, shown, `${label}: ${id} ${moveId} was shown at ${shown} and cost the player ${lost}`);
     tally.forecasts++;
   }
 }
@@ -288,6 +309,38 @@ test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lo
   assert.ok(tally.forecasts > 60, `enough shown intents were compared with what they cost: ${tally.forecasts}`);
   assert.ok(tally.actions > 150, `enough enemy actions were checked: ${tally.actions}`);
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
+});
+
+test('a lethal enemy multi-hit stops at the exact forecast prefix while a survivor takes the full intent', () => {
+  for (const hp of [1, 100]) {
+    const combat = fightFor('starseer', 162, ['cinderMantis']);
+    const enemy = combat.enemies[0];
+    enemy.plannedMoves = [];
+    enemy.planDue = true;
+    const move = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.scythePair, 'scythePair', combat);
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'scythePair', damage: 5, hits: 2, combatProfile: enemyMoveCarrier(enemy, move, 'scythePair', combat).combatProfile };
+    combat.player.hp = hp; combat.player.maxHp = 100; combat.player.block = 0;
+    combat.player.statuses = {};
+    combat.player.persistentPoise = { value: 18, max: 18, barrierBonus: 15 };
+    combat.player.combatStance = { maneuver: 'sweep', camp: 'physical', range: 'melee' };
+    const forecast = forecastBeforeTurn(combat);
+    assert.deepEqual(forecast.get(enemy.id).hits, [3, 3]);
+    assert.equal(forecast.get(enemy.id).shown, 6);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    const contacts = events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && event.targetId === 'player');
+    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [3] : [3, 3]);
+    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [3, 3]);
+    assert.equal(combat.player.hp, hp === 1 ? 0 : 94);
+    assert.equal(combat.result, hp === 1 ? 'defeat' : null);
+    const tally = { forecasts: 0, actions: 0, floaters: 0 };
+    checkForecast(forecast, events, tally, `enemy two-hit HP ${hp}`);
+    checkEnemyActions(events, new Map(), tally, `enemy two-hit HP ${hp}`);
+    checkFloaters(events, tally, `enemy two-hit HP ${hp}`);
+    assert.equal(tally.forecasts, 1);
+  }
 });
 
 // ---- (d) the named cases, each on a fixture that sets exactly that state ----------------------------------------------------------

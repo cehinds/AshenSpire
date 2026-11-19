@@ -1,8 +1,10 @@
 // W25 (owner, 2026-11-14) Necrotic: x0.7 damage; ignores Poise entirely (Block then HP; Poise neither absorbs nor drops); each necrotic hit that lands while the target's Poise is broken adds Necrotic build-up
-// equal to the attacker INT (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
+// equal to WIS for current Decay/Divine casting (archived W25: INT), at least 1; build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fight, play } from './elementFixture.mjs';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { fight, play, profile } from './elementFixture.mjs';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { ElementTurnEnd } from '../src/engine/elementIdentity.js';
@@ -11,6 +13,7 @@ const NECROTIC = { combatProfile: { camp: 'spell', school: 'decay', damageType: 
 // Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
 const hit = (combat, target, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...NECROTIC, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
+const archivedProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
 
 test('necrotic deals x0.7 and ignores Poise: the pool neither absorbs nor drops, Block still soaks', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 20 });
@@ -32,12 +35,33 @@ test('live: a necrotic hit never touches Poise, and the quote is what is lost', 
   assert.ok(played.lost.e1 > 0);
 });
 
-test('a hit on a target whose Poise is broken adds build-up equal to the attacker INT, at least 1; with Poise left it adds none', () => {
-  for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
-    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { intelligence } });
-    play(combat, 'core.graveToll', enemy.id);
-    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `INT ${intelligence}`);
+test('current Decay build-up uses WIS, at least 1, ignoring higher INT', () => {
+  for (const [wisdom, stacks] of [[4, 4], [0, 1]]) {
+    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { wisdom, intelligence: 9 } });
+    const played = play(combat, 'core.graveToll', enemy.id);
+    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `WIS ${wisdom}, INT 9`);
+    assert.equal(played.lost.e1, played.row.faceValue, 'shown = dealt');
+    assert.ok(played.lost.e1 > 0, 'the live hit landed');
   }
+});
+
+test('archived 6727 with elements enabled retains INT build-up and leaves the live fixture untouched', () => {
+  const archivedBefore = structuredClone(archivedProfile);
+  const liveBefore = structuredClone(profile);
+  for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
+    const { combat, enemy } = fight({ profile: archivedProfile, enemies: 1, poise: 0, attributes: { intelligence, wisdom: 9 } });
+    assert.equal(combat.fixCoreRules.elements.version, 1, 'the archived fight still has element rules');
+    play(combat, 'core.graveToll', enemy.id);
+    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `archived INT ${intelligence}, WIS 9`);
+  }
+  assert.deepEqual(archivedProfile, archivedBefore, 'the supplied profile was not mutated');
+  assert.deepEqual(profile, liveBefore, 'the default profile was not rebound');
+  const current = fight({ attributes: { wisdom: 4, intelligence: 9 } });
+  play(current.combat, 'core.graveToll', current.enemy.id);
+  assert.equal(getStacks(current.enemy, 'necroticBuildup'), 4, 'a subsequent default fight still uses WIS');
+});
+
+test('with Poise left necrotic adds no build-up; an elements-disabled old fight also adds none', () => {
   const held = fight({ enemies: 1, poise: 50 });
   const played = play(held.combat, 'core.graveToll', held.enemy.id);
   assert.equal(getStacks(held.enemy, 'necroticBuildup'), 0, 'Poise left: no build-up');
