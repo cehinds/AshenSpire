@@ -1,3 +1,4 @@
+import { validateEffects } from '../src/model/validate/effectGrammar.js';
 import { GearReceiptAdd } from '../src/engine/gearReceipt.js';
 // Owner, 2026-11-18 (gear pass A): the gear vocabulary is data (equipMods.csv + equipmentTypes.json) and each effect has an engine consumer. Preview equals play.
 import test from 'node:test';
@@ -563,4 +564,30 @@ test('dual Focus shares its built-in discount while robe and piece signatures re
   const def = ApplyGearCardRules(rules, { tags: ['camp:spell'], effects: [], cost: 1, manaCost: 8 }, { stance: 'prepared' });
   assert.equal(def.gearManaRules.length, 4, 'one shared Focus, one robe, and both independent signatures');
   assert.equal(GearManaCost(def, 9), 5, 'no general cap on independent Mana modifiers');
+});
+
+
+test('current Light armour leaves a valid zero Evade grant at zero in repeated previews and live play', () => {
+  const zero = { op: 'applyStatus', target: 'self', status: 'evade', stacks: 0 };
+  const problems = [];
+  validateEffects([zero], 'zeroEvade', { err: (path, message) => problems.push({ path, message }), ids: { statuses: new Set(['evade']) } });
+  assert.deepEqual(problems, [], 'the authored effect grammar accepts zero stacks');
+  const data = applyGameProfileToContent(contentBundle, profile);
+  assert.ok(data.cards.some(card => card.id === 'shadowstep'));
+  const zeroRegistries = bindGameProfileRegistries(createRegistries({ ...data, cards: data.cards.map(card => card.id === 'shadowstep' ? { ...card, effects: card.effects.map(effect => effect.op === 'applyStatus' && effect.status === 'evade' ? zero : effect) } : card) }), profile);
+  const run = createRunState({ registries: zeroRegistries, classId: 'rogue', seed: 31, profileMeta: META });
+  const combat = createRunCombat({ registries: zeroRegistries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.player.itemProps.gainBonus.evade, 1, 'current Light armour remains enabled');
+  combat.piles.hand.push({ instanceId: 'zero-evade', cardId: 'shadowstep', upgraded: false });
+  combat.player.stamina = 20;
+  const before = structuredClone(combat.player.statuses), counters = combat.rng.getCounters();
+  for (let repeat = 0; repeat < 2; repeat++) {
+    const row = previewCard(combat, 'zero-evade').values.find(value => value.status === 'evade');
+    assert.equal(row.value, 0, 'zero authored stacks do not trigger the gain bonus');
+    assert.deepEqual(combat.player.statuses, before, 'previews are pure');
+    assert.deepEqual(combat.rng.getCounters(), counters);
+  }
+  const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'zero-evade' });
+  assert.equal(combat.player.statuses.evade?.stacks || 0, before.evade?.stacks || 0);
+  assert.equal(played.events.filter(event => event.type === 'statusApplied' && event.status === 'evade').length, 0);
 });

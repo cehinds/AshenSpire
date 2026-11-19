@@ -1713,7 +1713,7 @@ function plannedStatusTargets(ctx, action, eff) {
 // (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
 /** The authored status grant before target resistance: shared by a card preview and the landed opcode. */
 export function ComputeStatusGrant(ctx, action, eff, target, base) {
-  const authored = base + (eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
+  const authored = base + (base > 0 && eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
 }
 
