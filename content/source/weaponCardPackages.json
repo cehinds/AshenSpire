@@ -560,7 +560,7 @@
       ],
       "learnableArts": [
         "sap",
-        "deathblow"
+        "feint"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",

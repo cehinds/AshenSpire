@@ -86,6 +86,7 @@ Engine test 32 forbids an item that a same-profile item of equal or lower rarity
 
 ## Notes
 
+- Stiletto lends Assassinate and teaches Sap and Feint. Feint is an existing 1-SP, zero-MP setup card (draw one and gain Prepared), matching Assassinate's Prepared bonus; it replaces the newly exposed Deathblow, whose damage lacks the required drawback. Feint appears on only this weapon. Deathblow's existing definition is unchanged.
 - Maul is an enemy move name in the game, not a weapon; it is authored here as a new hammer.
 - Armour rows are single-class (Cinderforged Plate and Wyrmscale Mail Reaver, Sage's Robe Starseer, Ringmail Hauberk Herald, Hunter's Hide Rogue), reusing that class's outfit art, and carry their peer's unlock.
 - Relics not authored: anvilSigil, duelistsRibbon, prayerBeads, quiverStrap, whetstoneCharm.
