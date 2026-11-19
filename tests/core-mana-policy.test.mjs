@@ -93,8 +93,11 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     ['core.cometLance', [2, 1], [1, 1], [1, 0]],
     ['core.meteor', [2, 3], [1, 2], [1, 1]],
     ['core.cantrip', [1, 0], [0, 0], [0, 0]],
+    // A current gear profile without spellCosts has neither surcharge nor its SP cut.
+    // Meteor stays 3 MP plain / 2 MP with Adept, before robe -1 and Prepared Focus -1.
+    ['core.meteor', [1, 2], [1, 1], [1, 0], false],
   ];
-  for (const [cardId, plain, prepared, focused] of prices) for (const [hand, stance, expected] of [
+  for (const [cardId, plain, prepared, focused, spellCosts = true] of prices) for (const [hand, stance, expected] of [
     ['greatsword', null, plain], ['ashStaff', null, plain], ['boneSceptre', null, plain],
     ['greatsword', 'casting', prepared], ['ashStaff', 'casting', focused],
     ['ashStaff', 'prepared', focused], ['boneSceptre', 'casting', focused],
@@ -102,6 +105,7 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     const run = fresh('starseer');
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
     const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
+    if (!spellCosts) delete combat.fixCoreRules.spellCosts;
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
     assert.equal(combat.player.maxMana, 3, 'base 1 + Nightweave 1 + robe type 1');
     assert.equal(getStacks(combat.player, 'ward'), hand === 'greatsword' ? 0 : 1, 'staff and sceptre types grant Ward at turn start');
@@ -111,7 +115,7 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     if (stance) combat.player.combatStance = { maneuver: stance, camp: 'spell' };
     const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
     const costs = cardPlayCosts(combat, 'robe-focus'), preview = previewCard(combat, 'robe-focus', combat.enemies[0].id);
-    assert.deepEqual([costs.stamina, costs.mana], expected, `${cardId}/${hand}/${stance}`);
+    assert.deepEqual([costs.stamina, costs.mana], expected, `${cardId}/${hand}/${stance}/spellCosts=${spellCosts}`);
     assert.deepEqual([preview.staminaCost, preview.manaCost], expected);
     assert.deepEqual(serializeCombatSnapshot(combat), before, 'quotes do not mutate combat');
     assert.deepEqual(combat.rng.getCounters(), counters, 'quotes consume no RNG');
