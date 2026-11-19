@@ -26926,13 +26926,6 @@
       "chevronsOffsetY": -0.07,
       "objectOffsetY": -0.015
     },
-    "corner": {
-      "x": 270,
-      "y": 337,
-      "width": 226,
-      "height": 287,
-      "maxSize": 212
-    },
     "object": {
       "x": 0,
       "y": 0,
@@ -26954,7 +26947,8 @@
       "rotation": 0,
       "opacity": 0.25,
       "blendMode": "normal",
-      "mixedFilter": "grayscale(1) blur(5px) drop-shadow(0 0 8px #d5dbe1)"
+      "mixedFilter": "grayscale(1) blur(5px) drop-shadow(0 0 8px #d5dbe1)",
+      "stanceOpacity": 0.15
     },
     "chevrons": {
       "assetId": "stat.chevrons",
@@ -26995,17 +26989,17 @@
       }
     },
     "priority": [
+      "hp",
+      "mp",
+      "sp",
+      "damage",
+      "poise",
+      "handsize",
       "strength",
       "dexterity",
       "constitution",
       "intelligence",
       "wisdom",
-      "hp",
-      "mp",
-      "sp",
-      "poise",
-      "damage",
-      "handsize",
       "gold",
       "xp"
     ],
@@ -27015,6 +27009,31 @@
       "con": "constitution",
       "int": "intelligence",
       "wis": "wisdom"
-    }
+    },
+    "stanceActions": [
+      "attack",
+      "smash",
+      "sweep",
+      "defend",
+      "counter",
+      "evade"
+    ],
+    "layerOrder": [
+      "background",
+      "chevrons",
+      "aura",
+      "object",
+      "effect",
+      "projectile"
+    ],
+    "effectGroupOrder": [
+      "secondary",
+      "main"
+    ],
+    "effectObjectOrder": [
+      "stat",
+      "utility",
+      "status"
+    ]
   }
 }
