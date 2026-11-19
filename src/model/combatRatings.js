@@ -496,7 +496,7 @@ export function finesseRatingView(entity) {
   const rows = Array.isArray(entity?.ratingSources) ? entity.ratingSources : [];
   const shift = rows.filter(row => row.kind === 'attribute').reduce((sum, row) => sum + (Number(row.dr) || 0) - (Number(row.ar) || 0), 0);
   if (!shift) return entity;
-  return { ...entity,
+  return { ...entity, finesseView: true, // stance attribute grants price the DEX row for AR (stanceRules.stanceAttributeBonus)
     ratings: { ...entity.ratings, ar: (Number(entity.ratings?.ar) || 0) + shift },
     ratingSources: rows.map(row => row.kind === 'attribute' ? { ...row, ar: Number(row.dr) || 0 } : row) };
 }

@@ -12,9 +12,7 @@
 //   boosts      net attribute change, by attribute, for the rest of the fight (turn boosts included)
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
-import { statRow } from '../model/statRows.js';
-import { statRowValue } from '../model/derivedStats.js';
-import { PrAttributeView } from '../model/fixCoreMechanics.js';
+import { ChannelRowValue } from '../model/channelRowValue.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { configuredCombat, profileHandSize } from './gameProfileCombat.js';
 
@@ -52,13 +50,7 @@ export function ElementStatScale(entity, element) {
 
 const whole = value => Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
 
-function rowValue(ctx, entity, id, attributes) {
-  const run = { derivedStatRuleSnapshot: entity.kind === 'enemy' ? null : ctx.derivedStatRuleSnapshot, class: entity.kind === 'enemy' ? null : entity.classId };
-  const row = statRow(ctx.registries, run, id);
-  if (!row) return 0;
-  const read = id === 'pr' ? PrAttributeView(ctx, attributes) : attributes;
-  return statRowValue(row, { attributes: read, level: 1, statId: id, lenientAttributes: true }).value;
-}
+const rowValue = ChannelRowValue;
 
 function attributeRow(entity) {
   return (entity.ratingSources || []).find(row => row.kind === 'attribute') || null;

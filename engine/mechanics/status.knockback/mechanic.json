@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Knockback",
-  "description": "Knocked back: it must Advance (pay its Advance cost) before its next melee move.",
+  "description": "Knocked back by a fight saved before Force lost its push: it must Advance (pay its Advance cost) before its next melee move. New fights never apply it.",
   "attaches": [
     "status"
   ],

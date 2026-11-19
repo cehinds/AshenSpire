@@ -195,6 +195,107 @@
         }
       ],
       "description": "Present: for every gap between two in-branch depths and every pair of neighbouring lanes present on both, one draw at this percentage adds one diagonal edge (direction 50/50, never crossing another edge). Replaces the single remerge draw per branch and gap. null means absent."
+    },
+    "startRestFromAct": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "First act whose depth-1 start node is a Rest (when restFloors lists depth 1). Earlier acts open on the depth-1 node drawn by firstFloor. null means every act."
+    },
+    "restGap": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Non-rest nodes allowed between two rests on a path, start counted as a rest when depth 1 is not one. The gap that ends at the pre-boss rest is not limited. null means absent."
+    },
+    "restFloorSpread": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Each rest depth other than depth 1 and the pre-boss depth may move up to this many depths either way per seed and act, within restGap. null means fixed."
+    },
+    "branchSpread": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "V spread: each branch's centre moves away from the board centre by this many times its distance from it, growing linearly to the boss depth, so the board widens with depth. null means none."
+    },
+    "singlePrebossRest": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "True: each branch's pre-boss depth is ONE rest node reached from every lane of the branch and linked only to its own boss. null means absent."
+    },
+    "fogCommittedBranch": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "With mapMode fog: once the player has left the start node, the bosses of the other branches are fogged. null means absent."
     }
   },
   "required": [

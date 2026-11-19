@@ -200,7 +200,7 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   const run = createRunState({ seed: 73, classId: 'reaver', registries: coreReg, runId: 'reach' });
   run.itemUpgradeLevels = { 'armament/greatsword': 2 };
   run.mapGraph = buildActMap(coreReg, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find((n) => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find((n) => n.type === 'shrine').id;
   beginGameProfileRest(run, `1:${run.mapNodeId}`);
   assert.throws(() => commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }), /Needs a Blacksmith|needs a Blacksmith/);
   assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
