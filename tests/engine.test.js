@@ -3596,11 +3596,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const expectedArmaments = ['straightSword', 'greatsword', 'dagger', 'shortbow', 'katana', 'halberd', 'warhammer', 'twinblade', 'battleaxe',
       'buckler', 'kiteShield', 'towerShield', 'roundShield', 'spikedShield', 'lantern', 'torch', 'parryDagger',
       'ashStaff', 'starstoneStaff', 'boneSceptre', 'emberlightSceptre', 'goldboughBranch', 'blightRod', 'gorefireBrand', 'wyrmhornStaff',
-      'frostSpear', 'cinderAxe', 'duskChime'];
+      'frostSpear', 'cinderAxe', 'duskChime',
+      // Codex art v28 equipment (docs/content/codex-equipment-buildout-2026-11-19.md)
+      'kris', 'stiletto', 'broadsword', 'flamberge', 'rapier', 'estoc', 'duelistsFoil', 'ashenClaymore', 'zweihander',
+      'pike', 'scythe', 'reapersCrescent', 'mace', 'morningStar', 'flail', 'maul', 'thunderMallet', 'beardedAxe',
+      'moonlitKatana', 'moonGlaives', 'longbow', 'huntersRecurve', 'handCrossbow', 'arbalest', 'leatherWhip', 'thornWhip',
+      'ironKnuckles', 'beastClaws', 'stormSceptre', 'grimoire', 'prayerBook', 'sunTalisman', 'boneTalisman'];
     eq([...ids].sort().join('|'), expectedArmaments.sort().join('|'), 'exact expanded armament roster');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 11, 'eleven weapons');
-    eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
-    eq(weapons.filter((w) => w.kind === 'staff').length, 9, 'nine staves');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 39, 'thirty-nine weapons');
+    eq(weapons.filter((w) => w.kind === 'shield').length, 12, 'twelve shields/offhands');
+    eq(weapons.filter((w) => w.kind === 'staff').length, 10, 'ten staves');
 
     const checkMods = (mods, where) => {
       if (mods === '') return;
@@ -3639,7 +3644,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
       const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
-      eq(mine.length, additions[id] ? 9 : 8, `class '${id}' has its full armour roster including four shared sets`);
+      eq(mine.length, (additions[id] ? 9 : 8) + ({ reaver: 2, starseer: 1, herald: 1, rogue: 1 }[id] ?? 0), `class '${id}' has its full armour roster including four shared sets`);
       if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
       eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }
@@ -3657,7 +3662,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(LEGACY_REG).join('; '), '', 'every authored piece parses against the vocabulary');
 
     const intrinsicReceipts = LEGACY_REG.equipment.armaments.map(armamentIntrinsicReceipt);
-    eq(intrinsicReceipts.length, 28, 'all 28 armaments expose an intrinsic stat receipt');
+    eq(intrinsicReceipts.length, 61, 'all 61 armaments expose an intrinsic stat receipt');
     eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
       weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
     assert(intrinsicReceipts.every((row) => ['weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']

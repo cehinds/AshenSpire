@@ -530,5 +530,632 @@
         "artCardId": "vesperWard"
       }
     }
+  },
+  {
+    "weaponId": "kris",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "twinFang"
+      ],
+      "learnableArts": [
+        "viperStrike",
+        "aspDart"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinFang"
+      }
+    }
+  },
+  {
+    "weaponId": "stiletto",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "twinFang"
+      ],
+      "learnableArts": [
+        "assassinate",
+        "feint"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinFang"
+      }
+    }
+  },
+  {
+    "weaponId": "broadsword",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "sweepingBlow"
+      ],
+      "learnableArts": [
+        "rend",
+        "hewingArc"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "sweepingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "flamberge",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "flameToBlade"
+      ],
+      "learnableArts": [
+        "progression-ember-hew",
+        "honedEdge"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "flameToBlade"
+      }
+    }
+  },
+  {
+    "weaponId": "rapier",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "riposte"
+      ],
+      "learnableArts": [
+        "quickCut",
+        "coupDeGrace"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "riposte"
+      }
+    }
+  },
+  {
+    "weaponId": "estoc",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "guardCounter"
+      ],
+      "learnableArts": [
+        "thousandCutsRogue",
+        "garrote"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "guardCounter"
+      }
+    }
+  },
+  {
+    "weaponId": "duelistsFoil",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "guardCounter"
+      ],
+      "learnableArts": [
+        "executionWindow",
+        "rondelParry"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "guardCounter"
+      }
+    }
+  },
+  {
+    "weaponId": "ashenClaymore",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "greatswordSunderingHew"
+      ],
+      "learnableArts": [
+        "executioner",
+        "bloodTithe"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "greatswordSunderingHew"
+      }
+    }
+  },
+  {
+    "weaponId": "zweihander",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "greatswordSunderingHew"
+      ],
+      "learnableArts": [
+        "progression-breaker-s-toll",
+        "warriorsVow"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "greatswordSunderingHew"
+      }
+    }
+  },
+  {
+    "weaponId": "pike",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "rimeThrust"
+      ],
+      "learnableArts": [
+        "twinPrick",
+        "impale"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "rimeThrust"
+      }
+    }
+  },
+  {
+    "weaponId": "scythe",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "cleavingBlow"
+      ],
+      "learnableArts": [
+        "crimsonCleave",
+        "ironSkin"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "cleavingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "reapersCrescent",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "sweepingBlow"
+      ],
+      "learnableArts": [
+        "bloodhuntersStrike",
+        "hemorrhage"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "sweepingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "mace",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "bashingBlow"
+      ],
+      "learnableArts": [
+        "shieldBash",
+        "kickOff"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "bashingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "morningStar",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "spikedReprisal"
+      ],
+      "learnableArts": [
+        "goreslash",
+        "hemorrhage"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "spikedReprisal"
+      }
+    }
+  },
+  {
+    "weaponId": "flail",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "spikedReprisal"
+      ],
+      "learnableArts": [
+        "shieldCrash",
+        "setTheShield"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "spikedReprisal"
+      }
+    }
+  },
+  {
+    "weaponId": "maul",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "bashingBlow"
+      ],
+      "learnableArts": [
+        "colossusSmash",
+        "ruinousBlow"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "bashingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "thunderMallet",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "shieldBash"
+      ],
+      "learnableArts": [
+        "aegisOfEmbers",
+        "enterBulwark"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "shieldBash"
+      }
+    }
+  },
+  {
+    "weaponId": "beardedAxe",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "cleavingBlow"
+      ],
+      "learnableArts": [
+        "sunderingChop",
+        "bloodTithe"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "cleavingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "moonlitKatana",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "katanaDrawCut"
+      ],
+      "learnableArts": [
+        "hamstringRogue",
+        "quickCut"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "katanaDrawCut"
+      }
+    }
+  },
+  {
+    "weaponId": "moonGlaives",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "twinbladeAttack",
+      "weaponArtDefaults": [
+        "twinbladeFlurry"
+      ],
+      "learnableArts": [
+        "twinPrick",
+        "serratedBlade"
+      ],
+      "combatKit": {
+        "attackProfileId": "twinbladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinbladeFlurry"
+      }
+    }
+  },
+  {
+    "weaponId": "longbow",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "quickstep"
+      ],
+      "learnableArts": [
+        "aimedShot",
+        "nockAndWait"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "quickstep"
+      }
+    }
+  },
+  {
+    "weaponId": "huntersRecurve",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "quickstep"
+      ],
+      "learnableArts": [
+        "barbedArrow",
+        "pinningShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "quickstep"
+      }
+    }
+  },
+  {
+    "weaponId": "handCrossbow",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "scholarsInsight"
+      ],
+      "learnableArts": [
+        "ricochet",
+        "pinningShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "scholarsInsight"
+      }
+    }
+  },
+  {
+    "weaponId": "arbalest",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "shieldBastion"
+      ],
+      "learnableArts": [
+        "lethalDose",
+        "arrowVolley"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "shieldBastion"
+      }
+    }
+  },
+  {
+    "weaponId": "leatherWhip",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "katanaDrawCut"
+      ],
+      "learnableArts": [
+        "hamstring",
+        "enfeeble"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "katanaDrawCut"
+      }
+    }
+  },
+  {
+    "weaponId": "thornWhip",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "contagion"
+      ],
+      "learnableArts": [
+        "septicBlade",
+        "toxicVolley"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "contagion"
+      }
+    }
+  },
+  {
+    "weaponId": "ironKnuckles",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "shieldGuardian"
+      ],
+      "learnableArts": [
+        "ironResolve",
+        "warSurgeon"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "shieldGuardian"
+      }
+    }
+  },
+  {
+    "weaponId": "beastClaws",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "twinbladeFlurry"
+      ],
+      "learnableArts": [
+        "fanOfKnives",
+        "shadowstep"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinbladeFlurry"
+      }
+    }
+  },
+  {
+    "weaponId": "stormSceptre",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "sceptreArcaneAttack",
+      "weaponArtDefaults": [
+        "starSpark"
+      ],
+      "learnableArts": [
+        "starstoneKris",
+        "celestialLance"
+      ],
+      "combatKit": {
+        "attackProfileId": "sceptreArcaneAttack",
+        "guardProfileId": "sceptreGuard",
+        "artCardId": "starSpark"
+      }
+    }
+  },
+  {
+    "weaponId": "grimoire",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "scholarsInsight"
+      ],
+      "learnableArts": [
+        "pyreOfCharts",
+        "cinderLance"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "scholarsInsight"
+      }
+    }
+  },
+  {
+    "weaponId": "prayerBook",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "urgentHeal"
+      ],
+      "learnableArts": [
+        "transfusion",
+        "secondBloom"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "urgentHeal"
+      }
+    }
+  },
+  {
+    "weaponId": "sunTalisman",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "urgentHeal"
+      ],
+      "learnableArts": [
+        "martyrBlood",
+        "litany"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "urgentHeal"
+      }
+    }
+  },
+  {
+    "weaponId": "boneTalisman",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "shieldAttack",
+      "weaponArtDefaults": [
+        "blightTouch"
+      ],
+      "learnableArts": [
+        "blightwardLash",
+        "progression-blight-litany"
+      ],
+      "combatKit": {
+        "attackProfileId": "shieldAttack",
+        "guardProfileId": "shieldGuard",
+        "artCardId": "blightTouch"
+      }
+    }
   }
 ]

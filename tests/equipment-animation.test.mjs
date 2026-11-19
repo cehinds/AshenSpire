@@ -41,7 +41,7 @@ for(const mutate of [
 const outfitRows=contentBundle.equipment.armour;
 const r=createRegistries(contentBundle);
 assert.ok(Array.isArray(outfitRows),'armor catalog available');
-assert.equal(outfitRows.length,35,'all current class/armor entries are exercised');
+assert.equal(outfitRows.length,40,'all 35 historical outfits and five Codex appearance borrowers are exercised');
 for(const outfit of outfitRows){
  const equipped=createRunState({seed:896,classId:outfit.classId,registries:r}).loadout;
  equipped.sets.armor[equipped.active.armor||0]=outfit.id;
