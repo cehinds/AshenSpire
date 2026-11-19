@@ -312,8 +312,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Robes (owner):** the unarmoured type gives **+1 max MP**. A specific robe can add more as its own bonus (Nightweave +1), with no cap; a rare robe may later add +2.
 - **Map (owner):** the longer acts are accepted for playtest (Act 1 sim win rate 95% → 85%). The V widens gradually with depth. By the pre-boss rest the player must not see another branch's pre-boss rest or boss; hiding the other branches' boss nodes is an acceptable way to get there.
 
+**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff).
+
 ## 23. No hidden caps (owner, 2026-11-18)
 - Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
 - New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.
-
-**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff).
