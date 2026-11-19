@@ -1,15 +1,15 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — Codex art buildout
+## Feature preview — Smash stance rule
 
-[Download the playable feature build](https://github.com/cehinds/AshenSpire/actions/runs/44482212940/artifacts/14509066914)
+[Download verified build 0.7.4.210](https://github.com/cehinds/AshenSpire/actions/runs/44499406132/artifacts/14515959316)
 
-Successful CI build of source `6a7378b6a0`: extract the archive and open `AshenSpire.html`. The Pages browser endpoint returned HTTP 503 during verification. This build contains the 32 Codex enemies and 38 equipment items; [verification and limits](docs/content/codex-art-buildout-verification.md).
+Extract the archive and open `AshenSpire.html`. Source `35548faa9f` includes GearPass and the Defend-only Smash multiplier. Desktop/phone downloaded-file checks passed; old and custom snapshot text stays intact. [Verification and limits](docs/content/smash-stance-rule-verification-2026-11-19.md).
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
-| ![Mobile: new Codex enemies](docs/preview/features/codex-art-buildout/mobile.png) | ![Desktop: new Codex enemies](docs/preview/features/codex-art-buildout/desktop.png) | ![Wide: new Codex enemies](docs/preview/features/codex-art-buildout/wide.png) | ![Tablet: new Codex enemies](docs/preview/features/codex-art-buildout/tablet.png) |
+| ![Phone: Smash stance rule](docs/preview/features/smash-stance-rule/phone-information.png) | ![Desktop: Smash stance rule](docs/preview/features/smash-stance-rule/desktop-information.png) | ![Wide: Smash stance rule](docs/preview/features/smash-stance-rule/wide-information.png) | ![Tablet: Smash stance rule](docs/preview/features/smash-stance-rule/tablet-information.png) |
 <!-- feature-preview:end -->
 
 

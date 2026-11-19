@@ -1,6 +1,6 @@
 # Smash stance rule verification — 2026-11-19
 
-Browser acceptance passed on combined GearPass + Smash source `35548faa9f130b8ea0000aa1f129124720304e61`: **32 checks passed, zero failed**, plus **36/36 snapshot, receipt and UI flows**. The eight selected current screenshots and two baseline screenshots are indexed in the [capture record](../preview/features/smash-stance-rule/capture-record.md).
+Browser acceptance passed on combined GearPass + Smash source `35548faa9f130b8ea0000aa1f129124720304e61`: **32 checks passed, zero failed**, plus **36/36 snapshot, receipt and UI flows**. The eight selected current screenshots and two baseline screenshots are indexed in the [capture record](https://github.com/cehinds/AshenSpire/blob/ffd94d62753574c91b210127c4ef149617162d61/docs/preview/features/smash-stance-rule/capture-record.md).
 
 The comparison used fetched `origin/dev` at `6232329243fbea016f8774bd398f02d3be6f1573`, which already includes GearPass. The checked-in source stamp was **0.7.4.209**, digest `ce10b5d42c`. Both probes asserted that source HEAD stayed unchanged; the tracked QA worktree stayed clean throughout the browser runs.
 
