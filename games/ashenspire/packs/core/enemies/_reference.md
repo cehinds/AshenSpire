@@ -441,6 +441,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:armor.wyrmscaleMail | Wyrmscale Mail | armor | armor | rare | mail |
 | gear:armor.ringmailHauberk | Ringmail Hauberk | armor | armor | common | mail |
 | gear:armor.huntersHide | Hunters Hide | armor | armor | common | leathers |
+| gear:armor.sagesRobe | Sages Robe | armor | armor | uncommon | robes |
 
 ## Relics (relic:)
 

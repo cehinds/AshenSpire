@@ -208,6 +208,12 @@
       "flat": {
         "piercing": 1
       }
+    },
+    "starseer:sagesRobe": {
+      "armorClass": "light",
+      "flat": {
+        "arcane": 1
+      }
     }
   },
   "sharedArmour": {

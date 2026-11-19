@@ -6,11 +6,11 @@ Art: `inventoryArtKey` is the item id (v28 ships `icon_<id>.webp`, pending PR #2
 
 Arts: each new weapon has one default and two learnable arts, all existing non-expansion cards, no card on more than three weapons.
 
-## Proposed (owner approval needed)
+## Authored after owner decision (2026-11-19)
 
-| Icon id | Proposed type | Proposed bonus |
-|---|---|---|
-| sagesRobe | unarmoured (robe), rare | Base: spells -1 MP, +1 max MP, Vulnerable to melee. Bonus: the first spell each turn costs 1 less MP. Not authored: no row in the list. |
+| Icon id | Type | Rarity | Authored | Class and art |
+|---|---|---|---|---|
+| sagesRobe | Ward robe (unarmoured caster armour) | uncommon | `self.maxMana=+1` | Starseer, Astral Vestment art and palette |
 
 ## Mechanics gaps
 
@@ -37,6 +37,7 @@ Only `strike.*`, `defend.*`, `power.*` and `self.*` mods exist. Type bases and b
 | Storm Sceptre | Shock on Lightning spells; Ward at turn start; Prepared-stance MP discount | No Shock, Ward or stance mod |
 | Grimoire, Prayer Book | Draw on first spell; 2 Ward; Fire spells +1; Healing +1 | No such mods (carry none) |
 | Sun Talisman, Bone Talisman | +1 Ward at turn start; Blight spells +1 | Sun Talisman Heal 1 is `self.regen=+1`; the rest has no mod |
+| Sage's Robe | 1 Ward stack at the start of each turn; spells -1 MP; Vulnerable to melee | No Ward-at-turn-start mod; waits on chore/ForceWardRules |
 | Cinderforged Plate | Resist Fire; Thorns; +5 Poise | Block +3 and DEX -1 authored; no Resist or Thorns mod |
 | Wyrmscale Mail | Resist Frost; +1 Poise; +3 Poise base | Poise lives in `poiseThreshold` (8); no Resist mod |
 | Ringmail Hauberk | 1 Block at turn start | No such mod |
@@ -86,5 +87,5 @@ Engine test 32 forbids an item that a same-profile item of equal or lower rarity
 ## Notes
 
 - Maul is an enemy move name in the game, not a weapon; it is authored here as a new hammer.
-- Armour rows are single-class (Cinderforged Plate and Wyrmscale Mail Reaver, Ringmail Hauberk Herald, Hunter's Hide Rogue), reusing that class's outfit art, and carry their peer's unlock.
+- Armour rows are single-class (Cinderforged Plate and Wyrmscale Mail Reaver, Sage's Robe Starseer, Ringmail Hauberk Herald, Hunter's Hide Rogue), reusing that class's outfit art, and carry their peer's unlock.
 - Relics not authored: anvilSigil, duelistsRibbon, prayerBeads, quiverStrap, whetstoneCharm.

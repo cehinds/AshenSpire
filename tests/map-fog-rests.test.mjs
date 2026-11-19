@@ -68,7 +68,9 @@ test('fogTrailOnly: the trail plus one step from the CURRENT node only; a branch
     while (walk.length < 4) { const next = g.nodes[walk[walk.length - 1]].next; if (!next.length) break; walk.push(next[0]); }
     run.path = walk; run.mapNodeId = walk[walk.length - 1];
     const k = know(run), here = g.nodes[run.mapNodeId];
-    const allowed = new Set([...walk, ...here.next, ...g.startIds, ...g.bossIds]);
+    // fogCommittedBranch: once a branch is entered only its boss stays lit.
+    const branch = g.nodes[walk[walk.length - 1]].branch;
+    const allowed = new Set([...walk, ...here.next, ...g.startIds, ...g.bossIds.filter(id => g.nodes[id].branch === branch)]);
     assert.deepEqual([...k.drawn].sort(), [...allowed].sort(), `${seed}: nothing beyond the trail, one step ahead, entrance and bosses`);
     for (const id of walk.slice(0, -1)) for (const to of g.nodes[id].next) if (!allowed.has(to)) assert.ok(!k.drawn.has(to), `${to}: a branch off a past node is hidden`);
   }

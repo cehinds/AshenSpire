@@ -1588,5 +1588,23 @@
       "file": "content/source/outfits.csv",
       "id": "huntersHide"
     }
+  },
+  {
+    "id": "armor.sagesRobe",
+    "name": "Sages_Robe",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes"
+    ],
+    "points": {},
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "sagesRobe"
+    }
   }
 ]

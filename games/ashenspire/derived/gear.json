@@ -4773,5 +4773,59 @@
         "max": 3
       }
     }
+  },
+  {
+    "id": "armor.sagesRobe",
+    "name": "Sages_Robe",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 2,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 6,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
   }
 ]

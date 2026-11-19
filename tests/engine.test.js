@@ -3644,7 +3644,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
       const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
-      eq(mine.length, (additions[id] ? 9 : 8) + ({ reaver: 2, herald: 1, rogue: 1 }[id] ?? 0), `class '${id}' has its full armour roster including four shared sets`);
+      eq(mine.length, (additions[id] ? 9 : 8) + ({ reaver: 2, starseer: 1, herald: 1, rogue: 1 }[id] ?? 0), `class '${id}' has its full armour roster including four shared sets`);
       if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
       eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }

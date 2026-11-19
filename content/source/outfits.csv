@@ -53,3 +53,4 @@ cinderforgedPlate,reaver,Cinderforged Plate,3F4C5A,64798E,3A3226,24272A,defend.b
 wyrmscaleMail,reaver,Wyrmscale Mail,302B25,4A433A,241C16,1A1712,defend.block=+2,beatStitchedKing,Every scale was a quarrel the wyrm lost.,8,vigil,,,wyrmscaleMail,,metal
 ringmailHauberk,herald,Ringmail Hauberk,44483A,747A5C,3A3226,2A2418,defend.block=+2,reachStitchedCourt,"Ten thousand rings, and each one remembers a blow.",5,pilgrim,,,ringmailHauberk,,
 huntersHide,rogue,Hunter's Hide,20272A,3B4B4A,211F25,151719,defend.block=+1|self.dexterity=+1,rogueBeatWarden,"Cured on the road, worn for the next one.",4,nightveil,,,huntersHide,,
+sagesRobe,starseer,Sage's Robe,4E1747,9327A0,3A2E4A,241E33,self.maxMana=+1,beatFellWarden,Every page it was woven beside is still listening.,4,astral,,,sagesRobe,,

@@ -4016,6 +4016,15 @@
       "tags": [
         "leathers"
       ]
+    },
+    "gear:armor.sagesRobe": {
+      "name": "Sages Robe",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "uncommon",
+      "tags": [
+        "robes"
+      ]
     }
   },
   "relics": {

@@ -5034,3 +5034,7 @@ armour,rogue,huntersHide,item:armor
 armour,rogue,huntersHide,flourish
 armour,rogue,huntersHide,ash
 armour,rogue,huntersHide,classification.armour
+armour,starseer,sagesRobe,item:armor
+armour,starseer,sagesRobe,starstone
+armour,starseer,sagesRobe,oath
+armour,starseer,sagesRobe,classification.armour

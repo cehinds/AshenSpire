@@ -134,7 +134,8 @@
         "reaver:riteVestments",
         "starseer:riteVestments",
         "rogue:riteVestments",
-        "herald:riteVestments"
+        "herald:riteVestments",
+        "starseer:sagesRobe"
       ]
     },
     "lightArmor": {
