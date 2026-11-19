@@ -1,5 +1,6 @@
 import { cardCutoutUrl } from './layeredCardArt.js';
 import { CARD_ART_ELEMENTS } from './cardArtComposition.js';
+import { reviewedCardArtCatalog } from '../content/reviewedCardArt.generated.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const color = value => typeof value === 'string' && /^(#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})|var\(--[a-z][a-z\d-]*\))$/i.test(value) ? value : '#c9d2dc';
@@ -41,10 +42,49 @@ export function cardArtLayersHtml(composition) {
 
 // A uniformly scaled 512×640 stage keeps shaft alignment and PNG aspect ratios
 // identical in square thumbnails, the short hand crop, and full inspection cards.
+const tintFilterId = (polarity, strength) => `card-stat-tint-${polarity}-${strength === 1 ? 'chevrons' : 'object'}`;
+const tintDefinitionsId = 'card-stat-tint-definitions';
+
+function installStatTintFilters() {
+  const doc = globalThis.document;
+  if (!doc?.body || doc.body.querySelector(`#${tintDefinitionsId}`)) return;
+  const { object, polarities } = reviewedCardArtCatalog.proceduralModifiers;
+  const weights = [0.2126, 0.7152, 0.0722];
+  // Split the source alpha between the light and rim palettes. Adding the
+  // complementary pieces preserves antialiased and translucent pixels.
+  const filters = Object.entries(polarities).map(([polarity, { rgb, scale }]) => {
+    const matrix = strength => rgb.flatMap((channel, row) => [
+      ...weights.map((weight, col) => (weight * channel * scale * strength + (row === col ? 1 - strength : 0)).toFixed(6)),
+      0, 0,
+    ]).concat(0, 0, 0, 1, 0).join(' ');
+    const id = strength => tintFilterId(polarity, strength);
+    return `<filter id="${id(1)}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${matrix(1)}"/></filter>` +
+      `<filter id="${id(object.tintStrength)}" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+        <feMorphology in="SourceAlpha" operator="erode" radius="${object.edgeWidth}" result="interior"/>
+        <feComposite in="SourceAlpha" in2="interior" operator="arithmetic" k2="1" k3="-1"/>
+        <feGaussianBlur stdDeviation="${object.edgeSoftness}" result="edgeMask"/>
+        <feColorMatrix in="SourceGraphic" type="matrix" values="${matrix(object.tintStrength)}" result="lightTint"/>
+        <feComposite in="lightTint" in2="edgeMask" operator="out" result="bodyTint"/>
+        <feColorMatrix in="SourceGraphic" type="matrix" values="${matrix(object.edgeTintStrength)}" result="strongTint"/>
+        <feComposite in="strongTint" in2="edgeMask" operator="in" result="edgeTint"/>
+        <feComposite in="bodyTint" in2="edgeTint" operator="arithmetic" k2="1" k3="1"/>
+      </filter>`;
+  }).join('');
+  // One shared set per document keeps the markup stable across card refreshes.
+  doc.body.insertAdjacentHTML('afterbegin', `<svg id="${tintDefinitionsId}" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none"><defs>${filters}</defs></svg>`);
+}
+
 function componentLayersHtml(art) {
   if (!art) return '';
   const images = art.sprites.filter(layer => layer.id !== 'background').map(layer => {
-    const css = Object.entries(layer.css).map(([key, value]) => `${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}:${value}`).join(';');
+    let spriteCss = layer.css;
+    if (layer.modifierTint) {
+      installStatTintFilters();
+      const { polarity, strength } = layer.modifierTint;
+      const filter = `url(#${tintFilterId(polarity, strength)})`;
+      spriteCss = { ...spriteCss, filter: [filter, spriteCss.filter].filter(Boolean).join(' ') };
+    }
+    const css = Object.entries(spriteCss).map(([key, value]) => `${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}:${value}`).join(';');
     return `<img data-card-art-component="${esc(layer.assetId)}" data-art-layer="${esc(layer.id)}" alt="" aria-hidden="true" draggable="false" src="${esc(cardCutoutUrl(layer.path))}" style="${esc(css)}" />`;
   }).join('');
   return `<span data-art-composition="${esc(art.code)}" style="position:absolute;inset:0;container-type:size;pointer-events:none"><span style="position:absolute;left:50%;top:50%;width:min(100cqw,80cqh);height:min(125cqw,100cqh);transform:translate(-50%,-50%)">${images}</span></span>`;

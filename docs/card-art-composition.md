@@ -5,7 +5,8 @@
 Simple is the default, including existing saved Simple preferences. Its pure
 `proceduralCardArt({type, tags, rank}, {registries})` factory selects only from
 the shipped 28 compositions, 44 base PNGs and 108 reviewed PNG/template pool,
-plus the pinned spear cutout and existing shortbow artwork for physical range.
+plus the approved default physical Skill object, the pinned spear cutout and
+existing shortbow artwork for physical range.
 It never routes by card ID, name, equipment profile, costs or effects. Semantic
 templates are indexed once; a bounded cache uses canonical sorted/deduplicated
 tags, type and rank. Returned recipes and their nested transforms are frozen.
@@ -23,9 +24,32 @@ un-ranged physical and all magical Counters paint the approved hammer in front
 with the same geometry. Range-tagged physical Counters replace only that foreground
 weapon. Magical elements and statuses retain their own backgrounds and cues. Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
-objects. Status tags select approved PNG marks/glows (a restrained approved
+objects. A physical Skill with no utility or approved status object uses the
+static cutout placed by `proceduralObjects.skill` in the reviewed library.
+Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
 never exceeds four visual identities.
+
+Stat modifier tags use `buff:<stat>` or `debuff:<stat>`. The reviewed library's
+`proceduralModifiers` config maps keywords and aliases to approved cutouts and
+sets their priority, placement, opacity and tint. The first supported stat in
+priority order supplies the object. Attributes precede resources. A stat with
+no registered cutout falls through to the next supported stat or ordinary art.
+
+A single modifier uses its silver object at 0.9 opacity with a light tint.
+The tint strengthens softly along the cutout’s alpha edges. The object config
+sets both tint strengths, rim width and feathering.
+Green up chevrons and a matching aura signal a buff. Red down chevrons and a
+matching aura signal a debuff. The chevron tint preserves the steel's shading.
+Chevron and aura opacity are independent of card rank. If the selected stat has both
+directions, its object and aura stay neutral and both chevron sets appear.
+
+The assembly replaces the main object on Skills, Powers, Defend and Evade.
+Attack, Smash, Sweep and Counter retain their weapons and place the modifier
+in the lower right. A retained combat card recomputes artwork from its current
+resolved definition and prepared effects when the hand refreshes. An effective
+range change can switch the weapon while preserving the remaining cues.
+Artwork selection leaves the card rules and inspection text intact.
 
 `PROCEDURAL_BACKGROUND_COLORS` maps element identities to background hue and
 saturation. Explicit element wins over the camp: physical cards without an
