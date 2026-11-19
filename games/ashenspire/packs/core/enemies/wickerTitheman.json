@@ -31,6 +31,10 @@
     {
       "slot": "mainHand",
       "ref": "gear:ashStaff"
+    },
+    {
+      "slot": "offHand",
+      "ref": "gear:prayerBook"
     }
   ],
   "relics": [

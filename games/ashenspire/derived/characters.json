@@ -5126,13 +5126,19 @@
         "own": 1,
         "bonuses": [
           {
+            "source": "prayerBook",
+            "name": "Prayer_Book",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "enemy.relic.titheBand",
             "name": "Tithe_Band",
             "kind": "relic",
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 3
       },
       "wisdom": {
         "own": 2,
@@ -5162,18 +5168,18 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
+        "constitution": 30,
         "strength": 5,
         "dexterity": 3,
         "wisdom": 6,
         "intelligence": 2,
         "level": 0
       },
-      "total": 46,
-      "formula": "10+20+5+3+6+2+0 = 46"
+      "total": 56,
+      "formula": "10+30+5+3+6+2+0 = 56"
     },
     "pools": {
-      "hp": 46,
+      "hp": 56,
       "sp": 2,
       "mp": 2,
       "ar": 1,
@@ -5185,6 +5191,11 @@
         "key": "mainHand",
         "id": "ashStaff",
         "name": "Ash_Staff"
+      },
+      {
+        "key": "offHand",
+        "id": "prayerBook",
+        "name": "Prayer_Book"
       }
     ],
     "relics": [
