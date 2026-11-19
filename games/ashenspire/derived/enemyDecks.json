@@ -4967,8 +4967,10 @@
             "amount": 6
           },
           {
-            "op": "moveEngagement",
-            "target": "enemy"
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
           }
         ],
         "hints": {

@@ -2390,7 +2390,7 @@
         "stamina": 1,
         "mana": 0
       },
-      "text": "Deal {damage} damage. Close one band.",
+      "text": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
       "usedBy": "enemy sheet"
     },
     "card:tollgateHookman.gateBar": {

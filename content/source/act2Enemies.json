@@ -912,9 +912,10 @@
         "maxConsecutive": 1,
         "effects": [
           {
-            "op": "moveEngagement",
-            "target": "enemy",
-            "bands": -1
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
           }
         ]
       },

@@ -6023,9 +6023,10 @@
         "amount": 6
       },
       {
-        "op": "moveEngagement",
+        "op": "applyStatus",
         "target": "enemy",
-        "bands": -1
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -6033,7 +6034,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Close one band.",
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
