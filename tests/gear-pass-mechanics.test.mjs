@@ -439,3 +439,13 @@ for (const intent of ['swapArmament', 'changeEquipment']) {
     assert.deepEqual(restored.player.itemProps, combat.player.itemProps);
   });
 }
+
+test('a gear Reach grant preserves a root range:ranged tag or combat profile', () => {
+  const rules = [{ selector: 'anyAttack', arg: null, conds: [], stat: 'reach', amount: 1, mode: 'add' }];
+  for (const extra of [{ tags: ['camp:physical', 'maneuver:attack', 'classification.attack', 'range:ranged'] }, { combatProfile: { range: 'ranged' } }]) {
+    const card = { tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 3 }], ...extra };
+    const projected = ApplyGearCardRules(rules, card);
+    assert.equal(projected.range, 'ranged');
+    assert.equal(projected.combatProfile.range, 'ranged');
+  }
+});

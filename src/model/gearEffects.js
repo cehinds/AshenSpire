@@ -12,6 +12,7 @@
 // Pure and headless. Card rules are applied to the card DEFINITION (ApplyGearCardRules), the one definition the face, the quote and the play all read,
 // so a preview equals the play. A rule with a target condition (Retreat-stacked, back row, front row) reads the target, so it rides the hit
 // (engine/gearHooks.js), through the same receipt the quote uses.
+import { RANGES } from './combatRanges.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
@@ -171,7 +172,8 @@ export function ApplyGearCardRules(rules, def, state = {}) {
   let effects = (def.effects || []).map(effect => ({ ...effect }));
   const gear = { ...(def.gear || {}) }, applied = [...(def.gearApplied || [])];
   let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost), mana = Number(def.resourceCosts?.mp ?? def.manaCost) || 0;
-  let keywords = def.keywords, range = def.range, costGrowth = def.costGrowth;
+  let keywords = def.keywords, costGrowth = def.costGrowth;
+  let range = [def.range, def.combatProfile?.range, ...tagsOfDef(def).filter(tag => tag.startsWith('range:')).map(tag => tag.slice(6))].filter(id => RANGES.includes(id)).sort((a, b) => RANGES.indexOf(a) - RANGES.indexOf(b)).at(-1);
   const hasCost = Number.isFinite(stamina);
   for (const rule of live) {
     const triggered = GearRuleTriggered(rule), n = rule.amount;
