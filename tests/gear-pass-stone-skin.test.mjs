@@ -111,3 +111,10 @@ test('a three-hit card spends Stone Skin hit by hit in the quote too: Pierce 1, 
   assert.equal(live.enemy.statuses.stoneHide?.stacks || 0, 0);
   assert.equal(quoted.enemy.statuses.stoneHide.stacks, 2, 'the quote spent nothing on the real target');
 });
+
+test('Diamond Skin retains Block and Stone Skin cancels Pierce under their original save keys', () => {
+  assert.equal(registries.statuses.get('stoneskin').name, 'Diamond Skin');
+  assert.equal(registries.statuses.get('stoneskin').modifiers.retainBlock, true);
+  assert.equal(registries.statuses.get('stoneHide').name, 'Stone Skin');
+  assert.equal(registries.statuses.get('stoneHide').stackMode, 'add');
+});

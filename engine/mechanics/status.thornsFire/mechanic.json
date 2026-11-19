@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/loadout/cardMods.js",
-    "symbol": "runMods"
+    "file": "src/model/gearEffects.js",
+    "symbol": "GearVocabularyEnabled"
   }
 }
