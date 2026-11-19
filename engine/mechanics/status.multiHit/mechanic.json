@@ -1,0 +1,26 @@
+{
+  "id": "status.multiHit",
+  "tag": "status.multiHit",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Multi-hit",
+  "description": "Each stack repeats the holder's attack once more: 1 stack makes 1 attack into 2. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.multiHit"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/gearEffects.js",
+    "symbol": "GearStatusRules"
+  }
+}

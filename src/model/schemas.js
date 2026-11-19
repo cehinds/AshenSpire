@@ -788,6 +788,9 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
 const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
+const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), uncapped: opt(bool) });
+const choiceModeSchema = obj({ id: str, name: str, tooltip: opt(str), icon: opt(str), costGrowth: opt(costGrowthSchema) });
+const retreatRuleFaceSchema = obj({ keywords: opt(arr(str)), textTemplate: opt(str), choiceModes: opt(arr(choiceModeSchema)) });
 const mechanicAttachmentFields = {
   mechanicTags: opt(arr(str)),
   mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
@@ -904,7 +907,8 @@ export const SCHEMAS = Object.freeze({
     requirements: opt(any),
     playLimit:opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
-    costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num),perCard:opt(bool),uncapped:opt(bool)})),
+    costGrowth: opt(costGrowthSchema),
+    retreatRuleFaces: opt(obj({ legacy: retreatRuleFaceSchema, current: retreatRuleFaceSchema })),
     // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
     upgradeMenu: opt(arr(str)),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
@@ -914,7 +918,7 @@ export const SCHEMAS = Object.freeze({
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     // Named modes the player picks when playing (model/cardChoices.js); an effect with `mode` plays only when its mode was picked.
-    choiceModes: opt(arr(obj({ id: str, name: str, tooltip: opt(str), icon: opt(str) }))),
+    choiceModes: opt(arr(choiceModeSchema)),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
@@ -943,7 +947,7 @@ export const SCHEMAS = Object.freeze({
         ramp: opt(rampNode),
         contest: opt(str),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
-        costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num),perCard:opt(bool),uncapped:opt(bool)})),
+        costGrowth: opt(costGrowthSchema),
       })
     ),
     icon: opt(str),
@@ -1016,7 +1020,7 @@ export const SCHEMAS = Object.freeze({
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
-    decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
+    decay: union(en('none', 'perTurnEnd', 'ownerTurnStart', 'onConsume'), obj({ duration: int })),
     instancePresentation: opt(obj({
       valueToken: en(...STATUS_VALUE_TOKENS),
       durationToken: en(...STATUS_DURATION_TOKENS),
@@ -1062,6 +1066,10 @@ export const SCHEMAS = Object.freeze({
     // Inert schema carrier for Arcane Exposure's registered break effect.
     // The engine slice will consume only explicit magic-school HP packets.
     schoolDamageVulnerability: opt(obj({ school: en(...DAMAGE_SCHOOLS) })),
+    // Owner, 2026-11-18: an attacker landing a hit takes `perStack` x stacks damage (Thorns); `element` types it, `onBlockOnly` needs the hit to meet Block.
+    thorns: opt(obj({ perStack: int, element: opt(str), onBlockOnly: opt(bool) })),
+    // Owner, 2026-11-18: one tag per element, each stack adds `perStack` of that element's damage taken (Fire Vulnerable, Frost Vulnerable, ...).
+    elementVulnerability: opt(obj({ element: str, perStack: num })),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),

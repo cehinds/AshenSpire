@@ -9,9 +9,10 @@
 // A fight without `elements` rules (an old save, another profile) never enters any of it: ElementRulesOf is null.
 // Random rolls use the `elements` rng stream only, and only when a rule needs a roll, so no other stream shifts.
 // Headless: no document, window or timers.
-import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
-import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
+import { ElementRulesOf, ElementOfHit, HitsAllTargets, ForceRules } from '../model/elementIdentityRules.js';
+import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
+import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
 import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
@@ -27,6 +28,9 @@ export function ElementAttribute(ctx, entity, id) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 const sumAttributes = (ctx, entity, ids) => ids.reduce((sum, id) => sum + ElementAttribute(ctx, entity, id), 0);
+const castingValue = (ctx, entity, school, legacy) => SpellTraditionsActive(ctx)
+  ? SpellScalingValue(Object.fromEntries(ATTRIBUTE_IDS.map(id => [id, ElementAttribute(ctx, entity, id)])), { school })
+  : legacy();
 const stacksOf = (entity, id) => Statuses.getStacks(entity, id);
 const defOf = (ctx, entity) => (entity?.kind === 'enemy' && entity.enemyId && ctx?.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null);
 /** Creature tag read (`undead`, `boss`): the entity's own tags, else its definition's tags and kinds. */
@@ -84,6 +88,11 @@ export function ElementReceiptStages(ctx, source, target, carrier, raw) {
   if (carrier?.elementChain) push('element-chain', 'Lightning chains', rules.lightning.chainMultiplier);
   push('element-burn', 'Burn: damage taken', 1 + rules.burn.damageTakenPerStack * stacksOf(target, 'burn'));
   if (element === 'lightning') push('element-shock', 'Shock: lightning taken', 1 + rules.shock.lightningTakenPerStack * stacksOf(target, 'shock'));
+  // One tag per element (owner, 2026-11-18): a target's <Element> Vulnerable stacks raise the damage of that element it takes.
+  for (const [id, inst] of Object.entries(target?.statuses || {})) {
+    const row = inst?.stacks > 0 ? ctx.registries?.statuses?.get(id)?.elementVulnerability : null;
+    if (row && element === row.element) push(`element-vulnerable-${row.element}`, `${row.element[0].toUpperCase()}${row.element.slice(1)} Vulnerable`, 1 + row.perStack * inst.stacks);
+  }
   if (stacksOf(target, 'brittle') > 0) push('element-brittle', 'Brittle', rules.frost.brittleMultiplier);
   const undead = ElementHasTag(ctx, target, rules.necrotic.undeadTag);
   if (element === 'divine' && undead) push('element-divine-undead', 'Divine against the undead', rules.divine.undeadMultiplier);
@@ -111,15 +120,24 @@ export function ElementProtectionView(ctx, source, target, carrier) {
   const element = ElementOfHit(carrier);
   if (element === 'necrotic') return { value: 0, ignored: 0, all: true };
   if (element === 'fire') {
-    const ignored = Math.min(pool.value, Math.floor(sumAttributes(ctx, source, rules.fire.poiseIgnoreAttributes) * rules.fire.poiseIgnorePerPoint));
+    const ignored = Math.min(pool.value, Math.floor(castingValue(ctx, source, 'fire', () => sumAttributes(ctx, source, rules.fire.poiseIgnoreAttributes)) * rules.fire.poiseIgnorePerPoint));
     return ignored > 0 ? { value: pool.value - ignored, ignored } : null;
   }
   return null;
 }
 
 /**
+ * ForcePoiseShare(ctx, carrier) -> the share of a Force hit's post-Block damage that goes to Poise (`elements.force.poiseShare`, 0.5;
+ * owner 2026-11-18: the other half is HP, where a normal physical hit sends 25% to Poise), or null for any other hit.
+ */
+export function ForcePoiseShare(ctx, carrier) {
+  const rules = ElementRulesOf(ctx), share = ForceRules(ctx).poiseShare;
+  return rules && share !== null && ElementOfHit(carrier) === 'force' ? share : null;
+}
+
+/**
  * The Poise lost in addition to what absorbed the hit: Fire's ignored points leave the pool (they never absorb, so a fire
- * hit can still break it), and Force adds (multiplier - 1) of the Poise damage the hit did.
+ * hit can still break it). Force's Poise rule is a share of the hit, not extra loss: see ForcePoiseShare.
  */
 export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const rules = ElementRulesOf(ctx);
@@ -128,7 +146,9 @@ export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const dealt = (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0);
   let extra = 0;
   if (view?.ignored > 0) extra += view.ignored;
-  if (element === 'force' && !receipt.evaded) extra += Math.floor(dealt * (rules.force.poiseMultiplier - 1));
+  // A fight saved with `elements.force.poiseMultiplier` keeps the old Force: x1.5 Poise damage (extra = (multiplier - 1) of what the hit did).
+  const force = ForceRules(ctx);
+  if (element === 'force' && !receipt.evaded && force.poiseMultiplier !== null && force.poiseShare === null) extra += Math.floor(dealt * (force.poiseMultiplier - 1));
   const left = Math.max(0, (pool?.value || 0) - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0));
   const added = receipt.evaded ? 0 : Math.min(extra, left);
   if (added > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + added;
@@ -155,7 +175,7 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
   if (receipt.element?.heal > 0) Actions.applyHeal(ctx, target, receipt.element.heal);
   // Build-up needs the target's Poise broken (at 0), like the other elemental statuses; the damage itself ignores Poise.
   if (element === 'necrotic' && target.alive && !(target.persistentPoise?.value > 0) && !ElementHasTag(ctx, target, rules.necrotic.undeadTag)) {
-    const stacks = Math.max(rules.necrotic.buildupMin, ElementAttribute(ctx, source, rules.necrotic.buildupAttribute));
+    const stacks = Math.max(rules.necrotic.buildupMin, castingValue(ctx, source, 'necrotic', () => ElementAttribute(ctx, source, rules.necrotic.buildupAttribute)));
     Statuses.applyStatus(ctx, target, 'necroticBuildup', stacks, source);
   }
   if (element === 'divine' && source?.alive) {
@@ -165,18 +185,22 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     for (const id of ['necroticBuildup', 'shock']) if (cleanse > 0 && stacksOf(source, id) > 0) Statuses.removeStatus(ctx, source, id, { amount: cleanse, reason: 'consumed' });
   }
   if (element === 'frost' && target.alive) {
-    const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
+    const stacks = rules.frost.chillBase + Math.floor(castingValue(ctx, source, 'frost', () => ElementAttribute(ctx, source, 'intelligence')) / rules.frost.chillIntPerExtra);
     Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
-  if (element === 'force' && target.alive && !carrier?.elementChain) ElementPushPull(ctx, source, target, carrier);
+  // Force has no built-in push or pull (owner, 2026-11-18): Retreat is its own tag, a moveEngagement effect. A fight saved with the old Force keeps the push and the pull.
+  if (element === 'force' && target.alive && !carrier?.elementChain && ForceRules(ctx).push) ElementPushPull(ctx, source, target, carrier);
 }
 
-/** Force: a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
+
+const cardPulls = carrier => (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
+
+/** Old Force (a fight saved before 2026-11-18): a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
 export function ElementPushPull(ctx, source, target, carrier) {
   if (!ctx.rangeState?.policy?.enabled || !source || !target) return;
   const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
   if (!sourceKey || !targetKey) return;
-  const pull = (carrier?.cardTags || carrier?.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.id)).some(tag => tag === 'pull' || tag === 'force:pull');
+  const pull = cardPulls(carrier);
   const band = engagementBand(ctx.rangeState, sourceKey, targetKey);
   if (pull ? band === 1 : band === 0) {
     ctx.rangeState = movedEngagementState(ctx.rangeState, sourceKey, targetKey, pull ? -1 : 1);
@@ -195,17 +219,18 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
   if (!rules || !hit || hit.targetId !== target?.id || !hit.element) return;
   const source = attacker;
   if (hit.element === 'fire') {
-    const stacks = Math.max(rules.fire.burnMin, ElementAttribute(ctx, source, rules.fire.burnAttribute));
+    const stacks = Math.max(rules.fire.burnMin, castingValue(ctx, source, 'fire', () => ElementAttribute(ctx, source, rules.fire.burnAttribute)));
     addCapped(ctx, target, 'burn', stacks, source, burnCap(ctx, rules));
   } else if (hit.element === 'lightning') {
-    const stacks = Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0);
+    const stacks = castingValue(ctx, source, 'lightning', () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0));
     addCapped(ctx, target, 'shock', stacks, source, shockCap(ctx, rules));
   } else if (hit.element === 'divine') {
     const smite = Math.floor(hit.amount * rules.divine.smiteFraction);
     if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
   } else if (hit.element === 'frost') {
     if (stacksOf(target, 'chill') > 0) { Statuses.applyStatus(ctx, target, 'freeze', 1, source); Statuses.applyStatus(ctx, target, 'brittle', 1, source); }
-  } else if (hit.element === 'force') {
+  } else if (hit.element === 'force' && ForceRules(ctx).knockback) {
+    // Only a fight saved with the old Force knocks back (owner, 2026-11-18: no built-in Retreat on Force). The status stays for tools/statusreach.mjs and old saves.
     Statuses.applyStatus(ctx, target, 'knockback', 1, source);
     if (ctx.rangeState?.policy?.enabled && source && target.alive) {
       const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
@@ -226,8 +251,8 @@ export function ElementPreviewBreak(ctx, attacker, defender, element, incoming =
     const have = defender.statuses?.[id]?.stacks || 0, give = Math.min(Math.floor(stacks), Math.max(0, cap - have));
     if (give > 0) defender.statuses = { ...defender.statuses, [id]: { ...defender.statuses?.[id], stacks: have + give } };
   };
-  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, ElementAttribute(ctx, attacker, rules.fire.burnAttribute)), burnCap(ctx, rules));
-  else if (element === 'lightning') add('shock', Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0), shockCap(ctx, rules));
+  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, castingValue(ctx, attacker, 'fire', () => ElementAttribute(ctx, attacker, rules.fire.burnAttribute))), burnCap(ctx, rules));
+  else if (element === 'lightning') add('shock', castingValue(ctx, attacker, 'lightning', () => Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0)), shockCap(ctx, rules));
   else if (element === 'frost' && (defender.statuses?.chill?.stacks || 0) > 0) { add('freeze', 1); add('brittle', 1); }
   else if (element === 'divine') return Math.floor((incoming || 0) * rules.divine.smiteFraction);
   return 0;

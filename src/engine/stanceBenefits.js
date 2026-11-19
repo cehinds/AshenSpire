@@ -14,6 +14,7 @@
 // Stance weaknesses (owner 2026-11-17, theme B): a target in Prepared takes x1.25 from melee hits, one in Idle (no stance) x1.25 from every hit.
 //              StanceWeaknessMultiplier (profileDamageReceipt, an offense stage)
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { FightMagicShare } from '../model/elementIdentityRules.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceOf } from '../model/stanceRules.js';
 import { configuredStance } from '../model/profileStance.js';
@@ -94,7 +95,7 @@ export function PoiseLossAdjust(ctx, source, carrier, defendingStance, { taken =
 /** A hit of magic: a spell-camp carrier, or one with a magic share or a magic school (the same test that makes a hit read PR). */
 function magicHit(ctx, carrier) {
   const profile = { ...(carrier?.combatProfile || {}), ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}) };
-  return profile.camp === 'spell' || magicShareOf(profile) > 0 || (!!ctx?.registries?.cards && isMagicalAttack(ctx, carrier));
+  return profile.camp === 'spell' || FightMagicShare(ctx, profile) > 0 || (!!ctx?.registries?.cards && isMagicalAttack(ctx, carrier));
 }
 
 /**

@@ -16684,7 +16684,7 @@
     },
     {
       "id": "progression-breaker-s-toll",
-      "name": "Breaker\u2019s Toll",
+      "name": "Breaker’s Toll",
       "type": "attack",
       "class": "reaver",
       "code": "C120",
@@ -21510,7 +21510,7 @@
     },
     {
       "id": "progression-pallbearer-s-ward",
-      "name": "Pallbearer\u2019s Ward",
+      "name": "Pallbearer’s Ward",
       "type": "skill",
       "class": "herald",
       "code": "C150",
@@ -22053,7 +22053,7 @@
     },
     {
       "id": "progression-pilgrim-s-shelter",
-      "name": "Pilgrim\u2019s Shelter",
+      "name": "Pilgrim’s Shelter",
       "type": "skill",
       "class": "herald",
       "code": "C154",
@@ -25147,7 +25147,7 @@
   "assets": {
     "O.background.0": {
       "id": "O.background.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 background",
+      "label": "Existing attack · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.0.png",
       "width": 512,
       "height": 640,
@@ -25158,7 +25158,7 @@
     },
     "O.effect.0": {
       "id": "O.effect.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing attack · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.0.png",
       "width": 512,
       "height": 640,
@@ -25169,7 +25169,7 @@
     },
     "O.object.0": {
       "id": "O.object.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 object",
+      "label": "Existing attack · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.0.png",
       "width": 512,
       "height": 640,
@@ -25180,7 +25180,7 @@
     },
     "O.background.1": {
       "id": "O.background.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 background",
+      "label": "Existing smash · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.1.png",
       "width": 512,
       "height": 640,
@@ -25191,7 +25191,7 @@
     },
     "O.effect.1": {
       "id": "O.effect.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing smash · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.1.png",
       "width": 512,
       "height": 640,
@@ -25202,7 +25202,7 @@
     },
     "O.object.1": {
       "id": "O.object.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 object",
+      "label": "Existing smash · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.1.png",
       "width": 512,
       "height": 640,
@@ -25246,7 +25246,7 @@
     },
     "O.background.4": {
       "id": "O.background.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 background",
+      "label": "Existing counter · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.4.png",
       "width": 512,
       "height": 640,
@@ -25257,7 +25257,7 @@
     },
     "O.effect.4": {
       "id": "O.effect.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing counter · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.4.png",
       "width": 512,
       "height": 640,
@@ -25268,7 +25268,7 @@
     },
     "O.object.4": {
       "id": "O.object.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 object",
+      "label": "Existing counter · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.4.png",
       "width": 512,
       "height": 640,
@@ -26345,6 +26345,16 @@
       "sha256": "f61cffa1310c3b6ba68c62712da2c97c21fd7ace564c4e79154ccf717ab079d2",
       "bytes": 82061
     },
+    "skill.object": {
+      "id": "skill.object",
+      "label": "Physical Skill object",
+      "source": "User-approved generated Skill card art",
+      "width": 1254,
+      "height": 1254,
+      "path": "assets-display/card-cutouts/skill.object.png",
+      "sha256": "cce1278d928f21ec232c41077a8f10e16340dd8c9b1c4bbdd5ad7c23e2bd3aed",
+      "bytes": 1017570
+    },
     "symbol.feather": {
       "id": "symbol.feather",
       "label": "feather object",
@@ -26404,6 +26414,131 @@
       "path": "assets-display/card-cutouts/cue.regen.mark.png",
       "sha256": "1a867e2443667622a9bf1fc152f9d1a96a73a837667929395e381d0bfc5b7d08",
       "bytes": 173755
+    },
+    "stat.str": {
+      "path": "assets-display/card-cutouts/stat.str.png",
+      "label": "Strength gauntlet",
+      "sha256": "0e93a4d8ecbaf9cff486b26886d7d9f4751bcebc74553b8f2440c7aac2ae1007",
+      "bytes": 1369738,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.dex": {
+      "path": "assets-display/card-cutouts/stat.dex.png",
+      "label": "Dexterity steel-gray leather boot",
+      "sha256": "a8fb22cd038889920ac7eb568816ee6d0c42004ceefead2435b12d403c70b121",
+      "bytes": 1282091,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.con": {
+      "path": "assets-display/card-cutouts/stat.con.png",
+      "label": "Constitution silver chestplate",
+      "sha256": "ff7f3b82d30cbfcb3921527c5df3123e3835ade9eb56be15dee682f770d896df",
+      "bytes": 1523716,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.int": {
+      "path": "assets-display/card-cutouts/stat.int.png",
+      "label": "Intelligence silver open book",
+      "sha256": "b1bbad496055679f3a9b7d22b30da08eb75e7a8e72e006bc4eb745d0e186dde5",
+      "bytes": 1438370,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.wis": {
+      "path": "assets-display/card-cutouts/stat.wis.png",
+      "label": "Wisdom silver eye",
+      "sha256": "893df25974ca1e9a90ddf773debe1a5b71b39125f0960562be775ae25000b7ee",
+      "bytes": 1008660,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.chevrons": {
+      "path": "assets-display/card-cutouts/stat.chevrons.png",
+      "label": "Three descending chevrons",
+      "sha256": "0c061e88dd10a5994de8f01c5accc5105cfeac9c0bee8e7ddbcd06618be15bfe",
+      "bytes": 1590743,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.hp": {
+      "path": "assets-display/card-cutouts/stat.hp.png",
+      "label": "Silver heart",
+      "sha256": "27be99b3593f6032b788085d78be0abe742710b073b437bc51e998c208d607c7",
+      "bytes": 1433291,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.mp": {
+      "path": "assets-display/card-cutouts/stat.mp.png",
+      "label": "Round vial with etched MP",
+      "sha256": "4e8e3e07f3a47ca9d9d713433bbef20a2f836f500b18f138d727f733bbdae16e",
+      "bytes": 1024827,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.sp": {
+      "path": "assets-display/card-cutouts/stat.sp.png",
+      "label": "Angular vial with etched SP",
+      "sha256": "c0781d29c7f3b140c7fd0c702b81c9f969f80e84547c8758d02c772a68970b91",
+      "bytes": 1310124,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.poise": {
+      "path": "assets-display/card-cutouts/stat.poise.png",
+      "label": "Poise stone tower",
+      "sha256": "d2dbc22ed771767ab17e815d0287bdc14f3495adf24c59362de87e171a816757",
+      "bytes": 1273084,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.handsize": {
+      "path": "assets-display/card-cutouts/stat.handsize.png",
+      "label": "Two steel cards",
+      "sha256": "9437636fcac9826b7141a3aa70e02df48d2565a60791fe31cbaf571794553b24",
+      "bytes": 1536971,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.gold": {
+      "path": "assets-display/card-cutouts/stat.gold.png",
+      "label": "Silver coin pile",
+      "sha256": "32990a5d9d71ab6e3aa16c60beb39364b26fcee1f324efaa203566c6e8ab976c",
+      "bytes": 1185510,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.xp": {
+      "path": "assets-display/card-cutouts/stat.xp.png",
+      "label": "Silver XP letters",
+      "sha256": "d6ac75f3c17224e1f9ea5b37f0e1abfe3d97c8bf4adfdf6bd28e6971a541b25f",
+      "bytes": 1084563,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.damage": {
+      "path": "assets-display/card-cutouts/stat.damage.png",
+      "label": "Round-plate steel dumbbell",
+      "sha256": "859aaff48b723803c902482e4723f53b007bc27eed656826e8c901d5ff072c1b",
+      "bytes": 787432,
+      "width": 1254,
+      "height": 1254
+    }
+  },
+  "proceduralObjects": {
+    "skill": {
+      "assetId": "skill.object",
+      "role": "object",
+      "x": 256,
+      "y": 320,
+      "width": 490,
+      "height": 490,
+      "rotation": 0,
+      "opacity": 0.9,
+      "blendMode": "normal"
     }
   },
   "effectLayers": {
@@ -26704,5 +26839,201 @@
       "opacity": 0.42,
       "blendMode": "screen"
     }
+  },
+  "proceduralModifiers": {
+    "stats": {
+      "strength": {
+        "assetId": "stat.str",
+        "statuses": [
+          "strength"
+        ]
+      },
+      "dexterity": {
+        "assetId": "stat.dex",
+        "statuses": [
+          "dexterity"
+        ]
+      },
+      "constitution": {
+        "assetId": "stat.con",
+        "statuses": [
+          "constitution"
+        ]
+      },
+      "intelligence": {
+        "assetId": "stat.int",
+        "statuses": [
+          "intelligence"
+        ]
+      },
+      "wisdom": {
+        "assetId": "stat.wis",
+        "statuses": [
+          "wisdom"
+        ]
+      },
+      "hp": {
+        "assetId": "stat.hp",
+        "statuses": []
+      },
+      "mp": {
+        "assetId": "stat.mp",
+        "statuses": [],
+        "centerObjectScale": 1.26
+      },
+      "poise": {
+        "assetId": "stat.poise",
+        "statuses": [
+          "barrier",
+          "goreblood"
+        ]
+      },
+      "damage": {
+        "assetId": "stat.damage",
+        "statuses": [
+          "weak",
+          "base.weak",
+          "silenced",
+          "confused",
+          "slowed"
+        ]
+      },
+      "sp": {
+        "assetId": "stat.sp",
+        "statuses": [],
+        "centerObjectScale": 1.22
+      },
+      "handsize": {
+        "assetId": "stat.handsize",
+        "statuses": []
+      },
+      "gold": {
+        "assetId": "stat.gold",
+        "statuses": []
+      },
+      "xp": {
+        "assetId": "stat.xp",
+        "statuses": []
+      }
+    },
+    "center": {
+      "x": 8,
+      "y": 8,
+      "width": 496,
+      "height": 624,
+      "maxSize": 500,
+      "objectScale": 1.15,
+      "chevronsOffsetY": -0.07,
+      "objectOffsetY": -0.015
+    },
+    "object": {
+      "x": 0,
+      "y": 0,
+      "width": 0.86,
+      "height": 0.86,
+      "rotation": 0,
+      "opacity": 0.9,
+      "blendMode": "normal",
+      "tintStrength": 0.03,
+      "edgeTintStrength": 0.52,
+      "edgeWidth": 0.02,
+      "edgeSoftness": 0.004
+    },
+    "aura": {
+      "x": 0,
+      "y": 0,
+      "width": 0.89,
+      "height": 0.89,
+      "rotation": 0,
+      "opacity": 0.25,
+      "blendMode": "normal",
+      "mixedFilter": "grayscale(1) blur(5px) drop-shadow(0 0 8px #d5dbe1)",
+      "stanceOpacity": 0.15
+    },
+    "chevrons": {
+      "assetId": "stat.chevrons",
+      "x": 0,
+      "y": -0.15,
+      "width": 0.96,
+      "height": 0.96,
+      "opacity": 0.73,
+      "blendMode": "normal",
+      "opposingX": 0.215,
+      "opposingScale": 0.55,
+      "glowRadius": 5
+    },
+    "polarities": {
+      "buff": {
+        "rotation": 180,
+        "rgb": [
+          0.32,
+          1,
+          0.42
+        ],
+        "scale": 1.14,
+        "glow": "#75ff90",
+        "tint": "brightness(0) saturate(100%) invert(84%) sepia(46%) saturate(808%) hue-rotate(62deg) brightness(105%)",
+        "aura": "blur(5px) drop-shadow(0 0 8px #75ff90)"
+      },
+      "debuff": {
+        "rotation": 0,
+        "rgb": [
+          1,
+          0.25,
+          0.28
+        ],
+        "scale": 1.14,
+        "glow": "#ff555b",
+        "tint": "brightness(0) saturate(100%) invert(51%) sepia(87%) saturate(2664%) hue-rotate(326deg) brightness(110%)",
+        "aura": "blur(5px) drop-shadow(0 0 8px #ff555b)"
+      }
+    },
+    "priority": [
+      "hp",
+      "mp",
+      "sp",
+      "damage",
+      "poise",
+      "handsize",
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence",
+      "wisdom",
+      "gold",
+      "xp"
+    ],
+    "statAliases": {
+      "str": "strength",
+      "dex": "dexterity",
+      "con": "constitution",
+      "int": "intelligence",
+      "wis": "wisdom"
+    },
+    "stanceActions": [
+      "attack",
+      "smash",
+      "sweep",
+      "defend",
+      "counter",
+      "evade"
+    ],
+    "layerOrder": [
+      "background",
+      "chevrons",
+      "aura",
+      "object",
+      "effect",
+      "projectile"
+    ],
+    "effectGroupOrder": [
+      "secondary",
+      "main"
+    ],
+    "effectObjectOrder": [
+      "stat",
+      "utility",
+      "status"
+    ]
   }
 }

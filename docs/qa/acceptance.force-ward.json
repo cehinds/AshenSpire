@@ -1,0 +1,54 @@
+{
+  "request": "Owner ruling 2026-11-18 section 20, Force and Ward: a Force hit is physical, so it hits Block first, and sends half of what Block leaves to Poise. Each Ward stack adds +5 max Poise; while a character holds Ward, damage goes Block, then Poise absorbs 100%, then HP.",
+  "success": "Playing Mote Shield (Ward) shows a Ward status on the player and raises the Poise pool; playing Battering Gale (Force) on an enemy resolves with no console errors at 1280x800 and 390x844.",
+  "failure": "No Ward status appears after Mote Shield; the combat screen logs a console error; the hand overflows the combat screen.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "ward-poise",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.moteShield,core.batteringGale,core.defend",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
+        { "wait": { "ms": 4000 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The player holds a Ward status", "selector": "[data-status-id=\"ward\"]" },
+        { "kind": "within", "label": "The hand stays inside the combat screen", "selector": ".hand", "container": ".combat" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "No Ward status after Mote Shield", "selector": "[data-status-id=\"ward\"]", "eq": 0 }
+      ]
+    },
+    {
+      "name": "force-hits-block-first",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.manaSurge,core.batteringGale,core.defend&shotMaxMana=3",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card[data-card-id=\"core.manaSurge\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".hand .card[data-card-id=\"core.manaSurge\"]" },
+        { "wait": { "ms": 1500 } },
+        { "click": ".hand .card[data-card-id=\"core.batteringGale\"]" },
+        { "wait": { "ms": 400 } },
+        { "click": ".combatant.enemy" },
+        { "wait": { "ms": 4000 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The enemy is still on screen after the Force hit", "selector": ".combatant.enemy" },
+        { "kind": "count", "label": "Mana Surge was played to fund the Force cast", "selector": ".hand .card[data-card-id=\"core.manaSurge\"]", "eq": 0 },
+        { "kind": "count", "label": "Battering Gale was played rather than refused", "selector": ".hand .card[data-card-id=\"core.batteringGale\"]", "eq": 0 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": []
+    }
+  ]
+}

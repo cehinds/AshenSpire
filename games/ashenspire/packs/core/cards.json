@@ -1101,9 +1101,11 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "rank.cantrip"
+      "rank.cantrip",
+      "school:force",
+      "retreat"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "textTemplate": "Deal {damage} damage. Inflict Retreat.",
     "upgrade": {
       "effects": [
         {
@@ -3294,7 +3296,8 @@
       "source:spell",
       "maneuver:casting",
       "classification.skill",
-      "rank.cantrip"
+      "rank.cantrip",
+      "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {

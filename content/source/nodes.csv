@@ -44,7 +44,7 @@ theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
 property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one. What the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
 blade,card,Blade,C9502E,⚔,,,,,Steel and edge: direct weapon work.
 bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
-retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts a free Retreat card in your hand each turn: step back out of the Advance."
+retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts an Ethereal, Exhaust Retreat card in your hand each turn. Retreat ends your Advance and sends front-row foes to the back row."
 pullRetreat,card,Pull,7FA8C9,↪,,,,,"Removes a Retreat stack from its target; with none left the target comes forward to the front row."
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
@@ -73,7 +73,7 @@ construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born. No blood to let."
 spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
 item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
 item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
-item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,"What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0)."
+item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,"What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies."
 item:armor,itemType,Armour,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armour.
 from:global,grantSource,Global,B8B0A0,🌐,,,,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.
 from:relic,grantSource,Relic,C9A227,◈,,,,,Carried in by the starting relic.
@@ -121,7 +121,7 @@ damage:blunt,damageType,Blunt,9FC3E8,◇,,,,,Adds 2 Poise damage once per action
 damage:fire,damageType,Fire,9FC3E8,◇,,,,,Applies 1 Burn on a Health hit unless the card already prints a Burn effect.
 damage:frost,damageType,Cold,9FC3E8,◇,,,,,Applies 1 Frost on a Health hit unless the card already prints a Frost effect.
 damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.
-damage:arcane,damageType,Force,9FC3E8,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
+damage:arcane,damageType,Force,9BC8BE,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
 damage:sacred,damageType,Holy,9FC3E8,◇,,,,,Removes 1 hostile debuff from the attacker after a Health hit.
 damage:decay,damageType,Necrotic,9FC3E8,◇,,,,,Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.
 damage:poison,damageType,Poison,9FC3E8,◇,,,,,Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up.
@@ -465,7 +465,7 @@ maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage ag
 school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.
 school:fire,school,Fire,E47C43,🔥,,,,,Fire pressure: Burn buildup keeps pressure between turns.
 school:lightning,school,Lightning,E8D46A,ϟ,,,,,Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.
-school:force,school,Force,B99DEC,✦,,,,,Force pressure: strip Ward and bypass melee Counter.
+school:force,school,Force,9BC8BE,✦,,,,,Force pressure: strip Ward and bypass melee Counter.
 school:alteration,school,Alteration,9BC8BE,◇,,,,,"Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure."
 school:illusion,school,Illusion,C59BD7,◎,,,,,"Tempo and hand control: Weak, confusion, draw and energy tools."
 school:divine,school,Divine,F0D99A,✚,,,,,"Restoration and cleansing: heal, protect and remove hostile effects."

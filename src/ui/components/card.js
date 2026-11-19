@@ -119,10 +119,10 @@ export function relicText(def, registries = null) {
 
 // `wardAsPoise` ({ preview }) is set when the run's profile has Ward switched off (Core 2): a card that authors
 // `wardOffTextTemplate` then reads its Ward damage as Poise damage, one combined figure (model/wardOffCardText.js).
-function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null) {
+function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null, rules = null) {
   let template = def.textTemplate;
   // A Core Smash adds the shared rule sentence once (model/smashClause.js); an authored template that has it is left alone.
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules);
   if (smashClause && !template.includes(smashClause)) template = `${template.trim()} ${smashClause}`;
   const projected = wardAsPoise ? wardOffCardText(def, tokens, baseTokens, wardAsPoise.preview) : null;
   if (projected) { template = projected.template; tokens = projected.tokens; baseTokens = projected.baseTokens; }
@@ -408,11 +408,11 @@ export function renderCard(registries, ref, opts = {}) {
   const paint = (at) => {
     const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
     const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
-      definition:def,registries,style:opts.artStyle});
+      definition:def,preview:opts.preview,registries,style:opts.artStyle});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
-      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
-      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
     const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
@@ -777,7 +777,7 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -965,7 +965,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // follow, then the chips.
   const common = html.slice(commonStart);
   html = html.slice(0, commonStart);
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"
@@ -1024,10 +1024,11 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   const service = tagService(registries);
+  const tagContext = { ...registries, ...statusContext };
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, tagContext)); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, tagContext));
   const rows = [...chips.values()];
   const effects = rows.filter((chip) => chip.effect && chip.effectTips.length);
   if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.effectTips.join(' '))}</dd>`).join('')}</dl>`;

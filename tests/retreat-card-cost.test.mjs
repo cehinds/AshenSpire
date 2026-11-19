@@ -44,3 +44,17 @@ test('saving and loading mid-fight keeps the count', () => {
   const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(777, combat.rng.getCounters()), snapshot: saved });
   assert.equal(previewCard(restored, 'qa2').cost, 2);
 });
+
+test('rejected and canceled Retreats do not charge the next fresh copy', () => {
+  const combat = withCopies(3);
+  playRetreat(combat, 'qa0');
+  const before = serializeCombatSnapshot(combat);
+  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'qa1', choice: 'not-a-choice' }), /no choice/);
+  assert.deepEqual(serializeCombatSnapshot(combat), before);
+  combat.beforeCombatCommit = () => ({ ok: false });
+  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'qa1' }), /save was refused/);
+  assert.deepEqual(serializeCombatSnapshot(combat), before);
+  delete combat.beforeCombatCommit;
+  assert.equal(playRetreat(combat, 'qa1').paid, 1);
+  assert.equal(playRetreat(combat, 'qa2').paid, 2);
+});

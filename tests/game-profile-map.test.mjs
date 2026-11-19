@@ -141,11 +141,11 @@ test('branch count never exceeds the distinct bosses of the act or maxBranches',
   const act3 = setup();
   let widest = 0;
   for (let seed = 1; seed <= 60; seed++) widest = Math.max(widest, buildActMap(act3.reg, createRng(seed), act3.run.seatOrder[2], 3).bossIds.length);
-  assert.equal(widest, 3, 'Core caps the branch count at 3 even where four bosses exist');
+  assert.equal(widest, 3, 'Core caps the branch count at 3 even where five bosses exist');
   const uncapped = setup({ maxBranches: 5 });
   let widest5 = 0;
   for (let seed = 1; seed <= 60; seed++) widest5 = Math.max(widest5, buildActMap(uncapped.reg, createRng(seed), uncapped.run.seatOrder[2], 3).bossIds.length);
-  assert.equal(widest5, 4, 'the final act offers four distinct bosses');
+  assert.equal(widest5, 5, 'the final act offers five distinct bosses');
 });
 test('branch width, length, rest placement and exposed node types follow JSON settings', () => {
   const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false, maxBranches: 1, ...PLAIN });

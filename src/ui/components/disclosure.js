@@ -274,7 +274,7 @@ function mountDetailsDisclosure(host, rows) {
     hideTooltip();
     if (openKey === entry.key) close(); else open(entry.key);
   });
-  if (tipHtml(entry)) attachTooltip(summary, () => tipHtml(entry));
+  if (tipHtml(entry)) attachTooltip(summary, () => tipHtml(entry), { secondTap: false });
 
   return { open, close, setValue, reflow() {}, get openKey() { return openKey; } };
 }

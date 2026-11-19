@@ -256,7 +256,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const projectCombatIntent = (target, enemyId) => target === combat
     ? previewMemo.memo(`project:${enemyId}`, () => projectIntentUncached(target, enemyId)) : projectIntentUncached(target, enemyId);
   function previewCard(target, instanceId, targetId, ranks, options) {
-    return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
+    return memoPreviewCard(target, instanceId, targetId, ranks, { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance', ...options });
   }
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -2609,6 +2609,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // once, the halves let a pure selection change reuse the unselected cards'
     // previews instead of re-quoting the whole hand.
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      { fixCoreRules: combat.fixCoreRules, profileHash: combat.gameProfile?.hash, combatExpansionVersion: combat.combatExpansionVersion },
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     // A play paints the hand from `disp.handPreviews`, the quotes taken BEFORE the dispatch, while `combat` is already
     // post-dispatch, so stateKey alone is the same before and after the animation ends. The tag keeps those two paints
@@ -2656,7 +2657,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+        return { inst, preview: pv, rules: combat, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
           stacked: stackedIds.has(inst.instanceId), maxRange: combat.rangeState?.policy?.maxRange,
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
@@ -3091,7 +3092,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           : { preview: pv, affordable };
       } catch (e) { console.warn('[combat] dragged card not previewable for', targetId); return; }
       const old = dragGhost;
-      const face = renderCard(registries, inst, { preview: quote.preview, affordable: quote.affordable, range: true,
+      const face = renderCard(registries, inst, { preview: quote.preview, rules: combat, affordable: quote.affordable, range: true,
         maxRange: combat.rangeState?.policy?.maxRange, faceLineLimit: 3, inspection: false });
       face.classList.add(...[...old.classList].filter(name => name !== 'unaffordable'));
       face.setAttribute('aria-hidden', 'true');
@@ -3549,7 +3550,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
-      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance' }),
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance', choice: o.play.choice }),
       // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
       conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
         target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
@@ -3886,14 +3887,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderHand({ refreshHitChances: false });
   }
   // Why a queued play can no longer go ahead (checked when its turn comes), or null.
-  function queuedPlayProblem({ instanceId, targetId, rank }) {
+  function queuedPlayProblem({ instanceId, targetId, rank, choice }) {
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return 'This card is no longer in your hand.';
     const blocked = unplayableReason(inst);
     if (blocked) return blocked;
     if (targetId && (!getEntity(combat, targetId)?.alive || !cardTargets(instanceId).legalIds.includes(targetId))) return 'Its target is gone.';
     let pv;
-    try { pv = previewCard(combat, instanceId, targetId, rank); } catch { return 'This card cannot be played now.'; }
+    try { pv = previewCard(combat, instanceId, targetId, rank, { choice }); } catch { return 'This card cannot be played now.'; }
     const needEnergy = pv.costIsX ? 0 : pv.cost;
     if (combat.player.energy < needEnergy) return `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`;
     if (combat.player.mana < pv.manaCost) return `Not enough mana (needs ${pv.manaCost}, have ${combat.player.mana}).`;
@@ -3960,7 +3961,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const plan = cardTargets(instanceId);
           const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
           // An area card (allEnemies) has no single destination: play it now.
-          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank)).needsTarget, previousTarget);
+          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank), { choice }).needsTarget, previousTarget);
           if (step === 'retarget') {
             selected = plan.mode === 'enemy' ? instanceId : null;
             selfArm = plan.mode === 'friendly' ? instanceId : null;
@@ -3982,7 +3983,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
     }
-    const finalPreview = previewCard(combat, instanceId, targetId, rank);
+    const finalPreview = previewCard(combat, instanceId, targetId, rank, { choice });
     const needEnergy = finalPreview.costIsX ? 0 : finalPreview.cost;
     const needStamina = finalPreview.staminaCost || 0;
     if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`); return; }

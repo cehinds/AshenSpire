@@ -12,7 +12,7 @@ const mechanic='defense.wardProtection';
 function fixture() {
   const root=mkdtempSync(join(tmpdir(),'ashen mechanic compatibility '));
   const copy=file=>{mkdirSync(dirname(join(root,file)),{recursive:true});cpSync(join(repo,file),join(root,file),{recursive:true});};
-  for(const file of ['content/source/fixCoreMechanics.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
+  for(const file of ['content/source/fixCoreMechanics.json','content/source/spellTraditions.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js','src/model/retreatRuleFaces.js',`engine/mechanics/${mechanic}`])copy(file);
   const index='engine/mechanics/index.json';
   writeFileSync(join(root,index),JSON.stringify({format:'ashen.mechanics-index@1',mechanics:[{id:mechanic,tag:'defense:wardProtection',family:'defense',portability:'portable',modules:['effects']}]}));
   return root;
@@ -28,6 +28,12 @@ function pin(root) {
 }
 const changes=[
   ['canonical JSON-only multiplier',root=>editJSON(root,'content/source/fixCoreMechanics.json',rules=>{rules.stance.discount+=1;})],
+  ['spell school tradition',root=>editJSON(root,'content/source/spellTraditions.json',rules=>{assert.deepEqual(rules.schools.force,['arcane']);rules.schools.force=['divine'];})],
+  ['Retreat version face evaluator',root=>{
+    const file=join(root,'src/model/retreatRuleFaces.js'),source=readFileSync(file,'utf8');
+    assert.match(source,/faces\[RetreatRulesActive\(context\) \? 'current' : 'legacy'\]/);
+    writeFileSync(file,source.replace("? 'current' : 'legacy'","? 'legacy' : 'current'"));
+  }],
   ['registered parameter default',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.parameters.properties.multiplier.default=0.6;})],
   ['registered service expression',root=>editJSON(root,`engine/mechanics/${mechanic}/service.json`,service=>{service.modifiers[0].value=0.6;})],
   ['class attachment eligibility',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.attaches=manifest.attaches.filter(kind=>kind!=='character');})],
@@ -43,6 +49,7 @@ for(const [label,change] of changes)test(`${label} changes runtimeHash and rejec
     const before=pin(root),oldCatalog={...baseline,...before};
     const saved=resolveGameAuthor({formatVersion:1,core:'ashen.core@2.0.0',modules:{}},oldCatalog);
     assert.equal(saved.lock.runtimeHash,before.runtimeHash);
+    assert.doesNotThrow(()=>validateResolvedGameProfile(saved,before.runtimeHash));
     change(root);const after=pin(root);
     assert.notEqual(after.runtimeHash,before.runtimeHash);
     assert.throws(()=>validateResolvedGameProfile(saved,after.runtimeHash),/unsupported runtime artifact/);

@@ -1311,7 +1311,7 @@
   },
   {
     "id": "stoneskin",
-    "name": "Stoneskin",
+    "name": "Diamond Skin",
     "icon": "skill",
     "tint": "#8a7b5c",
     "stackMode": "unique",
@@ -1330,7 +1330,7 @@
     "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 stack at the start of your turn.",
+    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 Ward at the start of your turn, and its +5 maximum Poise with it. When your Poise reaches 0, all Ward is lost.",
     "sharedWord": true
   },
   {
@@ -1422,6 +1422,70 @@
     "tint": "#c9a36a",
     "stackMode": "unique",
     "decay": "none",
-    "tooltip": "Knocked back: it must Advance (pay its Advance cost) before its next melee move."
+    "tooltip": "Knocked back by a fight saved before Force lost its push: it must Advance (pay its Advance cost) before its next melee move. New fights never apply it."
+  },
+  {
+    "id": "stoneHide",
+    "name": "Stone Skin",
+    "icon": "armour",
+    "tint": "#8a7b5c",
+    "stackMode": "add",
+    "decay": "ownerTurnStart",
+    "tooltip": "Each stack cancels 1 Pierce stack; both stacks are spent. Gone at the start of its owner's turn, like Block."
+  },
+  {
+    "id": "thorns",
+    "name": "Thorns",
+    "icon": "armour",
+    "tint": "var(--ember)",
+    "stackMode": "add",
+    "decay": "none",
+    "thorns": {
+      "perStack": 1
+    },
+    "tooltip": "An attacker that lands a hit on the holder takes damage equal to its Thorns stacks. Constant: it does not decay; only a timed effect, printed on its card, changes it."
+  },
+  {
+    "id": "thornsFire",
+    "name": "Fire Thorns",
+    "icon": "burn",
+    "tint": "var(--ember)",
+    "stackMode": "add",
+    "decay": "none",
+    "thorns": {
+      "perStack": 1,
+      "element": "fire",
+      "onBlockOnly": true
+    },
+    "tooltip": "When the holder's Block stops an attack, the attacker takes Fire damage equal to its Fire Thorns stacks."
+  },
+  {
+    "id": "multiHit",
+    "name": "Multi-hit",
+    "icon": "attack",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack repeats the holder's attack once more: 1 stack makes 1 attack into 2. 1 stack expires each turn."
+  },
+  {
+    "id": "reach",
+    "name": "Reach",
+    "icon": "target",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "The holder's physical attacks have Reach: they hit a back-row or Retreat-stacked enemy without removing its Retreat stacks. 1 stack expires at the end of its owner's turn."
+  },
+  {
+    "id": "fireVulnerable",
+    "name": "Fire Vulnerable",
+    "icon": "vulnerable",
+    "tint": "var(--ember)",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack: +5% Fire damage taken. 1 stack expires each turn.",
+    "elementVulnerability": {
+      "element": "fire",
+      "perStack": 0.05
+    }
   }
 ]

@@ -184,9 +184,24 @@
       {
         "id": "retreat",
         "name": "Retreat",
-        "tooltip": "Step back out of the enemy's reach."
+        "tooltip": "Step back out of the enemy's reach. Costs 1 more SP each time this copy Retreats in this fight.",
+        "costGrowth": { "stamina": 1, "perUse": 1, "uncapped": true }
       }
     ],
+    "retreatRuleFaces": {
+      "legacy": {
+        "choiceModes": [
+          { "id": "advance", "name": "Advance", "tooltip": "Step in: every enemy is within your reach." },
+          { "id": "retreat", "name": "Retreat", "tooltip": "Step back out of the enemy's reach." }
+        ]
+      },
+      "current": {
+        "choiceModes": [
+          { "id": "advance", "name": "Advance", "tooltip": "Step in: every enemy is within your reach." },
+          { "id": "retreat", "name": "Retreat", "tooltip": "Step back out of the enemy's reach. Costs 1 more SP each time this copy Retreats in this fight.", "costGrowth": { "stamina": 1, "perUse": 1, "uncapped": true } }
+        ]
+      }
+    },
     "upgrade": {
       "effects": [
         {

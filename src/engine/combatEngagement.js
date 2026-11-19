@@ -6,7 +6,7 @@ import { contestKindOf } from './contest.js';
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
 import { actorRangeKey, rangePairKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
 import { core2MultiHitRulesEnabled, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, RetreatRulesActive } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsEnemyHeldBack, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow, ContactRetreatStacks, SpendRetreatAdvances } from './bandRows.js';
+import { BandsActive, BandsEnemyAdvance, BandsEnemyHeldBack, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow, ContactRetreatStacks, SpendRetreatAdvances } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -46,7 +46,8 @@ function rangeSourceContext(ctx,source) {
   return {...ctx,player:source,loadout:seat.loadout,registries:ctx.registriesForPlayer?.(seatId) || ctx.registries};
 }
 function rangeSourceProfile(carrier,effect) {
-  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+  const effectRange = effect.range ?? effect.combatProfile?.range ?? effect.tags?.find(tag => tag.startsWith('range:'))?.slice(6);
+  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier, ...(effectRange ? { range: effectRange } : {}), tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
   return { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
 }
 function committedRangeSource(ctx,source,carrier,effect,profile) {
@@ -69,7 +70,7 @@ function committedRangeSource(ctx,source,carrier,effect,profile) {
 // reaches any target with no Advance and no Retreat cost. Beside a melee hit in the same card, only the hit pays.
 const MELEE_MANEUVERS = new Set(['attack', 'sweep', 'smash', 'counter']);
 const STATUS_OPS = new Set(['applyStatus', 'buildup', 'arcaneBuildup']);
-const statusOnlyReach = (ctx, effect, profile) => BandsActive(ctx) && STATUS_OPS.has(effect.op) && !MELEE_MANEUVERS.has(profile.maneuver); // only a fight with the rows rules (a fight saved before them keeps its prices)
+const statusOnlyReach = (ctx, effect, profile) => RetreatRulesActive(ctx) && BandsActive(ctx) && STATUS_OPS.has(effect.op) && !MELEE_MANEUVERS.has(profile.maneuver); // only a fight with the rows rules (a fight saved before them keeps its prices)
 const fartherRange = (a, b) => rangeBand(b ?? a) > rangeBand(a) ? b : a;
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   ctx=rangeSourceContext(ctx,source);
@@ -227,8 +228,11 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     const before = ctx.rangeState;
     // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
     // A throw pays only its Retreat Advances (it replaced the distance one): it spends the stacks and moves nobody.
-    if (plan.route === 'throw') { /* stacks are spent below */ }
-    else if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') { /* its stacks are spent and it steps forward below */ }
+    if (RetreatRulesActive(ctx) && plan.route === 'throw') { /* stacks are spent below */ }
+    else if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') {
+      if (!RetreatRulesActive(ctx)) BandsEnemyAdvance(ctx, source, 'advance');
+      // With the new policy its priced stacks are spent and it steps forward below.
+    }
     else if (BandsActive(ctx) && source.kind !== 'enemy') { SetAdvanced(ctx, source, true); MarkAdvancedByPlay(source, rootId); }
     else ctx.rangeState = advancedEngagementState(before, plan);
     SpendRetreatAdvances(ctx, source, plan, { frozen: prepaidPlanPending });

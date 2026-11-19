@@ -26,6 +26,7 @@ export function armouryStatsModel({ registries, run, meta = {}, inCombat = false
     attributeRows = attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run, settings: meta.settings || {} },
       // The hand a solo fight deals: mid-fight, that fight's own snapshot
       // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
       // holds no hand settings, Codex #1294); otherwise the next fight's,

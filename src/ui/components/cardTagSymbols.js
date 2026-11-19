@@ -102,6 +102,11 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Owner, 2026-11-18 section 22: Gale Pull carries the Pull tag; the rail says it removes a Retreat stack.
   const pull = tags.find(tag => tag.id === 'pullRetreat');
   if (pull && def.effects?.some(effect => effect?.op === 'pullEnemy') && !selected.some(row => row.id === 'pullRetreat') && selected.length < 5) selected.push(pull);
+  // Owner, 2026-11-18: a card whose moveEngagement sends a foe back carries the Retreat tag, and the rail says it inflicts Retreat (not the weapon's free Retreat card).
+  const retreat = tags.find(tag => tag.id === 'retreat');
+  if (retreat && def.effects?.some(effect => effect?.op === 'moveEngagement' && effect.target === 'enemy' && effect.bands > 0) && selected.length < 5) {
+    selected.push({ ...retreat, blurb: tFull('card.tag.retreatInflicts') });
+  }
   const statuses = new Map();
   const add = (id, occurrence = null) => {
     if (!registries?.statuses?.has(id)) return;
@@ -127,7 +132,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
-  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  const smashHelp = coreSmashHelp(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');

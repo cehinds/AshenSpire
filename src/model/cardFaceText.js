@@ -290,6 +290,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
         if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat foes');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        // Owner, 2026-11-18: a push on a foe inflicts Retreat (the stack bandRows.addRetreat gives); the face says so.
+        if (!close && effect.target === 'enemy') return frag('bonus', 'Inflict Retreat');
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
@@ -417,7 +419,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   }
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', tag: true, text: esc(smashClause) });
   // A run-long attribute upgrade (W25-L) says what it gives while the card is in the deck.
   for (const [attribute, amount] of Object.entries(def.runAttributeBonus || {})) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(amount)} ${ATTRIBUTE_ABBREVIATION[attribute] || esc(title(attribute))} for the run while in your deck` });

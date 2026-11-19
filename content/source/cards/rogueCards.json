@@ -307,6 +307,18 @@
       }
     ],
     "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust.",
+    "retreatRuleFaces": {
+      "legacy": {
+        "keywords": [],
+        "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared."
+      },
+      "current": {
+        "keywords": [
+          "exhaust"
+        ],
+        "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust."
+      }
+    },
     "upgrade": {
       "keywords": [],
       "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",

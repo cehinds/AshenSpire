@@ -1,3 +1,4 @@
+import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
@@ -49,6 +50,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  chosen = ProjectRetreatRuleFace(chosen, subject?.gameProfile ? subject : { gameProfile: subjectProfile(subject) });
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
   // A ranked ability card keeps its grade numbers; only a drawback-removal step applies to it (review of #2819).
@@ -102,6 +104,7 @@ function projectWeaponArtResources(bundle,profile) {
 /** @param {string | object} [profileOrAuthor] */
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
+  bundle.cards = (bundle.cards || []).map(def => ProjectRetreatRuleFace(def, { gameProfile: profile }));
   if(profile.foundation.mode === 'legacy') return bundle;
   if(gameModule(profile,'cards')?.mode === 'configured') {
     const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id,{rampless:true}));
@@ -142,6 +145,20 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     // own pack pins the starting poiseMax it plays with (Core 2 halved, Core 1 kept).
     const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
     bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
+  }
+  // A profile pins the enemy roster it was authored with. A run stamped with an older profile never meets an encounter that fields an
+  // enemy its pack does not carry: that enemy would have no stamina pool, stats or moves under the profile's rules (the Codex roster,
+  // 2026-11-18, is the first addition to meet an older pinned profile).
+  const pinnedRoster=new Set((gameContent(profile,'enemies')||[]).map(row=>row.id));
+  if(pinnedRoster.size) {
+    if(Array.isArray(bundle.enemies)) bundle.enemies=bundle.enemies.filter(def=>pinnedRoster.has(def.id));
+    if(Array.isArray(bundle.enemyMoves)) bundle.enemyMoves=bundle.enemyMoves.filter(row=>pinnedRoster.has(row.enemyId));
+    if(Array.isArray(bundle.encounters)) bundle.encounters=bundle.encounters.filter(row=>!Array.isArray(row.enemies)||row.enemies.every(id=>pinnedRoster.has(id)));
+    // Rows tagging what was dropped would tag nothing, which the registry refuses.
+    const allEnemies=new Set((baseBundle.enemies||[]).map(def=>def.id)), keptEncounters=new Set((bundle.encounters||[]).map(row=>row.id));
+    const allEncounters=new Set((baseBundle.encounters||[]).map(row=>row.id));
+    if(Array.isArray(bundle.tagging)) bundle.tagging=bundle.tagging.filter(row=>!((row.family==='enemy'&&allEnemies.has(row.objectId)&&!pinnedRoster.has(row.objectId))
+      ||(row.family==='enemyMove'&&allEnemies.has(row.scope)&&!pinnedRoster.has(row.scope))||(row.family==='encounter'&&allEncounters.has(row.objectId)&&!keptEncounters.has(row.objectId))));
   }
   if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
     ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);

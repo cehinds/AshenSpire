@@ -152,18 +152,18 @@ const withDirections = html => html.replace(/<span class="val (up|down)">(.*?)<\
  * source as the card face (cardFaceText), else the plain effect summary, else the authored text; '' only for a card
  * with no text at all. A tile never shows an empty effect row.
  */
-export function cardEffectHtml(def, preview = null, registries = null) {
+export function cardEffectHtml(def, preview = null, registries = null, rules = null) {
   if (!def) return '';
   let lines = null;
-  try { lines = cardFaceLines(def, preview, registries, null, { stanceEntry: false }); } catch { lines = null; }
+  try { lines = cardFaceLines(def, preview, registries, rules, { stanceEntry: false }); } catch { lines = null; }
   if (lines?.length) return withDirections(lines.map(row => row.html).join(' \u00b7 '));
   let summary = null;
-  try { summary = combatCardSummary(def, preview, registries); } catch { summary = null; }
+  try { summary = combatCardSummary(def, preview, registries, rules); } catch { summary = null; }
   const text = typeof summary === 'string' ? summary : Array.isArray(summary) ? summary.join(' ') : summary?.text;
   if (text) return esc(text);
   // The authored sentence with its tokens filled from the live preview, else the card's static tokens (the card
   // face's own token source); only a token that cannot resolve to a number is dropped.
-  const { tokens } = cardSummaryContext(def, preview, registries);
+  const { tokens } = cardSummaryContext(def, preview, registries, rules);
   const fill = token => { const figure = preview?.tokens?.[token] ?? tokens[token]; return Number.isFinite(figure) ? String(figure) : ''; };
   const authored = String(def.textTemplate || def.text || def.description || '').replace(/\{([^}]*)\}/g, (match, token) => fill(token)).replace(/\s+/g, ' ').trim();
   return esc(authored || def.name || '');
@@ -223,7 +223,7 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
     name: option.name ?? def?.name ?? '',
     // Numbers when every effect has one; otherwise the card's own compact text, so no tile has an empty effect row.
     line: complete ? line : freeze([]),
-    ...(!complete && def ? { html: cardEffectHtml(def, preview, registries) } : {}),
+    ...(!complete && def ? { html: cardEffectHtml(def, preview, registries, combat) } : {}),
     costs: option.play ? costsOf(option, preview, registries, combat) : freeze([]),
   });
 }

@@ -1,4 +1,6 @@
 import { ChannelWeight } from '../model/damageChannels.js';
+import { GearGainBonus, GearProps, GearState } from './gearReceipt.js';
+import { GearHitRiders } from '../model/gearEffects.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -6,7 +8,8 @@ import { SwapEnemyRows, PullEnemy } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, fixCorePierceRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -71,7 +74,7 @@ import { gameProfileServiceActive, withGameProfileService } from '../model/gameP
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { ratingValue, isMagicalAttack, ratingDamageMultiplier, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit, schoolOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -340,14 +343,31 @@ function claimStagger(ctx, target) {
 }
 
 // A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
-function fixCorePoiseBreak(ctx, source, target) {
+function fixCorePoiseBreak(ctx, source, target, carrier = null) {
   // `poiseBreak` marks a Core break that staggers, for the break haptic (fx.enemyPoiseBroken) and the log; Core breaks interrupt
   // nothing. A break the target's Impact protection refuses carries `poiseBreak: false`: the pool broke, nobody was staggered.
   const staggers = !(target.kind === 'enemy' && staggerRefused(ctx, target));
   ctx.emit('poiseBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
-  OnPoiseBreak(ctx, source, target, ctx.elementHit); // element identity (W25): Burn, Shock, Freeze, Smite, Knockback
+  OnPoiseBreak(ctx, source, target, ctx.elementHit); // element identity (W25): Burn, Shock, Freeze, Smite
+  // Owner, 2026-11-18: Poise at 0 breaks Ward: every stack goes, and the maximum Poise it gave goes with it (removeStatus re-syncs the pool).
+  if (FixCoreWardBreaksAtZeroPoise(ctx) && target.statuses?.ward?.stacks > 0) statuses.removeStatus(ctx, target, 'ward', { reason: 'poiseBroken' });
+  GearBreakRiders(ctx, source, target, carrier);
+}
+
+// Owner, 2026-11-19: gear riders that read the break (a Hammer Smash sends the target back with a Retreat stack only when the hit breaks its Poise).
+// Run once per break, through the same plan queue the other hit riders use; the unconditional riders ran with the hit.
+function GearBreakRiders(ctx, source, target, carrier) {
+  const rules = GearProps(source)?.hitRules;
+  if (!rules || !carrier || target.kind !== 'enemy' || !target.alive) return;
+  const riders = GearHitRiders(rules, carrier, target, { ...GearState(ctx, source), poiseBreak: true });
+  const ids = { sourceId: ctx.playerIdForEntity?.(source) || source.id, targetId: ctx.playerIdForEntity?.(target) || target.id };
+  const effects = [
+    ...riders.applies.map(b => ({ ...ids, op: 'applyStatus', status: b.status, stacks: b.stacks })),
+    ...riders.pushes.map(b => ({ ...ids, op: 'moveEngagement', target: 'enemy', bands: b.bands })),
+    ...riders.removes.map(b => ({ ...ids, op: 'removeStatus', target: 'enemy', status: b.status, amount: b.stacks })) ];
+  if (effects.length) applyProposalPlan(ctx, { effects }, source, target, carrier);
 }
 
 /**
@@ -367,7 +387,7 @@ export function drainFixCorePoise(ctx, source, target, amount, carrier = null, b
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   ctx.emit('persistentPoiseChanged', { targetId: target.id, spent, value: poise.value, max: poise.max, source: 'poiseDamage', ...seatOf(ctx, target) });
-  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target);
+  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target, carrier);
   return spent;
 }
 
@@ -426,6 +446,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   const before = target.block || 0;
   let poiseBefore = 0;
   target.block = receipt.blockRemaining;
+  if (target.earthBlock) target.earthBlock = Math.min(target.earthBlock, target.block);
   if (fixCoreEnabled(ctx)) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
@@ -435,6 +456,9 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   const hpBefore = target.hp;
   target.hp -= receipt.hpLoss;
+  // Stone Skin spent against the Pierce this hit carried (the quote spends nothing; the landed hit does).
+  const skinStatus = receipt.skinSpent > 0 ? fixCorePierceRules(fixCoreRules(ctx, target)).skinStatus : null;
+  if (skinStatus) statuses.removeStatus(ctx, target, skinStatus, { amount: receipt.skinSpent, reason: 'consumed' });
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
@@ -447,17 +471,47 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   ApplyElementReceipt(ctx, source, target, receipt, carrier); // element identity (W25): what a landed hit of its element does
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
   const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
-  if (poiseBroke) fixCorePoiseBreak(ctx, source, target);
+  if (poiseBroke) fixCorePoiseBreak(ctx, source, target, carrier);
   // One break is one stagger: a hit that already broke Poise has staggered the target.
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
   applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
+  ThornsReturn(ctx, source, target, carrier, receipt);
   if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   if (receipt.hpLoss > 0 && fixCoreEnabled(ctx)) stanceCounterBack(ctx, source, target, carrier, receipt);
   delete ctx.elementHit;
   return receipt.amount;
+}
+
+/**
+ * Thorns (owner, 2026-11-18): an attacker that lands a hit on a holder takes damage equal to the holder's Thorns stacks (a status row's `thorns.perStack` per stack).
+ * Constant, no decay. A row with `onBlockOnly` (Fire Thorns, the Lantern) answers only a hit that met Block. The return is plain HP loss, never an attack, so it
+ * cannot trigger Thorns, Reflect or a Counter; a reflected, countered or reactive hit is not an attacker landing a hit.
+ */
+export function ThornsDamage(ctx, source, target, carrier, receipt) {
+  if (!source?.alive || !target || source === target || source.kind === target.kind || receipt?.evaded || carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return 0;
+  let total = 0;
+  for (const [id, inst] of Object.entries(target.statuses || {})) {
+    const row = inst?.stacks > 0 ? ctx.registries?.statuses?.get(id)?.thorns : null;
+    if (!row || (row.onBlockOnly && !(receipt.blocked > 0))) continue;
+    let amount = row.perStack * inst.stacks;
+    if (row.element) {
+      const resist = Math.max(0, source.damageResistPercent?.[row.element] || 0);
+      amount = Math.max(0, Math.ceil(amount * (1 - resist / 100))); // a floor of 0 damage, no ceiling on resistance
+    }
+    total += amount;
+  }
+  return total;
+}
+export function ThornsReturn(ctx, source, target, carrier, receipt) {
+  const total = ThornsDamage(ctx, source, target, carrier, receipt);
+  if (total > 0) {
+    ctx.emit('thornsReturned', { sourceId: target.id, targetId: source.id, amount: total });
+    applyLoseHp(ctx, source, total, 'thorns', { sourceId: target.id });
+  }
+  return total;
 }
 
 // Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returned 25% of the HP a hit cost it; the shipped data dropped that return on 2026-11-15 (batch 5), so only a fight saved with `hpReturnFraction` still runs it.
@@ -542,7 +596,7 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 // non-damage things (Ward-first Barrier gains, mana, tags).
 // The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
-  return magicShareOf(profile);
+  return FightMagicShare(ctx, profile);
 }
 
 // The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
@@ -641,9 +695,11 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
   // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
   // Arcane is negated whole.
+  // A Force-school hit with no component list is Force whole (owner, 2026-11-18: Force is physical, so its parts are Blunt, not Arcane): every part is negated.
+  const wholeForce = receipt.profiles.map(profile => ForceRules(ctx).magicShare === 0 && schoolOf(profile) === 'force' && !componentPartsOf(profile));
   receipt.forceImmuneAmounts = hits.map(() => 0);
   for (let p = parts.length - 1; p >= 0; p--) {
-    if (!receipt.silencedImmune[parts[p].index] || parts[p].type !== 'arcane') continue;
+    if (!receipt.silencedImmune[parts[p].index] || (parts[p].type !== 'arcane' && !wholeForce[parts[p].index])) continue;
     receipt.forceImmuneAmounts[parts[p].index] += parts[p].amount;
     parts.splice(p, 1);
   }
@@ -811,6 +867,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
     ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
       immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0,
+      ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
       magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
       ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
     spendSilencedStack(ctx, target);
@@ -1115,6 +1172,9 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
     Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
   }
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
+  // Block laid by an Earth card is not bypassed by a built-in Pierce (owner, 2026-11-18); it is read as min(earthBlock, block).
+  const earth = fixCoreEnabled(ctx) ? fixCorePierceRules(fixCoreRules(ctx, entity)).earthSource : null;
+  if (amt > 0 && earth && (card?.tags || card?.authoredTags || []).includes(`school:${earth}`)) entity.earthBlock = Math.min((entity.earthBlock || 0) + amt, entity.block);
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
     // A guard no card raised names what did (a Defend stance's turn-start protection), for the log.
@@ -1652,13 +1712,19 @@ function plannedStatusTargets(ctx, action, eff) {
 
 // Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
 // (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
+/** The authored status grant before target resistance: shared by a card preview and the landed opcode. */
+export function ComputeStatusGrant(ctx, action, eff, target, base) {
+  const authored = base + (base > 0 && eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
+  return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
+}
+
 function runGuardStackOpcode(ctx, action, eff) {
   if (eff.op === 'gainCounterStacks') {
     if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
     // A Counter card adds the Block it stands behind, after its own Block grant.
     // Owner 2026-11-15: under the card-stack rule the grant is the card's own 1..3 (CounterStackGrant), never the Block held.
     const grant = eff.amount === undefined ? CounterStackGrant(ctx, action.card) : 0;
-    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount !== undefined ? evalNum(ctx, action, eff.amount, 0, t) : grant || t.block);
+    for (const t of resolveTargets(ctx, action, eff.target)) { const gained = eff.amount !== undefined ? evalNum(ctx, action, eff.amount, 0, t) : grant || t.block; gainCounterStacks(ctx, t, gained > 0 && !eff.noGainBonus ? gained + GearGainBonus(t, 'counter') : gained); }
     return true;
   }
   if (eff.op === 'applyReflect') {
@@ -1895,8 +1961,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     applyStatus: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const authored = evalNum(ctx, action, eff.stacks, 1, t);
-        const stacks = FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0)); // W25-F: the flux lifts the stacks a card applies
+        const stacks = ComputeStatusGrant(ctx, action, eff, t, evalNum(ctx, action, eff.stacks, 1, t));
         const held = t.statuses?.[eff.status]?.stacks || 0;
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
           tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]

@@ -222,8 +222,12 @@ test('a line with a tag rider reads its faceHtml on the face and drops when that
 
 test('a split-type hit keeps its hit count and area: never split into unqualified fragments', () => {
   const faces = id => project(defOf(id)).clauses.map(line => plain(line.html));
-  // Both types belong to every one of the three hits.
-  assert.equal(faces('starShower')[0], '2 Blunt + 1 Force ×3');
+  // Both types belong to every one of the three hits. Star Shower is all Blunt now (Force is physical, owner 2026-11-18), so a Blunt + Poison card stands in for the split.
+  assert.equal(faces('starShower')[0], 'Deal 3 Blunt damage ×3');
+  const repeated = project({ ...defOf('viperStrike'), effects: defOf('viperStrike').effects.map(effect => (effect.op === 'damage' ? { ...effect, hits: 3 } : effect)) }).clauses.map(line => plain(line.html));
+  assert.match(repeated[0], /×3$/, repeated.join(' | '));
+  assert.match(repeated[0], /Blunt/, repeated.join(' | '));
+  assert.match(repeated[0], /Poison/, repeated.join(' | '));
   // The area qualifier cannot be said in five words: the cue names the effect instead of a lone fragment.
   assert.ok(!faces('meteorSwarm').some(clause => /^(?:Deal )?\d+ Blunt;|^\d+ Force damage/.test(clause)), faces('meteorSwarm').join(' | '));
   assert.ok(faces('meteorSwarm').every(clause => !/Inspect/.test(clause)), 'the real rules text, no Inspect cue');

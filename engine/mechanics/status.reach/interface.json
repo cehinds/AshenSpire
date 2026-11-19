@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.reach",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1629,5 +1629,1573 @@
     "width": 512,
     "height": 512,
     "confidence": "visual-reviewed"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/idle.webp": {
+    "headY": 146,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-smash.webp": {
+    "headY": 66,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-attack.webp": {
+    "headY": 184,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-counter.webp": {
+    "headY": 166,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-sweep.webp": {
+    "headY": 178,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-defend.webp": {
+    "headY": 184,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brackenTusker/stance-preparing.webp": {
+    "headY": 146,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/idle.webp": {
+    "headY": 140,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-smash.webp": {
+    "headY": 78,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-attack.webp": {
+    "headY": 150,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-counter.webp": {
+    "headY": 120,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-sweep.webp": {
+    "headY": 80,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-defend.webp": {
+    "headY": 148,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/fenwickToad/stance-preparing.webp": {
+    "headY": 80,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/idle.webp": {
+    "headY": 98,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-smash.webp": {
+    "headY": 140,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-attack.webp": {
+    "headY": 96,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-counter.webp": {
+    "headY": 106,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-sweep.webp": {
+    "headY": 96,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-defend.webp": {
+    "headY": 160,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/reedpipePoacher/stance-preparing.webp": {
+    "headY": 134,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/idle.webp": {
+    "headY": 98,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-smash.webp": {
+    "headY": 96,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-attack.webp": {
+    "headY": 154,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-counter.webp": {
+    "headY": 116,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-sweep.webp": {
+    "headY": 120,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-defend.webp": {
+    "headY": 162,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerTitheman/stance-preparing.webp": {
+    "headY": 176,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/idle.webp": {
+    "headY": 138,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-smash.webp": {
+    "headY": 84,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-attack.webp": {
+    "headY": 178,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-counter.webp": {
+    "headY": 128,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-sweep.webp": {
+    "headY": 156,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-defend.webp": {
+    "headY": 194,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/quarryRam/stance-preparing.webp": {
+    "headY": 168,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/idle.webp": {
+    "headY": 116,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-smash.webp": {
+    "headY": 68,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-attack.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-counter.webp": {
+    "headY": 122,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-sweep.webp": {
+    "headY": 148,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-defend.webp": {
+    "headY": 136,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/tollgateHookman/stance-preparing.webp": {
+    "headY": 192,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/idle.webp": {
+    "headY": 138,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-smash.webp": {
+    "headY": 66,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-attack.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-counter.webp": {
+    "headY": 144,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-sweep.webp": {
+    "headY": 142,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-defend.webp": {
+    "headY": 162,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/waxsealBailiff/stance-preparing.webp": {
+    "headY": 184,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/idle.webp": {
+    "headY": 122,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-smash.webp": {
+    "headY": 76,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-attack.webp": {
+    "headY": 122,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-counter.webp": {
+    "headY": 120,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-sweep.webp": {
+    "headY": 130,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-defend.webp": {
+    "headY": 160,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnshellTortoise/stance-preparing.webp": {
+    "headY": 78,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/idle.webp": {
+    "headY": 142,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-smash.webp": {
+    "headY": 66,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-attack.webp": {
+    "headY": 184,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-counter.webp": {
+    "headY": 166,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-sweep.webp": {
+    "headY": 170,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-defend.webp": {
+    "headY": 146,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagtongImp/stance-preparing.webp": {
+    "headY": 216,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/idle.webp": {
+    "headY": 188,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-smash.webp": {
+    "headY": 76,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-attack.webp": {
+    "headY": 180,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-counter.webp": {
+    "headY": 170,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-sweep.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-defend.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sootwingBat/stance-preparing.webp": {
+    "headY": 242,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/idle.webp": {
+    "headY": 202,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-smash.webp": {
+    "headY": 136,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-attack.webp": {
+    "headY": 212,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-counter.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-sweep.webp": {
+    "headY": 212,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-defend.webp": {
+    "headY": 250,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/siltCrownNewt/stance-preparing.webp": {
+    "headY": 194,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/idle.webp": {
+    "headY": 178,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-smash.webp": {
+    "headY": 164,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-attack.webp": {
+    "headY": 236,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-counter.webp": {
+    "headY": 174,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-sweep.webp": {
+    "headY": 280,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-defend.webp": {
+    "headY": 256,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/wickerHind/stance-preparing.webp": {
+    "headY": 176,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/idle.webp": {
+    "headY": 204,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-smash.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-attack.webp": {
+    "headY": 258,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-counter.webp": {
+    "headY": 202,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-sweep.webp": {
+    "headY": 256,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-defend.webp": {
+    "headY": 200,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/blackrushStork/stance-preparing.webp": {
+    "headY": 190,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/idle.webp": {
+    "headY": 166,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-smash.webp": {
+    "headY": 142,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-attack.webp": {
+    "headY": 184,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-counter.webp": {
+    "headY": 150,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-sweep.webp": {
+    "headY": 180,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-defend.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pearlbackSnail/stance-preparing.webp": {
+    "headY": 160,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/idle.webp": {
+    "headY": 214,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-smash.webp": {
+    "headY": 190,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-attack.webp": {
+    "headY": 268,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-counter.webp": {
+    "headY": 222,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-sweep.webp": {
+    "headY": 284,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-defend.webp": {
+    "headY": 236,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/alderMaskHarvester/stance-preparing.webp": {
+    "headY": 244,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/idle.webp": {
+    "headY": 210,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-smash.webp": {
+    "headY": 190,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-attack.webp": {
+    "headY": 262,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-counter.webp": {
+    "headY": 220,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-sweep.webp": {
+    "headY": 250,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-defend.webp": {
+    "headY": 260,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/pallidOathCamel/stance-preparing.webp": {
+    "headY": 212,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/idle.webp": {
+    "headY": 170,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-smash.webp": {
+    "headY": 176,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-attack.webp": {
+    "headY": 200,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-counter.webp": {
+    "headY": 178,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-sweep.webp": {
+    "headY": 232,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-defend.webp": {
+    "headY": 194,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/inkveilNautilus/stance-preparing.webp": {
+    "headY": 190,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/idle.webp": {
+    "headY": 118,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-smash.webp": {
+    "headY": 110,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-attack.webp": {
+    "headY": 180,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-counter.webp": {
+    "headY": 124,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-sweep.webp": {
+    "headY": 188,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-defend.webp": {
+    "headY": 140,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mirrorFanAbbess/stance-preparing.webp": {
+    "headY": 124,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/idle.webp": {
+    "headY": 230,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-smash.webp": {
+    "headY": 156,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-attack.webp": {
+    "headY": 244,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-counter.webp": {
+    "headY": 202,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-sweep.webp": {
+    "headY": 248,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-defend.webp": {
+    "headY": 238,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/saltChoirWalrus/stance-preparing.webp": {
+    "headY": 202,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/idle.webp": {
+    "headY": 84,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-smash.webp": {
+    "headY": 50,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-attack.webp": {
+    "headY": 100,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-counter.webp": {
+    "headY": 72,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-sweep.webp": {
+    "headY": 132,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-defend.webp": {
+    "headY": 120,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/rimewheelPenitent/stance-preparing.webp": {
+    "headY": 92,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/idle.webp": {
+    "headY": 116,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-smash.webp": {
+    "headY": 90,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-attack.webp": {
+    "headY": 192,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-counter.webp": {
+    "headY": 108,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-sweep.webp": {
+    "headY": 214,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-defend.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/brassThroatIbex/stance-preparing.webp": {
+    "headY": 132,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/idle.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-smash.webp": {
+    "headY": 146,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-attack.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-counter.webp": {
+    "headY": 160,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-sweep.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-defend.webp": {
+    "headY": 186,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/kilnbackTerrapin/stance-preparing.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/idle.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-smash.webp": {
+    "headY": 172,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-attack.webp": {
+    "headY": 252,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-counter.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-sweep.webp": {
+    "headY": 246,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-defend.webp": {
+    "headY": 208,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/slagwingHeron/stance-preparing.webp": {
+    "headY": 182,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/idle.webp": {
+    "headY": 242,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-smash.webp": {
+    "headY": 218,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-attack.webp": {
+    "headY": 274,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-counter.webp": {
+    "headY": 256,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-sweep.webp": {
+    "headY": 256,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-defend.webp": {
+    "headY": 270,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ashSilkWeaver/stance-preparing.webp": {
+    "headY": 236,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/idle.webp": {
+    "headY": 216,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-smash.webp": {
+    "headY": 178,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-attack.webp": {
+    "headY": 232,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-counter.webp": {
+    "headY": 202,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-sweep.webp": {
+    "headY": 256,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-defend.webp": {
+    "headY": 220,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/ferrumVotary/stance-preparing.webp": {
+    "headY": 206,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/idle.webp": {
+    "headY": 82,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-smash.webp": {
+    "headY": 42,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-attack.webp": {
+    "headY": 110,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-counter.webp": {
+    "headY": 56,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-sweep.webp": {
+    "headY": 86,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-defend.webp": {
+    "headY": 118,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/woundwoodTusker/stance-preparing.webp": {
+    "headY": 82,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/idle.webp": {
+    "headY": 66,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-smash.webp": {
+    "headY": 50,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-attack.webp": {
+    "headY": 46,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-counter.webp": {
+    "headY": 44,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-sweep.webp": {
+    "headY": 44,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-defend.webp": {
+    "headY": 64,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/mireProcessional/stance-preparing.webp": {
+    "headY": 62,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/idle.webp": {
+    "headY": 78,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-smash.webp": {
+    "headY": 64,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-attack.webp": {
+    "headY": 134,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-counter.webp": {
+    "headY": 82,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-sweep.webp": {
+    "headY": 94,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-defend.webp": {
+    "headY": 72,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/veiledJusticiar/stance-preparing.webp": {
+    "headY": 62,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/idle.webp": {
+    "headY": 134,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-smash.webp": {
+    "headY": 94,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-attack.webp": {
+    "headY": 168,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-counter.webp": {
+    "headY": 112,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-sweep.webp": {
+    "headY": 132,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-defend.webp": {
+    "headY": 108,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/sixleggedHearse/stance-preparing.webp": {
+    "headY": 146,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/idle.webp": {
+    "headY": 268,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-smash.webp": {
+    "headY": 176,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-attack.webp": {
+    "headY": 246,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-counter.webp": {
+    "headY": 230,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-sweep.webp": {
+    "headY": 186,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-defend.webp": {
+    "headY": 230,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/crucibleNewt/stance-preparing.webp": {
+    "headY": 226,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/idle.webp": {
+    "headY": 160,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-smash.webp": {
+    "headY": 92,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-attack.webp": {
+    "headY": 224,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-counter.webp": {
+    "headY": 114,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-sweep.webp": {
+    "headY": 208,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-defend.webp": {
+    "headY": 124,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/carrionHeadsman/stance-preparing.webp": {
+    "headY": 136,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/idle.webp": {
+    "headY": 186,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-smash.webp": {
+    "headY": 120,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-attack.webp": {
+    "headY": 196,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-counter.webp": {
+    "headY": 198,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-sweep.webp": {
+    "headY": 180,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-defend.webp": {
+    "headY": 192,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
+  },
+  "assets/enemy-poses/expansion/knellcapSentinel/stance-preparing.webp": {
+    "headY": 226,
+    "feetY": 480,
+    "width": 512,
+    "height": 512,
+    "confidence": "alpha-measured"
   }
 }

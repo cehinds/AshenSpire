@@ -28,7 +28,7 @@ const pack = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cha
 
 test('every enemy (registry and Core pack) has valid weaknesses, and the two agree', () => {
   const all = contentBundle.enemies.map(def => registries.enemies.get(def.id));
-  assert.equal(all.length, 33);
+  assert.equal(all.length, 65);
   for (const def of all) {
     assert.deepEqual(weaknessProblems(def.weaknesses), [], def.id);
     const row = pack.find(r => r.id === def.id);

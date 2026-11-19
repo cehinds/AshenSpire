@@ -3536,5 +3536,3398 @@
       ]
     },
     "spFloor": 2
+  },
+  {
+    "id": "brackenTusker",
+    "name": "Bracken_Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 2
+    },
+    "defaultDeck": [
+      "brackenTusker.gore",
+      "brackenTusker.gore",
+      "brackenTusker.bristle",
+      "brackenTusker.trample",
+      "brackenTusker.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "brackenTusker",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "brackenTusker.trample",
+      "poiseMax": 6,
+      "cardHints": {
+        "brackenTusker.gore": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "gore",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brackenTusker.bristle": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bristle",
+          "coreSp": "card"
+        },
+        "brackenTusker.trample": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "trample",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brackenTusker.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "fenwickToad",
+    "name": "Fenwick_Toad",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 2
+    },
+    "defaultDeck": [
+      "fenwickToad.tongueLash",
+      "fenwickToad.bileSpit",
+      "fenwickToad.puffUp",
+      "fenwickToad.advance",
+      "fenwickToad.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "leatherWhip"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "fenwickToad",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "fenwickToad.bileSpit",
+      "poiseMax": 3,
+      "cardHints": {
+        "fenwickToad.tongueLash": {
+          "aiWeight": 40,
+          "costSource": "authored",
+          "legacyMove": "tongueLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "fenwickToad.bileSpit": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bileSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "fenwickToad.puffUp": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "puffUp",
+          "coreSp": "card"
+        },
+        "fenwickToad.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "fenwickToad.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "reedpipePoacher",
+    "name": "Reedpipe_Poacher",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "wisdom",
+      "intelligence",
+      "strength",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 2
+    },
+    "defaultDeck": [
+      "reedpipePoacher.dart",
+      "reedpipePoacher.dart",
+      "reedpipePoacher.snare",
+      "reedpipePoacher.advance",
+      "reedpipePoacher.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "handCrossbow"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "reedpipePoacher",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "reedpipePoacher.snare",
+      "poiseMax": 2,
+      "cardHints": {
+        "reedpipePoacher.dart": {
+          "aiWeight": 55,
+          "costSource": "authored",
+          "legacyMove": "dart",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "reedpipePoacher.snare": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "snare",
+          "coreSp": "card"
+        },
+        "reedpipePoacher.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "reedpipePoacher.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "slashing",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wickerTitheman",
+    "name": "Wicker_Titheman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 2
+    },
+    "defaultDeck": [
+      "wickerTitheman.tithe",
+      "wickerTitheman.tithe",
+      "wickerTitheman.bindingStraw",
+      "wickerTitheman.kindleWard",
+      "wickerTitheman.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      },
+      {
+        "key": "offHand",
+        "id": "prayerBook"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titheBand"
+      }
+    ],
+    "presentation": {
+      "art": "wickerTitheman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 4,
+      "cardHints": {
+        "wickerTitheman.tithe": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "tithe",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerTitheman.bindingStraw": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bindingStraw",
+          "coreSp": "card"
+        },
+        "wickerTitheman.kindleWard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "kindleWard",
+          "coreSp": "card"
+        },
+        "wickerTitheman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "siltCrownNewt",
+    "name": "Silt-Crown_Newt",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "siltCrownNewt.mireSpit",
+      "siltCrownNewt.mireSpit",
+      "siltCrownNewt.tailCrush",
+      "siltCrownNewt.drowningCoil",
+      "siltCrownNewt.siltShroud",
+      "siltCrownNewt.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.siltCrown"
+      }
+    ],
+    "presentation": {
+      "art": "siltCrownNewt",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 12,
+      "cardHints": {
+        "siltCrownNewt.mireSpit": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "mireSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.tailCrush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "tailCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.drowningCoil": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "drowningCoil",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.siltShroud": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siltShroud",
+          "coreSp": "card"
+        },
+        "siltCrownNewt.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wickerHind",
+    "name": "Wicker_Hind",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributes": {
+      "wisdom": 2
+    },
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "wickerHind.antlerRake",
+      "wickerHind.hallowSpark",
+      "wickerHind.hoofStamp",
+      "wickerHind.wickerMend",
+      "wickerHind.advance",
+      "wickerHind.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "goldboughBranch"
+      },
+      {
+        "key": "offHand",
+        "id": "sunTalisman"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.wickerAntlers"
+      }
+    ],
+    "presentation": {
+      "art": "wickerHind",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "wickerHind.hallowSpark",
+      "poiseMax": 10,
+      "cardHints": {
+        "wickerHind.antlerRake": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "antlerRake",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.hallowSpark": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hallowSpark",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.hoofStamp": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hoofStamp",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "wickerHind.wickerMend": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wickerMend",
+          "coreSp": "card"
+        },
+        "wickerHind.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "wickerHind.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "blackrushStork",
+    "name": "Blackrush_Stork",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "blackrushStork.beakJab",
+      "blackrushStork.spearDive",
+      "blackrushStork.blackrushSkewer",
+      "blackrushStork.wadeGuard",
+      "blackrushStork.advance",
+      "blackrushStork.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "pike"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "blackrushStork",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "blackrushStork.spearDive",
+      "poiseMax": 10,
+      "cardHints": {
+        "blackrushStork.beakJab": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "beakJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.spearDive": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "spearDive",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.blackrushSkewer": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "blackrushSkewer",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "blackrushStork.wadeGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wadeGuard",
+          "coreSp": "card"
+        },
+        "blackrushStork.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "blackrushStork.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "pearlbackSnail",
+    "name": "Pearlback_Snail",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "pearlbackSnail.slimeBash",
+      "pearlbackSnail.shellSlam",
+      "pearlbackSnail.pearlGuard",
+      "pearlbackSnail.pearlGuard",
+      "pearlbackSnail.nacreWall",
+      "pearlbackSnail.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.pearlShell"
+      }
+    ],
+    "presentation": {
+      "art": "pearlbackSnail",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 14,
+      "cardHints": {
+        "pearlbackSnail.slimeBash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slimeBash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.shellSlam": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.pearlGuard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pearlGuard",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.nacreWall": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "nacreWall",
+          "coreSp": "card"
+        },
+        "pearlbackSnail.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "alderMaskHarvester",
+    "name": "Alder_Mask_Harvester",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "alderMaskHarvester.scytheCut",
+      "alderMaskHarvester.reapingSweep",
+      "alderMaskHarvester.harvestArc",
+      "alderMaskHarvester.soulReap",
+      "alderMaskHarvester.alderVeil",
+      "alderMaskHarvester.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "reapersCrescent"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "alderMaskHarvester",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "alderMaskHarvester.harvestArc",
+      "poiseMax": 12,
+      "cardHints": {
+        "alderMaskHarvester.scytheCut": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "scytheCut",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.reapingSweep": {
+          "aiWeight": 25,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "reapingSweep",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.harvestArc": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "harvestArc",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.soulReap": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "soulReap",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.alderVeil": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "alderVeil",
+          "coreSp": "card"
+        },
+        "alderMaskHarvester.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        },
+        {
+          "to": "fire",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "woundwoodTusker",
+    "name": "Woundwood_Tusker",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 3
+    },
+    "defaultDeck": [
+      "woundwoodTusker.woundGore",
+      "woundwoodTusker.woundGore",
+      "woundwoodTusker.timberCharge",
+      "woundwoodTusker.rootPlow",
+      "woundwoodTusker.barkHide",
+      "woundwoodTusker.barkHide",
+      "woundwoodTusker.scarSnort",
+      "woundwoodTusker.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.woundwoodHeart"
+      }
+    ],
+    "presentation": {
+      "art": "woundwoodTusker",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "woundwoodTusker.woundwoodRampage"
+      ],
+      "firstCard": "woundwoodTusker.timberCharge",
+      "poiseMax": 15,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "woundwoodTusker.woundwoodRampage"
+          ]
+        }
+      ],
+      "cardHints": {
+        "woundwoodTusker.woundGore": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "woundGore",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.timberCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "timberCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.rootPlow": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rootPlow",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.barkHide": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "barkHide",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.scarSnort": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "scarSnort",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.woundwoodRampage": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "woundwoodRampage",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "woundwoodTusker.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
+    }
+  },
+  {
+    "id": "mireProcessional",
+    "name": "The_Mire_Processional",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 3
+    },
+    "defaultDeck": [
+      "mireProcessional.pallLash",
+      "mireProcessional.bogCandle",
+      "mireProcessional.graveMurk",
+      "mireProcessional.pallBearers",
+      "mireProcessional.mournersChorus",
+      "mireProcessional.wakeVeil",
+      "mireProcessional.advance",
+      "mireProcessional.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre"
+      },
+      {
+        "key": "offHand",
+        "id": "boneTalisman"
+      },
+      {
+        "key": "armor",
+        "id": "armor.ossuaryWeave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.funeralPall"
+      }
+    ],
+    "presentation": {
+      "art": "mireProcessional",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "mireProcessional.finalRequiem"
+      ],
+      "firstCard": "mireProcessional.graveMurk",
+      "poiseMax": 12,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 45,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "mireProcessional.finalRequiem"
+          ]
+        }
+      ],
+      "cardHints": {
+        "mireProcessional.pallLash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "pallLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.bogCandle": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "bogCandle",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.graveMurk": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "graveMurk",
+          "coreSp": "card"
+        },
+        "mireProcessional.pallBearers": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pallBearers",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.mournersChorus": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "mournersChorus",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.wakeVeil": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wakeVeil",
+          "coreSp": "card"
+        },
+        "mireProcessional.finalRequiem": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "finalRequiem",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mireProcessional.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "mireProcessional.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        }
+      ]
+    },
+    "spFloor": 3
+  },
+  {
+    "id": "quarryRam",
+    "name": "Quarry_Ram",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "quarryRam.headbutt",
+      "quarryRam.headbutt",
+      "quarryRam.quarryCharge",
+      "quarryRam.stonyStand",
+      "quarryRam.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "quarryRam",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "quarryRam.quarryCharge",
+      "poiseMax": 9,
+      "cardHints": {
+        "quarryRam.headbutt": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "headbutt",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "quarryRam.quarryCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "quarryCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "quarryRam.stonyStand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "stonyStand",
+          "coreSp": "card"
+        },
+        "quarryRam.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "tollgateHookman",
+    "name": "Tollgate_Hookman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "tollgateHookman.tollJab",
+      "tollgateHookman.hookHaul",
+      "tollgateHookman.gateBar",
+      "tollgateHookman.advance",
+      "tollgateHookman.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "scythe"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "tollgateHookman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "tollgateHookman.hookHaul",
+      "poiseMax": 6,
+      "cardHints": {
+        "tollgateHookman.tollJab": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "tollJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "tollgateHookman.hookHaul": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hookHaul",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "tollgateHookman.gateBar": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "gateBar",
+          "coreSp": "card"
+        },
+        "tollgateHookman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "tollgateHookman.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "waxsealBailiff",
+    "name": "Waxseal_Bailiff",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "waxsealBailiff.waxBrand",
+      "waxsealBailiff.writOfDebt",
+      "waxsealBailiff.sealPress",
+      "waxsealBailiff.ledgerGuard",
+      "waxsealBailiff.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "rapier"
+      },
+      {
+        "key": "offHand",
+        "id": "torch"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "waxsealBailiff",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "waxsealBailiff.writOfDebt",
+      "poiseMax": 4,
+      "cardHints": {
+        "waxsealBailiff.waxBrand": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "waxBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.writOfDebt": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "writOfDebt",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.sealPress": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sealPress",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.ledgerGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ledgerGuard",
+          "coreSp": "card"
+        },
+        "waxsealBailiff.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "carrionHeadsman",
+    "name": "Carrion_Headsman",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "carrionHeadsman.cleaveStroke",
+      "carrionHeadsman.rendingCut",
+      "carrionHeadsman.executionDrop",
+      "carrionHeadsman.hoodGuard",
+      "carrionHeadsman.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beardedAxe"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "carrionHeadsman",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "carrionHeadsman.rendingCut",
+      "poiseMax": 8,
+      "cardHints": {
+        "carrionHeadsman.cleaveStroke": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "cleaveStroke",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.rendingCut": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rendingCut",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.executionDrop": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "executionDrop",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.hoodGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hoodGuard",
+          "coreSp": "card"
+        },
+        "carrionHeadsman.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "knellcapSentinel",
+    "name": "Knellcap_Sentinel",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 3
+    },
+    "defaultDeck": [
+      "knellcapSentinel.knellStrike",
+      "knellcapSentinel.bellRing",
+      "knellcapSentinel.capGuard",
+      "knellcapSentinel.capGuard",
+      "knellcapSentinel.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "mace"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.knellcapHelm"
+      }
+    ],
+    "presentation": {
+      "art": "knellcapSentinel",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 11,
+      "cardHints": {
+        "knellcapSentinel.knellStrike": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "knellStrike",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.bellRing": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bellRing",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.capGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "capGuard",
+          "coreSp": "card"
+        },
+        "knellcapSentinel.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    },
+    "spFloor": 2
+  },
+  {
+    "id": "pallidOathCamel",
+    "name": "Pallid_Oath_Camel",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "pallidOathCamel.oathKick",
+      "pallidOathCamel.hallowSpit",
+      "pallidOathCamel.packCrush",
+      "pallidOathCamel.oathWater",
+      "pallidOathCamel.pilgrimBurden",
+      "pallidOathCamel.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "sunTalisman"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.oathPack"
+      }
+    ],
+    "presentation": {
+      "art": "pallidOathCamel",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 13,
+      "cardHints": {
+        "pallidOathCamel.oathKick": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "oathKick",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.hallowSpit": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hallowSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.packCrush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "packCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.oathWater": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "oathWater",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.pilgrimBurden": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pilgrimBurden",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "pallidOathCamel.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "magic",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "inkveilNautilus",
+    "name": "Inkveil_Nautilus",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributes": {
+      "wisdom": 2
+    },
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "inkveilNautilus.inkJet",
+      "inkveilNautilus.veilCloud",
+      "inkveilNautilus.inkstorm",
+      "inkveilNautilus.shellGuard",
+      "inkveilNautilus.advance",
+      "inkveilNautilus.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "wyrmhornStaff"
+      },
+      {
+        "key": "offHand",
+        "id": "grimoire"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.inkVeil"
+      }
+    ],
+    "presentation": {
+      "art": "inkveilNautilus",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "inkveilNautilus.veilCloud",
+      "poiseMax": 11,
+      "cardHints": {
+        "inkveilNautilus.inkJet": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "inkJet",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.veilCloud": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilCloud",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.inkstorm": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "inkstorm",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.shellGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellGuard",
+          "coreSp": "card"
+        },
+        "inkveilNautilus.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "inkveilNautilus.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "magic",
+          "effect": "mana"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mirrorFanAbbess",
+    "name": "Mirror-Fan_Abbess",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "mirrorFanAbbess.fanSlash",
+      "mirrorFanAbbess.mirrorRiposte",
+      "mirrorFanAbbess.mirrorRiposte",
+      "mirrorFanAbbess.glassGlare",
+      "mirrorFanAbbess.wardingFan",
+      "mirrorFanAbbess.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "duelistsFoil"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.riteVestments"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "mirrorFanAbbess",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "mirrorFanAbbess.mirrorRiposte",
+      "poiseMax": 13,
+      "cardHints": {
+        "mirrorFanAbbess.fanSlash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "fanSlash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.mirrorRiposte": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "mirrorRiposte",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.glassGlare": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "glassGlare",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.wardingFan": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wardingFan",
+          "coreSp": "card"
+        },
+        "mirrorFanAbbess.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "saltChoirWalrus",
+    "name": "Salt_Choir_Walrus",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "saltChoirWalrus.saltDirge",
+      "saltChoirWalrus.blubberSlam",
+      "saltChoirWalrus.choirChorus",
+      "saltChoirWalrus.frozenBulwark",
+      "saltChoirWalrus.advance",
+      "saltChoirWalrus.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "frostSpear"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.saltBlubber"
+      }
+    ],
+    "presentation": {
+      "art": "saltChoirWalrus",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 14,
+      "cardHints": {
+        "saltChoirWalrus.saltDirge": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "saltDirge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.blubberSlam": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "blubberSlam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.choirChorus": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "choirChorus",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.frozenBulwark": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frozenBulwark",
+          "coreSp": "card"
+        },
+        "saltChoirWalrus.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "saltChoirWalrus.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rimewheelPenitent",
+    "name": "Rimewheel_Penitent",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "rimewheelPenitent.penanceLash",
+      "rimewheelPenitent.penanceLash",
+      "rimewheelPenitent.wheelScourge",
+      "rimewheelPenitent.rimeOffering",
+      "rimewheelPenitent.frostGuard",
+      "rimewheelPenitent.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "leatherWhip"
+      },
+      {
+        "key": "armor",
+        "id": "armor.rimeweaveRobes"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "rimewheelPenitent",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "rimewheelPenitent.rimeOffering",
+      "poiseMax": 12,
+      "cardHints": {
+        "rimewheelPenitent.penanceLash": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "penanceLash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.wheelScourge": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "wheelScourge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.rimeOffering": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rimeOffering",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.frostGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "frostGuard",
+          "coreSp": "card"
+        },
+        "rimewheelPenitent.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "veiledJusticiar",
+    "name": "The_Veiled_Justiciar",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 4
+    },
+    "defaultDeck": [
+      "veiledJusticiar.verdictStrike",
+      "veiledJusticiar.verdictStrike",
+      "veiledJusticiar.gavelFall",
+      "veiledJusticiar.righteousLight",
+      "veiledJusticiar.sentenceRead",
+      "veiledJusticiar.veilGuard",
+      "veiledJusticiar.veilGuard",
+      "veiledJusticiar.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gildedOathsworn"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.judgeSeal"
+      }
+    ],
+    "presentation": {
+      "art": "veiledJusticiar",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "veiledJusticiar.finalJudgement"
+      ],
+      "firstCard": "veiledJusticiar.sentenceRead",
+      "poiseMax": 15,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "veiledJusticiar.finalJudgement"
+          ]
+        }
+      ],
+      "cardHints": {
+        "veiledJusticiar.verdictStrike": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "verdictStrike",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.gavelFall": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "gavelFall",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.righteousLight": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "righteousLight",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.sentenceRead": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "sentenceRead",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.veilGuard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "veilGuard",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.finalJudgement": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "finalJudgement",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "veiledJusticiar.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
+    }
+  },
+  {
+    "id": "sixleggedHearse",
+    "name": "The_Sixlegged_Hearse",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 4
+    },
+    "defaultDeck": [
+      "sixleggedHearse.legStomp",
+      "sixleggedHearse.legStomp",
+      "sixleggedHearse.hearseCharge",
+      "sixleggedHearse.pallTrample",
+      "sixleggedHearse.coffinShield",
+      "sixleggedHearse.coffinShield",
+      "sixleggedHearse.graveReek",
+      "sixleggedHearse.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.hearseFrame"
+      }
+    ],
+    "presentation": {
+      "art": "sixleggedHearse",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "sixleggedHearse.lastRites"
+      ],
+      "firstCard": "sixleggedHearse.hearseCharge",
+      "poiseMax": 17,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "sixleggedHearse.lastRites"
+          ]
+        }
+      ],
+      "cardHints": {
+        "sixleggedHearse.legStomp": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "legStomp",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.hearseCharge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "hearseCharge",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.pallTrample": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "pallTrample",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.coffinShield": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "coffinShield",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.graveReek": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "graveReek",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.lastRites": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "lastRites",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sixleggedHearse.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "kilnshellTortoise",
+    "name": "Kilnshell_Tortoise",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "kilnshellTortoise.shellBash",
+      "kilnshellTortoise.kilnBreath",
+      "kilnshellTortoise.shellTuck",
+      "kilnshellTortoise.kilnPlate",
+      "kilnshellTortoise.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "roundShield"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "kilnshellTortoise",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "kilnshellTortoise.kilnPlate",
+      "poiseMax": 12,
+      "cardHints": {
+        "kilnshellTortoise.shellBash": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "shellBash",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.kilnBreath": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "kilnBreath",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.shellTuck": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellTuck",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.kilnPlate": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "kilnPlate",
+          "coreSp": "card"
+        },
+        "kilnshellTortoise.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "slagtongImp",
+    "name": "Slagtong_Imp",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "slagtongImp.slagSpit",
+      "slagtongImp.tongueBrand",
+      "slagtongImp.cinderCackle",
+      "slagtongImp.advance",
+      "slagtongImp.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "emberlightSceptre"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "slagtongImp",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "slagtongImp.cinderCackle",
+      "poiseMax": 4,
+      "cardHints": {
+        "slagtongImp.slagSpit": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagtongImp.tongueBrand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "tongueBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagtongImp.cinderCackle": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "cinderCackle",
+          "coreSp": "card"
+        },
+        "slagtongImp.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "slagtongImp.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "sootwingBat",
+    "name": "Sootwing_Bat",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 3,
+      "max": 4
+    },
+    "defaultDeck": [
+      "sootwingBat.sootFlurry",
+      "sootwingBat.sootFlurry",
+      "sootwingBat.ashWingBeat",
+      "sootwingBat.advance",
+      "sootwingBat.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "sootwingBat",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "sootwingBat.ashWingBeat",
+      "poiseMax": 4,
+      "cardHints": {
+        "sootwingBat.sootFlurry": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "sootFlurry",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sootwingBat.ashWingBeat": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ashWingBeat",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "sootwingBat.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "sootwingBat.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "brassThroatIbex",
+    "name": "Brass-Throat_Ibex",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "constitution",
+      "strength",
+      "dexterity"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "brassThroatIbex.brassCall",
+      "brassThroatIbex.hornRam",
+      "brassThroatIbex.thunderLeap",
+      "brassThroatIbex.stormPeal",
+      "brassThroatIbex.advance",
+      "brassThroatIbex.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "stormSceptre"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.brassThroat"
+      }
+    ],
+    "presentation": {
+      "art": "brassThroatIbex",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "brassThroatIbex.brassCall",
+      "poiseMax": 14,
+      "cardHints": {
+        "brassThroatIbex.hornRam": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "hornRam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.brassCall": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "brassCall",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.thunderLeap": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "thunderLeap",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.stormPeal": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "stormPeal",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "brassThroatIbex.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "brassThroatIbex.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
+    }
+  },
+  {
+    "id": "kilnbackTerrapin",
+    "name": "Kilnback_Terrapin",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "constitution",
+      "strength",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "kilnbackTerrapin.shellRam",
+      "kilnbackTerrapin.siegeLob",
+      "kilnbackTerrapin.emberVolley",
+      "kilnbackTerrapin.siegePlate",
+      "kilnbackTerrapin.bunkerGuard",
+      "kilnbackTerrapin.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "warhammer"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.kilnbackFurnace"
+      }
+    ],
+    "presentation": {
+      "art": "kilnbackTerrapin",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "kilnbackTerrapin.siegeLob",
+      "poiseMax": 15,
+      "cardHints": {
+        "kilnbackTerrapin.shellRam": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "shellRam",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.siegeLob": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegeLob",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.emberVolley": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberVolley",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.siegePlate": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "siegePlate",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.bunkerGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "bunkerGuard",
+          "coreSp": "card"
+        },
+        "kilnbackTerrapin.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "slagwingHeron",
+    "name": "Slagwing_Heron",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "slagwingHeron.slagJab",
+      "slagwingHeron.emberDive",
+      "slagwingHeron.moltenBeak",
+      "slagwingHeron.heronWard",
+      "slagwingHeron.advance",
+      "slagwingHeron.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "pike"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "slagwingHeron",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "slagwingHeron.emberDive",
+      "poiseMax": 13,
+      "cardHints": {
+        "slagwingHeron.slagJab": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "slagJab",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.emberDive": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberDive",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.moltenBeak": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenBeak",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "slagwingHeron.heronWard": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "heronWard",
+          "coreSp": "card"
+        },
+        "slagwingHeron.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "slagwingHeron.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ashSilkWeaver",
+    "name": "Ash-Silk_Weaver",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "wisdom",
+      "intelligence",
+      "strength",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "ashSilkWeaver.venomFang",
+      "ashSilkWeaver.silkSnare",
+      "ashSilkWeaver.cocoonCrush",
+      "ashSilkWeaver.ashSilkVolley",
+      "ashSilkWeaver.advance",
+      "ashSilkWeaver.retreat"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "blightRod"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "ashSilkWeaver",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "ashSilkWeaver.silkSnare",
+      "poiseMax": 12,
+      "cardHints": {
+        "ashSilkWeaver.venomFang": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "venomFang",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.silkSnare": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "silkSnare",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.cocoonCrush": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "cocoonCrush",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.ashSilkVolley": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ashSilkVolley",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ashSilkWeaver.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        },
+        "ashSilkWeaver.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ferrumVotary",
+    "name": "Ferrum_Votary",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 5
+    },
+    "defaultDeck": [
+      "ferrumVotary.ironCensure",
+      "ferrumVotary.voltaicPrayer",
+      "ferrumVotary.anvilBrand",
+      "ferrumVotary.ironLitany",
+      "ferrumVotary.thunderOath",
+      "ferrumVotary.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "thunderMallet"
+      },
+      {
+        "key": "offHand",
+        "id": "kiteShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.bastionHarness"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ironVow"
+      }
+    ],
+    "presentation": {
+      "art": "ferrumVotary",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "ferrumVotary.thunderOath",
+      "poiseMax": 15,
+      "cardHints": {
+        "ferrumVotary.ironCensure": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "ironCensure",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.voltaicPrayer": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "voltaicPrayer",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.anvilBrand": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "anvilBrand",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "ferrumVotary.ironLitany": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "ironLitany",
+          "coreSp": "card"
+        },
+        "ferrumVotary.thunderOath": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "thunderOath",
+          "coreSp": "card"
+        },
+        "ferrumVotary.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "crucibleNewt",
+    "name": "The_Crucible_Newt",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "constitution",
+      "dexterity",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 5,
+      "max": 5
+    },
+    "defaultDeck": [
+      "crucibleNewt.moltenBite",
+      "crucibleNewt.moltenBite",
+      "crucibleNewt.crucibleTail",
+      "crucibleNewt.slagBreath",
+      "crucibleNewt.emberSpit",
+      "crucibleNewt.moltenHide",
+      "crucibleNewt.moltenHide",
+      "crucibleNewt.advance"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "beastClaws"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.crucibleHeart"
+      }
+    ],
+    "presentation": {
+      "art": "crucibleNewt",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "crucibleNewt.meltdown"
+      ],
+      "firstCard": "crucibleNewt.crucibleTail",
+      "poiseMax": 20,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "crucibleNewt.meltdown"
+          ]
+        }
+      ],
+      "cardHints": {
+        "crucibleNewt.moltenBite": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "moltenBite",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.crucibleTail": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "crucibleTail",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.slagBreath": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "slagBreath",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.emberSpit": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "emberSpit",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.moltenHide": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "moltenHide",
+          "coreSp": "card"
+        },
+        "crucibleNewt.meltdown": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "meltdown",
+          "coreOffense": "card",
+          "coreSp": "card"
+        },
+        "crucibleNewt.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
+    }
   }
 ]

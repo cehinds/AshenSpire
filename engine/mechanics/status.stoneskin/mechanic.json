@@ -3,7 +3,7 @@
   "tag": "status.stoneskin",
   "version": "1.0.0",
   "family": "status",
-  "label": "Stoneskin",
+  "label": "Diamond Skin",
   "description": "Your Block is not removed at the start of your next turn.",
   "attaches": [
     "status"

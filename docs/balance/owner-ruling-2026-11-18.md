@@ -312,7 +312,7 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Robes (owner):** the unarmoured type gives **+1 max MP**. A specific robe can add more as its own bonus (Nightweave +1), with no cap; a rare robe may later add +2.
 - **Map (owner):** the longer acts are accepted for playtest (Act 1 sim win rate 95% → 85%). The V widens gradually with depth. By the pre-boss rest the player must not see another branch's pre-boss rest or boss; hiding the other branches' boss nodes is an acceptable way to get there.
 
-**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff). There are free Advance sources: a few 0-SP Advance cards, an Advance tag on some existing cards (the card includes one free Advance), and Advance as an upgrade option. 
+**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff). There are free Advance sources: a few 0-SP Advance cards, an Advance tag on some existing cards (the card includes one free Advance), and Advance as an upgrade option.
 
 **Retreat-source drawbacks (owner, approved 2026-11-19):**
 - `core.retreat` (the weapon's free card): a weapon with the retreat tag adds the Retreat card to your hand each turn, as now. It costs 0 SP the first time, Exhausts, and its cost rises by 1 SP each use in that fight (counted per fight, not per card copy, since each copy is a fresh Exhausting instance). Ethereal stays as it is.
@@ -329,6 +329,16 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
 - New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.
 
-## 24. Buff-card drawbacks (owner, 2026-11-19)
+## 24. Continuation approvals (owner, 2026-11-18 Alaska / 2026-11-19 UTC)
+- The 30 martial cards are approved; cards 29-30 use Rare, the top rarity.
+- The 12 magic Smash/Sweep cards are approved.
+- Block retention is displayed as **Diamond Skin**; its existing `stoneskin` status/card keys stay unchanged. Pierce cancellation stays **Stone Skin**, status `stoneHide`.
+- Starseer uses the calculated starting hand; there is no special five-card override.
+- **Magic Absorption trial (owner, supersedes the open note in §20):** each stack absorbs up to 10 magic damage before Block, Poise or HP. Consume a stack once it absorbs damage; the caster gains 1 MP per consumed stack.
+- The new Magic Absorption card costs **2 SP, 0 MP** and has two drawbacks chosen from Exhaust, Ethereal, Escalating, Vulnerable, Weak, bind, paralysis or self-damage. Its first upgrade guarantees **Reaction**, plus another tag or drawback easing.
+- **Initial trial defaults (orchestrator-decided):** start with **3 stacks**, continuing the prior trial, and choose **Exhaust + Ethereal** as the two starting drawbacks.
+- Implementation is queued with the later magic-card pass; this amendment adds no Magic Absorption mechanic to GearPass.
+
+## 25. Buff-card drawbacks (owner, 2026-11-19)
 - Most buff cards carry a drawback before upgrade: Exhaust, a high cost, an escalating cost, Ethereal, a buff to an enemy, a discard, Wound/Dazed status cards added to the deck, or a negative status on the user. Upgrades can remove or soften the drawback as an option.
 - Upgrade options favour easing the drawback or improving effectiveness/cost: at early upgrade levels they are offered about 3:1 against new-effect options; additional effects come mostly at later levels.

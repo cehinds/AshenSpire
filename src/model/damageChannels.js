@@ -11,9 +11,6 @@
 /** The attribute each channel is fed by (`pr` is max(INT, WIS) wherever the run reads it: fixCoreMechanics.PrAttributeView). */
 export const CHANNEL_ATTRIBUTE = Object.freeze({ ar: 'strength', dr: 'dexterity', pr: 'intelligence' });
 
-/** The channel an attribute feeds (the inverse of CHANNEL_ATTRIBUTE; Wisdom feeds the magic channel through max(INT, WIS)). */
-export const ATTRIBUTE_CHANNEL = Object.freeze({ strength: 'ar', dexterity: 'dr', intelligence: 'pr', wisdom: 'pr' });
-
 /** The short word a player reads for a channel. */
 export const CHANNEL_LABEL = Object.freeze({ ar: 'STR', dr: 'DEX', pr: 'INT/WIS' });
 

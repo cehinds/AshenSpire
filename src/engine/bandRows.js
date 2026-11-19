@@ -7,7 +7,7 @@
 //   Advanced        -> every pair band 0 (you are in every enemy's reach);
 //   back row        -> its pair band is at least 1 (reach) while you are not Advanced;
 //   front row       -> the pair band is left as stored (a Backstep or push may hold it at 1).
-import { FixCoreBands } from '../model/fixCoreMechanics.js';
+import { FixCoreBands, RetreatRulesActive } from '../model/fixCoreMechanics.js';
 import { actorRangeKey, bandCap, rangePairKey } from '../model/combatEngagement.js';
 import { equippedIn } from '../model/loadout.js';
 import { FORMATION_ROWS, formationDimensions, perspectiveEnemyCellOrder } from '../model/formationLayout.js';
@@ -99,7 +99,7 @@ export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
 
 /** ContactRetreatStacks(ctx, source, target): the Retreat stacks each side of a pair holds (owner 2026-11-18 section 22, amended 2026-11-19: one Advance per stack). */
 export function ContactRetreatStacks(ctx, source, target) {
-  if (!BandsActive(ctx)) return { enemyStacks: 0, playerStacks: 0 };
+  if (!BandsActive(ctx) || !RetreatRulesActive(ctx)) return { enemyStacks: 0, playerStacks: 0 };
   const enemy = [source, target].find(entity => entity?.kind === 'enemy'), player = [source, target].find(entity => entity && entity.kind !== 'enemy');
   return { enemyStacks: enemy ? RetreatStacks(enemy) : 0, playerStacks: player ? RetreatStacks(player) : 0 };
 }
@@ -113,7 +113,7 @@ export function ContactRetreatStacks(ctx, source, target) {
  * gained since are left alone.
  */
 export function SpendRetreatAdvances(ctx, source, plan, { frozen = false } = {}) {
-  if (!BandsActive(ctx) || !plan?.targets) return;
+  if (!BandsActive(ctx) || !RetreatRulesActive(ctx) || !plan?.targets) return;
   const melee = plan.targets.filter(row => row.coverage === 0 && !row.bypass);
   if (!melee.length) return;
   const paid = Math.max(0, Math.round(plan.advanceSp / (ctx.rangeState.policy.advanceSpPerBand || 1)));
@@ -134,7 +134,7 @@ export function SpendRetreatAdvances(ctx, source, plan, { frozen = false } = {})
 
 /** PullEnemy(ctx, target): Gale Pull (owner 2026-11-18 section 22). Removes 1 Retreat stack from the target; with none left the target comes forward to the front row. No rows: nothing. */
 export function PullEnemy(ctx, target) {
-  if (!BandsActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;
+  if (!BandsActive(ctx) || !RetreatRulesActive(ctx) || !target?.alive || target.kind !== 'enemy') return false;
   spendRetreat(ctx, target, 1);
   if (RetreatStacks(target) > 0) return true;
   SetEnemyRow(ctx, target, 'front', 'pull');
@@ -225,7 +225,7 @@ export function BandsMoveEngagement(ctx, source, target, bands, rootId = null) {
     // The move is spent either way, so the intent shown (the step forward) is the move played.
     if (source.row === 'back') { BandsEnemyAdvance(ctx, source, 'approach'); return true; }
     // The enemy's Advance against a player holding Retreat spends one of the player's stacks (owner 2026-11-18 section 22).
-    if (target?.kind !== 'enemy' && RetreatStacks(target) > 0) { spendRetreat(ctx, target, 1); return true; }
+    if (RetreatRulesActive(ctx) && target?.kind !== 'enemy' && RetreatStacks(target) > 0) { spendRetreat(ctx, target, 1); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.

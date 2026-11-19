@@ -50,20 +50,22 @@ export function swapOnError(img, makePlaceholder) {
 }
 
 /**
- * hideOnError(img) — when `img` fails it is hidden (the art "dies quietly"),
- * and marked so a restore shows it again and asks for its art again.
+ * hideOnError(img, onRestore?, onHide?) — hide and mark an image that fails to load.
+ * Use the callbacks to restore or remove accompanying art with the image.
  */
-export function hideOnError(img) {
+export function hideOnError(img, onRestore = () => {}, onHide = () => {}) {
   if (!img || typeof img.addEventListener !== 'function') return img;
   img.addEventListener('error', () => {
     img.hidden = true;
+    onHide();
     markArtPlaceholder(img, () => {
       // Re-pointing (refreshMountedArt) may already have loaded it on its new
       // url before this restore runs, with nobody listening: shown at once
       // then; otherwise shown when it loads (review of #1471).
       reload(img);
-      if (img.complete && img.naturalWidth > 0) img.hidden = false;
-      else img.addEventListener('load', () => { img.hidden = false; }, { once: true });
+      const show = () => { img.hidden = false; onRestore(); };
+      if (img.complete && img.naturalWidth > 0) show();
+      else img.addEventListener('load', show, { once: true });
     });
   });
   return img;
