@@ -20,6 +20,7 @@ function liveCore() {
   combat.player.energy = 9; combat.player.stamina = 9;
   return combat;
 }
+const VOW_ID = 'warriorsVow';
 const give = (combat, cardId, instanceId) => { combat.piles.hand.push({ instanceId, cardId, upgraded: false }); return instanceId; };
 const play = (combat, instanceId, targetId) => dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId });
 
@@ -86,13 +87,13 @@ test('the figure\'s pose and glyph read the stance the engine ended on, live and
 
 // Non-Core (createRegistries(contentBundle), no profile): the numbers match what dev paid before the stance change.
 const plainReg = createRegistries(contentBundle);
-async function plainPlay(cardId) {
+async function plainPlay(cardId, choice) {
   const { createCombat } = await import('../src/engine/combat.js');
   const player = { id: 'p', classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 5, maxStamina: 5, energyMax: 3, drawPerTurn: 5,
     deck: [{ instanceId: 'x1', cardId, upgraded: false }, ...Array.from({ length: 8 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'strike', upgraded: false }))], relicIds: [], flasks: [] };
   const combat = createCombat({ registries: plainReg, rng: createRng(1), combatExpansionVersion: 2, player, enemyIds: [contentBundle.enemies[0].id] });
   if (!combat.piles.hand.some(c => c.instanceId === 'x1')) combat.piles.hand.push({ instanceId: 'x1', cardId, upgraded: false });
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'x1' });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'x1', ...(choice ? { choice } : {}) });
   return combat.player;
 }
 
@@ -101,6 +102,17 @@ test('non-Core: Defend-stance cards do not restore Block and Barrier a second ti
     const player = await plainPlay(cardId);
     assert.deepEqual([player.block, player.barrier ?? 0], [block, 0], cardId);
     assert.equal(player.combatStance.maneuver, 'defend');
+  }
+});
+
+// Codex on #2843: Warrior's Vow picking Bulwark or Brace syncs the stance only; no unquoted Defend restore (Block, Barrier).
+test('non-Core: Warrior\'s Vow picking a Defend stance restores nothing the card does not show', async () => {
+  for (const [pick, devBlock] of [['bulwark', 3], ['brace', 4]]) {
+    const player = await plainPlay(VOW_ID, pick);
+    assert.equal(player.stanceId, pick);
+    assert.equal(player.combatStance.maneuver, 'defend', pick);
+    assert.equal(player.barrier ?? 0, 0, `${pick}: no Barrier overflow`);
+    assert.equal(player.block ?? 0, devBlock, `${pick}: dev's Block, no Defend restore on top`);
   }
 });
 

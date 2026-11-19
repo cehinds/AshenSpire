@@ -384,8 +384,9 @@ export function setCombatStance(ctx, entity, carrier) {
         owner: entity, target: entity, card: carrier, meta: { ...provenance, stanceEntry: true } });
     }
   }
-  // Defense restores on every accepted card, including an unchanged stance.
-  if (next.maneuver === 'defend') {
+  // Defense restores on every accepted card, including an unchanged stance. A registry stance entry (an enterStance effect,
+  // e.g. Warrior's Vow picking Bulwark) only syncs the stance: it restores nothing the card does not show (Codex on #2843).
+  if (next.maneuver === 'defend' && !carrier?.registryStanceEntry) {
     const amount = stanceRulesFor(ctx).defenseRestore;
     for (const [poolName, overflowOp] of [['persistentPoise', 'block'], ['persistentWard', 'gainBarrier']]) {
       const pool = entity[poolName];
