@@ -4125,14 +4125,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.woundwoodHeart": {
-      "name": "Woundwood Heart",
-      "text": "CON +3, STR +1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.funeralPall": {
       "name": "Funeral Pall",
       "text": "CON +3, WIS +1, SP -2",
@@ -4252,6 +4244,14 @@
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.woundwoodHeart": {
+      "name": "Woundwood Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
         "self.strength=+1"
       ]
     }
