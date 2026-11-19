@@ -291,3 +291,27 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - This replaces "Stone Skin reduces Pierce damage by 1 per stack" and the old "Pierce bypasses up to 2 Block".
 - **Gale Push (owner):** it carries an explicit **inflict Retreat** tag (it gives the target a Retreat stack), shown on the face beside Force.
 - **Hammers (owner):** a hammer Smash also inflicts **1 Retreat stack** on its target. This is part of the hammer type base, alongside +1 Poise damage and Smash Vulnerable.
+
+## 22. Retreat, Reach and targeting (owner, 2026-11-18)
+- **Gale Pull (new card):** the opposite of Gale Push. It carries the Force tag and removes 1 Retreat stack from its target, bringing it forward when it has none left.
+- **Retreat on either side:** a hit between two combatants needs **Reach** if either one holds a Retreat stack (the player can hold them too, e.g. a bow's end-of-turn stack). Without Reach, each side holding Retreat must be closed with an Advance (1 SP each, which spends one stack). When both sides hold Retreat, both Advances are needed (2 SP).
+- **Status-only plays are Reach by default:** a card's status effects that don't come from a melee attack, Sweep, Smash or Counter reach any target with no Advance cost. Example: a Defend card that inflicts Weak applies it to a retreated enemy for free.
+- **Self-and-all cards:** a card that affects the player and every enemy plays when you select the player **or** any enemy as its target.
+- **Poise target (owner):** a level-1 Reaver in plate starts near 15 Poise (was 21 = attributes 3 + Greatsword item 6 + plate item 6 + type bonuses 6). The fix is to lower the **type bonuses** and keep the items' own Poise:
+  - The heavy group goes from +5 to **+2** Poise.
+  - The Greatsword type goes from +1 to **0** Poise.
+  - To keep heavy above medium, medium goes from +3 to **+1** and light from +1 to **0**. *(decided)*
+  - Shields keep their +1 Poise.
+  - Result: about 17 for that Reaver, close to 15; the rest is left for playtest.
+- **Light and medium full-set bonuses (owner):** these replace the free stacks.
+  - Medium (mail): whenever you gain Counter stacks, gain 1 more. If you end your turn in Counter stance while holding Counter stacks, gain 1 more Counter (3 left becomes 4).
+  - Light (leathers): whenever you gain Evade stacks, gain 1 more. If you end your turn in Defend stance while holding Evade stacks, gain 1 more Evade.
+  - Holding no stacks gives nothing; the bonus only adds to stacks you have or are gaining.
+- **Armour type bonuses, clarified (owner):** "set bonus" meant the one armour piece you wear; there is one armour slot, so no multi-piece sets. The bonus comes from wearing that type: mail (medium) gives the Counter stack bonus, leathers (light) the Evade stack bonus, plate (heavy) Thorns 1, robes (unarmoured) +1 max MP.
+- **Poise break (owner):** a broken Poise applies **2 stacks** each of Staggered, Vulnerable, Weak and Frail (was 1), until the start of that character's next turn.
+- **Robes (owner):** the unarmoured type gives **+1 max MP**. A specific robe can add more as its own bonus (Nightweave +1), with no cap; a rare robe may later add +2.
+- **Map (owner):** the longer acts are accepted for playtest (Act 1 sim win rate 95% → 85%). The V widens gradually with depth. By the pre-boss rest the player must not see another branch's pre-boss rest or boss; hiding the other branches' boss nodes is an acceptable way to get there.
+
+## 23. No hidden caps (owner, 2026-11-18)
+- Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
+- New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.

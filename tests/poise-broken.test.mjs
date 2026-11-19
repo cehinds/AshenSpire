@@ -119,10 +119,10 @@ test('with the shipped Attack stance benefit a hit on a Broken enemy is 10 x 1.2
 });
 
 test('Vulnerable multiplies a Broken target once (x1.25), however many stacks', () => {
-  const combat = fight(['wanderingSoldier'], { noStance: true }); const enemy = combat.enemies[0]; sandbag(enemy, 1);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1);
   hit(combat, enemy, 10);
-  enemy.statuses.vulnerable = { stacks: 2 };
-  assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.25), 'Vulnerable still multiplies once, however many stacks');
+  enemy.statuses.vulnerable = { stacks: 7 };
+  assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.2 * 1.25), 'Vulnerable still multiplies once however many stacks (Attack stance x1.2 included); no x1.5');
 });
 
 test('a Broken enemy cannot be broken again and its Poise cannot be refilled until Broken ends', () => {
@@ -153,10 +153,10 @@ test('Ward or Barrier gained while Broken raises the maximum but does not refill
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 5);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 3);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
-  // The refill is to the soldier's rated Poise, 8 (its gear's Poise under the gear statPoints rule), not the sandbagged 5.
-  assert.equal(enemy.persistentPoise.value, 8);
+  // The refill is to the soldier's rated Poise, 5 (1 + CON 4: owner 2026-11-18 §13, gear Poise counts only while guarding), not the sandbagged 3 stand-in.
+  assert.equal(enemy.persistentPoise.value, 5);
   hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');
