@@ -1,0 +1,254 @@
+{
+  "request": "Owner ruling section 22 (Retreat, Reach and targeting): Gale Pull removes a Retreat stack and brings the enemy forward; a melee hit against a retreated enemy needs an Advance (its SP shows and is paid); a status-only part (a Defend card that inflicts Weak) is Reach and costs no Advance; a card that affects the player and every enemy plays when you click the player.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "melee-vs-retreated",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.strike,core.strike,core.strike,core.strike",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.strike\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "the quote prices the Advance: total 2 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 2 Stamina"
+        },
+        {
+          "kind": "text",
+          "label": "the quote shows the Advance as +1 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+1 Stamina"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "a retreated enemy is hit at the plain 1 Stamina price",
+          "selector": ".combat-range-action",
+          "includes": "Total 1 Stamina"
+        }
+      ]
+    },
+    {
+      "name": "defend-weak-free",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.rallyingRoar\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        },
+        {
+          "kind": "text",
+          "label": "the Defend + Weak card's Advance is quoted at +0 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+0 Stamina"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "the Defend card is charged an Advance surcharge",
+          "selector": ".combat-range-action",
+          "matches": "\\+[1-9] Stamina"
+        }
+      ]
+    },
+    {
+      "name": "gale-pull",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.galePull,core.galePull,core.galePull,core.galePull",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.galePull\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Gale Pull brings the enemy forward to the front row",
+          "selector": ".enemy-row .combatant[data-band-row=\"front\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "the enemy is still in the back row after Gale Pull",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        }
+      ]
+    },
+    {
+      "name": "self-and-all-player-target",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "drag": {
+            "from": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+            "to": ".combatant.player"
+          }
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "one Rallying Roar left the hand (played by dropping it on the player)",
+          "selector": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+          "eq": 4
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "all five Rallying Roars are still in hand",
+          "selector": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+          "eq": 5
+        }
+      ]
+    }
+  ]
+}
