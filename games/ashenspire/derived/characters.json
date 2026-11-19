@@ -5757,8 +5757,8 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "katana",
-            "name": "Katana",
+            "source": "reapersCrescent",
+            "name": "Reapers_Crescent",
             "kind": "gear",
             "amount": 1
           }
@@ -5769,8 +5769,8 @@
         "own": 1,
         "bonuses": [
           {
-            "source": "katana",
-            "name": "Katana",
+            "source": "reapersCrescent",
+            "name": "Reapers_Crescent",
             "kind": "gear",
             "amount": 1
           }
@@ -5831,8 +5831,8 @@
     "gear": [
       {
         "key": "mainHand",
-        "id": "katana",
-        "name": "Katana"
+        "id": "reapersCrescent",
+        "name": "Reapers_Crescent"
       },
       {
         "key": "armor",
