@@ -372,7 +372,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:kilnbackTerrapin.shellRam | Shell Ram | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
 | card:kilnbackTerrapin.siegeLob | Siege Lob | attack | 2 | 1 | Deal {damage} damage. |
 | card:kilnbackTerrapin.emberVolley | Ember Volley | attack | 3 | 1 | Deal {damage} damage. |
-| card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. Heal {heal} HP. |
+| card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. |
 | card:kilnbackTerrapin.bunkerGuard | Bunker Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:kilnbackTerrapin.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:slagwingHeron.slagJab | Slag Jab | attack | 1 | 0 | Deal {damage} damage. |
@@ -471,7 +471,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
-| relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
 | relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
@@ -480,3 +479,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
+| relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |

@@ -1159,14 +1159,7 @@
         "intent": "block",
         "block": 14,
         "weight": 20,
-        "maxConsecutive": 1,
-        "effects": [
-          {
-            "op": "heal",
-            "target": "self",
-            "amount": 3
-          }
-        ]
+        "maxConsecutive": 1
       },
       "bunkerGuard": {
         "sp": 1,

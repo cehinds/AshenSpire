@@ -8360,21 +8360,15 @@
         "op": "block",
         "target": "self",
         "amount": 14
-      },
-      {
-        "op": "heal",
-        "target": "self",
-        "amount": 3
       }
     ],
     "tags": [
       "camp:physical",
-      "fx:heal",
       "maneuver:defend",
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Heal {heal} HP."
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "kilnbackTerrapin.bunkerGuard",
