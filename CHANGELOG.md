@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
-- **Smash hits Defend harder** ([#2876](https://github.com/cehinds/AshenSpire/pull/2876), `0.7.4.209`). New fights give Smash +50% damage against Defend; Prepared keeps +25%, and Counter reduces it by 25% once. Older saved rules keep their tuning, and card help follows the actual fight.
+- **Smash hits Defend harder** ([#2876](https://github.com/cehinds/AshenSpire/pull/2876), `0.7.4.211`). New fights give Smash +50% damage against Defend; Prepared keeps +25%, and Counter reduces it by 25% once. Older saved rules keep their tuning, and card help follows the actual fight.
 - **Your equipment bonuses now match the fight** ([#2865](https://github.com/cehinds/AshenSpire/pull/2865), `0.7.4.209`). Stone Skin cancels Pierce stack for stack, swapping gear refreshes its bonuses, and older saves keep their original equipment rules. Block-retaining Stoneskin is now called Diamond Skin.
 - **Smash stance contract clarified** ([#2874](https://github.com/cehinds/AshenSpire/pull/2874), `0.7.4.207`). The rules handbook specifies the Defend, Prepared and Counter multipliers and how older saved rules keep their behavior. Gameplay implementation follows in a separate fix.
 - **Codex enemies and equipment enter the climb** ([#2871](https://github.com/cehinds/AshenSpire/pull/2871), `0.7.4.205`). Meet 32 new enemies across all three acts and find 38 weapons, off-hands and outfits with their inventory artwork. New enemy Smashes fit their Stamina pools; older saved rosters and existing card prices stay intact.
