@@ -2,7 +2,7 @@ import { approvedCardArt } from './layeredCardArt.js';
 import { objectTagIds } from '../content/tags.js';
 import { tagService } from '../model/tagService.js';
 import { proceduralCardArt } from './proceduralCardArt.js';
-import { cardStatModifierTags } from './cardStatModifiers.js';
+import { CardStatModifierTags } from './cardStatModifiers.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 
 export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', 'evade', 'sweep', 'defend']);
@@ -107,7 +107,7 @@ export function proceduralDefinitionArt(def, { ref, registries } = {}) {
   const validAbility = rank => Number.isInteger(rank) && rank >= 0;
   const rank = validRank(def.rank) ? def.rank : validAbility(def.abilityRank) ? def.abilityRank + 1
     : validRank(ref?.rank) ? ref.rank : validAbility(ref?.abilityRank) ? ref.abilityRank + 1 : 1;
-  return proceduralCardArt({ type: def.type, tags: [...tags, ...cardStatModifierTags(def, registries)], rank }, { registries });
+  return proceduralCardArt({ type: def.type, tags: [...tags, ...CardStatModifierTags(def, registries)], rank }, { registries });
 }
 
 /** Every active status can contribute a small motif; registry labels are data, not markup. */

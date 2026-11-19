@@ -24,7 +24,7 @@ function effectCanGrant(amount, defaultAmount = 0) {
 }
 
 /** Extract presentation tags from the effective card payload without evaluating combat state. */
-export function cardStatModifierTags(definition, registries) {
+export function CardStatModifierTags(definition, registries) {
   const activeStatuses = registries == null ? shippedStatuses : registries.statuses;
   const tags = new Set();
   const add = (stat, delta) => {

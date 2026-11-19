@@ -4,10 +4,10 @@ import { contentBundle } from '../src/content/index.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { createRegistries } from '../src/model/registries.js';
 import { upcastCard } from '../src/model/upcasting.js';
-import { CARD_STAT_MODIFIER_IDS, cardStatModifierTags } from '../src/ui/cardStatModifiers.js';
+import { CARD_STAT_MODIFIER_IDS, CardStatModifierTags } from '../src/ui/cardStatModifiers.js';
 
 const registries = createRegistries(contentBundle);
-const facts = (effects, active = registries) => cardStatModifierTags({ effects }, active);
+const facts = (effects, active = registries) => CardStatModifierTags({ effects }, active);
 const applyStatus = (status, stacks) => ({ op: 'applyStatus', status, stacks, target: 'self' });
 const change = (attribute, amount) => ({ op: 'changeAttribute', attribute, amount, target: 'self' });
 const link = card => ({ op: 'castLinkedSpell', card });
@@ -26,11 +26,11 @@ test('resolved card definitions supply legacy and direct attribute facts across 
   };
   for (const [id, tags] of Object.entries(cases)) {
     const definition = registries.cards.get(id);
-    assert.deepEqual(cardStatModifierTags(definition, registries), tags, id);
+    assert.deepEqual(CardStatModifierTags(definition, registries), tags, id);
   }
 
   const attack = registries.cards.get('strike');
-  assert.deepEqual(cardStatModifierTags(applyUpgradeSteps(attack, [
+  assert.deepEqual(CardStatModifierTags(applyUpgradeSteps(attack, [
     { k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' },
   ]), registries), ['buff:intelligence']);
 });
@@ -49,7 +49,7 @@ test('signed constant attribute formulas follow engine rounding and deduplicate'
       change('unrecognizedAttribute', 1),
     ].map(Object.freeze)),
   });
-  assert.deepEqual(cardStatModifierTags(spell, registries), ['buff:strength', 'debuff:dexterity', 'debuff:wisdom']);
+  assert.deepEqual(CardStatModifierTags(spell, registries), ['buff:strength', 'debuff:dexterity', 'debuff:wisdom']);
   assert.deepEqual(spell.cardTags, ['camp:spell']);
   assert.deepEqual(CARD_STAT_MODIFIER_IDS, [
     'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom',
@@ -113,6 +113,6 @@ test('only selected upcast and bounded linked payloads contribute facts', () => 
     ['depth9', { effects: [change('wisdom', 1)] }],
   ]);
   for (let depth = 1; depth < 8; depth++) cards.set(`depth${depth}`, { effects: [link(`depth${depth + 1}`)] });
-  assert.deepEqual(cardStatModifierTags(card, { cards }), ['buff:intelligence', 'buff:strength']);
-  assert.deepEqual(cardStatModifierTags(upcastCard(card, 1), { cards }), ['buff:intelligence', 'buff:strength', 'buff:constitution']);
+  assert.deepEqual(CardStatModifierTags(card, { cards }), ['buff:intelligence', 'buff:strength']);
+  assert.deepEqual(CardStatModifierTags(upcastCard(card, 1), { cards }), ['buff:intelligence', 'buff:strength', 'buff:constitution']);
 });
