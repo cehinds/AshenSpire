@@ -1161,7 +1161,7 @@
         "maxConsecutive": 1
       },
       "wickerMend": {
-        "sp": 2,
+        "sp": 3,
         "intent": "buff",
         "weight": 20,
         "maxConsecutive": 1,

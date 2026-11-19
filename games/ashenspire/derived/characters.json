@@ -5366,13 +5366,27 @@
       },
       "constitution": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "enemy.relic.wickerAntlers",
+            "name": "Wicker_Antlers",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "wisdom": {
         "own": 2,
-        "bonuses": [],
-        "total": 2
+        "bonuses": [
+          {
+            "source": "enemy.relic.wickerAntlers",
+            "name": "Wicker_Antlers",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 4
       },
       "intelligence": {
         "own": 2,
@@ -5390,20 +5404,20 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
+        "constitution": 20,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 4,
+        "wisdom": 8,
         "intelligence": 4,
         "level": 5
       },
-      "total": 41,
-      "formula": "10+10+5+3+4+4+5 = 41"
+      "total": 55,
+      "formula": "10+20+5+3+8+4+5 = 55"
     },
     "pools": {
-      "hp": 41,
+      "hp": 55,
       "sp": 3,
-      "mp": 2,
+      "mp": 3,
       "ar": 1,
       "dr": 1,
       "hand": 7
@@ -5415,7 +5429,13 @@
         "name": "Goldbough_Branch"
       }
     ],
-    "relics": [],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.wickerAntlers",
+        "name": "Wicker_Antlers"
+      }
+    ],
     "deck": {
       "size": 6,
       "cards": [

@@ -1967,8 +1967,8 @@
       "name": "Wicker Mend",
       "type": "power",
       "cost": {
-        "stamina": 2,
-        "mana": 1
+        "stamina": 3,
+        "mana": 2
       },
       "text": "Heal {heal} HP.",
       "usedBy": "enemy sheet"
@@ -4245,6 +4245,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.wickerAntlers": {
+      "name": "Wicker Antlers",
+      "text": "WIS +2, CON +1",
+      "modifiers": [
+        "self.wisdom=+2",
+        "self.constitution=+1"
       ]
     }
   }

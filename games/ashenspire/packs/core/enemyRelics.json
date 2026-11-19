@@ -201,5 +201,14 @@
       "self.strength=+1"
     ],
     "text": "CON +2, STR +1"
+  },
+  {
+    "id": "enemy.relic.wickerAntlers",
+    "name": "Wicker_Antlers",
+    "modifiers": [
+      "self.wisdom=+2",
+      "self.constitution=+1"
+    ],
+    "text": "WIS +2, CON +1"
   }
 ]

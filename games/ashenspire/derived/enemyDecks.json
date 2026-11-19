@@ -3982,8 +3982,8 @@
         "id": "wickerHind.wickerMend",
         "name": "Wicker_Mend",
         "copies": 1,
-        "sp": 2,
-        "mp": 1,
+        "sp": 3,
+        "mp": 2,
         "keywords": [],
         "effects": [
           {

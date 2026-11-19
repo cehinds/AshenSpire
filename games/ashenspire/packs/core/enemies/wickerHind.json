@@ -33,7 +33,12 @@
       "ref": "gear:goldboughBranch"
     }
   ],
-  "relics": [],
+  "relics": [
+    {
+      "slot": "relic1",
+      "ref": "relic:enemy.relic.wickerAntlers"
+    }
+  ],
   "deck": [
     "card:wickerHind.antlerRake",
     "card:wickerHind.hallowSpark",
