@@ -14,7 +14,7 @@ import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
 import { scaleOwnElementActions } from './elementRules.js';
-import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
+import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
@@ -2243,7 +2243,15 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       if (effect.op === 'damage' || effect.target !== 'self') continue;
       sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
     }
+    // A Counter's stack grant is synthetic support (prepareTacticalCard arms it only live).
+    if (FixCoreCounterStacks(combat)) sim.queue.push({ effect: { op: 'gainCounterStacks', target: 'self' }, source: sim.player, owner: sim.player, target: sim.player, card: action.card });
     drainQueue(sim);
+    // The forecast reads the coming enemy phase. A reaction during that phase has no intervening owner turn end.
+    if (combat.phase === 'player') {
+      sim.player.combatStance = { maneuver: 'counter', camp: action.card.combatProfile?.camp || 'physical', range: action.card.combatProfile?.range || 'melee' };
+      QueueGearTurnGrants(sim, sim.player, 'end');
+      drainQueue(sim);
+    }
     return (counterProjection = sim.player);
   };
   // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.

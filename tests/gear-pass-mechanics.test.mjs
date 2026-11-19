@@ -464,3 +464,47 @@ test('current Light armour Evade gain is included once in the pure preview and t
   dispatch(combat, { type: 'playCard', cardInstanceId: id });
   assert.equal((combat.player.statuses.evade?.stacks || 0) - before, shown);
 });
+
+
+test('current Medium armour Counter forecast matches the played card and exchange', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.player.counterStacks = 4;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
+  combat.player.stamina = 30;
+  const id = 'gear-medium-counter';
+  combat.piles.hand.push({ instanceId: id, cardId: 'core.counter' });
+  const before = combat.player.counterStacks, counters = combat.rng.getCounters();
+  const forecast = previewCard(combat, id).counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(combat.player.counterStacks, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  const from = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
+  assert.ok(actual);
+  assert.equal(forecast.hp, actual.amount);
+  assert.equal(actual.counterStacks, 7, 'the exact end grant is included once before the contact');
+});
+
+
+test('a current Medium Counter reaction forecast adds the card gain but no intervening turn-end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil' });
+  combat.phase = 'enemy';
+  combat.player.counterStacks = 3;
+  combat.player.stamina = 30;
+  combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
+  enemy.intentRevealed = true;
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'medium-reaction', cardId: 'core.counter' });
+  const forecast = previewCard(combat, 'medium-reaction').counterReturn;
+  assert.ok(forecast?.hp > 0);
+  assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and Medium 1, no end grant');
+  assert.equal(combat.player.counterStacks, 3);
+});
