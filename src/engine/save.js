@@ -602,15 +602,15 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // the run's own frozen attuneMax and is what a fight in progress carries.
         const rarityProblems = sigilRarityProblems(registries, run);
         if (rarityProblems.length) throw new Error(`Malformed sigils: ${rarityProblems.join('; ')}`);
-        // Owner, 2026-11-05: a profile unlock no longer makes a set owned in a
-        // run. A save from before that wears such a set without recording it,
-        // so it would vanish once unequipped. Grant it to the run here, once,
-        // at load; ownership() stays pure.
+        // A run owns its creation grant and acquired armour, including shared
+        // sets. Older saves may wear a set without recording that acquisition;
+        // preserve it here before it can disappear after unequipping.
+        // ownership() stays pure.
         if (run.loadout && run.loadout.sets) {
-          const worn = new Set(Object.values(run.loadout.sets).flat().filter(Boolean));
+          const worn = new Set((run.loadout.sets.armor || []).filter(Boolean));
           const grant = run.loadout.creationArmourGrant;
           for (const piece of registries.equipment.armour || []) {
-            if (piece.classId !== run.class || !piece.unlock || !worn.has(piece.id)) continue;
+            if (piece.classId !== run.class || !worn.has(piece.id)) continue;
             if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
             const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
             if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
