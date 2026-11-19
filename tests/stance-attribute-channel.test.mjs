@@ -53,3 +53,10 @@ test('a fight saved with the old flat stanceRating keeps the flat bonus', () => 
   const c = inStance(fight({}), 'casting', { intelligence: 1, wisdom: 10 }, { stanceRating: { casting: { pr: 2 } } });
   assert.equal(bonus(c, 'pr'), 2);
 });
+test('+2 STR does not raise a finesse attack (DEX governs); a normal STR attack gets +2', async () => {
+  const { finesseRatingView } = await import('../src/model/combatRatings.js');
+  const c = inStance(fight({ [RELIC]: ['attackStance'] }), 'attack', {});
+  assert.equal(bonus(c, 'ar'), 2);
+  const view = finesseRatingView(c.player);
+  assert.equal(stanceRatingBonus(c, view, 'ar') - stanceRatingBonus(c, { ...view, itemProps: null }, 'ar'), 0);
+});

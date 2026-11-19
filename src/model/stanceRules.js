@@ -128,7 +128,8 @@ function stanceAttributeBonus(ctx, entity, maneuver, id) {
   if (!grants || !entity.attributes || !ctx?.registries) return 0;
   const boosted = { ...entity.attributes };
   for (const [attribute, n] of Object.entries(grants)) boosted[attribute] = Math.max(0, (Number(boosted[attribute]) || 0) + n);
-  return ChannelRowValue(ctx, entity, id, boosted) - ChannelRowValue(ctx, entity, id, entity.attributes);
+  const row = entity.finesseView && id === 'ar' ? 'dr' : id; // a finesse hit's Attack rating is the DEX-driven row (finesseRatingView)
+  return ChannelRowValue(ctx, entity, row, boosted) - ChannelRowValue(ctx, entity, row, entity.attributes);
 }
 export function stanceRatingBonus(ctx, entity, id) {
   if (ctx?.combatExpansionVersion !== 2) return 0;
