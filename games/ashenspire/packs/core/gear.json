@@ -1296,5 +1296,73 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "longbow",
+    "name": "Longbow",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "longbow"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "huntersRecurve",
+    "name": "Hunters_Recurve",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "huntersRecurve"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "handCrossbow",
+    "name": "Hand_Crossbow",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "handCrossbow"
+    },
+    "range": "reach"
+  },
+  {
+    "id": "arbalest",
+    "name": "Arbalest",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "bow",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "arbalest"
+    },
+    "range": "reach"
   }
 ]

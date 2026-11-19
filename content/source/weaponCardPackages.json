@@ -910,5 +910,81 @@
         "artCardId": "twinbladeFlurry"
       }
     }
+  },
+  {
+    "weaponId": "longbow",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "aimedShot"
+      ],
+      "learnableArts": [
+        "nockAndWait",
+        "barbedArrow"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "aimedShot"
+      }
+    }
+  },
+  {
+    "weaponId": "huntersRecurve",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "barbedArrow"
+      ],
+      "learnableArts": [
+        "arrowVolley",
+        "pinningShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "barbedArrow"
+      }
+    }
+  },
+  {
+    "weaponId": "handCrossbow",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "ricochet"
+      ],
+      "learnableArts": [
+        "aimedShot",
+        "pinningShot"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "ricochet"
+      }
+    }
+  },
+  {
+    "weaponId": "arbalest",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bowPierceAttack",
+      "weaponArtDefaults": [
+        "lethalDose"
+      ],
+      "learnableArts": [
+        "nockAndWait",
+        "arrowVolley"
+      ],
+      "combatKit": {
+        "attackProfileId": "bowPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "lethalDose"
+      }
+    }
   }
 ]

@@ -23,7 +23,11 @@
         "stiletto"
       ],
       "bow": [
-        "shortbow"
+        "shortbow",
+        "longbow",
+        "huntersRecurve",
+        "handCrossbow",
+        "arbalest"
       ],
       "polearm": [
         "halberd",

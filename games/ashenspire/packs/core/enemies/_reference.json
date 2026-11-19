@@ -3847,6 +3847,50 @@
         "frost"
       ],
       "range": "melee"
+    },
+    "gear:longbow": {
+      "name": "Longbow",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:huntersRecurve": {
+      "name": "Hunters Recurve",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:handCrossbow": {
+      "name": "Hand Crossbow",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:arbalest": {
+      "name": "Arbalest",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
     }
   },
   "relics": {

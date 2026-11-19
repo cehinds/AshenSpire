@@ -424,6 +424,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:beardedAxe | Bearded Axe | rightHand | weapon | common | axe, heavy |
 | gear:moonlitKatana | Moonlit Katana | rightHand | weapon | rare | katana, bleed |
 | gear:moonGlaives | Moon Glaives | rightHand | weapon | rare | twinblade, flurry, light, frost |
+| gear:longbow | Longbow | rightHand | weapon | uncommon | bow, retreat |
+| gear:huntersRecurve | Hunters Recurve | rightHand | weapon | rare | bow, retreat |
+| gear:handCrossbow | Hand Crossbow | rightHand | weapon | common | bow, retreat |
+| gear:arbalest | Arbalest | rightHand | weapon | rare | bow, retreat |
 
 ## Relics (relic:)
 

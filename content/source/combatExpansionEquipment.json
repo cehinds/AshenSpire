@@ -504,7 +504,11 @@
       "traits": {
         "conductive": true
       }
-    }
+    },
+    "longbow": {},
+    "huntersRecurve": {},
+    "handCrossbow": {},
+    "arbalest": {}
   },
   "enemies": {
     "wanderingSoldier": {

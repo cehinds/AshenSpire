@@ -81,7 +81,11 @@
         "item:blade"
       ],
       "members": [
-        "shortbow"
+        "shortbow",
+        "longbow",
+        "huntersRecurve",
+        "handCrossbow",
+        "arbalest"
       ]
     },
     "greatswords": {
