@@ -853,5 +853,62 @@
         "artCardId": "aegisOfEmbers"
       }
     }
+  },
+  {
+    "weaponId": "beardedAxe",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "sunderingChop"
+      ],
+      "learnableArts": [
+        "cleavingBlow",
+        "bloodTithe"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "sunderingChop"
+      }
+    }
+  },
+  {
+    "weaponId": "moonlitKatana",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "katanaDrawCut"
+      ],
+      "learnableArts": [
+        "hamstringRogue",
+        "quickCut"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "katanaDrawCut"
+      }
+    }
+  },
+  {
+    "weaponId": "moonGlaives",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "twinbladeAttack",
+      "weaponArtDefaults": [
+        "twinbladeFlurry"
+      ],
+      "learnableArts": [
+        "twinPrick",
+        "serratedBlade"
+      ],
+      "combatKit": {
+        "attackProfileId": "twinbladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "twinbladeFlurry"
+      }
+    }
   }
 ]

@@ -8,7 +8,8 @@
         "flamberge",
         "rapier",
         "estoc",
-        "duelistsFoil"
+        "duelistsFoil",
+        "moonlitKatana"
       ],
       "greatsword": [
         "greatsword",
@@ -40,11 +41,13 @@
         "thunderMallet"
       ],
       "twinblade": [
-        "twinblade"
+        "twinblade",
+        "moonGlaives"
       ],
       "axe": [
         "battleaxe",
-        "cinderAxe"
+        "cinderAxe",
+        "beardedAxe"
       ],
       "shield": [
         "buckler",

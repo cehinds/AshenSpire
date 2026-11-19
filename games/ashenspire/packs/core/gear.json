@@ -1240,5 +1240,61 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "beardedAxe",
+    "name": "Bearded_Axe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "axe",
+      "heavy"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "beardedAxe"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "moonlitKatana",
+    "name": "Moonlit_Katana",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "katana",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "moonlitKatana"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "moonGlaives",
+    "name": "Moon_Glaives",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "twinblade",
+      "flurry",
+      "light",
+      "frost"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "moonGlaives"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]

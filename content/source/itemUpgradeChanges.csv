@@ -228,3 +228,15 @@ armament/thunderMallet,1,upgrade:cost:smithing-stone,1
 armament/thunderMallet,1,card:attack:effect:damage,3
 armament/thunderMallet,1,card:guard:effect:block,3
 armament/thunderMallet,1,card:technique:effect:block,2
+armament/beardedAxe,1,upgrade:cost:smithing-stone,1
+armament/beardedAxe,1,card:attack:effect:damage,3
+armament/beardedAxe,1,card:guard:effect:block,3
+armament/beardedAxe,1,card:technique:effect:block,2
+armament/moonlitKatana,1,upgrade:cost:smithing-stone,1
+armament/moonlitKatana,1,card:attack:effect:damage,3
+armament/moonlitKatana,1,card:guard:effect:block,3
+armament/moonlitKatana,1,card:technique:effect:block,2
+armament/moonGlaives,1,upgrade:cost:smithing-stone,1
+armament/moonGlaives,1,card:attack:effect:damage,3
+armament/moonGlaives,1,card:guard:effect:block,3
+armament/moonGlaives,1,card:technique:effect:block,2

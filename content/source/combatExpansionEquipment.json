@@ -486,6 +486,24 @@
       "flat": {
         "lightning": 1
       }
+    },
+    "beardedAxe": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "moonlitKatana": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "frost": 1
+      }
+    },
+    "moonGlaives": {
+      "traits": {
+        "conductive": true
+      }
     }
   },
   "enemies": {

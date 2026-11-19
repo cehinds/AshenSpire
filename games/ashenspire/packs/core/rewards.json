@@ -37,7 +37,10 @@
         "morningStar",
         "flail",
         "maul",
-        "thunderMallet"
+        "thunderMallet",
+        "beardedAxe",
+        "moonlitKatana",
+        "moonGlaives"
       ]
     },
     "shields": {

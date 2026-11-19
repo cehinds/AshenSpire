@@ -3812,6 +3812,41 @@
         "stagger"
       ],
       "range": "melee"
+    },
+    "gear:beardedAxe": {
+      "name": "Bearded Axe",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "axe",
+        "heavy"
+      ],
+      "range": "melee"
+    },
+    "gear:moonlitKatana": {
+      "name": "Moonlit Katana",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "katana",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:moonGlaives": {
+      "name": "Moon Glaives",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "twinblade",
+        "flurry",
+        "light",
+        "frost"
+      ],
+      "range": "melee"
     }
   },
   "relics": {

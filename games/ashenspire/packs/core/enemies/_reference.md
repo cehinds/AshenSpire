@@ -421,6 +421,9 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:flail | Flail | rightHand | weapon | rare | hammer, stagger |
 | gear:maul | Maul | rightHand | weapon | uncommon | hammer, stagger |
 | gear:thunderMallet | Thunder Mallet | rightHand | weapon | rare | hammer, stagger |
+| gear:beardedAxe | Bearded Axe | rightHand | weapon | common | axe, heavy |
+| gear:moonlitKatana | Moonlit Katana | rightHand | weapon | rare | katana, bleed |
+| gear:moonGlaives | Moon Glaives | rightHand | weapon | rare | twinblade, flurry, light, frost |
 
 ## Relics (relic:)
 

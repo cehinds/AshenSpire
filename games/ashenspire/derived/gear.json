@@ -3665,5 +3665,180 @@
         "max": 5
       }
     }
+  },
+  {
+    "id": "beardedAxe",
+    "name": "Bearded_Axe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "axe",
+      "heavy"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.cost=+1"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 3,
+        "max": 3
+      },
+      "bonus": {
+        "min": 2,
+        "max": 3
+      }
+    }
+  },
+  {
+    "id": "moonlitKatana",
+    "name": "Moonlit_Katana",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "katana",
+      "bleed"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.bleed=+2"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
+    }
+  },
+  {
+    "id": "moonGlaives",
+    "name": "Moon_Glaives",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "twinblade",
+      "flurry",
+      "light",
+      "frost"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 2,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "modifiers": [
+      "strike.hits=+1",
+      "self.maxStamina=+1",
+      "strike.frost=+2"
+    ],
+    "pool": {
+      "ratings": {
+        "min": 5,
+        "max": 5
+      },
+      "bonus": {
+        "min": 2,
+        "max": 5
+      }
+    }
   }
 ]
