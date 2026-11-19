@@ -24,7 +24,7 @@
     "tier": "minion",
     "deckSize": 5,
     "reserveSize": 0,
-    "distinctCards": 4,
+    "distinctCards": 5,
     "levelRange": "1-2"
   },
   "equipment": [
@@ -36,10 +36,10 @@
   "relics": [],
   "deck": [
     "card:fenwickToad.tongueLash",
-    "card:fenwickToad.tongueLash",
     "card:fenwickToad.bileSpit",
     "card:fenwickToad.puffUp",
-    "card:fenwickToad.advance"
+    "card:fenwickToad.advance",
+    "card:fenwickToad.retreat"
   ],
   "reserve": [],
   "ai": {
@@ -69,6 +69,12 @@
       "aiWeight": 0,
       "costSource": "authored",
       "legacyMove": "advance"
+    },
+    "card:fenwickToad.retreat": {
+      "aiWeight": 40,
+      "maxConsecutive": 1,
+      "costSource": "authored",
+      "legacyMove": "retreat"
     }
   },
   "behaviour": {
@@ -76,6 +82,7 @@
     "startingRange": "reach",
     "rangeClosingMove": "advance",
     "rangeRoutePolicy": "advance",
+    "rangeRetreatMove": "retreat",
     "weaknesses": [
       {
         "to": "fire",
@@ -112,6 +119,7 @@
       "startingRange",
       "rangeClosingMove",
       "rangeRoutePolicy",
+      "rangeRetreatMove",
       "weaknesses"
     ]
   }

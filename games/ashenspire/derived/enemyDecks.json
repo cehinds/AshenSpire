@@ -3491,7 +3491,7 @@
       {
         "id": "fenwickToad.tongueLash",
         "name": "Tongue_Lash",
-        "copies": 2,
+        "copies": 1,
         "sp": 1,
         "mp": 0,
         "keywords": [],
@@ -3578,6 +3578,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "fenwickToad.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],

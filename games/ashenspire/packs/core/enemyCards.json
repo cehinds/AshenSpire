@@ -4382,6 +4382,31 @@
     "textTemplate": "Close one band."
   },
   {
+    "id": "fenwickToad.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
+  },
+  {
     "id": "reedpipePoacher.dart",
     "name": "Dart",
     "class": "colorless",

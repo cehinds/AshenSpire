@@ -232,6 +232,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:fenwickToad.bileSpit | Bile Spit | attack | 1 | 0 | Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy. |
 | card:fenwickToad.puffUp | Puff Up | skill | 1 | 0 | Gain {block} Block. |
 | card:fenwickToad.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:fenwickToad.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:reedpipePoacher.dart | Dart | attack | 1 | 0 | Deal {damage} damage. |
 | card:reedpipePoacher.snare | Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. |
 | card:reedpipePoacher.advance | Advance | skill | 1 | 0 | Close one band. |

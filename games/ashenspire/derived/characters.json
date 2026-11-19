@@ -4973,7 +4973,7 @@
         {
           "id": "fenwickToad.tongueLash",
           "name": "Tongue_Lash",
-          "copies": 2
+          "copies": 1
         },
         {
           "id": "fenwickToad.bileSpit",
@@ -4988,6 +4988,11 @@
         {
           "id": "fenwickToad.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "fenwickToad.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]

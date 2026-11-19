@@ -1803,6 +1803,16 @@
       "text": "Close one band.",
       "usedBy": "enemy sheet"
     },
+    "card:fenwickToad.retreat": {
+      "name": "Retreat",
+      "type": "skill",
+      "cost": {
+        "stamina": 2,
+        "mana": 0
+      },
+      "text": "Fall back one band.",
+      "usedBy": "enemy sheet"
+    },
     "card:reedpipePoacher.dart": {
       "name": "Dart",
       "type": "attack",
