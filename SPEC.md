@@ -2452,6 +2452,11 @@ Every level gives something; no level is points-only. Rewards stack, repeated bo
 - **Respec.** Lowers queued rank-ups by the levels lost and drops the track's deferred drafts and rank-ups waiting for a level above 1 (the ledger re-offers what it still queues). Ranks already raised stay.
 - `upgradeAt` is retired: no level upgrades cards; a draft, master lesson or book lesson card joins plain; the balance key is an unknown field and the load door no longer reconciles it.
 
+#### Card upgrade roll
+
+Owner rulings of 2026-11-19 (design: `docs/balance/buff-drawbacks-proposal-2026-11-19.md` sections 6 to 11). Code: `src/model/cardUpgradeSteps.js` (`rollUpgradeOptions`), `src/model/cardUpgrade.js` (apply, validate).
+- **Group roll.** A rolled upgrade is random and tied to the card's type. The roll order is group, then rarity, then kind. The groups are ease (lowers a drawback), effectiveness/cost, new effect, and identity (a share inside new effect: range, targeting, maneuver, damage type). Shares by upgrade number (ease/effectiveness/new effect/identity): 1 to 3 40/35/20/5, 4 to 5 30/30/30/10, 6 to 7 20/30/35/15, 8 to 10 15/20/45/20. A group with no eligible kind gives its share to the others pro rata (a card with no drawback has no ease share). The kind inside a group is picked by the existing `WEIGHTS`. The roll is two stream draws per option (the first is split by rescaling), so a preview still equals the commit.
+
 #### Flat bonus and attribute picks
 
 - **Every-5th flat.** Each owned card carries a derived `skillBonus` (`skills.js stampSkillBonuses`): the sum, over every card-school track whose schools (the held pieces' `skillSchools`) the card's tags meet, of floor(level / `balance.skill.flatEvery` (5)), capped at 99. A card in both hands' schools and the dual-wield union earns each. Every owned card counts, including equipment-bound and item-owned.
