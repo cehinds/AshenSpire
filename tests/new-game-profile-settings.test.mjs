@@ -37,11 +37,13 @@ test('invalid imported rules are rejected and stale preferences fall back safely
 test('a stored snapshot with an old Rest-first preset is refused when loaded', () => {
   const core = dataClone(resolveGameProfile('core'));
   delete core.hash;
-  core.modules.routes.restFloors = [1, 9];
+  core.modules.routes.restFloors = [1, 11];
   core.modules.routes.restsPerAct = 2;
   core.content.routes.restsPerAct = 2;
   core.modules.routes.firstFloor = 'fight';
-  core.content.routes.restFloors = [1, 9];
+  core.modules.routes.startRestFromAct = null; // an old preset has no start-rest act, so depth 1 is a rest in every act
+  core.content.routes.restFloors = [1, 11];
+  core.content.routes.startRestFromAct = null;
   const snapshot = { ...core, hash: gameDigest(core) };
   assert.throws(() => validateResolvedGameProfile(snapshot), e => e.path === '$/modules/routes/firstFloor' && /firstFloor/.test(e.message));
   const cleared = dataClone(core);

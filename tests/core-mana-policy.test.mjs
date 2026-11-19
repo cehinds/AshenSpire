@@ -36,7 +36,7 @@ test('core Reaver starts with one MP and an earned fourth WIS adds exactly one m
   run.attributes.intelligence = 3; run.attributes.wisdom = 3;
   rederivePools(registries, run, 'test');
   assert.equal(run.maxMana, 1, 'INT 3 and WIS 3 leave Mana at the base');
-  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
   assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);

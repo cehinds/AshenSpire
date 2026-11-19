@@ -98,7 +98,7 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb'), saved.lock.runtimeHash);
 });
 
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
@@ -145,7 +145,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7');
+  assert.equal(profile.lock.runtimeHash, 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
