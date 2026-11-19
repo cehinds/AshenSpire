@@ -4705,7 +4705,8 @@
           "effect": "damage"
         }
       ]
-    }
+    },
+    "spFloor": 3
   },
   {
     "id": "quarryRam",

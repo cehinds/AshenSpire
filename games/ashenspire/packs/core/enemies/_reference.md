@@ -508,7 +508,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
-| relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
@@ -519,3 +518,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
 | relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
+| relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
