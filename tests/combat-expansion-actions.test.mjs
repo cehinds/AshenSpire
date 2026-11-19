@@ -52,15 +52,15 @@ test('whole Spell action applies persistent Ward once across hits, spends it, an
 
 // Was: the same blunt Spell action spent Ward (wardResisted 3, Ward 0). The damage type decides the route now:
 // the blunt part is physical, so Ward is not touched and the hit lands on HP.
-// A force Spell is all physical (owner 2026-11-18): Block, then Poise, then HP; Ward is never met.
-test('a force Spell action (school force, blunt damage type) is all physical (owner 2026-11-18): Ward is untouched, the whole hit lands on HP', () => {
+// A force Spell is a school hit: force splits half magic (Ward) and half blunt (Block, then HP).
+test('a force Spell action (school force, blunt damage type) splits: its magic half meets Ward, the rest lands on HP', () => {
   const { combat, enemy } = fixture();
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
-  assert.equal(damage.reduce((sum, event) => sum + (event.wardResisted || 0), 0), 0, 'Ward resists nothing of a physical hit');
-  assert.ok(damage.every(event => !event.wardAbsorbed), 'no hit spends Ward');
-  assert.ok(before - enemy.hp > 0, 'the physical hit lands on HP');
+  assert.ok(damage.reduce((sum, event) => sum + (event.wardResisted || 0), 0) > 0, 'the magic half is resisted by Ward');
+  assert.ok(enemy.persistentWard.value < 3, 'Ward is spent by the magic half');
+  assert.ok(before - enemy.hp > 0, 'the physical half lands on HP');
 });
 
 test('paused action receipts are interned after JSON restore and finish without repeating a charge or roll', () => {

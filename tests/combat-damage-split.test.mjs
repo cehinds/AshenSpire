@@ -2,6 +2,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // One hit, two parts: a magic part (Barrier, then Ward) and a physical part
 // (Block). Exact numbers from the damage-split brief.
 import test from 'node:test';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -16,13 +17,15 @@ import { objectTagIds } from '../src/content/tags.js';
 import { previewCard } from '../src/engine/combat.js';
 import { splitOf } from '../src/model/playingCard.js';
 
-function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null, silenced = 0 } = {}) {
+function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null, silenced = 0, newForce = false } = {}) {
   const registries = createRegistries(contentBundle);
   // A damage type's Advanced share (damageTypeShares) is a run's ratings config, read through ctx.ratingsRules.
   const ratingsRules = damageTypeShares ? { ...resolveCombatRatings(Object.fromEntries(Object.entries(damageTypeShares).map(([type, share]) => [`gameConfig.combatRatings.damageTypes.${type}`, share])), contentBundle), enabled: true } : null;
   const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2, ...(ratingsRules ? { ratingsRules } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  // The new Force (owner 2026-11-18) is data in the fight: a Core fight carries it, an unconfigured one keeps the old 0.5 split.
+  if (newForce) combat.fixCoreRules = structuredClone(fixCoreMechanics);
   const enemy = combat.enemies[0];
   enemy.block = block; enemy.barrier = barrier;
   enemy.damageResistanceFlat = { ...flat }; enemy.damageWeaknessPercent = { ...weakness };
@@ -280,11 +283,11 @@ const v2Carrier = (id, extra = {}) => {
 };
 const hitOf = r => r.damage[0];
 
-test('starstonePebble in v2 (force) is all physical (owner 2026-11-18): ten blunt, no magic, Ward untouched', () => {
+test('starstonePebble in v2 (force) splits 50:50 in a fight without the new Force data: five magic, five blunt', () => {
   const r = strike(v2Carrier('starstonePebble'), 10, { ward: 10 });
   const d = hitOf(r);
-  assert.equal(d.magicAmount, 0);
-  assert.equal(d.physicalAmount, 10);
+  assert.equal(d.magicAmount, 5);
+  assert.equal(d.physicalAmount, 5);
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
@@ -471,7 +474,7 @@ test('a Force spell face with a +4 Power is all physical like its committed hit 
   const face = faceOf({}, 'starstonePebble', 4);
   assert.equal(face.value.splitBase, 6, 'the card base is 6');
   assert.equal(face.value.faceValue, 10, 'the face is the base plus the Power');
-  const committed = hitOf(strike({ ...v2Carrier('starstonePebble'), skipRatingBonus: false, ratingValue: 4 }, face.value.splitBase, { ward: 20 }));
+  const committed = hitOf(strike({ ...v2Carrier('starstonePebble'), skipRatingBonus: false, ratingValue: 4 }, face.value.splitBase, { ward: 20, newForce: true }));
   assert.equal(face.parts, null, 'an all-physical face names no split');
   assert.deepEqual([committed.magicAmount, committed.physicalAmount], [0, 10]);
 });

@@ -53,3 +53,17 @@ test('a Core fight with no elements block (made before W25) keeps the old Force'
   assert.equal(ForceRules(combat).legacy, true);
   assert.equal(FightMagicShare(combat, FORCE.combatProfile), 0.5);
 });
+
+test('a non-Core fight (expanded combat, unconfigured profile) keeps the old Force: half magic, half blunt, Ward is met', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createCombat } = await import('../src/engine/combat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { contactMagicShare } = await import('../src/engine/actions.js');
+  const combat = createCombat({ registries: createRegistries(contentBundle), rng: createRng(901), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  assert.equal(combat.fixCoreRules, undefined, 'not a Core fight');
+  assert.equal(ForceRules(combat).legacy, true);
+  assert.equal(contactMagicShare(combat, FORCE.combatProfile), 0.5);
+  assert.equal(ForceRules(combat).push, true);
+});

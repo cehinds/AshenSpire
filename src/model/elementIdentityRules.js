@@ -14,13 +14,13 @@ export function ElementRulesOf(ctx) {
 /**
  * ForceRules(ctx) -> the Force rules this fight plays under (owner, 2026-11-18, section 20), read from its saved `elements.force`:
  *   magicShare (0: Force is physical), poiseShare (0.5 to Poise after Block), push and knockback (false: no built-in Retreat).
- * A fight saved with the old `elements.force.poiseMultiplier` (1.5) and none of those keys keeps the old Force: a 0.5 magic share, the x1.5 Poise
- * damage, the push and the Knockback. So does a Core fight with no `elements` block at all (made before W25). Any other fight plays the new rules.
+ * A fight whose snapshot lacks those keys keeps the old Force: a 0.5 magic share, the x1.5 Poise damage (when `poiseMultiplier` is saved), the push and the
+ * Knockback. That covers a Core fight saved before the ruling, one with no `elements` block (made before W25), and any non-Core fight.
  */
 export function ForceRules(ctx) {
   const force = ctx?.fixCoreRules?.elements?.force;
-  const noElements = fixCoreEnabled(ctx) && !ctx?.fixCoreRules?.elements;
-  const legacy = noElements || (!!force && force.poiseMultiplier !== undefined && force.poiseShare === undefined);
+  // The new Force is data in the fight (elements.force.magicShare or poiseShare). A fight without it, Core or not (an old save, an unconfigured profile), keeps the old Force.
+  const legacy = !(Number.isFinite(force?.magicShare) || Number.isFinite(force?.poiseShare));
   return {
     legacy,
     magicShare: Number.isFinite(force?.magicShare) ? Math.max(0, force.magicShare) : legacy ? 0.5 : 0,
