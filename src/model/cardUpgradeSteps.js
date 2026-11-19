@@ -23,6 +23,8 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
   // Easing a drawback (playtest 2026-11-17, theme C): offered only on a card that has it, and weighted to come up.
   'fx:unethereal': 12, 'fx:steady': 12,
+  // Owner, 2026-11-19: a signed `stk` lowers a drawback's count (self debuff, enemy buff, discard, added status cards); dropped at 0.
+  stkEase: 12,
   // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
   attr: 2 });
 // The roll's groups (owner, 2026-11-19; docs/balance/buff-drawbacks-proposal-2026-11-19.md section 6). A roll picks the group by
@@ -30,7 +32,7 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
 // card's own numbers better, `new` adds an effect, `identity` reshapes what the card is (inside "new effect").
 export const UPGRADE_GROUPS = Object.freeze(['ease', 'eff', 'new', 'identity']);
 const GROUP_OF = Object.freeze({
-  'fx:unexhaust': 'ease', 'fx:unethereal': 'ease', 'fx:steady': 'ease',
+  'fx:unexhaust': 'ease', 'fx:unethereal': 'ease', 'fx:steady': 'ease', stkEase: 'ease',
   dmg: 'eff', blk: 'eff', stk: 'eff', cost: 'eff', hits: 'eff', poise: 'eff', element: 'eff', rankDown: 'eff',
   range: 'identity', targeting: 'identity', maneuver: 'identity', school: 'identity',
 });
@@ -82,7 +84,7 @@ const PLACED_AT = Object.freeze({
   range: 2, attr: 2, school: 0,
 });
 // The ease kinds: easing a drawback is common; the uncommon version removes it and draws a card, the rare one removes it and takes a rare-size step.
-const EASE_KINDS = Object.freeze(['fx:unexhaust', 'fx:unethereal', 'fx:steady']);
+const EASE_KINDS = Object.freeze(['fx:unexhaust', 'fx:unethereal', 'fx:steady', 'stkEase']);
 
 /** Every option kind a rolled upgrade can be; a card's `upgradeMenu` names a subset of these (theme C, playtest 2026-11-17). */
 export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
@@ -93,6 +95,15 @@ const CANTRIP_STACK_CAP = 5;
 const ENGINE_STACK_CAPS = Object.freeze({ venom: 3 });
 const stackCap = (status, card) => STACK_CAPS[status] ?? ENGINE_STACK_CAPS[status] ?? (tagsOf(card).includes(RANK_DOWN_TAG) ? CANTRIP_STACK_CAP : undefined);
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
+// The drawbacks a signed `stk` can lower (proposal section 7): a self debuff, a buff the card gives an enemy, a forced discard, or
+// status cards (Wound, Dazed) added to a pile. Only an effect the card was authored with counts (a Cycle or Copy step is not a drawback).
+const SELF_DEBUFFS = Object.freeze(['weak', 'frail', 'vulnerable', 'bleed', 'burn']);
+const ENEMY_BUFFS = Object.freeze(['strength']);
+const isSelfDebuff = (e) => isPlainStatus(e) && e.target === 'self' && SELF_DEBUFFS.includes(e.status);
+const isEnemyBuff = (e) => isPlainStatus(e) && (e.target === 'enemy' || e.target === 'allEnemies') && ENEMY_BUFFS.includes(e.status);
+const isDrawbackStatus = (e) => isSelfDebuff(e) || isEnemyBuff(e);
+const isAddedCards = (e, id) => e.op === 'addCard' && e.card !== id && Number.isFinite(e.count) && !CONDITION_KEYS_OF(e);
+const CONDITION_KEYS_OF = (e) => ['when', 'if', 'condition', 'unless', 'repeat'].some((key) => key in e);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
 export function upgradeSeed(runSeed, instanceId, stepIndex) {
@@ -156,6 +167,8 @@ function options(base, current, applied, limits, rarity = 0) {
       if (one.sp && one.mp) found.cost = { combo: ['sp', 'mp'] };
     } else if (pools.length) found.cost = { pools, by };
   }
+  // A Power eases its drawbacks too (Ethereal, a rising cost, a debuff); it has no Exhaust to drop.
+  if (type === 'power') addDrawbackEase(base, current, found);
   if (restricted) return found;
 
   const effects = current.effects || [];
@@ -186,7 +199,7 @@ function options(base, current, applied, limits, rarity = 0) {
   };
   const seenStatus = new Set();
   const stackable = effects.find((e) => {
-    if (!isPlainStatus(e) || seenStatus.has(e.status)) return false;
+    if (!isPlainStatus(e) || isDrawbackStatus(e) || seenStatus.has(e.status)) return false;
     seenStatus.add(e.status);
     const cap = stackCap(e.status, current);
     if (cap === undefined || e.stacks + 1 > cap) return false;
@@ -220,6 +233,7 @@ function options(base, current, applied, limits, rarity = 0) {
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn, rarity);
   addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity, scale);
+  addDrawbackEase(base, current, found);
   if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
   return found;
 }
@@ -261,8 +275,6 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
   if (!keywords.includes('retain') && !keywords.includes('ethereal')) set('retain');
   if (!keywords.includes('innate')) set('innate');
   if (keywords.includes('exhaust')) set('unexhaust');
-  if (keywords.includes('ethereal')) set('unethereal');
-  if (risingCost(current)) set('steady');
   if (!hasOp(effects, 'retain')) set('holdOne');
   const boosted = (stat) => effects.some((e) => (e.op === 'applyStatus' && e.thisTurn === true && e.status === stat) || (e.op === 'changeAttribute' && e.attribute === stat));
   // A boost is a live attribute change (engine/liveStats.js): STR for an attack, DEX for a block, INT for a spell's damage, WIS for a
@@ -277,6 +289,23 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
   // Owner, 2026-11-14: Reaction is open to every stance (attack, smash, sweep, spells, skills). A card that already reacts (Defense, Counter,
   // or `trait:reaction`) and an X-cost card are left out; Powers never reach this menu.
   if (!tags.includes('trait:reaction') && !['defend', 'counter'].includes(maneuver) && !tags.includes('maneuver:defend') && !tags.includes('maneuver:counter') && current.cost !== 'X' && base.cost !== 'X') set('reaction');
+}
+
+/** Ethereal and a rising cost (both `fx` steps) and the signed `stk` (proposal section 7) lower what a card's drawback costs. */
+function addDrawbackEase(base, current, found) {
+  const effects = current.effects || [];
+  if ((current.keywords || []).includes('ethereal')) found['fx:unethereal'] = { fx: 'unethereal' };
+  if (risingCost(current)) found['fx:steady'] = { fx: 'steady' };
+  const targets = [];
+  for (const e of effects) {
+    if (isDrawbackStatus(e) && !targets.some((t) => t.status === e.status && t.side === (e.target === 'self' ? 'self' : 'enemy'))) targets.push({ status: e.status, side: e.target === 'self' ? 'self' : 'enemy', count: e.stacks });
+  }
+  const authored = base.effects || [];
+  const discard = effects.find((e) => isPlainEffect(e, 'discard'));
+  if (discard && authored.some((e) => isPlainEffect(e, 'discard'))) targets.push({ op: 'discard', count: discard.amount });
+  const added = effects.find((e) => isAddedCards(e, base.id));
+  if (added && authored.some((e) => isAddedCards(e, base.id))) targets.push({ op: 'addCard', count: added.count });
+  if (targets.length) found.stkEase = { targets };
 }
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
@@ -368,9 +397,11 @@ function optionsByRarity(base, current, applied, limits) {
   for (const kind of EASE_KINDS) {
     const ease = per[0][kind];
     if (!ease) continue;
-    if (per[0]['fx:draw']) per[1][kind] = { ...ease, also: [{ kind: 'fx:draw', option: per[0]['fx:draw'] }] };
+    // A Power takes no draw option, so its sweetener is a cost cut.
+    const partner = per[0]['fx:draw'] ? 'fx:draw' : per[0].cost ? 'cost' : '';
+    if (partner) per[1][kind] = { ...ease, remove: true, also: [{ kind: partner, option: per[0][partner] }] };
     const rare = ['cost', 'dmg', 'blk'].filter((k) => per[2][k]).map((k) => ({ kind: k, option: per[2][k] }));
-    if (rare.length) per[2][kind] = { ...ease, also: rare };
+    if (rare.length) per[2][kind] = { ...ease, remove: true, also: rare };
   }
   return per;
 }
@@ -395,11 +426,16 @@ const stepOf = (kind, option, choice, rarity = 0) => {
     const { also, ...ease } = option;
     const at = Math.min(also.length - 1, Math.floor(choice * also.length));
     const partner = stepOf(also[at].kind, also[at].option, choice * also.length - at, 0);
-    return rated({ k: 'combo', steps: [stepOf(kind, ease, 0, 0), partner] });
+    return rated({ k: 'combo', steps: [stepOf(kind, ease, choice, 0), partner] });
   }
   // The boost's duration and size follow the rarity: +2 this turn, +1 for the rest of the fight, +2 for the rest of the fight.
   if (kind === 'fx:boost') return rated(rarity === 0 ? { k: 'fx', fx: 'boost', stat: option.stat, n: 2, until: 'turn' } : { k: 'fx', fx: 'boost', stat: option.stat, n: rarity, until: 'fight' });
-  if (kind.startsWith('fx:')) return rated({ k: 'fx', ...option });
+  if (kind.startsWith('fx:')) { const { remove, ...fx } = option; return rated({ k: 'fx', ...fx }); }
+  if (kind === 'stkEase') {
+    const target = pickOf(option.targets);
+    const n = option.remove ? -target.count : -1;
+    return rated(target.op ? { k: 'stk', op: target.op, n } : { k: 'stk', status: target.status, side: target.side, n });
+  }
   switch (kind) {
     case 'dmg': return rated({ k: 'dmg', n: option.n });
     case 'blk': return rated({ k: 'blk', n: option.n });

@@ -171,8 +171,26 @@ function applyStep(card, step) {
       break;
     }
     case 'stk': {
-      const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
-      if (effect) effect.stacks += step.n;
+      // A signed step (owner, 2026-11-19) lowers a drawback: a self debuff or enemy buff's stacks, a discard's amount, or the cards
+      // an addCard adds. The effect is dropped at 0, with the sentence that named it.
+      if (step.op === 'discard' || step.op === 'addCard') {
+        const index = effects.findIndex((e) => (step.op === 'discard' ? isPlainEffect(e, 'discard') : e.op === 'addCard' && e.card !== card.id && Number.isFinite(e.count)));
+        if (index >= 0) {
+          const key = step.op === 'discard' ? 'amount' : 'count';
+          effects[index][key] += step.n;
+          if (effects[index][key] <= 0) { effects.splice(index, 1); dropEffectText(out, card, step.op === 'discard' ? /discard/i : /\badd\b.*\b(wound|dazed|slimed|guilt|cards?)\b/i); }
+        }
+      } else if (step.side) {
+        const onSelf = step.side === 'self';
+        const index = effects.findIndex((e) => isPlainStatus(e) && e.status === step.status && (onSelf ? e.target === 'self' : e.target === 'enemy' || e.target === 'allEnemies'));
+        if (index >= 0) {
+          effects[index].stacks += step.n;
+          if (effects[index].stacks <= 0) { effects.splice(index, 1); dropEffectText(out, card, new RegExp(`\\b${step.status}\\b`, 'i')); }
+        }
+      } else {
+        const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
+        if (effect) effect.stacks += step.n;
+      }
       break;
     }
     case 'addStatus':
@@ -268,8 +286,9 @@ const DRAWBACK_TEXT = Object.freeze({
   unethereal: /^Ethereal\.?$/i,
   steady: /Stamina each play|per prior play/i,
 });
-function dropDrawbackText(out, card, fx) {
-  const pattern = DRAWBACK_TEXT[fx];
+function dropDrawbackText(out, card, fx) { dropEffectText(out, card, DRAWBACK_TEXT[fx]); }
+// Drop the sentences of a card's text and face lines that match `pattern`, unless that would leave none.
+function dropEffectText(out, card, pattern) {
   if (typeof card.textTemplate === 'string') {
     const sentences = SplitAfter(card.textTemplate, /\.\s+/);
     const kept = sentences.filter((sentence) => !pattern.test(sentence.trim()));
@@ -383,8 +402,14 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
     if (step.r !== undefined && !UPGRADE_RARITIES.includes(step.r)) bad('r');
-    if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
-    if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
+    const easing = step.k === 'stk' && (step.op !== undefined || step.side !== undefined);
+    if (easing) {
+      // A signed drawback step: n is negative; `op` names a discard or addCard effect, `side` and `status` a status effect.
+      if (!(Number.isInteger(step.n) && step.n <= -1 && step.n >= -99)) bad('n');
+      if (step.op !== undefined && !['discard', 'addCard'].includes(step.op)) bad('op');
+      if (step.side !== undefined && !['self', 'enemy'].includes(step.side)) bad('side');
+    } else if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['stk', 'addStatus'].includes(step.k) && step.op === undefined && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
     if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
