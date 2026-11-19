@@ -25,11 +25,11 @@ const EXEMPT_UI_ROWS = new Set(['combat.callout.evadeFailed']);
 // hash covers (tools/game-config.mjs): rewording it rejects every saved fight, so it keeps its dash until that is
 // decided on purpose. The generated mechanic already reads " - " there.
 const RUNTIME_HASHED = new Set([
-  'content/source/statuses.json[8].tooltip', // frost
-  'content/source/statuses.json[9].tooltip', // insanity
-  'content/source/statuses.json[10].tooltip', // bleedResist
-  'content/source/statuses.json[11].tooltip', // frostResist
-  'content/source/statuses.json[12].tooltip', // insanityResist
+  'content/source/statuses.json[9].tooltip', // frost
+  'content/source/statuses.json[10].tooltip', // insanity
+  'content/source/statuses.json[11].tooltip', // bleedResist
+  'content/source/statuses.json[12].tooltip', // frostResist
+  'content/source/statuses.json[13].tooltip', // insanityResist
 ]);
 const RUNTIME_HASHED_CSV_ROWS = new Set(['from:global']);
 
@@ -96,7 +96,7 @@ test('authored JSON a player reads carries no em or en dash', () => {
   const rows = files.flatMap((file) => stringsIn(readJson(file), file)).filter((row) => !RUNTIME_HASHED.has(row.where));
   assert.deepEqual(dashed(rows), []);
   const statuses = readJson('content/source/statuses.json');
-  assert.deepEqual([8, 9, 10, 11, 12].map((at) => statuses[at].id), ['frost', 'insanity', 'bleedResist', 'frostResist', 'insanityResist'],
+  assert.deepEqual([9, 10, 11, 12, 13].map((at) => statuses[at].id), ['frost', 'insanity', 'bleedResist', 'frostResist', 'insanityResist'],
     'the runtime-hashed exemptions still point at the statuses they name');
 });
 

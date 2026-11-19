@@ -42,11 +42,11 @@ test('the shipped hand behaviour shuffles ordinary cards and draws a fixed numbe
   assert.equal(handRulesDefaults.drawMode, 'fixed');
 });
 
-test('the Draw row gives every class 4 cards a turn at creation', () => {
+test('the Draw row gives every class 5 cards a turn at creation (owner, 2026-11-18: 5 + floor(INT / 4), INT under 4 at creation)', () => {
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 3, classId, registries });
-    assert.equal(run.drawPerTurn, 4, `${classId} draws ${run.drawPerTurn} at creation`);
-    assert.equal(scaledCards(handRow(fightFor(run).handRules, 'draw'), run.attributes, 1), 4, classId);
+    assert.equal(run.drawPerTurn, 5 + Math.floor(run.attributes.intelligence / 4), `${classId} draws ${run.drawPerTurn} at creation`);
+    assert.equal(scaledCards(handRow(fightFor(run).handRules, 'draw'), run.attributes, 1), 5 + Math.floor(run.attributes.intelligence / 4), classId);
   }
 });
 
@@ -112,7 +112,7 @@ test('a run saved before D27 keeps its snapshotted Draw row while new fights use
   assert.equal(c.handRules.retain, false);
   assert.equal(c.handRules.drawMode, 'fixed');
   // A new run on the same content draws the new row.
-  assert.equal(createRunState({ seed: 7, classId: 'rogue', registries }).drawPerTurn, 4);
+  assert.equal(createRunState({ seed: 7, classId: 'rogue', registries }).drawPerTurn, 5);
 });
 
 test('the Draw row is data: overriding its base changes what a new character draws', () => {

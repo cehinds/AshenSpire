@@ -40,8 +40,10 @@ for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6
     const baseFace = playingCardModel(registries, b.instance, { rules: b.combat });
     const multiplier = b.combat.gameProfile.modules.effects.baseDamageMultiplier ?? 1;
     assert.equal(upFace.name, `${baseDef.name}+`);
-    assert.equal(baseFace.tokens.damage, Math.ceil(wantBase[0] * multiplier), 'base face shows the profile-scaled damage');
-    assert.equal(upFace.tokens.damage, Math.ceil(wantUp[0] * multiplier), 'upgraded face shows the profile-scaled damage');
+    // Owner 2026-11-18 (ruling §15): a face carries the wearer's STR on physical damage, after the profile scale.
+    const str = b.combat.player.attributes.strength;
+    assert.equal(baseFace.tokens.damage, Math.ceil(wantBase[0] * multiplier) + str, 'base face shows the profile-scaled damage plus STR');
+    assert.equal(upFace.tokens.damage, Math.ceil(wantUp[0] * multiplier) + str, 'upgraded face shows the profile-scaled damage plus STR');
   });
 }
 

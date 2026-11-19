@@ -20,7 +20,7 @@ import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const SLASH = { kind: 'attack', moveId: 'slash', damage: 8, hits: 1,
   combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };

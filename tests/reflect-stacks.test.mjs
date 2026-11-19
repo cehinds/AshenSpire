@@ -19,7 +19,7 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(registries = reg) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -253,7 +253,7 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
 test('Counter forecast under Reflect equals live: a return that kills the attacker forecasts no Counter; a survivable one forecasts live\'s damage', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
   // Full base damage: under Core's halving the soldier's 8 Slash returns 1, which its Poise rating absorbs, so the Reflect return could never kill.
-  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
   const fullBase = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile);
   const run = enemyHp => {
     const { combat, enemy } = live(fullBase);
@@ -310,7 +310,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
   // With 11 stacks held (10 + the card's 1), each answered hit returns the scaled base 2 plus floor(incoming x 0.1 x stacks held), then spends one stack.
   assert.equal(control.forecast.hp, 48, 'control forecast with the card-stack Counter rule; the enemy side x0.7 (owner, 2026-11-18) took it from 66 (19 + 25 + 22)');
-  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
   const legacy = withoutBatch2Rules(() => run(0, fullProfile, 20));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
   assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');

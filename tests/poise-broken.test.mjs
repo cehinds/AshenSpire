@@ -20,7 +20,7 @@ import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription 
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
@@ -154,10 +154,10 @@ test('Ward or Barrier gained while Broken raises the maximum but does not refill
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 5);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 3);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
-  // The refill is to the soldier's rated Poise, 8 (its gear's Poise under the gear statPoints rule), not the sandbagged 5.
-  assert.equal(enemy.persistentPoise.value, 8);
+  // The refill is to the soldier's rated Poise, 5 (1 + CON 4: owner 2026-11-18 §13, gear Poise counts only while guarding), not the sandbagged 3 stand-in.
+  assert.equal(enemy.persistentPoise.value, 5);
   hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');

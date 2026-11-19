@@ -1,3 +1,4 @@
+import { ChannelWeight } from '../model/damageChannels.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -61,6 +62,7 @@ import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { reconcileRunLoadoutHp } from '../model/loadout/cardMods.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { cardUpgradeStepsOn, freeCardUpgradeStep, applyFreeCardUpgrade } from '../model/cardUpgradeService.js';
@@ -995,7 +997,7 @@ const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.bloc
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -2343,6 +2345,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
+        reconcileRunLoadoutHp(ctx.registries, run); // relic properties (maxMana1) raise the pools the moment it is held
       }
       return;
     },

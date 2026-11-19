@@ -25,12 +25,12 @@ const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 const STAT_ORDER = ['ar', 'dr', 'pr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
+  ar: 'STR', dr: 'DEX', pr: 'INT', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [
-  { op: 'damage', label: 'Damage', rating: 'AR' },
-  { op: 'block', label: 'Block', rating: 'DR' },
+  { op: 'damage', label: 'Damage', rating: 'STR' },
+  { op: 'block', label: 'Block', rating: 'DEX' },
 ];
 
 /** True when this run's Smith upgrades follow the Core 2 gear pipeline. */

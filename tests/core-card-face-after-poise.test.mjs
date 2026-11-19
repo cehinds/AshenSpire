@@ -14,7 +14,8 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Owner, 2026-11-18: the playtest physical cut is off here; this file pins how a face relates to a quote, not the scale.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

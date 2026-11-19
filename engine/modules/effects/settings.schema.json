@@ -22,12 +22,17 @@
         false
       ]
     },
-    "attackRatingWeight": {
+    "strengthDamageWeight": {
       "type": "number",
       "minimum": 0,
       "maximum": 100
     },
-    "defenseRatingWeight": {
+    "dexterityBlockWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "magicStatWeight": {
       "type": "number",
       "minimum": 0,
       "maximum": 100
@@ -43,6 +48,11 @@
       "maximum": 10
     },
     "enemyDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "physicalDamageMultiplier": {
       "type": "number",
       "minimum": 0,
       "maximum": 10
@@ -77,8 +87,9 @@
     "damageModel",
     "elements",
     "spellRanks",
-    "attackRatingWeight",
-    "defenseRatingWeight"
+    "strengthDamageWeight",
+    "dexterityBlockWeight",
+    "magicStatWeight"
   ],
   "additionalProperties": false
 }

@@ -9,12 +9,11 @@ import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuv
 import * as Triggers from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade, GrantEnemyCounterBadge } from './combatMatchups.js';
-import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
-import { combatRules } from '../content/combatRules.js';
+import { attackDescriptor } from '../model/attackTags.js';
 import { canonicalDamageType, isPhysicalDamageType, techniqueNeedsWeaponType } from '../model/combatRatings.js';
-import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
+import { ResolveCarrierDamageType, WieldedPiece } from '../model/carrierDamageType.js';
 
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
@@ -33,32 +32,8 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
   if (carrier.combatProfile.evade?.whileStatus && source) carrier.combatProfile.evadeEligible = source.statuses?.[carrier.combatProfile.evade.whileStatus]?.stacks > 0;
-  // A mixed card's weapon part is resolved like an untagged card's whole type.
-  const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
-  if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
-    const attack = attackDescriptor(carrier);
-    const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
-    const piece = wieldedArmament(ctx, carrier, source, kind);
-    // No piece of that kind in hand: a physical weapon card is thrown with bare hands
-    // and deals the unarmed profile's type (owner #19), as the unarmed source does.
-    const rules = combatRules;
-    const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
-    // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
-    const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
-    const bare = piece || !['weapon', 'unarmed'].includes(kind) || magical ? null
-      : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
-    const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
-      : rules.fallbackSource.family;
-    const pieceType = (piece && attackDescriptor(piece).damageType) || bare;
-    if (weaponPart) {
-      // The resolved parts travel on the carrier, so every effect and the
-      // damage rules read the same split as this profile.
-      const components = weaponDamageComponents(attack, family, pieceType);
-      carrier.attack = { ...carrier.attack, components };
-      carrier.combatProfile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
-      carrier.combatProfile.damageType = dominantDamageType(components);
-    } else carrier.combatProfile.damageType = weaponDamageType(attack, family, pieceType) || null;
-  }
+  // An untyped card (or a mixed card's weapon part) takes the wielded armament's type (owner #19); the static face reads the same resolver.
+  if (source?.kind !== 'enemy' && !source?.enemyId) ResolveCarrierDamageType(carrier, ctx?.registries, ctx?.loadout, source?.classId);
   // A technique's physical part (Poison, fire or another magic type on a physical maneuver) is the
   // wielded weapon's blow (owner, 2026-10-13): its physical type, else bare-handed Blunt downstream.
   if (ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId && techniqueNeedsWeaponType(carrier)) {
@@ -71,17 +46,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
 
 // The armament a card is dealt with: its lending piece, else the first piece of that kind in its hand.
 export function wieldedArmament(ctx, carrier, source, kind) {
-  const pieces = ctx.registries.equipment?.armaments || [];
-  let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
-  if (!piece && ctx.loadout) {
-    const hand = { right: 'mainHand', left: 'offHand' }[carrier.sourceHand] || carrier.sourceHand || 'mainHand';
-    for (const slot of ctx.registries.equipment?.slots || []) {
-      if (slotHand(slot) !== (hand === 'offHand' ? 'left' : 'right')) continue;
-      const equipped = equippedIn(ctx.registries, ctx.loadout, source?.classId, slot.id);
-      if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
-    }
-  }
-  return piece || null;
+  return WieldedPiece(ctx.registries, ctx.loadout, source?.classId, carrier, kind);
 }
 
 const counterPayloadOps = ctx => combatExpansionEnabled(ctx)

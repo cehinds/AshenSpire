@@ -1,5 +1,5 @@
 import * as Engagement from './combatEngagement.js';
-import { fixCoreEnabled, CounterArmedWhileStacks, EnemyCounterBadgeStacks } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, CounterArmedWhileStacks, EnemyCounterBadgeStacks, CounterDecayClock } from '../model/fixCoreMechanics.js';
 import { CounterStackRule, counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { decayCounterStacks, SpendCounterStacks, counterStackCount, gainCounterStacks } from './guardStacks.js';
@@ -455,7 +455,8 @@ export function startTacticalTurn(ctx, entity) {
   if (!combatExpansionEnabled(ctx) || !entity) return { block: 0, barrier: 0 };
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start (owner 2026-10-31); the Counter then lasts only while stacks remain.
-  if ((entity.kind === 'player' && fixCoreEnabled(ctx)) || EnemyCounterBadgeRule(ctx, entity)) decayCounterStacks(ctx, entity);
+  // The clock is data (counter.decayClock, owner 2026-11-18): Counter stacks fade at the start of the holder's own turn and at no other time.
+  if (CounterDecayClock(ctx) === 'ownerTurnStart' && ((entity.kind === 'player' && fixCoreEnabled(ctx)) || EnemyCounterBadgeRule(ctx, entity))) decayCounterStacks(ctx, entity);
   ExpireCombatCounterAtTurnStart(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;

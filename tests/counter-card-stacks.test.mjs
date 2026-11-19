@@ -18,7 +18,7 @@ import { CounterHitAnswers, counterReturnForReceipt } from '../src/engine/counte
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 
 // Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const bundle = (hits, damage = 8) => ({ ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits, weight: 45 } } } : e) });
 const regFor = (hits, damage = 8) => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle(hits, damage), profile)), profile);
 const reg = regFor(1), reg3 = regFor(3);

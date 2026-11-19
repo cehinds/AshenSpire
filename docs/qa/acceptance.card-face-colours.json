@@ -1,0 +1,43 @@
+{
+  "request": "Owner 2026-11-18: card face numbers are black by default, including everything the character carries outside the fight (attributes, gear, level, the global multipliers). A number is green only when something in the fight raises it (a status, the current stance's bonus, a triggered relic or card effect) and red only when something in the fight lowers it (Weak, Frail, ...). The baseline is the same card's face outside combat.",
+  "success": "In a Reaver's opening hand of Strike, Sweep and Counter at 1280x800 and 390x844, Strike's damage is green (its Attack stance bonus) and Sweep's damage is plain black (only the always-on STR bonus), with no console errors. The red case (Weak on a Sweep) is pinned by tests/card-face-colours-2026-11-18.test.mjs, since the sandbox cannot apply a status.",
+  "failure": "Sweep's damage is green or red although only attributes and the global multipliers apply to it; no figure is green on Strike; or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "opening-hand-green-black",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.strike,core.sweep,core.counter,core.defend",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Strike's damage is green: its stance bonus is an in-combat effect",
+          "selector": ".hand .card[data-card-id=\"core.strike\"] .val.up"
+        },
+        {
+          "kind": "visible",
+          "label": "Sweep's damage is black: only the always-on attributes apply",
+          "selector": ".hand .card[data-card-id=\"core.sweep\"] .val"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Sweep's damage is marked green or red although nothing in the fight moved it",
+          "selector": ".hand .card[data-card-id=\"core.sweep\"] .val.up, .hand .card[data-card-id=\"core.sweep\"] .val.down"
+        }
+      ]
+    }
+  ]
+}

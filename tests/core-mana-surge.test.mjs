@@ -134,7 +134,7 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
     const run = start('herald');
-    if (intelligencePoints) spendEarnedPoints(reg, run, 'intelligence', intelligencePoints);
+    if (intelligencePoints) spendEarnedPoints(reg, run, 'wisdom', intelligencePoints);
     const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.player.maxMana, maxMana);
     const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
@@ -261,13 +261,13 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
 // Mana's first increase is at max(INT, WIS) 4. Bone Sceptre takes the fresh Reaver to INT 3 and raises Draw.
 // The pool test starts at WIS 3 so the Blight Rod's +1 WIS crosses the Mana threshold.
 const POOL_PIECE = 'blightRod';
-test('Core changeEquipment: the Bone Sceptre intelligence raises Draw by 2 and moves no pool', () => {
+test('Core changeEquipment: the Bone Sceptre intelligence leaves Draw at 5 (INT 3 is under 4) and moves no pool', () => {
   const { combat, run } = equipmentFight('reaver');
   const p = combat.player;
   const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
   dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
-  assert.equal(p.drawPerTurn, before.draw + 2, 'the sceptre intelligence raises Draw');
-  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'INT 3 is below the first Mana threshold');
+  assert.equal(p.drawPerTurn, before.draw, 'Draw is 5 + floor(INT / 4) (owner, 2026-11-18): the sceptre takes INT to 3, short of the 4 that buys a card');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'a sceptre moves no pool');
 });
 for (const intent of ['changeEquipment', 'swapArmament']) {
   test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {

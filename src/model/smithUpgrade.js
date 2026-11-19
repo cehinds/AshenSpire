@@ -16,7 +16,7 @@ import { ITEM_SMITH, ITEM_STAT_OPTIONS, ITEM_SMITH_BEFORE_STAT_POINTS, ITEM_STAT
 import { gameModule } from './gameProfile.js';
 
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', pr: 'magic damage', poise: 'Poise', ward: 'Ward', mp: 'Mana',
+  ar: 'STR', dr: 'DEX', pr: 'INT', poise: 'Poise', ward: 'Ward', mp: 'Mana',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 

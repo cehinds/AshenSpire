@@ -139,6 +139,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'xp.combatWin': Object.freeze({ max: 1000 }),
   'xp.killLevelMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
   'xp.combatPowerMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
+  'xp.tierMultiplier.normal': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
+  'xp.tierMultiplier.elite': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
+  'xp.tierMultiplier.boss': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
@@ -542,7 +545,7 @@ const RETIRED_BALANCE_PATHS = new Set([
 // base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
 // "HP", which is the very mismatch this block exists to end.
 const LABEL_ACRONYMS = new Map(Object.entries({
-  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+  hp: 'HP', xp: 'XP', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
 }));
 
 /**
@@ -581,6 +584,9 @@ const BALANCE_LABELS = Object.freeze({
   'xp.combatWin': 'Combat power XP base',
   'xp.combatPowerMultiplier': 'Combat power XP multiplier',
   'xp.killLevelMultiplier': 'Enemy level XP multiplier',
+  'xp.tierMultiplier.normal': 'Normal fight XP multiplier',
+  'xp.tierMultiplier.elite': 'Elite fight XP multiplier',
+  'xp.tierMultiplier.boss': 'Boss fight XP multiplier',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',

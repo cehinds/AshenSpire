@@ -1,3 +1,4 @@
+import { ChannelLabel } from '../../model/damageChannels.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { logicalViewport } from '../viewViewport.js';
@@ -1157,7 +1158,7 @@ export function mountEquipment(host, {
     const head = el('div', { class: 'armament-compact-heading armoury-position-values' }, [
       el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
       el('strong', { class: 'armament-position-name', text: position.summary.name }),
-      pill({ label: position.active ? 'Equipped' : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
+      pill({ label: position.active ? t('deckEditor.tag.equipped') : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
     ]);
     // W25-R: the item's properties as a short chip list under its name.
     const chips = ItemPropertyChips(propertyLinesOf(position.summary.item, position.summary.category));
@@ -1352,7 +1353,7 @@ export function mountEquipment(host, {
       const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
-        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
+        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${ChannelLabel(row.receipt.rating.id)} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
       // A power face: the label, its gear bonus as the description, the value trailing as StatusText.
       const powerFace = face({
@@ -1385,7 +1386,7 @@ export function mountEquipment(host, {
         key: id,
         kind: 'relic',
         disclosure: 'face',
-        face: { label: relic.name, value: 'Equipped' },
+        face: { label: relic.name, value: t('deckEditor.tag.equipped') },
         reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.', ...relicPropertyLines(id)] },
       };
     });
@@ -1600,8 +1601,6 @@ export function mountEquipment(host, {
       fact('Combat bonuses', summaryItem.bonus),
       fact('Smithing tier', String(smithingLevel)),
       ...(intrinsic ? [
-        fact('Attack rating (AR)', String(intrinsic.attackRating)),
-        fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
         fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
         fact('Unique Skill Stamina', String(intrinsic.uniqueSkillStaminaCost)),

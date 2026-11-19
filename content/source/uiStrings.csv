@@ -43,8 +43,8 @@ combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
 combat.protection.poiseBonusAria,,"Poise {value} of {max}, plus {bonus} bonus","{bonus} Poise above the maximum. Bonus Poise is taken first and fades 5 per turn.",Poise {value}/{max} +{bonus}
-combat.protection.counter,,Counter,"Counter {stacks} · each hit it answers returns {stackPercent}% of the hit per stack and uses up 1 · −{decay} per turn",Counter
-combat.protection.counterEnemy,,Counter,"Counter {stacks} · its Counter answers your next covered hit, which uses up 1 · −{decay} per turn",Counter
+combat.protection.counter,,Counter,"Counter {stacks} · each hit it answers returns {stackPercent}% of the hit per stack and uses up 1 · −{decay} at the start of your turn",Counter
+combat.protection.counterEnemy,,Counter,"Counter {stacks} · its Counter answers your next covered hit, which uses up 1 · −{decay} at the start of its turn",Counter
 combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}% of it back at the attacker; every reflected hit costs one stack. Stacks last until the fight ends.",Reflect
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
@@ -841,7 +841,11 @@ deckEditor.source.art,,Weapon art,,
 deckEditor.source.technique,,Technique,,
 deckEditor.source.reward,,Reward,,
 deckEditor.source.item,,Item-owned,,
+deckEditor.sort.default,,Sort,"Restore the default order: cards in the deck first, weapon arts first, then total cost, then name.",
 deckEditor.sort.cost,,Cost,,
+deckEditor.tag.equipped,,Equipped,,
+deckEditor.tag.reward,,Reward,,
+deckEditor.tag.art,,Art,,
 deckEditor.sort.name,,Name,,
 deckEditor.sort.type,,Type,,
 deckEditor.sort.source,,Source,,
@@ -1360,9 +1364,9 @@ progression.gain.label.hp,,HP,,
 progression.gain.label.mana,,Mana,,
 progression.gain.label.energy,,Energy,,
 progression.gain.label.stamina,,Stamina,,
-progression.gain.label.ar,,AR,,
-progression.gain.label.dr,,DR,,
-progression.gain.label.pr,,PR,,
+progression.gain.label.ar,,Physical damage,,
+progression.gain.label.dr,,Block,,
+progression.gain.label.pr,,Magic damage,,
 progression.gain.label.openingHand,,Opening hand,,
 progression.gain.label.handSize,,Hand size,,
 progression.gain.label.draw,,Draw,,
@@ -1602,6 +1606,17 @@ reward.configured.noteArmoury,,Choose {count}. Add the card to your deck or edit
 reward.configured.noteNoEditor,,Choose {count}. Add the card to your deck or keep it in your collection.,,
 reward.configured.noteBonus,,Choose {count} card. Bonus: you may also rank up a card.,,
 reward.configured.noteItems,,Choose {count}.,,
+reward.picks.prompt.many,,Select {count} card rewards,,
+reward.picks.prompt.one,,Select {count} card reward,,
+reward.picks.aria,,Card rewards,,
+reward.picks.full,,You have chosen {count}. Tap a chosen card to put it back.,,
+reward.picks.continue.title,,Take these rewards?,,
+reward.picks.continue.message,,You chose:,,
+reward.picks.continue.none,,No card chosen.,,
+reward.picks.continue.unusedMany,,{count} picks unused.,,
+reward.picks.continue.unusedOne,,1 pick unused.,,
+reward.picks.destination.label,,Where do they go?,,
+reward.picks.destination.deckFull,,Your deck cannot take all of them right now; they go to your library.,,
 reward.configured.addToDeck,,Add to deck,Add this card to your deck now.,
 reward.configured.addToLibrary,,Add to library,Keep this card in your library without adding it to your deck.,
 reward.configured.editDeck,,Edit deck,Keep this card and open the deck editor with it ready to place.,
