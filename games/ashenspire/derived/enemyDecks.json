@@ -6980,11 +6980,6 @@
             "op": "damage",
             "target": "enemy",
             "amount": 19
-          },
-          {
-            "op": "poiseDamage",
-            "target": "enemy",
-            "amount": 10
           }
         ],
         "hints": {
