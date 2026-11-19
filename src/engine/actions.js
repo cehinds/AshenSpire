@@ -6,6 +6,7 @@ import { SwapEnemyRows } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
+import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
 import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -543,7 +544,7 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 // non-damage things (Ward-first Barrier gains, mana, tags).
 // The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
-  return magicShareOf(profile);
+  return FightMagicShare(ctx, profile);
 }
 
 // The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
@@ -643,7 +644,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
   // Arcane is negated whole.
   // A Force-school hit with no component list is Force whole (owner, 2026-11-18: Force is physical, so its parts are Blunt, not Arcane): every part is negated.
-  const wholeForce = receipt.profiles.map(profile => schoolOf(profile) === 'force' && !componentPartsOf(profile));
+  const wholeForce = receipt.profiles.map(profile => ForceRules(ctx).magicShare === 0 && schoolOf(profile) === 'force' && !componentPartsOf(profile));
   receipt.forceImmuneAmounts = hits.map(() => 0);
   for (let p = parts.length - 1; p >= 0; p--) {
     if (!receipt.silencedImmune[parts[p].index] || (parts[p].type !== 'arcane' && !wholeForce[parts[p].index])) continue;

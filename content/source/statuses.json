@@ -1422,6 +1422,6 @@
     "tint": "#c9a36a",
     "stackMode": "unique",
     "decay": "none",
-    "tooltip": "Knocked back: it must Advance (pay its Advance cost) before its next melee move."
+    "tooltip": "Knocked back by a fight saved before Force lost its push: it must Advance (pay its Advance cost) before its next melee move. New fights never apply it."
   }
 ]

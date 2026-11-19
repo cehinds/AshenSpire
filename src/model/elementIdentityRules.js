@@ -3,11 +3,37 @@
 // src/engine/elementIdentity.js. A fight copies the rules into itself when it is created, so a fight (or a run
 // profile) without an `elements` block keeps every pre-W25 behaviour: ElementRulesOf returns null.
 import { fixCoreEnabled, StatusCapsLifted } from './fixCoreMechanics.js';
+import { componentPartsOf, magicShareOf, schoolOf } from './combatRatings.js';
 
 /** The element rules this fight plays under, or null (old fights, other profiles). */
 export function ElementRulesOf(ctx) {
   const rules = ctx?.fixCoreRules?.elements;
   return rules?.version === 1 && fixCoreEnabled(ctx) ? rules : null;
+}
+
+/**
+ * ForceRules(ctx) -> the Force rules this fight plays under (owner, 2026-11-18, section 20), read from its saved `elements.force`:
+ *   magicShare (0: Force is physical), poiseShare (0.5 to Poise after Block), push and knockback (false: no built-in Retreat).
+ * A fight saved with the old `elements.force.poiseMultiplier` (1.5) and none of those keys keeps the old Force: a 0.5 magic share, the x1.5 Poise
+ * damage, the push and the Knockback. So does a Core fight with no `elements` block at all (made before W25). Any other fight plays the new rules.
+ */
+export function ForceRules(ctx) {
+  const force = ctx?.fixCoreRules?.elements?.force;
+  const noElements = fixCoreEnabled(ctx) && !ctx?.fixCoreRules?.elements;
+  const legacy = noElements || (!!force && force.poiseMultiplier !== undefined && force.poiseShare === undefined);
+  return {
+    legacy,
+    magicShare: Number.isFinite(force?.magicShare) ? Math.max(0, force.magicShare) : legacy ? 0.5 : 0,
+    poiseShare: Number.isFinite(force?.poiseShare) ? Math.max(0, force.poiseShare) : null,
+    poiseMultiplier: Number.isFinite(force?.poiseMultiplier) ? force.poiseMultiplier : null,
+    push: force?.push ?? legacy,
+    knockback: force?.knockback ?? legacy,
+  };
+}
+/** FightMagicShare(ctx, profile, config) -> magicShareOf, except that a Force-school hit with no share of its own reads this fight's Force magic share. */
+export function FightMagicShare(ctx, profile, config = null) {
+  if (schoolOf(profile) === 'force' && !Number.isFinite(profile?.magicShare) && !componentPartsOf(profile)) return ForceRules(ctx).magicShare;
+  return magicShareOf(profile, config);
 }
 
 const ELEMENT_OF = Object.freeze({

@@ -234,8 +234,8 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
 }
 // Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 207 and 195 -> 217; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'ba9cee5e6897eb8e', state: 'a5ff6331e7f15a5c', events: 207, turn: 6 }],
-  [[4242, 'reaver'], { log: '480a615995269f3c', state: '64bb7a99563f3298', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ba9cee5e6897eb8e', state: 'b95b6f7468a28b87', events: 207, turn: 6 }],
+  [[4242, 'reaver'], { log: '480a615995269f3c', state: 'b57088686d922a44', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

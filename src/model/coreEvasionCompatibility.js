@@ -37,7 +37,7 @@
 // W25-W (2026-11-15): Ward's Block-first routing (`ward.routing` in fixCoreMechanics.json) and the Barrier -> "Gain N Poise" wording move the runtime hash; batch 3's 753eed... is kept.
 // Theme C of the 2026-11-17 playtest (tooltip wording on the Melee, Reach, Ranged, Reaction and Ethereal mechanic manifests), merged on theme B, moves the runtime hash again; wording only, no rule. Theme B's 73fdb0... and theme C's own cb5271... are kept.
 // The Ethereal manifest's reader is the engine again (review of #2819: it pointed at the upgrade step); wording only, edad64... is kept.
-// Owner ruling 2026-11-18 section 20 (Force is physical with a half-Poise share: elements.force.poiseShare replaces poiseMultiplier; Ward decay and max Poise) moves the runtime hash again; a save from 8be512... keeps its own snapshotted rules.
+// Owner ruling 2026-11-18 sections 20 and 21 (Force physical with a half-Poise share, no built-in push or Knockback; Ward decay and break; Pierce 1 Block per stack; break statuses) move the runtime hash again. They are data in the fight's rules (elements.force, ward, pierce, poise): a fight saved before them keeps its snapshotted rules, and an old `elements.force.poiseMultiplier` keeps the old Force (ForceRules); 8be512... and 0bf081... are in PREVIOUS_RUNTIMES.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5',
   'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c',
@@ -118,7 +118,7 @@ const PREVIOUS_RUNTIMES = new Set([
 // The Retreat status mechanic folder and the Magic Focus text (2026-11-18 green-discovered pass: engine/mechanics/status.retreat, item_magic-focus) move it again; 8be512... is now in PREVIOUS_RUNTIMES.
 // The equipment.mainHand and offHand mechanic text (feature merge, 2026-11-18) moves it again; f95905... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:a8f5033ee4d30268863dc3365b4e27b2e9b7e1add0b1417e4f0cb923d3d45049';
+const FIXED_EVASION_RUNTIME = 'sha256:404f187342bcbb67ba7095a6d573a998a931a67a75d22323461d60767ff52a3c';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

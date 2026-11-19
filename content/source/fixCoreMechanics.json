@@ -234,7 +234,10 @@
       "freezePlayerStaminaLoss": 2
     },
     "force": {
-      "poiseShare": 0.5
+      "magicShare": 0,
+      "poiseShare": 0.5,
+      "push": false,
+      "knockback": false
     }
   }
 }
