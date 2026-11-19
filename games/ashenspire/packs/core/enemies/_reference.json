@@ -2750,7 +2750,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:saltChoirWalrus.choirChorus": {
@@ -4535,14 +4535,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.saltBlubber": {
-      "name": "Salt Blubber",
-      "text": "CON +3, SP -1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.sp=-1"
-      ]
-    },
     "relic:enemy.relic.brassThroat": {
       "name": "Brass Throat",
       "text": "WIS +2, CON +1",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.wisdom=+2",
         "self.intelligence=+1"
+      ]
+    },
+    "relic:enemy.relic.saltBlubber": {
+      "name": "Salt Blubber",
+      "text": "CON +3, SP -1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.sp=-1"
       ]
     }
   }
