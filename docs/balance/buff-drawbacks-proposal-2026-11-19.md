@@ -185,7 +185,7 @@ Roll the group first by upgrade number (`stepIndex + 1`), then a kind inside the
 | 6 to 7 | 20% | 30% | 35% | 15% | 1 : 1 |
 | 8 to 10 (late) | 15% | 20% | 45% | 20% | 1 : 1.9 |
 
-Identity change is its own share inside "new effect" (section 9): present from upgrade 1 at low odds, rising to a fifth of rolls late.
+Identity change (range, targeting, stance, damage type; the element packet moved to effectiveness / cost) is its own share inside "new effect" (section 9): present from upgrade 1 at low odds, rising to a fifth of rolls late.
 
 A card with no drawback has no ease share; it goes to effectiveness/cost, so 75% / 25% early. Upgrades are never fixed per card: a card gets the same random, type-gated roll as today, only weighted by this table. For the cards in sections 3 and 4 that means no authored `upgrade` block should fix the first upgrade (today an authored block is always upgrade 1); drop or reduce it to numbers so upgrade 1 rolls and favours the drawback. The "current drawback" column keeps today's authored upgrades as facts only. Rank-up bonuses (`rankUpBonus.js`) and the blacksmith's 2 to 3 options reuse the same roll. Stored steps keep working (saves hold the step list, not the roll), so owned cards do not change; only new previews do, and seeded roll tests need new expected values.
 
@@ -199,7 +199,7 @@ Kinds in order: ease group first, then effectiveness/cost, then new effects. "Ex
 | Attack, counter maneuver | same | `cost`, `stk` | `fx:counter`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne` |
 | Skill (not spell), the typical buff | same three plus signed `stk` | `cost`, `blk` when it has Block, `stk` (raises the buff status) | `fx:block`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:boost` (DEX), `fx:reaction`, `maneuver` |
 | Spell (skill or attack) | same | as the row above, `cost` may cut MP too (not on a Basic) | as above plus `fx:boost` (INT or WIS), `attr`, `element`, `school` |
-| Sweep (`maneuver:sweep`, `targeting:area`, damage on `allEnemies`) | same | `poise` (a plain `poiseDamage`; not offered when `maneuver:smash`), `stk`, `cost` (floored at 2 SP at rank 0; an authored lower cost lowers the floor). Gate today: `dmg` needs `effects[dmgIndex].target === 'enemy'`, so a sweep's per-target damage is NOT offered, and `hits` and `fx:target` need an enemy-target hit too. Propose lifting the `dmg` gate to `allEnemies` (the step raises damage per target) | `addStatus` (bleed or weak, if it has no status), `range` (melee/reach), `element` (physical sweep), `dmgType` (section 9), `fx:block`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:reaction`. No `targeting` and no `maneuver` kind: both are gated off `maneuver:sweep` |
+| Sweep (`maneuver:sweep`, `targeting:area`, damage on `allEnemies`) | same | `poise` (a plain `poiseDamage`; not offered when `maneuver:smash`), `stk`, `cost` (floored at 2 SP at rank 0; an authored lower cost lowers the floor). Gate today: `dmg` needs `effects[dmgIndex].target === 'enemy'`, so a sweep's per-target damage is NOT offered, and `hits` and `fx:target` need an enemy-target hit too. Approved (owner, 2026-11-19): lift the `dmg` gate to `allEnemies` (the step raises damage per target) | `addStatus` (bleed or weak, if it has no status), `range` (melee/reach), `element` (physical sweep), `dmgType` (section 9), `fx:block`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:reaction`. No `targeting` and no `maneuver` kind: both are gated off `maneuver:sweep` |
 | Smash (`maneuver:smash`) | same | `dmg`, `cost` (floor 2 SP; a floored smash is not also charged 1 MP), `stk`. `poise` is NOT offered on a smash: its Poise is derived from the hit (+50% stance bonus and `smashPoiseBase` 3), so a printed Poise step would be a no-op; `hits` is not offered (needs printed damage 8 or less; smashes start near 12) | `addStatus`, `range`, `targeting` (single to area, x0.75), `maneuver` (smash to attack), `element`, `dmgType`, `fx:block`, `fx:draw`, `fx:target`, `fx:boost` (STR), `fx:reaction`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne` |
 | Defend / Block (`maneuver:defend`, has Block, already `trait:reaction`) | `fx:unexhaust`, `fx:unethereal`, `fx:steady`, signed `stk` | `blk` (printed Block only), `cost`, `stk` on a Ward/Barrier/Poise status that is a plain numeric `applyStatus` | `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:boost` (DEX for a non-spell, WIS for a spell with Block or Ward). Not offered: `fx:block` (already has Block), `fx:reaction` (defend or counter excluded), every damage kind |
 | Evade (a `maneuver:defend` card with no printed Block; its Evade stacks come from a metric formula, not a plain number) | same | `cost` only (`stk` and `blk` need a plain number or printed Block) | `fx:block` (it has no Block, so it is offered; a real new effect), `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`; no boost (needs Block or damage) |
@@ -233,7 +233,7 @@ Today `maneuver` only swaps between Attack and Smash (`ATTACK_MANEUVERS` in `car
 | to Evade | n/a | Evade is not a maneuver: Evade cards carry `maneuver:defend` and an Evade status | Not a transition |
 | to Casting | No | `casting` is the spell stance and needs MP and a school | Do not add |
 
-Proposed gates: keep Attack and Smash as is. Optionally add Attack or Smash to Sweep for a card that already has `targeting:area` (so the tag matches what the card does), at 2 SP or more; no other transition.
+Owner ruling (2026-11-19): Attack/Smash to Sweep is not approved; the `maneuver` kind stays Attack and Smash only.
 
 ## 9. Identity-change options
 
@@ -244,8 +244,8 @@ Identity kinds reshape what a card is without changing its numbers. Proposal: th
 | `range` | 6 | `range:` tag. Melee to Reach and Reach to Melee, nothing else | attacking, not a counter; at most 2 range steps; Reach is dropped if the run's `maxRange` cap is lower | identity, weight 3 (halved): see below |
 | `targeting` | 6 | Single to Area (damage x0.75, hits all) or Area to Single (damage x1.25) | hits an enemy, not `maneuver:sweep`, not counter, one retarget per card; Area to Single only if the grown total stays inside the +100% guard | identity, 6 |
 | `maneuver` | 5 | Attack and Smash swap (section 8) | non-spell, hits an enemy, maneuver is attack or smash, a smash needs 2 SP, once | identity, 5 |
-| `school` | 4 | Nothing: `addTagOptions` never sets `found.school` ("a school change alone changes no play"). The weight is dead | never offered | Remove the entry, or leave at 0; do not count it |
-| `element` | 6 | A physical hit becomes Magic, Arcane, Holy or Fire: sets the `damage:` tag, `damageSchool`, magic share 1 (Barrier then Ward), exposure build-up; drops a `weaponDamage` block | hits an enemy, not a counter, not a spell camp, damage school physical, no element step yet | identity, 6 |
+| `school` | 4 | Nothing: `addTagOptions` never sets `found.school` ("a school change alone changes no play"). The weight is dead | never offered | Left as is (owner, 2026-11-19: not fixing it); do not count it |
+| `element` | 6 | Reworked (owner, 2026-11-19): ADDS an element packet to the existing damage instead of replacing it; see "Element packet" below | any card that deals damage (not a counter's fixed return) | effectiveness / cost group (it is a damage step), weight 12 |
 | `rankDown` | 3 | Becomes a cantrip (`rank.cantrip`): the Mana price goes to 0 | not a Basic or cantrip, SP not 0, Mana above 0, the multi-hit SP floor still fits | effectiveness / cost group (it is a cost cut), 3 |
 | `dmgType` (new) | none | see below | see below | identity, 5 |
 
@@ -257,9 +257,22 @@ Today no kind changes the physical type (slashing, piercing, blunt). The type fe
 
 - What it does: sets the hit's physical type to one of the other two of slashing, piercing, blunt (the roll picks one at random from the two). The three types carry the same cost weight (2 SP each in `COST_TAGS`), so the derived cost does not move.
 - Weight: 5, in the identity group.
-- Gates: the card hits an enemy; not a counter; not a spell or elemental hit (camp physical, `damageSchool` physical, no element step applied); melee range only (the range tag is melee, so a card that rolled Reach is out, and a Reach card cannot be changed); maneuver is attack, smash or sweep; not already changed by a dmgType step. Cards that take their type from the wielded weapon (`attack.weaponDamage`): the step replaces it with the fixed type, as `element` does, so the card no longer follows the weapon. Decide whether to allow that or to exclude weapon-typed cards.
+- Gates: the card hits an enemy; not a counter; not a spell or elemental hit (camp physical, `damageSchool` physical, no element step applied); melee range only (the range tag is melee, so a card that rolled Reach is out, and a Reach card cannot be changed); maneuver is attack, smash or sweep; not already changed by a dmgType step. Cards that take their type from the wielded weapon (`attack.weaponDamage`): the step replaces it with the fixed type, as `element` does, so the card no longer follows the weapon. Allowed (owner, 2026-11-19): a weapon card may change type away from its weapon's.
 - Face text: the card text does not name a physical type, so no sentence is needed; the face shows it through the damage-type tag chip and tooltip (`weaknessIcons.js` already has the icons). Add the three type names and a one-line tooltip each to the strings.
 - Files: `src/model/cardUpgradeSteps.js` (a `WEIGHTS` entry `dmgType`, the gate and option in `addTagOptions`, a `stepOf` case; `UPGRADE_OPTION_KINDS` and `upgradeMenu` validation in `validate/entityCross.js` follow the `WEIGHTS` keys); apply path: reuse the existing `tag` step branch for `step.damage` in `src/model/cardUpgrade.js`, which already drops other `damage:` tags and rewrites `attack.damageType` and component types; save format: `{ k: 'tag', damage: 'piercing' }`, a `tag` step with no `tag` field, so no new step kind in `UPGRADE_STEP_KINDS` and no save migration, but check that the step validator accepts a `tag` step with no `tag`; UI label: the change line in `src/ui/models/CardUpgradeModel.js` and its string key, plus the option name in the upgrade picker; tests: the `core-card-upgrade-*` tests and a new test that a dmgType step changes the type the engine reads.
+
+### Element packet (the reworked `element` kind)
+
+A Strike plus Fire stays an Attack (same maneuver, camp and cost rules), keeps its physical damage and gains a second packet of fire magic damage on the same hit. Owner rulings of 2026-11-19: Attack/Smash to Sweep is not approved; the `school` kind is left as is.
+
+- Size: a flat amount by rarity, not a split of the hit: common 75% of the common `dmg` step (min 2), uncommon x2 (min 3), rare x4 (min 6); e.g. Smash 12: +2, +3, +6; Spell 24: +3, +6, +12. It counts against the "+100% of printed total" guard together with `dmg` steps, and shows as its own number.
+- How it is stored: the card's one `damage` effect rises by the packet and gets `damageComponents` weighted by amounts (e.g. physical 6, fire 2). `componentPartsOf` in `combatRatings.js` already turns weights into a magic share (here 25%), so no new damage path is needed. Later `dmg` steps scale both parts in proportion.
+- Channel: the physical part keeps its STR and AR channel; the magic part uses INT and the Power rating (a spell's Power is magic, a weapon's Attack is physical: the contact comment in `actions.js`), so Arcane Trader INT boosts raise it.
+- Routing: the magic part goes to Barrier, then Ward (the Ward ruling); the physical part goes to Block, then Poise. The fire part also takes the element's weakness, resist and exposure build-up (`exposureBuildupPerHit`), as the old element step did.
+- "Magic trait" means: a `damage:<element>` tag, the school tag and the magic share. It does NOT make the card a spell: `camp` stays physical, so the spell-stance bonus (Prepared +25% spell damage) and spell tags do not apply. Cost re-derives through the formula (magic damage steps price on MP); the existing rule that an upgrade must not raise the card's cost applies, so the packet is clamped to the largest size that keeps the cost, or the option is not offered.
+- Existing elemental cards: the option does not add a second element; it raises that element's packet by the same sizes (or its element status through `stk`). A card holds one added element.
+- Face text: a second sentence "Deal {fire} Fire damage." with the element icon beside the physical line; `cardFaceBudget.js` limits the lines.
+- Gates: any card that deals enemy damage, except a counter's fixed return payload.
 
 
 ## 10. Upgrade rarity
@@ -309,29 +322,29 @@ Ease kinds (the "ease" rows): remove Exhaust `fx:unexhaust`, remove Ethereal `fx
 | rarity | upgrade | group | chance at upgrade 1 | notes / gates |
 |---|---|---|---|---|
 | common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
-| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 9.5% |  |
-| common | +1 stack on the card's own status | effectiveness / cost | 6.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.8% | not on a smash (Poise derived from the hit) |
-| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 3.2% | once per card; Basic cards have no MP cut |
-| common | +1 hit: 2 hits of 60% damage each | effectiveness / cost | 1.6% | printed damage 8 or less, single target |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 8.3% |  |
+| common | +1 stack on the card's own status | effectiveness / cost | 5.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.3% | not on a smash (Poise derived from the hit) |
+| common | Add an element packet: +2 (min) damage of Magic, Arcane, Holy or Fire as a second packet | effectiveness / cost | 3.3% | any damaging card; an elemental card raises its own element packet instead; not a counter |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 2.8% | once per card; Basic cards have no MP cut |
+| common | +1 hit: 2 hits of 60% damage each | effectiveness / cost | 1.4% | printed damage 8 or less, single target |
 | common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
 | common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
 | common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
 | common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 3.5% | melee, non-spell, non-elemental, once |
 | uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
-| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 4.2% |  |
-| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.7% | not on a smash (Poise derived from the hit) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 3.5% |  |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.4% | not on a smash (Poise derived from the hit) |
+| uncommon | Element packet x2 (75% of an uncommon `dmg` step, min 3) | effectiveness / cost | 1.4% | same |
 | uncommon | +8 Block (12) | new effect | 1.3% | only a card with no Block; not a counter |
 | uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
 | uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
-| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
 | uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 0.7% | not a sweep, not a counter |
-| uncommon | Stance: Attack to Smash or Smash to Attack | identity | 0.6% | smash needs 2 SP |
 | rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
-| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.7% |  |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.6% |  |
 
-Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 11 low-chance rows omitted.
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 13 low-chance rows omitted.
 
 #### Counter (return payload)
 
@@ -360,45 +373,47 @@ Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one)
 | rarity | upgrade | group | chance at upgrade 1 | notes / gates |
 |---|---|---|---|---|
 | common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
-| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 10.2% | ; NEW gate: `dmg` offered on `allEnemies` |
-| common | +1 stack on the card's own status | effectiveness / cost | 6.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 4.1% | not on a smash (Poise derived from the hit) |
-| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 3.4% | once per card; Basic cards have no MP cut |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 8.8% | ; approved gate lift: `dmg` offered on `allEnemies` |
+| common | +1 stack on the card's own status | effectiveness / cost | 5.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.5% | not on a smash (Poise derived from the hit) |
+| common | Add an element packet: +2 (min) damage of Magic, Arcane, Holy or Fire as a second packet | effectiveness / cost | 3.5% | any damaging card; an elemental card raises its own element packet instead; not a counter |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 2.9% | once per card; Basic cards have no MP cut |
 | common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
 | common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
 | common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
 | common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 4.7% | melee, non-spell, non-elemental, once |
 | uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
-| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 4.2% | ; NEW gate: `dmg` offered on `allEnemies` |
-| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.7% | not on a smash (Poise derived from the hit) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 3.5% | ; approved gate lift: `dmg` offered on `allEnemies` |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.4% | not on a smash (Poise derived from the hit) |
+| uncommon | Element packet x2 (75% of an uncommon `dmg` step, min 3) | effectiveness / cost | 1.4% | same |
 | uncommon | +8 Block (12) | new effect | 1.4% | only a card with no Block; not a counter |
 | uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
 | uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
 | uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
 | rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
-| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.7% | ; NEW gate: `dmg` offered on `allEnemies` |
-| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| rare | +4 Poise damage (x4) | effectiveness / cost | 0.3% | not on a smash (Poise derived from the hit) |
-| rare | +12 Block (18; x3) | new effect | 0.3% | only a card with no Block; not a counter |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.6% | ; approved gate lift: `dmg` offered on `allEnemies` |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
 
-Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.2% in total for this type (see the shared table). 5 low-chance rows omitted.
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.2% in total for this type (see the shared table). 7 low-chance rows omitted.
 
 #### Smash
 
 | rarity | upgrade | group | chance at upgrade 1 | notes / gates |
 |---|---|---|---|---|
 | common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
-| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 12.2% |  |
-| common | +1 stack on the card's own status | effectiveness / cost | 8.2% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 4.1% | once per card; Basic cards have no MP cut |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 10.2% |  |
+| common | +1 stack on the card's own status | effectiveness / cost | 6.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | Add an element packet: +2 (min) damage of Magic, Arcane, Holy or Fire as a second packet | effectiveness / cost | 4.1% | any damaging card; an elemental card raises its own element packet instead; not a counter |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 3.4% | once per card; Basic cards have no MP cut |
 | common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
 | common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
 | common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
 | common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 3.5% | melee, non-spell, non-elemental, once |
 | uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
-| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 5.2% |  |
-| uncommon | +2 stacks on the card's own status | effectiveness / cost | 3.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 4.2% |  |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | Element packet x2 (75% of an uncommon `dmg` step, min 3) | effectiveness / cost | 1.7% | same |
 | uncommon | +8 Block (12) | new effect | 1.3% | only a card with no Block; not a counter |
 | uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
 | uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
@@ -407,11 +422,9 @@ Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one)
 | uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 0.7% | not a sweep, not a counter |
 | uncommon | Stance: Attack to Smash or Smash to Attack | identity | 0.6% | smash needs 2 SP |
 | rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
-| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.9% |  |
-| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.6% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| rare | Cost -2 in one pool | effectiveness / cost | 0.3% | needs a cost of 3 or more in that pool |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.7% |  |
 
-Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 6 low-chance rows omitted.
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 8 low-chance rows omitted.
 
 #### Block (Defend)
 
@@ -477,29 +490,29 @@ Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one)
 | rarity | upgrade | group | chance at upgrade 1 | notes / gates |
 |---|---|---|---|---|
 | common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
-| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 7.6% |  |
-| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 6.3% | printed Block only |
-| common | +1 stack on the card's own status | effectiveness / cost | 5.1% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.0% | not on a smash (Poise derived from the hit) |
-| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 2.5% | once per card; Basic cards have no MP cut |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 6.7% |  |
+| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 5.6% | printed Block only |
+| common | +1 stack on the card's own status | effectiveness / cost | 4.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 2.7% | not on a smash (Poise derived from the hit) |
+| common | Add an element packet: +2 (min) damage of Magic, Arcane, Holy or Fire as a second packet | effectiveness / cost | 2.7% | any damaging card; an elemental card raises its own element packet instead; not a counter |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 2.2% | once per card; Basic cards have no MP cut |
 | common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
 | common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
 | common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
 | uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
-| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 2.6% |  |
-| uncommon | +4 Block (x2) | effectiveness / cost | 2.2% | printed Block only |
-| uncommon | +2 stacks on the card's own status | effectiveness / cost | 1.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
-| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.1% | not on a smash (Poise derived from the hit) |
-| uncommon | Cost -1 SP and -1 MP (combo of two `cost` steps) | effectiveness / cost | 0.9% | two-pool cards only |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 2.3% |  |
+| uncommon | +4 Block (x2) | effectiveness / cost | 2.0% | printed Block only |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 1.6% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 0.9% | not on a smash (Poise derived from the hit) |
+| uncommon | Element packet x2 (75% of an uncommon `dmg` step, min 3) | effectiveness / cost | 0.9% | same |
+| uncommon | Cost -1 SP and -1 MP (combo of two `cost` steps) | effectiveness / cost | 0.8% | two-pool cards only |
 | uncommon | +8 Block (12) | new effect | 1.4% | only a card with no Block; not a counter |
 | uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
-| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
-| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
 | uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 4.2% | not a sweep, not a counter |
 | rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
 | rare | Range: Melee to Reach or Reach to Melee | identity | 0.8% | strong: skips Advance SP; capped by `maxRange` |
 
-Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.1% in total for this type (see the shared table). 10 low-chance rows omitted.
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.1% in total for this type (see the shared table). 13 low-chance rows omitted.
 
 #### Power
 
@@ -533,7 +546,77 @@ These rows (the generic `fx` effects) are in every type's denominators but not r
 Notes: Counter cards are `maneuver:counter` (fixed return payload), so damage, hits, Poise, range, targeting, element and `dmgType` are gated off. The Sweep `dmg` row needs the proposed gate lift. A Power can roll only the ease rows and `cost`; its ease "draw 1" combo needs a different sweetener (a `cost` step) because Powers take no draw option today.
 
 
-## 11. Risks
+## 11. Upgrade vendors
+
+### Where upgrades come from today
+
+| Source | Code | Options and odds today |
+|---|---|---|
+| Rest-site Smith | `RestUpgradeRule` in `cardUpgradeLimits.js` | upgrades 1 to 3: one option; 4th on: two options, each 20% two effects; one free tier per visit (`smith.free`) |
+| Blacksmith card upgrade (`upgradeArt`) | `blacksmith.js`, `upgradeChoiceCount` | 2 or 3 options, seeded; free, or 1 Smithing Stone past the free allowance |
+| Blacksmith rank-up bonus | `rankUpBonus.js` | 3 choices, `scale` 2, no authored step |
+| Free upgrade effects | `freeCardUpgradeStep` / `applyFreeCardUpgrade` in `engine/actions.js` | one rolled option |
+| Arcane Trader | none today | `arcane-trader-proposal-2026-11-18.md` sells relics, scrolls, magic armaments and armour, spell cards: no card service. A card upgrade there is a NEW service and needs approval |
+
+All of these use the base tables of section 10 (and the section 6 group shares) unless they are at a vendor below. The rank-up bonus uses the base table one band later (its x2 scale already makes its steps bigger), so upgrade 1 to 3 rolls like 4 to 5.
+
+### Category of every kind
+
+P physical, M magic, N neutral. A kind can be P or M by card: `fx:boost` is P for a weapon card (STR, DEX) and M for a spell (INT, WIS); `addStatus` is P (Bleed, Weak) or M (Burn, Vulnerable); `blk` and `fx:block` are M on a spell, P otherwise.
+
+| Category | Kinds |
+|---|---|
+| Physical | `dmg`, `hits`, `poise`, `blk`, `fx:block`, `dmgType`, `maneuver`, `range` (Reach), `fx:target`, `fx:counter`, `fx:boost` (STR/DEX), `addStatus` (physical), SP-side `cost` |
+| Magic | `element` (add or raise a packet), `school` (dead today, stays), `attr`, `rankDown`, `fx:boost` (INT/WIS), `addStatus` (spell), MP-side `cost`, Ward/Barrier `stk` |
+| Neutral | all ease rows, `stk` on a non-Ward status, `targeting`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:reaction` |
+
+Physical tags the Blacksmith should also offer: Reach is `range`, Pierce is `dmgType` piercing; Force and Thorns have no upgrade kind today (NEW if wanted). Spell tags and a Ward-boost kind for the Arcane Trader are also NEW and not specified here.
+
+### Per-vendor category weights
+
+A multiplier on the kind weight when picking inside a group. Ease options are neutral, so both vendors offer them at the same odds.
+
+| Vendor | Physical | Magic | Neutral |
+|---|---|---|---|
+| Blacksmith | x3 | x0.25 | x1 |
+| Arcane Trader | x0.25 | x3 | x1 |
+| Rest site, free upgrade, other | x1 | x1 | x1 |
+
+The off-category share is small, not zero, so a card with no kind in the vendor's category (a Skill buff at the Arcane Trader) still gets a full list.
+
+### Per-vendor rarity odds (own category versus off-category)
+
+Neutral kinds and ease rows use the base table (70/25/5, 45/40/15, 25/45/30, 10/40/50).
+
+| Upgrade # | own category (common / uncommon / rare) | off-category (common / uncommon / rare) |
+|---|---|---|
+| 1 to 3 | 55 / 33 / 12 | 80 / 18 / 2 |
+| 4 to 5 | 35 / 42 / 23 | 60 / 32 / 8 |
+| 6 to 7 | 18 / 42 / 40 | 40 / 42 / 18 |
+| 8 to 10 | 7 / 33 / 60 | 25 / 45 / 30 |
+
+### Roll order with a vendor
+
+Group (section 6 by upgrade number) then category (vendor multipliers over the kinds the group has) then rarity (the odds above for that category) then kind within group, category and rarity by `WEIGHTS`.
+
+### What each vendor offers at upgrade 1 (computed, group shares 40/35/20/5)
+
+| Card | vendor | physical kinds | magic kinds | neutral kinds | rare (any kind) |
+|---|---|---|---|---|---|
+| Attack | base table | 34% | 5% | 61% | 5.0% |
+| Attack | Blacksmith | 46% | 1% | 54% | 8.2% |
+| Attack | Arcane Trader | 10% | 16% | 74% | 5.7% |
+| Spell | base table | 14% | 22% | 64% | 5.6% |
+| Spell | Blacksmith | 30% | 5% | 66% | 9.5% |
+| Spell | Arcane Trader | 3% | 39% | 58% | 7.9% |
+| Skill buff | base table | 24% | 0% | 76% | 5.0% |
+| Skill buff | Blacksmith | 36% | 0% | 64% | 7.5% |
+| Skill buff | Arcane Trader | 8% | 0% | 92% | 4.8% |
+
+Reading it: the Blacksmith clearly skews an Attack toward physical kinds and raises its rare odds; the Arcane Trader raises a spell's magic kinds from 22% to 39% and an Attack's from 5% to 16% (its only magic kind is `element`), and a non-damaging buff Skill has no magic kind at all. To give the Arcane Trader more for an Attack, the element packet carries a weight of 12 in the effectiveness/cost group (so it is a headline option there), and a Ward-boost kind could be added later.
+
+
+## 12. Risks
 
 - Wound/Dazed bloat. `addCard` makes combat-only instances, so the deck editor and shop removal never see them. A Wound sits in the discard pile until combat ends (it reshuffles), so repeated plays thicken the draw pile; Dazed is Ethereal and clears itself each turn. Cap at about 3 added status cards per fight from card plays, and prefer Dazed on common cards, Wound on uncommon and rare. If a design ever makes them run-long, they would need to be removable in the deck editor.
 - Enemy buff and the AI/sim. Permanent enemy Strength compounds on long fights and bosses, and the autoplay policy (`autoCombatPolicy.js`) does not price it, so a sim run will under-rate those cards. Keep to Strength 1 to 2 and run the card-budget report plus a sim sweep before shipping.
