@@ -6882,12 +6882,12 @@
         "total": 1
       },
       "constitution": {
-        "own": 2,
+        "own": 1,
         "bonuses": [],
-        "total": 2
+        "total": 1
       },
       "wisdom": {
-        "own": 2,
+        "own": 3,
         "bonuses": [
           {
             "source": "enemy.relic.inkVeil",
@@ -6896,7 +6896,7 @@
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 5
       },
       "intelligence": {
         "own": 2,
@@ -6920,19 +6920,19 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
+        "constitution": 10,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 8,
+        "wisdom": 10,
         "intelligence": 5,
         "level": 10
       },
-      "total": 61,
-      "formula": "10+20+5+3+8+5+10 = 61"
+      "total": 53,
+      "formula": "10+10+5+3+10+5+10 = 53"
     },
     "pools": {
-      "hp": 61,
-      "sp": 4,
+      "hp": 53,
+      "sp": 5,
       "mp": 3,
       "ar": 1,
       "dr": 1,

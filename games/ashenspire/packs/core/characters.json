@@ -5277,6 +5277,9 @@
       "character.enemy",
       "tier.elite"
     ],
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
       "wisdom",
       "intelligence",

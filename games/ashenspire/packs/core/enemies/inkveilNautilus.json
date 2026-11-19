@@ -6,6 +6,9 @@
     "tier.elite"
   ],
   "stats": {
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
       "wisdom",
       "intelligence",
@@ -118,6 +121,7 @@
       "id",
       "name",
       "tags",
+      "attributes",
       "attributePriority",
       "levelProfile",
       "defaultDeck",
