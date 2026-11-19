@@ -315,3 +315,5 @@ Every item of a type carries its type's base effect. An item's own signature (se
 ## 23. No hidden caps (owner, 2026-11-18)
 - Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
 - New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.
+
+**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff).
