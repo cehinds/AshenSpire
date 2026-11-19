@@ -54,9 +54,10 @@ test('Light and Medium inspector conditions name the held status', () => {
 
 test('an absent-version inspector preserves its legacy configured output without type or signature leakage', () => {
   const old = legacyGearRegistries(core2Registries());
-  const staff = equipmentCardModel(old, old.equipment.armaments.find(p => p.id === 'ashStaff'));
+  const staffPiece = old.equipment.armaments.find(p => p.id === 'ashStaff');
+  const staff = equipmentCardModel(old, staffPiece);
   assert.deepEqual(staff.bonuses, []);
-  assert.match(staff.typeExplanation, /every spell by 1/);
+  assert.equal(staff.typeExplanation, staffPiece.itemTypes.map(type => old.tags.find(tag => tag.id === type.tag)?.blurb).filter(Boolean).join(' '), 'legacy classification still reads its authored tag blurbs');
   const plate = equipmentCardModel(old, old.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver'));
   assert.deepEqual(plate.bonuses.map(b => b.label), ['6 Poise. Gain 1 Constitution.']);
   assert.ok(!JSON.stringify(plate.bonuses).includes('Thorns'));
