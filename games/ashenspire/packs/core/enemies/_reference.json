@@ -4158,14 +4158,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.crucibleHeart": {
-      "name": "Crucible Heart",
-      "text": "CON +3, STR +1",
-      "modifiers": [
-        "self.constitution=+3",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.titheBand": {
       "name": "Tithe Band",
       "text": "WIS +1, CON +1",
@@ -4253,6 +4245,14 @@
         "self.constitution=+3",
         "self.strength=+1",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.crucibleHeart": {
+      "name": "Crucible Heart",
+      "text": "CON +3, STR +1",
+      "modifiers": [
+        "self.constitution=+3",
+        "self.strength=+1"
       ]
     }
   }

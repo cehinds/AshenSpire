@@ -1403,7 +1403,7 @@
   },
   {
     "id": "crucibleNewt",
-    "equipmentSp": 1,
+    "equipmentSp": 3,
     "attributes": {
       "strength": 7,
       "dexterity": 2,
