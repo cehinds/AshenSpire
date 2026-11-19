@@ -37,9 +37,9 @@ test('a spell face shows +1 Mana and +1 Stamina (cantrips +1 Mana only); a non-s
 });
 
 test('a Focus item takes 1 Mana off the face price; Prepared is never applied outside a fight', () => {
-  const plain = newRun('greatsword'), focus = newRun('boneSceptre');
+  const plain = newRun('greatsword');
   const def = spells.find(d => !cantrip(d) && d.cost !== 'X' && printed(d).mana > 0);
-  assert.equal(FaceCostProfile(reg, def, focus).mana, FaceCostProfile(reg, def, plain).mana - 1);
+  for (const hand of ['boneSceptre', 'duskChime']) assert.equal(FaceCostProfile(reg, def, newRun(hand)).mana, FaceCostProfile(reg, def, plain).mana - 1, `${hand}: absent-version saved pricing is unchanged`);
   assert.equal(FaceCostProfile(reg, def, plain).stamina, printed(def).stamina + 1, 'no Prepared -1 on a face');
 });
 
@@ -89,6 +89,8 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
       ['starseer', 'emberlightSceptre', 'boneSceptre', 1, 1],
       ['starseer', 'boneSceptre', 'blightRod', 1, 1],
       ['starseer', 'gorefireBrand', 'emberlightSceptre', 1, 1],
+      ['starseer', 'duskChime', null, 1, 1],
+      ['starseer', 'duskChime', 'boneSceptre', 1, 1],
     ]) {
       const run = createRunState({ registries: currentReg, classId, seed: 5, profileMeta: meta });
       run.loadout.sets.rightHand[0] = right; run.loadout.sets.leftHand[0] = left;

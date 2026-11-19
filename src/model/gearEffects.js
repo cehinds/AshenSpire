@@ -90,6 +90,12 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
       else if (spec.apply === 'playGrant') out.playGrants.push({ ...common, grant: spec.op || 'status', status: spec.status || null, amount: mod.value });
     }
   }
+  // Existing Focus-tagged pieces (Dusk Chime) retain the same Prepared-only effect even without a staff/sceptre type row.
+  const taggedFocus = !focusTaken && worn.find(piece => (piece.itemTypeTags || []).includes(registries?.balance?.mana?.focusItemType));
+  if (taggedFocus) {
+    const mod = (GEAR_TYPES.weaponTypes.staff?.mods || []).map(ParseGearMod).find(row => row?.field === 'cardMana' && row.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared'));
+    if (mod && fields[mod.field]) out.cardRules.push({ selector: mod.selector, arg: mod.arg, conds: mod.conds, source: taggedFocus.id, stat: fields[mod.field].op, amount: mod.value, mode: mod.mode });
+  }
   return out;
 }
 
