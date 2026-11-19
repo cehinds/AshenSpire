@@ -32,3 +32,22 @@ test('a fight whose rules lack breakStatusStacks applies none', () => {
   play(combat, 'cometFragment', enemy.id);
   for (const id of BREAK_STATUS_IDS) assert.equal(getStacks(enemy, id), 0, id);
 });
+
+test('only what the break added leaves with Broken: 3 Vulnerable from Bash, a break (5), Broken ends -> 3 again; stacks added while Broken stay', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 0 });
+  enemy.statuses.vulnerable = { stacks: 3 }; // from Bash
+  enemy.statuses.weak = { stacks: 1 };
+  enemy.persistentPoise = { value: 2, max: 20 };
+  play(combat, 'cometFragment', enemy.id);
+  assert.ok(enemy.broken);
+  assert.equal(getStacks(enemy, 'vulnerable'), 5, '3 + the break\'s 2');
+  assert.equal(getStacks(enemy, 'weak'), 3);
+  enemy.statuses.frail = { stacks: (enemy.statuses.frail?.stacks || 0) + 4 }; // another source, while Broken
+  combat.turn = enemy.broken.endTurn;
+  delete enemy.broken.loseNext;
+  assert.equal(EndBrokenWhenDue(combat, enemy), true);
+  assert.equal(getStacks(enemy, 'vulnerable'), 3, 'back to the pre-break stacks (no decay ran in between)');
+  assert.equal(getStacks(enemy, 'weak'), 1);
+  assert.equal(getStacks(enemy, 'frail'), 4, 'the 4 added while Broken stay; only the break\'s 2 went');
+  assert.equal(getStacks(enemy, 'staggered'), 0);
+});

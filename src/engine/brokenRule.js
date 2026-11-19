@@ -85,8 +85,14 @@ export function BreakCombatant(ctx, entity, rules) {
   }
   entity.broken = record;
   if (rules.statusStacks > 0) {
-    record.statusIds = [...BREAK_STATUS_IDS];
-    for (const id of BREAK_STATUS_IDS) Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);
+    // What the break added, and what the owner held before it (the ClearTurnBoosts pattern): only the grant leaves with Broken, never stacks from another source.
+    record.statusGrants = {};
+    for (const id of BREAK_STATUS_IDS) {
+      const base = Statuses.getStacks(entity, id);
+      Statuses.applyStatus(ctx, entity, id, rules.statusStacks, entity);
+      const granted = Statuses.getStacks(entity, id) - base;
+      if (granted > 0) record.statusGrants[id] = { granted, base };
+    }
   }
   entity.combatStance = brokenStance(entity, rules);
   ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered', broken: true });
@@ -114,7 +120,7 @@ export function EndBrokenWhenDue(ctx, entity) {
   const broken = entity?.broken;
   if (!broken || broken.loseNext || (ctx.turn || 0) < broken.endTurn) return false;
   // Still Broken while the statuses go, so the pool re-sync keeps the bar empty until the refill below.
-  for (const id of broken.statusIds || []) if (entity.statuses?.[id]?.stacks > 0) Statuses.removeStatus(ctx, entity, id, { reason: 'brokenEnd' });
+  Statuses.RemoveBreakGrants(ctx, entity, broken.statusGrants);
   delete entity.broken;
   if (entity.combatStance?.broken) delete entity.combatStance;
   const poise = entity.persistentPoise;

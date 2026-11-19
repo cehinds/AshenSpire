@@ -264,6 +264,19 @@ export function ClearTurnBoosts(ctx, entity) {
 }
 
 /**
+ * RemoveBreakGrants(ctx, entity, grants) — remove what a Poise break added ({ id: { granted, base } }), never more than is still above the stacks the owner held
+ * before it: a loss since the grant (decay) takes the grant first, so stacks from another source (Bash, a later card) are never eaten.
+ */
+export function RemoveBreakGrants(ctx, entity, grants) {
+  for (const [id, { granted, base }] of Object.entries(grants || {})) {
+    const inst = entity.statuses?.[id];
+    if (!inst) continue;
+    const present = Math.max(0, Math.min(granted, inst.stacks - base));
+    if (present > 0) removeStatus(ctx, entity, id, { amount: present, reason: 'brokenEnd' });
+  }
+}
+
+/**
  * decayAtTurnEnd(ctx, entity) — apply per-owner-turn-end decay:
  *   'perTurnEnd'   → −1 stack (expire at 0)
  *   { duration }   → −1 turn (expire at 0; stacks untouched until then)
