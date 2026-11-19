@@ -1907,7 +1907,7 @@
       "name": "Tail Crush",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -1967,7 +1967,7 @@
       "name": "Hoof Stamp",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2017,7 +2017,7 @@
       "name": "Spear Dive",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2077,7 +2077,7 @@
       "name": "Shell Slam",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2187,7 +2187,7 @@
       "name": "Timber Charge",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2227,7 +2227,7 @@
       "name": "Woundwood Rampage",
       "type": "attack",
       "cost": {
-        "stamina": 3,
+        "stamina": 4,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2277,7 +2277,7 @@
       "name": "Pall Bearers",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2587,7 +2587,7 @@
       "name": "Pack Crush",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2747,7 +2747,7 @@
       "name": "Blubber Slam",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2857,7 +2857,7 @@
       "name": "Gavel Fall",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -2927,7 +2927,7 @@
       "name": "Hearse Charge",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3147,7 +3147,7 @@
       "name": "Thunder Leap",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3187,7 +3187,7 @@
       "name": "Shell Ram",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3257,7 +3257,7 @@
       "name": "Ember Dive",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3327,7 +3327,7 @@
       "name": "Cocoon Crush",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3387,7 +3387,7 @@
       "name": "Anvil Brand",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",
@@ -3437,7 +3437,7 @@
       "name": "Crucible Tail",
       "type": "attack",
       "cost": {
-        "stamina": 2,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",

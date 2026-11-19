@@ -242,24 +242,24 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:wickerTitheman.kindleWard | Kindle Ward | skill | 1 | 0 | Gain {block} Block. |
 | card:wickerTitheman.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:siltCrownNewt.mireSpit | Mire Spit | attack | 1 | 1 | Deal {damage} damage. |
-| card:siltCrownNewt.tailCrush | Tail Crush | attack | 2 | 0 | Deal {damage} damage. |
+| card:siltCrownNewt.tailCrush | Tail Crush | attack | 3 | 0 | Deal {damage} damage. |
 | card:siltCrownNewt.drowningCoil | Drowning Coil | attack | 3 | 0 | Deal {damage} damage. Apply {frail} Frail to the enemy. |
 | card:siltCrownNewt.siltShroud | Silt Shroud | skill | 1 | 0 | Gain {block} Block. |
 | card:siltCrownNewt.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:wickerHind.antlerRake | Antler Rake | attack | 1 | 0 | Deal {damage} damage. |
 | card:wickerHind.hallowSpark | Hallow Spark | attack | 1 | 1 | Deal {damage} damage. |
-| card:wickerHind.hoofStamp | Hoof Stamp | attack | 2 | 0 | Deal {damage} damage. |
+| card:wickerHind.hoofStamp | Hoof Stamp | attack | 3 | 0 | Deal {damage} damage. |
 | card:wickerHind.wickerMend | Wicker Mend | power | 3 | 2 | Heal {heal} HP. |
 | card:wickerHind.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:wickerHind.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:blackrushStork.beakJab | Beak Jab | attack | 1 | 0 | Deal {damage} damage. |
-| card:blackrushStork.spearDive | Spear Dive | attack | 2 | 0 | Deal {damage} damage. |
+| card:blackrushStork.spearDive | Spear Dive | attack | 3 | 0 | Deal {damage} damage. |
 | card:blackrushStork.blackrushSkewer | Blackrush Skewer | attack | 3 | 0 | Deal {damage} damage. |
 | card:blackrushStork.wadeGuard | Wade Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:blackrushStork.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:blackrushStork.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:pearlbackSnail.slimeBash | Slime Bash | attack | 1 | 0 | Deal {damage} damage. |
-| card:pearlbackSnail.shellSlam | Shell Slam | attack | 2 | 0 | Deal {damage} damage. |
+| card:pearlbackSnail.shellSlam | Shell Slam | attack | 3 | 0 | Deal {damage} damage. |
 | card:pearlbackSnail.pearlGuard | Pearl Guard | skill | 2 | 0 | Gain {block} Block. |
 | card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. |
 | card:pearlbackSnail.advance | Advance | skill | 1 | 0 | Close one band. |
@@ -270,16 +270,16 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:alderMaskHarvester.alderVeil | Alder Veil | skill | 1 | 0 | Gain {block} Block. |
 | card:alderMaskHarvester.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:woundwoodTusker.woundGore | Wound Gore | attack | 1 | 0 | Deal {damage} damage. |
-| card:woundwoodTusker.timberCharge | Timber Charge | attack | 2 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.timberCharge | Timber Charge | attack | 3 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.rootPlow | Root Plow | attack | 2 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.barkHide | Bark Hide | skill | 1 | 0 | Gain {block} Block. |
 | card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
-| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 4 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:mireProcessional.pallLash | Pall Lash | attack | 1 | 0 | Deal {damage} damage. |
 | card:mireProcessional.bogCandle | Bog Candle | attack | 1 | 1 | Deal {damage} damage. |
 | card:mireProcessional.graveMurk | Grave Murk | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
-| card:mireProcessional.pallBearers | Pall Bearers | attack | 2 | 0 | Deal {damage} damage. |
+| card:mireProcessional.pallBearers | Pall Bearers | attack | 3 | 0 | Deal {damage} damage. |
 | card:mireProcessional.mournersChorus | Mourners' Chorus | attack | 2 | 0 | Deal {damage} damage. |
 | card:mireProcessional.wakeVeil | Wake Veil | skill | 1 | 0 | Gain {block} Block. |
 | card:mireProcessional.finalRequiem | Final Requiem | attack | 3 | 2 | Deal {damage} damage. |
@@ -310,7 +310,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:knellcapSentinel.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:pallidOathCamel.oathKick | Oath Kick | attack | 1 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.hallowSpit | Hallow Spit | attack | 1 | 1 | Deal {damage} damage. |
-| card:pallidOathCamel.packCrush | Pack Crush | attack | 2 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.packCrush | Pack Crush | attack | 3 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. |
 | card:pallidOathCamel.pilgrimBurden | Pilgrim Burden | attack | 3 | 0 | Deal {damage} damage. |
 | card:pallidOathCamel.advance | Advance | skill | 1 | 0 | Close one band. |
@@ -326,7 +326,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:mirrorFanAbbess.wardingFan | Warding Fan | skill | 1 | 0 | Gain {block} Block. |
 | card:mirrorFanAbbess.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:saltChoirWalrus.saltDirge | Salt Dirge | attack | 1 | 1 | Deal {damage} damage. |
-| card:saltChoirWalrus.blubberSlam | Blubber Slam | attack | 2 | 0 | Deal {damage} damage. |
+| card:saltChoirWalrus.blubberSlam | Blubber Slam | attack | 3 | 0 | Deal {damage} damage. |
 | card:saltChoirWalrus.choirChorus | Choir Chorus | power | 2 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
 | card:saltChoirWalrus.frozenBulwark | Frozen Bulwark | skill | 2 | 0 | Gain {block} Block. |
 | card:saltChoirWalrus.advance | Advance | skill | 1 | 0 | Close one band. |
@@ -337,14 +337,14 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:rimewheelPenitent.frostGuard | Frost Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:rimewheelPenitent.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:veiledJusticiar.verdictStrike | Verdict Strike | attack | 1 | 0 | Deal {damage} damage. |
-| card:veiledJusticiar.gavelFall | Gavel Fall | attack | 2 | 0 | Deal {damage} damage. |
+| card:veiledJusticiar.gavelFall | Gavel Fall | attack | 3 | 0 | Deal {damage} damage. |
 | card:veiledJusticiar.righteousLight | Righteous Light | attack | 2 | 1 | Deal {damage} damage. |
 | card:veiledJusticiar.sentenceRead | Sentence Read | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
 | card:veiledJusticiar.veilGuard | Veil Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:veiledJusticiar.finalJudgement | Final Judgement | attack | 3 | 2 | Deal {damage} damage. |
 | card:veiledJusticiar.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:sixleggedHearse.legStomp | Leg Stomp | attack | 1 | 0 | Deal {damage} damage. |
-| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 2 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 3 | 0 | Deal {damage} damage. |
 | card:sixleggedHearse.pallTrample | Pall Trample | attack | 2 | 0 | Deal {damage} damage. |
 | card:sixleggedHearse.coffinShield | Coffin Shield | skill | 1 | 0 | Gain {block} Block. |
 | card:sixleggedHearse.graveReek | Grave Reek | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
@@ -366,36 +366,36 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:sootwingBat.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:brassThroatIbex.hornRam | Horn Ram | attack | 1 | 0 | Deal {damage} damage. |
 | card:brassThroatIbex.brassCall | Brass Call | attack | 1 | 1 | Deal {damage} damage. |
-| card:brassThroatIbex.thunderLeap | Thunder Leap | attack | 2 | 0 | Deal {damage} damage. |
+| card:brassThroatIbex.thunderLeap | Thunder Leap | attack | 3 | 0 | Deal {damage} damage. |
 | card:brassThroatIbex.stormPeal | Storm Peal | attack | 3 | 2 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
 | card:brassThroatIbex.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:brassThroatIbex.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
-| card:kilnbackTerrapin.shellRam | Shell Ram | attack | 2 | 0 | Deal {damage} damage. |
+| card:kilnbackTerrapin.shellRam | Shell Ram | attack | 3 | 0 | Deal {damage} damage. |
 | card:kilnbackTerrapin.siegeLob | Siege Lob | attack | 2 | 1 | Deal {damage} damage. |
 | card:kilnbackTerrapin.emberVolley | Ember Volley | attack | 3 | 1 | Deal {damage} damage. |
 | card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. |
 | card:kilnbackTerrapin.bunkerGuard | Bunker Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:kilnbackTerrapin.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:slagwingHeron.slagJab | Slag Jab | attack | 1 | 0 | Deal {damage} damage. |
-| card:slagwingHeron.emberDive | Ember Dive | attack | 2 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.emberDive | Ember Dive | attack | 3 | 0 | Deal {damage} damage. |
 | card:slagwingHeron.moltenBeak | Molten Beak | attack | 3 | 0 | Deal {damage} damage. |
 | card:slagwingHeron.heronWard | Heron Ward | skill | 1 | 0 | Gain {block} Block. |
 | card:slagwingHeron.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:slagwingHeron.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:ashSilkWeaver.venomFang | Venom Fang | attack | 1 | 0 | Deal {damage} damage. |
 | card:ashSilkWeaver.silkSnare | Silk Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
-| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 2 | 0 | Deal {damage} damage. |
+| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 3 | 0 | Deal {damage} damage. |
 | card:ashSilkWeaver.ashSilkVolley | Ash-Silk Volley | attack | 3 | 1 | Deal {damage} damage. |
 | card:ashSilkWeaver.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashSilkWeaver.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:ferrumVotary.ironCensure | Iron Censure | attack | 1 | 0 | Deal {damage} damage. |
 | card:ferrumVotary.voltaicPrayer | Voltaic Prayer | attack | 1 | 1 | Deal {damage} damage. |
-| card:ferrumVotary.anvilBrand | Anvil Brand | attack | 2 | 0 | Deal {damage} damage. |
+| card:ferrumVotary.anvilBrand | Anvil Brand | attack | 3 | 0 | Deal {damage} damage. |
 | card:ferrumVotary.ironLitany | Iron Litany | skill | 2 | 0 | Gain {block} Block. |
 | card:ferrumVotary.thunderOath | Thunder Oath | power | 1 | 1 | Apply {strength} Strength to yourself. |
 | card:ferrumVotary.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:crucibleNewt.moltenBite | Molten Bite | attack | 1 | 0 | Deal {damage} damage. |
-| card:crucibleNewt.crucibleTail | Crucible Tail | attack | 2 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.crucibleTail | Crucible Tail | attack | 3 | 0 | Deal {damage} damage. |
 | card:crucibleNewt.slagBreath | Slag Breath | attack | 2 | 0 | Deal {damage} damage. |
 | card:crucibleNewt.emberSpit | Ember Spit | attack | 1 | 1 | Deal {damage} damage. |
 | card:crucibleNewt.moltenHide | Molten Hide | skill | 1 | 0 | Gain {block} Block. |

@@ -4225,7 +4225,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 6
       }
     ],
     "tags": [
@@ -4646,8 +4646,8 @@
     "name": "Tail_Crush",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -4816,8 +4816,8 @@
     "name": "Hoof_Stamp",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -4949,8 +4949,8 @@
     "name": "Spear_Dive",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5110,8 +5110,8 @@
     "name": "Shell_Slam",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5409,8 +5409,8 @@
     "name": "Timber_Charge",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5525,8 +5525,8 @@
     "name": "Woundwood_Rampage",
     "class": "colorless",
     "rarity": "special",
-    "cost": 3,
-    "staminaCost": 3,
+    "cost": 4,
+    "staminaCost": 4,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5667,8 +5667,8 @@
     "name": "Pall_Bearers",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5867,7 +5867,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 6
       }
     ],
     "tags": [
@@ -6147,7 +6147,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 5
       }
     ],
     "tags": [
@@ -6289,7 +6289,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 8
       }
     ],
     "tags": [
@@ -6397,7 +6397,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 5
       }
     ],
     "tags": [
@@ -6522,8 +6522,8 @@
     "name": "Pack_Crush",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -6966,8 +6966,8 @@
     "name": "Blubber_Slam",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -7267,8 +7267,8 @@
     "name": "Gavel_Fall",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -7464,8 +7464,8 @@
     "name": "Hearse_Charge",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8070,8 +8070,8 @@
     "name": "Thunder_Leap",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8182,8 +8182,8 @@
     "name": "Shell_Ram",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8373,8 +8373,8 @@
     "name": "Ember_Dive",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8567,8 +8567,8 @@
     "name": "Cocoon_Crush",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8729,8 +8729,8 @@
     "name": "Anvil_Brand",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -8864,8 +8864,8 @@
     "name": "Crucible_Tail",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
