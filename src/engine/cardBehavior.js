@@ -44,7 +44,7 @@ export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;
   const meta={energySpent:paid.energy || 0,manaSpent:paid.mana || 0,staminaSpent:paid.stamina || 0};
   const variant=def.effectVariants.find(row=>Triggers.evalPredicate(ctx,row.if,{source:ctx.player,owner:ctx.player,target,card:def,meta}));
-  return variant ? {...def,effects:variant.effects,...(variant.textTemplate ? {textTemplate:variant.textTemplate} : {}),activeEffectVariant:def.effectVariants.indexOf(variant)} : def;
+  return variant ? {...def,effects:variant.effects,...(variant.gearApplied ? {gearApplied:variant.gearApplied} : {}),...(variant.textTemplate ? {textTemplate:variant.textTemplate} : {}),activeEffectVariant:def.effectVariants.indexOf(variant)} : def;
 }
 
 export function weaponDamageBasis(ctx,actor=ctx.player) {

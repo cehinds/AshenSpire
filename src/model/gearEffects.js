@@ -16,6 +16,7 @@ import { RANGES } from './combatRanges.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
+import { isFormula } from './formulas.js';
 
 const TARGET_CONDS = new Set(['target']);
 
@@ -163,7 +164,6 @@ export function GearTargetCondMet(cond, target) {
 
 const ENEMY_AIMED = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'otherEnemy']);
 const adjust = (current, rule) => (rule.mode === 'set' ? rule.amount : (Number(current) || 0) + rule.amount);
-
 /** The rules the player's own statuses stand for: Multi-hit stacks repeat each attack, Reach stacks give physical attacks Reach. */
 export function GearStatusRules(statuses = {}) {
   const rules = [];
@@ -173,50 +173,71 @@ export function GearStatusRules(statuses = {}) {
   return rules;
 }
 
+const EFFECT_STATS = new Set(['damage', 'poiseDamage', 'block', 'heal', 'multiHit']);
+const amountValue = value => typeof value === 'number' || isFormula(value);
+const adjustAmount = (current, rule) => rule.mode === 'set' ? Math.max(0, rule.amount)
+  : isFormula(current) ? { f: 'add', args: [current, rule.amount], min: 0 } : Math.max(0, adjust(current, rule));
+
+// Match selectors against the original branch, then project only its effects. Shared prices and flags belong to the card-level pass.
+function projectGearEffects(rules, def) {
+  const live = rules.filter(rule => EFFECT_STATS.has(rule.stat) && GearSelectorMatches(rule.selector, rule.arg, def));
+  const effects = (def.effects || []).map(effect => ({ ...effect })), applied = new Set();
+  for (const rule of live) {
+    const n = rule.amount;
+    if (rule.stat === 'damage' || rule.stat === 'block' || rule.stat === 'heal') {
+      for (const effect of effects) if (effect.op === rule.stat && (rule.stat !== 'damage' || ENEMY_AIMED.has(effect.target)) && amountValue(effect.amount)) {
+        effect.amount = adjustAmount(effect.amount, rule); applied.add(rule);
+      }
+    } else if (rule.stat === 'poiseDamage') {
+      const own = effects.find(effect => effect.op === 'poiseDamage' && amountValue(effect.amount));
+      const hit = effects.find(effect => effect.op === 'damage' && ENEMY_AIMED.has(effect.target));
+      if (own) { own.amount = adjustAmount(own.amount, rule); applied.add(rule); }
+      else if (hit && n > 0) { effects.splice(effects.indexOf(hit) + 1, 0, { op: 'poiseDamage', target: hit.target, amount: n }); applied.add(rule); }
+    } else if (rule.stat === 'multiHit') {
+      for (const effect of effects) if (effect.op === 'damage' && ENEMY_AIMED.has(effect.target)) {
+        effect.hits = Math.max(1, (effect.hits || 1) + n); applied.add(rule);
+      }
+    }
+  }
+  return { effects, applied };
+}
+
 /**
  * ApplyGearCardRules(rules, def, state) -> a new card definition, or `def` unchanged. Only rules without a target condition apply here.
  * Applied rules are recorded on `def.gearApplied` (stat, amount, triggered) so a face can colour a triggered number; the flags Pierce, Ignore
  * Block, DEX and a second STR travel on `def.gear` to the hit carrier.
  */
 export function ApplyGearCardRules(rules, def, state = {}) {
-  const live = (rules || []).filter(rule => !GearRuleNeedsTarget(rule) && GearSelectorMatches(rule.selector, rule.arg, def) && rule.conds.every(cond => GearCondMet(cond, state)));
-  if (!live.length || !def) return def;
-  let effects = (def.effects || []).map(effect => ({ ...effect }));
-  const gear = { ...(def.gear || {}) }, applied = [...(def.gearApplied || [])];
+  const eligible = (rules || []).filter(rule => !GearRuleNeedsTarget(rule) && rule.conds.every(cond => GearCondMet(cond, state)));
+  if (!eligible.length || !def) return def;
+  const live = eligible.filter(rule => GearSelectorMatches(rule.selector, rule.arg, def));
+  if (!live.length && !(def.effectVariants || []).some(variant => eligible.some(rule => EFFECT_STATS.has(rule.stat) && GearSelectorMatches(rule.selector, rule.arg, { ...def, effects: variant.effects })))) return def;
+  const base = projectGearEffects(eligible, def), common = new Set();
+  const gear = { ...(def.gear || {}) };
   let stamina = Number(def.resourceCosts?.sp ?? def.staminaCost ?? def.cost);
   const manaRules = [...(def.gearManaRules || [])];
   let keywords = def.keywords, costGrowth = def.costGrowth;
   let range = [def.range, def.combatProfile?.range, ...tagsOfDef(def).filter(tag => tag.startsWith('range:')).map(tag => tag.slice(6))].filter(id => RANGES.includes(id)).sort((a, b) => RANGES.indexOf(a) - RANGES.indexOf(b)).at(-1);
   const hasCost = Number.isFinite(stamina);
   for (const rule of live) {
-    const triggered = GearRuleTriggered(rule), n = rule.amount;
-    const note = () => applied.push({ stat: rule.stat, amount: n, triggered, source: rule.source });
-    if (rule.stat === 'damage') {
-      let touched = false;
-      for (const effect of effects) if (effect.op === 'damage' && ENEMY_AIMED.has(effect.target) && typeof effect.amount === 'number') { effect.amount = Math.max(0, adjust(effect.amount, rule)); touched = true; }
-      if (touched) note();
-    } else if (rule.stat === 'poiseDamage') {
-      const own = effects.find(effect => effect.op === 'poiseDamage' && typeof effect.amount === 'number');
-      const hit = effects.find(effect => effect.op === 'damage' && ENEMY_AIMED.has(effect.target));
-      if (own) { own.amount = Math.max(0, adjust(own.amount, rule)); note(); }
-      else if (hit && n > 0) { effects.splice(effects.indexOf(hit) + 1, 0, { op: 'poiseDamage', target: hit.target, amount: n }); note(); }
-    } else if (rule.stat === 'block' || rule.stat === 'heal') {
-      let touched = false;
-      for (const effect of effects) if (effect.op === rule.stat && typeof effect.amount === 'number') { effect.amount = Math.max(0, adjust(effect.amount, rule)); touched = true; }
-      if (touched) note();
-    } else if (rule.stat === 'multiHit') {
-      let touched = false;
-      for (const effect of effects) if (effect.op === 'damage' && ENEMY_AIMED.has(effect.target)) { effect.hits = Math.max(1, (effect.hits || 1) + n); touched = true; }
-      if (touched) note();
-    } else if (rule.stat === 'cost' && hasCost) { stamina = Math.max(0, adjust(stamina, rule)); note(); }
+    const n = rule.amount;
+    const note = () => common.add(rule);
+    if (rule.stat === 'cost' && hasCost) { stamina = Math.max(0, adjust(stamina, rule)); note(); }
     else if (rule.stat === 'manaCost') { manaRules.push({ mode: rule.mode, amount: n }); note(); }
     else if (rule.stat === 'reach') { if (range !== 'ranged') range = 'reach'; note(); }
     else if (rule.stat === 'retain') { keywords = [...new Set([...(keywords || []), 'retain'])]; note(); }
     else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: Number.MAX_SAFE_INTEGER, stamina: 1 }; note(); }
     else if (['pierce', 'ignoreBlock', 'addDex', 'addStr'].includes(rule.stat)) { gear[rule.stat] = adjust(gear[rule.stat], rule); note(); }
   }
+  const notes = (projection, original = def) => [...(original.gearApplied || def.gearApplied || []), ...eligible
+    .filter(rule => projection.applied.has(rule) || common.has(rule))
+    .map(rule => ({ stat: rule.stat, amount: rule.amount, triggered: GearRuleTriggered(rule), source: rule.source }))];
+  const variants = def.effectVariants?.map(variant => {
+    const projection = projectGearEffects(eligible, { ...def, effects: variant.effects });
+    return { ...variant, effects: projection.effects, gearApplied: notes(projection, variant) };
+  });
   const costs = hasCost ? { cost: stamina, staminaCost: stamina } : {};
-  const next = { ...def, effects, ...costs, ...(manaRules.length ? { gearManaRules: manaRules } : {}), keywords, gear, gearApplied: applied,
+  const next = { ...def, effects: base.effects, ...(variants ? { effectVariants: variants } : {}), ...costs, ...(manaRules.length ? { gearManaRules: manaRules } : {}), keywords, gear, gearApplied: notes(base),
     ...(costGrowth ? { costGrowth } : {}), ...(range && range !== def.range ? { range, combatProfile: { ...(def.combatProfile || {}), range } } : {}) };
   if (def.resourceCosts && hasCost) next.resourceCosts = { ...def.resourceCosts, sp: stamina };
   return next;
