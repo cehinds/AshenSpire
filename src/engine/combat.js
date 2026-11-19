@@ -2545,7 +2545,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
-      fixCoreRules: { spellTraditionsVersion: combat.fixCoreRules?.spellTraditionsVersion },
+      fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId } } : {}),
     // Information travels with this preview, including custom saved status

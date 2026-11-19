@@ -165,6 +165,57 @@ for (const version of [undefined, 0]) test(`saved combat tradition policy ${vers
   assert.deepEqual(face.classes, ['black']);
   const def = world.registries.cards.get('blightTouch');
   assert.equal(staticCardTokens(def, world.registries, world.combat).damage, face.value, 'pile/combat face honors the saved policy');
-  assert.equal(staticCardTokens(def, world.registries, { ...world.run, fixCoreRules: { spellTraditionsVersion: version } }).damage, face.value, 'saved run policy wins too');
-  assert.equal(staticCardTokens(def, world.registries, { faceAttributes: face.preview.faceRules.faceAttributes, fixCoreRules: {} }).damage, face.value, 'registry profile fallback retains the saved policy');
+  assert.equal(staticCardTokens(def, world.registries, { ...world.run, fixCoreRules: world.combat.fixCoreRules }).damage, face.value, 'saved run policy wins too');
+  assert.equal(staticCardTokens(def, world.registries, { faceAttributes: face.preview.faceRules.faceAttributes, fixCoreRules: world.combat.fixCoreRules }).damage, face.value, 'registry profile fallback retains the saved policy');
+});
+
+for (const policy of ['current', 'saved attribute rule', 'saved disabled tradition']) test(`an Evade metric face renders its full detached ${policy} snapshot`, () => {
+  const world = fight('rogue');
+  const rules = world.combat.fixCoreRules;
+  if (policy === 'saved attribute rule') {
+    delete rules.spellTraditionsVersion;
+    delete rules.accuracy.hitRoll;
+    delete rules.accuracy.evadeStacksPerCard;
+    Object.assign(rules.accuracy, { evadeStackBase: 5, evadeStackDex: 2 });
+  } else if (policy === 'saved disabled tradition') {
+    rules.spellTraditionsVersion = 0;
+    rules.accuracy.evadeStacksPerCard = 4;
+  }
+  const before = structuredClone(rules);
+  const def = world.registries.cards.get('core.evade');
+  assert.equal(def.effects[0].stacks.metric, 'evadeStackGain', 'exercise the real configured metric consumer');
+  world.combat.piles.hand.push({ instanceId: 'evade-face', cardId: def.id });
+  const preview = previewCard(world.combat, 'evade-face');
+  const snapshot = preview.faceRules.fixCoreRules;
+  assert.deepEqual(snapshot, before, 'all saved rules and flag presence survive');
+  assert.notEqual(snapshot, rules);
+  assert.notEqual(snapshot.accuracy, rules.accuracy);
+  assert.notEqual(snapshot.accuracy.precisionWeights, rules.accuracy.precisionWeights);
+  assert.equal(Object.hasOwn(snapshot, 'spellTraditionsVersion'), Object.hasOwn(before, 'spellTraditionsVersion'));
+  const expected = policy === 'saved attribute rule' ? 5 + 2 * world.combat.player.attributes.dexterity
+    : policy === 'saved disabled tradition' ? 4 : 1;
+  assert.equal(preview.values[0].value, expected, 'the live gain follows the saved accuracy rule');
+  assert.equal(staticCardTokens(def, world.registries, preview.faceRules).evade,
+    policy === 'saved attribute rule' ? '5 plus 2× DEX' : String(expected), 'the static consumer accepts the complete saved rule envelope');
+  const lines = cardFaceLines(def, preview, world.registries, null);
+  assert.ok(lines?.length > 0, 'the in-hand card renders');
+  assert.match(lines.map(row => row.html).join(''), new RegExp(`>${expected}</span> Evade`));
+  snapshot.accuracy.evadeStackBase = 999;
+  snapshot.accuracy.precisionWeights.dex = 999;
+  assert.deepEqual(rules, before, 'mutating nested face metadata cannot alter the saved combat');
+});
+
+test('an Evade face with no saved rule object keeps the historical default path', () => {
+  const ownProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
+  const world = fight('rogue', { ownProfile });
+  delete world.combat.fixCoreRules;
+  world.combat.piles.hand.push({ instanceId: 'old-evade-face', cardId: 'core.evade' });
+  const preview = previewCard(world.combat, 'old-evade-face');
+  assert.equal(preview.faceRules.fixCoreRules, undefined, 'no partial envelope or invented defaults are attached');
+  const def = world.registries.cards.get('core.evade');
+  assert.equal(staticCardTokens(def, world.registries, preview.faceRules).evade, '1');
+  const lines = cardFaceLines(def, preview, world.registries, null);
+  assert.match(lines.map(row => row.html).join(''), />1<\/span> Evade/);
+  assert.equal(world.combat.fixCoreRules, undefined, 'rendering does not install a rule snapshot');
+  assert.equal(ownProfile.modules.effects.spellTraditionsVersion, undefined, 'the genuine profile keeps its historical policy');
 });
