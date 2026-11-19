@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-18
 
-- **Split Windows promotion tests into eight groups** ([#2848](https://github.com/cehinds/AshenSpire/pull/2848), `0.7.4.176`). Windows now divides its regular discovery tests across eight runners so each group has less work to finish within the 15-minute limit.
+- **Split Windows promotion tests into eight groups** ([#2848](https://github.com/cehinds/AshenSpire/pull/2848), `0.7.4.178`). Windows now divides its regular discovery tests across eight runners so each group has less work to finish within the 15-minute limit.
 - **Published enemy concept and equipment artwork** ([#2844](https://github.com/cehinds/AshenSpire/pull/2844), `0.7.4.175`). The game pins verified art pack v28, adding 448 enemy concept poses and 49 equipment illustrations. The concept catalog keeps all 32 enemy designs disabled for later integration.
 - **Rarity banner trim and enemy sprite concepts** ([#2842](https://github.com/cehinds/AshenSpire/pull/2842), `0.7.4.173`). Combat cards show white, green or blue on the cost-banner trim for common, uncommon or rare, including on phones in Lite mode. An authoring catalog marks 32 enemy sprite designs as disabled concepts with complete stance, action and downed poses for future integration.
 - **Browser checks follow character Review and reward controls** ([#2839](https://github.com/cehinds/AshenSpire/pull/2839), `0.7.4.170`). Browser checks wait for the character Review tap guard before pressing Begin, and the full-run check picks rewards through the visible card or name button before confirming.
