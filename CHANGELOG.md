@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
-- **Longer acts, a V-shaped map and re-enterable traders** ([#2847](https://github.com/cehinds/AshenSpire/pull/2847), `0.7.4.181`). Acts now have 11 levels before the boss. Acts 2 and 3 open on a rest, and rests sit 2 to 5 nodes apart. The boss branches fan out like a V, each with one pre-boss rest that leads only to its own boss, so you never see the other bosses from there. You can click the trader or blacksmith you are standing on to go back in, and the blacksmith keeps the stock you left. A rare combat crash with Carrion Talon and one enemy left is fixed, and its random shot no longer lands on an enemy that already died.
+- **Longer acts, a V-shaped map and re-enterable traders** ([#2847](https://github.com/cehinds/AshenSpire/pull/2847), `0.7.4.183`). Acts now have 11 levels before the boss. Acts 2 and 3 open on a rest, and rests sit 2 to 5 nodes apart. The boss branches fan out like a V, each with one pre-boss rest that leads only to its own boss, so you never see the other bosses from there. You can click the trader or blacksmith you are standing on to go back in, and the blacksmith keeps the stock you left. A rare combat crash with Carrion Talon and one enemy left is fixed, and its random shot no longer lands on an enemy that already died.
 - **Stance cards change your stance** ([#2843](https://github.com/cehinds/AshenSpire/pull/2843), `0.7.4.181`). Entering a stance with a card (Enter: Gorefire, Bulwark, Brace) now changes your combat stance, so your pose and the action icon above you show the stance you entered, and its bonuses apply instead of Prepared's.
 
 ## 2026-11-18
