@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { reconcileRunLoadoutHp } from '../src/model/loadout.js';
 import { canonicalGameJSON } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -60,4 +63,26 @@ test('an old profile keeps its existing regeneration modifier but gains no new L
   assert.equal(mods.startStatuses.find(row => row.status === 'regen')?.stacks, originalRegen + 2);
   assert.equal(mods.startStatuses.some(row => row.status === 'thornsFire'), false);
   assert.equal(GearSummary(registry, run.loadout, run.class, run).hitRules.length, 0);
+});
+
+test('the genuine pre-gear historical profile keeps Tower Shield pool suppression through save and reconcile', () => {
+  const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url)))));
+  assert.equal(profile.modules.gear.typeEffectsVersion, undefined);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  run.loadout.sets.leftHand[0] = 'towerShield';
+  const source = gameProfileEquipmentReceipt(registries, run).sources.find(row => row.sourceId === 'armament/towerShield');
+  assert.ok(source);
+  assert.equal(source.hp, 0);
+  assert.equal(runMods(registries, run.loadout, run.class, run).maxHp, 0, 'a resolved old-profile item suppresses its raw +10 HP even when its resolved HP is zero');
+  reconcileRunLoadoutHp(registries, run);
+  const maxHp = run.maxHp;
+  const manager = createSaveManager(createMemoryStorage());
+  manager.saveRun(run, null);
+  const restored = manager.loadRun(registries);
+  assert.ok(restored, JSON.stringify(manager.runStatus()));
+  assert.equal(restored.maxHp, maxHp);
+  reconcileRunLoadoutHp(registries, restored);
+  assert.equal(restored.maxHp, maxHp);
+  assert.equal(runMods(registries, restored.loadout, restored.class, restored).maxHp, 0);
 });

@@ -225,7 +225,13 @@ export function validateFixCoreRules(rules) {
   const pr = rules.ratings;
   if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
-  fractions('pierce', rules.pierce && Object.fromEntries(Object.entries(rules.pierce).filter(([key]) => key === 'blockBypassFraction')), ['blockBypassFraction']);
+  const pierce = rules.pierce;
+  if (pierce !== undefined && (typeof pierce !== 'object' || pierce === null || Array.isArray(pierce)
+    || Object.keys(pierce).some(key => !Object.hasOwn(FIXCORE_PIERCE_DEFAULTS, key))
+    || (pierce.blockBypassFraction !== undefined && !(Number.isFinite(pierce.blockBypassFraction) && pierce.blockBypassFraction >= 0 && pierce.blockBypassFraction <= 1))
+    || (pierce.blockIgnoredPerStack !== undefined && !(Number.isInteger(pierce.blockIgnoredPerStack) && pierce.blockIgnoredPerStack >= 0))
+    || (pierce.builtInElements !== undefined && !(Array.isArray(pierce.builtInElements) && pierce.builtInElements.every(id => typeof id === 'string' && id.length > 0)))
+    || ['skinStatus', 'earthSource'].some(key => pierce[key] !== undefined && pierce[key] !== null && !(typeof pierce[key] === 'string' && pierce[key].length > 0)))) throw new Error('FixCore pierce requires optional fraction, non-negative integer Block per stack, element strings and nullable status/source strings');
   validateStanceBenefits(rules.stanceBenefits);
   validateSpellCosts(rules.spellCosts);
   validateElementFlux(rules.elementFlux);

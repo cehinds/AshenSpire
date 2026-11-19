@@ -91,7 +91,7 @@ export function runMods(registries, loadout, classId, run = null) {
       // Resolved gear replaces a pool stat only when its own points supply that pool (hp, mp, sp); an item that supplies none (Nightweave's +1 max MP) and every
       // type or group base still add, uncapped (owner, 2026-11-18).
       const poolStat = { maxHp: 'hp', maxMana: 'mp', maxStamina: 'sp' }[spec.apply];
-      if (resolvedPiece && poolStat && (resolvedSource?.[poolStat] || 0) > 0) continue;
+      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (resolvedSource?.[poolStat] || 0) > 0)) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
