@@ -167,7 +167,10 @@
     }
   },
   "enemyHealBlockCost": 3,
-  "protectionParameters": {},
+  "protectionParameters": {
+    "defense.poiseProtection": { "multiplier": 0.75 },
+    "defense.wardProtection": { "multiplier": 0.75 }
+  },
   "range": {
     "version": 1,
     "enabled": true,
