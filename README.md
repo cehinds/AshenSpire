@@ -1,19 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — read-only deck inspection
-
-[Download this verified feature build](https://github.com/cehinds/AshenSpire/actions/runs/44548667281/artifacts/14540528548)
-
-The read-only deck says View Deck, omits Pile, and uses tighter card spacing. The hosted branch preview is awaiting the Pages publisher.
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Read-only deck on a phone](docs/preview/features/deck-view/mobile.png) | ![Read-only deck on desktop](docs/preview/features/deck-view/desktop.png) | ![Read-only deck on a wide screen](docs/preview/features/deck-view/wide.png) | ![Read-only deck on a tablet](docs/preview/features/deck-view/tablet.png) |
-
-[Capture details and acceptance evidence](docs/preview/features/deck-view/README.md)
-<!-- feature-preview:end -->
-
 
 
 
