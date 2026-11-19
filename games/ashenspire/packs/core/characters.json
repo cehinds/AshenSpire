@@ -4524,10 +4524,6 @@
           "to": "lightning",
           "effect": "stagger",
           "amount": 20
-        },
-        {
-          "to": "slashing",
-          "effect": "damage"
         }
       ]
     }
