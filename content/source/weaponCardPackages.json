@@ -758,5 +758,100 @@
         "artCardId": "bloodhuntersStrike"
       }
     }
+  },
+  {
+    "weaponId": "mace",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "bashingBlow"
+      ],
+      "learnableArts": [
+        "shieldBash",
+        "kickOff"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "bashingBlow"
+      }
+    }
+  },
+  {
+    "weaponId": "morningStar",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "goreslash"
+      ],
+      "learnableArts": [
+        "serratedBlade",
+        "hemorrhage"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "goreslash"
+      }
+    }
+  },
+  {
+    "weaponId": "flail",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "shieldCrash"
+      ],
+      "learnableArts": [
+        "kickOff",
+        "setTheShield"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "shieldCrash"
+      }
+    }
+  },
+  {
+    "weaponId": "maul",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "colossusSmash"
+      ],
+      "learnableArts": [
+        "bashingBlow",
+        "ruinousBlow"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "colossusSmash"
+      }
+    }
+  },
+  {
+    "weaponId": "thunderMallet",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "aegisOfEmbers"
+      ],
+      "learnableArts": [
+        "shieldwall",
+        "enterBulwark"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "aegisOfEmbers"
+      }
+    }
   }
 ]

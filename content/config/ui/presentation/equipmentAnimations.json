@@ -32,7 +32,12 @@
         "reapersCrescent"
       ],
       "hammer": [
-        "warhammer"
+        "warhammer",
+        "mace",
+        "morningStar",
+        "flail",
+        "maul",
+        "thunderMallet"
       ],
       "twinblade": [
         "twinblade"

@@ -458,6 +458,34 @@
       "traits": {
         "conductive": true
       }
+    },
+    "mace": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "morningStar": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "flail": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "maul": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "thunderMallet": {
+      "traits": {
+        "conductive": true
+      },
+      "flat": {
+        "lightning": 1
+      }
     }
   },
   "enemies": {

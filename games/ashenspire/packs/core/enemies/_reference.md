@@ -416,6 +416,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:pike | Pike | rightHand | weapon | common | spear, retreat |
 | gear:scythe | Scythe | rightHand | weapon | uncommon | polearm, retreat |
 | gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm, retreat |
+| gear:mace | Mace | rightHand | weapon | common | hammer, stagger |
+| gear:morningStar | Morning Star | rightHand | weapon | uncommon | hammer, stagger, bleed |
+| gear:flail | Flail | rightHand | weapon | rare | hammer, stagger |
+| gear:maul | Maul | rightHand | weapon | uncommon | hammer, stagger |
+| gear:thunderMallet | Thunder Mallet | rightHand | weapon | rare | hammer, stagger |
 
 ## Relics (relic:)
 

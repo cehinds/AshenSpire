@@ -3756,6 +3756,62 @@
         "retreat"
       ],
       "range": "reach"
+    },
+    "gear:mace": {
+      "name": "Mace",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:morningStar": {
+      "name": "Morning Star",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "hammer",
+        "stagger",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:flail": {
+      "name": "Flail",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:maul": {
+      "name": "Maul",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:thunderMallet": {
+      "name": "Thunder Mallet",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
     }
   },
   "relics": {

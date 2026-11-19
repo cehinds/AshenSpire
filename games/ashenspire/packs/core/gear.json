@@ -1149,5 +1149,96 @@
     },
     "material": "metal",
     "range": "reach"
+  },
+  {
+    "id": "mace",
+    "name": "Mace",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "mace"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "morningStar",
+    "name": "Morning_Star",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "hammer",
+      "stagger",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "morningStar"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "flail",
+    "name": "Flail",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "flail"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "maul",
+    "name": "Maul",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "maul"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "thunderMallet",
+    "name": "Thunder_Mallet",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "thunderMallet"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]

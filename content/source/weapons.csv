@@ -67,3 +67,8 @@ zweihander,Zweihander,weapon,either,rare,colossal,1.00,B8B0A0,C9A227,bladeAttack
 pike,Pike,weapon,either,common,polearm,1.00,A8A090,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,Long enough that the first blow is yours.,10,halberd,6,3,2,6,1,0,pike,piercing,reach,metal
 scythe,Scythe,weapon,either,uncommon,polearm,1.00,A8A090,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,"A harvest tool, repurposed. The crop is the same.",7,halberd,7,4,2,7,1,0,scythe,slashing,reach,metal
 reapersCrescent,Reaper's Crescent,weapon,either,rare,polearm,1.00,A8A090,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,It takes a little back for every life it cuts.,4,halberd,7,4,2,7,1,0,reapersCrescent,slashing,reach,metal
+mace,Mace,weapon,either,common,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.poise=+1,,Flanged iron and no subtlety at all.,10,warhammer,9,3,2,9,1,0,mace,blunt,melee,metal
+morningStar,Morning Star,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.bleed=+1,,The spikes are what it has instead of mercy.,7,warhammer,9,3,2,9,1,0,morningStar,blunt,melee,metal
+flail,Flail,weapon,either,rare,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,The head has opinions about where it lands.,4,warhammer,9,3,2,9,1,0,flail,blunt,melee,metal
+maul,Maul,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.poise=+4,,"Built to break a stance, not a skin.",7,warhammer,9,3,2,9,1,0,maul,blunt,melee,metal
+thunderMallet,Thunder Mallet,weapon,either,rare,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.poise=+1,,Every swing carries a little weather.,4,warhammer,9,3,2,9,1,0,thunderMallet,blunt,melee,metal

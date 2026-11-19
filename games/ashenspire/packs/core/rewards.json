@@ -32,7 +32,12 @@
         "duelistsFoil",
         "pike",
         "scythe",
-        "reapersCrescent"
+        "reapersCrescent",
+        "mace",
+        "morningStar",
+        "flail",
+        "maul",
+        "thunderMallet"
       ]
     },
     "shields": {
