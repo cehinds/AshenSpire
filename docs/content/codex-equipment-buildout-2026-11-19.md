@@ -43,6 +43,46 @@ Only `strike.*`, `defend.*`, `power.*` and `self.*` mods exist. Type bases and b
 | Hunter's Hide | Back-row damage | No such mod |
 | Heavy/medium/light set bonuses | Counter, Evade, Thorns at turn | Set-bonus mechanic belongs to chore/GearPassMechanics |
 
+## Per-item stat choices
+
+Engine test 32 forbids an item that a same-profile item of equal or lower rarity beats on every axis. Because most new items carry few mods, each was given its own Attack, Defence and Weight (weight equals the Poise threshold, a validator rule), within about two points of its peer. A search (nearest to the intended shape, no dominance in either direction) set the values. Existing items are unchanged.
+
+| Item | Attack | Defence | Weight (= Poise threshold) | Trade-off |
+|---|---|---|---|---|
+| kris | 1 | 1 | 3 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| stiletto | 2 | 1 | 2 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| broadsword | 3 | 2 | 6 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| flamberge | 4 | 1 | 5 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| rapier | 1 | 3 | 3 | light, high defence, low attack |
+| estoc | 2 | 3 | 3 | light and quick, gives up attack |
+| duelistsFoil | 2 | 4 | 3 | best guard of any blade, light |
+| ashenClaymore | 4 | 1 | 8 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| zweihander | 5 | 2 | 9 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| pike | 2 | 1 | 6 | Reach, lower attack, heavy |
+| scythe | 4 | 2 | 7 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| reapersCrescent | 4 | 3 | 6 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| mace | 1 | 2 | 7 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| morningStar | 3 | 2 | 8 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| flail | 3 | 3 | 8 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| maul | 3 | 2 | 10 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| thunderMallet | 4 | 1 | 10 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| beardedAxe | 2 | 1 | 6 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| moonlitKatana | 3 | 2 | 4 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| moonGlaives | 2 | 1 | 5 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| longbow | 2 | 1 | 3 | light, modest attack |
+| huntersRecurve | 2 | 2 | 3 | balanced bow |
+| handCrossbow | 1 | 2 | 2 | lightest bow, low attack |
+| arbalest | 3 | 1 | 4 | heavier, harder-hitting |
+| leatherWhip | 1 | 1 | 2 | light Reach, lowest attack |
+| thornWhip | 1 | 2 | 2 | light Reach, a little guard |
+| ironKnuckles | 1 | 2 | 3 | light, low attack, some guard |
+| beastClaws | 2 | 1 | 3 | light, sharper |
+| stormSceptre | 2 | 2 | 3 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| grimoire | 0 | 6 | 3 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| prayerBook | 0 | 6 | 2 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| sunTalisman | 1 | 3 | 1 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+| boneTalisman | 3 | 2 | 2 | searched so no same-profile item of equal or lower rarity dominates it, or is dominated by it |
+
 ## Notes
 
 - Maul is an enemy move name in the game, not a weapon; it is authored here as a new hammer.
