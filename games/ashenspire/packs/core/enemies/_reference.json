@@ -2590,7 +2590,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:pallidOathCamel.oathWater": {
@@ -4592,14 +4592,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.oathPack": {
-      "name": "Oath Pack",
-      "text": "CON +2, WIS +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.wisdom=+1"
-      ]
-    },
     "relic:enemy.relic.judgeSeal": {
       "name": "Judge Seal",
       "text": "STR +2, WIS +1",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.constitution=+2",
         "self.sp=-1"
+      ]
+    },
+    "relic:enemy.relic.oathPack": {
+      "name": "Oath Pack",
+      "text": "CON +2, WIS +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.wisdom=+1"
       ]
     }
   }

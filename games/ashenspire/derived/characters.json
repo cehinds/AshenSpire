@@ -6799,10 +6799,10 @@
         "own": 1,
         "bonuses": [
           {
-            "source": "lantern",
-            "name": "Lantern",
+            "source": "sunTalisman",
+            "name": "Sun_Talisman",
             "kind": "gear",
-            "amount": 1
+            "amount": 2
           },
           {
             "source": "enemy.relic.oathPack",
@@ -6811,7 +6811,7 @@
             "amount": 1
           }
         ],
-        "total": 3
+        "total": 4
       },
       "intelligence": {
         "own": 1,
@@ -6825,17 +6825,17 @@
         "constitution": 40,
         "strength": 20,
         "dexterity": 6,
-        "wisdom": 6,
+        "wisdom": 8,
         "intelligence": 1,
         "level": 10
       },
-      "total": 93,
-      "formula": "10+40+20+6+6+1+10 = 93"
+      "total": 95,
+      "formula": "10+40+20+6+8+1+10 = 95"
     },
     "pools": {
-      "hp": 93,
+      "hp": 95,
       "sp": 4,
-      "mp": 3,
+      "mp": 4,
       "ar": 4,
       "dr": 2,
       "hand": 4
@@ -6848,8 +6848,8 @@
       },
       {
         "key": "offHand",
-        "id": "lantern",
-        "name": "Lantern"
+        "id": "sunTalisman",
+        "name": "Sun_Talisman"
       }
     ],
     "relics": [
