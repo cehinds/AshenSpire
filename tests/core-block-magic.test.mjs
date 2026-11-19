@@ -40,11 +40,11 @@ test('the numeric Barrier pool is gone: it mitigates nothing (SPEC 4.1a)',()=>{
  assert.equal(r.blocked,4);
  assert.equal(r.barrierMitigated,0);
 });
-test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
+test('a pierce hit (one stack) ignores 1 Block',()=>{
  for (const carrier of [pierce,{...physical,tags:['pierce']},{...physical,authoredTags:['damage:piercing']}]) {
   const r=hit(carrier,50);
-  assert.equal(r.hpLoss,2,'floor(.2 * 10)');
-  assert.equal(r.blocked,8);
+  assert.equal(r.hpLoss,1,'one stack ignores 1 Block');
+  assert.equal(r.blocked,9);
   assert.equal(hit(carrier,1).blockRemaining,0,'Block is spent as the same hit without pierce would spend it');
   assert.equal(hit(carrier,1).hpLoss,10,'a Block of 1 is all pierced, so the whole hit reaches HP');
   assert.ok(isPierceHit(carrier.combatProfile,carrier));

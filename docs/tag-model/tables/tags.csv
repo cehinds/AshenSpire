@@ -187,7 +187,7 @@ meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.
 meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,A6D8EF,school:frost
 meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
 meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,live-tag,⛰,8A7B5C,school:earth
-meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
+meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,9BC8BE,school:force
 meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,astral,live-tag,✦,7FA8C9,starstone
 meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
 meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,theme.oath,live-tag,✚,C9A227,oath

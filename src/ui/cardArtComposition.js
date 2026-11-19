@@ -2,12 +2,15 @@ import { approvedCardArt } from './layeredCardArt.js';
 import { objectTagIds } from '../content/tags.js';
 import { tagService } from '../model/tagService.js';
 import { proceduralCardArt } from './proceduralCardArt.js';
+import { CardStatModifierTags } from './cardStatModifiers.js';
+import { combatProfileFor } from '../model/combatCardProfile.js';
 
 export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', 'evade', 'sweep', 'defend']);
 // Presentation only: these palettes do not introduce damage schools or rules.
 export const CARD_ART_ELEMENTS = Object.freeze(Object.fromEntries(Object.entries({
   wind: { variant: 1, color: '#c8e3df', glow: '#81b5af', motif: 'wisps', filter: '' },
-  force: { variant: 4, color: '#b7baff', glow: '#777fe8', motif: 'rings', filter: 'hue-rotate(-28deg) saturate(.75)' },
+  // Force is green, the Alteration family (owner, 2026-11-18); it keeps its own rings motif.
+  force: { variant: 4, color: '#b2e6cf', glow: '#60b59e', motif: 'rings', filter: 'hue-rotate(27deg)' },
   fire: { variant: 2, color: '#ffc17e', glow: '#ee7237', motif: 'embers', filter: '' },
   lightning: { variant: 3, color: '#fff0a2', glow: '#ddbb4e', motif: 'bolts', filter: '' },
   earth: { variant: 5, color: '#d2b486', glow: '#a17e42', motif: 'shards', filter: 'hue-rotate(-65deg) saturate(.6)' },
@@ -60,8 +63,8 @@ const damageElement = (def, tags) => {
 };
 
 /** Compatibility adapter only: old definitions may declare visual facts in DSL.
- * Explicit cardTags are authoritative, even when empty; the pure factory never
- * reads effects, card IDs or registry card definitions.
+ * Explicit cardTags are authoritative for identity, even when empty. Live
+ * stat modifiers supply additional presentation tags for every definition.
  */
 export function proceduralDefinitionArt(def, { ref, registries } = {}) {
   if (!def || typeof def !== 'object') return null;
@@ -91,11 +94,21 @@ export function proceduralDefinitionArt(def, { ref, registries } = {}) {
       tags.push(...damage.filter(type => typeof type === 'string').map(type => `damage:${type}`));
     }
   }
+  // Runtime card proposals can change range without rewriting the authored tags.
+  if (def.range !== undefined || typeof def.reach === 'string') {
+    const { range } = combatProfileFor({ range: def.range, reach: def.reach });
+    if (range) {
+      for (let i = tags.length - 1; i >= 0; i--) {
+        if (/^(range|reach):/.test(tags[i])) tags.splice(i, 1);
+      }
+      tags.push(`range:${range}`);
+    }
+  }
   const validRank = rank => Number.isInteger(rank) && rank > 0;
   const validAbility = rank => Number.isInteger(rank) && rank >= 0;
   const rank = validRank(def.rank) ? def.rank : validAbility(def.abilityRank) ? def.abilityRank + 1
     : validRank(ref?.rank) ? ref.rank : validAbility(ref?.abilityRank) ? ref.abilityRank + 1 : 1;
-  return proceduralCardArt({ type: def.type, tags, rank }, { registries });
+  return proceduralCardArt({ type: def.type, tags: [...tags, ...CardStatModifierTags(def, registries)], rank }, { registries });
 }
 
 /** Every active status can contribute a small motif; registry labels are data, not markup. */

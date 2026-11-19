@@ -32,14 +32,18 @@ function rowArt(row) {
   const well = row.artAsset
     ? artWell({ src: composed ? cardCutoutUrl(row.artAsset) : assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'option-row-art' } })
     : artWell({ glyph: row.artGlyph, small: true, attrs: { class: 'option-row-art' } });
-  hideOnError(well.querySelector?.('img'));
+  const base = well.querySelector?.('img');
   if (row.artComposition) {
+    const paintLayers = () => {
+      if (well.querySelector('[data-card-art-layers]')) return;
+      well.insertAdjacentHTML?.('beforeend', cardArtLayersHtml(row.artComposition));
+      if (base && well.querySelectorAll) bindCardComponentFailures(well, base);
+    };
     well.style && Object.assign(well.style, { position: 'relative', isolation: 'isolate' });
-    well.insertAdjacentHTML?.('beforeend', cardArtLayersHtml(row.artComposition));
-    // A cutout that fails to load fires the base image's error (hidden and marked by hideOnError).
-    const base = well.querySelector?.('img');
-    if (base && well.querySelectorAll) bindCardComponentFailures(well, base);
-  }
+    paintLayers();
+    // A failed base image or cutout hides the whole composition.
+    hideOnError(base, paintLayers, () => well.querySelector('[data-card-art-layers]')?.remove());
+  } else hideOnError(base);
   return well;
 }
 

@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreWardDecay } from '../model/fixCoreMechanics.js';
 import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
@@ -219,7 +219,9 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 }
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
+  const before = getStacks(target, statusId);
   const result = removeStatusRaw(ctx, target, statusId, opts);
+  TakeFromBreakGrant(target, statusId, before - getStacks(target, statusId));
   syncPoolsAfterStatus(ctx, target);
   return result;
 }
@@ -257,10 +259,35 @@ export function ClearTurnBoosts(ctx, entity) {
     // before it (or gained since, without `thisTurn`) are never eaten. A boost saved without a base keeps the old subtraction.
     const present = Number.isFinite(bases[statusId]) ? Math.max(0, Math.min(stacks, inst.stacks - bases[statusId])) : stacks;
     inst.stacks -= present;
+    TakeFromBreakGrant(entity, statusId, present);
     if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
   }
   delete entity.turnBoosts;
   delete entity.turnBoostBases;
+}
+
+/**
+ * TakeFromBreakGrant(target, statusId, loss) — the one helper every stack-loss path calls (removeStatus: a cleanse, a consume, turn-start decay;
+ * turn-end decay; ClearTurnBoosts). A loss takes the stacks a Poise break added FIRST, then the rest, so a gain from another source made after the
+ * break (or before it) is never mistaken for the grant: base 1, break +2, Bash +2, lose 1 leaves a grant of 1 and expiry takes it, leaving 3.
+ */
+export function TakeFromBreakGrant(target, statusId, loss) {
+  const grant = target?.broken?.statusGrants?.[statusId];
+  if (!grant || !(loss > 0)) return;
+  grant.granted = Math.max(0, grant.granted - loss);
+}
+
+/**
+ * RemoveBreakGrants(ctx, entity, grants) — remove what a Poise break added ({ id: { granted } }), never more than the grant that is left: every loss since
+ * the break took the grant first (TakeFromBreakGrant), so stacks from another source (Bash, a later card) are never eaten.
+ */
+export function RemoveBreakGrants(ctx, entity, grants) {
+  for (const [id, { granted }] of Object.entries(grants || {})) {
+    const inst = entity.statuses?.[id];
+    if (!inst) continue;
+    const present = Math.max(0, Math.min(granted, inst.stacks));
+    if (present > 0) removeStatus(ctx, entity, id, { amount: present, reason: 'brokenEnd' });
+  }
 }
 
 /**
@@ -279,7 +306,7 @@ export function decayAtTurnEnd(ctx, entity) {
     if (statusId === 'precision') continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
-      else inst.stacks -= 1;
+      else { inst.stacks -= 1; TakeFromBreakGrant(entity, statusId, 1); }
       // A stack that carries a Ward or Poise bonus moves the pool at once, not at the next status change.
       syncPoolsAfterStatus(ctx, entity);
       if (getStacks(entity, statusId) <= 0) {
@@ -389,8 +416,22 @@ export function anyCombatantFlag(ctx, key) {
 export function statusDefinition(ctx, id, holder = null) {
   return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id), holder);
 }
+/**
+ * ExpireBreakStatuses(ctx, entity) — the statuses a Poise break added last until the start of the owner's next turn (owner, 2026-11-18, 3a). The break records
+ * whether the owner's turn start for its round had already happened: if not (an enemy broken in the player's phase, or by another enemy's action before its own
+ * turn), the next turn start is this round's; if so, it is the next round's.
+ * Broken itself (the lost action) runs on to EndBrokenWhenDue.
+ */
+export function ExpireBreakStatuses(ctx, entity) {
+  const record = entity?.broken;
+  if (!record?.statusGrants) return;
+  if (record.ownerTurnStarted && !((ctx.turn || 0) > record.since)) return;
+  RemoveBreakGrants(ctx, entity, record.statusGrants);
+  delete record.statusGrants;
+}
 export function decayAtTurnStart(ctx, entity) {
   if (!fixCoreEnabled(ctx) || entity.fixCoreDecayRound === ctx.turn) return;
+  ExpireBreakStatuses(ctx, entity);
   entity.fixCoreDecayRound = ctx.turn;
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {
@@ -401,7 +442,8 @@ export function decayAtTurnStart(ctx, entity) {
       const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
       if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
     } else if (def.decay === 'perTurnEnd' || id === 'evade') {
-      removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
+      // Owner, 2026-11-18: Ward's own decay is `ward.decayPerTurn`; its max Poise leaves with each stack (syncPoolsAfterStatus clamps current Poise).
+      removeStatus(ctx, entity, id, { amount: id === 'ward' ? FixCoreWardDecay(ctx, entity, amount) : amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {
       inst.duration -= 1;
       if (inst.duration <= 0) removeStatus(ctx, entity, id, { reason: 'expired' });
