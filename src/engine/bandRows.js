@@ -97,18 +97,27 @@ export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   return true;
 }
 
-/** PlayerRetreatBands(ctx, source, target): 1 when the player in this pair holds a Retreat stack (owner 2026-11-18 section 22), else 0. The enemy's own Retreat is its back row (a band). */
-export function PlayerRetreatBands(ctx, source, target) {
-  if (!BandsActive(ctx)) return 0;
-  const player = [source, target].find(entity => entity && entity.kind !== 'enemy');
-  return player && RetreatStacks(player) > 0 ? 1 : 0;
+/** ContactRetreatStacks(ctx, source, target): the Retreat stacks each side of a pair holds (owner 2026-11-18 section 22, amended 2026-11-19: one Advance per stack). */
+export function ContactRetreatStacks(ctx, source, target) {
+  if (!BandsActive(ctx)) return { enemyStacks: 0, playerStacks: 0 };
+  const enemy = [source, target].find(entity => entity?.kind === 'enemy'), player = [source, target].find(entity => entity && entity.kind !== 'enemy');
+  return { enemyStacks: enemy ? RetreatStacks(enemy) : 0, playerStacks: player ? RetreatStacks(player) : 0 };
 }
 
-/** SpendPlayerRetreat(ctx, source, plan): the Advance a plan paid for a player's Retreat spends one of that player's stacks. */
-export function SpendPlayerRetreat(ctx, source, plan) {
-  if (!BandsActive(ctx) || !plan?.targets?.some(row => row.retreatBands > 0)) return;
-  const keys = new Set(source.kind === 'enemy' ? plan.targets.filter(row => row.retreatBands > 0).map(row => row.targetKey) : [actorRangeKey(ctx, source)]);
-  for (const player of playerEntities(ctx)) if (keys.has(actorRangeKey(ctx, player))) spendRetreat(ctx, player, 1);
+/**
+ * SpendRetreatAdvances(ctx, source, plan): the Advances a plan paid for Retreat each spend one stack. ORDER: the enemy's stacks first, then the player's
+ * (the enemy stands between you and the hit; your own Retreat is the step you took back, so it is walked off last). A melee contact's full stacks on
+ * both sides were priced into the plan, so all of them are spent.
+ */
+export function SpendRetreatAdvances(ctx, source, plan) {
+  if (!BandsActive(ctx) || !plan?.targets) return;
+  const opposing = plan.targets.filter(row => row.coverage === 0 && !row.bypass).map(row => row.targetKey);
+  if (!opposing.length) return;
+  const keys = new Set(opposing);
+  const all = [...ctx.enemies, ...playerEntities(ctx)];
+  for (const entity of all) if (entity.kind === 'enemy' && keys.has(actorRangeKey(ctx, entity))) spendRetreat(ctx, entity, RetreatStacks(entity));
+  const playerKeys = new Set(source.kind === 'enemy' ? opposing : [actorRangeKey(ctx, source)]);
+  for (const entity of playerEntities(ctx)) if (playerKeys.has(actorRangeKey(ctx, entity))) spendRetreat(ctx, entity, RetreatStacks(entity));
 }
 
 /** PullEnemy(ctx, target): Gale Pull (owner 2026-11-18 section 22). Removes 1 Retreat stack from the target; with none left the target comes forward to the front row. No rows: nothing. */

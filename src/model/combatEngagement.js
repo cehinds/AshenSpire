@@ -93,7 +93,7 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
   if (!['advance', 'throw'].includes(route)) throw Error('Unknown range route');
   if (rangeStateProblems(state).length || !Array.isArray(contacts)) throw Error('Invalid engagement plan input');
   const policy = state.policy;
-  let available = route !== 'throw' || policy.enabled, maxMissing = 0;
+  let available = route !== 'throw' || policy.enabled, maxMissing = 0, maxRetreat = 0;
   const targets = contacts.map((contact, index) => {
     const { targetKey, weapon = false, throwCapable = false, bypass = false, sourceWeaponId = null } = contact;
     const coverage = rangeBand(contact.coverage ?? 'melee');
@@ -101,12 +101,17 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     const inherited = context?.targets?.find(row => rangePairKey(context.sourceKey,row.targetKey) === rangePairKey(sourceKey,targetKey));
     const actualBand = inherited?.actualBand ?? engagementBand(state, sourceKey, targetKey);
     const distance = contextBand(context, sourceKey, targetKey, actualBand);
-    // Retreat on the player's side (owner 2026-11-18 section 22): one more Advance, for a hit with no Reach (the contact says so; Reach ignores Retreat).
-    const retreatBands = policy.enabled && !bypass ? Math.max(0, Math.floor(contact.retreatBands || 0)) : 0;
-    const missingBands = policy.enabled && !bypass ? Math.max(0, distance + retreatBands - coverage) : 0;
-    const extended = route === 'throw' && missingBands > 0;
-    if (extended && (!throwCapable || missingBands > 1)) available = false;
+    // Retreat (owner 2026-11-18 section 22, amended 2026-11-19): a hit with no Reach (melee coverage) needs one Advance per Retreat stack. The enemy's
+    // first stack is the back-row band already in `distance`; its further stacks and each of the player's own stacks add one band. A frozen receipt carries the sum.
+    const retreatBands = policy.enabled && !bypass && coverage === 0
+      ? Math.max(0, Math.floor(contact.retreatBands ?? Math.max(0, (contact.enemyStacks || 0) - distance) + (contact.playerStacks || 0))) : 0;
+    // A throw replaces the distance Advance (one band beyond the weapon's range); it never replaces a Retreat Advance, which is paid on either route.
+    const distanceMissing = policy.enabled && !bypass ? Math.max(0, distance - coverage) : 0;
+    const missingBands = route === 'throw' ? distanceMissing : distanceMissing + retreatBands;
+    const extended = route === 'throw' && distanceMissing > 0;
+    if (extended && (!throwCapable || distanceMissing > 1)) available = false;
     maxMissing = Math.max(maxMissing, missingBands);
+    maxRetreat = Math.max(maxRetreat, retreatBands);
     return { contactId: contact.contactId ?? String(index), targetKey, actualBand, band: distance, coverage,
       weapon: !!weapon, throwCapable: !!throwCapable, bypass: !!bypass, sourceWeaponId, ...(retreatBands ? { retreatBands } : {}),
       missingBands, effectiveBand: !policy.enabled || bypass ? Math.min(distance, coverage) : route === 'advance' ? Math.min(distance, coverage) : distance,
@@ -119,7 +124,7 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     approachByPair.set(row.targetKey, Math.max(approachByPair.get(row.targetKey) || 0, row.missingBands));
   }
   for (const row of targets) row.effectiveBand = policy.enabled ? Math.max(0, row.band - (approachByPair.get(row.targetKey) || 0)) : row.band;
-  const advanceSp = policy.enabled && route === 'advance' ? maxMissing * policy.advanceSpPerBand : 0;
+  const advanceSp = policy.enabled ? (route === 'advance' ? maxMissing : maxRetreat) * policy.advanceSpPerBand : 0;
   if (!count(advanceSp)) throw Error('Range payment exceeds the safe integer limit');
   return { version: 1, sourceKey, route, available, advanceSp, targets };
 }
@@ -130,7 +135,7 @@ export function rangePlanProblems(plan, state, actorKeys = null) {
     || plan.rootId !== undefined && !text(plan.rootId)) return ['Invalid range action plan'];
   for (const row of plan.targets) if (!fields(row, ['contactId', 'targetKey', 'actualBand', 'band', 'coverage', 'weapon', 'throwCapable', 'bypass', 'sourceWeaponId', 'retreatBands', 'missingBands', 'effectiveBand', 'precisionDelta'])
     || !text(row.contactId) || !opposingRangeKeys(plan.sourceKey, row.targetKey) || actorKeys && !actorKeys.includes(row.targetKey)
-    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.missingBands > 2 || row.retreatBands !== undefined && !count(row.retreatBands)
+    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.retreatBands !== undefined && !count(row.retreatBands)
     || !Number.isSafeInteger(row.precisionDelta) || !['weapon', 'throwCapable', 'bypass'].every(k => typeof row[k] === 'boolean')
     || row.sourceWeaponId !== null && !text(row.sourceWeaponId)) return ['Invalid range contact receipt'];
   if (new Set(plan.targets.map(row => row.contactId)).size !== plan.targets.length) return ['Duplicate range contacts'];
