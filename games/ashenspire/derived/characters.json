@@ -7061,8 +7061,8 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "straightSword",
-            "name": "Straight_Sword",
+            "source": "duelistsFoil",
+            "name": "Duelists_Foil",
             "kind": "gear",
             "amount": 1
           },
@@ -7079,13 +7079,19 @@
         "own": 2,
         "bonuses": [
           {
+            "source": "duelistsFoil",
+            "name": "Duelists_Foil",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
             "source": "parryDagger",
             "name": "Parrying_Dagger",
             "kind": "gear",
             "amount": 1
           }
         ],
-        "total": 3
+        "total": 4
       },
       "constitution": {
         "own": 1,
@@ -7115,27 +7121,27 @@
         "base": 10,
         "constitution": 10,
         "strength": 20,
-        "dexterity": 9,
+        "dexterity": 12,
         "wisdom": 6,
         "intelligence": 1,
         "level": 10
       },
-      "total": 66,
-      "formula": "10+10+20+9+6+1+10 = 66"
+      "total": 69,
+      "formula": "10+10+20+12+6+1+10 = 69"
     },
     "pools": {
-      "hp": 66,
-      "sp": 3,
+      "hp": 69,
+      "sp": 4,
       "mp": 2,
       "ar": 4,
-      "dr": 3,
+      "dr": 4,
       "hand": 4
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "straightSword",
-        "name": "Straight_Sword"
+        "id": "duelistsFoil",
+        "name": "Duelists_Foil"
       },
       {
         "key": "offHand",
