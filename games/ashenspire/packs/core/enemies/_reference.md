@@ -274,7 +274,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:woundwoodTusker.rootPlow | Root Plow | attack | 2 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.barkHide | Bark Hide | skill | 1 | 0 | Gain {block} Block. |
 | card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
-| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 4 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage. |
 | card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:mireProcessional.pallLash | Pall Lash | attack | 1 | 0 | Deal {damage} damage. |
 | card:mireProcessional.bogCandle | Bog Candle | attack | 1 | 1 | Deal {damage} damage. |

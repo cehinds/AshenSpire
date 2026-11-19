@@ -2227,7 +2227,7 @@
       "name": "Woundwood Rampage",
       "type": "attack",
       "cost": {
-        "stamina": 4,
+        "stamina": 3,
         "mana": 0
       },
       "text": "Deal {damage} damage.",

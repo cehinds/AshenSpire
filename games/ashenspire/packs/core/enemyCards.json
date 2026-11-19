@@ -5525,8 +5525,8 @@
     "name": "Woundwood_Rampage",
     "class": "colorless",
     "rarity": "special",
-    "cost": 4,
-    "staminaCost": 4,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -5536,7 +5536,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 20
       }
     ],
     "tags": [
