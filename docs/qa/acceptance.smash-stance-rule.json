@@ -1,0 +1,101 @@
+{
+  "request": "Smash vs stance: +50% damage against Defend (currently smashVsDefensive.damageMultiplier 1.25 in content/source/fixCoreMechanics.json) and −25% against Counter (new). This goes in a separate fix PR (fix/SmashStanceRule) from dev, not in this branch.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "wide",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "tablet",
+      "width": 820,
+      "height": 1180
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Core Smash real Information states Defend 1.5 and Prepared 1.25 (audio muted)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=wanderingSoldier&shotDeck=core.smash&shotSettings=%7B%22muteAudio%22%3Atrue%7D",
+      "ready": ".hand .card[data-card-id=\"core.smash\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".hand .card[data-card-id=\"core.smash\"]",
+            "ms": 1100
+          }
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": "button[aria-label=\"Information about Smash\"]"
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The real Smash Information modal opens",
+          "selector": ".card-inspection-modal"
+        },
+        {
+          "kind": "count",
+          "label": "Information shows the actual core.smash card",
+          "selector": ".card-inspection-modal .card[data-card-id=\"core.smash\"]",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "Defend receives exactly the new 1.5 damage multiplier",
+          "selector": ".card-inspection-modal .card-inspection-details",
+          "includes": "Against Defend: 1.5× damage."
+        },
+        {
+          "kind": "text",
+          "label": "Prepared retains its 1.25 damage multiplier",
+          "selector": ".card-inspection-modal .card-inspection-details",
+          "includes": "Against Prepared: 1.25× damage."
+        },
+        {
+          "kind": "text",
+          "label": "The existing Block bonus and Poise share remain stated",
+          "selector": ".card-inspection-modal .card-inspection-details",
+          "includes": "Add a quarter of their Block; half of the total breaks Poise."
+        },
+        {
+          "kind": "visible",
+          "label": "The Information tag rail exposes real Smash help",
+          "selector": ".card-inspection-modal .inspection-tags"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No unexpected browser console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Fresh combat incorrectly claims the old shared Defend and Prepared multiplier",
+          "selector": ".card-inspection-modal .card-inspection-details",
+          "includes": "Against Defend or Prepared: 1.25× damage."
+        }
+      ]
+    }
+  ]
+}

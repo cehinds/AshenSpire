@@ -16,6 +16,10 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Revalidated after GearPass 6232329243 (2026-11-19): only three CURRENT captures move to the combined 04de9306 runtime.
+// The immutable upstream historical capture and all event, RNG, receipt and continuation fields are unchanged.
+// Recaptured 2026-11-19 for the Defend-only Smash override: only current profile/runtime, snapshot and save digests move.
+// Native and production agree; events, RNG, receipts and continuations are unchanged, and the complete historical scenario is unchanged.
 // Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
 // Native and production agree; immutable-parent oracles explain historical metadata drift, with events, RNG, receipts, continuations and original profile provenance preserved.
 // Recaptured 2026-11-19 for the Strength call-map reanchor to finishAbilityPlay: only 27 current-profile/runtime/snapshot/save hashes moved.
@@ -103,6 +107,8 @@ function openFight(api, enemyId, encounterId, profileId) {
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight drops the `bands` rules, as one saved before them.
   delete combat.fixCoreRules?.bands;
+  // This scenario pins an actual pre-override combat, not today's new-fight defaults.
+  if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
   return { api, profile, registries, run, combat, encounter };
 }
