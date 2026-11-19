@@ -5020,8 +5020,8 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "shortbow",
-            "name": "Shortbow",
+            "source": "handCrossbow",
+            "name": "Hand_Crossbow",
             "kind": "gear",
             "amount": 1
           }
@@ -5068,8 +5068,8 @@
     "gear": [
       {
         "key": "mainHand",
-        "id": "shortbow",
-        "name": "Shortbow"
+        "id": "handCrossbow",
+        "name": "Hand_Crossbow"
       }
     ],
     "relics": [],

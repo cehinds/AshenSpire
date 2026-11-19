@@ -3741,7 +3741,7 @@
     "defaultGear": [
       {
         "key": "mainHand",
-        "id": "shortbow"
+        "id": "handCrossbow"
       }
     ],
     "defaultRelics": [],
