@@ -25,8 +25,9 @@
    and the mask's .alternative-scene-edge, SVG filter attributes) are
    the same: static art blurred once per fit. Without them the sharp scene ends in
    a hard rectangle against its stretched fill. The cost pennant trim keeps its
-   small painted filter to convey card rarity. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']):not(:where([data-component='flag-trim'] img)),
+   small painted filter to convey card rarity. Static stat-modifier artwork
+   keeps its filters so buffs and debuffs retain their authored colors. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']):not(:where([data-component='flag-trim'] img, img[data-art-layer^='modifier-'])),
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
 :root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
   filter: none !important;

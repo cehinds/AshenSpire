@@ -358,11 +358,12 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
     const magicBypass = pierceBypassed-piercedPhysicalPart;
     let magicBlocked = plainMagicBlocked-magicBypass;
-    // The pierced physical amount meets Poise first, 1:1 (owner, 2026-10-26): Poise loses up to that much and only the rest reaches HP.
-    // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
+    // Saved fraction-based Pierce keeps its 1:1 Poise absorption (owner, 2026-10-26). Stack-based Pierce adds no special Poise damage:
+    // everything Block leaves uses the ordinary split, including Force's half-Poise share (owner, 2026-11-18).
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption, so its pierced part gets none either.
-    const piercePhysical = smashRule ? 0 : piercedPhysicalPart;
+    const stackPierce = fixCorePierceRules(fixCoreRules(ctx,target)).blockIgnoredPerStack > 0;
+    const piercePhysical = smashRule || stackPierce ? 0 : piercedPhysicalPart;
     piercePoise = Math.min(piercePhysical,poisePool);
     const pierceToHp = piercePhysical-piercePoise;
     const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;

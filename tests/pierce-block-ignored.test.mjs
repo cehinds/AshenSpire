@@ -48,6 +48,45 @@ test('Pierce cannot ignore more Block than there is', () => {
   assert.equal(receipt.pierceBypassed, 1);
 });
 
+test('stack Pierce leaves the whole post-Block hit on the ordinary Poise split', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  enemy.block = 5;
+  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
+  assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
+  assert.equal(receipt.blocked, 3);
+  assert.equal(receipt.blockRemaining, 0, 'Block spending stays the same as an unpierced hit');
+  assert.equal(receipt.piercePoise, 0, 'Pierce adds no separate 1:1 Poise absorption');
+  assert.equal(receipt.poiseMitigated, 5, 'the 17 post-Block damage uses the ordinary 25% split');
+  assert.equal(receipt.hpLoss, 12);
+});
+
+test('stack Pierce leaves a Force hit on its half-Poise split after Block', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  enemy.block = 5;
+  const force = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force', 'pierce'], pierceStacks: 2 };
+  const receipt = hit(combat, enemy, force, 40);
+  assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
+  assert.equal(receipt.blocked, 3);
+  assert.equal(receipt.blockRemaining, 0);
+  assert.equal(receipt.piercePoise, 0);
+  assert.equal(receipt.poiseMitigated, 9, 'Force absorbs half of the 17 remaining damage, keeping its existing rounding');
+  assert.equal(receipt.hpLoss, 8);
+});
+
+test('a saved fight without stack Pierce retains the fraction bypass and separate 1:1 Poise absorption', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  delete combat.fixCoreRules.pierce.blockIgnoredPerStack;
+  enemy.block = 5;
+  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
+  assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
+  assert.equal(receipt.pierceBypassed, 4, 'legacy Pierce ignores 20% of the hit, rather than 2 Block');
+  assert.equal(receipt.blocked, 1);
+  assert.equal(receipt.blockRemaining, 0);
+  assert.equal(receipt.piercePoise, 4);
+  assert.equal(receipt.poiseMitigated, 8, '4 pierced damage meets Poise 1:1, then 15 uses the ordinary split');
+  assert.equal(receipt.hpLoss, 11);
+});
+
 test('Pierce with Ward up: what Block holds is Block, and Poise still absorbs the whole rest', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 0 });
   enemy.block = 5;

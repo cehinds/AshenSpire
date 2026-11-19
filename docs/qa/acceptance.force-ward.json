@@ -29,17 +29,23 @@
     },
     {
       "name": "force-hits-block-first",
-      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.batteringGale,core.defend",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.manaSurge,core.batteringGale,core.defend&shotMaxMana=3",
       "ready": ".hand .card",
       "settleMs": 1500,
       "actions": [
+        { "click": ".hand .card[data-card-id=\"core.manaSurge\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".hand .card[data-card-id=\"core.manaSurge\"]" },
+        { "wait": { "ms": 1500 } },
         { "click": ".hand .card[data-card-id=\"core.batteringGale\"]" },
         { "wait": { "ms": 400 } },
         { "click": ".combatant.enemy" },
-        { "wait": { "ms": 1500 } }
+        { "wait": { "ms": 4000 } }
       ],
       "success": [
         { "kind": "visible", "label": "The enemy is still on screen after the Force hit", "selector": ".combatant.enemy" },
+        { "kind": "count", "label": "Mana Surge was played to fund the Force cast", "selector": ".hand .card[data-card-id=\"core.manaSurge\"]", "eq": 0 },
+        { "kind": "count", "label": "Battering Gale was played rather than refused", "selector": ".hand .card[data-card-id=\"core.batteringGale\"]", "eq": 0 },
         { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
       ],
       "failure": []

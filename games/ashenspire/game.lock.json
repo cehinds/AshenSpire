@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:5348e49326533bb15c1f6d1e75666e688ac2dc3c68896f14815cb28561b74b13",
+      "hash": "sha256:1bc6a676e5072cf568335492113cbd56553d98aea28021ae62087fcd41943465",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772"
     },
     "core": {
-      "hash": "sha256:5348e49326533bb15c1f6d1e75666e688ac2dc3c68896f14815cb28561b74b13",
+      "hash": "sha256:1bc6a676e5072cf568335492113cbd56553d98aea28021ae62087fcd41943465",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [

@@ -4,6 +4,7 @@ import { approvedCardArt } from './layeredCardArt.js';
 import { cardRank } from '../model/cardRank.js';
 
 const actions = ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend'];
+const weaponActions = ['attack', 'smash', 'counter', 'sweep'];
 const aliases = { defense: 'defend', evasion: 'evade' };
 const elements = ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind', 'blood'];
 const elementAliases = { alternation: 'alteration', illusion: 'psychic', decay: 'necrotic', cold: 'frost', holy: 'divine', sacred: 'divine', arcane: 'force' };
@@ -45,6 +46,14 @@ function backgroundColor(selected, category) {
 }
 // One approved effect layer per presentation `fx:` tag (asset-data/card-art/reviewed-library.json effectLayers).
 const effectLayers = Object.freeze(reviewed.effectLayers || {});
+const modifierArt = freeze(clone(reviewed.proceduralModifiers));
+const modifierLayers = [modifierArt.object, modifierArt.aura, modifierArt.chevrons];
+const modifierWidth = Math.max(...modifierLayers.map(layer => 2 * Math.abs(layer.x) + layer.width));
+const modifierHeight = Math.max(...modifierLayers.map(layer => 2 * Math.abs(layer.y) + layer.height));
+const modifierAssets = freeze(clone(Object.fromEntries([
+  modifierArt.chevrons.assetId,
+  ...Object.values(modifierArt.stats).map(stat => stat.assetId).filter(Boolean),
+].map(id => [id, reviewed.assets[id]]))));
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
@@ -103,6 +112,75 @@ function withOpacity(sprite, intensity) {
   return result;
 }
 
+function statModifier(tag) {
+  const [polarity, rawStat, extra] = tag.split(':');
+  const key = rawStat?.toLowerCase();
+  const stat = Object.hasOwn(modifierArt.statAliases, key) ? modifierArt.statAliases[key] : key;
+  if (extra !== undefined || !Object.hasOwn(modifierArt.polarities, polarity)
+    || !Object.hasOwn(modifierArt.stats, stat)) return null;
+  const entry = modifierArt.stats[stat];
+  // Pending cutouts use the ordinary action and status art.
+  return modifierAssets[entry.assetId] ? { tag: `${polarity}:${stat}`, polarity, stat, ...entry } : null;
+}
+
+function selectStatModifiers(tags) {
+  const modifiers = new Map(tags.map(statModifier).filter(Boolean).map(row => [row.tag, row]));
+  const stat = modifierArt.priority.find(id => modifiers.has(`buff:${id}`) || modifiers.has(`debuff:${id}`));
+  return [modifiers.get(`buff:${stat}`), modifiers.get(`debuff:${stat}`)].filter(Boolean);
+}
+
+function statModifierLayers(modifiers, layout, coordinateSpace, startZ) {
+  const { object, aura, chevrons, polarities } = modifierArt;
+  const { polarity, stat, assetId } = modifiers[0];
+  const opposing = modifiers.length > 1;
+  const size = Math.min(layout.width / modifierWidth, layout.height / modifierHeight, layout.maxSize);
+  const centerX = layout.x + layout.width / 2, centerY = layout.y + layout.height / 2;
+  const objectScale = layout.objectScale ? modifierArt.stats[stat].centerObjectScale ?? layout.objectScale : 1;
+  let zIndex = startZ;
+
+  function sprite(role, id, layer, direction, { filter, tint } = {}) {
+    const { path, name: label } = modifierAssets[id];
+    const { rotation, opacity, blendMode } = layer;
+    const offsetY = role === 'chevrons' ? layout.chevronsOffsetY : layout.objectOffsetY;
+    const x = centerX + layer.x * size, y = centerY + (layer.y + (offsetY ?? 0)) * size;
+    const layerScale = role === 'chevrons' ? size : size * objectScale;
+    const width = layer.width * layerScale, height = layer.height * layerScale;
+    const radians = rotation * Math.PI / 180;
+    const cosine = Math.cos(radians), sine = Math.sin(radians);
+    const z = zIndex++;
+    return {
+      id: `modifier-${direction}-${stat}-${role}`, assetId: id, path, label, zIndex: z,
+      ...(tint !== undefined ? { modifierTint: { polarity: direction, strength: tint } } : {}),
+      transform: { x, y, width, height, rotation, opacity, blendMode },
+      affine: [cosine, sine, -sine, cosine],
+      css: {
+        position: 'absolute', left: `${x / coordinateSpace.width * 100}%`, top: `${y / coordinateSpace.height * 100}%`,
+        width: `${width / coordinateSpace.width * 100}%`, height: `${height / coordinateSpace.height * 100}%`,
+        objectFit: 'contain', transformOrigin: '50% 50%', transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        opacity: String(opacity), mixBlendMode: blendMode, ...(filter ? { filter } : {}), pointerEvents: 'none', zIndex: String(z),
+      },
+    };
+  }
+
+  const style = polarities[polarity];
+  const auraLayer = sprite('aura', assetId, aura, opposing ? 'mixed' : polarity, {
+    filter: opposing ? aura.mixedFilter : `${style.tint} ${style.aura}`,
+  });
+  const arrows = modifiers.map(({ polarity: direction }, index) => {
+    const layer = { ...chevrons, rotation: polarities[direction].rotation };
+    if (opposing) {
+      layer.x += (index === 0 ? -1 : 1) * chevrons.opposingX;
+      layer.width *= chevrons.opposingScale;
+      layer.height *= chevrons.opposingScale;
+    }
+    return sprite('chevrons', chevrons.assetId, layer, direction, {
+      tint: 1, filter: `drop-shadow(0 0 ${chevrons.glowRadius}px ${polarities[direction].glow})`,
+    });
+  });
+  return [auraLayer, ...arrows, sprite('object', assetId, object, opposing ? 'mixed' : polarity,
+    { tint: !opposing && object.edgeTintStrength > 0 ? object.tintStrength : undefined })];
+}
+
 /** Pure presentation: only type, canonical tags and one-based rank select art. */
 export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}) {
   tags = canonicalTags(tags);
@@ -122,7 +200,8 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   // Defensive and utility icons keep their action silhouette.
   const rangedWeapon = tags.includes('range:ranged') || projectile
     && tags.some(tag => ['delivery:projectile', 'delivery:ranged', 'maneuver:ranged'].includes(tag));
-  const weapon = category === 'physical' && ['attack', 'smash', 'sweep', 'counter'].includes(maneuver)
+  const preserveWeapon = weaponActions.includes(maneuver);
+  const weapon = category === 'physical' && preserveWeapon
     ? rangedWeapon ? 'bow'
       : tags.includes('range:reach') ? 'spear' : null
     : null;
@@ -131,18 +210,22 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   const selectedElements = identityElement.elements;
   const element = selectedElements[0] || (category === 'magical' ? 'force' : null);
   const templateElement = element === 'blood' ? 'force' : element;
-  const cueElements = selectedElements.length ? selectedElements : element ? [element] : [];
+  const visibleModifiers = selectStatModifiers(tags);
+  const replacedStatuses = new Set(visibleModifiers.flatMap(modifier => modifier.statuses));
+  const cueRoom = 3 - Number(visibleModifiers.length > 0);
+  const cueElements = (selectedElements.length ? selectedElements : element ? [element] : []).slice(0, Math.min(cueRoom, 2));
   rank = cardRank({ rank });
   const statuses = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
-    .filter(id => statusExists(registries, id)).slice(0, 3 - Math.min(cueElements.length, 2));
+    .filter(id => !replacedStatuses.has(id) && statusExists(registries, id)).slice(0, cueRoom - cueElements.length);
   // Explicit effect identities outrank compatibility aliases such as Retain.
   // Multiple explicit effects retain the approved catalog's deterministic order.
   const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
     || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
   // A presentation `fx:` tag paints its approved effect layer while the four visual identities have room (one at most).
-  const effectRoom = Math.min(1, Math.max(0, 3 - Math.min(cueElements.length, 2) - statuses.length));
+  const effectRoom = Math.min(1, cueRoom - cueElements.length - statuses.length);
   const effects = tags.filter(tag => tag.startsWith('fx:') && Object.hasOwn(effectLayers, tag)).slice(0, effectRoom);
-  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, effects, rank]);
+  const modifierTags = visibleModifiers.map(modifier => modifier.tag);
+  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, effects, modifierTags, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
     if (!registryCaches.has(registries)) registryCaches.set(registries, new Map());
@@ -195,8 +278,23 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
       transform: 'translate(-50%, -50%) rotate(0deg) scale(1, 1)' });
   }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
-  if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
-    art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
+  if (visibleModifiers.length && !preserveWeapon) {
+    art.sprites = art.sprites.filter(sprite => sprite.id === 'background');
+  } else if (maneuver === 'skill' && !utility) {
+    const statusObject = statusObjects.get(statusCueId(statuses[0]));
+    if (statusObject) {
+      art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObject), id: 'object' }];
+    } else if (category === 'physical') {
+      const skillObject = clone(reviewed.proceduralObjects.skill);
+      art.sprites = art.sprites.map(sprite => {
+        if (sprite.id === 'object') {
+          return { ...skillObject, zIndex: sprite.zIndex, css: { ...skillObject.css, zIndex: sprite.css.zIndex } };
+        }
+        // The borrowed spell template uses a purple aura on both sides of the object.
+        if (sprite.assetId === 'I.effect.0') sprite.css.filter = 'grayscale(1)';
+        return sprite;
+      });
+    }
   }
   for (const sprite of art.sprites.filter(sprite => /^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     const outline = weaponAssets.has(sprite.assetId)
@@ -250,16 +348,20 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     const decorative = sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id);
     return decorative ? withOpacity(sprite, intensity) : sprite;
   });
-  // Every valid recipe has a decorative PNG whose opacity changes with rank.
-  if (!art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
+  // Ordinary recipes without an existing decoration receive the rank aura.
+  if (!visibleModifiers.length && !art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     art.sprites.push({ ...withOpacity(spritesByAsset.get('I.effect.0'), intensity * 0.5), id: 'rank-aura' });
+  }
+  if (visibleModifiers.length) {
+    const layout = preserveWeapon ? modifierArt.corner : modifierArt.center;
+    art.sprites.push(...statModifierLayers(visibleModifiers, layout, art.coordinateSpace, statusZ));
   }
   art.code = `procedural-${maneuver}-${selectedElements.join('+') || 'physical'}-${utility?.code || ''}${weapon ? `-${weapon}` : ''}`;
   art.path = art.sprites.find(sprite => sprite.id === 'background').path;
   const result = freeze({ kind: 'simple', path: art.path, fit: 'cover', position: '50% 50%', filter: '',
     category, maneuver, element, elements: selectedElements, rank, variant: Math.min(rank, 5), componentArt: art,
     statuses: statuses.map(id => ({ id })), layers: [],
-    visualCues: [`action:${maneuver}`, ...cueElements.slice(0, 2).map(id => `element:${id}`), ...statuses.map(id => `status:${id}`), ...effects] });
+    visualCues: [`action:${maneuver}`, ...modifierTags, ...cueElements.map(id => `element:${id}`), ...statuses.map(id => `status:${id}`), ...effects] });
   if (cache.size >= 512) cache.delete(cache.keys().next().value);
   cache.set(key, result);
   return result;
