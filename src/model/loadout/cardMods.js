@@ -10,7 +10,7 @@ import { parseMod } from './modStrings.js';
 import { EQUIPMENT_POOL_FIELDS, EQUIPMENT_POOL_CURRENT, moveEquipmentPool } from './applyVocab.js';
 import { WeaponCardPackageModel } from './weaponPackages.js';
 import { equippedPieces } from './equipped.js';
-import { GearPieceMods, GearTypeEffectsEnabled } from '../gearEffects.js';
+import { GearPieceMods, GearTypeEffectsEnabled, GearVocabularyEnabled } from '../gearEffects.js';
 import { GEAR_TYPES } from '../../content/gearTypes.js';
 
 /**
@@ -86,7 +86,7 @@ export function runMods(registries, loadout, classId, run = null) {
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
       // Newly introduced vocabulary cannot change a saved profile which predates the gear pass.
-      if (!GearTypeEffectsEnabled(subject) && (['statPoint', 'flag', 'resist'].includes(spec.apply) || ['thorns', 'thornsFire'].includes(spec.status))) continue;
+      if (!GearVocabularyEnabled(subject, spec)) continue;
       // Resolved gear replaces pool stats; independent swap/status effects remain.
       // Resolved gear replaces a pool stat only when its own points supply that pool (hp, mp, sp); an item that supplies none (Nightweave's +1 max MP) and every
       // type or group base still add, uncapped (owner, 2026-11-18).

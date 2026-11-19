@@ -15,8 +15,9 @@ export function ItemIsThemed(row, classId, kind) {
  * ThemedItemPick(rng, stream, ids, { classId, kind, rowOf }) -> one id from `ids`: a themed one 75% of the time (when any is left), else any.
  * One `rng.int` roll per pick, then one `rng.pick`, so a replay of the offer's stream reads the same.
  */
-export function ThemedItemPick(rng, stream, ids, { classId, kind, rowOf }) {
+export function ThemedItemPick(rng, stream, ids, { classId, kind, rowOf, enabled = true }) {
   if (!ids.length) return null;
+  if (!enabled) return rng.pick(stream, ids);
   const themed = ids.filter(id => ItemIsThemed(rowOf(id), classId, kind));
   const roll = rng.int(stream, 1, 100);
   return rng.pick(stream, roll <= GEAR_TYPES.themedPercent && themed.length ? themed : ids);

@@ -56,6 +56,7 @@ const wholeNumber = (mode, value, prior = 0) => (mode === 'add' ? prior + value 
  * `statPoints` and `pools` are read by the receipt and runMods; the rest is stamped on the player for the fight.
  */
 export const GearTypeEffectsEnabled = subject => subject?.gameProfile?.modules?.gear?.typeEffectsVersion === 1;
+export const GearVocabularyEnabled = (subject, spec) => GearTypeEffectsEnabled(subject) || !(spec?.scope === 'gear' || ['statPoint', 'flag', 'resist'].includes(spec?.apply) || ['thorns', 'thornsFire'].includes(spec?.status));
 
 export function GearSummary(registries, loadout, classId, subject = registries) {
   const typeEffects = GearTypeEffectsEnabled(subject);

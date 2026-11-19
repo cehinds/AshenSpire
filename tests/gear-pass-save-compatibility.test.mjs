@@ -10,6 +10,9 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { gameProfileEquipmentReceipt } from '../src/model/gameProfileGear.js';
+import { equipmentCardModel } from '../src/model/equipmentCard.js';
+import { gameProfileShopStock, GameProfileArmamentOffer } from '../src/model/gameProfileRewards.js';
+import { coreBlacksmithShelves } from '../src/model/blacksmithStock.js';
 import { GearSummary } from '../src/model/gearEffects.js';
 import { runMods } from '../src/model/loadout.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -70,6 +73,10 @@ test('the genuine pre-gear historical profile keeps Tower Shield pool suppressio
   assert.equal(profile.modules.gear.typeEffectsVersion, undefined);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const outfit = registries.equipment.armour.find(row => row.classId === 'reaver' && row.id === 'default');
+  const shown = equipmentCardModel(registries, outfit);
+  assert.ok(!gameProfileEquipmentReceipt(registries, run).sources.some(row => row.sourceId === 'armor/reaver/default'));
+  assert.ok(!shown.facts.some(row => ['Dexterity', 'Constitution', 'DEX', 'CON', 'dexterity', 'constitution'].includes(row.label)), 'old default armour inspector shows no named-gear attribute receipt that live combat does not grant');
   run.loadout.sets.leftHand[0] = 'towerShield';
   const source = gameProfileEquipmentReceipt(registries, run).sources.find(row => row.sourceId === 'armament/towerShield');
   assert.ok(source);
@@ -85,4 +92,42 @@ test('the genuine pre-gear historical profile keeps Tower Shield pool suppressio
   reconcileRunLoadoutHp(registries, restored);
   assert.equal(restored.maxHp, maxHp);
   assert.equal(runMods(registries, restored.loadout, restored.class, restored).maxHp, 0);
+});
+
+test('an old profile future shop offer matches Dev items and RNG, and cached offers roll nothing', () => {
+  // Oracle captured from clean Dev 66e473a77c with the original immutable 73ef profile bytes.
+  const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url)))));
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 }), rng = createRng(41);
+  const offer = gameProfileShopStock(registries, run, rng, { shopId: 'old-smith' });
+  assert.deepEqual(offer.options.map(row => row.id), ['shortbow', 'dagger', 'straightSword', 'progression-whisperglass-die', 'sacrificialKnife', 'crackedLantern', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'wayfarerPlate', 'nightweave', 'riteVestments']);
+  assert.equal(rng.getCounters().shop, 21);
+  assert.equal(Object.values(rng.getCounters()).reduce((sum, n) => sum + n, 0), 21);
+  const before = rng.getCounters();
+  assert.deepEqual(gameProfileShopStock(registries, structuredClone(run), rng, { shopId: 'old-smith' }), offer);
+  assert.deepEqual(rng.getCounters(), before);
+});
+
+test('pre-type profiles keep Dev future armament and Blacksmith offers without new theme rolls', () => {
+  // Independent oracle: clean Dev 66e473a77c, seed511 / offer RNG41, default profile before the opt-in existed.
+  const { registries, run } = world(false), rng = createRng(41);
+  const offer = GameProfileArmamentOffer(registries, run, rng, { offerId: 'old-boss', pool: 'boss' });
+  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'kiteShield' }, { kind: 'armor', id: 'riteVestments' }]);
+  assert.equal(rng.getCounters().cardRewards, 9);
+  const other = world(false), smithRng = createRng(41);
+  const smith = coreBlacksmithShelves(other.registries, smithRng, other.run);
+  assert.deepEqual(smith.armaments, [{ id: 'lantern', tier: 3, cost: 170 }, { id: 'katana', tier: 2, cost: 187 }, { id: 'duskChime', tier: 3, cost: 370 }, { id: 'halberd', tier: 0, cost: 101 }, { id: 'towerShield', tier: 0, cost: 157 }, { id: 'torch', tier: 1, cost: 85 }]);
+  assert.equal(smithRng.getCounters().shopOffers, 19);
+});
+
+test('old equipment inspectors do not advertise new Lantern or Torch vocabulary', () => {
+  const { registries, run } = world(false);
+  for (const id of ['lantern', 'torch']) {
+    const piece = registries.equipment.armaments.find(row => row.id === id);
+    const shown = equipmentCardModel(registries, piece);
+    assert.ok(!shown.bonuses.some(row => /thorns|vulnerable/i.test(row.label)), id);
+    run.loadout.sets.leftHand[0] = id;
+    assert.ok(!runMods(registries, run.loadout, run.class, run).startStatuses.some(row => row.status === 'thornsFire'));
+    assert.equal(GearSummary(registries, run.loadout, run.class, run).hitRules.length, 0);
+  }
 });
