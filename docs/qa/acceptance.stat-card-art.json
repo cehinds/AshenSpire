@@ -1,0 +1,76 @@
+{
+  "request": "I want it to look like this.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "modifier-art-in-combat",
+      "url": "?shot=combat&shotSeed=41045&shotDeck=honedEdge,gildedOath,goreblood",
+      "ready": "[data-card-id=\"honedEdge\"]",
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Strength uses its neutral steel cutout",
+          "selector": "[data-card-id=\"honedEdge\"] img[data-card-art-component=\"stat.str\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Strength outranks Dexterity on Gilded Oath",
+          "selector": "[data-card-id=\"gildedOath\"] img[data-card-art-component=\"stat.str\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Goreblood's Poise debuff shows the steel Poise cutout",
+          "selector": "[data-card-id=\"goreblood\"] img[data-card-art-component=\"stat.poise\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Buff uses separate up chevrons",
+          "selector": "[data-art-layer=\"modifier-buff-strength-chevrons\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Debuff uses separate down chevrons",
+          "selector": "[data-art-layer=\"modifier-debuff-poise-chevrons\"]"
+        },
+        {
+          "kind": "style",
+          "label": "Chevrons match the approved opacity",
+          "selector": "[data-art-layer=\"modifier-buff-strength-chevrons\"]",
+          "prop": "opacity",
+          "equals": "0.73"
+        },
+        {
+          "kind": "visible",
+          "label": "Red chevrons reference their steel tint filter",
+          "selector": "[data-art-layer=\"modifier-debuff-poise-chevrons\"][style*=\"card-stat-tint-debuff-chevrons\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No browser errors",
+          "max": 0,
+          "ignore": [
+            "Blocked call to navigator\\.vibrate because user hasn.t tapped"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Lower-priority Dexterity displaced Strength",
+          "selector": "[data-art-layer=\"modifier-buff-dexterity-object\"]"
+        }
+      ]
+    }
+  ]
+}

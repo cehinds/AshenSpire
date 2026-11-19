@@ -42,8 +42,7 @@ function rowArt(row) {
     well.style && Object.assign(well.style, { position: 'relative', isolation: 'isolate' });
     paintLayers();
     // A failed base image or cutout hides the whole composition.
-    hideOnError(base, paintLayers);
-    base?.addEventListener('error', () => well.querySelector('[data-card-art-layers]')?.remove());
+    hideOnError(base, paintLayers, () => well.querySelector('[data-card-art-layers]')?.remove());
   } else hideOnError(base);
   return well;
 }
