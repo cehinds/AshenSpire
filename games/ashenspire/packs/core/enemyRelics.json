@@ -93,15 +93,6 @@
     "text": "CON +2, STR +1"
   },
   {
-    "id": "enemy.relic.pearlShell",
-    "name": "Pearl_Shell",
-    "modifiers": [
-      "self.constitution=+3",
-      "self.sp=-1"
-    ],
-    "text": "CON +3, SP -1"
-  },
-  {
     "id": "enemy.relic.kilnbackFurnace",
     "name": "Kilnback_Furnace",
     "modifiers": [
@@ -210,5 +201,14 @@
       "self.constitution=+1"
     ],
     "text": "WIS +2, CON +1"
+  },
+  {
+    "id": "enemy.relic.pearlShell",
+    "name": "Pearl_Shell",
+    "modifiers": [
+      "self.constitution=+3",
+      "self.sp=-1"
+    ],
+    "text": "CON +3, SP -1"
   }
 ]
