@@ -22,7 +22,8 @@ const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'u
 const LEGACY_RESTS={servicesPerVisit:'all',services:['smith','levelUp','upgradeCard'],recovery:{hp:'full',sp:'full',mp:'full',healingFlasks:'full',mpFlasks:'full'},smith:{free:true,tiersPerService:1}};
 const freshLegacy=()=>{const run=fresh();run.gameProfile.content.rests=structuredClone(LEGACY_RESTS);return run;};
 // A branch may open narrow, so a rest depth's lane ids vary by seed: take the first rest on the floor.
-const restId=(run,floor)=>Object.values(run.mapGraph.nodes).find(n=>n.type==='shrine'&&n.floor===floor).id;
+// The old fixed rest depths 3, 6, 9 stand for the first, second and last rest depth of the act (Core now rests on one mid depth and the pre-boss depth).
+const restId=(run,floor)=>{const rests=Object.values(run.mapGraph.nodes).filter(n=>n.type==='shrine');const depths=[...new Set(rests.map(n=>n.floor))].sort((x,y)=>x-y);const at=floor===3?0:floor===6?1:depths.length-1;return rests.find(n=>n.floor===depths[Math.min(at,depths.length-1)]).id;};
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
 
 test('fixed classes, eleven starters, persistent pin and restamping do not mint equipment grants',()=>{
@@ -47,19 +48,21 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has nine preboss depths, a rest in every lane of every branch on depths 3, 6 and 9, distinct branch bosses, and replay stability',()=>{
+test('seeded route has eleven preboss depths, a start rest from act 2, a rest in every lane of every branch on one mid depth and one pre-boss rest per branch, distinct branch bosses, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
-  const b=map.bossIds.length;assert.ok(b>=1&&b<=5);assert.equal(map.floors,10);
-  for(let k=0;k<b;k++){const lanes=map.columns/b;for(const floor of [3,6,9]){const row=Object.values(map.nodes).filter(n=>n.branch===k&&n.floor===floor);assert.ok(row.length>=1&&row.length<=lanes&&row.every(n=>n.type==='shrine'),`branch ${k} floor ${floor} is all rests`);}}
-  assert.deepEqual([...new Set(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor))].sort(),[3,6,9]);
-  const bosses=map.bossIds.map(id=>map.nodes[id]);assert.ok(bosses.every(n=>n.floor===10));assert.equal(new Set(bosses.map(n=>n.encounterId)).size,b);
+  const b=map.bossIds.length;assert.ok(b>=1&&b<=5);assert.equal(map.floors,12);
+  const restDepths=[...new Set(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor))].sort((x,y)=>x-y);
+  const mid=restDepths.filter(f=>f>1&&f<11);assert.equal(mid.length,1);assert.ok(tier===1?[5,6].includes(mid[0]):[5,6,7].includes(mid[0]),`mid rest depth ${mid}`);
+  assert.deepEqual(restDepths,tier>=2?[1,mid[0],11]:[mid[0],11]);
+  for(let k=0;k<b;k++){for(const floor of restDepths.filter(f=>f>1)){const row=Object.values(map.nodes).filter(n=>n.branch===k&&n.floor===floor);assert.ok(row.length>=1&&row.every(n=>n.type==='shrine'),`branch ${k} floor ${floor} is all rests`);if(floor===11)assert.equal(row.length,1,'one pre-boss rest per branch');}}
+  const bosses=map.bossIds.map(id=>map.nodes[id]);assert.ok(bosses.every(n=>n.floor===12));assert.equal(new Set(bosses.map(n=>n.encounterId)).size,b);
   assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
   // Core 2 shows every node type (hiddenTypes empty); an old pinned profile still hides them behind '?' events.
-  for(const n of Object.values(map.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
+  for(const n of Object.values(map.nodes)){if(n.floor===1&&tier===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
    else assert.equal(n.type,{fight:'monster',event:'event',elite:'elite',treasure:'treasure',shop:'merchant',rest:'shrine',boss:'boss'}[n.actualType]);}
   const old=legacyCoreProfile(),oldReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old);
   const oldMap=buildActMap(oldReg,createRng(100+tier),run.seatOrder[tier-1],tier);
@@ -155,7 +158,7 @@ test('two DEX increases from 2 add one authored SP, and Smith commits an equipme
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'dexterity'});
  run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'dexterity'});
  assert.equal(run.maxStamina,initial+1);
- run.mapNodeId=restId(run,9);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ run.actNumber=2;run.mapNodeId=restId(run,9);beginGameProfileRest(run,'2:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1,'CON adds no SP');
  const smith=freshLegacy();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);

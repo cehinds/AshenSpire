@@ -24,7 +24,7 @@ function fixture({ legacy = false } = {}) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-one-pick' });
   if (legacy) run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   run.hp = 10; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);

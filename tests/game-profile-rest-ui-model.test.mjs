@@ -22,7 +22,7 @@ function fixture({ legacyDeck = false } = {}) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'rest-ui-test' });
   run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
@@ -137,7 +137,7 @@ test('arriving with full pools but a spent flask records the flask refill (revie
   const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
   run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
   run.flaskCharges.hpCurrent = 0;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);

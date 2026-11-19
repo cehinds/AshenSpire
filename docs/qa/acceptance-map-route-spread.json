@@ -1,0 +1,254 @@
+{
+  "request": "Owner request (2026-11-18), act map: two more depths per act (11 pre-boss depths); acts 2 and 3 start on a rest node (act 1 still starts on a combat node); rests 2-5 non-rest nodes apart; each boss branch fans away from the others like a V, and from a branch's pre-boss rest no other branch's late nodes or boss are visible or reachable; a trader or blacksmith you left re-opens by clicking the node you still stand on.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "act1-start-combat",
+      "url": "?shot=map&shotSeed=QA3",
+      "ready": ".map-node",
+      "settleMs": 1200,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Act 1 opens on a combat node at depth 1",
+          "selector": ".map-node.monster[data-node=\"n1_0\"]"
+        },
+        {
+          "kind": "count",
+          "label": "No rest is drawn at the act 1 start",
+          "selector": ".map-node.shrine",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Act 1 start drawn as a rest",
+          "selector": ".map-node.shrine[data-node=\"n1_0\"]"
+        }
+      ]
+    },
+    {
+      "name": "act2-start-rest-v-spread",
+      "url": "?shot=map&shotSeed=QA3&shotAct=2",
+      "ready": ".map-node",
+      "settleMs": 1200,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Act 2 opens on a rest node at depth 1",
+          "selector": ".map-node.shrine[data-node=\"n1_0\"]"
+        },
+        {
+          "kind": "count",
+          "label": "The branch bosses are all lit and spread across the board (V)",
+          "selector": ".map-node.boss",
+          "min": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Act 2 start drawn as a fight",
+          "selector": ".map-node.monster[data-node=\"n1_0\"]"
+        }
+      ]
+    },
+    {
+      "name": "v-spread-bosses",
+      "url": "?shot=map&shotSeed=QA3&shotAct=2",
+      "ready": ".map-node.boss",
+      "settleMs": 1200,
+      "success": [
+        {
+          "kind": "count",
+          "label": "At least two branch bosses are lit and drawn apart across the widened board",
+          "selector": ".map-node.boss",
+          "min": 2
+        },
+        {
+          "kind": "visible",
+          "label": "The act 2 start rest is on the board",
+          "selector": ".map-node.shrine[data-node=\"n1_0\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Only one boss is lit at the start",
+          "selector": ".map-node.boss",
+          "eq": 1
+        }
+      ]
+    },
+    {
+      "name": "preboss-rest-no-other-boss",
+      "url": "?shot=map&shotSeed=QA3&shotAct=2&shotAt=floor:last&shotTrail=1",
+      "ready": ".map-node",
+      "settleMs": 1200,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The pre-boss rest is where you stand",
+          "selector": ".map-node.shrine.current"
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one boss is drawn: your own",
+          "selector": ".map-node.boss",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Only your own boss is reachable",
+          "selector": ".map-node.reachable",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Another branch's boss is drawn",
+          "selector": ".map-node.boss",
+          "min": 2
+        },
+        {
+          "kind": "count",
+          "label": "More than one node is reachable from the pre-boss rest",
+          "selector": ".map-node.reachable",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "trader-reentry-node",
+      "url": "?shot=map&shotSeed=QA3&shotAct=2&shotAt=type:merchant&shotTrail=1&shotRevisit=shop",
+      "ready": ".map-node",
+      "settleMs": 1200,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The trader you left is the node you stand on and is enterable",
+          "selector": ".map-node.merchant.current.reachable"
+        },
+        {
+          "kind": "count",
+          "label": "Only that trader is enterable (no travel yet)",
+          "selector": ".map-node.reachable",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "The left trader is not enterable",
+          "selector": ".map-node.merchant.current.reachable",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "trader-reentry-opens",
+      "url": "?shot=map&shotSeed=QA3&shotAct=2&shotAt=type:merchant&shotTrail=1&shotRevisit=shop",
+      "ready": ".map-node.merchant.current",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": ".map-node.merchant.current"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": "#map-enter"
+        },
+        {
+          "wait": {
+            "ms": 1500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Clicking the trader you still stand on re-opens its shop",
+          "selector": ".shop-workspace"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The map is still showing after entering the trader",
+          "selector": ".map-enter"
+        }
+      ]
+    }
+  ]
+}
