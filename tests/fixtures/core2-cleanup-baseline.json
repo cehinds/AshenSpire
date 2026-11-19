@@ -6,12 +6,12 @@
   "scenarios": {
     "paid reaction": {
       "profile": {
-        "hash": "sha256:a918cb37a95f8c15386bc02fa7d9c4af68071170a09c61b8a2d14d7a8916cd6d",
-        "runtimeHash": "sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9",
+        "hash": "sha256:7f4d9f7e5bb89bb0c35f378d6d80713730ba1b9eaabc13c175db455faf9434d8",
+        "runtimeHash": "sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "6bda1c414f2da4b0cef88f3af773ae4a6c389cf9901c569f0c25b4e1f67144c2",
+        "snapshot": "9a008ca0960ebd4e8f9c5fbe8b4faecea5bfe9039cc213157628fc6a594c8322",
         "events": "5ff1e30596ad200b44c0e0bb4f7a01cd953408b6aa097590133b365cdbe4be3b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -36,7 +36,7 @@
         }
       },
       "pending": {
-        "snapshot": "cc8d5b87c4cc677e143c163ddf92f281d9621dc0cee4fd1509664deade9f8980",
+        "snapshot": "4288c95455d0d8927f577d3c1c546d10533581a2eb67ffb010d3c031cc2a498f",
         "events": "04c8a1a7700461a23103650d23e3fdad6dfe7c6843fba91a7ea1145617644547",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -48,11 +48,11 @@
         }
       },
       "save": {
-        "stored": "63cc92b0ac3b6770d6ab746af2ff44d08ff4579ddc8f0eb1498adc842a2f44b6",
-        "loaded": "3ade5ef17650c6c26d59c1b543e7f4937d4fe0840647c3218e5ea4935f048dda"
+        "stored": "78eb467038e716db940b5ee015ba6d6013660171b63c09580fdea840cc0f9fb2",
+        "loaded": "2abef3d9fac2b3b2f91692f74f340dc1cb3ea0d612e2865899936d9903789d2d"
       },
       "restored": {
-        "snapshot": "cc8d5b87c4cc677e143c163ddf92f281d9621dc0cee4fd1509664deade9f8980",
+        "snapshot": "4288c95455d0d8927f577d3c1c546d10533581a2eb67ffb010d3c031cc2a498f",
         "events": "0ae983628d3c10769579fd7353a862e3b4cdf84e13522b859a5e1aa6b24e8eac",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -64,7 +64,7 @@
         }
       },
       "live": {
-        "snapshot": "d784c97931e10303d4de2c7e13ad5e39a3572fe8b9b104283ad4270f28df60c7",
+        "snapshot": "c1841fd250028774367434ed6062ba0a334cf7cf46ec315e97c71b4d32015e23",
         "events": "5d9f9130fdd2f9b9fe69e3006d8c6bcc5ec21b282a1ef7288d0431a49c70e687",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -77,7 +77,7 @@
         "continuation": "fae6e3d92853842db9231eddde5736236b0da67bc7b964ca384c95e99d42b07b"
       },
       "afterRestore": {
-        "snapshot": "d784c97931e10303d4de2c7e13ad5e39a3572fe8b9b104283ad4270f28df60c7",
+        "snapshot": "c1841fd250028774367434ed6062ba0a334cf7cf46ec315e97c71b4d32015e23",
         "events": "a967d59a0ed4c0d9872f704c83c612f98651fa20b53c4288b96afb31727f7631",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -92,12 +92,12 @@
     },
     "paid delayed charge": {
       "profile": {
-        "hash": "sha256:a918cb37a95f8c15386bc02fa7d9c4af68071170a09c61b8a2d14d7a8916cd6d",
-        "runtimeHash": "sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9",
+        "hash": "sha256:7f4d9f7e5bb89bb0c35f378d6d80713730ba1b9eaabc13c175db455faf9434d8",
+        "runtimeHash": "sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "7ab83d825a4a68144f4936c73d5f591dcdf8136fac739f73ba12c3f48cd02e03",
+        "snapshot": "9602c63f6e70f312d2cc256bf5fc38847c384b7c0ff0583dce40ca8aa22f7800",
         "events": "a8ce397e9dddcd42003b9d8aafef5dc7212cca909f052e30a3f89fd6607a868e",
         "rng": {
           "hash": "6c0f0fdb9eb81cb667534c8d4c460ed2fd542e05becef8cdea5846c74a0813ca",
@@ -113,7 +113,7 @@
         "totalSp": 2
       },
       "pending": {
-        "snapshot": "a1d64de82801a731fe9188d7a655fa2ce31ea6debb47730f7910c34e6ed413eb",
+        "snapshot": "55e22f81141b741e8e57a6a3bb05fa4ec33112e0631e88136efc38646897bf92",
         "events": "5d6ef487a5d96c405cc6e956bed3da7989284bc58b1f84a34db9954410195598",
         "rng": {
           "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
@@ -124,11 +124,11 @@
         }
       },
       "save": {
-        "stored": "650a4119ebc98e64430f12f8aeb0900dfa92d7ae117db6e179ed9de88b0ef874",
-        "loaded": "00cdfd54ed6738b973c79360e6795fa9e0590a746c54d46a355a5529b34879d6"
+        "stored": "5ca32114b155d5dfa7f2e14ca3613e5da7d76955a0f7afeffc49cde3d60927b1",
+        "loaded": "5d748ff2fce482cea11a4bbc2b336aeaf463dd95edf254ea14f3cecd166411d8"
       },
       "restored": {
-        "snapshot": "a1d64de82801a731fe9188d7a655fa2ce31ea6debb47730f7910c34e6ed413eb",
+        "snapshot": "55e22f81141b741e8e57a6a3bb05fa4ec33112e0631e88136efc38646897bf92",
         "events": "5d6ef487a5d96c405cc6e956bed3da7989284bc58b1f84a34db9954410195598",
         "rng": {
           "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
@@ -139,7 +139,7 @@
         }
       },
       "live": {
-        "snapshot": "d6e07e4cfa6e552c46507f0142cba03c42acbfcd065dc61ec85878d099f1be08",
+        "snapshot": "8f746ab4483629253b790d5ab65a847edd37a1a9ce73ddd5897985103a039cd0",
         "events": "1b058868291b274d3b54bf802987b205c975bd55f7b5006fb915731625084afa",
         "rng": {
           "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
@@ -152,7 +152,7 @@
         "continuation": "240af38f5b0ba6accf322290a93631112b87376c0cedc363b1a43eb6bbd55165"
       },
       "afterRestore": {
-        "snapshot": "d6e07e4cfa6e552c46507f0142cba03c42acbfcd065dc61ec85878d099f1be08",
+        "snapshot": "8f746ab4483629253b790d5ab65a847edd37a1a9ce73ddd5897985103a039cd0",
         "events": "1b058868291b274d3b54bf802987b205c975bd55f7b5006fb915731625084afa",
         "rng": {
           "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
@@ -167,12 +167,12 @@
     },
     "ordered enemy plan": {
       "profile": {
-        "hash": "sha256:a918cb37a95f8c15386bc02fa7d9c4af68071170a09c61b8a2d14d7a8916cd6d",
-        "runtimeHash": "sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9",
+        "hash": "sha256:7f4d9f7e5bb89bb0c35f378d6d80713730ba1b9eaabc13c175db455faf9434d8",
+        "runtimeHash": "sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "35fe5348b9568d382cbbf2cdf5f086c05f3e3898c30a3a1346a206f3af88a2cb",
+        "snapshot": "58d60675a98b7ccac5a683a7871cf42db5ae494eb78a205be6426b6e513bded2",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -198,7 +198,7 @@
         ]
       ],
       "pending": {
-        "snapshot": "35fe5348b9568d382cbbf2cdf5f086c05f3e3898c30a3a1346a206f3af88a2cb",
+        "snapshot": "58d60675a98b7ccac5a683a7871cf42db5ae494eb78a205be6426b6e513bded2",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -210,11 +210,11 @@
         }
       },
       "save": {
-        "stored": "01bfd06adb9909474f4a5479407216fb85f00ef6b2db5a11e31acc9f1f6afb56",
-        "loaded": "c772880bb140cf0ef989fbca8f875f2726c576eae161984ef28f862fe9678cc9"
+        "stored": "de07d66a4c3a9964b65f3a42ccd5c9b00b4321ed2a5b1d350c2294f0ac2783d1",
+        "loaded": "eae01222acb1e6df4490c9c1892678bb40ec184d76bbf5cd6860d3eeee168021"
       },
       "restored": {
-        "snapshot": "35fe5348b9568d382cbbf2cdf5f086c05f3e3898c30a3a1346a206f3af88a2cb",
+        "snapshot": "58d60675a98b7ccac5a683a7871cf42db5ae494eb78a205be6426b6e513bded2",
         "events": "b034354b7513d5fb93bb8100ca053b85ec60c88839d9a9aa0b421f717e93836b",
         "rng": {
           "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
@@ -226,7 +226,7 @@
         }
       },
       "live": {
-        "snapshot": "1d0ef32385a6f6711cac71d708905e34f5c1360ea04550294fa99f4afa63d8d2",
+        "snapshot": "922cde1b4f720d41f92ccb0570595b68312096fdb7bf44a88c32e722db60b914",
         "events": "e749e4ccf92acf0c6feafe829badd4bdf1745b15fc2acda1b6e5c2cd9e87c754",
         "rng": {
           "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",
@@ -239,7 +239,7 @@
         "continuation": "79ee9b953d5d403d1bd69e9b6fb9342e5ab2df552d7affab85962ad8238a9124"
       },
       "afterRestore": {
-        "snapshot": "1d0ef32385a6f6711cac71d708905e34f5c1360ea04550294fa99f4afa63d8d2",
+        "snapshot": "922cde1b4f720d41f92ccb0570595b68312096fdb7bf44a88c32e722db60b914",
         "events": "e749e4ccf92acf0c6feafe829badd4bdf1745b15fc2acda1b6e5c2cd9e87c754",
         "rng": {
           "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",

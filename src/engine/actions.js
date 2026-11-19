@@ -1712,7 +1712,7 @@ function plannedStatusTargets(ctx, action, eff) {
 // Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
 // (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
 /** The authored status grant before target resistance: shared by a card preview and the landed opcode. */
-export function computeStatusGrant(ctx, action, eff, target, base) {
+export function ComputeStatusGrant(ctx, action, eff, target, base) {
   const authored = base + (eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
 }
@@ -1959,7 +1959,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     applyStatus: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const stacks = computeStatusGrant(ctx, action, eff, t, evalNum(ctx, action, eff.stacks, 1, t));
+        const stacks = ComputeStatusGrant(ctx, action, eff, t, evalNum(ctx, action, eff.stacks, 1, t));
         const held = t.statuses?.[eff.status]?.stacks || 0;
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
           tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]

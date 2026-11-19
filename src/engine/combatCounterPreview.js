@@ -91,7 +91,9 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     // A projected defender has already received the card's immediate stack grant and any intervening turn-end grants.
     const stacks = projected && cardStacks
         ? counterStackCount(projected)
-        : card ? counterStacksAfterCard(ctx.player, base.block, ctx, card) : counterStackCount(ctx.player);
+        : card
+        ? counterStacksAfterCard(ctx.player, base.block, ctx, card)
+        : counterStackCount(ctx.player);
     let held = stacks;
     const perHit = [];
     for (let hit = 0; hit < hits; hit++)

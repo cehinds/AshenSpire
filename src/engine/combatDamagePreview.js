@@ -178,7 +178,7 @@ function previewAttackerHpLoss(ctx, attacker, amount) {
 }
 
 /** Landed-hit returns follow the live order: Thorns, then Reflect, then a possible Counter. */
-export function previewHitReturns(ctx, attacker, holder, receipt, carrier) {
+export function PreviewHitReturns(ctx, attacker, holder, receipt, carrier) {
   if (!attacker || !(attacker.hp > 0)) return false;
   const thorns = Actions.ThornsDamage(ctx, attacker, holder, carrier, receipt);
   if (thorns > 0 && previewAttackerHpLoss(ctx, attacker, thorns)) return true;
@@ -251,7 +251,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
       // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
-      if (defender && previewHitReturns(previewCtx, attacker, defender, receipt, carrier)) break;
+      if (defender && PreviewHitReturns(previewCtx, attacker, defender, receipt, carrier)) break;
     }
     // Owner, 2026-11-14: the quoted hit is the HP the target will lose from it (receipt.hpLoss): after its defensive stance, Reflect, Block,
     // Poise and Evade, carried hit to hit through the detached defender. Supersedes the 2026-11-02 and 2026-11-03 rulings.

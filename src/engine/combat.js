@@ -2455,7 +2455,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       case 'applyStatus': {
         entry.status = eff.status;
         const statusTarget = ['self', 'owner'].includes(eff.target) || !primary ? p : primary;
-        entry.value = A.computeStatusGrant(combat, action, eff, statusTarget, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary));
+        entry.value = A.ComputeStatusGrant(combat, action, eff, statusTarget, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary));
         break;
       }
       case 'heal':

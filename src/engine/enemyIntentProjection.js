@@ -204,7 +204,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt, state.attacker || source);
         const attacker = Damage.cloneDetachedAttacker(state.attacker);
-        Damage.previewHitReturns(ctx, attacker, landed, receipt, carrier);
+        Damage.PreviewHitReturns(ctx, attacker, landed, receipt, carrier);
         add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}|${attacker?.combatStance}|${attacker?.persistentPoise?.value}|${JSON.stringify(attacker?.statuses)}`, loss: state.loss + receipt.hpLoss, landed: state.landed + 1, probability: state.probability * receipt.hitChance });
         // A hit Evade cancels spends one stack, so the next hit of the same move meets one stack fewer, as live does.
         const missed = receipt.evaded ? structuredClone(state.target) : state.target;
