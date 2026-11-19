@@ -204,9 +204,8 @@ test('a status is named by its whole name or id, never by a stem of another word
   assert.ok(statusNamed(charge, 'gain starstone 1.') && statusNamed(charge, 'gain starstone charge.'));
   const [def] = await profiles();
   withKitDom(dom => {
-    // Owner 2026-11-18: Force is physical, so Radiant Spray's first clause now names its Blunt type and the face budget drops the third clause at ranks 4 and 5.
-    // Only the base face still carries the Starstone gain.
-    for (const ref of [{ cardId: 'radiantSpray' }]) {
+    // Owner 2026-11-18: Force is physical, so Radiant Spray's computed face names its Blunt type; a face that has to drop an effect falls back to the authored summary, which keeps the Starstone gain at every rank.
+    for (const ref of [{ cardId: 'radiantSpray' }, { cardId: 'radiantSpray', abilityRank: 4 }, { cardId: 'radiantSpray', abilityRank: 5 }]) {
       const lines = facesOf(dom, def.registries, ref, def.rules);
       assert.ok(lines.some(line => /starstone/i.test(line)), `${JSON.stringify(ref)}: ${lines.join(' | ')}`);
     }
