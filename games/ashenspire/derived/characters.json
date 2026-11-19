@@ -6645,13 +6645,13 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "warhammer",
-            "name": "Warhammer",
+            "source": "mace",
+            "name": "Mace",
             "kind": "gear",
-            "amount": 2
+            "amount": 1
           }
         ],
-        "total": 4
+        "total": 3
       },
       "dexterity": {
         "own": 1,
@@ -6691,28 +6691,28 @@
       "terms": {
         "base": 10,
         "constitution": 50,
-        "strength": 20,
+        "strength": 15,
         "dexterity": 3,
         "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 91,
-      "formula": "10+50+20+3+2+1+5 = 91"
+      "total": 86,
+      "formula": "10+50+15+3+2+1+5 = 86"
     },
     "pools": {
-      "hp": 91,
+      "hp": 86,
       "sp": 2,
       "mp": 2,
-      "ar": 4,
+      "ar": 3,
       "dr": 1,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "warhammer",
-        "name": "Warhammer"
+        "id": "mace",
+        "name": "Mace"
       },
       {
         "key": "offHand",

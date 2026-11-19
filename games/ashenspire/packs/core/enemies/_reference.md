@@ -305,7 +305,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:carrionHeadsman.hoodGuard | Hood Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:carrionHeadsman.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:knellcapSentinel.knellStrike | Knell Strike | attack | 1 | 0 | Deal {damage} damage. |
-| card:knellcapSentinel.bellRing | Bell Ring | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:knellcapSentinel.bellRing | Bell Ring | attack | 2 | 0 | Deal {damage} damage. |
 | card:knellcapSentinel.capGuard | Cap Guard | skill | 1 | 0 | Gain {block} Block. |
 | card:knellcapSentinel.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:pallidOathCamel.oathKick | Oath Kick | attack | 1 | 0 | Deal {damage} damage. |
@@ -509,7 +509,6 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
 | relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
-| relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
@@ -519,3 +518,4 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
 | relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
 | relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |
+| relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |

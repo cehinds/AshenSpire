@@ -31,7 +31,7 @@
   "equipment": [
     {
       "slot": "mainHand",
-      "ref": "gear:warhammer"
+      "ref": "gear:mace"
     },
     {
       "slot": "offHand",

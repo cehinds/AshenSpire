@@ -2540,7 +2540,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:knellcapSentinel.capGuard": {
@@ -4584,14 +4584,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.knellcapHelm": {
-      "name": "Knellcap Helm",
-      "text": "CON +2, SP -1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.sp=-1"
-      ]
-    },
     "relic:enemy.relic.inkVeil": {
       "name": "Ink Veil",
       "text": "WIS +2, INT +1",
@@ -4663,6 +4655,14 @@
         "self.constitution=+3",
         "self.wisdom=+1",
         "self.sp=-2"
+      ]
+    },
+    "relic:enemy.relic.knellcapHelm": {
+      "name": "Knellcap Helm",
+      "text": "CON +2, SP -1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.sp=-1"
       ]
     }
   }
