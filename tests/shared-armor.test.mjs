@@ -39,12 +39,14 @@ test('shared armor validates and preserves existing creation choices', () => {
   }
 });
 
-for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip ${id} only when its requirement is met`, () => {
+for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip purchased ${id} only when its requirement is met`, () => {
   const run = createRunState({ seed: 31, classId: cls, registries: r });
   const piece = r.equipment.armour.find(p => p.classId === cls && p.id === id);
   const [attribute, minimum] = Object.entries(piece.requirements.attributes)[0];
+  assert.equal(ownership(r, { loadout: run.loadout }).has(piece), false, 'shared armour requires acquisition');
+  run.loadout.boughtArmour = [{ classId: cls, id }];
   const owned = ownership(r, { loadout: run.loadout });
-  assert.ok(owned.has(piece), 'available in Armoury without profile unlock');
+  assert.ok(owned.has(piece), 'purchased armour belongs to this run');
   const ctx = { inCombat: false, classId: cls, attributes: { ...run.attributes, [attribute]: minimum - 1 } };
   const before = structuredClone(run.loadout);
   const beforePools = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
