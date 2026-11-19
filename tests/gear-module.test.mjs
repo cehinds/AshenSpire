@@ -89,7 +89,8 @@ test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', a
   assert.deepEqual(core.modifiers, ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2']);
   const e = characterSettings(profile.modules);
   const carriers = enemies.filter(x => enemyRelicIds(x).includes(core.id));
-  // The Codex roster (2026-11-18) is authored with its own stamina curve and no Blight Core, so "most minions" counts the older roster.
+  // The Codex roster (2026-11-18) is exempt on purpose: Ashen Blight Core's SP -2 would leave its minions below the 2 SP their Smash and
+  // spell cards cost, and its theme is ash corruption, which the Codex wildlife and townsfolk are not. "Most minions" counts the older roster.
   const minions = enemies.filter(x => x.tier === 'minion' && !CODEX_IDS.includes(x.id)), elites = enemies.filter(x => x.tier === 'elite');
   assert.ok(carriers.filter(x => x.tier === 'minion').length > minions.length / 2, 'most minions');
   assert.ok(carriers.filter(x => x.tier === 'boss').length >= 2, 'a couple of bosses');
