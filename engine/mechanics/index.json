@@ -1617,6 +1617,16 @@
       ]
     },
     {
+      "id": "status.retreat",
+      "tag": "status.retreat",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
       "id": "status.sanguinePact",
       "tag": "status.sanguinePact",
       "family": "status",

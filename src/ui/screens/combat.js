@@ -1174,7 +1174,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
           ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
-          ...(entity.ratings ? (combat.breakMeterVersion === 1 ? ['ar', 'dr', 'pr', 'ward'] : ['ar', 'dr', 'pr']).map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
+          ...(entity.ratings && combat.breakMeterVersion === 1 ? ['ward'].map(id => ({ label: t('combat.protection.ward'), value: ratingValue(combat, entity, id) })) : []),
           ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),

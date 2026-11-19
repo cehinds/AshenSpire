@@ -66,7 +66,7 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
     ...(rows[id] || {}), base,
   };
   // Owner, 2026-11-17: under `secondaryPolicy: "primaryOnly"` a row levelGains names reads only the attributes it lists
-  // (AR from STR, DR from DEX, Stamina from CON, Mana from WIS); every other attribute weight of that row is zeroed.
+  // (Stamina from DEX, HP from CON, Mana from WIS); every other attribute weight of that row is zeroed.
   if (stats.secondaryPolicy === 'primaryOnly') {
     for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
   }
@@ -85,7 +85,7 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
     rows[id] = { ...(rows[id] || {}), maxOf: [...ids] };
   }
   for (const id of ['openingHand', 'draw']) rows[id] = {
-    ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
+    ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0, pointsPerIncrease: Math.max(1, stats.handPointsPerIncrease || 1),
     byClass: {},
   };
   // Every class's pool base and per-level growth (owner, 2026-11-17: HP = 30 + 5 x (CON + level) is base 35, CON 5 and 5 per level

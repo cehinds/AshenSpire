@@ -13,7 +13,7 @@ import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterPro
 import { statusControlProblems } from './combatStatusState.js';
 import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
 import { combatReactionProblems, combatRangeProblems } from './combatReactionState.js';
-import { perceptionProblems } from './perception.js';
+import { perceptionProblems, PerceptionEnabled } from './perception.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -388,7 +388,7 @@ export function combatSnapshotProblems(snapshot) {
   if (!Array.isArray(snapshot.enemies)) problems.push('enemies must be an array');
   else snapshot.enemies.forEach((enemy, index) => problems.push(...entityProblems(enemy, `enemies[${index}]`)));
   if (Array.isArray(snapshot.enemies)) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies, { ownerIds: new Set(['player']) }));
-  if (snapshot.enemyKnowledge?.rules?.perception) problems.push(...perceptionProblems(snapshot.skills?.perception, snapshot.enemyKnowledge.rules.perception));
+  if (snapshot.enemyKnowledge?.rules?.perception && PerceptionEnabled(snapshot.enemyKnowledge.rules)) problems.push(...perceptionProblems(snapshot.skills?.perception, snapshot.enemyKnowledge.rules.perception));
   if (snapshot.fixCoreRules) { try { validateFixCoreRules(normalizeFixCoreRules(snapshot.fixCoreRules)); } catch(error) { problems.push(error.message); } }
   if (snapshot.combatExpansionVersion !== undefined && ![1, 2].includes(snapshot.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2');
   if (snapshot.combatExpansionVersion === 2) problems.push(...combatExpansionRulesProblems(snapshot.combatExpansionRules));

@@ -518,7 +518,7 @@ function manaFloorProblems(bundle, mode) {
 // — the legacy draw, the second Poise and the fallback hand size are gone —
 // so the note only says where a row's number is used.
 function derivedRowNote(id) {
-  if (['ar', 'dr', 'pr', 'ward'].includes(id)) return ' Only while combat ratings are on. Equipment, relics and statuses add on top.';
+  if (id === 'ward') return ' Only while combat ratings are on. Equipment, relics and statuses add on top.';
   if (id === 'poise') return ' Armour and relic Poise add on top.';
   if (id === 'draw') return ' Cards drawn at the start of each turn after the first (a fixed draw), never past the hand size.';
   if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size. Each class opens on its own base and attribute (the per-class rows); the shared Base and weights apply only to a fight with no class.';
@@ -620,6 +620,7 @@ export function startingStatRows(bundle) {
   const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
   for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
     const presentation = bundle.derivedStatRules.presentation[id];
+    if (!presentation) continue; // a row with no presentation (a retired one a saved table still carries) has no editor
     const label = presentation.label;
     const rule = { ...derivedDefaults, ...authored };
     // Labels name the row and the field, so a search that finds every "per

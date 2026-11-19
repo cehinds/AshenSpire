@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { snapshotEnemyKnowledgeRules } from '../src/model/enemyKnowledgeRules.js';
 import { openRunEnemyKnowledge, openKnowledgeEncounter, addKnowledgeCounterBonus, reconcilePerception, acknowledgeKnowledgeBank, enemyKnowledgeRunProblems } from '../src/model/enemyKnowledgeRun.js';
 import { emptyEnemyKnowledge, bankEnemyKnowledgeProfile, knowledgePoints } from '../src/model/enemyKnowledgeProfile.js';
+const perceptionOn = rules => { rules.perception.enabled = true; return rules; }; // Perception is off by default (owner 2026-11-18)
 const newRun = receiptId => {
-  const run = { seed: 42, skills: {}, enemyKnowledgeRules: snapshotEnemyKnowledgeRules() };
+  const run = { seed: 42, skills: {}, enemyKnowledgeRules: perceptionOn(snapshotEnemyKnowledgeRules()) };
   openRunEnemyKnowledge(run, { receiptId, bankable: true }); return run;
 };
 const run = newRun('unique-run-a'), second = newRun('unique-run-b');

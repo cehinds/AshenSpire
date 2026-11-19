@@ -129,17 +129,17 @@
     "martial": [
       {
         "id": "ar",
-        "stat": "ar",
+        "stat": "strength",
         "n": 1,
         "weight": 30,
-        "text": "+1 AR"
+        "text": "+1 STR"
       },
       {
         "id": "dr",
-        "stat": "dr",
+        "stat": "dexterity",
         "n": 1,
         "weight": 20,
-        "text": "+1 DR"
+        "text": "+1 DEX"
       },
       {
         "id": "attr",
@@ -197,10 +197,10 @@
       },
       {
         "id": "magicDamage",
-        "stat": "pr",
+        "stat": "intelligence",
         "n": 1,
         "weight": 30,
-        "text": "+1 magic damage (PR)"
+        "text": "+1 INT"
       },
       {
         "id": "attr",
@@ -216,10 +216,10 @@
     "armor": [
       {
         "id": "dr",
-        "stat": "dr",
+        "stat": "dexterity",
         "n": 1,
         "weight": 40,
-        "text": "+1 DR"
+        "text": "+1 DEX"
       },
       {
         "id": "ward",
@@ -357,7 +357,7 @@
     {
       "id": "attackStance",
       "name": "Attacker's Stance",
-      "text": "+2 AR while in Attack stance",
+      "text": "+2 STR while in Attack stance",
       "weights": {
         "martial": 0,
         "magic": 0,
@@ -365,9 +365,9 @@
         "relic": 1
       },
       "fx": {
-        "stanceRating": {
+        "stanceAttribute": {
           "stance": "attack",
-          "rating": "ar",
+          "attribute": "strength",
           "n": 2
         }
       }
@@ -375,7 +375,7 @@
     {
       "id": "smashStance",
       "name": "Smasher's Stance",
-      "text": "+2 AR while in Smash stance",
+      "text": "+2 STR while in Smash stance",
       "weights": {
         "martial": 0,
         "magic": 0,
@@ -383,9 +383,9 @@
         "relic": 1
       },
       "fx": {
-        "stanceRating": {
+        "stanceAttribute": {
           "stance": "smash",
-          "rating": "ar",
+          "attribute": "strength",
           "n": 2
         }
       }
@@ -393,7 +393,7 @@
     {
       "id": "castingStance",
       "name": "Caster's Stance",
-      "text": "+2 magic damage while in Casting stance",
+      "text": "+2 INT while in Casting stance",
       "weights": {
         "martial": 0,
         "magic": 0,
@@ -401,9 +401,9 @@
         "relic": 1
       },
       "fx": {
-        "stanceRating": {
+        "stanceAttribute": {
           "stance": "casting",
-          "rating": "pr",
+          "attribute": "intelligence",
           "n": 2
         }
       }
@@ -411,7 +411,7 @@
     {
       "id": "defendStance",
       "name": "Defender's Stance",
-      "text": "+2 DR while in Defend stance",
+      "text": "+2 DEX while in Defend stance",
       "weights": {
         "martial": 0,
         "magic": 0,
@@ -419,9 +419,9 @@
         "relic": 1
       },
       "fx": {
-        "stanceRating": {
+        "stanceAttribute": {
           "stance": "defend",
-          "rating": "dr",
+          "attribute": "dexterity",
           "n": 2
         }
       }
@@ -742,6 +742,20 @@
       }
     },
     {
+      "id": "maxMana1",
+      "name": "Deep Reserves",
+      "text": "+1 max Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "stats": {
+        "mp": 1
+      }
+    },
+    {
       "id": "handSize1",
       "name": "Wide Grip",
       "text": "+1 hand size",
@@ -841,7 +855,7 @@
     }
   ],
   "$note": {
-    "properties": "The property pool (W25 step 6). weights: how likely each is per item family; 0 never rolls on that family. fx: what it does in a fight or in deck editing (model/itemProperties.js summarises, the engine reads); stats: stat points it adds (the gear receipt). Owner 2026-11-17 (#2820 review): the stance-rating properties (+2 AR / DR / magic damage in a stance) roll on relics only; armour and armaments grant no AR, DR or PR."
+    "properties": "The property pool (W25 step 6). weights: how likely each is per item family; 0 never rolls on that family. fx: what it does in a fight or in deck editing (model/itemProperties.js summarises, the engine reads); stats: stat points it adds (the gear receipt). Owner 2026-11-17 (#2820 review): the stance-attribute properties (+2 STR / DEX / INT in a stance) roll on relics only; armour and armaments grant no AR, DR or PR (owner, 2026-11-18: they are no longer stats)."
   },
   "categoryChange": {
     "stones": 1,

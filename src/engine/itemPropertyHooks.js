@@ -56,7 +56,7 @@ export function ItemStatusStacks(target, statusId, stacks) {
   return n > 0 && stacks > 0 ? Math.max(0, stacks - n) : stacks;
 }
 
-/** A rating bonus while in the stance the player stands in. */
+/** A damage-channel (STR / DEX / INT) bonus while in the stance the player stands in. */
 export function ItemStanceRating(entity, maneuver, ratingId) {
   return propsOf(entity)?.stanceRating?.[maneuver]?.[ratingId] || 0;
 }

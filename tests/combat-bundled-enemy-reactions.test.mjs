@@ -23,7 +23,7 @@ function coreCounterFixture({ cardStacks = false } = {}) {
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; } // pins the pre-Wave-2.5 arithmetic (tests/legacyStanceRules.mjs)
   // ...and the Block-as-stacks Counter rule of a fight created before Wave 2 batch 5 (the card-stack rule has its own test below).
-  if (!cardStacks) { const counter = { ...combat.fixCoreRules.counter }; for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key]; combat.fixCoreRules = { ...combat.fixCoreRules, counter }; }
+  if (!cardStacks) { const counter = { ...combat.fixCoreRules.counter }; for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key]; combat.fixCoreRules = { ...combat.fixCoreRules, counter }; }
   combat.piles.hand.push({ instanceId: 'bundled-core-counter', cardId: 'core.counter' });
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [],
@@ -39,11 +39,12 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   const returned = view.values.find(row => row.op === 'damage').counterReturn;
   // The soldier's 8 is halved by the Core base-damage scale (effects.baseDamageMultiplier 0.5): 4 incoming.
   // Owner, 2026-11-18: the enemy side scale (x0.7) takes that 4 to 3.
-  assert.equal(returned.incoming, 3);
-  // The card's 9 Block, scaled by blockGainMultiplier 0.7 to 6, become 6 stacks. The scaled base 2 + floor(0.6 x 3) = 3, Poise floor(0.5 x 3) = 1.
-  assert.equal(returned.hp, 3);
+  // The second 2026-11-18 cut (physical x0.7) takes it to 2.
+  assert.equal(returned.incoming, 2);
+  // Owner, 2026-11-18 (second cut): the 9 Block, scaled by blockGainMultiplier 0.49, become 4 stacks: the scaled base 2 + floor(0.4 x 2) = 2, Poise floor(0.5 x 2) = 1.
+  assert.equal(returned.hp, 2);
   assert.equal(returned.poise, 1);
-  assert.equal(returned.block, 0, "the Counter Block grant is a share of the scaled 3-damage hit (floor(0.25 x 3) = 0) and takes no blockGainMultiplier");
+  assert.equal(returned.block, 0, "the Counter Block grant is a share of the scaled 2-damage hit (floor(0.25 x 2) = 0) and takes no blockGainMultiplier");
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
@@ -51,7 +52,7 @@ test('bundled Core Counter under the card-stack rule previews 2 + floor(0.1 x 4 
   const { combat, enemy } = coreCounterFixture({ cardStacks: true });
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const returned = previewCard(combat, 'bundled-core-counter', enemy.id).values.find(row => row.op === 'damage').counterReturn;
-  assert.equal(returned.incoming, 3, 'the soldier\'s 8, halved by the Core base-damage scale, then scaled by the enemy side x0.7');
+  assert.equal(returned.incoming, 2, 'the soldier\'s 8, halved by the Core base-damage scale, then the physical and enemy side x0.7 cuts');
   assert.equal(returned.hp, 2, 'core.counter grants 1 stack: floor(4 x 0.1 x 1) = 0 on top of the scaled base 2');
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });

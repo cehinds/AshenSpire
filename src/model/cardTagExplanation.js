@@ -6,7 +6,7 @@ export function cardTagExplanation(def, tag, ctx = null) {
   const evade = def.evade != null;
   if (tag.id === 'maneuver:defend') return evade
     ? 'Defense stance with Evade: prepare the printed chance to avoid an incoming attack.'
-    : 'Defense stance: grant the printed protection. Spell protection combines physical Block and Ward; DR strengthens Block and PR strengthens Ward.';
+    : 'Defense stance: grant the printed protection. Spell protection combines physical Block and Ward; DEX strengthens Block and INT or WIS strengthens Ward.';
   if (tag.id === 'maneuver:sweep')
     return 'Sweep stance: attack across targets. At Rank 2 or higher it can be played as a Reaction before an incoming attack and may interrupt its attacker.';
   if (tag.id === 'maneuver:counter') return evade

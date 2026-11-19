@@ -19,7 +19,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
 const digest = profile => { delete profile.hash; profile.hash = gameDigest(profile); return profile; };
 function priorRuntimeEnvelope() {
-  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
+  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
   profile.lock.runtimeHash = oldRuntime;
   profile.lock.artifacts.find(row => row.id === 'ashen.mechanics-runtime').hash = 'sha256:e39c92284fa521a808ac0d306d7dac27dc21f542fc8db4ad069a08a3bc05bb18';
   profile.lock.artifacts.find(row => row.path === 'games/ashenspire/packs/core/cards.json').hash = 'sha256:979184ab67b7007074431b9550e288d5d6319149e386c3d29726c22e705c1e6f';
@@ -76,7 +76,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
 
 test('a run saved on dev before the 2026-10-25 combat retune (runtime 73ef24...) still loads and fights', () => {
   const devRuntime = 'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2';
-  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
+  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
   profile.lock.runtimeHash = devRuntime;
   digest(profile);
   const originalHash = profile.hash;
@@ -98,7 +98,17 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085'), saved.lock.runtimeHash);
+});
+
+test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) still validate on the merged runtime', () => {
+  for (const hash of ['sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb', 'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5']) {
+    const saved = priorRuntimeEnvelope();
+    saved.lock.runtimeHash = hash;
+    digest(saved);
+    assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
+    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085'), hash);
+  }
 });
 
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
@@ -113,7 +123,7 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 
 
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
-  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
+  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
   // Re-pinned 2026-11-01: the Evade stance retirement edits the stances module defaults, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-05: retiring the glassCannon status edits engine/mechanics/index.json (the mechanics-runtime artifact), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-05: the Reach cap (range.maxRange in fixCoreMechanics.json, src/model/combatEngagement.js) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
@@ -145,7 +155,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb');
+  assert.equal(profile.lock.runtimeHash, 'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

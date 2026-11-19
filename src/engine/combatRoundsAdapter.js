@@ -9,7 +9,7 @@ import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/co
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
 import { quoteRangeActions } from './combatEngagement.js';
-import { BandsEnemyPhaseRangeState, BandsEnemyBackAtPhase, BandsActive } from './bandRows.js';
+import { BandsEnemyPhaseRangeState, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsActive } from './bandRows.js';
 import * as Actions from './actions.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
@@ -227,17 +227,31 @@ export function trimEnemyPlan(enemy, def, entries, { combat, projectBands = fals
 // attack has closed the distance, later attacks against that target quote no Advance until
 // something grows the distance again. The quote is taken before the move's own movement
 // effects, matching execution (the Advance is accepted when the move's actions are).
+// The planning copy shares its statuses with the real enemy; the projected stack is spent on a copy of them.
+function projectRetreatSpent(enemy) {
+  const stacks = enemy.statuses?.retreat?.stacks || 0;
+  enemy.statuses = { ...enemy.statuses, retreat: { ...enemy.statuses.retreat, stacks: stacks - 1 } };
+  if (stacks - 1 <= 0) delete enemy.statuses.retreat;
+}
+
 function projectEnemyMovement(pricing, enemy, moveId) {
   if (!pricing.rangeState?.policy.enabled) return;
   const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
   if (move.delay) return;
-  if (core2MultiHitRulesEnabled(pricing)) pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
+  // Rows (owner 2026-11-18): a back-row enemy holding Retreat stacks is not brought closer by the Advance an attack carries; the shown
+  // step forward (its own moveEngagement, below) is what spends a stack, one per approach, and only the stackless one steps to the front.
+  const heldBack = BandsEnemyHeldBack(pricing, enemy);
+  if (core2MultiHitRulesEnabled(pricing) && !heldBack) pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
   if (!move.effects?.some(effect => effect.op === 'moveEngagement')) return;
   const preview = previewEnemyAction(pricing, enemy, moveId);
   for (const effect of preview?.actionEffects || []) {
     if (effect.op !== 'moveEngagement' || effect.if && effect.conditionMet !== true || effect.oncePerTurn) continue;
     const repeats = Math.max(0, Math.floor(effect.repeat ?? 1));
     for (let repeat = 0; repeat < repeats; repeat++) {
+      if (effect.bands <= 0 && BandsActive(pricing) && enemy.row === 'back') {
+        if (BandsEnemyHeldBack(pricing, enemy)) { projectRetreatSpent(enemy); continue; } // a held enemy's approach spends a stack and stays back
+        enemy.row = 'front'; // stackless: it steps forward, and the move below closes the pair band
+      }
       pricing.rangeState = movedEngagementState(pricing.rangeState, actorRangeKey(pricing, enemy),
         actorRangeKey(pricing, pricing.player), effect.bands);
     }

@@ -1,9 +1,10 @@
 import { applyStatus } from './statuses.js';
 import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtra } from './itemPropertyHooks.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
+import { ChannelLabel, ChannelWeight } from '../model/damageChannels.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { ScaleCardBaseDamage, isSpellCard } from '../model/combatCardProfile.js';
+import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
@@ -63,8 +64,7 @@ export function setProfileStance(ctx, entity, carrier) {
   return true;
 }
 function rating(entity, name) {
-  const aliases = { ar: 'attackRating', dr: 'defenseRating' };
-  const value = entity?.ratings?.[name] ?? entity?.[name] ?? entity?.[aliases[name]] ?? 0;
+  const value = entity?.ratings?.[name] ?? entity?.[name] ?? 0;
   return Number.isFinite(value) ? value : 0;
 }
 function hasPoise(target) {
@@ -121,6 +121,11 @@ export function SpellPoiseMultiplier(effects, source, target, carrier) {
   const m = effects?.spellPoiseDamageMultiplier;
   return source?.kind === 'player' && target?.kind === 'enemy' && Number.isFinite(m) && m > 1 && (isSpellCard(carrier) || carrier?.combatProfile?.camp === 'spell') ? m : 1;
 }
+/** The effects module's physical-damage factor (1 when unset), applied to the physical share of a hit for both sides. */
+export function PhysicalDamageMultiplier(effects) {
+  const value = effects?.physicalDamageMultiplier;
+  return Number.isFinite(value) && value >= 0 ? value : 1;
+}
 /** The effects module's per-side damage factor (1 when unset): enemies read `enemyDamageMultiplier`, the player `playerDamageMultiplier`. */
 export function SideDamageMultiplier(effects, source) {
   const value = source?.kind === 'enemy' ? effects?.enemyDamageMultiplier : source?.kind === 'player' ? effects?.playerDamageMultiplier : 1;
@@ -155,23 +160,23 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
-  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ChannelLabel(ratingId);
   // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
   const finesse = modern && ratingId === 'ar' && core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
   const rated = finesse ? finesseRatingView(source) : source;
   const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
-  const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
+  const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * ChannelWeight(effects,ratingId);
   let raw = base;
   const applicable = (rated?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
   const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
     for (const [index,row] of applicable.entries()) {
-      const contribution = (row[ratingId] || 0) * (effects?.attackRatingWeight || 0);
+      const contribution = (row[ratingId] || 0) * ChannelWeight(effects,ratingId);
       raw = transition(`${ratingId}:${row.sourceId || index}`,`${row.name || row.kind}: ${ratingLabel}`,raw,raw+contribution);
     }
     raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
-  } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
+  } else raw = transition('ar',ratingLabel,raw,raw+ratingBonus);
   // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
   const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
@@ -200,6 +205,14 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-11-18: one stage scales every hit by its side (`effects.playerDamageMultiplier` / `enemyDamageMultiplier`), after the element stages and
   // before Block and Poise absorb it, so the face, the intent and the hit read the same number. Final returns (a Counter return, a reflected hit, a
   // proposal's reactive return) are not scaled again. A positive hit never rounds to 0.
+  // Owner, 2026-11-18: the physical share of the hit (the receipt's own physical/magical split) takes `effects.physicalDamageMultiplier` for both sides,
+  // on top of the side scale, with the same exemptions for final returns. A positive physical part never rounds to 0.
+  const physicalMultiplier = flatReturn || carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : PhysicalDamageMultiplier(effects);
+  if (physicalMultiplier !== 1 && raw > 0) {
+    const split = splitContactParts({amount:raw,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+    const physicalFraction = split.physical + split.magic > 0 ? split.physical / (split.physical + split.magic) : 0;
+    if (physicalFraction > 0) raw = transition('physical-damage-scale','Physical damage scale',raw,ScalePhysicalDamage(raw,physicalFraction,physicalMultiplier),'offense',physicalMultiplier);
+  }
   const sideMultiplier = flatReturn || carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : SideDamageMultiplier(effects, source);
   if (sideMultiplier !== 1 && raw > 0) raw = transition('side-damage-scale',`${source?.kind === 'enemy' ? 'Enemy' : 'Player'} damage scale`,raw,Math.max(raw >= 1 && sideMultiplier > 0 ? 1 : 0,raw*sideMultiplier),'offense',sideMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
@@ -407,8 +420,9 @@ export function profileCardCosts(ctx, def) {
 export function profileHandSize(ctx) {
   const cards = configuredModule(ctx, 'cards');
   if (!cards) return 0;
+  const perIncrease = Math.max(1, cards.handPointsPerIncrease || 1);
   return Math.max(0, Math.floor((cards.handBase ?? 4)
-    + (ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
+    + Math.floor((ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0) / perIncrease)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
 }
 export function profileFallbackDamage(ctx) {
   return gameContent(ctx, 'fallback')?.attackDamage ?? ctx.gameProfile?.foundation?.attackDamage ?? 5;

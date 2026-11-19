@@ -1,6 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyBackAtPhase, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEnemyBackAtPhase, BandsEnemyHeldBack, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -912,6 +912,23 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
   const rangeQuote = quoteRangeActions(combat, enemy, actions, { route: 'advance', preview: true });
   const totalSp = spCost + (rangeQuote?.advanceSp || 0);
+  // Rows (owner 2026-11-18): a back-row enemy holding Retreat stacks cannot close with the Advance an attack carries (that Advance
+  // would only spend a stack), so a melee move that needs one is not played as if in range: the enemy plays its own step forward
+  // (which spends one stack) when it can afford it, else the move is refused and spends nothing.
+  // A charged (prepaid) melee resolving from the back row cannot reach either: it spends one stack as its approach and fizzles (its SP was paid at the charge).
+  if (prepaid && BandsEnemyHeldBack(combat, enemy) && quoteRangeActions(combat, enemy, actions, { route: 'advance' })?.advanceSp > 0) {
+    BandsEnemyAdvance(combat, enemy, 'advance');
+    combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, required: totalSp, available: Rounds.enemyAvailableSp(enemy), resource: 'range' });
+    return 'refused';
+  }
+  if (!prepaid && rangeQuote?.advanceSp > 0 && BandsEnemyHeldBack(combat, enemy)) {
+    const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
+    const closingEligible = closing && closingId !== moveId && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId))
+      && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing, { enemy, moveId: closingId, combat }) <= Rounds.enemyAvailableSp(enemy);
+    if (closingEligible) return executeMovePayload(combat, enemy, closing, closingId);
+    combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, required: totalSp, available: Rounds.enemyAvailableSp(enemy), resource: 'range' });
+    return 'refused';
+  }
   if (fixCoreEnabled(combat)) {
     const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
     const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
@@ -2522,6 +2539,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(range ? { range, costs: rangeCosts } : {}),
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    // The rules a face outside combat would read for this player: the profile pin and the always-on attributes (no fight boosts). A live number is
+    // compared with that face's number, so only something in the fight (a status, a stance, a triggered effect) colours it.
+    ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
+      // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
+      gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId } } : {}),
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),

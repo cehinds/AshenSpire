@@ -38,8 +38,6 @@ export function armamentIntrinsicReceipt(piece) {
   if (problems.length) throw new Error(problems.join('; '));
   return Object.freeze({
     itemId: piece.id,
-    attackRating: piece.attackRating,
-    defenseRating: piece.defenseRating,
     weight: piece.weight,
     weaponArtManaCost: piece.weaponArtManaCost,
     uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost,

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "item",
   "label": "Magic Focus",
-  "description": "What this piece IS: the Armoury and the smith name it Magic Focus.",
+  "description": "What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0).",
   "attaches": [
     "gear"
   ],

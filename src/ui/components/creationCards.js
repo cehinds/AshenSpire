@@ -114,12 +114,13 @@ export function primaryStatCard(input) {
 export function resourceStrip(rows, poise, { compact = false } = {}) {
   const entries = new Map(rows.map((entry) => [entry.id, entry]));
   entries.set('poise', { id: 'poise', value: poise.value, formula: poise.note || '' });
-  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) {
+  if (poise.ratings) for (const id of ['ward']) {
     entries.set(id, { ...entries.get(id), id, value: poise.ratings[id],
-      formula: `${id.toUpperCase()} ${poise.ratings[id]} · Includes attributes and equipment.` });
+      formula: `Ward ${poise.ratings[id]} · Includes attributes and equipment.` });
   }
-  const labels = { hp: 'HP', stamina: 'Stamina', mana: 'Mana', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
-  const groups = [['hp', 'stamina', 'mana'], ['ar', 'pr'], ['dr', 'poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
+  const labels = { hp: 'HP', stamina: 'Stamina', mana: 'Mana', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
+  // AR, DR and PR are not stats (owner, 2026-11-18): STR, DEX and INT already stand on the attribute cards.
+  const groups = [['hp', 'stamina', 'mana'], ['poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
   const known = new Set(groups.flat());
   if (compact) {
     groups.pop();
@@ -128,7 +129,7 @@ export function resourceStrip(rows, poise, { compact = false } = {}) {
     if (capacity) entries.set('handSize', { ...capacity,
       formula: [capacity.formula, entries.get('openingHand')?.formula].filter(Boolean).join(' · ') });
   }
-  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating'].includes(id));
+  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating', 'ar', 'dr', 'pr'].includes(id));
   if (extra.length) groups.push(extra);
   const lines = groups.map((ids) => {
     const chips = ids.filter((id) => entries.has(id)).map((id) => {

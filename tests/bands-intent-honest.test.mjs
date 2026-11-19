@@ -43,7 +43,7 @@ test('Advance played after the intents rolled flips the shown step forward to th
   }
 });
 
-test('Retreat played after that flips it back to Approaching, and the approach runs', () => {
+test('Retreat played after that ends the Advance and sends the front enemy back; the surgeon, back all along and not held, steps forward at the phase start (no front row left), so its attack stands', () => {
   let ran = 0;
   for (const seed of seeds) {
     const combat = fight(seed);
@@ -55,10 +55,9 @@ test('Retreat played after that flips it back to Approaching, and the approach r
     combat.loadout = structuredClone(combat.loadout); combat.loadout.sets.rightHand = ['shortbow'];
     GrantRetreatCard(combat);
     play(combat, combat.piles.hand.find(c => c.cardId === 'core.retreat').instanceId);
-    assert.equal(surgeon.intent.moveId, 'advance', `seed ${seed}: back to Approaching`);
-    assert.equal(surgeon.intent.approachFor, attack);
-    dispatch(combat, { type: 'endTurn' });
-    assert.equal(moves(combat)[0], 'advance');
+    assert.equal(combat.player.advanced, 0, 'the Advance is over');
+    assert.equal(surgeon.row, 'back', `seed ${seed}: Retreat sent it to the back row`);
+    assert.equal(surgeon.intent.moveId, attack, 'a lone back-row enemy plans its attack, not an approach (SPEC rows)');
     ran++;
   }
   assert.ok(ran > 0);
@@ -140,4 +139,21 @@ test('the planner itself queues a back-row melee opener as the step forward (no 
   const queue = extendEnemyQueue({ ...enemy, movesHistory: [] }, def, [], { isFirstTurn: true, pick: () => null, combat });
   assert.equal(queue[0].moveId, 'advance');
   assert.equal(queue[0].approachFor, 'caneStrike');
+});
+
+test('retreat hold: a lone enemy sent back by Retreat shows the step forward (it cannot reach this phase), and the move done is the move shown', () => {
+  let held = 0;
+  for (const seed of seeds) {
+    const combat = bandsFight({ enemyIds: ['wanderingSoldier'], seed, hand: ['core.retreat'] });
+    const soldier = combat.enemies[0];
+    play(combat, 'qa0');
+    assert.equal(soldier.row, 'back');
+    assert.equal(soldier.statuses.retreat?.stacks, 1);
+    const shown = soldier.intent.moveId;
+    if (soldier.intent.approachFor) { held++; assert.equal(shown, 'advance', `seed ${seed}: a held melee enemy shows the step forward`); }
+    const before = combat.eventLog.filter(e => e.type === 'enemyMoveStarted').length;
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(combat.eventLog.filter(e => e.type === 'enemyMoveStarted')[before]?.moveId, shown, `seed ${seed}: the move done is the move shown`);
+  }
+  assert.ok(held > 0, 'at least one seed rolls a melee attack that becomes the step forward');
 });
