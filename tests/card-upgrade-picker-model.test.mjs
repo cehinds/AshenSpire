@@ -112,7 +112,7 @@ test('the Core rest model lists Upgrade Card with a preview per upgradable deck 
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'picker-rest' });
   run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   const model = gameProfileRestModel(reg, run, visit);
   const service = model.services.find(s => s.id === 'upgradeCard');

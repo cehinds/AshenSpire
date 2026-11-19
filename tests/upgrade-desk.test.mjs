@@ -25,7 +25,7 @@ import '../src/engine/combat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
-const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
+const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
 const fresh = () => { const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' }); run.smithingStones = 3; run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run); return run; };
 const mount = (dom, run, itemRef, handlers = {}) => {
   const host = dom.document.createElement('main'); dom.document.body.append(host);
