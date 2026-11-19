@@ -583,7 +583,7 @@
 "enemyMove","inkveilNautilus","shellGuard","block","false","false","","","physical","defend","","","","",""
 "enemyMove","mirrorFanAbbess","fanSlash","attack","true","false","weapon","slashing","physical","attack","","","delivery:melee","",""
 "enemyMove","mirrorFanAbbess","mirrorRiposte","block","false","true","weapon","slashing","physical","counter","","melee","delivery:melee","",""
-"enemyMove","mirrorFanAbbess","glassGlare","attack","true","false","spell","sacred","spell","","divine","","delivery:projectile","",""
+"enemyMove","mirrorFanAbbess","glassGlare","attack","true","false","spell","arcane","spell","","divine","","delivery:projectile","",""
 "enemyMove","mirrorFanAbbess","wardingFan","block","false","false","","","physical","defend","","","","",""
 "enemyMove","saltChoirWalrus","saltDirge","attack","true","false","spell","frost","spell","","frost","","delivery:projectile","",""
 "enemyMove","saltChoirWalrus","blubberSlam","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
