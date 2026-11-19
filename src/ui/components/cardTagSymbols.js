@@ -99,6 +99,11 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
     : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
+  // Owner, 2026-11-18: a card whose moveEngagement sends a foe back carries the Retreat tag, and the rail says it inflicts Retreat (not the weapon's free Retreat card).
+  const retreat = tags.find(tag => tag.id === 'retreat');
+  if (retreat && def.effects?.some(effect => effect?.op === 'moveEngagement' && effect.target === 'enemy' && effect.bands > 0) && selected.length < 5) {
+    selected.push({ ...retreat, blurb: tFull('card.tag.retreatInflicts') });
+  }
   const statuses = new Map();
   const add = (id, occurrence = null) => {
     if (!registries?.statuses?.has(id)) return;

@@ -57,17 +57,18 @@ test('Core: an expired stance no longer counts; other stances do not count', () 
   assert.equal(isStaggered(combat, null), false);
 });
 
-test('Broken (shipped rule): a real Poise break makes hasStatus staggered true through `broken`, with no stance and no status', () => {
+test('Broken (shipped rule): a real Poise break makes hasStatus staggered true through `broken` and the break\'s own Staggered stacks (owner 2026-11-18), with no stance', () => {
   const { combat, target } = live(2, { legacy: false });
   assert.equal(combat.fixCoreRules.poise.breakRule, 'broken');
   assert.equal(ev(combat, target), false, 'not broken yet');
   breakPoise(combat, target);
   assert.ok(target.broken, 'the break made the target Broken');
-  assert.equal(target.statuses.staggered, undefined);
+  assert.equal(target.statuses.staggered?.stacks, 2, 'the break grants 2 Staggered (poise.breakStatusStacks)');
   assert.equal(isStaggered(combat, target), true);
   assert.equal(ev(combat, target), true);
-  assert.equal(ev(combat, target, { ...staggeredPred, atLeast: 2 }), false, 'Broken counts as one stack');
-  assert.equal(ev(combat, target, { p: 'hasStatus', of: 'target', status: 'weak' }), false);
+  assert.equal(ev(combat, target, { ...staggeredPred, atLeast: 2 }), true, 'the break\'s 2 stacks count');
+  assert.equal(ev(combat, target, { ...staggeredPred, atLeast: 3 }), false);
+  assert.equal(ev(combat, target, { p: 'hasStatus', of: 'target', status: 'weak' }), true, 'the break grants Weak too');
 });
 
 test('Broken (shipped rule): a Staggered stance alone does not count; only Broken does', () => {

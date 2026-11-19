@@ -37,7 +37,9 @@ function live(classId, seed = 433, enemyIds = ['wanderingSoldier']) {
   const enemy = combat.enemies[0];
   delete combat.reactionRules.contactPolicy;
   Object.assign(combat.player, { basePrecisionBonus: 1000, hp: 999, maxHp: 999, energy: 99, stamina: 99, maxStamina: 99, mana: 99, maxMana: 99, statuses: {} });
-  Object.assign(enemy, { hp: 5000, maxHp: 5000, statuses: {}, ratingSources: [], basePrecisionBonus: 0, block: 0 });
+  // An already-empty pool isolates the card's rider from Poise absorption and new break grants.
+  Object.assign(enemy, { hp: 5000, maxHp: 5000, statuses: {}, ratingSources: [], basePrecisionBonus: 0, block: 0,
+    persistentPoise: { value: 0, max: enemy.persistentPoise.max } });
   dispatch(combat, { type: 'setReactions', enabled: false });
   return { combat, player: combat.player, enemy };
 }
@@ -56,6 +58,7 @@ function bothSides(classId, cardId, setup, measure) {
     setup(world, met);
     const before = measure(world);
     play(world.combat, cardId, registries.cards.get(cardId).type === 'attack' ? world.enemy : null);
+    assert.equal(world.enemy.broken, undefined, `${cardId}: the condition fixture does not break Poise`);
     return measure(world) - before;
   });
 }
@@ -180,6 +183,7 @@ test('the stance payoffs land at 1.5–2× an ordinary hit, and the preview equa
         const rows = preview.values.filter(row => ['damage', 'loseHp'].includes(row.op)).map(row => row.perTarget?.[world.enemy.id] ?? row.value);
         const hp = world.enemy.hp;
         dispatch(world.combat, { type: 'playCard', cardInstanceId: 'probe', targetId: world.enemy.id });
+        assert.equal(world.enemy.broken, undefined, `${cardId}: the stance payoff does not break this target`);
         return { rows, lost: hp - world.enemy.hp, vulnerable: world.enemy.statuses.vulnerable?.stacks || 0 };
       };
       const ordinary = hit('sweep'), matched = hit(matching);
@@ -219,9 +223,10 @@ test('Pyre Brand, Dirty Strike and Rime Lance read the target status', () => {
     const world = live('starseer');
     if (on) world.enemy.statuses.frost = { stacks: 1 };
     play(world.combat, 'rimeLance', world.enemy);
+    assert.equal(world.enemy.broken, undefined, 'Rime Lance status comparison does not include a Poise break');
     return world.enemy.statuses.vulnerable?.stacks || 0;
   });
-  assert.ok(vulnerable[0] > 0 && vulnerable[1] === 0, `Vulnerable only on a Frosted target (${vulnerable})`);
+  assert.deepEqual(vulnerable, [1, 0], 'Rime Lance grants exactly its one Vulnerable only on a Frosted target');
 });
 
 test('Lunging Thrust and Distant Star play only at Reach', () => {
