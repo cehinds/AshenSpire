@@ -21,7 +21,8 @@ import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
 import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, DefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
 import { FluxMultiplier } from './elementFlux.js';
-import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
+import { FightMagicShare } from '../model/elementIdentityRules.js';
+import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish, ForcePoiseShare } from './elementIdentity.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -30,6 +31,25 @@ export function isPierceHit(profile, carrier) {
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
+}
+/**
+ * PierceStacks(ctx, target, carrier, profile) -> the Pierce stacks a hit carries (owner, 2026-11-18, section 21): 0 for a hit that is not Pierce or a reaction,
+ * else the carrier's `pierceStacks` (a weapon or card grants more), else 1. The ONE place the stack count is read, so a defence that cancels
+ * Pierce stacks (Stone Skin, built on the gear branch) reduces it here first.
+ */
+export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}) {
+  if (!isPierceHit(profile, carrier) || carrier?.combatReaction) return 0;
+  return Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1;
+}
+/**
+ * PierceBlockIgnored(ctx, target, carrier, profile, total) -> the Block a hit ignores: each Pierce stack ignores `pierce.blockIgnoredPerStack` (1) point of
+ * Block; whatever passes still routes Block, then Poise, then HP. A fight saved without that key keeps the old rule, `blockBypassFraction` (20%) of the hit.
+ */
+export function PierceBlockIgnored(ctx, target, carrier, profile, total) {
+  const stacks = PierceStacks(ctx, target, carrier, profile);
+  if (!(stacks > 0)) return 0;
+  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  return rules.blockIgnoredPerStack > 0 ? Math.floor(stacks * rules.blockIgnoredPerStack) : Math.floor(rules.blockBypassFraction * total);
 }
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
@@ -81,6 +101,14 @@ function reflectApplies(target, source, carrier, profile) {
   return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
 // `forecast`: a preview of an attack that will certainly be avoided (Evade, out of range, hit roll off) prices 0 HP, as the play will; the landed receipt never sets it.
+/** A Force hit's Poise share of what Block left (`poiseIn`): Poise absorbs that share (never more than it holds) and HP takes the rest, rounded down. Keeps the normal absorption if that is larger. */
+function ForcePoiseReceipt(target, poiseIn, share, normal) {
+  const held = Math.max(0, target?.persistentPoise?.value || 0);
+  const reduced = Math.min(held, poiseIn - Math.floor(poiseIn * (1 - share)));
+  if (reduced <= normal.reduced) return normal;
+  return { ...normal, amount: poiseIn - reduced, reduced,
+    sources: [{ id: 'force-poise-share', label: 'Force: a share of the hit goes to Poise', stage: 'mitigation', operation: 'multiply', multiplier: 1 - share, amount: -reduced, requested: poiseIn, effective: poiseIn - reduced }] };
+}
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
   // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
@@ -156,7 +184,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     return after;
   };
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
-  const share = magicShareOf(profile);
+  const share = FightMagicShare(ctx, profile);
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
@@ -279,7 +307,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     const afterBlock = total - blocked;
@@ -297,7 +325,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
@@ -324,23 +352,27 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical);
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
     const magicBypass = pierceBypassed-piercedPhysicalPart;
     let magicBlocked = plainMagicBlocked-magicBypass;
-    // The pierced physical amount meets Poise first, 1:1 (owner, 2026-10-26): Poise loses up to that much and only the rest reaches HP.
-    // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
+    // Saved fraction-based Pierce keeps its 1:1 Poise absorption (owner, 2026-10-26). Stack-based Pierce adds no special Poise damage:
+    // everything Block leaves uses the ordinary split, including Force's half-Poise share (owner, 2026-11-18).
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption, so its pierced part gets none either.
-    const piercePhysical = smashRule ? 0 : piercedPhysicalPart;
+    const stackPierce = fixCorePierceRules(fixCoreRules(ctx,target)).blockIgnoredPerStack > 0;
+    const piercePhysical = smashRule || stackPierce ? 0 : piercedPhysicalPart;
     piercePoise = Math.min(piercePhysical,poisePool);
     const pierceToHp = piercePhysical-piercePoise;
     const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;
     const poiseIn = physical-piercePhysical-physicalBlocked;
     // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
-    const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
+    // Owner, 2026-11-18: a Force hit sends `elements.force.poiseShare` (half) of what Block left to Poise, the rest to HP, in place of the usual 25%.
+    const forceShare = smashRule ? null : ForcePoiseShare(ctx,carrier);
+    const normalPoise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
+    const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(afterPierce,poiseIn,forceShare,normalPoise);
     // Magic after the physical part: Poise first (1:1, the pool the physical part left), then the Block the physical part left, then Barrier, then HP.
     magicPoise = poiseMeetsMagic && !smashRule ? Math.min(magical,Math.max(0,poisePool-piercePoise-poise.reduced)) : 0;
     const magicAfterPoise = magical-magicPoise;

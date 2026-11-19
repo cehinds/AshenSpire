@@ -5,7 +5,8 @@
 Simple is the default, including existing saved Simple preferences. Its pure
 `proceduralCardArt({type, tags, rank}, {registries})` factory selects only from
 the shipped 28 compositions, 44 base PNGs and 108 reviewed PNG/template pool,
-plus the pinned spear cutout and existing shortbow artwork for physical range.
+plus the approved default physical Skill object, the pinned spear cutout and
+existing shortbow artwork for physical range.
 It never routes by card ID, name, equipment profile, costs or effects. Semantic
 templates are indexed once; a bounded cache uses canonical sorted/deduplicated
 tags, type and rank. Returned recipes and their nested transforms are frozen.
@@ -23,9 +24,45 @@ un-ranged physical and all magical Counters paint the approved hammer in front
 with the same geometry. Range-tagged physical Counters replace only that foreground
 weapon. Magical elements and statuses retain their own backgrounds and cues. Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
-objects. Status tags select approved PNG marks/glows (a restrained approved
+objects. A physical Skill with no utility or approved status object uses the
+static cutout placed by `proceduralObjects.skill` in the reviewed library.
+Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
 never exceeds four visual identities.
+
+A specific Attack, Smash, Sweep, Defend, Counter or Evade silhouette wins
+first, including a weapon or staff for a spell attack. Counter keeps its shield
+and foreground weapon as one stance assembly. Otherwise, a supported secondary
+effect object wins over a main effect object. A card with neither uses its
+existing Skill or generic spell art. The reviewed library config ranks stat,
+utility and status objects within each effect group.
+
+Stat modifier tags use `buff:<stat>` or `debuff:<stat>`. Within the same
+effect group, the reviewed library tries HP, MP, SP, Damage, Poise, Hand Size,
+STR, DEX, CON, INT, WIS, Gold and XP in that order. A stat without a registered
+cutout falls through. Presentation-only tags can specify `main:` or
+`secondary:` before the complete tag, for example `secondary:buff:str`.
+An unscoped tag defaults to main when it has no matching secondary effect.
+
+Effect roles follow the current resolved definition and prepared combat effects.
+An authored main visual focus or matching explicit utility takes precedence
+when classifying a main effect. Otherwise, the primary ranked effect is main,
+or the first eligible effect if none can be ranked. Linked effects inherit the
+role of the calling effect, and combo riders count as secondary. Existing
+utility and registered status symbols qualify as objects. A heal can select its
+utility art and ordinary resource gains do not qualify as stat modifiers.
+
+A stat object uses its original cutout with a light interior tint and a stronger
+soft tint along its edges. The chosen stat still contributes centered green up
+or red down chevrons when a stance or another effect supplies the object. If the
+chosen stat has both directions, both chevron sets are centered as a group and
+the object tint and aura are neutral. Art paints from back to front in the
+configured order of background, chevrons, aura, object, effects and projectiles,
+with card UI above the artwork.
+
+The hand refresh recomputes the choice as effective cards change. A weapon
+range change can switch the weapon and its aura silhouette while the centered
+chevrons and compatible effects stay in place.
 
 `PROCEDURAL_BACKGROUND_COLORS` maps element identities to background hue and
 saturation. Explicit element wins over the camp: physical cards without an

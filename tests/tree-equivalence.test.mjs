@@ -97,7 +97,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:fire': { blurb: 'Applies 1 Burn on a Health hit unless the card already prints a Burn effect.' },
     'damage:frost': { label: 'Cold', blurb: 'Applies 1 Frost on a Health hit unless the card already prints a Frost effect.' },
     'damage:lightning': { blurb: 'Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.' },
-    'damage:arcane': { label: 'Force', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
+    // Owner 2026-11-18 (ruling §20): Force is green, the Alteration family, not the old blue-lilac; the tag keeps its id, glyph and blurb.
+    'damage:arcane': { label: 'Force', color: '9BC8BE', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
+    'school:force': { color: '9BC8BE' },
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
     'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
     // No dashes in player text (2026-11-17, chore/EventCopy): the em dash in these blurbs became a colon or full stop.

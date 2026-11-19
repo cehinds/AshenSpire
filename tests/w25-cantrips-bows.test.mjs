@@ -55,6 +55,14 @@ test('every school cantrip applies at least 1 stack of its school status, at bot
     const school = schoolOf(card);
     if (!school || school === 'lightning') continue;
     for (const [grade, effects] of [['base', card.effects], ['upgrade', card.upgrade.effects]]) {
+      if (school === 'force') {
+        // Force is a damage type, not a spell school; Gale Push explicitly carries Retreat.
+        assert.equal(card.id, 'core.galePush', `${grade}: the authored Force cantrip`);
+        for (const tag of ['school:force', 'retreat']) assert.ok(tagsOf(card).includes(tag), `${card.id} ${grade}: ${tag}`);
+        assert.deepEqual(effects.filter(effect => effect.op === 'moveEngagement'), [{ op: 'moveEngagement', target: 'enemy', bands: 1 }], `${grade}: inflict Retreat`);
+        assert.deepEqual(effects.filter(effect => effect.op === 'damage'), [{ op: 'damage', target: 'enemy', amount: grade === 'base' ? 3 : 5 }], `${grade}: the authored Force hit`);
+        continue;
+      }
       const found = (effects || []).filter(e => e.op === 'applyStatus' && SCHOOL_STATUS[school].includes(e.status));
       assert.ok(found.length && found.every(e => e.stacks >= 1), `${card.id} (${school}) ${grade}`);
     }

@@ -1,0 +1,96 @@
+{
+  "request": "looks good, go ahead and implement this priority order and centered chevrons in the procedural card generator, then review, test and merge to dev, review and test",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "modifier-object-priority-in-combat",
+      "url": "?gameProfile=ashen.core%402.0.0&shot=combat&shotSeed=41045&shotDeck=core.rendingHex,aegisOfEmbers,gildedOath",
+      "ready": "[data-card-id=\"core.rendingHex\"]",
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Rending Hex keeps its spell staff",
+          "selector": "[data-card-id=\"core.rendingHex\"] [data-art-layer=\"object\"][data-card-art-component=\"V.object.0\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Rending Hex uses separate damage debuff chevrons",
+          "selector": "[data-card-id=\"core.rendingHex\"] [data-art-layer=\"modifier-debuff-damage-chevrons\"][data-card-art-component=\"stat.chevrons\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Rending Hex centers its chevrons on the staff",
+          "selector": "[data-card-id=\"core.rendingHex\"] [data-art-layer=\"modifier-debuff-damage-chevrons\"][data-card-art-component=\"stat.chevrons\"][style*=\"left:50%\"]"
+        },
+        {
+          "kind": "style",
+          "label": "Rending Hex damage debuff chevrons are red",
+          "selector": "[data-card-id=\"core.rendingHex\"] [data-art-layer=\"modifier-debuff-damage-chevrons\"][data-card-art-component=\"stat.chevrons\"]",
+          "prop": "filter",
+          "equals": "url(\"#card-stat-tint-debuff-chevrons\") drop-shadow(rgb(255, 85, 91) 0px 0px 5px)"
+        },
+        {
+          "kind": "visible",
+          "label": "Aegis of Embers keeps its Defend shield",
+          "selector": "[data-card-id=\"aegisOfEmbers\"] [data-art-layer=\"object\"][data-card-art-component=\"O.object.4\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Aegis of Embers shows the Strength buff chevrons",
+          "selector": "[data-card-id=\"aegisOfEmbers\"] [data-art-layer=\"modifier-buff-strength-chevrons\"][data-card-art-component=\"stat.chevrons\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Aegis of Embers centers its chevrons on the shield",
+          "selector": "[data-card-id=\"aegisOfEmbers\"] [data-art-layer=\"modifier-buff-strength-chevrons\"][data-card-art-component=\"stat.chevrons\"][style*=\"left:50%\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Gilded Oath chooses the secondary Dexterity object",
+          "selector": "[data-card-id=\"gildedOath\"] [data-art-layer=\"modifier-buff-dexterity-object\"][data-card-art-component=\"stat.dex\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Gilded Oath pairs the Dexterity object with up chevrons",
+          "selector": "[data-card-id=\"gildedOath\"] [data-art-layer=\"modifier-buff-dexterity-chevrons\"][data-card-art-component=\"stat.chevrons\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No browser errors",
+          "max": 0,
+          "ignore": [
+            "Blocked call to navigator\\.vibrate because user hasn.t tapped"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Rending Hex shows an auxiliary object",
+          "selector": "[data-card-id=\"core.rendingHex\"] :is([data-art-layer^=\"secondaryObject\"],[data-art-layer^=\"modifier-\"][data-art-layer$=\"-object\"])"
+        },
+        {
+          "kind": "visible",
+          "label": "Aegis of Embers shows an auxiliary object",
+          "selector": "[data-card-id=\"aegisOfEmbers\"] :is([data-art-layer^=\"secondaryObject\"],[data-art-layer^=\"modifier-\"][data-art-layer$=\"-object\"])"
+        },
+        {
+          "kind": "visible",
+          "label": "Gilded Oath shows the main Strength object",
+          "selector": "[data-card-id=\"gildedOath\"] [data-art-layer=\"modifier-buff-strength-object\"][data-card-art-component=\"stat.str\"]"
+        }
+      ]
+    }
+  ]
+}
