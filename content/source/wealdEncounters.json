@@ -90,6 +90,59 @@
     }
   },
   {
+    "id": "brackenCharge",
+    "enemies": [
+      "brackenTusker"
+    ],
+    "weight": 20,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
+    "id": "bogAmbush",
+    "enemies": [
+      "fenwickToad",
+      "reedpipePoacher"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
+    "id": "titheRound",
+    "enemies": [
+      "wickerTitheman",
+      "wanderingSoldier"
+    ],
+    "weight": 18,
+    "pool": "normal",
+    "seat": "weald",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 1,
+      "max": 2
+    }
+  },
+  {
     "id": "eliteWyrm",
     "enemies": [
       "wyrmAspirant"
@@ -196,6 +249,125 @@
     "id": "bossThornMatriarch",
     "enemies": [
       "thornMatriarch"
+    ],
+    "weight": 1,
+    "pool": "boss",
+    "seat": "weald",
+    "floorBand": {
+      "min": 6,
+      "max": 6
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 3
+    }
+  },
+  {
+    "id": "eliteSiltCrown",
+    "enemies": [
+      "siltCrownNewt"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "eliteWickerHind",
+    "enemies": [
+      "wickerHind"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "eliteBlackrushStork",
+    "enemies": [
+      "blackrushStork"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "eliteWealdPearlback",
+    "enemies": [
+      "pearlbackSnail"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "eliteAlderHarvest",
+    "enemies": [
+      "alderMaskHarvester"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "weald",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 2,
+      "max": 3
+    }
+  },
+  {
+    "id": "bossWoundwoodTusker",
+    "enemies": [
+      "woundwoodTusker"
+    ],
+    "weight": 1,
+    "pool": "boss",
+    "seat": "weald",
+    "floorBand": {
+      "min": 6,
+      "max": 6
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 3
+    }
+  },
+  {
+    "id": "bossMireProcessional",
+    "enemies": [
+      "mireProcessional"
     ],
     "weight": 1,
     "pool": "boss",

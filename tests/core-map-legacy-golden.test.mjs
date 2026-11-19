@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { CODEX_IDS } from '../tools/enemy-roster-table.mjs';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { contentBundle } from '../src/content/index.js';
@@ -12,7 +13,11 @@ import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 // A run saved before the visible-fork map keeps the routes content it was pinned with (tests/coreLegacyRoutes.mjs): maps built
 // from it must roll draw for draw as they always did.
 const profile = legacyCoreProfile();
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// This profile is today's Core with its old routes content, so it does carry the Codex enemies and nothing gates their encounters out.
+// The golden is a fingerprint of the map CODE draw for draw on the roster it was rolled against, so it builds from the pre-Codex
+// encounters (2026-11-18). Old pinned profiles are gated differently: applyGameProfileToContent drops enemies a pin does not carry.
+const preCodex = { ...contentBundle, encounters: contentBundle.encounters.filter(row => !row.enemies.some(id => CODEX_IDS.includes(id))) };
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(preCodex, profile)), profile);
 const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
 
 const digest = map => createHash('sha256').update(JSON.stringify(Object.keys(map.nodes).sort().map(id => {

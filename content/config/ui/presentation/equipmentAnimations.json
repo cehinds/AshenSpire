@@ -3,31 +3,59 @@
     "weaponGroups": {
       "sword": [
         "straightSword",
-        "katana"
+        "katana",
+        "broadsword",
+        "flamberge",
+        "rapier",
+        "estoc",
+        "duelistsFoil",
+        "moonlitKatana"
       ],
       "greatsword": [
-        "greatsword"
+        "greatsword",
+        "ashenClaymore",
+        "zweihander"
       ],
       "dagger": [
         "dagger",
-        "parryDagger"
+        "parryDagger",
+        "kris",
+        "stiletto",
+        "leatherWhip",
+        "thornWhip",
+        "ironKnuckles",
+        "beastClaws"
       ],
       "bow": [
-        "shortbow"
+        "shortbow",
+        "longbow",
+        "huntersRecurve",
+        "handCrossbow",
+        "arbalest"
       ],
       "polearm": [
         "halberd",
-        "frostSpear"
+        "frostSpear",
+        "pike",
+        "scythe",
+        "reapersCrescent"
       ],
       "hammer": [
-        "warhammer"
+        "warhammer",
+        "mace",
+        "morningStar",
+        "flail",
+        "maul",
+        "thunderMallet"
       ],
       "twinblade": [
-        "twinblade"
+        "twinblade",
+        "moonGlaives"
       ],
       "axe": [
         "battleaxe",
-        "cinderAxe"
+        "cinderAxe",
+        "beardedAxe"
       ],
       "shield": [
         "buckler",
@@ -37,14 +65,19 @@
         "spikedShield"
       ],
       "lantern": [
-        "lantern"
+        "lantern",
+        "grimoire",
+        "prayerBook"
       ],
       "torch": [
-        "torch"
+        "torch",
+        "sunTalisman",
+        "boneTalisman"
       ],
       "staff": [
         "ashStaff",
-        "starstoneStaff"
+        "starstoneStaff",
+        "stormSceptre"
       ],
       "sceptre": [
         "boneSceptre",
@@ -2331,6 +2364,331 @@
         "rightGroup": "empty",
         "leftGroup": "bow",
         "setId": "rogue-gutterLeathersBow"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "greatsword",
+        "leftGroup": "empty",
+        "setId": "reaver-wardenGreatsword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "empty",
+        "leftGroup": "greatsword",
+        "setId": "reaver-wardenGreatsword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "sword",
+        "leftGroup": "shield",
+        "setId": "reaver-wardenSwordShield"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "shield",
+        "leftGroup": "sword",
+        "setId": "reaver-wardenSwordShield"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "empty",
+        "leftGroup": "empty",
+        "setId": "reaver-wardenUnarmed"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "grip": "dual",
+        "setId": "reaver-wardenTwinSword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "dagger",
+        "leftGroup": "empty",
+        "grip": "one",
+        "setId": "reaver-wardenDaggerSingle"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "bow",
+        "leftGroup": "empty",
+        "setId": "reaver-wardenBow"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "cinderforgedPlate",
+        "rightGroup": "empty",
+        "leftGroup": "bow",
+        "setId": "reaver-wardenBow"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "greatsword",
+        "leftGroup": "empty",
+        "setId": "reaver-vigilGreatsword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "empty",
+        "leftGroup": "greatsword",
+        "setId": "reaver-vigilGreatsword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "sword",
+        "leftGroup": "shield",
+        "setId": "reaver-vigilSwordShield"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "shield",
+        "leftGroup": "sword",
+        "setId": "reaver-vigilSwordShield"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "empty",
+        "leftGroup": "empty",
+        "setId": "reaver-vigilUnarmed"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "grip": "dual",
+        "setId": "reaver-vigilTwinSword"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "dagger",
+        "leftGroup": "empty",
+        "grip": "one",
+        "setId": "reaver-vigilDaggerSingle"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "bow",
+        "leftGroup": "empty",
+        "setId": "reaver-vigilBow"
+      },
+      {
+        "classId": "reaver",
+        "armourId": "wyrmscaleMail",
+        "rightGroup": "empty",
+        "leftGroup": "bow",
+        "setId": "reaver-vigilBow"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "greatsword",
+        "leftGroup": "empty",
+        "setId": "herald-pilgrimGreatsword"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "empty",
+        "leftGroup": "greatsword",
+        "setId": "herald-pilgrimGreatsword"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "sword",
+        "leftGroup": "shield",
+        "setId": "herald-pilgrimSwordShield"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "shield",
+        "leftGroup": "sword",
+        "setId": "herald-pilgrimSwordShield"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "empty",
+        "leftGroup": "empty",
+        "setId": "herald-pilgrimUnarmed"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "grip": "dual",
+        "setId": "herald-pilgrimTwinSword"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "dagger",
+        "leftGroup": "empty",
+        "grip": "one",
+        "setId": "herald-pilgrimDaggerSingle"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "bow",
+        "leftGroup": "empty",
+        "setId": "herald-pilgrimBow"
+      },
+      {
+        "classId": "herald",
+        "armourId": "ringmailHauberk",
+        "rightGroup": "empty",
+        "leftGroup": "bow",
+        "setId": "herald-pilgrimBow"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "greatsword",
+        "leftGroup": "empty",
+        "setId": "rogue-nightveilGreatsword"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "empty",
+        "leftGroup": "greatsword",
+        "setId": "rogue-nightveilGreatsword"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "sword",
+        "leftGroup": "shield",
+        "setId": "rogue-nightveilSwordShield"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "shield",
+        "leftGroup": "sword",
+        "setId": "rogue-nightveilSwordShield"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "empty",
+        "leftGroup": "empty",
+        "setId": "rogue-nightveilUnarmed"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "grip": "dual",
+        "setId": "rogue-nightveilTwinSword"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "dagger",
+        "leftGroup": "empty",
+        "grip": "one",
+        "setId": "rogue-nightveilDaggerSingle"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "bow",
+        "leftGroup": "empty",
+        "setId": "rogue-nightveilBow"
+      },
+      {
+        "classId": "rogue",
+        "armourId": "huntersHide",
+        "rightGroup": "empty",
+        "leftGroup": "bow",
+        "setId": "rogue-nightveilBow"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "greatsword",
+        "leftGroup": "empty",
+        "setId": "starseer-astralGreatsword"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "empty",
+        "leftGroup": "greatsword",
+        "setId": "starseer-astralGreatsword"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "sword",
+        "leftGroup": "shield",
+        "setId": "starseer-astralSwordShield"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "shield",
+        "leftGroup": "sword",
+        "setId": "starseer-astralSwordShield"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "empty",
+        "leftGroup": "empty",
+        "setId": "starseer-astralUnarmed"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "grip": "dual",
+        "setId": "starseer-astralTwinSword"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "dagger",
+        "leftGroup": "empty",
+        "grip": "one",
+        "setId": "starseer-astralDaggerSingle"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "bow",
+        "leftGroup": "empty",
+        "setId": "starseer-astralBow"
+      },
+      {
+        "classId": "starseer",
+        "armourId": "sagesRobe",
+        "rightGroup": "empty",
+        "leftGroup": "bow",
+        "setId": "starseer-astralBow"
       }
     ],
     "sets": {

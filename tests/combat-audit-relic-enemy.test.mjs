@@ -22,8 +22,8 @@ for (const mode of ['native', 'bundled']) {
       statusModifierConsumerDeclarations: 18, statusModifierConsumerOutcomesCovered: 18,
       statusResistanceBranches: 3, statusResistanceBranchesCovered: 3, statusControlBranches: 4, statusControlBranchesCovered: 4,
       statusTaggedVulnerabilityBranches: 3, statusTaggedVulnerabilityCovered: 3,
-      statuses: statusCount, statusesCovered: statusCount, enemies: 33, enemyMoves: 103, enemyMovesCovered: 103,
-      enemyReactionMoves: 2, enemyReactionScenariosCovered: 4, encounters: 35, classes: 4, encounterClassScenarios: 140, encounterClassCovered: 140,
+      statuses: statusCount, statusesCovered: statusCount, enemies: 65, enemyMoves: 235, enemyMovesCovered: 235,
+      enemyReactionMoves: 2, enemyReactionScenariosCovered: 4, encounters: 72, classes: 4, encounterClassScenarios: 288, encounterClassCovered: 288,
     });
     assert.equal(report.relics.missing.length, 0);
     assert.equal(report.relics.conditionalBranches, 33);

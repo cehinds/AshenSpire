@@ -59,7 +59,7 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
 
 test('every registered boss move and charging payload has a deterministic detached action preview', () => {
   const bossIds = new Set(registries.encounters.all().filter(row => row.pool === 'boss').flatMap(row => row.enemies));
-  assert.equal(bossIds.size, 10);
+  assert.equal(bossIds.size, 15);
   for (const def of registries.enemies.all().filter(e => bossIds.has(e.id))) {
     const { combat, enemy } = fixture(def.id, Object.keys(def.moves)[0]);
     for (const [moveId, move] of Object.entries(def.moves)) {
