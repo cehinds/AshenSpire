@@ -40,6 +40,7 @@
 // Owner ruling 2026-11-18 sections 20 and 21 (Force physical with a half-Poise share, no built-in push or Knockback; Ward decay and break; Pierce 1 Block per stack; break statuses) move the runtime hash again. They are data in the fight's rules (elements.force, ward, pierce, poise): a fight saved before them keeps its snapshotted rules, and an old `elements.force.poiseMultiplier` keeps the old Force (ForceRules); 8be512... and 0bf081... are in PREVIOUS_RUNTIMES.
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8',
   'sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9',
   'sha256:8f1b1cf21f5758b4e1b1b916c9227df0747b56490217395410b94e6cffa259cc',
   'sha256:a00f7a769672150f37d74824575c7d6cfd35e32f939d292dab1d1ee609ed9f7c',
@@ -139,7 +140,7 @@ const PREVIOUS_RUNTIMES = new Set([
 // Merging dev (#2835 and the route spread) into the Force, Ward and Pierce rules pass (chore/ForceWardRules): dev's 58cd1d... and this branch's 404f18... are now in PREVIOUS_RUNTIMES.
 // Canonical Stone Skin and Fire Thorns mechanic manifests regenerated after Dev integration.
 // Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
-const FIXED_EVASION_RUNTIME = 'sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8';
+const FIXED_EVASION_RUNTIME = 'sha256:2a83899f7a10b415a18fb43d150034bcbf4e3ef92cc4ea4c19dfc9bd85fdecd3';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
