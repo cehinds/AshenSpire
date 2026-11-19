@@ -1,16 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Smash stance rule
 
-[Download verified build 0.7.4.210](https://github.com/cehinds/AshenSpire/actions/runs/44499406132/artifacts/14515959316)
-
-Extract the archive and open `AshenSpire.html`. Source `35548faa9f` includes GearPass and the Defend-only Smash multiplier. Desktop/phone downloaded-file checks passed; old and custom snapshot text stays intact. [Verification and limits](docs/content/smash-stance-rule-verification-2026-11-19.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Phone: Smash stance rule](docs/preview/features/smash-stance-rule/phone-information.png) | ![Desktop: Smash stance rule](docs/preview/features/smash-stance-rule/desktop-information.png) | ![Wide: Smash stance rule](docs/preview/features/smash-stance-rule/wide-information.png) | ![Tablet: Smash stance rule](docs/preview/features/smash-stance-rule/tablet-information.png) |
-<!-- feature-preview:end -->
 
 
 
