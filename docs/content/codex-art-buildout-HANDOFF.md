@@ -2,7 +2,7 @@
 
 Owner task, 2026-11-18: give every new Codex enemy and weapon asset real, playable content. Follow CLAUDE.md: workers code, the main session reviews, sandbox QA, PR into `dev`, merge, then promote `dev` → `review`.
 
-Resume state: reviewed source is pushed at `6a7378b6a039cbe6bc2f7348fbfc8b049abfca35`, including `origin/dev` at `0327759be4` (build box 0.7.4.201). No PR yet. Final isolated discovered lanes and browser QA are running; do not claim final acceptance until their reports finish.
+Resume state: reviewed source is pushed at `6a7378b6a039cbe6bc2f7348fbfc8b049abfca35`, including `origin/dev` at `0327759be4` (build box 0.7.4.201). No PR yet. Final verification is complete: core 151 PASS, code check PASS, all 1,208 discovered files / 9,438 tests with zero failures, sandbox 164 PASS / 0 FAIL, and 22 decoded-image scenes PASS. See [the verification record](codex-art-buildout-verification.md) for screenshots, preview and the inherited optional-sample network warning in downloaded standalone mode.
 
 ### Completed during resume
 
