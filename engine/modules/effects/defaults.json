@@ -11,5 +11,6 @@
   "enemyDamageMultiplier": 1,
   "physicalDamageMultiplier": 1,
   "blockGainMultiplier": 1,
-  "spellPoiseDamageMultiplier": 1
+  "spellPoiseDamageMultiplier": 1,
+  "spellTraditionsVersion": 0
 }

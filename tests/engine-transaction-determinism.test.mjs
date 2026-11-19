@@ -6,6 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -18,14 +20,20 @@ import { candidateState } from '../src/engine/combatRules.js';
 import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults, withoutQuickstepCounterStacks, withoutThemeBRules } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
-function fight([seed, classId]) {
-  const profile = resolveGameProfile('default');
+// Exact resolved Dev profile at a1d31db6b5, runtime 521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772.
+// Archive SHA256: 40c87e9a705457ca0504cd44677f7e1a8cb630edb6a3ff5067439af7a6ca0324.
+const precedingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-521250.json.gz', import.meta.url))));
+
+function fight([seed, classId], profile = resolveGameProfile('default')) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
   const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
+}
+function legacyFight(setup) {
+  return fight(setup, precedingDevProfile);
 }
 function answerReactions(combat) {
   for (let guard = 0; combat.pendingReaction && guard < 20; guard++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -44,8 +52,9 @@ function play(combat, turns) {
   return combat;
 }
 const replacer = (key, value) => value instanceof Map ? { map: [...value] } : value;
+const stateData = combat => Object.fromEntries(Object.entries(combat).filter(([key, value]) => typeof value !== 'function' && !['registries', 'rng', 'gameProfile'].includes(key)));
 export function digest(combat) {
-  const data = Object.fromEntries(Object.entries(combat).filter(([key, value]) => typeof value !== 'function' && !['registries', 'rng', 'gameProfile'].includes(key)));
+  const data = stateData(combat);
   const text = JSON.stringify({ data, rng: combat.rng.getCounters() }, replacer);
   return { log: createHash('sha256').update(JSON.stringify(combat.eventLog, replacer)).digest('hex').slice(0, 16),
     state: createHash('sha256').update(text).digest('hex').slice(0, 16), events: combat.eventLog.length, turn: combat.turn };
@@ -137,7 +146,7 @@ function withStaggeredRule(build) {
 // and state hashes (event counts and turns unchanged). Measured with this test's own digest(), not derived.
 // Recaptured 2026-11-18 on the merge of the physical cut with the ratings removal (STR, DEX and magic stat replace AR, DR and PR; the runtime hash moved): every
 // pin moved by log and state hashes (a few by event count); no turn moved. Measured with this test's own digest().
-// `fight` resolves the current profile for every lane; the legacy wrappers change only the fight policy.
+// These legacy-policy lanes retain the exact preceding Dev profile; the current PINNED lanes below resolve the new default.
 // RNG counters, event types, event counts and turns are unchanged. The exact pre-tuning resolved profile
 // from 174714e7d8 still reproduces all 18 previous digests in this engine.
 const LEGACY_PINNED = [
@@ -146,7 +155,7 @@ const LEGACY_PINNED = [
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
-    const first = digest(play(withLegacyDefaults(() => withStaggeredRule(() => fight(setup))), 5));
+    const first = digest(play(withLegacyDefaults(() => withStaggeredRule(() => legacyFight(setup))), 5));
     assert.deepEqual(first, expected);
   });
 }
@@ -156,7 +165,7 @@ const LEGACY_ROLL_BROKEN_PINNED = [
 ];
 for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
   test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
-    assert.deepEqual(digest(play(withLegacyDefaults(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withLegacyDefaults(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
@@ -167,7 +176,7 @@ const PRE_BATCH2_PINNED = [
 ];
 for (const [setup, expected] of PRE_BATCH2_PINNED) {
   test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
-    assert.deepEqual(digest(play(withoutBatch2Rules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutBatch2Rules(() => legacyFight(setup)), 5)), expected);
   });
 }
 // W25-F (spell costs and elemental flux): these are the shipped digests before it. A fight whose rules lack `spellCosts` and `elementFlux` still reproduces them exactly,
@@ -178,7 +187,7 @@ const PRE_W25F_PINNED = [
 ];
 for (const [setup, expected] of PRE_W25F_PINNED) {
   test(`pre-W25-F fight ${setup[0]}/${setup[1]} still reproduces the digest from before spell costs and flux`, () => {
-    assert.deepEqual(digest(play(withoutSpellCostRules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutSpellCostRules(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for W25-F: PRE_W25F_PINNED above reproduces the previous digests with the two keys removed (and the legacy and pre-batch-2 fights above, built through helpers that remove them too, are unchanged). Logs, event counts, turns and RNG are identical, so only the state hashes move (the fight's rules snapshot gains the two blocks).
@@ -194,7 +203,7 @@ const PRE_NO_CAPS_PINNED = [
 ];
 for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
   test(`pre-no-caps fight ${setup[0]}/${setup[1]} still reproduces the digest from before statusCaps`, () => {
-    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => withoutStatusCapsRule(() => fight(setup))), 5)), expected);
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => withoutStatusCapsRule(() => legacyFight(setup))), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for Wave 2 batch 5 (Counter stacks `counter.stackSource` and friends, no Counter-stance return): a fight whose rules lack the Counter-stack
@@ -206,7 +215,7 @@ const PRE_BATCH5_PINNED = [
 ];
 for (const [setup, expected] of PRE_BATCH5_PINNED) {
   test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
-    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for W25-EvadeCards (Quickstep joins `counter.stacksByCard`): log, event counts and turns are identical, only the state hashes move, through the new key in the fight's rules
@@ -217,7 +226,7 @@ const PRE_EVADECARDS_PINNED = [
 ];
 for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
   test(`pre-Evade-cards fight ${setup[0]}/${setup[1]} still reproduces the digest from before Quickstep's Counter stack`, () => {
-    assert.deepEqual(digest(play(withoutQuickstepCounterStacks(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutQuickstepCounterStacks(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-17 for theme B (Counter armed while stacks remain, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses):
@@ -229,22 +238,41 @@ const PRE_THEME_B_PINNED = [
 ];
 for (const [setup, expected] of PRE_THEME_B_PINNED) {
   test(`pre-theme-B fight ${setup[0]}/${setup[1]} still reproduces the digest from before the 2026-11-17 status and stance rules`, () => {
-    assert.deepEqual(digest(play(withoutThemeBRules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutThemeBRules(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 207 and 195 -> 217; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
-const PINNED = [
-  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: 'bbb64c8f26459e66', events: 207, turn: 6 }],
-  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: '5c9def4a8c9d283d', events: 217, turn: 6 }],
+// Stat allocation: the 16 legacy-policy lanes now pin their exact preceding Dev profile. Current lanes keep the new default.
+// Only their state digests move: the Poise row/base row replaces CON with WIS, its explicit override is recorded, and
+// fixCoreRules.spellTraditionsVersion is added. The control below restores exactly those fields and compares the entire
+// serialized state; full logs, event counts, turns and every RNG counter are unchanged. The prior current pins remain controls.
+const PRE_STAT_PINNED = [
+  { log: 'fb4f923cd562413e', state: 'bbb64c8f26459e66', events: 207, turn: 6 },
+  { log: '872df8f1e3aee8e3', state: '5c9def4a8c9d283d', events: 217, turn: 6 },
 ];
-for (const [setup, expected] of PINNED) {
+const PINNED = [
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '44f38aa443dd3992', events: 207, turn: 6 }],
+  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: 'd90bb37e12ee947d', events: 217, turn: 6 }],
+];
+for (const [index, [setup, expected]] of PINNED.entries()) {
   const seed = `${setup[0]}/${setup[1]}`;
   test(`seeded fight ${seed} reproduces its log, final state and RNG position`, () => {
-    const first = digest(play(fight(setup), 5));
+    const current = play(fight(setup), 5);
+    const first = digest(current);
     const second = digest(play(fight(setup), 5));
     assert.deepEqual(second, first, 'two plays of one seed agree');
     assert.ok(first.events > 40 && first.turn >= 4, 'the fight did real work');
     assert.deepEqual(first, expected, 'digest matches the pinned profile and fight rules');
+    const previous = play(legacyFight(setup), 5);
+    assert.deepEqual(digest(previous), PRE_STAT_PINNED[index], 'the exact prior profile retains its entire prior digest');
+    assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
+    assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');
+    const before = JSON.parse(JSON.stringify(stateData(previous), replacer));
+    const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
+    for (const key of ['rules', 'baseRules']) restored.derivedStatRuleSnapshot[key].rules.poise = before.derivedStatRuleSnapshot[key].rules.poise;
+    delete restored.derivedStatRuleSnapshot.modifierOverride.rules.poise;
+    delete restored.fixCoreRules.spellTraditionsVersion;
+    assert.equal(JSON.stringify(restored), JSON.stringify(before), 'only saved Poise ownership and the tradition flag differ');
   });
 }
 

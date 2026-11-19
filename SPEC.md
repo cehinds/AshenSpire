@@ -2,6 +2,8 @@
 
 Single-player browser roguelike deckbuilder, mechanically faithful to Slay the Spire, thematically inspired by (legally distinct from) Elden Ring. Companions: `DEVELOPER.md`, `CREDITS.md`.
 
+**Current stat allocation:** [Stat allocation rules](docs/balance/stat-allocation-rules-2026-11-18.md) supersede conflicting older stat descriptions for new Core profiles. Existing runs retain their saved rules.
+
 - Numbers are **initial balance targets** (M3 pass may move them); structures (formulas, orderings, state shapes) are contractual.
 - Two contracts supersede conflicting older prose:
   - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned) supersedes conflicting older prose in this specification and its combat contracts: revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.

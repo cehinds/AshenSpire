@@ -39,6 +39,7 @@
 // The Ethereal manifest's reader is the engine again (review of #2819: it pointed at the upgrade step); wording only, edad64... is kept.
 // Owner ruling 2026-11-18 sections 20 and 21 (Force physical with a half-Poise share, no built-in push or Knockback; Ward decay and break; Pierce 1 Block per stack; break statuses) move the runtime hash again. They are data in the fight's rules (elements.force, ward, pierce, poise): a fight saved before them keeps its snapshotted rules, and an old `elements.force.poiseMultiplier` keeps the old Force (ForceRules); 8be512... and 0bf081... are in PREVIOUS_RUNTIMES.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772',
   'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
   'sha256:404f187342bcbb67ba7095a6d573a998a931a67a75d22323461d60767ff52a3c',
   'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5',
@@ -129,7 +130,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Merging the route spread (#2847) with the stance-card fix (#2843): c7c295... and 80a96c... are now in PREVIOUS_RUNTIMES.
 // Merging dev (route spread #2847, stance fix #2843) into the rules pass (#2835): 0bf081... and 6ef5d3... are now in PREVIOUS_RUNTIMES.
 // Merging dev (#2835 and the route spread) into the Force, Ward and Pierce rules pass (chore/ForceWardRules): dev's 58cd1d... and this branch's 404f18... are now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772';
+// Versioned casting traditions and WIS-Poise retain the preceding Dev runtime's saved profiles.
+const FIXED_EVASION_RUNTIME = 'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
