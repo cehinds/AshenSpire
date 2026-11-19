@@ -1,0 +1,20 @@
+{
+  "request": "go ahead and increase the base size of the cards by 20% so that more text can show on teh card (reduce font a few points), and reduce gap between rows so that scrolling is not necessary for 4 or less cards; also apply the font size to hand cards in combat",
+  "viewports": [{"name":"desktop","width":1280,"height":800},{"name":"phone","width":390,"height":844}],
+  "scenes": [
+    {"name":"reward","url":"?shot=reward&shotTake=1","ready":".reward-choice-face","settleMs":900,"actions":[{"click":".reward-choice-face"},{"wait":{"ms":200}}],"success":[
+      {"kind":"visible","label":"Reward choices render","selector":".reward-choice-face"},
+      {"kind":"style","label":"Shared base reward scale is 0.9","selector":".reward-door","prop":"--reward-card-scale","equals":".9"},
+      {"kind":"style","label":"Reward rows use 12px gaps","selector":".reward-choice-grid","prop":"row-gap","equals":"12px"},
+      {"kind":"visible","label":"Chosen state is visible","selector":".reward-choice-face.is-chosen"},
+      {"kind":"within","label":"Footer stays inside the reward modal","selector":".reward-chooser-foot","container":".reward-door"},
+      {"kind":"consoleErrors","label":"No reward runtime errors","max":0,"ignore":["navigator\\.vibrate"]}
+    ],"failure":[{"kind":"count","label":"No reward choices rendered","selector":".reward-choice-face","eq":0}]},
+    {"name":"combat-hand","url":"?shot=combat","ready":".hand .card","settleMs":1200,"success":[
+      {"kind":"count","label":"Combat hand contains multiple cards","selector":".hand .card","min":3},
+      {"kind":"style","label":"Combat hand uses the same surface rules adjustment","selector":".hand .card","prop":"--card-rules-font-reduction-px","equals":"2"},
+      {"kind":"visible","label":"Hand rules remain visible","selector":".hand .card [data-card-binding='rules']"},
+      {"kind":"consoleErrors","label":"No combat runtime errors","max":0,"ignore":["navigator\\.vibrate"]}
+    ],"failure":[{"kind":"count","label":"Combat hand is empty","selector":".hand .card","eq":0}]}
+  ]
+}
