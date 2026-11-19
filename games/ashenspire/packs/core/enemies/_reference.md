@@ -462,9 +462,9 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
 | gear:ashenClaymore | Ashen Claymore | rightHand | weapon | uncommon | greatsword, heavy, stagger |
 | gear:zweihander | Zweihander | rightHand | weapon | rare | greatsword, heavy, stagger |
-| gear:pike | Pike | rightHand | weapon | common | spear, retreat |
-| gear:scythe | Scythe | rightHand | weapon | uncommon | polearm, retreat |
-| gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm, retreat |
+| gear:pike | Pike | rightHand | weapon | common | spear |
+| gear:scythe | Scythe | rightHand | weapon | uncommon | polearm |
+| gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm |
 | gear:mace | Mace | rightHand | weapon | common | hammer, stagger |
 | gear:morningStar | Morning Star | rightHand | weapon | uncommon | hammer, stagger, bleed |
 | gear:flail | Flail | rightHand | weapon | rare | hammer, stagger |
@@ -477,8 +477,8 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:huntersRecurve | Hunters Recurve | rightHand | weapon | rare | bow, retreat |
 | gear:handCrossbow | Hand Crossbow | rightHand | weapon | common | bow, retreat |
 | gear:arbalest | Arbalest | rightHand | weapon | rare | bow, retreat |
-| gear:leatherWhip | Leather Whip | rightHand | weapon | common | flurry, retreat |
-| gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, retreat, bleed |
+| gear:leatherWhip | Leather Whip | rightHand | weapon | common | flurry |
+| gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, bleed |
 | gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
 | gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
 | gear:stormSceptre | Storm Sceptre | rightHand | staff | uncommon | sceptre, retreat |

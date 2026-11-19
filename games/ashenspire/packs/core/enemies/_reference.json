@@ -4160,8 +4160,7 @@
       "kind": "weapon",
       "rarity": "common",
       "tags": [
-        "spear",
-        "retreat"
+        "spear"
       ],
       "range": "reach"
     },
@@ -4171,8 +4170,7 @@
       "kind": "weapon",
       "rarity": "uncommon",
       "tags": [
-        "polearm",
-        "retreat"
+        "polearm"
       ],
       "range": "reach"
     },
@@ -4182,8 +4180,7 @@
       "kind": "weapon",
       "rarity": "rare",
       "tags": [
-        "polearm",
-        "retreat"
+        "polearm"
       ],
       "range": "reach"
     },
@@ -4328,8 +4325,7 @@
       "kind": "weapon",
       "rarity": "common",
       "tags": [
-        "flurry",
-        "retreat"
+        "flurry"
       ],
       "range": "reach"
     },
@@ -4340,7 +4336,6 @@
       "rarity": "uncommon",
       "tags": [
         "flurry",
-        "retreat",
         "bleed"
       ],
       "range": "reach"
