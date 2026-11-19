@@ -178,12 +178,14 @@ With every kind eligible, ease plus effectiveness (134) against new effect (145)
 
 Roll the group first by upgrade number (`stepIndex + 1`), then a kind inside the group by the existing weights, so the ratio holds however many kinds a card is eligible for. The two draws per option (`pick`, `choice`) are kept: split `pick` into group and kind by rescaling, so the roll stays a pure function of the stream. If the card has no ease option left, its ease share goes to effectiveness/cost; if a group has no eligible kind, its share goes to the other groups pro rata. Kinds are the existing ones only.
 
-| Upgrade # | Ease drawback | Effectiveness / cost | New effect | (ease + effectiveness) : new |
-|---|---|---|---|---|
-| 1 to 3 (early) | 40% | 35% | 25% | 3 : 1 |
-| 4 to 5 | 30% | 30% | 40% | 1.5 : 1 |
-| 6 to 7 | 20% | 30% | 50% | 1 : 1 |
-| 8 to 10 (late) | 15% | 20% | 65% | 1 : 1.9 |
+| Upgrade # | Ease drawback | Effectiveness / cost | New effect (other) | Identity change | (ease + effectiveness) : new (other + identity) |
+|---|---|---|---|---|---|
+| 1 to 3 (early) | 40% | 35% | 20% | 5% | 3 : 1 |
+| 4 to 5 | 30% | 30% | 30% | 10% | 1.5 : 1 |
+| 6 to 7 | 20% | 30% | 35% | 15% | 1 : 1 |
+| 8 to 10 (late) | 15% | 20% | 45% | 20% | 1 : 1.9 |
+
+Identity change is its own share inside "new effect" (section 9): present from upgrade 1 at low odds, rising to a fifth of rolls late.
 
 A card with no drawback has no ease share; it goes to effectiveness/cost, so 75% / 25% early. Upgrades are never fixed per card: a card gets the same random, type-gated roll as today, only weighted by this table. For the cards in sections 3 and 4 that means no authored `upgrade` block should fix the first upgrade (today an authored block is always upgrade 1); drop or reduce it to numbers so upgrade 1 rolls and favours the drawback. The "current drawback" column keeps today's authored upgrades as facts only. Rank-up bonuses (`rankUpBonus.js`) and the blacksmith's 2 to 3 options reuse the same roll. Stored steps keep working (saves hold the step list, not the roll), so owned cards do not change; only new previews do, and seeded roll tests need new expected values.
 
@@ -197,6 +199,10 @@ Kinds in order: ease group first, then effectiveness/cost, then new effects. "Ex
 | Attack, counter maneuver | same | `cost`, `stk` | `fx:counter`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne` |
 | Skill (not spell), the typical buff | same three plus signed `stk` | `cost`, `blk` when it has Block, `stk` (raises the buff status) | `fx:block`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:boost` (DEX), `fx:reaction`, `maneuver` |
 | Spell (skill or attack) | same | as the row above, `cost` may cut MP too (not on a Basic) | as above plus `fx:boost` (INT or WIS), `attr`, `element`, `school` |
+| Sweep (`maneuver:sweep`, `targeting:area`, damage on `allEnemies`) | same | `poise` (a plain `poiseDamage`; not offered when `maneuver:smash`), `stk`, `cost` (floored at 2 SP at rank 0; an authored lower cost lowers the floor). Gate today: `dmg` needs `effects[dmgIndex].target === 'enemy'`, so a sweep's per-target damage is NOT offered, and `hits` and `fx:target` need an enemy-target hit too. Propose lifting the `dmg` gate to `allEnemies` (the step raises damage per target) | `addStatus` (bleed or weak, if it has no status), `range` (melee/reach), `element` (physical sweep), `dmgType` (section 9), `fx:block`, `fx:draw`, `fx:cycle`, `fx:cull`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:reaction`. No `targeting` and no `maneuver` kind: both are gated off `maneuver:sweep` |
+| Smash (`maneuver:smash`) | same | `dmg`, `cost` (floor 2 SP; a floored smash is not also charged 1 MP), `stk`. `poise` is NOT offered on a smash: its Poise is derived from the hit (+50% stance bonus and `smashPoiseBase` 3), so a printed Poise step would be a no-op; `hits` is not offered (needs printed damage 8 or less; smashes start near 12) | `addStatus`, `range`, `targeting` (single to area, x0.75), `maneuver` (smash to attack), `element`, `dmgType`, `fx:block`, `fx:draw`, `fx:target`, `fx:boost` (STR), `fx:reaction`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne` |
+| Defend / Block (`maneuver:defend`, has Block, already `trait:reaction`) | `fx:unexhaust`, `fx:unethereal`, `fx:steady`, signed `stk` | `blk` (printed Block only), `cost`, `stk` on a Ward/Barrier/Poise status that is a plain numeric `applyStatus` | `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`, `fx:boost` (DEX for a non-spell, WIS for a spell with Block or Ward). Not offered: `fx:block` (already has Block), `fx:reaction` (defend or counter excluded), every damage kind |
+| Evade (a `maneuver:defend` card with no printed Block; its Evade stacks come from a metric formula, not a plain number) | same | `cost` only (`stk` and `blk` need a plain number or printed Block) | `fx:block` (it has no Block, so it is offered; a real new effect), `fx:draw`, `fx:cycle`, `fx:cull`, `fx:copy`, `fx:shuffle`, `fx:retain`, `fx:innate`, `fx:holdOne`; no boost (needs Block or damage) |
 | Power (change) | `fx:unethereal`, signed `stk`, and `cost` | `cost` | none offered today; keep it so (a power's new-effect share goes to ease and `cost`). The pool runs out after the drawback is eased and `cost` is taken, as today |
 | Ranked ability card (`gradeProfiles`) | `fx:unexhaust`, `fx:unethereal`, `fx:steady` | none | none (unchanged) |
 | Status, curse, consumable | none | none | none (unchanged) |
@@ -212,7 +218,50 @@ Self debuff (SD), enemy buff (EB), forced discard (DS) and added Wound/Dazed (ST
 
 Recommend (a): it reuses `stk`'s existing apply path, adds no id to the player-visible menu, and keeps the saved step format (`{k:'stk', ...}`) valid. Cards with a one-stack drawback ease to nothing in one step, so the signed step removes the drawback outright, which also covers "remove the Wound add" with no extra kind. The two-notch swap ("Wound to Dazed") from the earlier draft is dropped.
 
-## 8. Risks
+## 8. Maneuver transitions (the `maneuver` identity kind)
+
+Today `maneuver` only swaps between Attack and Smash (`ATTACK_MANEUVERS` in `cardUpgradeSteps.js` is the `maneuver:` family filtered to `attack` and `smash`). The step writes the new `maneuver:` tag (a `tag` step), and the SP/MP cost re-derives from the tag (maneuver floors in `MANEUVER_SP_FLOORS`: smash and sweep 2 SP).
+
+| From to | Rollable today? | Gate | What it does to damage and cost |
+|---|---|---|---|
+| Attack to Smash | Yes | non-spell, hits an enemy, card already pays 2 SP or more (`sp >= 2`), not already changed by a maneuver step | Smash at 2 SP or more scales damage and Poise (x1.8 at 2 SP, `twoCostMultiplier`), adds `smashPoiseBase` 3 Poise, +50% Poise stance bonus; cost floor 2 SP (a floored smash is not also charged 1 MP) |
+| Smash to Attack | Yes | same | Loses the Poise add and bonus; the cost floor lifts and the cost re-derives |
+| Attack or Smash to Sweep | No | `sweep` is not in `ATTACK_MANEUVERS` | Sweep keeps its damage unscaled (`SWEEP_UNSCALED_OPS`), 2 SP floor, area targeting; a sweep's stance damage factor is 0.75 (`sweepMultiplier` in `combatExpansionMatchups.json`; the owner's "0.7" is the same idea, I did not find a 0.7). Reach it with the `targeting` kind (single to area, damage x0.75), which does not change the `maneuver:` tag |
+| Sweep to anything | No | `targeting` and `maneuver` are both gated off `maneuver:sweep` | A sweep card cannot roll either; it is stuck as a sweep |
+| to Defend (Block) | No | no gate offers it | Would change the card's job (damage to Block). Do not add: an upgrade should not turn an attack into a defence card |
+| to Counter | No | `maneuver:counter` cards use a fixed return payload (`counterReturn`), which also blocks `dmg`, `hits`, `poise`, `range`, `targeting` | Do not add, same reason |
+| to Evade | n/a | Evade is not a maneuver: Evade cards carry `maneuver:defend` and an Evade status | Not a transition |
+| to Casting | No | `casting` is the spell stance and needs MP and a school | Do not add |
+
+Proposed gates: keep Attack and Smash as is. Optionally add Attack or Smash to Sweep for a card that already has `targeting:area` (so the tag matches what the card does), at 2 SP or more; no other transition.
+
+## 9. Identity-change options
+
+Identity kinds reshape what a card is without changing its numbers. Proposal: they are one share inside "new effect", placed from upgrade 1 at low odds (5%) and rising to 20% late (weighting table in section 6). Inside the share each kind rolls by its weight. Gates are in `addTagOptions` (`cardUpgradeSteps.js`). "attacking" means the card hits an enemy and is attack, smash, sweep, ranged or counter maneuver, or a spell.
+
+| Kind | Current weight | What it changes today | Who can roll it (gates) | Group and proposed weight |
+|---|---|---|---|---|
+| `range` | 6 | `range:` tag. Melee to Reach and Reach to Melee, nothing else | attacking, not a counter; at most 2 range steps; Reach is dropped if the run's `maxRange` cap is lower | identity, weight 3 (halved): see below |
+| `targeting` | 6 | Single to Area (damage x0.75, hits all) or Area to Single (damage x1.25) | hits an enemy, not `maneuver:sweep`, not counter, one retarget per card; Area to Single only if the grown total stays inside the +100% guard | identity, 6 |
+| `maneuver` | 5 | Attack and Smash swap (section 8) | non-spell, hits an enemy, maneuver is attack or smash, a smash needs 2 SP, once | identity, 5 |
+| `school` | 4 | Nothing: `addTagOptions` never sets `found.school` ("a school change alone changes no play"). The weight is dead | never offered | Remove the entry, or leave at 0; do not count it |
+| `element` | 6 | A physical hit becomes Magic, Arcane, Holy or Fire: sets the `damage:` tag, `damageSchool`, magic share 1 (Barrier then Ward), exposure build-up; drops a `weaponDamage` block | hits an enemy, not a counter, not a spell camp, damage school physical, no element step yet | identity, 6 |
+| `rankDown` | 3 | Becomes a cantrip (`rank.cantrip`): the Mana price goes to 0 | not a Basic or cantrip, SP not 0, Mana above 0, the multi-hit SP floor still fits | effectiveness / cost group (it is a cost cut), 3 |
+| `dmgType` (new) | none | see below | see below | identity, 5 |
+
+Range: it covers melee to Reach and Reach to melee only. There is no Reach to Ranged entry in the map (`{ melee: 'reach', reach: 'melee' }`) and a card that is already Ranged has no next range, so Reach to Ranged is not offered today. A Reach hit is priced at the distance it covers, so it skips the implicit Advance SP (`advanceSpPerBand` 1 SP per missing band in `rangeActionPlan`, `src/model/combatEngagement.js`) and gains `reachPrecisionBonus` +1 Precision (`RANGE_POLICY_DEFAULTS`). It also keeps hitting from the back row after a Retreat without paying to Advance. That is a strong effect, so flag it: halve the weight to 3, and keep the two-range-step cap and the `maxRange` cap.
+
+### New kind: `dmgType` (physical damage type)
+
+Today no kind changes the physical type (slashing, piercing, blunt). The type feeds the Pierce bypass (`actions.js`, a piercing hit lets part of the damage past Block; the piercing rider in `combatMatchups.js`), the enemy weakness, resist and immune lookups (`enemyWeaknessRules.js`, `WEAKNESS_PHYSICAL`), and physical routing in `physicalTypeOf` (`combatRatings.js`). I found no read of the damage type by Stone Skin (the status only keeps Block), so that part of the brief is unconfirmed.
+
+- What it does: sets the hit's physical type to one of the other two of slashing, piercing, blunt (the roll picks one at random from the two). The three types carry the same cost weight (2 SP each in `COST_TAGS`), so the derived cost does not move.
+- Weight: 5, in the identity group.
+- Gates: the card hits an enemy; not a counter; not a spell or elemental hit (camp physical, `damageSchool` physical, no element step applied); melee range only (the range tag is melee, so a card that rolled Reach is out, and a Reach card cannot be changed); maneuver is attack, smash or sweep; not already changed by a dmgType step. Cards that take their type from the wielded weapon (`attack.weaponDamage`): the step replaces it with the fixed type, as `element` does, so the card no longer follows the weapon. Decide whether to allow that or to exclude weapon-typed cards.
+- Face text: the card text does not name a physical type, so no sentence is needed; the face shows it through the damage-type tag chip and tooltip (`weaknessIcons.js` already has the icons). Add the three type names and a one-line tooltip each to the strings.
+- Files: `src/model/cardUpgradeSteps.js` (a `WEIGHTS` entry `dmgType`, the gate and option in `addTagOptions`, a `stepOf` case; `UPGRADE_OPTION_KINDS` and `upgradeMenu` validation in `validate/entityCross.js` follow the `WEIGHTS` keys); apply path: reuse the existing `tag` step branch for `step.damage` in `src/model/cardUpgrade.js`, which already drops other `damage:` tags and rewrites `attack.damageType` and component types; save format: `{ k: 'tag', damage: 'piercing' }`, a `tag` step with no `tag` field, so no new step kind in `UPGRADE_STEP_KINDS` and no save migration, but check that the step validator accepts a `tag` step with no `tag`; UI label: the change line in `src/ui/models/CardUpgradeModel.js` and its string key, plus the option name in the upgrade picker; tests: the `core-card-upgrade-*` tests and a new test that a dmgType step changes the type the engine reads.
+
+## 10. Risks
 
 - Wound/Dazed bloat. `addCard` makes combat-only instances, so the deck editor and shop removal never see them. A Wound sits in the discard pile until combat ends (it reshuffles), so repeated plays thicken the draw pile; Dazed is Ethereal and clears itself each turn. Cap at about 3 added status cards per fight from card plays, and prefer Dazed on common cards, Wound on uncommon and rare. If a design ever makes them run-long, they would need to be removable in the deck editor.
 - Enemy buff and the AI/sim. Permanent enemy Strength compounds on long fights and bosses, and the autoplay policy (`autoCombatPolicy.js`) does not price it, so a sim run will under-rate those cards. Keep to Strength 1 to 2 and run the card-budget report plus a sim sweep before shipping.
