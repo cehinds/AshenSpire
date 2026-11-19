@@ -6028,12 +6028,25 @@
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "boneTalisman",
+            "name": "Bone_Talisman",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 1,
         "bonuses": [
+          {
+            "source": "boneTalisman",
+            "name": "Bone_Talisman",
+            "kind": "gear",
+            "amount": 1
+          },
           {
             "source": "enemy.relic.funeralPall",
             "name": "Funeral_Pall",
@@ -6041,7 +6054,7 @@
             "amount": 3
           }
         ],
-        "total": 4
+        "total": 5
       },
       "wisdom": {
         "own": 2,
@@ -6049,12 +6062,6 @@
           {
             "source": "boneSceptre",
             "name": "Bone_Sceptre",
-            "kind": "gear",
-            "amount": 1
-          },
-          {
-            "source": "lantern",
-            "name": "Lantern",
             "kind": "gear",
             "amount": 1
           },
@@ -6071,7 +6078,7 @@
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 5
       },
       "intelligence": {
         "own": 2,
@@ -6095,22 +6102,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 40,
+        "constitution": 50,
         "strength": 10,
-        "dexterity": 3,
-        "wisdom": 12,
+        "dexterity": 6,
+        "wisdom": 10,
         "intelligence": 5,
         "level": 10
       },
-      "total": 90,
-      "formula": "10+40+10+3+12+5+10 = 90"
+      "total": 101,
+      "formula": "10+50+10+6+10+5+10 = 101"
     },
     "pools": {
-      "hp": 90,
+      "hp": 101,
       "sp": 4,
-      "mp": 5,
+      "mp": 4,
       "ar": 2,
-      "dr": 1,
+      "dr": 2,
       "hand": 9
     },
     "gear": [
@@ -6121,8 +6128,8 @@
       },
       {
         "key": "offHand",
-        "id": "lantern",
-        "name": "Lantern"
+        "id": "boneTalisman",
+        "name": "Bone_Talisman"
       },
       {
         "key": "armor",

@@ -4687,11 +4687,6 @@
             "op": "damage",
             "target": "enemy",
             "amount": 18
-          },
-          {
-            "op": "poiseDamage",
-            "target": "enemy",
-            "amount": 9
           }
         ],
         "hints": {
