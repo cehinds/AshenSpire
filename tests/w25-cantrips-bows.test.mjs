@@ -53,7 +53,7 @@ test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 
 test('every school cantrip applies at least 1 stack of its school status, at both grades', () => {
   for (const card of cantrips) {
     const school = schoolOf(card);
-    if (!school || school === 'lightning') continue;
+    if (!school || school === 'lightning' || card.id === 'core.galePull') continue; // Gale Pull (section 22) is Force by tag and moves rows instead of applying a status
     for (const [grade, effects] of [['base', card.effects], ['upgrade', card.upgrade.effects]]) {
       const found = (effects || []).filter(e => e.op === 'applyStatus' && SCHOOL_STATUS[school].includes(e.status));
       assert.ok(found.length && found.every(e => e.stacks >= 1), `${card.id} (${school}) ${grade}`);
