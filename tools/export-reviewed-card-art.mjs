@@ -78,6 +78,20 @@ const { priority, statAliases, object, chevrons } = modifiers;
 const statIds = Object.keys(modifiers.stats);
 if (!Array.isArray(priority) || new Set(priority).size !== statIds.length || priority.length !== statIds.length
   || !priority.every(id => Object.hasOwn(modifiers.stats, id))) throw Error('Modifier priority must list each stat once');
+for (const [key, required] of Object.entries({
+  stanceActions: ['attack', 'smash', 'sweep', 'defend', 'counter', 'evade'],
+  effectGroupOrder: ['secondary', 'main'],
+  effectObjectOrder: ['stat', 'utility', 'status'],
+  layerOrder: ['background', 'chevrons', 'aura', 'object', 'effect', 'projectile'],
+})) {
+  const values = modifiers[key];
+  if (!Array.isArray(values) || values.length !== required.length || !required.every(value => values.includes(value))) {
+    throw Error(`Invalid modifier policy: ${key}`);
+  }
+}
+if (!Number.isFinite(modifiers.aura.stanceOpacity) || modifiers.aura.stanceOpacity < 0 || modifiers.aura.stanceOpacity > 1) {
+  throw Error('Invalid stance modifier aura opacity');
+}
 for (const [alias, id] of Object.entries(statAliases)) {
   if (!/^[a-z]+$/.test(alias) || Object.hasOwn(modifiers.stats, alias) || !Object.hasOwn(modifiers.stats, id)) {
     throw Error(`Invalid modifier alias: ${alias}`);
@@ -97,7 +111,7 @@ if (!(Number.isFinite(center.objectScale) && center.objectScale > 0)
   || ![center.chevronsOffsetY, center.objectOffsetY].every(Number.isFinite)
   || Object.values(modifiers.stats).some(({ centerObjectScale }) => centerObjectScale !== undefined
     && !(Number.isFinite(centerObjectScale) && centerObjectScale > 0))) throw Error('Invalid modifier center layout');
-for (const layout of [modifiers.center, modifiers.corner]) {
+for (const layout of [modifiers.center]) {
   if (![layout.x, layout.y, layout.width, layout.height, layout.maxSize].every(Number.isFinite)
     || Math.min(layout.width, layout.height, layout.maxSize) <= 0
     || layout.x < 0 || layout.y < 0 || layout.x + layout.width > 512 || layout.y + layout.height > 640) {
