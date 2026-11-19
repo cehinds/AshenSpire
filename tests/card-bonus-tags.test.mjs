@@ -160,11 +160,11 @@ test('a visible Core Smash tag explains the standard matchup without repeating i
   const def = definition('core.reaverSpecial');
   const tags = cardSideTags(playingCardModel(core, { cardId: def.id }), def, core);
   const smash = tags.find(tag => tag.id === 'maneuver:smash');
-  assert.match(smash.blurb, /1\.25× damage, plus a quarter of their Block; half of it breaks Poise/);
+  assert.match(smash.blurb, /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. Add a quarter of their Block; half of the total breaks Poise/);
   assert.match(cardTagRailHtml([smash]), /tabindex="0".*data-tip="Smash/);
   assert.deepEqual(faceWith(def, tags).map(line => line.kind), ['damage']);
   assert.doesNotMatch(text(faceWith(def, tags)), /Defend|Prepared|Poise|Precision/);
-  assert.match(text(cardFaceLines(def, null, core)), /Against Defend or Prepared/, 'without a represented tag the complete headless face keeps the rule');
+  assert.match(text(cardFaceLines(def, null, core)), /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage/, 'without a represented tag the complete headless face keeps the rule');
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: 'core.strike' }), definition('core.strike'), core).some(tag => tag.id === 'maneuver:smash'));
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: def.id }), def, legacy).some(tag => tag.id === 'maneuver:smash'));
 });

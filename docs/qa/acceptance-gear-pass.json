@@ -1,6 +1,6 @@
 {
   "request": "Gear pass mechanics (owner, 2026-11-18/19): armour types carry bonuses (Mail Counter +1, Leathers Evade +1, Plate Thorns 1, Robes +1 max MP, Poise by group), staves and sceptres give 1 Ward a turn, tomes 2, a Hammer Smash sends the target back only when it breaks Poise, a Bow keeps 1 Retreat stack at the end of a turn spent in Defend stance. The equipment inspector exposes applicable human-readable type/group rules and signature rules beside the configured stat summary.",
-  "success": "Starting equipment names and Poise are shown; the plate-wearing Reaver starts with 17 Poise and Thorns 1; an Ash Staff grants Ward 1. The real combat hand and player's inspector remain usable at desktop, phone, wide and tablet sizes with no console errors. Opened Heavy and Focus equipment inspectors show their real group/type effects and own signatures without clipping or raw strings.",
+  "success": "Starting equipment names and Poise are shown; the plate-wearing Reaver starts with 16 Poise and Thorns 1; an Ash Staff grants Ward 1. The real combat hand and player's inspector remain usable at desktop, phone, wide and tablet sizes with no console errors. Opened Heavy and Focus equipment inspectors show their real group/type effects and own signatures without clipping or raw strings.",
   "failure": "A card face or the sheet prints a raw mod string or 'undefined' or 'NaN', or the page logs a console error.",
   "viewports": [
     {
@@ -155,7 +155,7 @@
           "kind": "text",
           "label": "Reaver's item and armour-group Poise reach the live pool",
           "selector": ".combatant-door [data-section=\"state\"]",
-          "matches": "Poise\\s*17\\s*/\\s*17"
+          "matches": "Poise\\s*16\\s*/\\s*16"
         },
         {
           "kind": "consoleErrors",

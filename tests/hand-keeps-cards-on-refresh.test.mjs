@@ -13,6 +13,8 @@ import { mountHand } from '../src/ui/components/hand.js';
 import { openBoundCardInspection } from '../src/ui/components/cardInspection.js';
 import { clearSelection, resetSelection } from '../src/ui/components/cardSelection.js';
 import { withModalDom } from './helpers/dom.mjs';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 const registries = createRegistries(contentBundle);
 const player = {
@@ -145,3 +147,57 @@ test('a refresh moves no child of the card: every node keeps its place and ident
   assert.deepEqual([...first.children], before, 'the same child nodes in the same order');
   assert.equal(moves, 0, 'none was removed or inserted again');
 }));
+
+test('a mounted live hand refreshes saved Smash rules with an unchanged preview and keeps Information and Play current', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const combat = createCombat({ registries: core, gameProfile: profile, combatExpansionVersion: 2, rng: createRng(71),
+    enemyIds: ['wanderingSoldier'], player: { ...structuredClone(player),
+      deck: [{ instanceId: 'smash-hand', cardId: 'core.smash', upgraded: false }] } });
+  const inst = combat.piles.hand.find(card => card.cardId === 'core.smash');
+  assert.ok(inst);
+  const preview = previewCard(combat, inst.instanceId);
+  const previewBefore = JSON.stringify(preview);
+  combat.fixCoreRules = structuredClone(combat.fixCoreRules);
+  // Real combat hosts may carry cycles. The hand's signature must read the rule authority, never serialize the host.
+  combat.uiTestCycle = combat;
+  const cases = [
+    ['old', { damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 }, 'Against Defend or Prepared: 1.25× damage. Add a quarter of their Block; half of the total breaks Poise.'],
+    ['shipped', { ...fixCoreMechanics.smashVsDefensive }, 'Against Defend: 1.5× damage. Against Prepared: 1.25× damage. Add a quarter of their Block; half of the total breaks Poise.'],
+    ['custom', { damageMultiplier: 3, blockFraction: 0.3, poiseFraction: 0.4 }, 'Against Defend or Prepared: 3× damage. Add 30% of their Block; 40% of the total breaks Poise.'],
+  ];
+  withHand(({ hand, handEl, wired, updated }) => {
+    let first, plays = 0;
+    const commands = { play: () => { plays++; } };
+    for (const [name, rules, expected] of cases) {
+      combat.fixCoreRules.smashVsDefensive = rules;
+      const row = { ...entry(inst, preview, true, { play: true }), rules: combat, commands };
+      hand.render({ cards: [row] });
+      const card = handEl.children[0];
+      if (!first) first = card;
+      assert.equal(card, first, `${name}: keeps the mounted card`);
+      assert.equal(wired.length, 1, `${name}: play wiring is not rebound`);
+      assert.equal(card.classList.contains('unaffordable'), false, `${name}: affordability is unchanged`);
+      const tag = card.querySelector('[data-tag-id="maneuver:smash"]');
+      assert.ok(tag, `${name}: Smash tag is visible`);
+      for (const attribute of ['aria-description', 'data-tip']) {
+        assert.ok(tag.getAttribute(attribute).includes(expected), `${name}: actual hand ${attribute}`);
+        assert.doesNotMatch(tag.getAttribute(attribute), /defendDamageMultiplier|fixCoreRules/, `${name}: no internal keys`);
+      }
+      if (name !== 'shipped') assert.doesNotMatch(tag.getAttribute('aria-description'), /Against Defend: 1\.5× damage\./, `${name}: no shipped-rule leak`);
+      const shell = openBoundCardInspection(card);
+      assert.ok(shell, `${name}: opens the actual bound Information door`);
+      const information = [...shell.panel.querySelectorAll('.inspection-tag')].find(node => node.getAttribute('data-tip')?.startsWith('Heavy strike.'));
+      assert.ok(information?.getAttribute('data-tip').includes(expected), `${name}: Information tag reads the saved combat rules`);
+      assert.doesNotMatch(information.getAttribute('data-tip'), /defendDamageMultiplier|fixCoreRules/);
+      const play = shell.panel.querySelector('[data-act="play"]');
+      assert.ok(play && !play.disabled, `${name}: Play remains available`);
+      shell.close({ liftNow: true });
+      assert.equal(JSON.stringify(preview), previewBefore, `${name}: preview did not change`);
+    }
+    assert.equal(updated.length, 2, 'both rule-only changes refresh the live record');
+    const shell = openBoundCardInspection(first);
+    shell.panel.querySelector('[data-act="play"]').click();
+    assert.equal(plays, 1, 'the kept card still commits its host Play action once');
+  }, { registries: core });
+});

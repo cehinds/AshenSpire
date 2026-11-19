@@ -358,7 +358,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     return result;
   }
   // The options renderCard is given above, for refreshCard (tests/hand-keeps-cards-on-refresh.test.mjs holds the two equal).
-  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
+  const cardOpts = entry => ({ preview: entry.preview, rules: entry.rules, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
     surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
   // A card that keeps its element while its look changes runs without transitions for the frame that paints the
   // change, so it lands as a rebuilt card did. The second frame callback restores the stylesheet's own.
@@ -439,7 +439,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // `commands` is deliberately absent: those are closures that resolve the
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
+      // A restored fight can change only its saved rules. Keep the combat itself out of JSON: it owns callbacks and cyclic state.
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability,
+        { fixCoreRules: entry.rules?.fixCoreRules, profileHash: entry.rules?.gameProfile?.hash, combatExpansionVersion: entry.rules?.combatExpansionVersion }]);
       // What a refresh cannot change: the instance, the viewer's reason and name, the surface, whether the card is wired
       // at all (it has a preview), and the host's own controls.
       const structure = liveWiring ? JSON.stringify([entry.inst, entry.reason, entry.name, entry.surface, !!entry.preview, rebuildKey ? rebuildKey(entry) : '']) : '';
@@ -485,7 +487,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       rebuilt++;
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
+        { preview: entry.preview, rules: entry.rules, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
           reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS

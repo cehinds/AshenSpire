@@ -129,7 +129,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
-  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  const smashHelp = coreSmashHelp(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');

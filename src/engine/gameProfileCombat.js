@@ -285,7 +285,9 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
-  const matchupMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  const smashMultiplier = smashRule && defending === 'defend'
+    ? smashRule.defendDamageMultiplier ?? smashRule.damageMultiplier : smashRule?.damageMultiplier;
+  const matchupMultiplier = smashRule ? smashMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
   // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
   // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
   const advantageMultiplier = matchupMultiplier > 1 && weaknessMultiplier > 1 ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier : matchupMultiplier;

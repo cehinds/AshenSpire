@@ -62,6 +62,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const snapshot = serializeCombatSnapshot(combat);
+  delete snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier; // this is the old snapshot's shared tuning, not the new default
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
   // A fight saved before the 2026-11-14 ruling: it has no hitRoll / evadeStacksPerCard / perception.roll keys, so it keeps rolling and grants evadeStackBase.
@@ -119,7 +120,7 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92'), saved.lock.runtimeHash);
 });
 
 test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) and dev\'s current runtime (58cd1d...) still validate on the merged runtime', () => {
@@ -128,8 +129,22 @@ test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules
     saved.lock.runtimeHash = hash;
     digest(saved);
     assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9'), hash);
+    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92'), hash);
   }
+});
+
+for (const priorRuntime of [
+  'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772',
+  'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649',
+  'sha256:59cc12805591c6c2441d3b34360fd2562376fad622f136e591680a05d56af10a',
+]) test(`a profile saved before GearPass + Smash integration keeps runtime ${priorRuntime}`, () => {
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = priorRuntime;
+  digest(saved);
+  const before = JSON.stringify(saved);
+  assert.equal(validateGameProfileSnapshot(saved).hash, saved.hash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), saved.lock.runtimeHash);
+  assert.equal(JSON.stringify(saved), before);
 });
 
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
@@ -178,7 +193,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
-  assert.equal(profile.lock.runtimeHash, 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9');
+  assert.equal(profile.lock.runtimeHash, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -187,14 +202,18 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
   assert.equal(combat.fixCoreRules.smashVsDefensive.damageMultiplier, 1.25);
+  assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
   const restored = restoreStripped({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 1.25);
+  assert.equal(restored.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
   const target = restored.enemies[0];
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  // The shipped Core halves base damage (effects.baseDamageMultiplier 0.5, 2026-11-17): 12 -> 6, x1.25 floors to 7.
+  // This is a CURRENT-rules round trip: 12 -> 6, x1.5 against Defend = 9; Prepared keeps its shared x1.25 = 7.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 9);
+  target.combatStance.maneuver = 'prepared';
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 7);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
