@@ -4073,6 +4073,406 @@
         "light",
         "unwieldy"
       ]
+    },
+    "gear:kris": {
+      "name": "Kris",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "dagger",
+        "flurry",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:stiletto": {
+      "name": "Stiletto",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "dagger",
+        "flurry"
+      ],
+      "range": "melee"
+    },
+    "gear:broadsword": {
+      "name": "Broadsword",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:flamberge": {
+      "name": "Flamberge",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "sword",
+        "burn"
+      ],
+      "range": "melee"
+    },
+    "gear:rapier": {
+      "name": "Rapier",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:estoc": {
+      "name": "Estoc",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:duelistsFoil": {
+      "name": "Duelists Foil",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "sword"
+      ],
+      "range": "melee"
+    },
+    "gear:ashenClaymore": {
+      "name": "Ashen Claymore",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "greatsword",
+        "heavy",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:zweihander": {
+      "name": "Zweihander",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "greatsword",
+        "heavy",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:pike": {
+      "name": "Pike",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "spear",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:scythe": {
+      "name": "Scythe",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "polearm",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:reapersCrescent": {
+      "name": "Reapers Crescent",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "polearm",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:mace": {
+      "name": "Mace",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:morningStar": {
+      "name": "Morning Star",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "hammer",
+        "stagger",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:flail": {
+      "name": "Flail",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:maul": {
+      "name": "Maul",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:thunderMallet": {
+      "name": "Thunder Mallet",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "hammer",
+        "stagger"
+      ],
+      "range": "melee"
+    },
+    "gear:beardedAxe": {
+      "name": "Bearded Axe",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "axe",
+        "heavy"
+      ],
+      "range": "melee"
+    },
+    "gear:moonlitKatana": {
+      "name": "Moonlit Katana",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "katana",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:moonGlaives": {
+      "name": "Moon Glaives",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "twinblade",
+        "flurry",
+        "light",
+        "frost"
+      ],
+      "range": "melee"
+    },
+    "gear:longbow": {
+      "name": "Longbow",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:huntersRecurve": {
+      "name": "Hunters Recurve",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:handCrossbow": {
+      "name": "Hand Crossbow",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:arbalest": {
+      "name": "Arbalest",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "rare",
+      "tags": [
+        "bow",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:leatherWhip": {
+      "name": "Leather Whip",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "flurry",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:thornWhip": {
+      "name": "Thorn Whip",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "flurry",
+        "retreat",
+        "bleed"
+      ],
+      "range": "reach"
+    },
+    "gear:ironKnuckles": {
+      "name": "Iron Knuckles",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "flurry"
+      ],
+      "range": "melee"
+    },
+    "gear:beastClaws": {
+      "name": "Beast Claws",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "flurry",
+        "bleed"
+      ],
+      "range": "melee"
+    },
+    "gear:stormSceptre": {
+      "name": "Storm Sceptre",
+      "slot": "rightHand",
+      "kind": "staff",
+      "rarity": "uncommon",
+      "tags": [
+        "sceptre",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:grimoire": {
+      "name": "Grimoire",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [],
+      "range": "melee"
+    },
+    "gear:prayerBook": {
+      "name": "Prayer Book",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "common",
+      "tags": [],
+      "range": "melee"
+    },
+    "gear:sunTalisman": {
+      "name": "Sun Talisman",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [
+        "regen"
+      ],
+      "range": "melee"
+    },
+    "gear:boneTalisman": {
+      "name": "Bone Talisman",
+      "slot": "leftHand",
+      "kind": "shield",
+      "rarity": "uncommon",
+      "tags": [],
+      "range": "melee"
+    },
+    "gear:armor.cinderforgedPlate": {
+      "name": "Cinderforged Plate",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "rare",
+      "tags": [
+        "plate"
+      ]
+    },
+    "gear:armor.wyrmscaleMail": {
+      "name": "Wyrmscale Mail",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "rare",
+      "tags": [
+        "mail"
+      ]
+    },
+    "gear:armor.ringmailHauberk": {
+      "name": "Ringmail Hauberk",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "common",
+      "tags": [
+        "mail"
+      ]
+    },
+    "gear:armor.huntersHide": {
+      "name": "Hunters Hide",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "common",
+      "tags": [
+        "leathers"
+      ]
+    },
+    "gear:armor.sagesRobe": {
+      "name": "Sages Robe",
+      "slot": "armor",
+      "kind": "armor",
+      "rarity": "uncommon",
+      "tags": [
+        "robes"
+      ]
     }
   },
   "relics": {

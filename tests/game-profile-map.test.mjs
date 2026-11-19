@@ -23,6 +23,8 @@ function setup(routes = {}, legacy = false) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
   return { reg, run };
 }
+// Route keys of 2026-11-18 (rest spacing, V spread, single pre-boss rest, committed-branch fog); a test that pins plain geometry clears them.
+const PLAIN = { restGap: null, restFloorSpread: null, singlePrebossRest: null, branchSpread: null, startRestFromAct: null, fogCommittedBranch: null };
 // Branched Core maps (owner, 2026-10-25): depth 1 is shared, then every branch has its own lanes, rests, elites and boss.
 const restSetHas = floor => [3, 6, 9].includes(floor);
 function verifyPaths(map, rests) {
@@ -146,7 +148,7 @@ test('branch count never exceeds the distinct bosses of the act or maxBranches',
   assert.equal(widest5, 5, 'the final act offers five distinct bosses');
 });
 test('branch width, length, rest placement and exposed node types follow JSON settings', () => {
-  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false, maxBranches: 1 });
+  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false, maxBranches: 1, ...PLAIN });
   const map = buildActMap(reg, createRng(7), run.seatOrder[0], 1);
   assert.equal(map.columns, 4);
   assert.equal(map.floors, 6);
@@ -263,19 +265,22 @@ test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026
   const open = build({});
   assert.deepEqual(open.startIds, ['n1_0']);
   assert.equal(open.nodes.n1_0.actualType, 'fight');
-  assert.ok(Object.values(open.nodes).filter(node => node.floor === 3).every(node => node.type === 'shrine'), 'rests moved to depth 3 so depth 1 can be a fight');
-  const restFirst = build({ firstFloor: null, requirePrebossRest: false, restFloors: [1, 6] });
+  assert.ok(Object.values(open.nodes).filter(node => node.type === 'shrine').every(node => node.floor > 1), 'act 1 opens on its fight: the depth-1 rest starts in act 2 (startRestFromAct)');
+  const act2 = setup(); // act 2 opens on a rest: firstFloor only draws the depth-1 node of the acts before startRestFromAct
+  const second = buildActMap(act2.reg, createRng(5), act2.run.seatOrder[1], 2);
+  assert.equal(second.nodes.n1_0.type, 'shrine');
+  const restFirst = build({ firstFloor: null, requirePrebossRest: false, restFloors: [1, 6], ...PLAIN });
   assert.deepEqual(restFirst.startIds, ['n1_0']);
   assert.equal(restFirst.nodes.n1_0.type, 'shrine');
   const shop = build({ firstFloor: 'shop' });
   for (const id of shop.startIds) assert.equal(shop.nodes[id].actualType, 'shop');
-  assert.throws(() => build({ firstFloor: 'fight', requirePrebossRest: false, restFloors: [1, 6] }), /firstFloor/, 'depth 1 cannot be both a rest and a fight');
+  assert.throws(() => build({ firstFloor: 'fight', requirePrebossRest: false, restFloors: [1, 6], ...PLAIN }), /firstFloor/, 'depth 1 cannot be both a rest and a fight');
   assert.throws(() => setup({ firstFloor: 'rest', restFloors: [3, 7] }), /firstFloor/, 'rest is not a forceable lane type');
   assert.throws(() => setup({ firstFloor: 'boss' }), /firstFloor/);
   assert.throws(() => build({ firstFloor: 'elite' }), /firstFloor/, 'an elite cannot open before minimumThreatFloor');
 });
 test('a configured fog route reveals only landmarks, then the split and next rest; the trail persists on load', () => {
-  const { reg, run } = setup({ mapMode: 'fog', fogRevealRests: false, fogTrailOnly: false, requirePrebossRest: false, restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
+  const { reg, run } = setup({ mapMode: 'fog', fogRevealRests: false, fogTrailOnly: false, requirePrebossRest: false, restFloors: [1, 6], firstFloor: null, ...PLAIN }); // the Rest-first route, authored explicitly
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');
@@ -312,9 +317,10 @@ test('a rest lights only its own branch\'s next rest, never a sibling branch\'s'
   for (let seed = 1; seed <= 30; seed++) {
     const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
     if (map.bossIds.length < 2) continue;
-    for (const rest of Object.values(map.nodes).filter(node => node.type === 'shrine' && node.floor === 3)) {
+    for (const rest of Object.values(map.nodes).filter(node => node.type === 'shrine')) {
       const found = nearestShrine({ graph: map, from: rest.id });
-      assert.equal(map.nodes[found.id].branch, rest.branch);
+      if (rest.floor === map.floors - 1) assert.equal(found, null, 'no rest lies beyond the pre-boss rest');
+      else assert.equal(map.nodes[found.id].branch, rest.branch);
       const lit = litNodes({ graph: map, run: { path: [rest.id], mapNodeId: rest.id } });
       for (const id of lit) if (map.nodes[id].type === 'shrine' && id !== rest.id) assert.equal(map.nodes[id].branch, rest.branch, `${id} lit from ${rest.id}`);
       checked++;

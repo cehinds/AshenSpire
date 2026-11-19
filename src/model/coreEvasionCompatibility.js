@@ -38,6 +38,7 @@
 // Theme C of the 2026-11-17 playtest (tooltip wording on the Melee, Reach, Ranged, Reaction and Ethereal mechanic manifests), merged on theme B, moves the runtime hash again; wording only, no rule. Theme B's 73fdb0... and theme C's own cb5271... are kept.
 // The Ethereal manifest's reader is the engine again (review of #2819: it pointed at the upgrade step); wording only, edad64... is kept.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8',
   'sha256:edad64eb5d0992e6eee07b451ea4b95fc51302018437017d6697c7cd1cecf6c5',
   'sha256:73fdb07daecf40ce03f3d066a795fb5519b3eb0048c21447511d23c33ee9ff53',
   'sha256:cb5271059640a11d4d4b87795a6e553464d721ca14c05e327b2fe0396f5497f9',
@@ -99,6 +100,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:fa12ec96cbd300f3f77ac7a0ed1faffe4dc2a780d6f57d38fb74ee53c14a18bd',
   'sha256:c569dee21009eb36ba8a7cc8b2437f843aae9c2c784d5ae4fcab36ebcffeed4f',
   'sha256:a81550e92799eaf09bb092dc21b1c310d0e2a80e0a2dd1708547952693e1ad4f',
+  'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8',
+  'sha256:c7c295d2af270f815e8de01086a31718390a5eb3d3253474d90ab97cd95f15c7',
+  'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
@@ -107,7 +111,10 @@ const PREVIOUS_RUNTIMES = new Set([
 // Blacksmith prices) moves it again; 73fdb0... is now in PREVIOUS_RUNTIMES.
 // The #2820 review (tier HP scale in combat creation, reactive returns kept out of the base scale) moves it again; fa12ec... is now in PREVIOUS_RUNTIMES.
 // Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
-const FIXED_EVASION_RUNTIME = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
+// The route spread (2026-11-18: 11 depths, start rest, V spread, re-entry keys) moves it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
+// Registry stance rows name their combat maneuver (stances.json, 2026-11-18, #2843) and the Prepared mechanic text follows; 0a9ca3... is now in PREVIOUS_RUNTIMES.
+// Merging the route spread (#2847) with the stance-card fix (#2843): c7c295... and 80a96c... are now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

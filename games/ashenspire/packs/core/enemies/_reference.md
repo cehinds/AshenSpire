@@ -453,6 +453,44 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:armor.bastionHarness | Bastion Harness | armor | armor | uncommon | plate, encumbered |
 | gear:armor.rimeweaveRobes | Rimeweave Robes | armor | armor | uncommon | robes, frost, thin |
 | gear:armor.waywatcherCoat | Waywatcher Coat | armor | armor | uncommon | leathers, light, unwieldy |
+| gear:kris | Kris | rightHand | weapon | uncommon | dagger, flurry, bleed |
+| gear:stiletto | Stiletto | rightHand | weapon | rare | dagger, flurry |
+| gear:broadsword | Broadsword | rightHand | weapon | uncommon | sword |
+| gear:flamberge | Flamberge | rightHand | weapon | rare | sword, burn |
+| gear:rapier | Rapier | rightHand | weapon | common | sword |
+| gear:estoc | Estoc | rightHand | weapon | uncommon | sword |
+| gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
+| gear:ashenClaymore | Ashen Claymore | rightHand | weapon | uncommon | greatsword, heavy, stagger |
+| gear:zweihander | Zweihander | rightHand | weapon | rare | greatsword, heavy, stagger |
+| gear:pike | Pike | rightHand | weapon | common | spear, retreat |
+| gear:scythe | Scythe | rightHand | weapon | uncommon | polearm, retreat |
+| gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm, retreat |
+| gear:mace | Mace | rightHand | weapon | common | hammer, stagger |
+| gear:morningStar | Morning Star | rightHand | weapon | uncommon | hammer, stagger, bleed |
+| gear:flail | Flail | rightHand | weapon | rare | hammer, stagger |
+| gear:maul | Maul | rightHand | weapon | uncommon | hammer, stagger |
+| gear:thunderMallet | Thunder Mallet | rightHand | weapon | rare | hammer, stagger |
+| gear:beardedAxe | Bearded Axe | rightHand | weapon | common | axe, heavy |
+| gear:moonlitKatana | Moonlit Katana | rightHand | weapon | rare | katana, bleed |
+| gear:moonGlaives | Moon Glaives | rightHand | weapon | rare | twinblade, flurry, light, frost |
+| gear:longbow | Longbow | rightHand | weapon | uncommon | bow, retreat |
+| gear:huntersRecurve | Hunters Recurve | rightHand | weapon | rare | bow, retreat |
+| gear:handCrossbow | Hand Crossbow | rightHand | weapon | common | bow, retreat |
+| gear:arbalest | Arbalest | rightHand | weapon | rare | bow, retreat |
+| gear:leatherWhip | Leather Whip | rightHand | weapon | common | flurry, retreat |
+| gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, retreat, bleed |
+| gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
+| gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
+| gear:stormSceptre | Storm Sceptre | rightHand | staff | uncommon | sceptre, retreat |
+| gear:grimoire | Grimoire | leftHand | shield | uncommon |  |
+| gear:prayerBook | Prayer Book | leftHand | shield | common |  |
+| gear:sunTalisman | Sun Talisman | leftHand | shield | uncommon | regen |
+| gear:boneTalisman | Bone Talisman | leftHand | shield | uncommon |  |
+| gear:armor.cinderforgedPlate | Cinderforged Plate | armor | armor | rare | plate |
+| gear:armor.wyrmscaleMail | Wyrmscale Mail | armor | armor | rare | mail |
+| gear:armor.ringmailHauberk | Ringmail Hauberk | armor | armor | common | mail |
+| gear:armor.huntersHide | Hunters Hide | armor | armor | common | leathers |
+| gear:armor.sagesRobe | Sages Robe | armor | armor | uncommon | robes |
 
 ## Relics (relic:)
 

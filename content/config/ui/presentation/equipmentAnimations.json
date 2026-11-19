@@ -3,31 +3,59 @@
     "weaponGroups": {
       "sword": [
         "straightSword",
-        "katana"
+        "katana",
+        "broadsword",
+        "flamberge",
+        "rapier",
+        "estoc",
+        "duelistsFoil",
+        "moonlitKatana"
       ],
       "greatsword": [
-        "greatsword"
+        "greatsword",
+        "ashenClaymore",
+        "zweihander"
       ],
       "dagger": [
         "dagger",
-        "parryDagger"
+        "parryDagger",
+        "kris",
+        "stiletto",
+        "leatherWhip",
+        "thornWhip",
+        "ironKnuckles",
+        "beastClaws"
       ],
       "bow": [
-        "shortbow"
+        "shortbow",
+        "longbow",
+        "huntersRecurve",
+        "handCrossbow",
+        "arbalest"
       ],
       "polearm": [
         "halberd",
-        "frostSpear"
+        "frostSpear",
+        "pike",
+        "scythe",
+        "reapersCrescent"
       ],
       "hammer": [
-        "warhammer"
+        "warhammer",
+        "mace",
+        "morningStar",
+        "flail",
+        "maul",
+        "thunderMallet"
       ],
       "twinblade": [
-        "twinblade"
+        "twinblade",
+        "moonGlaives"
       ],
       "axe": [
         "battleaxe",
-        "cinderAxe"
+        "cinderAxe",
+        "beardedAxe"
       ],
       "shield": [
         "buckler",
@@ -37,14 +65,19 @@
         "spikedShield"
       ],
       "lantern": [
-        "lantern"
+        "lantern",
+        "grimoire",
+        "prayerBook"
       ],
       "torch": [
-        "torch"
+        "torch",
+        "sunTalisman",
+        "boneTalisman"
       ],
       "staff": [
         "ashStaff",
-        "starstoneStaff"
+        "starstoneStaff",
+        "stormSceptre"
       ],
       "sceptre": [
         "boneSceptre",

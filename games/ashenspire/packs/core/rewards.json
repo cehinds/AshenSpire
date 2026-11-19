@@ -24,7 +24,23 @@
         "cinderAxe",
         "frostSpear",
         "halberd",
-        "warhammer"
+        "warhammer",
+        "broadsword",
+        "flamberge",
+        "rapier",
+        "estoc",
+        "duelistsFoil",
+        "pike",
+        "scythe",
+        "reapersCrescent",
+        "mace",
+        "morningStar",
+        "flail",
+        "maul",
+        "thunderMallet",
+        "beardedAxe",
+        "moonlitKatana",
+        "moonGlaives"
       ]
     },
     "shields": {
@@ -39,7 +55,11 @@
         "roundShield",
         "spikedShield",
         "lantern",
-        "torch"
+        "torch",
+        "grimoire",
+        "prayerBook",
+        "sunTalisman",
+        "boneTalisman"
       ]
     },
     "scepters": {
@@ -56,7 +76,8 @@
         "blightRod",
         "gorefireBrand",
         "wyrmhornStaff",
-        "duskChime"
+        "duskChime",
+        "stormSceptre"
       ]
     },
     "bows": {
@@ -65,7 +86,11 @@
         "item:blade"
       ],
       "members": [
-        "shortbow"
+        "shortbow",
+        "longbow",
+        "huntersRecurve",
+        "handCrossbow",
+        "arbalest"
       ]
     },
     "greatswords": {
@@ -74,7 +99,9 @@
         "item:blade"
       ],
       "members": [
-        "greatsword"
+        "greatsword",
+        "ashenClaymore",
+        "zweihander"
       ]
     },
     "daggers": {
@@ -84,7 +111,13 @@
       ],
       "members": [
         "dagger",
-        "parryDagger"
+        "parryDagger",
+        "kris",
+        "stiletto",
+        "leatherWhip",
+        "thornWhip",
+        "ironKnuckles",
+        "beastClaws"
       ]
     },
     "robes": {
@@ -101,7 +134,8 @@
         "reaver:riteVestments",
         "starseer:riteVestments",
         "rogue:riteVestments",
-        "herald:riteVestments"
+        "herald:riteVestments",
+        "starseer:sagesRobe"
       ]
     },
     "lightArmor": {
@@ -123,7 +157,8 @@
         "rogue:nightweave",
         "rogue:gutterLeathers",
         "herald:nightweave",
-        "herald:gutterLeathers"
+        "herald:gutterLeathers",
+        "rogue:huntersHide"
       ]
     },
     "mediumArmor": {
@@ -137,7 +172,9 @@
         "reaver:oathsworn",
         "herald:default",
         "herald:ossuary",
-        "herald:pilgrim"
+        "herald:pilgrim",
+        "reaver:wyrmscaleMail",
+        "herald:ringmailHauberk"
       ]
     },
     "heavyArmor": {
@@ -151,7 +188,8 @@
         "reaver:wayfarerPlate",
         "starseer:wayfarerPlate",
         "rogue:wayfarerPlate",
-        "herald:wayfarerPlate"
+        "herald:wayfarerPlate",
+        "reaver:cinderforgedPlate"
       ]
     }
   },
