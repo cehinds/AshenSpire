@@ -27,14 +27,10 @@ test('a plain attack and a plain block cost 1 SP and no Mana, whatever the autho
 });
 
 test('a smash and a sweep cost 2 SP or more and scale their numbers; a ranked spell pays Mana', () => {
-  // Maul now lends Colossus Smash as its default art, so the existing weapon-art
-  // Mana minimum applies to it just as it does to Bashing Blow and Sweeping Blow.
-  const maul = registries.equipment.armaments.find(piece => piece.id === 'maul');
-  assert.deepEqual(maul.weaponCardPackage.weaponArtDefaults, ['colossusSmash'], 'the Maul default art is the priced fixture');
   for (const id of ['bashingBlow', 'sweepingBlow', 'colossusSmash']) {
     const card = cardOf(id);
     assert.ok(card.cost >= 2, `${id} costs ${card.cost}`);
-    assert.equal(card.manaCost, 1, `${id}: default weapon arts also pay Mana`);
+    assert.equal(card.manaCost || 0, ['bashingBlow', 'sweepingBlow'].includes(id) ? 1 : 0, `${id}: weapon arts also pay Mana`);
     // A smash scales its damage; a sweep's damage stays normal (owner, 2026-10-13).
     const sweep = (authoredOf(id).tags || []).includes('maneuver:sweep');
     assert.equal(amountOf(card, 'damage'), sweep ? amountOf(authoredOf(id), 'damage') : Math.round(amountOf(authoredOf(id), 'damage') * TWO_COST_EFFECT_MULTIPLIER), id);

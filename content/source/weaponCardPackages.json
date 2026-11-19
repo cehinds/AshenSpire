@@ -537,16 +537,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "viperStrike"
+        "twinFang"
       ],
       "learnableArts": [
-        "garrote",
+        "viperStrike",
         "aspDart"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "viperStrike"
+        "artCardId": "twinFang"
       }
     }
   },
@@ -556,16 +556,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "assassinate"
+        "twinFang"
       ],
       "learnableArts": [
-        "sap",
+        "assassinate",
         "feint"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "assassinate"
+        "artCardId": "twinFang"
       }
     }
   },
@@ -578,7 +578,7 @@
         "sweepingBlow"
       ],
       "learnableArts": [
-        "cleavingBlow",
+        "rend",
         "hewingArc"
       ],
       "combatKit": {
@@ -632,16 +632,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "thousandCutsRogue"
+        "guardCounter"
       ],
       "learnableArts": [
-        "bladeDanceRogue",
+        "thousandCutsRogue",
         "garrote"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "thousandCutsRogue"
+        "artCardId": "guardCounter"
       }
     }
   },
@@ -651,16 +651,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "executionWindow"
+        "guardCounter"
       ],
       "learnableArts": [
-        "rondelParry",
-        "bindingParry"
+        "executionWindow",
+        "rondelParry"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "executionWindow"
+        "artCardId": "guardCounter"
       }
     }
   },
@@ -670,16 +670,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "executioner"
+        "greatswordSunderingHew"
       ],
       "learnableArts": [
-        "ruinousBlow",
+        "executioner",
         "bloodTithe"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "executioner"
+        "artCardId": "greatswordSunderingHew"
       }
     }
   },
@@ -689,16 +689,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "progression-breaker-s-toll"
+        "greatswordSunderingHew"
       ],
       "learnableArts": [
-        "ruinousBlow",
+        "progression-breaker-s-toll",
         "warriorsVow"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "progression-breaker-s-toll"
+        "artCardId": "greatswordSunderingHew"
       }
     }
   },
@@ -708,16 +708,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "twinPrick"
+        "rimeThrust"
       ],
       "learnableArts": [
-        "impale",
-        "kickOff"
+        "twinPrick",
+        "impale"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "twinPrick"
+        "artCardId": "rimeThrust"
       }
     }
   },
@@ -727,16 +727,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "crimsonCleave"
+        "cleavingBlow"
       ],
       "learnableArts": [
-        "hewingArc",
+        "crimsonCleave",
         "ironSkin"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "crimsonCleave"
+        "artCardId": "cleavingBlow"
       }
     }
   },
@@ -746,16 +746,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "bloodhuntersStrike"
+        "sweepingBlow"
       ],
       "learnableArts": [
-        "sweepingBlow",
+        "bloodhuntersStrike",
         "hemorrhage"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "bloodhuntersStrike"
+        "artCardId": "sweepingBlow"
       }
     }
   },
@@ -784,16 +784,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "goreslash"
+        "spikedReprisal"
       ],
       "learnableArts": [
-        "serratedBlade",
+        "goreslash",
         "hemorrhage"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "goreslash"
+        "artCardId": "spikedReprisal"
       }
     }
   },
@@ -803,16 +803,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "shieldCrash"
+        "spikedReprisal"
       ],
       "learnableArts": [
-        "kickOff",
+        "shieldCrash",
         "setTheShield"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "shieldCrash"
+        "artCardId": "spikedReprisal"
       }
     }
   },
@@ -822,16 +822,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "colossusSmash"
+        "bashingBlow"
       ],
       "learnableArts": [
-        "bashingBlow",
+        "colossusSmash",
         "ruinousBlow"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "colossusSmash"
+        "artCardId": "bashingBlow"
       }
     }
   },
@@ -841,16 +841,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "aegisOfEmbers"
+        "shieldBash"
       ],
       "learnableArts": [
-        "shieldwall",
+        "aegisOfEmbers",
         "enterBulwark"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "aegisOfEmbers"
+        "artCardId": "shieldBash"
       }
     }
   },
@@ -860,16 +860,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
-        "sunderingChop"
+        "cleavingBlow"
       ],
       "learnableArts": [
-        "cleavingBlow",
+        "sunderingChop",
         "bloodTithe"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "sunderingChop"
+        "artCardId": "cleavingBlow"
       }
     }
   },
@@ -917,16 +917,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bowPierceAttack",
       "weaponArtDefaults": [
-        "aimedShot"
+        "quickstep"
       ],
       "learnableArts": [
-        "nockAndWait",
-        "barbedArrow"
+        "aimedShot",
+        "nockAndWait"
       ],
       "combatKit": {
         "attackProfileId": "bowPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "aimedShot"
+        "artCardId": "quickstep"
       }
     }
   },
@@ -936,16 +936,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bowPierceAttack",
       "weaponArtDefaults": [
-        "barbedArrow"
+        "quickstep"
       ],
       "learnableArts": [
-        "arrowVolley",
+        "barbedArrow",
         "pinningShot"
       ],
       "combatKit": {
         "attackProfileId": "bowPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "barbedArrow"
+        "artCardId": "quickstep"
       }
     }
   },
@@ -955,16 +955,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bowPierceAttack",
       "weaponArtDefaults": [
-        "ricochet"
+        "scholarsInsight"
       ],
       "learnableArts": [
-        "aimedShot",
+        "ricochet",
         "pinningShot"
       ],
       "combatKit": {
         "attackProfileId": "bowPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "ricochet"
+        "artCardId": "scholarsInsight"
       }
     }
   },
@@ -974,16 +974,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "bowPierceAttack",
       "weaponArtDefaults": [
-        "lethalDose"
+        "shieldBastion"
       ],
       "learnableArts": [
-        "nockAndWait",
+        "lethalDose",
         "arrowVolley"
       ],
       "combatKit": {
         "attackProfileId": "bowPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "lethalDose"
+        "artCardId": "shieldBastion"
       }
     }
   },
@@ -993,16 +993,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "hamstring"
+        "katanaDrawCut"
       ],
       "learnableArts": [
-        "enfeeble",
-        "smokeVeil"
+        "hamstring",
+        "enfeeble"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "hamstring"
+        "artCardId": "katanaDrawCut"
       }
     }
   },
@@ -1012,16 +1012,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "septicBlade"
+        "contagion"
       ],
       "learnableArts": [
-        "venomcoat",
+        "septicBlade",
         "toxicVolley"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "septicBlade"
+        "artCardId": "contagion"
       }
     }
   },
@@ -1031,16 +1031,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "ironResolve"
+        "shieldGuardian"
       ],
       "learnableArts": [
-        "enterGorefire",
+        "ironResolve",
         "warSurgeon"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "ironResolve"
+        "artCardId": "shieldGuardian"
       }
     }
   },
@@ -1050,16 +1050,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "daggerPierceAttack",
       "weaponArtDefaults": [
-        "fanOfKnives"
+        "twinbladeFlurry"
       ],
       "learnableArts": [
-        "hemorrhage",
+        "fanOfKnives",
         "shadowstep"
       ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
-        "artCardId": "fanOfKnives"
+        "artCardId": "twinbladeFlurry"
       }
     }
   },
@@ -1069,16 +1069,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "sceptreArcaneAttack",
       "weaponArtDefaults": [
-        "starstoneKris"
+        "starSpark"
       ],
       "learnableArts": [
-        "astralInsight",
+        "starstoneKris",
         "celestialLance"
       ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
         "guardProfileId": "sceptreGuard",
-        "artCardId": "starstoneKris"
+        "artCardId": "starSpark"
       }
     }
   },
@@ -1088,16 +1088,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
-        "pyreOfCharts"
+        "scholarsInsight"
       ],
       "learnableArts": [
-        "ashfallRite",
+        "pyreOfCharts",
         "cinderLance"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
-        "artCardId": "pyreOfCharts"
+        "artCardId": "scholarsInsight"
       }
     }
   },
@@ -1107,16 +1107,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
-        "transfusion"
+        "urgentHeal"
       ],
       "learnableArts": [
-        "lastMercy",
+        "transfusion",
         "secondBloom"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
-        "artCardId": "transfusion"
+        "artCardId": "urgentHeal"
       }
     }
   },
@@ -1126,16 +1126,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
-        "martyrBlood"
+        "urgentHeal"
       ],
       "learnableArts": [
-        "bloodletting",
+        "martyrBlood",
         "litany"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
-        "artCardId": "martyrBlood"
+        "artCardId": "urgentHeal"
       }
     }
   },
@@ -1145,16 +1145,16 @@
       "compatibility": "attack-v1",
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
-        "blightwardLash"
+        "blightTouch"
       ],
       "learnableArts": [
-        "cullTheWeak",
+        "blightwardLash",
         "progression-blight-litany"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
-        "artCardId": "blightwardLash"
+        "artCardId": "blightTouch"
       }
     }
   }
