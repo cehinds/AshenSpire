@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Revalidated after GearPass 6232329243 (2026-11-19): only three CURRENT captures move to the combined 04de9306 runtime.
+// The immutable upstream historical capture and all event, RNG, receipt and continuation fields are unchanged.
 // Recaptured 2026-11-19 for the Defend-only Smash override: only current profile/runtime, snapshot and save digests move.
 // Native and production agree; events, RNG, receipts and continuations are unchanged, and the complete historical scenario is unchanged.
 // Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
