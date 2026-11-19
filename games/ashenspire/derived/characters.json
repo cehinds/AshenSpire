@@ -6308,18 +6308,25 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "halberd",
-            "name": "Halberd",
+            "source": "scythe",
+            "name": "Scythe",
             "kind": "gear",
-            "amount": 2
+            "amount": 1
           }
         ],
-        "total": 4
+        "total": 3
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "scythe",
+            "name": "Scythe",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
       },
       "constitution": {
         "own": 2,
@@ -6341,28 +6348,28 @@
       "terms": {
         "base": 10,
         "constitution": 20,
-        "strength": 20,
-        "dexterity": 3,
+        "strength": 15,
+        "dexterity": 6,
         "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 61,
-      "formula": "10+20+20+3+2+1+5 = 61"
+      "total": 59,
+      "formula": "10+20+15+6+2+1+5 = 59"
     },
     "pools": {
-      "hp": 61,
+      "hp": 59,
       "sp": 2,
       "mp": 1,
-      "ar": 4,
-      "dr": 1,
+      "ar": 3,
+      "dr": 2,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "halberd",
-        "name": "Halberd"
+        "id": "scythe",
+        "name": "Scythe"
       }
     ],
     "relics": [],
