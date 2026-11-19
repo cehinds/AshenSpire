@@ -1910,7 +1910,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:siltCrownNewt.drowningCoil": {
@@ -4575,14 +4575,6 @@
         "self.strength=+1"
       ]
     },
-    "relic:enemy.relic.siltCrown": {
-      "name": "Silt Crown",
-      "text": "CON +2, STR +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.woundwoodHeart": {
       "name": "Woundwood Heart",
       "text": "CON +3, STR +1",
@@ -4663,6 +4655,14 @@
       "modifiers": [
         "self.wisdom=+1",
         "self.constitution=+1"
+      ]
+    },
+    "relic:enemy.relic.siltCrown": {
+      "name": "Silt Crown",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
       ]
     }
   }

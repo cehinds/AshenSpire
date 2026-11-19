@@ -5258,8 +5258,15 @@
       },
       "dexterity": {
         "own": 1,
-        "bonuses": [],
-        "total": 1
+        "bonuses": [
+          {
+            "source": "beastClaws",
+            "name": "Beast_Claws",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 3
       },
       "constitution": {
         "own": 2,
@@ -5275,15 +5282,8 @@
       },
       "wisdom": {
         "own": 1,
-        "bonuses": [
-          {
-            "source": "blightRod",
-            "name": "Blight_Rod",
-            "kind": "gear",
-            "amount": 2
-          }
-        ],
-        "total": 3
+        "bonuses": [],
+        "total": 1
       },
       "intelligence": {
         "own": 1,
@@ -5296,27 +5296,27 @@
         "base": 10,
         "constitution": 40,
         "strength": 15,
-        "dexterity": 3,
-        "wisdom": 6,
+        "dexterity": 9,
+        "wisdom": 2,
         "intelligence": 1,
         "level": 5
       },
-      "total": 80,
-      "formula": "10+40+15+3+6+1+5 = 80"
+      "total": 82,
+      "formula": "10+40+15+9+2+1+5 = 82"
     },
     "pools": {
-      "hp": 80,
+      "hp": 82,
       "sp": 4,
-      "mp": 3,
+      "mp": 2,
       "ar": 3,
-      "dr": 1,
+      "dr": 3,
       "hand": 4
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "blightRod",
-        "name": "Blight_Rod"
+        "id": "beastClaws",
+        "name": "Beast_Claws"
       }
     ],
     "relics": [

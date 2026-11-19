@@ -4658,11 +4658,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 17
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 8
       }
     ],
     "tags": [
@@ -4670,7 +4665,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
