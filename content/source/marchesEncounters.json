@@ -230,7 +230,7 @@
     "id": "a2_tollgate",
     "enemies": [
       "tollgateHookman",
-      "gildedKnight"
+      "courtSurgeon"
     ],
     "weight": 18,
     "pool": "normal",
