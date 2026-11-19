@@ -10,8 +10,10 @@ import { installMockRaf, tickFrames } from './helpers/mock-raf.mjs';
 test('enemy expansion covers canonical enemies with complete 260ms sequences', () => {
   assert.deepEqual(Object.keys(enemyExpansion).sort(), [...ENEMY_POSES].sort());
   for (const art of Object.values(enemyExpansion)) {
-    assert.equal(art.poses.length, 24);
-    assert.equal(Object.keys(art.actions).length, 6);
+    const concept = art.poses.length === 8;
+    // Codex concept enemies (2026-11-18) commit 8 frames and name hit, wounded and defeated through actions as well.
+    assert.equal(art.poses.length, concept ? 8 : 24);
+    assert.equal(Object.keys(art.actions).length, concept ? 9 : 6);
     for (const sequence of Object.values(art.actions)) {
       assert.equal(sequence.reduce((sum, frame) => sum + frame.duration, 0), 260);
       for (const frame of sequence) assert.ok(art.poses.includes(frame.pose));
