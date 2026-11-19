@@ -7995,13 +7995,13 @@
         "own": 2,
         "bonuses": [
           {
-            "source": "shortbow",
-            "name": "Shortbow",
+            "source": "beastClaws",
+            "name": "Beast_Claws",
             "kind": "gear",
-            "amount": 1
+            "amount": 2
           }
         ],
-        "total": 3
+        "total": 4
       },
       "constitution": {
         "own": 1,
@@ -8024,27 +8024,27 @@
         "base": 10,
         "constitution": 10,
         "strength": 10,
-        "dexterity": 9,
+        "dexterity": 12,
         "wisdom": 4,
         "intelligence": 1,
         "level": 10
       },
-      "total": 54,
-      "formula": "10+10+10+9+4+1+10 = 54"
+      "total": 57,
+      "formula": "10+10+10+12+4+1+10 = 57"
     },
     "pools": {
-      "hp": 54,
-      "sp": 2,
+      "hp": 57,
+      "sp": 3,
       "mp": 2,
       "ar": 2,
-      "dr": 3,
+      "dr": 4,
       "hand": 3
     },
     "gear": [
       {
         "key": "mainHand",
-        "id": "shortbow",
-        "name": "Shortbow"
+        "id": "beastClaws",
+        "name": "Beast_Claws"
       }
     ],
     "relics": [],
