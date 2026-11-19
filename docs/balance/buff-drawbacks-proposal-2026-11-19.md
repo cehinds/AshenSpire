@@ -261,7 +261,279 @@ Today no kind changes the physical type (slashing, piercing, blunt). The type fe
 - Face text: the card text does not name a physical type, so no sentence is needed; the face shows it through the damage-type tag chip and tooltip (`weaknessIcons.js` already has the icons). Add the three type names and a one-line tooltip each to the strings.
 - Files: `src/model/cardUpgradeSteps.js` (a `WEIGHTS` entry `dmgType`, the gate and option in `addTagOptions`, a `stepOf` case; `UPGRADE_OPTION_KINDS` and `upgradeMenu` validation in `validate/entityCross.js` follow the `WEIGHTS` keys); apply path: reuse the existing `tag` step branch for `step.damage` in `src/model/cardUpgrade.js`, which already drops other `damage:` tags and rewrites `attack.damageType` and component types; save format: `{ k: 'tag', damage: 'piercing' }`, a `tag` step with no `tag` field, so no new step kind in `UPGRADE_STEP_KINDS` and no save migration, but check that the step validator accepts a `tag` step with no `tag`; UI label: the change line in `src/ui/models/CardUpgradeModel.js` and its string key, plus the option name in the upgrade picker; tests: the `core-card-upgrade-*` tests and a new test that a dmgType step changes the type the engine reads.
 
-## 10. Risks
+
+## 10. Upgrade rarity
+
+Every upgrade option carries a rarity from the existing card ladder: common, uncommon, rare. A 4th tier is not needed: a rare step is already x3 to x4 and meets the existing "+100% of the printed total" guard on damage and Block (`biggest()` in `cardUpgradeSteps.js` returns the largest step that fits), so a bigger tier would only be clipped. Add one only if rare turns out too common late (50% at upgrades 8 to 10).
+
+### How it combines with the group weighting
+
+Roll the group (section 6 table: ease / effectiveness-cost / new effect / identity, by upgrade number), then the rarity (below, by upgrade number, over the rarities that group has options for, renormalised), then pick a kind in that group and rarity by the existing `WEIGHTS`. The existing amount scaler `limits.scale` (the rank-up bonus already uses 2) is the hook for sizes: common scale 1, uncommon 2, rare 4, with each kind's own cap kept. Stored steps already hold their size (`{k:'dmg', n}`), so the save format needs no change; an optional `r` field can store the rarity for the picker colour.
+
+| Upgrade # | common | uncommon | rare |
+|---|---|---|---|
+| 1 to 3 | 70% | 25% | 5% |
+| 4 to 5 | 45% | 40% | 15% |
+| 6 to 7 | 25% | 45% | 30% |
+| 8 to 10 | 10% | 40% | 50% |
+
+### Step sizes by rarity (derived from today's steps)
+
+Common is today's step. Uncommon is x2, the shipped `rankUpBonusScale`. Rare is x3 to x4, set by the card budget curve (`card-budget-2026-11-18.md`: a 1 SP Defend gives 10 Block, a Strike 6 damage, a 2 SP Smash 12).
+
+| Kind | Common (today) | Uncommon | Rare | Rare multiplier and basis |
+|---|---|---|---|---|
+| `dmg` | +max(2, 15% of printed total) | x2 | x4 | x4; capped at printed +100% in all steps. Strike 6: +2, +4, +6 (cap). Smash 12: +2, +4, +8. Spell 24: +4, +8, +16 |
+| `blk` | +max(2, 20%) | x2 | x4 | x4; same cap. Defend 10: +2, +4, +8 |
+| `poise` | +max(1, 20%) | x2 | x4 | x4 |
+| `stk` | +1 stack | +2 | +3, up to the status cap | x3; caps: Burn, Weak, Vulnerable, Frail 3, Bleed 4 |
+| `cost` | -1 in one pool | -1 SP and -1 MP (combo) | -2 in one pool | x2; floors (SP 1, MP 1) limit it |
+| `hits` | 2 hits | none | 3 hits | existing 2 or 3 hit roll, split by rarity |
+| `addStatus` | 1 stack | 2 | 3 (capped) | x3 |
+| `fx:block` | +4 (6 at 2 SP) | +8 (12) | +12 (18) | x3: about one Defend of Block |
+| `fx:draw` | +1 | none | +2 | x2 (total draw stays at 3 or less) |
+| `fx:cycle` | 1 | none | 2 | x2 |
+| `fx:boost` | +2 this turn | +1 for the fight | +2 for the fight | NEW size |
+| `fx:target` | none | +1 target at 50% | +1 target at 75% | NEW size |
+| ease | ease one notch | remove it, plus draw 1 (combo) | remove it, plus a rare-size step (combo) | enhanced ease uses existing combo steps |
+| identity kinds, `fx:cull/copy/shuffle/retain/innate/holdOne/reaction/counter`, `attr`, `rankDown` | one size | | | rarity is a placement only (see the tables) |
+
+### Potential upgrades by card type (ordered by rarity)
+
+Chance at upgrade 1 = P(group) x P(rarity within that group) x kind weight over the weights of the same group and rarity, for a card with a drawback (group shares ease 40%, effectiveness/cost 35%, new effect 20%, identity 5%; rarity 70/25/5). A drawback-free card has no ease rows: that 40% moves to the other groups pro rata. Where a group has no row at a rarity, the rarity odds are renormalised over the ones it has. Kinds the gates remove for that type are not in its table.
+
+Ease kinds (the "ease" rows): remove Exhaust `fx:unexhaust`, remove Ethereal `fx:unethereal`, stop a rising cost `fx:steady`, cost -1 on an Expensive card `cost`, and -1 on a self debuff / enemy buff / discard / Wound-Dazed count (signed `stk`, recommended in section 7). Exactly one of them matches a card's drawback.
+
+#### Attack
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 9.5% |  |
+| common | +1 stack on the card's own status | effectiveness / cost | 6.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.8% | not on a smash (Poise derived from the hit) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 3.2% | once per card; Basic cards have no MP cut |
+| common | +1 hit: 2 hits of 60% damage each | effectiveness / cost | 1.6% | printed damage 8 or less, single target |
+| common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
+| common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
+| common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 3.5% | melee, non-spell, non-elemental, once |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 4.2% |  |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.7% | not on a smash (Poise derived from the hit) |
+| uncommon | +8 Block (12) | new effect | 1.3% | only a card with no Block; not a counter |
+| uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
+| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
+| uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 0.7% | not a sweep, not a counter |
+| uncommon | Stance: Attack to Smash or Smash to Attack | identity | 0.6% | smash needs 2 SP |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.7% |  |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 11 low-chance rows omitted.
+
+#### Counter (return payload)
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 29.5% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 11.7% | printed Block only |
+| common | +1 stack on the card's own status | effectiveness / cost | 9.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 4.7% | once per card; Basic cards have no MP cut |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 2.3% | `fx:boost` |
+| common | +1 Counter stack a play (cap 3 per card) | new effect | 2.3% | `fx:counter`, counter cards only |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.5% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 Block (x2) | effectiveness / cost | 5.1% | printed Block only |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 4.1% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 1.5% | `fx:boost` |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.1% |  |
+| rare | +8 Block (x4; at most printed +100% total) | effectiveness / cost | 0.8% | printed Block only |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.7% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| rare | Cost -2 in one pool | effectiveness / cost | 0.3% | needs a cost of 3 or more in that pool |
+| rare | +2 stat for the rest of the fight (NEW size) | new effect | 0.3% | NEW value of `fx:boost` |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 14.7% in total for this type (see the shared table).
+
+#### Sweep
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 10.2% | ; NEW gate: `dmg` offered on `allEnemies` |
+| common | +1 stack on the card's own status | effectiveness / cost | 6.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 4.1% | not on a smash (Poise derived from the hit) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 3.4% | once per card; Basic cards have no MP cut |
+| common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
+| common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
+| common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 4.7% | melee, non-spell, non-elemental, once |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 4.2% | ; NEW gate: `dmg` offered on `allEnemies` |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 2.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.7% | not on a smash (Poise derived from the hit) |
+| uncommon | +8 Block (12) | new effect | 1.4% | only a card with no Block; not a counter |
+| uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
+| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.7% | ; NEW gate: `dmg` offered on `allEnemies` |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| rare | +4 Poise damage (x4) | effectiveness / cost | 0.3% | not on a smash (Poise derived from the hit) |
+| rare | +12 Block (18; x3) | new effect | 0.3% | only a card with no Block; not a counter |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.2% in total for this type (see the shared table). 5 low-chance rows omitted.
+
+#### Smash
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 12.2% |  |
+| common | +1 stack on the card's own status | effectiveness / cost | 8.2% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 4.1% | once per card; Basic cards have no MP cut |
+| common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
+| common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
+| common | Physical damage type: slashing, piercing or blunt (`dmgType`, NEW) | identity | 3.5% | melee, non-spell, non-elemental, once |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 5.2% |  |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 3.5% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +8 Block (12) | new effect | 1.3% | only a card with no Block; not a counter |
+| uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
+| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
+| uncommon | Hit +1 other target at half damage | new effect | 0.5% | `fx:target`; attack classification, enemy-target hit |
+| uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 0.7% | not a sweep, not a counter |
+| uncommon | Stance: Attack to Smash or Smash to Attack | identity | 0.6% | smash needs 2 SP |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
+| rare | +8 damage (x4; at most printed total +100% in all steps) | effectiveness / cost | 0.9% |  |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.6% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| rare | Cost -2 in one pool | effectiveness / cost | 0.3% | needs a cost of 3 or more in that pool |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.0% in total for this type (see the shared table). 6 low-chance rows omitted.
+
+#### Block (Defend)
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 29.5% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 11.7% | printed Block only |
+| common | +1 stack on the card's own status | effectiveness / cost | 9.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 4.7% | once per card; Basic cards have no MP cut |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 2.7% | `fx:boost` |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.5% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 Block (x2) | effectiveness / cost | 5.1% | printed Block only |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 4.1% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 1.5% | `fx:boost` |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.1% |  |
+| rare | +8 Block (x4; at most printed +100% total) | effectiveness / cost | 0.8% | printed Block only |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.7% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| rare | Cost -2 in one pool | effectiveness / cost | 0.3% | needs a cost of 3 or more in that pool |
+| rare | +2 stat for the rest of the fight (NEW size) | new effect | 0.3% | NEW value of `fx:boost` |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 16.6% in total for this type (see the shared table).
+
+#### Evade-type Defend
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 29.5% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 34.4% | once per card; Basic cards have no MP cut |
+| common | +4 Block (6 at 2 SP or more) | new effect | 5.0% | only a card with no Block; not a counter |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.5% | combo steps already exist (20% rest-site rule) |
+| uncommon | +8 Block (12) | new effect | 2.4% | only a card with no Block; not a counter |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.1% |  |
+| rare | Cost -2 in one pool | effectiveness / cost | 2.5% | needs a cost of 3 or more in that pool |
+| rare | +12 Block (18; x3) | new effect | 0.5% | only a card with no Block; not a counter |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 13.1% in total for this type (see the shared table).
+
+#### Skill (non-spell buff)
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 29.5% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 11.7% | printed Block only |
+| common | +1 stack on the card's own status | effectiveness / cost | 9.4% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 4.7% | once per card; Basic cards have no MP cut |
+| common | +4 Block (6 at 2 SP or more) | new effect | 5.0% | only a card with no Block; not a counter |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.5% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 Block (x2) | effectiveness / cost | 4.2% | printed Block only |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 3.3% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | Cost -1 SP and -1 MP (combo of two `cost` steps) | effectiveness / cost | 1.7% | two-pool cards only |
+| uncommon | +8 Block (12) | new effect | 2.0% | only a card with no Block; not a counter |
+| uncommon | Gain the Reaction trait | new effect | 0.9% | not a Defend, Counter or Evade |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.1% |  |
+| rare | +8 Block (x4; at most printed +100% total) | effectiveness / cost | 0.8% | printed Block only |
+| rare | +3 stacks on the card's own status (up to the status cap: Burn, Weak, Vulnerable, Frail 3; Bleed 4) | effectiveness / cost | 0.7% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| rare | Cost -2 in one pool | effectiveness / cost | 0.3% | needs a cost of 3 or more in that pool |
+| rare | +12 Block (18; x3) | new effect | 0.5% | only a card with no Block; not a counter |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 12.7% in total for this type (see the shared table).
+
+#### Spell
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 28.0% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | +2 damage (15% of printed, min 2; e.g. Strike 6, Spell 24 +4) | effectiveness / cost | 7.6% |  |
+| common | +2 Block (20% of printed, min 2) | effectiveness / cost | 6.3% | printed Block only |
+| common | +1 stack on the card's own status | effectiveness / cost | 5.1% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| common | +1 Poise damage (20% of printed, min 1) | effectiveness / cost | 3.0% | not on a smash (Poise derived from the hit) |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 2.5% | once per card; Basic cards have no MP cut |
+| common | +4 Block (6 at 2 SP or more) | new effect | 3.7% | only a card with no Block; not a counter |
+| common | Add 1 stack of Bleed/Weak (physical) or Burn/Vulnerable (spell) on the enemy | new effect | 1.6% | only a card with damage and no status yet |
+| common | +2 Strength (Dexterity for a Block card, INT/WIS for a spell) this turn | new effect | 1.6% | `fx:boost` |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 10.0% | combo steps already exist (20% rest-site rule) |
+| uncommon | +4 damage (x2, the existing `rankUpBonusScale`) | effectiveness / cost | 2.6% |  |
+| uncommon | +4 Block (x2) | effectiveness / cost | 2.2% | printed Block only |
+| uncommon | +2 stacks on the card's own status | effectiveness / cost | 1.8% | first plain numeric `applyStatus` only; none on a Power or an Evade (formula stacks) |
+| uncommon | +2 Poise damage (x2) | effectiveness / cost | 1.1% | not on a smash (Poise derived from the hit) |
+| uncommon | Cost -1 SP and -1 MP (combo of two `cost` steps) | effectiveness / cost | 0.9% | two-pool cards only |
+| uncommon | +8 Block (12) | new effect | 1.4% | only a card with no Block; not a counter |
+| uncommon | Add 2 stacks of that status | new effect | 0.6% | only a card with damage and no status yet |
+| uncommon | +1 stat for the rest of the fight (stacks per play) | new effect | 0.6% | `fx:boost` |
+| uncommon | Gain the Reaction trait | new effect | 0.6% | not a Defend, Counter or Evade |
+| uncommon | Targeting: single to area (x0.75) or area to single (x1.25) | identity | 4.2% | not a sweep, not a counter |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.0% |  |
+| rare | Range: Melee to Reach or Reach to Melee | identity | 0.8% | strong: skips Advance SP; capped by `maxRange` |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 9.1% in total for this type (see the shared table). 10 low-chance rows omitted.
+
+#### Power
+
+| rarity | upgrade | group | chance at upgrade 1 | notes / gates |
+|---|---|---|---|---|
+| common | Ease the drawback one notch (the one matching kind, see ease kinds above) | ease | 37.3% | chance is for a card that has the drawback; with none, this share goes to effectiveness / cost |
+| common | Cost -1 in one pool (SP min 1, MP min 1) | effectiveness / cost | 43.6% | once per card; Basic cards have no MP cut |
+| uncommon | Remove the drawback outright, and draw 1 (combo of an ease step and `fx:draw`) | ease | 13.3% | combo steps already exist (20% rest-site rule) |
+| rare | Remove the drawback and take a rare-size step: cost -2, or +4x damage / Block (combo) | ease | 2.7% |  |
+| rare | Cost -2 in one pool | effectiveness / cost | 3.1% | needs a cost of 3 or more in that pool |
+
+Shared utility rows (draw, cycle, cull, copy, shuffle, retain, innate, hold one) add 0.0% in total for this type (see the shared table).
+
+### Shared utility rows (chance at upgrade 1, per type)
+
+These rows (the generic `fx` effects) are in every type's denominators but not repeated in its table. A dash means the type does not get the row. A Power gets none.
+
+| rarity | upgrade | group | Attack | Counter | Sweep | Smash | Block | Evade-type | Skill | Spell |
+|---|---|---|---|---|---|---|---|---|---|---|
+| common | Draw +1 (`fx:draw`; total draw 3 at most) | new effect | 2.8% | 4.0% | 2.8% | 2.8% | 4.8% | 3.9% | 3.9% | 2.8% |
+| common | Cycle 1: discard 1, draw 1 (`fx:cycle`) | new effect | 1.6% | 2.3% | 1.6% | 1.6% | 2.7% | 2.2% | 2.2% | 1.6% |
+| common | Cull: Exhaust a card from hand, draw 2 (`fx:cull`) | new effect | 0.8% | 1.2% | 0.8% | 0.8% | 1.4% | 1.1% | 1.1% | 0.8% |
+| common | Copy: add a copy of this card to the discard (`fx:copy`) | new effect | 1.0% | 1.4% | 1.0% | 1.0% | 1.7% | 1.4% | 1.4% | 1.0% |
+| common | Shuffle the discard pile into the draw pile (`fx:shuffle`) | new effect | 0.8% | 1.2% | 0.8% | 0.8% | 1.4% | 1.1% | 1.1% | 0.8% |
+| uncommon | Retain keyword (`fx:retain`) | new effect | 0.7% | 1.8% | 0.8% | 0.7% | 1.8% | 1.3% | 1.1% | 0.8% |
+| uncommon | Innate keyword (`fx:innate`) | new effect | 0.4% | 0.9% | 0.4% | 0.4% | 0.9% | 0.7% | 0.6% | 0.4% |
+| uncommon | Hold one: Retain one other card this turn (`fx:holdOne`) | new effect | 0.4% | 1.1% | 0.5% | 0.4% | 1.1% | 0.8% | 0.7% | 0.5% |
+| rare | Draw +2 (NEW size) | new effect | 0.2% | 0.5% | 0.2% | 0.2% | 0.5% | 0.4% | 0.4% | 0.2% |
+| rare | Cycle 2: discard 2, draw 2 (NEW size) | new effect | 0.1% | 0.3% | 0.1% | 0.1% | 0.3% | 0.2% | 0.2% | 0.1% |
+
+Notes: Counter cards are `maneuver:counter` (fixed return payload), so damage, hits, Poise, range, targeting, element and `dmgType` are gated off. The Sweep `dmg` row needs the proposed gate lift. A Power can roll only the ease rows and `cost`; its ease "draw 1" combo needs a different sweetener (a `cost` step) because Powers take no draw option today.
+
+
+## 11. Risks
 
 - Wound/Dazed bloat. `addCard` makes combat-only instances, so the deck editor and shop removal never see them. A Wound sits in the discard pile until combat ends (it reshuffles), so repeated plays thicken the draw pile; Dazed is Ethereal and clears itself each turn. Cap at about 3 added status cards per fight from card plays, and prefer Dazed on common cards, Wound on uncommon and rare. If a design ever makes them run-long, they would need to be removable in the deck editor.
 - Enemy buff and the AI/sim. Permanent enemy Strength compounds on long fights and bosses, and the autoplay policy (`autoCombatPolicy.js`) does not price it, so a sim run will under-rate those cards. Keep to Strength 1 to 2 and run the card-budget report plus a sim sweep before shipping.
