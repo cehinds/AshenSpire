@@ -2445,7 +2445,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       }
       case 'applyStatus': {
         entry.status = eff.status;
-        entry.value = FluxScale(combat, p, action.card, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0));
+        const statusTarget = ['self', 'owner'].includes(eff.target) || !primary ? p : primary;
+        entry.value = A.computeStatusGrant(combat, action, eff, statusTarget, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary));
         break;
       }
       case 'heal':

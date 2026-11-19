@@ -449,3 +449,18 @@ test('a gear Reach grant preserves a root range:ranged tag or combat profile', (
     assert.equal(projected.combatProfile.range, 'ranged');
   }
 });
+
+test('current Light armour Evade gain is included once in the pure preview and the live grant', () => {
+  const { combat } = build({ classId: 'rogue', right: 'dagger' });
+  assert.equal(combat.player.itemProps.gainBonus.evade, 1);
+  const id = 'gear-light-shadowstep';
+  combat.piles.hand.push({ instanceId: id, cardId: 'shadowstep' });
+  combat.player.stamina = 20;
+  const before = combat.player.statuses.evade?.stacks || 0, counters = combat.rng.getCounters();
+  const shown = previewCard(combat, id).values.find(row => row.status === 'evade').value;
+  assert.equal(shown, 3, 'Shadowstep base 2 plus the worn Light armour bonus');
+  assert.equal(combat.player.statuses.evade?.stacks || 0, before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal((combat.player.statuses.evade?.stacks || 0) - before, shown);
+});
