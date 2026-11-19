@@ -1,0 +1,499 @@
+{
+  "request": "Codex recently added a lot of new card art and sprites on dev, including new enemies and weapons. Finish building out the enemies and cards those assets were made for, so each new asset is used by real, playable game content.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Combat: Weald normals (brackenTusker, fenwickToad, reedpipePoacher)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=brackenTusker,fenwickToad,reedpipePoacher",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "brackenTusker pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "brackenTusker concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "brackenTusker stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "fenwickToad stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "reedpipePoacher stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "brackenTusker shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "brackenTusker stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"brackenTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "fenwickToad stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"fenwickToad\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "reedpipePoacher stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"reedpipePoacher\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Weald elites (pearlbackSnail, mirrorFanAbbess)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=pearlbackSnail,mirrorFanAbbess",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "pearlbackSnail stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "mirrorFanAbbess stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "pearlbackSnail stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"pearlbackSnail\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "mirrorFanAbbess stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"mirrorFanAbbess\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Weald boss (woundwoodTusker)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=woundwoodTusker",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "woundwoodTusker stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "woundwoodTusker stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"woundwoodTusker\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Reach normals (slagtongImp, sootwingBat, kilnshellTortoise)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=slagtongImp,sootwingBat,kilnshellTortoise",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "slagtongImp pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "slagtongImp concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "slagtongImp stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "sootwingBat stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "kilnshellTortoise stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "slagtongImp shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "slagtongImp stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"slagtongImp\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "sootwingBat stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"sootwingBat\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "kilnshellTortoise stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"kilnshellTortoise\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Combat: Reach boss (crucibleNewt)",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=crucibleNewt",
+      "ready": ".enemy-expansion-stage img.pose-frame",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "crucibleNewt pose stage is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "crucibleNewt concept art frame is visible",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"] img.pose-frame"
+        },
+        {
+          "kind": "hidden",
+          "label": "crucibleNewt stage carries no art-placeholder attribute",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"][data-art-placeholder]"
+        },
+        {
+          "kind": "visible",
+          "label": "An enemy intent is visible",
+          "selector": ".combatant.enemy [class*=\"intent\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "crucibleNewt shows the name placeholder instead of art",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"] .enemy-expansion-placeholder"
+        },
+        {
+          "kind": "visible",
+          "label": "crucibleNewt stage is marked as an art placeholder",
+          "selector": ".enemy-expansion-stage[data-enemy-id=\"crucibleNewt\"][data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Weapon card in play: rapier kit",
+      "url": "?shot=combat&shotSeed=4&shotKit=1&shotClass=reaver&shotMainHand=rapier",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Hand holds the rapier kit card",
+          "selector": ".hand .card",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown on the hand",
+          "selector": ".hand [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Weapon card in play: beastClaws kit",
+      "url": "?shot=combat&shotSeed=4&shotKit=1&shotClass=reaver&shotMainHand=beastClaws",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Hand holds the beastClaws kit card",
+          "selector": ".hand .card",
+          "min": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown on the hand",
+          "selector": ".hand [data-art-placeholder]"
+        }
+      ]
+    },
+    {
+      "name": "Weapon inventory icons (Compendium, rapier, beastClaws, handCrossbow, scythe)",
+      "url": "?shot=compendium&shotFound=rapier,beastClaws,handCrossbow,scythe",
+      "ready": "img[src*=\"icon_rapier\"]",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "rapier v28 inventory icon is shown (src contains icon_rapier)",
+          "selector": "img[src*=\"icon_rapier\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "beastClaws v28 inventory icon is shown (src contains icon_beastClaws)",
+          "selector": "img[src*=\"icon_beastClaws\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "handCrossbow v28 inventory icon is shown (src contains icon_handCrossbow)",
+          "selector": "img[src*=\"icon_handCrossbow\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "scythe v28 inventory icon is shown (src contains icon_scythe)",
+          "selector": "img[src*=\"icon_scythe\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An art placeholder is shown instead of an icon",
+          "selector": "[data-art-placeholder]"
+        }
+      ]
+    }
+  ]
+}
