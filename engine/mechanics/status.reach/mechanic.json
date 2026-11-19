@@ -1,0 +1,26 @@
+{
+  "id": "status.reach",
+  "tag": "status.reach",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Reach",
+  "description": "The holder's physical attacks have Reach: they hit a back-row or Retreat-stacked enemy without removing its Retreat stacks. 1 stack expires at the end of its owner's turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.reach"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/bandRows.js",
+    "symbol": "DefaultEnemyRow"
+  }
+}

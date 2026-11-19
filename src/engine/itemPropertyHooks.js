@@ -45,9 +45,13 @@ export function ItemRetainIds(ctx, player, costOf) {
 }
 
 /** Percent added to the damage the player takes of one type: -50 for a resist, -100 for an immunity. */
-export function ItemIncomingPercent(entity, damageType) {
+export function ItemIncomingPercent(entity, damageType, element = null) {
   const kind = propsOf(entity)?.resist?.[damageType];
-  return kind === 'immune' ? -100 : kind === 'resist' ? -50 : 0;
+  const base = kind === 'immune' ? -100 : kind === 'resist' ? -50 : 0;
+  // Owner, 2026-11-18: a gear Resist takes 25% less damage of its element, read off the hit's damage type or its school.
+  const gear = propsOf(entity)?.gearResist;
+  const percent = gear ? Math.max(gear[damageType] || 0, gear[element] || 0) : 0;
+  return base <= -100 ? base : Math.max(-100, base - percent);
 }
 
 /** Stacks of a status after the player's properties made it smaller. */

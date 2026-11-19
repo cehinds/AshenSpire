@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.multiHit",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

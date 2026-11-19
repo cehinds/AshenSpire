@@ -688,6 +688,7 @@ export function mountCustomize(app, {
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run },
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     // Legacy ratings-off configurations still expose their equipment kit
@@ -868,6 +869,7 @@ export function mountCustomize(app, {
       const cards = new Map(attributeCardModels(registries, state.attributes, {
         projection: statProjection(registries, preview),
         equipmentProfiles: rules,
+        gainContext: { run: preview },
       }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
@@ -1707,6 +1709,7 @@ export function mountCustomize(app, {
     const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
       projection: specimenProjection,
       equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run: specimenRun },
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));

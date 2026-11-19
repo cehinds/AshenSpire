@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -31,6 +33,43 @@ function priorRuntimeEnvelope() {
 }
 
 const restoreStripped = (...args) => withoutWeaknesses(restoreCombatSnapshot(...args)); // a restore refills enemy weaknesses; the fixture drops them again
+// Genuine resolved profiles from the two exact merge parents, rather than current profiles with edited runtime hashes.
+for (const [name, file, runtime, rulesFile] of [
+  ['stat parent 6e2cb1b8', 'stat-profile-6e2cb1b8.json.gz', 'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc'],
+  ['Gear parent 62323292', 'gear-profile-62323292.json.gz', 'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649'],
+  ['stat parent 05ce3864', 'stat-profile-05ce3864.json.gz', 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9', 'stat-rules-05ce3864.json'],
+  ['Smash Dev parent 4fc475a2', 'dev-profile-4fc475a2.json.gz', 'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8', 'dev-rules-4fc475a2.json'],
+]) test(`the genuine ${name} profile resumes with its exact saved policy`, () => {
+  const profile = JSON.parse(gunzipSync(readFileSync(new URL(`./fixtures/${file}`, import.meta.url))));
+  const before = structuredClone(profile);
+  assert.equal(profile.lock.runtimeHash, runtime);
+  assert.deepEqual(validateGameProfileSnapshot(profile), before);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 512 });
+  const restoredRun = deserializeRun(serializeRun(run));
+  assert.deepEqual(restoredRun.gameProfile, before);
+  const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
+  const snapshot = serializeCombatSnapshot(combat);
+  // These exact parent JSON bytes pin the original combat policy, independently of today's new-fight defaults.
+  if (rulesFile) snapshot.fixCoreRules = JSON.parse(readFileSync(new URL(`./fixtures/${rulesFile}`, import.meta.url)));
+  const rulesBefore = structuredClone(snapshot.fixCoreRules);
+  if (rulesFile) {
+    assert.equal(snapshot.fixCoreRules.spellTraditionsVersion, profile.modules.effects.spellTraditionsVersion);
+    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') ? 1.5 : undefined);
+    const entries = new Map();
+    const save = createSaveManager({ getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
+    restoredRun.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
+    save.saveRun(restoredRun, combat.rng);
+    const loaded = save.loadRun(registries);
+    assert.ok(loaded, 'the genuine parent loads through the real save path');
+    assert.deepEqual(loaded.gameProfile, before);
+    assert.deepEqual(loaded.combatEntered.snapshot.fixCoreRules, rulesBefore, 'the complete original policy survives save/load');
+  }
+  const restored = restoreStripped({ registries, rng: createRng(512), snapshot, expectedGameProfile: restoredRun.gameProfile });
+  assert.deepEqual(restored.gameProfile, before);
+  assert.deepEqual(restored.fixCoreRules, rulesBefore, 'the complete saved rules survive restoration');
+  assert.deepEqual(profile, before, 'loading must not rewrite either parent profile');
+});
 test('a compatible prior-runtime Core profile resumes without changing its integrity hash', () => {
   const profile = priorRuntimeEnvelope(), before = JSON.stringify(profile), originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
@@ -42,6 +81,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const snapshot = serializeCombatSnapshot(combat);
+  delete snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier; // this is the old snapshot's shared tuning, not the new default
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
   // A fight saved before the 2026-11-14 ruling: it has no hitRoll / evadeStacksPerCard / perception.roll keys, so it keeps rolling and grants evadeStackBase.
@@ -56,6 +96,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   // The envelope is today's Core profile under an older runtime pin, so it carries effects.baseDamageMultiplier 0.5 (2026-11-17): 12 -> 6, x2 = 12.
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 12);
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
+  delete restored.player.itemProps?.gainBonus; // the Rogue's Leathers give +1 on every Evade gain (gear pass, 2026-11-18); this test reads the snapshotted card rule alone
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
   // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped evadeStacksPerCard, and the
@@ -98,17 +139,31 @@ test('a profile saved under the previous build\'s runtime (before #2843) still v
   saved.lock.runtimeHash = 'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8';
   digest(saved);
   assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-  assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772'), saved.lock.runtimeHash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), saved.lock.runtimeHash);
 });
 
-test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) still validate on the merged runtime', () => {
-  for (const hash of ['sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb', 'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5']) {
+test('profiles saved under dev\'s route-spread runtime (6ef5d3...) and the rules-pass runtime (0bf081...) and dev\'s current runtime (58cd1d...) still validate on the merged runtime', () => {
+  for (const hash of ['sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8', 'sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9', 'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085', 'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb', 'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5']) {
     const saved = priorRuntimeEnvelope();
     saved.lock.runtimeHash = hash;
     digest(saved);
     assert.doesNotThrow(() => validateGameProfileSnapshot(saved));
-    assert.equal(coreEvasionCompatibleRuntime(saved, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772'), hash);
+    assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), hash);
   }
+});
+
+for (const priorRuntime of [
+  'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772',
+  'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649',
+  'sha256:59cc12805591c6c2441d3b34360fd2562376fad622f136e591680a05d56af10a',
+]) test(`a profile saved before GearPass + Smash integration keeps runtime ${priorRuntime}`, () => {
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = priorRuntime;
+  digest(saved);
+  const before = JSON.stringify(saved);
+  assert.equal(validateGameProfileSnapshot(saved).hash, saved.hash);
+  assert.equal(coreEvasionCompatibleRuntime(saved, resolveGameProfile('default').lock.runtimeHash), saved.lock.runtimeHash);
+  assert.equal(JSON.stringify(saved), before);
 });
 
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
@@ -155,7 +210,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned for the #2820 review (tier HP scale, reactive returns unscaled); fa12ec... is in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-17 (theme C on theme B): the shorter Melee, Reach, Ranged, Reaction and Ethereal tooltips regenerate their mechanic manifests; wording only (73fdb0... and cb5271... are in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
+  // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
+  assert.equal(profile.lock.runtimeHash, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -164,14 +221,18 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
   assert.equal(combat.fixCoreRules.smashVsDefensive.damageMultiplier, 1.25);
+  assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
   const restored = restoreStripped({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 1.25);
+  assert.equal(restored.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
   const target = restored.enemies[0];
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  // The shipped Core halves base damage (effects.baseDamageMultiplier 0.5, 2026-11-17): 12 -> 6, x1.25 floors to 7.
+  // This is a CURRENT-rules round trip: 12 -> 6, x1.5 against Defend = 9; Prepared keeps its shared x1.25 = 7.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 9);
+  target.combatStance.maneuver = 'prepared';
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 7);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });

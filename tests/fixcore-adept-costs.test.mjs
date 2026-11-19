@@ -9,6 +9,9 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { live, baseRegistries, profile } from './helpers/fixcore-combat-rules.mjs';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+// The native Adept arithmetic below already pins pre-W25 spell rules; pin its pre-gear price as well.
+const adeptRegistries = legacyGearRegistries(baseRegistries);
 
 const physical = { cost: 3, staminaCost: 3, manaCost: 3, type: 'attack', combatProfile: { camp: 'physical', maneuver: 'counter' }, cardTags: ['trait:reaction'] };
 const magic = { ...physical, type: 'spell', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'ranged' } };
@@ -17,11 +20,11 @@ function unit(classId, card = physical) {
   return { gameProfile: profile, combatExpansionVersion: 2, core2ActionRulesVersion: 1, phase: 'player', player };
 }
 function native(classId) {
-  const run = createRunState({ registries: baseRegistries, classId, seed: 511,
+  const run = createRunState({ registries: adeptRegistries, classId, seed: 511,
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
   run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
-  const combat = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: adeptRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
   delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   return combat;
@@ -112,7 +115,7 @@ test('native Frost Counter has a zero-MP matching reaction quote and identical s
   assert.ok(option, 'zero Mana remains affordable during a matching reaction');
   assert.equal(option.staminaCost, 1); assert.equal(option.manaCost, 0);
   const snapshot = serializeCombatSnapshot(ctx);
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
+  const restored = restoreCombatSnapshot({ registries: adeptRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
   const play = combat => dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id });
   const a = play(ctx), b = play(restored);
   assert.deepEqual(a, b);
@@ -151,7 +154,7 @@ test('an older active reaction snapshot retains its accepted MP quote and old pa
   const option = ctx.pendingReaction.options.find(row => row.cardId === 'frostCounter');
   assert.equal(option.manaCost, 1);
   const snapshot = serializeCombatSnapshot(ctx);
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
+  const restored = restoreCombatSnapshot({ registries: adeptRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
   assert.equal(restored.core2ActionRulesVersion, undefined);
   assert.deepEqual(restored.pendingReaction.options, ctx.pendingReaction.options);
   const result = dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: option.id });

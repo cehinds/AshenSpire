@@ -22,7 +22,8 @@ test('Ward is configured as +5 max Poise per stack, losing 1 stack per turn, and
 });
 
 test('2 Ward = +10 max Poise; at the holder\'s next turn start 1 stack and +5 remain, then none and base Poise returns', () => {
-  const { combat, player } = fight({ enemies: 1 });
+  // Use a class without a Ward-granting staff: this assertion isolates Ward's own decay.
+  const { combat, player } = fight({ classId: 'reaver', enemies: 1 });
   const base = player.persistentPoise.max;
   ward(combat, player, 2);
   assert.equal(player.persistentPoise.max, base + 10, '+5 per stack');

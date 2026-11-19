@@ -83,8 +83,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
     'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
     'from:armor': { label: 'Armour' },
-    // Owner 2026-11-18 (ruling §9): a focus (staff, sceptre) lowers every spell's Mana cost by 1, so its blurb says so.
-    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0).' },
+    // Owner 2026-11-18 (ruling §18 supersedes §9 timing): one shared Focus discount applies only in Prepared.
+    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies.' },
     'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
@@ -221,7 +221,7 @@ test('every object states exactly one kind, the one its collection and type name
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
-  assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
+  assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
   const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
     contentBundle.flasks, contentBundle.events,

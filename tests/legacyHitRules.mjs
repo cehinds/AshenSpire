@@ -2,6 +2,19 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 // A fight created before the 2026-11-14 ruling (attacks always hit, intents always read) keeps rolling: its snapshotted rules lack
 // `accuracy.hitRoll` and `perception.roll`. Tests that assert the d20 or the perception check hand their fight through here.
 
+// An old combat has no Defend-specific Smash override. Restore the whole owning
+// object's entries so nested calls and exceptions preserve both tuning and key order.
+export function withoutDefendSmashOverride(build) {
+  const owner = fixCoreMechanics.smashVsDefensive;
+  if (!owner || !Object.hasOwn(owner, 'defendDamageMultiplier')) return build();
+  const rows = Object.entries(owner);
+  delete owner.defendDamageMultiplier;
+  try { return build(); } finally {
+    for (const key of Object.keys(owner)) delete owner[key];
+    for (const [key, value] of rows) owner[key] = value;
+  }
+}
+
 // Owner, 2026-11-15 (Wave 2 batch 5): the Counter-stack keys (`counter.stackSource`, `returnPerStack`, ...) are newer than every earlier fight.
 // Every wrapper below removes them from the shipped defaults while it builds, and puts them back after.
 const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard'];
@@ -51,26 +64,31 @@ function stripSection20() {
 }
 /** Theme B goes first and comes back last, so its whole-object snapshot also puts back the Counter-stack keys in their original places. */
 function guarded(build) {
-  const restoreSection20 = stripSection20(), restoreThemeB = stripThemeB(), restore = stripCounterStacks();
-  try { return build(); } finally { restore(); restoreThemeB(); restoreSection20(); }
+  return withoutDefendSmashOverride(() => {
+    const restoreSection20 = stripSection20(), restoreThemeB = stripThemeB(), restore = stripCounterStacks();
+    try { return build(); } finally { restore(); restoreThemeB(); restoreSection20(); }
+  });
 }
 /** Runs `build` while the shipped default rules lack only the theme B keys (2026-11-17): a fight created before the status and stance rules. */
-export function withoutThemeBRules(build) { const restoreSection20 = stripSection20(), restore = stripThemeB(); try { return build(); } finally { restore(); restoreSection20(); } }
+export function withoutThemeBRules(build) { return withoutDefendSmashOverride(() => { const restoreSection20 = stripSection20(), restore = stripThemeB(); try { return build(); } finally { restore(); restoreSection20(); } }); }
 /** The rules of a fight saved before the 2026-11-14 ruling: the perception key is absent, so intents roll. */
 export function legacyPerceptionRules(rules = fixCoreMechanics) {
   const out = structuredClone(rules);
   delete out.perception.roll;
+  delete out.smashVsDefensive?.defendDamageMultiplier;
   return out;
 }
 export function legacyHitRoll(combat) {
   const rules = structuredClone(combat.fixCoreRules || combat.gameProfile?.fixCoreRules);
   delete rules.accuracy.hitRoll; delete rules.accuracy.evadeStacksPerCard;
+  delete rules.smashVsDefensive?.defendDamageMultiplier;
   combat.fixCoreRules = rules;
   return combat;
 }
 export function legacyPerceptionRoll(combat) {
   const rules = structuredClone(combat.fixCoreRules || combat.gameProfile?.fixCoreRules);
   delete rules.perception.roll;
+  delete rules.smashVsDefensive?.defendDamageMultiplier;
   combat.fixCoreRules = rules;
   return combat;
 }
@@ -79,6 +97,7 @@ export const legacyRolls = combat => legacyPerceptionRoll(legacyHitRoll(combat))
 export function legacyRules(rules) {
   const out = structuredClone(rules);
   delete out.accuracy.hitRoll; delete out.accuracy.evadeStacksPerCard; delete out.perception.roll;
+  delete out.smashVsDefensive?.defendDamageMultiplier;
   return out;
 }
 
@@ -149,8 +168,10 @@ function withoutSpellCostRulesInner(build) {
 
 /** Runs `build` while the shipped default rules lack only `statusCaps` (owner 2026-11-15, no max stack counts): a fight created before it keeps every old hold cap. */
 export function withoutStatusCapsRule(build) {
-  const restore = dropStatusCaps();
-  try { return build(); } finally { restore(); }
+  return withoutDefendSmashOverride(() => {
+    const restore = dropStatusCaps();
+    try { return build(); } finally { restore(); }
+  });
 }
 
 /** Runs `build` while the shipped default rules lack the Counter-stack keys (batch 5, 2026-11-15): a fight or card face from before the ruling. */

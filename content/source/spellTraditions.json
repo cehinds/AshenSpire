@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "traditions": {
+    "arcane": {
+      "label": "Arcane",
+      "attribute": "intelligence"
+    },
+    "divine": {
+      "label": "Divine",
+      "attribute": "wisdom"
+    }
+  },
+  "schools": {
+    "arcane": [
+      "arcane",
+      "divine"
+    ],
+    "fire": [
+      "arcane",
+      "divine"
+    ],
+    "earth": [
+      "arcane",
+      "divine"
+    ],
+    "lightning": [
+      "arcane",
+      "divine"
+    ],
+    "frost": [
+      "arcane",
+      "divine"
+    ],
+    "force": [
+      "arcane"
+    ],
+    "illusion": [
+      "arcane"
+    ],
+    "alteration": [
+      "arcane"
+    ],
+    "divine": [
+      "divine"
+    ],
+    "decay": [
+      "divine"
+    ],
+    "necrotic": [
+      "divine"
+    ]
+  }
+}
