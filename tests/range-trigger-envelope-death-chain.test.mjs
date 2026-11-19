@@ -62,3 +62,11 @@ test('every Talon shot lands on a living enemy when all enemies have 1 HP', () =
     assert.ok(shots.length >= 2, `seed ${seed}: Talon shot was dropped (${shots.join(',')})`);
   }
 });
+
+test('a genuinely unbounded chain still refuses', () => {
+  const ctx = live(), card = strike(ctx);
+  three(ctx);
+  for (const enemy of ctx.enemies) enemy.hp = 50;
+  mount(ctx, [{ on: 'damageDealt', do: [{ op: 'damage', target: 'randomEnemy', amount: 1 }] }]);
+  assert.throws(() => previewCard(ctx, card.instanceId, 'e1'), /unbounded range-trigger envelope/);
+});
