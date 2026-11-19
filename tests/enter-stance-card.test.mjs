@@ -132,6 +132,11 @@ test('entered-stance helper reads the play that caused the change, live and from
   const broken = { type: 'combatStanceChanged', sourceId: 'player', targetId: 'e1', maneuver: 'staggered', cardInstanceId: 'x' };
   assert.equal(CardAsEnteredStance(card, [played, change('defend', { targetId: 'player', cardInstanceId: 'x' }), broken], played).cardTags.at(-1), 'maneuver:defend');
   // Prepared (an immediate-transition Prepare) must not become an unknown maneuver tag.
+  // Reviewer on #2843: the same card instance played twice reads each play's own pick, not the last one in the log.
+  const replay = { type: 'cardPlayed', sourceId: 'player', cardInstanceId: 'x' };
+  const twice = [played, change('defend', { cardInstanceId: 'x' }), replay, change('counter', { cardInstanceId: 'x' })];
+  assert.equal(CardAsEnteredStance(card, twice, played).cardTags.at(-1), 'maneuver:defend', 'first play keeps its own pick');
+  assert.equal(CardAsEnteredStance(card, twice, replay).cardTags.at(-1), 'maneuver:counter', 'second play reads its own pick');
   const prepared = CardAsEnteredStance(card, [played, change('prepared', { cardInstanceId: 'x' })], played);
   assert.equal(prepared.cardTags.at(-1), 'maneuver:casting');
   assert.doesNotThrow(() => kindForCard(prepared));

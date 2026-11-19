@@ -63,7 +63,12 @@ export function CardAsEnteredStance(card = {}, events = [], played = {}) {
   // change is emitted before its own cardPlayed, so that window is only a best guess).
   const tagged = events.some(event => event.type === 'combatStanceChanged' && event.cardInstanceId !== undefined);
   let changed;
-  if (tagged) changed = events.filter(event => ofActor(event) && event.cardInstanceId === played.cardInstanceId).pop();
+  if (tagged) {
+    // Only this play's own tagged changes: after its cardPlayed, before the same card instance is played again.
+    const from = events.indexOf(played) + 1;
+    const again = events.findIndex((event, index) => index >= from && event.type === 'cardPlayed' && event.cardInstanceId === played.cardInstanceId);
+    changed = events.slice(from, again < 0 ? undefined : again).filter(event => ofActor(event) && event.cardInstanceId === played.cardInstanceId).pop();
+  }
   else {
     const start = events.indexOf(played) + 1;
     const next = events.findIndex((event, index) => index >= start && event.type === 'cardPlayed');
