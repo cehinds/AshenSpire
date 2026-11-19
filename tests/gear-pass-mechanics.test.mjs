@@ -399,3 +399,18 @@ test('the unarmoured type gives +1 max MP and a specific robe adds its own on to
   const nightweave = build({ classId: 'starseer', armor: 'nightweave' }).run;
   assert.equal(runMods(registries, nightweave.loadout, nightweave.class).maxMana, 2, 'Nightweave: the type base plus its own +1');
 });
+
+// Owner, 2026-11-19: the Bow's end-of-turn Retreat is a floor of 1 stack, and only while in Defend stance.
+function bowEnd({ stacks, stance }) {
+  const world = build({ right: 'shortbow' });
+  const { combat } = world;
+  assert.ok(combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'retreat' && grant.conds.some(c => c.name === 'stance' && c.arg === 'defend')), 'the Bow grant is Defend-gated');
+  if (stacks) combat.player.statuses.retreat = { stacks };
+  combat.player.combatStance = { maneuver: stance, camp: 'physical', range: 'melee' };
+  dispatch(combat, { type: 'endTurn' });
+  return combat.player.statuses.retreat?.stacks || 0;
+}
+test('Bow end of turn in Defend: 0 Retreat stacks becomes 1', () => assert.equal(bowEnd({ stacks: 0, stance: 'defend' }), 1));
+test('Bow end of turn in Defend: 1 Retreat stack stays 1, no extra stack', () => assert.equal(bowEnd({ stacks: 1, stance: 'defend' }), 1));
+test('Bow end of turn in Defend: 2 Retreat stacks stay 2', () => assert.equal(bowEnd({ stacks: 2, stance: 'defend' }), 2));
+test('Bow end of turn outside Defend gives no Retreat stack', () => assert.equal(bowEnd({ stacks: 0, stance: 'counter' }), 0));

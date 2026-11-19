@@ -101,7 +101,7 @@ hitRemoveRetreat,gear,hitRemove,,,retreat,Remove Retreat,,"Matching hits remove 
 hitRetreat,gear,hitPush,,,,Retreat on hit,,"Matching hits send the target to the back row with a Retreat stack, as a push does."
 turnBlock,gear,turnGrant,block,,,Block,,"Block at the start or end of your turn."
 turnCounter,gear,turnGrant,counter,,,Counter,,"Counter stacks at the start or end of your turn."
-turnRetreat,gear,turnGrant,retreat,,,Retreat stack,,"Sends front-row enemies back with Retreat stacks."
+turnRetreat,gear,turnGrant,retreat,,,Retreat stack,,"Ends the Advance and leaves you holding at least this many Retreat stacks (a floor: stacks already held count)."
 turnHeal,gear,turnGrant,heal,,,Heal,,"HP at the start or end of your turn."
 turnEvade,gear,turnGrant,,,evade,Evade,,"Evade at the start or end of your turn."
 turnWard,gear,turnGrant,,,ward,Ward,,"Ward at the start or end of your turn."

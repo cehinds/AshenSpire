@@ -25,7 +25,7 @@ function grantEffect(grant) {
   if (grant.grant === 'block') return { op: 'block', amount: n };
   // The end-of-turn grants are exact: they take no gain bonus.
   if (grant.grant === 'counter') return { op: 'gainCounterStacks', amount: n, noGainBonus: true };
-  if (grant.grant === 'retreat') return { op: 'moveEngagement', bands: 1 };
+  if (grant.grant === 'retreat') return { op: 'moveEngagement', bands: 1 }; // the Retreat itself; the stacks are a floor, set in QueueGearTurnGrants
   if (grant.grant === 'heal') return { op: 'heal', amount: n };
   if (grant.grant === 'draw') return { op: 'draw', amount: n };
   if (grant.status) return { op: 'applyStatus', status: grant.status, stacks: n, noGainBonus: true };
@@ -37,11 +37,16 @@ export function QueueGearTurnGrants(ctx, player, phase) {
   const props = GearProps(player);
   if (!props?.turnGrants) return;
   const state = GearState(ctx, player);
+  let retreatFloor = 0;
   for (const grant of props.turnGrants) {
     if (grant.phase !== phase || !grant.conds.every(cond => GearCondMet(cond, state))) continue;
     const effect = grantEffect(grant);
+    if (grant.grant === 'retreat' && grant.amount > 0) retreatFloor += grant.amount;
     if (effect && grant.amount > 0) queue(ctx, player, effect);
   }
+  // Owner, 2026-11-19: a Retreat grant is a floor, not an addition: the holder ends with max(current, floor) Retreat stacks, so a stack already held adds nothing.
+  const missing = retreatFloor - Math.max(0, Number(player.statuses?.retreat?.stacks) || 0);
+  if (missing > 0) queue(ctx, player, { op: 'applyStatus', status: 'retreat', stacks: missing, noGainBonus: true });
 }
 
 /** QueueGearCardPlayed(ctx, player, def): what playing a matching card grants (Evade on a Defend, Ward on a spell, a draw, STR until end of turn). */

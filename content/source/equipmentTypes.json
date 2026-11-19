@@ -74,7 +74,7 @@
       "mods": [
         "anyAttack.cardReach=+1",
         "anyAttack@target:retreating.cardAddDex=+1",
-        "end.turnRetreat=+1",
+        "end@stance:defend.turnRetreat=+1",
         "start.turnReach=+1",
         "anyAttack.cardPierce=+1",
         "self.vulnMelee=+1"
