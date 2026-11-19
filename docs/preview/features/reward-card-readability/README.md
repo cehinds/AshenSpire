@@ -1,6 +1,6 @@
 # Reward and combat card readability
 
-[PR #2867](https://github.com/cehinds/AshenSpire/pull/2867) · [Feature preview](https://cehinds.github.io/AshenSpire/branches/fix/reward-card-readability/latest/) (branch CI publication pending).
+[PR #2867](https://github.com/cehinds/AshenSpire/pull/2867) · [Feature preview](https://cehinds.github.io/AshenSpire/branches/fix/reward-card-readability/latest/) (hosted publication pending). [Tested feature build ZIP](https://github.com/cehinds/AshenSpire/actions/runs/44475709148/artifacts/14505969093) — successful feature-preview run for source `110a5cb5b3666c3e6bd66f916067c873cbf4fbe4`. Extract the ZIP and open its self-contained HTML. GitHub sign-in is required for artifact downloads.
 
 Captured November 18, 2026 (America/Anchorage), using headless Chromium. UI implementation: `fefe9698c8d4db8371c3a7534281dd72fb1392c6`; base: `66e473a77c74da54bd8701fd5a2614a0e7484985`. The isolated validation build was **0.7.4.199**, digest **87d96cdf30**. Screenshots render source modules after the normal application boot, rather than the bundled HTML. Later receipt and evidence commits do not change these UI components.
 

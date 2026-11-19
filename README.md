@@ -3,7 +3,7 @@
 <!-- feature-preview:start -->
 ## Feature preview — Reward and combat card readability
 
-[Feature test build](https://cehinds.github.io/AshenSpire/branches/fix/reward-card-readability/latest/) — branch CI publication pending.
+[Feature test build](https://cehinds.github.io/AshenSpire/branches/fix/reward-card-readability/latest/) — hosted page publication pending. [Download the tested feature build](https://github.com/cehinds/AshenSpire/actions/runs/44475709148/artifacts/14505969093).
 
 Uniform, larger reward cards with compact rows and smaller rules text; combat hands use the same text adjustment. [Capture record and validation](docs/preview/features/reward-card-readability/README.md).
 
