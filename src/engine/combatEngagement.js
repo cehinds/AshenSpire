@@ -15,7 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
-import { BandsActive, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
+import { BandsActive, BandsEnemyAdvance, BandsMoveEngagement, MarkAdvancedByPlay, PlayerRetreat, SetAdvanced, SetEnemyRow } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -209,7 +209,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
     const before = ctx.rangeState;
     // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
-    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
+    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') BandsEnemyAdvance(ctx, source, 'advance');
     else if (BandsActive(ctx) && source.kind !== 'enemy') { SetAdvanced(ctx, source, true); MarkAdvancedByPlay(source, rootId); }
     else ctx.rangeState = advancedEngagementState(before, plan);
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);

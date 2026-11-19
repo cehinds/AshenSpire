@@ -162,6 +162,16 @@ export function BandsFormationBlock(ctx, enemy) {
   return ctx.enemies.some(other => other !== enemy && other.alive && other.row === enemy.row) ? rules.formationBlock : 0;
 }
 
+/** BandsEnemyAdvance(ctx, enemy, reason): a back-row enemy's own Advance (owner 2026-11-18): while it holds Retreat stacks it spends ONE and stays back; with none it steps to the front. Returns true when it moved. */
+export function BandsEnemyAdvance(ctx, enemy, reason = 'advance') {
+  if (RetreatStacks(enemy) > 0) { spendRetreat(ctx, enemy, 1); return false; }
+  SetEnemyRow(ctx, enemy, 'front', reason);
+  return true;
+}
+
+/** BandsEnemyHeldBack(ctx, enemy): true when the enemy stands in the back row holding Retreat stacks, so an Advance of its own spends a stack and does not close the distance. */
+export const BandsEnemyHeldBack = (ctx, enemy) => Boolean(BandsActive(ctx)) && enemy?.row === 'back' && RetreatStacks(enemy) > 0;
+
 /** BandsMoveEngagement(ctx, source, target, bands): a moveEngagement effect under rows. Returns true when rows handled it (the pair band is not moved by the caller). */
 export function BandsMoveEngagement(ctx, source, target, bands, rootId = null) {
   if (!BandsActive(ctx)) return false;
@@ -169,7 +179,7 @@ export function BandsMoveEngagement(ctx, source, target, bands, rootId = null) {
     if (bands > 0) { SetEnemyRow(ctx, source, 'back', 'retreat'); return true; }
     // A retreated enemy's approach removes one of its Retreat stacks instead of moving it forward; with none it steps forward as normal.
     // The move is spent either way, so the intent shown (the step forward) is the move played.
-    if (source.row === 'back') { if (RetreatStacks(source) > 0) spendRetreat(ctx, source, 1); else SetEnemyRow(ctx, source, 'front', 'approach'); return true; }
+    if (source.row === 'back') { BandsEnemyAdvance(ctx, source, 'approach'); return true; }
     return false; // a front enemy held at reach (a Backstep, a push): the ordinary pair move closes it
   }
   // A player's push ("Retreat one band": Gale Push, Hit and Run; owner 2026-11-18) sends the target to the back row, as a Force push does.
