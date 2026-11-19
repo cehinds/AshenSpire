@@ -8591,8 +8591,8 @@
         "own": 3,
         "bonuses": [
           {
-            "source": "warhammer",
-            "name": "Warhammer",
+            "source": "thunderMallet",
+            "name": "Thunder_Mallet",
             "kind": "gear",
             "amount": 2
           },
@@ -8669,8 +8669,8 @@
     "gear": [
       {
         "key": "mainHand",
-        "id": "warhammer",
-        "name": "Warhammer"
+        "id": "thunderMallet",
+        "name": "Thunder_Mallet"
       },
       {
         "key": "offHand",

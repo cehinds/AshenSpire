@@ -3390,7 +3390,7 @@
         "stamina": 2,
         "mana": 0
       },
-      "text": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "text": "Deal {damage} damage.",
       "usedBy": "enemy sheet"
     },
     "card:ferrumVotary.ironLitany": {
@@ -4535,14 +4535,6 @@
         "self.intelligence=+1"
       ]
     },
-    "relic:enemy.relic.ironVow": {
-      "name": "Iron Vow",
-      "text": "CON +2, STR +1",
-      "modifiers": [
-        "self.constitution=+2",
-        "self.strength=+1"
-      ]
-    },
     "relic:enemy.relic.crucibleHeart": {
       "name": "Crucible Heart",
       "text": "CON +3, STR +1",
@@ -4659,6 +4651,14 @@
     },
     "relic:enemy.relic.kilnbackFurnace": {
       "name": "Kilnback Furnace",
+      "text": "CON +2, STR +1",
+      "modifiers": [
+        "self.constitution=+2",
+        "self.strength=+1"
+      ]
+    },
+    "relic:enemy.relic.ironVow": {
+      "name": "Iron Vow",
       "text": "CON +2, STR +1",
       "modifiers": [
         "self.constitution=+2",
