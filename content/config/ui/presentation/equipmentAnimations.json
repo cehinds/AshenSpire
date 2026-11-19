@@ -20,7 +20,11 @@
         "dagger",
         "parryDagger",
         "kris",
-        "stiletto"
+        "stiletto",
+        "leatherWhip",
+        "thornWhip",
+        "ironKnuckles",
+        "beastClaws"
       ],
       "bow": [
         "shortbow",

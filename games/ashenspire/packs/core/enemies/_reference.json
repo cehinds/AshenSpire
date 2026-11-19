@@ -3891,6 +3891,50 @@
         "retreat"
       ],
       "range": "reach"
+    },
+    "gear:leatherWhip": {
+      "name": "Leather Whip",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "flurry",
+        "retreat"
+      ],
+      "range": "reach"
+    },
+    "gear:thornWhip": {
+      "name": "Thorn Whip",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "flurry",
+        "retreat",
+        "bleed"
+      ],
+      "range": "reach"
+    },
+    "gear:ironKnuckles": {
+      "name": "Iron Knuckles",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "common",
+      "tags": [
+        "flurry"
+      ],
+      "range": "melee"
+    },
+    "gear:beastClaws": {
+      "name": "Beast Claws",
+      "slot": "rightHand",
+      "kind": "weapon",
+      "rarity": "uncommon",
+      "tags": [
+        "flurry",
+        "bleed"
+      ],
+      "range": "melee"
     }
   },
   "relics": {

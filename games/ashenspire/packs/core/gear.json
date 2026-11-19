@@ -1364,5 +1364,77 @@
       "id": "arbalest"
     },
     "range": "reach"
+  },
+  {
+    "id": "leatherWhip",
+    "name": "Leather_Whip",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "flurry",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "leatherWhip"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "thornWhip",
+    "name": "Thorn_Whip",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "flurry",
+      "retreat",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "thornWhip"
+    },
+    "material": "metal",
+    "range": "reach"
+  },
+  {
+    "id": "ironKnuckles",
+    "name": "Iron_Knuckles",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "ironKnuckles"
+    },
+    "material": "metal",
+    "range": "melee"
+  },
+  {
+    "id": "beastClaws",
+    "name": "Beast_Claws",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "flurry",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "beastClaws"
+    },
+    "material": "metal",
+    "range": "melee"
   }
 ]

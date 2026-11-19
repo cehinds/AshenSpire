@@ -428,6 +428,10 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:huntersRecurve | Hunters Recurve | rightHand | weapon | rare | bow, retreat |
 | gear:handCrossbow | Hand Crossbow | rightHand | weapon | common | bow, retreat |
 | gear:arbalest | Arbalest | rightHand | weapon | rare | bow, retreat |
+| gear:leatherWhip | Leather Whip | rightHand | weapon | common | flurry, retreat |
+| gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, retreat, bleed |
+| gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
+| gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
 
 ## Relics (relic:)
 

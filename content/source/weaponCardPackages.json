@@ -986,5 +986,81 @@
         "artCardId": "lethalDose"
       }
     }
+  },
+  {
+    "weaponId": "leatherWhip",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "hamstring"
+      ],
+      "learnableArts": [
+        "enfeeble",
+        "smokeVeil"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "hamstring"
+      }
+    }
+  },
+  {
+    "weaponId": "thornWhip",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "septicBlade"
+      ],
+      "learnableArts": [
+        "venomcoat",
+        "toxicVolley"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "septicBlade"
+      }
+    }
+  },
+  {
+    "weaponId": "ironKnuckles",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "ironResolve"
+      ],
+      "learnableArts": [
+        "enterGorefire",
+        "warSurgeon"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "ironResolve"
+      }
+    }
+  },
+  {
+    "weaponId": "beastClaws",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "daggerPierceAttack",
+      "weaponArtDefaults": [
+        "fanOfKnives"
+      ],
+      "learnableArts": [
+        "hemorrhage",
+        "shadowstep"
+      ],
+      "combatKit": {
+        "attackProfileId": "daggerPierceAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "fanOfKnives"
+      }
+    }
   }
 ]

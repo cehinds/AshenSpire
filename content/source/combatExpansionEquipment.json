@@ -508,7 +508,27 @@
     "longbow": {},
     "huntersRecurve": {},
     "handCrossbow": {},
-    "arbalest": {}
+    "arbalest": {},
+    "leatherWhip": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "thornWhip": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "ironKnuckles": {
+      "traits": {
+        "conductive": true
+      }
+    },
+    "beastClaws": {
+      "traits": {
+        "conductive": true
+      }
+    }
   },
   "enemies": {
     "wanderingSoldier": {
