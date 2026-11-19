@@ -11,11 +11,14 @@
 // Perception's roll bonus is the observer's Wisdom (rollKnowledgeRead).
 import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
-import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreWardDisabled, FixCoreHitRollOff, FixCorePerceptionRollOff } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
+import { SpellRowValue, SpellTraditionsActive } from './spellTraditions.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
 import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { ItemPropertySummary } from './itemProperties.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
 import { t } from './strings.js';
 
@@ -24,11 +27,12 @@ export const POOL_SCALE = 5;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
 // Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+5 HP and +1 Poise both score 1, HP first).
 // WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
-export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
+export const GAIN_ORDER = Object.freeze(['hp', 'poise', 'arcaneMagic', 'divineMagic', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'ward', 'evasion', 'precision']);
 const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
   energy: 'progression.gain.label.energy', hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
+  arcaneMagic: 'progression.gain.label.arcaneMagic', divineMagic: 'progression.gain.label.divineMagic',
   openingHand: 'progression.gain.label.openingHand', handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
   evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
   perception: 'progression.gain.label.perception',
@@ -36,36 +40,54 @@ const LABEL_KEYS = Object.freeze({
 const round = (n) => Math.round(n * 100) / 100;
 
 function previewContext(registries, run, attributes) {
-  const entity = { id: 'player', kind: 'player', attributes, level: run.level, classId: run.class };
+  const entity = { id: 'player', kind: 'player', attributes, level: run.level, classId: run.class, itemProps: ItemPropertySummary(run) };
   const ctx = {
     registries, player: entity, loadout: run.loadout, attributes, characterLevel: run.level?.level,
     combatExpansionVersion: run.combatExpansionVersion, gameProfile: run.gameProfile || registries.gameProfile,
+    derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
+    ...(run.fixCoreRules ? { fixCoreRules: run.fixCoreRules } : {}),
   };
   return { ctx, entity };
+}
+
+function effectiveAttributesFor(registries, run, attributes) {
+  const probe = { ...run, attributes, allocatedAttributes: undefined };
+  return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe));
+}
+
+export function AttributeHandReceipts(registries, run, settings = {}, attributes = run.attributes) {
+  const effective = effectiveAttributesFor(registries, run, attributes);
+  const { ctx } = previewContext(registries, run, effective);
+  if (!configuredCombat(ctx)) return handSizeReceipts(runHandRules(registries, run, settings), effective, run.level?.level);
+  const value = profileHandSize(ctx);
+  return { configured: true, opening: { value }, turn: { value }, capacity: { value } };
 }
 
 /** attributePointGains(registries, run, attributeId, { settings }) → [{ statId, label, before, after, delta, text }] for +1 of that attribute. */
 export function attributePointGains(registries, run, attributeId, { settings = {} } = {}) {
   // The same transforms rederivePools (model/levelup.js) applies before pricing a
   // pool: a constant blight or gear bonus moves which floored point crosses a threshold.
-  const effective = (attributes) => { const probe = { ...run, attributes, allocatedAttributes: undefined }; return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe)); };
+  const effective = (attributes) => effectiveAttributesFor(registries, run, attributes);
   const rawNow = { ...run.attributes };
   const current = effective(rawNow);
   const raised = effective({ ...rawNow, [attributeId]: (Number(rawNow[attributeId]) || 0) + 1 });
   const level = run.level?.level;
   const classDef = registries.classes?.get?.(run.class);
   const gains = [];
+  const traditions = SpellTraditionsActive(run);
   const push = (statId, before, after) => {
     const delta = round(after - before);
     if (!delta) return;
     // Ward's word is the stat table's own presentation label (no second copy of it in uiStrings).
-    const label = LABEL_KEYS[statId] ? t(LABEL_KEYS[statId]) : registries.derivedStatRules?.presentation?.[statId]?.label || statId;
+    const label = traditions && statId === 'ar' ? 'Physical damage' : traditions && statId === 'dr' ? 'Block'
+      : LABEL_KEYS[statId] ? t(LABEL_KEYS[statId]) : registries.derivedStatRules?.presentation?.[statId]?.label || statId;
     gains.push({ statId, label, before: round(before), after: round(after), delta,
       text: t('progression.gain.item', { amount: `${delta > 0 ? '+' : ''}${delta}`, label }) });
   };
   const { ctx, entity } = previewContext(registries, run, current);
   const fixCore = fixCoreEnabled(ctx);
   for (const statId of ROW_IDS) {
+    if (traditions && statId === 'pr') continue;
     if (statId === 'ward' && fixCoreWardDisabled(ctx)) continue;
     // Under combatExpansionVersion 2 energy is stamina (rederivePools skips it); only a legacy run has its own pool.
     if (statId === 'energy' && run.combatExpansionVersion === 2) continue;
@@ -75,6 +97,12 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     push(statId, value(current), value(raised));
   }
   const after = previewContext(registries, run, raised);
+  if (traditions) {
+    for (const [id, tradition] of [['arcaneMagic', 'arcane'], ['divineMagic', 'divine']]) {
+      const card = { tags: [`tradition:${tradition}`] };
+      push(id, SpellRowValue(ctx, entity, current, card), SpellRowValue(after.ctx, after.entity, raised, card));
+    }
+  }
   if (configuredCombat(ctx)) {
     // A configured (Core 2) fight deals handBase + INT for the opening hand, every turn draw and the capacity
     // (turnDrawCount -> profileHandSize); the hand rows below are not read. Call the engine's own function.
@@ -90,12 +118,13 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     push('openingHand', handBefore.opening.value, handAfter.opening.value);
     push('handSize', handBefore.capacity.value, handAfter.capacity.value);
   }
-  push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
+  const rules = fixCore ? fixCoreRules(ctx) : null;
+  if (!traditions || !FixCoreHitRollOff(rules)) push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
   if (fixCore) {
-    push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));
+    if (!traditions || !FixCoreHitRollOff(rules)) push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));
     // rollKnowledgeRead: the observer rolls d20 + own Wisdom, so a point of Wisdom is a point of Perception.
     // (push skips a zero delta, so only the +1 that raises Wisdom shows.)
-    push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
+    if (!traditions || !FixCorePerceptionRollOff(rules)) push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
   }
   return gains;
 }

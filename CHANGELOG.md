@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-19
 
+- **Stats explain what your points change** ([#2873](https://github.com/cehinds/AshenSpire/pull/2873), `0.7.4.213`). Strength improves physical damage, Dexterity improves Block and Stamina, Constitution improves Health only, Wisdom improves Divine magic, Mana and Poise, and Intelligence improves Arcane magic and hand size. Attribute allocation shows full names and clear benefits, with resource thresholds in the expanded details. The preview includes equipment hand-size bonuses and matches the points you apply. Saved characters keep their recorded rules.
 - **Smash hits Defend harder** ([#2876](https://github.com/cehinds/AshenSpire/pull/2876), `0.7.4.211`). New fights give Smash +50% damage against Defend; Prepared keeps +25%, and Counter reduces it by 25% once. Older saved rules keep their tuning, and card help follows the actual fight.
 - **Your equipment bonuses now match the fight** ([#2865](https://github.com/cehinds/AshenSpire/pull/2865), `0.7.4.209`). Stone Skin cancels Pierce stack for stack, swapping gear refreshes its bonuses, and older saves keep their original equipment rules. Block-retaining Stoneskin is now called Diamond Skin.
 - **Smash stance contract clarified** ([#2874](https://github.com/cehinds/AshenSpire/pull/2874), `0.7.4.207`). The rules handbook specifies the Defend, Prepared and Counter multipliers and how older saved rules keep their behavior. Gameplay implementation follows in a separate fix.

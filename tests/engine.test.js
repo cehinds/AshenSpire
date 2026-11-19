@@ -7930,7 +7930,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Owner, 2026-11-18: Mana is WIS in fours and Stamina is DEX in fours, so Constitution feeds neither any more.
     eq(constitution.face.summary, '+1 HP per pt · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
-    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+    eq(constitution.reveal.flavour, REG.attributes.get('constitution').sense,
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+1 every 1 point$/.test(line))
       && !constitution.reveal.lines.some((line) => /^Mana /.test(line))

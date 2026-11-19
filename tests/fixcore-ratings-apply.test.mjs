@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -14,10 +16,12 @@ import { configuredModule, profileDamageReceipt } from '../src/engine/gameProfil
 import { stanceRulesFor } from '../src/model/stanceRules.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { SpellTraditionsActive } from '../src/model/spellTraditions.js';
+import { ChannelWeight } from '../src/model/damageChannels.js';
 import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 
 // Owner, 2026-10-19: AR, DR, PR and Poise still apply to cards in Core, and spell effectiveness still uses PR.
-// Each rating comes from the CHARACTER (derived-stat rows: STR -> AR, DEX -> DR, INT -> PR, CON -> Poise) and from
+// Each rating comes from the CHARACTER (derived-stat rows: STR -> AR, DEX -> DR, school-selected INT/WIS -> PR, WIS -> Poise) and from
 // EQUIPMENT (owner, 2026-11-17, gear `statPoints`: gear and Smith tiers grant attribute points and Poise, never AR, DR or PR, so a
 // weapon's STR, a shield's or armor's DEX, a staff's INT and armor/shield Poise reach the ratings through the rows above). Every source is raised on its own, in a fresh
 // Core run, and the card value must move by the configured weight, in the preview and in live combat alike.
@@ -26,10 +30,10 @@ const profile = legacyGearProfile(resolveGameProfile({ formatVersion: 1, core: '
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const N = 3;
 
-function world(classId, mutate, { targetStance = null } = {}) {
-  const run = createRunState({ registries: reg, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+function world(classId, mutate, { targetStance = null, registries: fixtureRegistries = reg } = {}) {
+  const run = createRunState({ registries: fixtureRegistries, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   mutate?.(run);
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: fixtureRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const target = combat.enemies[0];
   Object.assign(target, { hp: 5000, maxHp: 5000, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 20, max: 20 }, attributes: { dexterity: 0 } });
   delete target.combatStance; delete target.combatCounter;
@@ -39,7 +43,7 @@ function world(classId, mutate, { targetStance = null } = {}) {
 }
 const weights = combat => {
   const fx = configuredModule(combat, 'effects');
-  return { ar: fx.strengthDamageWeight, pr: fx.strengthDamageWeight, dr: fx.dexterityBlockWeight };
+  return { ar: ChannelWeight(fx, 'ar'), pr: ChannelWeight(fx, 'pr'), dr: ChannelWeight(fx, 'dr') };
 };
 function hand(combat, cardId) {
   const instanceId = `rt_${cardId}`;
@@ -97,7 +101,7 @@ const sources = {
     ['staff (Emberlight Sceptre)', 'reaver', run => { run.loadout.sets.rightHand[0] = 'emberlightSceptre'; }],
   ],
   poise: [
-    ['CON (stat)', 'reaver', stat('constitution')],
+    ['WIS (stat)', 'reaver', stat('wisdom')],
     ['armor (Warden)', 'reaver', run => { run.loadout.sets.armor[0] = 'warden'; }],
     ['shield (Tower Shield)', 'reaver', run => { run.loadout.sets.leftHand[0] = 'towerShield'; }],
   ],
@@ -174,6 +178,15 @@ test('Core armor Smith tiers add attribute points (gear statPoints), not a flat 
 });
 
 // ---- Poise rating -> the Poise pool ---------------------------------------------------------------------------------
+test('CON does not raise the new Wisdom-based Poise pool', () => {
+  const base = world('reaver');
+  for (const [label, mutate] of [['CON', stat('constitution')]]) {
+    const up = world('reaver', mutate);
+    assert.equal(ratings(up).poise, ratings(base).poise, label);
+    assert.equal(up.combat.player.persistentPoise.max, base.combat.player.persistentPoise.max, label);
+  }
+});
+
 for (const src of sources.poise) {
   test(`Poise rating (${src[0]}) sets the player's Poise pool one for one`, () => {
     raised('poise', src, ({ base, up, delta }) => {
@@ -214,7 +227,7 @@ test('PR (INT) does not change a physical attack card', () => {
   assert.equal(damage(up, 'core.strike').incoming, damage(base, 'core.strike').incoming);
 });
 
-// ---- PR bonus routes to the magical part of a split; enemies keep AR for their spells --------------------------------
+// ---- PR bonus routes to the magical part of a split; enemy casting is versioned ------------------------------------
 test('PR bonus lands in the magical half of Arcane Spark; the physical half is unchanged', () => {
   const base = world('starseer'), up = world('starseer', stat('intelligence'));
   const part = w => { const { combat, target } = w; const id = hand(combat, 'core.cantrip');
@@ -231,8 +244,27 @@ test('AR bonus keeps its routing on a physical card (physical part)', () => {
   assert.equal(b.magical, a.magical);
   assert.ok(b.physical > a.physical);
 });
-test('an enemy spell-camp attack keeps reading AR (its PR is 0), exactly as before', () => {
-  const { combat, target } = world('starseer');
+test('a new-profile enemy spell uses its own casting attributes instead of AR', () => {
+  const { combat } = world('starseer');
+  const enemy = combat.enemies[0];
+  enemy.ratings = { ...enemy.ratings, ar: 20, pr: 0 };
+  enemy.attributes = { ...enemy.attributes, intelligence: 7, wisdom: 2 };
+  assert.equal(SpellTraditionsActive(combat), true);
+  const incoming = (source, school) => profileDamageReceipt(combat, source, combat.player, 10, {
+    combatProfile: { camp: 'spell', maneuver: 'casting', range: 'reach', school }, tags: [`school:${school}`],
+  }).damageReceipt.hits[0].incoming;
+  const empty = { ...enemy, attributes: { ...enemy.attributes, intelligence: 0, wisdom: 0 } };
+  assert.equal(incoming(enemy, 'force') - incoming(empty, 'force'), Math.floor(7 * weights(combat).pr));
+  assert.equal(incoming(enemy, 'divine') - incoming(empty, 'divine'), Math.floor(2 * weights(combat).pr));
+  assert.equal(incoming({ ...enemy, ratings: { ...enemy.ratings, ar: 99 } }, 'force'), incoming(enemy, 'force'));
+});
+
+test('an enemy spell from a genuine historical profile keeps reading AR', () => {
+  const historical = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-fae7af.json.gz', import.meta.url))));
+  const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, historical)), historical);
+  const { combat } = world('starseer', null, { registries: oldRegistries });
+  assert.equal(combat.gameProfile.hash, historical.hash);
+  assert.equal(SpellTraditionsActive(combat), false);
   const enemy = combat.enemies[0];
   enemy.ratings = { ...enemy.ratings, ar: 4, pr: 0 };
   const carrier = { cardId: 'core.cantrip', damageSchool: 'magic', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'melee' } };

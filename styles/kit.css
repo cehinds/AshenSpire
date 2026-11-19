@@ -1948,14 +1948,25 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
 
 /* Allocation uses the same connected primary-stat fold, with the point
-   controls inside its header. The details element keeps its own layout box. */
+   controls inside its header. Stack the name and summary instead of using
+   the primary-stat grid's max-content name column. Reserve a separate column
+   for the controls so all text wraps before them. */
 .as-row.setting.se-row { display: block; padding: 0; border: 0; }
 .as-row.setting.se-row > .as-row-fold,
 .as-row.setting.se-row > .as-row-fold > .disc-fold-row { display: block; width: 100%; }
 .as-row.setting.se-row .disc-face { width: 100%; }
-.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
+.as-row.setting.se-row .disc-face > .as-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+}
+.as-row.setting.se-row .disc-face > .as-row > .as-labelstack {
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.as-row.setting.se-row .ls-label {
+  display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .5em;
+  white-space: normal; overflow: visible; text-overflow: clip;
+}
 .as-row.setting.se-row .se-controls { flex: 0 0 auto; margin-left: auto; }
-.as-row.setting.se-row .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-row.setting.se-row .disc-summary { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; }
 .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }

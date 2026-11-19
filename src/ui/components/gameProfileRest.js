@@ -124,6 +124,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     const previews = el('div', { class: 'configured-level-recovery' });
     const cards = new Map(attributeCardModels(registries, run.attributes, {
       projection: statProjection(registries, run), equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run, settings: meta?.settings || {} },
       hand: runHandRules(registries, run, meta?.settings || {}),
     }).map(card => [card.id, card]));
     const draw = () => {
