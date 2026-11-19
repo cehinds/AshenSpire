@@ -4290,5 +4290,60 @@
         "max": 4
       }
     }
+  },
+  {
+    "id": "stormSceptre",
+    "name": "Storm_Sceptre",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "sceptre",
+      "retreat"
+    ],
+    "setPoints": {},
+    "points": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
+      "poise": 3,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "modifiers": [],
+    "pool": {
+      "ratings": {
+        "min": 4,
+        "max": 4
+      },
+      "bonus": {
+        "min": 2,
+        "max": 4
+      }
+    }
   }
 ]

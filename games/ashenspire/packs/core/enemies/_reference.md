@@ -432,6 +432,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, retreat, bleed |
 | gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
 | gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
+| gear:stormSceptre | Storm Sceptre | rightHand | staff | uncommon | sceptre, retreat |
 
 ## Relics (relic:)
 

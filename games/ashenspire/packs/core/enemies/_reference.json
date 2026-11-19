@@ -3935,6 +3935,17 @@
         "bleed"
       ],
       "range": "melee"
+    },
+    "gear:stormSceptre": {
+      "name": "Storm Sceptre",
+      "slot": "rightHand",
+      "kind": "staff",
+      "rarity": "uncommon",
+      "tags": [
+        "sceptre",
+        "retreat"
+      ],
+      "range": "reach"
     }
   },
   "relics": {

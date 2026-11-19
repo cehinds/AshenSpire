@@ -1436,5 +1436,22 @@
     },
     "material": "metal",
     "range": "melee"
+  },
+  {
+    "id": "stormSceptre",
+    "name": "Storm_Sceptre",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "sceptre",
+      "retreat"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "stormSceptre"
+    },
+    "range": "reach"
   }
 ]

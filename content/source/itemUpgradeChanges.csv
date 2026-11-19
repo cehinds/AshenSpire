@@ -272,3 +272,7 @@ armament/beastClaws,1,upgrade:cost:smithing-stone,1
 armament/beastClaws,1,card:attack:effect:damage,3
 armament/beastClaws,1,card:guard:effect:block,3
 armament/beastClaws,1,card:technique:effect:block,2
+armament/stormSceptre,1,upgrade:cost:smithing-stone,1
+armament/stormSceptre,1,card:attack:effect:damage,3
+armament/stormSceptre,1,card:guard:effect:block,3
+armament/stormSceptre,1,card:technique:effect:block,2

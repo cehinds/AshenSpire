@@ -1062,5 +1062,24 @@
         "artCardId": "fanOfKnives"
       }
     }
+  },
+  {
+    "weaponId": "stormSceptre",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "sceptreArcaneAttack",
+      "weaponArtDefaults": [
+        "starstoneKris"
+      ],
+      "learnableArts": [
+        "astralInsight",
+        "celestialLance"
+      ],
+      "combatKit": {
+        "attackProfileId": "sceptreArcaneAttack",
+        "guardProfileId": "sceptreGuard",
+        "artCardId": "starstoneKris"
+      }
+    }
   }
 ]

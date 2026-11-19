@@ -4986,3 +4986,13 @@ armament,,beastClaws,source:weapon
 armament,,beastClaws,delivery:melee
 armament,,beastClaws,damage:slashing
 armament,,beastClaws,classification.armament
+armament,,stormSceptre,item:magic-focus
+armament,,stormSceptre,ritual
+armament,,stormSceptre,blight
+armament,,stormSceptre,siphon
+armament,,stormSceptre,theme:blight
+armament,,stormSceptre,source:spell
+armament,,stormSceptre,delivery:projectile
+armament,,stormSceptre,damage:arcane
+armament,,stormSceptre,classification.armament
+armament,,stormSceptre,retreat

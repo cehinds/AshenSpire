@@ -528,6 +528,12 @@
       "traits": {
         "conductive": true
       }
+    },
+    "stormSceptre": {
+      "traits": {
+        "caster": true,
+        "conductive": true
+      }
     }
   },
   "enemies": {
