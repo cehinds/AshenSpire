@@ -226,7 +226,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:ashheartDragon.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
 | card:brackenTusker.gore | Gore | attack | 1 | 0 | Deal {damage} damage. |
 | card:brackenTusker.bristle | Bristle | skill | 1 | 0 | Gain {block} Block. |
-| card:brackenTusker.trample | Trample | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:brackenTusker.trample | Trample | attack | 2 | 0 | Deal {damage} damage. |
 | card:brackenTusker.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:fenwickToad.tongueLash | Tongue Lash | attack | 1 | 0 | Deal {damage} damage. |
 | card:fenwickToad.bileSpit | Bile Spit | attack | 1 | 0 | Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy. |
