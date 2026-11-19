@@ -5396,13 +5396,19 @@
         "own": 3,
         "bonuses": [
           {
+            "source": "sunTalisman",
+            "name": "Sun_Talisman",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
             "source": "enemy.relic.wickerAntlers",
             "name": "Wicker_Antlers",
             "kind": "relic",
             "amount": 2
           }
         ],
-        "total": 5
+        "total": 7
       },
       "intelligence": {
         "own": 1,
@@ -5423,17 +5429,17 @@
         "constitution": 20,
         "strength": 5,
         "dexterity": 3,
-        "wisdom": 10,
+        "wisdom": 14,
         "intelligence": 3,
         "level": 5
       },
-      "total": 56,
-      "formula": "10+20+5+3+10+3+5 = 56"
+      "total": 60,
+      "formula": "10+20+5+3+14+3+5 = 60"
     },
     "pools": {
-      "hp": 56,
+      "hp": 60,
       "sp": 4,
-      "mp": 3,
+      "mp": 4,
       "ar": 1,
       "dr": 1,
       "hand": 6
@@ -5443,6 +5449,11 @@
         "key": "mainHand",
         "id": "goldboughBranch",
         "name": "Goldbough_Branch"
+      },
+      {
+        "key": "offHand",
+        "id": "sunTalisman",
+        "name": "Sun_Talisman"
       }
     ],
     "relics": [

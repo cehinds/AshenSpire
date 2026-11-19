@@ -248,7 +248,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:siltCrownNewt.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:wickerHind.antlerRake | Antler Rake | attack | 1 | 0 | Deal {damage} damage. |
 | card:wickerHind.hallowSpark | Hallow Spark | attack | 1 | 1 | Deal {damage} damage. |
-| card:wickerHind.hoofStamp | Hoof Stamp | attack | 2 | 0 | Deal {damage} damage and {poiseDamage} Poise damage. |
+| card:wickerHind.hoofStamp | Hoof Stamp | attack | 2 | 0 | Deal {damage} damage. |
 | card:wickerHind.wickerMend | Wicker Mend | power | 3 | 2 | Heal {heal} HP. |
 | card:wickerHind.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:wickerHind.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
@@ -514,8 +514,8 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
 | relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
 | relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
-| relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
 | relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
 | relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
 | relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
 | relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
+| relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
