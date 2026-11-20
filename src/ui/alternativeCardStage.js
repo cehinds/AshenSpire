@@ -7,7 +7,7 @@ import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
-import { liteRendering, effectsOff, motionOff } from './performance.js';
+import { liteRendering, FxOff, motionOff } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
@@ -116,12 +116,12 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   // Effects off keeps the stance glow but holds it still: the resting glow of the held stance or
   // status, never the casting pulse (the action and its payment colours only tint while Effects is on).
   const filterFor = (frame, action, paid = resources, active = !!action) =>
-    effectsOff() ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
+    FxOff('glow') ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
     : liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   const paintGate=createPaintGate();
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
-    paintedLite=liteRendering()+'/'+effectsOff();
+    paintedLite=liteRendering()+'/'+FxOff('glow');
     let x=0, effect=null;
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
@@ -140,7 +140,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // Static until something it shows changes (owner, 2026-11-06: the figure flickered because it was
     // redrawn). The same pixels are never cleared and drawn again; a clear plus a filtered draw can show
     // a blank frame on a phone GPU. Animations change this signature every frame, so they still paint.
-    const lite=liteRendering(),off=effectsOff(),noFlash=document.body.classList.contains('reduce-flashes');
+    const lite=liteRendering(),off=FxOff('glow'),noFlash=FxOff('flash')||document.body.classList.contains('reduce-flashes');
     const flashing=flashAt!==null?flashElapsed:-1;
     const sig=paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
       action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt});const fresh=paintGate.changed(sig);
@@ -186,14 +186,14 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     currentArt={canvas,image:source,left,top,width,height,body};
     ctx.save();
     // Loaded outfit and hurt images never change their pixels after decoding.
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!FxOff('glow'),still:FxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
-    if(effect && !still && !effectsOff() && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
+    if(effect && !still && !FxOff('sparks') &&!reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
       if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);if(el.dataset.effect!==effect)el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
-    const flash=flashAt===null||effectsOff()||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
+    const flash=flashAt===null||FxOff('flash')||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
       if(mask.width!==dimensions[0])mask.width=dimensions[0];
       if(mask.height!==dimensions[1])mask.height=dimensions[1];
@@ -289,7 +289,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       // must not rasterize it again; initial/failed loads have no currentArt,
       // and action, reaction and asset-load paths still paint themselves.
       if(next===rest&&!resume&&!playing&&flashAt===null&&!bodyReaction
-        &&currentArt&&paintedLite===liteRendering()+'/'+effectsOff()&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
+        &&currentArt&&paintedLite===liteRendering()+'/'+FxOff('glow')&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
       rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];

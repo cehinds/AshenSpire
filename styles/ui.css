@@ -632,6 +632,7 @@ button.ev-choice {
 /* ---------- event screen ---------- */
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+:root[data-effects='off'] .event-art { animation: none; }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
 /* multiple player seats sit side-by-side in the combat player-zone */

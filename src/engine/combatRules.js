@@ -40,14 +40,19 @@ const SHARED_RULE_KEYS = ['combatExpansionRules', 'combatMatchupRules', 'combatI
  * of what each preview cloned, and a phone spent seconds per tap cloning it.
  * Everything that reads a candidate's log reads only what it emitted itself
  * (`eventLog.length` before and `slice(start)` after), so an empty start is
- * the same answer. A transaction (foundationTransaction) keeps the full log:
- * it replaces ctx's.
+ * the same answer. A transaction (foundationTransaction) keeps the full log,
+ * since it replaces ctx's, but as a new array holding the same rows: a row is
+ * never edited after it is emitted, so only the array (what the transaction
+ * appends to) needs to be the candidate's own. Deep-cloning every row made each
+ * action cost grow with the fight (45 ms a card at 10k rows).
  */
 export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = key === 'eventLog' ? null : value;
   }
+  // The log is replaced below; the null keeps its place in the key order.
+  const eventLog = detached ? [] : Array.isArray(ctx.eventLog) ? ctx.eventLog.slice() : structuredClone(ctx.eventLog);
   // Only a privately owned immutable profile may bypass the clone. The guard
   // falls back if another data field aliases it (or one of its descendants).
   const sharedProfile = shareableGameProfile(data);
@@ -58,7 +63,7 @@ export function candidateState(ctx, { detached = false } = {}) {
   for (const key of SHARED_RULE_KEYS) {
     if (data[key] && typeof data[key] === 'object' && Object.isFrozen(data[key])) { sharedRules[key] = data[key]; delete data[key]; }
   }
-  const candidate = { ...structuredClone(data), ...sharedRules, ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...sharedRules, ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached || 'eventLog' in data ? { eventLog } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
