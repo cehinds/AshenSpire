@@ -1350,7 +1350,7 @@
     "tint": "#e8d46a",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Each stack is -1 Precision. 1 stack expires each turn."
+    "tooltip": "Each stack makes the next Lightning hit more likely to Shock. 1 stack expires each turn."
   },
   {
     "id": "damp",

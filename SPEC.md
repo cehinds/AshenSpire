@@ -995,7 +995,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - *Metal conducts:* a target using metal equipment (row `material: metal`; Core weapons, shields, armour are tagged) takes the hit at +1 Precision for the attacker (+1 Accuracy on that hit).
   - *Shock contest* (stream `combatContest`): after HP loss the hit tries to inflict 1 Shocked. Roll d20 + (target's current Shocked stacks × (caster INT + WIS + card rank)) vs DC = target's current Poise + STR + DEX + CON + level (d20 helper `engine/d20Chance.js` and the roll log; the receipt shows total vs DC). Card rank = the played copy's `cardRank` (§13.4o; 1 when absent). Success: 1 Shocked.
   - A **Damp** target gives the caster advantage (roll twice, keep higher). A caster *wearing metal equipment* rolls with disadvantage (keep lower); a natural 1 on the kept die deals the spell's damage to the caster instead (target takes none, no Shocked). Advantage and disadvantage cancel.
-- **Shocked:** stackable; each stack is -1 Precision (-1 Accuracy); -1 stack at the end of its holder's turn.
+- **Shocked:** stackable; each stack raises the next Shock contest against its holder (the stacks term above); -1 stack at the end of its holder's turn. It no longer changes Precision or Accuracy (owner, 2026-11-20: Precision is gone from Core).
 - **Damp:** stackable; -1 stack at the end of its holder's turn.
   - Lightning hit on a Damp holder: advantage on the shock contest. Burn stacks applied to a Damp holder are halved (rounded down, at least 1 when any were applied).
   - Any Fire hit (fire school or damage type, or a card applying Burn) that deals HP loss to a Damp holder removes all its Damp.

@@ -780,11 +780,17 @@
           {
             "op": "applyStatus",
             "target": "enemy",
-            "status": "base.charm",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply {base.charm} Charm.",
+        "textTemplate": "Apply {weak} Weak and {vulnerable} Vulnerable.",
         "icon": "skill",
         "flavor": "A courtly working carried beyond the frozen bridges.\n\nPetitioners learned to soften the attention of armed doorwardens before presenting their claims. The words lost their courtesy as the queues grew hungry. Their cadence still causes a raised weapon to hesitate before its appointed stroke.\n\nAn audience can be won without consent."
       },
@@ -1146,18 +1152,12 @@
         "keywords": [],
         "effects": [
           {
-            "op": "applyStatus",
-            "target": "self",
-            "status": "base.foresight",
-            "stacks": 3
-          },
-          {
             "op": "draw",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
-        "faceTemplate": ["Gain {base.foresight} Foresight.", "Draw {draw} cards."],
+        "textTemplate": "Draw {draw} cards.",
+        "faceTemplate": ["Draw {draw} cards."],
         "icon": "skill",
         "flavor": "An exercise of the Observatory's night students.\n\nApprentices watched a candle's reflection through a bowl of dark water before they were allowed near the lenses. The practice taught them to notice a movement before seeking its cause. Few saw farther than the next breath.\n\nThat breath was sometimes sufficient."
       },
@@ -4170,7 +4170,6 @@
                     "burn",
                     "venom",
                     "base.weak",
-                    "base.charm",
                     "base.bind",
                     "base.restrained",
                     "base.poison",
@@ -7714,11 +7713,11 @@
           {
             "op": "applyStatus",
             "target": "self",
-            "status": "base.veil",
+            "status": "evade",
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain Veil for {base.veil} turns. Single-target actions must pass a Perception check.",
+        "textTemplate": "Gain {evade} Evade.",
         "icon": "skill",
         "flavor": "A veiling art of the river city's hidden messengers.\n\nCouriers crossed occupied bridges by moving where a watcher's attention had just departed. A small working deepened that omission until a searching gaze passed over them. Those with a practiced eye could still find the disturbance in the crowd.\n\nA missing figure leaves an occupied space."
       },
