@@ -197,6 +197,9 @@ import { controlGate, recoveryControls } from '../../engine/combatStatusControl.
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
 
+// The upcast prompt after choosing a target is off (owner, 2026-11-20: the Ask to upcast setting was
+// dropped; Core 2 never offered it). Turning it on is this one edit.
+const ASK_TO_UPCAST_AFTER_TARGET = false;
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
@@ -3954,7 +3957,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (blocked) { refusePlay(instanceId, `unplayable: ${blocked}`, blocked); return; }
     const definition = resolveCombatCard(combat, inst);
     const rank = chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0;
-    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastOptions(definition).length) {
+    if (chosenUpcastRanks === null && ASK_TO_UPCAST_AFTER_TARGET && upcastOptions(definition).length) {
       if (expansionChoiceShell) { refusePlay(instanceId, 'upcast choice already open'); return; }
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),

@@ -1063,10 +1063,9 @@ export function advancedConfigOwns(bundle) {
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
-  if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
   for (const key of additionalKeys) {
     // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
-    if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
+    if (key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
@@ -1222,7 +1221,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       for (let index = 0; index < range.length; index += 1) range[index] = Math.max(0, Math.round(range[index] * rewardMultiplier));
     }
   }
-  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
+  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`]);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
@@ -1578,7 +1577,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
-    if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
   }
   const changes = {};
   // A file exported before ruleset 7 carries retired stat keys and per-item
