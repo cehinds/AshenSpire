@@ -12,7 +12,7 @@ const mechanic='defense.wardProtection';
 function fixture() {
   const root=mkdtempSync(join(tmpdir(),'ashen mechanic compatibility '));
   const copy=file=>{mkdirSync(dirname(join(root,file)),{recursive:true});cpSync(join(repo,file),join(root,file),{recursive:true});};
-  for(const file of ['content/source/fixCoreMechanics.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
+  for(const file of ['content/source/fixCoreMechanics.json','content/source/spellTraditions.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
   const index='engine/mechanics/index.json';
   writeFileSync(join(root,index),JSON.stringify({format:'ashen.mechanics-index@1',mechanics:[{id:mechanic,tag:'defense:wardProtection',family:'defense',portability:'portable',modules:['effects']}]}));
   return root;
