@@ -7,6 +7,8 @@
 //   2. A later death relays out the figures and leaves every backdrop box where it was.
 //   3. Review of #2918: the grid follows the resting cards' top, which moves with the hand's size. Changing the hand,
 //      then a death (which relays out the figures with the new grid), leaves every backdrop box where it was.
+//   4. A window resize inside the form factor (1280x800 to 1180x760) refits once; a hand change and a death after it
+//      leave every backdrop box where the resize put it.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
@@ -87,6 +89,31 @@ try {
     assert.notEqual(afterDeath.epoch, handChanged.epoch, `${label}: the death relays out the figures`);
     assert.deepEqual(afterDeath.boxes, settled.boxes, `${label}: and every backdrop box stays where it was`);
     assert.equal(afterDeath.environmentHeight, settled.environmentHeight);
+    await page.close();
+    console.log(`ok ${label}`);
+  }
+  {
+    const label = '1280x800 to 1180x760 core, resize then hand then death';
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+    await page.goto(`${server.url}index.html?shot=combat&gameProfile=core&shotEnemyCount=3&shotSeed=7&shotHand=5`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!window.__combat);
+    await page.waitForSelector('.combatant.enemy .sprite');
+    await page.waitForTimeout(2500);
+    const before = await read(page);
+    await page.setViewportSize({ width: 1180, height: 760 });
+    await page.waitForTimeout(1500);
+    const resized = await read(page);
+    assert.notDeepEqual(resized.boxes, before.boxes, `${label}: the resize refits the backdrop`);
+    for (const cards of [3, 2]) {
+      await page.evaluate(cards => { window.__combat.piles.hand.length = cards; window.__renderCombatForShot(); }, cards);
+      await page.waitForTimeout(800);
+    }
+    assert.deepEqual((await read(page)).boxes, resized.boxes, `${label}: a hand change leaves the backdrop`);
+    await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.hp = 0; enemy.alive = false; window.__renderCombatForShot(); });
+    await settle(page);
+    const afterDeath = await read(page);
+    assert.notEqual(afterDeath.epoch, resized.epoch, `${label}: the death relays out the figures`);
+    assert.deepEqual(afterDeath.boxes, resized.boxes, `${label}: and every backdrop box stays where the resize put it`);
     await page.close();
     console.log(`ok ${label}`);
   }
