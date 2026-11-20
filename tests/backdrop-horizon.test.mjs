@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { alternativeCombatComposition, combatSceneryGround, combatStandingGround } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
@@ -20,10 +20,10 @@ const fitAt = (width, height, narrow) => {
 test('the backdrop frames the enemy back rank, high enough to keep the horizon in view', () => {
   for (const [width, height, narrow] of [[360, 267, true], [390, 460, true], [1440, 400, false]]) {
     const { actors, fit } = fitAt(width, height, narrow);
-    const framed = combatSceneryGround(fit, actors, 0);
-    assert.ok(framed <= height * .6, `camera line at ${framed} of ${height}`);
-    assert.equal(framed, combatStandingGround(fit, actors, 0), 'the grid never splits the camera from the standing line');
-    assert.ok(fit.every(size => size.sceneryGround === undefined && size.standingGround === undefined));
+    const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
+    const backRank = Math.min(...fit.filter(size => enemyIds.has(size.id)).map(size => size.ground));
+    assert.ok(backRank <= height * .6, `back rank at ${backRank} of ${height}`);
+    assert.ok(fit.every(size => size.sceneryGround === undefined && size.standingGround === undefined), 'no camera override');
   }
 });
 
@@ -34,7 +34,6 @@ test('a tablet spacious field frames its backdrop on the enemy ground as before'
   const sizes = actors.map((actor, i) => ({ id: actor.slot.id, x: [260, 500, 700][i],
     visibleHeight: 100, scale: 1, multiplier: 1 }));
   const tall = alternativeCombatComposition({ actors, sizes, width, height: 376, handTop: 376 });
-  assert.equal(combatSceneryGround(tall, actors, 0), combatStandingGround(tall, actors, 0));
   assert.ok(tall.every(fit => fit.sceneryGround === undefined));
 });
 
@@ -59,9 +58,11 @@ test('the stage no longer frames a desktop camera on a horizon share or a standi
   assert.doesNotMatch(art, /horizonCameraGround|desktopHorizonFloor|combatHorizonFloor|horizonShare/);
 });
 
-test('the backdrop never frames so low that the back-row feet leave its standing area', () => {
+// Owner (2026-11-20): the combat backdrop is a fixed picture. No actor-derived ground or standing line reaches it;
+// its floor is the empty grid's back rank (tests/combat-backdrop-fixed.test.mjs).
+test('the combat backdrop takes no ground or standing line from the actors', () => {
   const art = readFileSync(new URL('../src/ui/alternativeArt.js', import.meta.url), 'utf8');
-  assert.match(art, /Math\.min\(ground, standGround \+ \(device\.groundAnchor - standingTop\) \* device\.height \* scale\)/);
+  assert.doesNotMatch(art, /standGround|standingTop/);
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  assert.match(stage, /standGround: combatStandingGround\(sizes, actors, plan\.ground\) \/ zoom/);
+  assert.doesNotMatch(stage, /combatSceneryGround|combatStandingGround/);
 });
