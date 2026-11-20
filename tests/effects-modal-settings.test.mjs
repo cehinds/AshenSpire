@@ -42,3 +42,18 @@ test('the modal draws the master first and greys Visual effects while Effects is
   const on = effectsModalHtml({ effects: true });
   assert.doesNotMatch(on, /data-effects-section="visual" data-off/);
 });
+
+test('screen shake, ambient and fighter motion moved into the modal, keys and defaults unchanged', () => {
+  assert.deepEqual(rows.filter((r) => r.modalSection === 'visual').map((r) => r.key),
+    ['fxGlow', 'fxSparks', 'fxFlash', 'screenShake', 'fxHitStop', 'ambient']);
+  assert.deepEqual(rows.filter((r) => r.modalSection === 'motion').map((r) => r.key),
+    ['motionAttack', 'motionHit', 'motionIdle', 'motionDefeat']);
+  assert.equal(row('screenShake').def, true);
+  assert.equal(row('ambient').def, 'normal');
+  const html = effectsModalHtml({});
+  assert.ok(html.indexOf('data-effects-section="motion"') > html.indexOf('data-effects-section="visual"'));
+  assert.doesNotMatch(html, /data-effects-section="motion" data-off/, 'fighter motion works with Effects off');
+  assert.ok(html.includes(t('settings.effects.motionNote')));
+  const interfaceRows = rows.filter((r) => r.advancedGroup === 'Interface' && !r.modal).map((r) => r.key);
+  assert.ok(!interfaceRows.includes('ambient'), 'ambient left Advanced > Interface');
+});

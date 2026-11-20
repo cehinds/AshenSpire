@@ -318,7 +318,7 @@ export function openEffectsModal({ settings, onChange, opener = document.activeE
   const draw = (focusKey = null) => {
     if (!host) return;
     host.innerHTML = effectsModalHtml(settings);
-    host.querySelectorAll('[data-effects-section][data-off] input, [data-effects-section][data-off] button').forEach((control) => { control.disabled = true; });
+    host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
     host.querySelectorAll('.toggle[data-key]').forEach((box) => {
       box.addEventListener('change', () => commit(box.dataset.key, box.checked));
     });
@@ -1618,6 +1618,8 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     if (row.retired || row.modal || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
     if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
   }
+  // The Effects modal's rows are found too, filed under the button that opens them.
+  for (const row of SETTINGS_ROWS) if (row.modal === 'effects' && hit(row)) hits.push({ row, where: `General › Combat › ${t('settings.row.effects')}` });
   const advanced = categoryHandler('Advanced')?.rows || [];
   for (const group of visibleAdvancedGroups(debug, profile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
