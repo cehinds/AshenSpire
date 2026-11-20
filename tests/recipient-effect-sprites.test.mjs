@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PlayRecipientEffect, ClearRecipientEffects, RecipientPlaceholderSvg, PrewarmRecipientEffect, RecipientEffectView, PlayRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
+import { PlayRecipientEffect, ClearRecipientEffects, RecipientPlaceholderSvg, PrewarmRecipientEffect, PrewarmCombatRecipientEffects, RecipientEffectView, PlayRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
 import { DecorateRecipientEffects } from '../src/ui/recipientEffectEvents.js';
 import { playTimeline } from '../src/ui/fx.js';
 import { withKitDom, rewardDom, installDom } from './helpers/dom.mjs';
@@ -189,17 +189,48 @@ test('cold loads cannot join an active contact late or resurrect it; the next hi
   } finally { ClearRecipientEffects(layer); globalThis.Image = oldImage; restore(); }
 });
 
-test('effects off and reduced motion omit recipient sprites', () => {
+// Impact sprites carry combat feedback, not decoration, so the decorative
+// Effects toggle no longer hides them; reduced motion and Reduce flashes still do.
+test('recipient sprites survive Effects off; reduced motion and reduce flashes omit them', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   withKitDom(dom => {
-    const layer = dom.document.createElement('div');
     dom.document.documentElement = { dataset: { effects: 'off' } };
-    PlayRecipientEffect(layer, box, recipe);
-    assert.equal(layer.children.length, 0);
+    const shown = dom.document.createElement('div');
+    PlayRecipientEffect(shown, box, recipe);
+    assert.ok(shown.children.length > 0, 'Effects off still shows the recipient sprite');
+    ClearRecipientEffects(shown);
     dom.document.documentElement.dataset.effects = 'on';
     dom.document.body.classList.add('reduced-motion');
-    PlayRecipientEffect(layer, box, recipe);
-    assert.equal(layer.children.length, 0);
+    const still = dom.document.createElement('div');
+    PlayRecipientEffect(still, box, recipe);
+    assert.equal(still.children.length, 0);
+    dom.document.body.classList.remove('reduced-motion');
+    dom.document.body.classList.add('reduce-flashes');
+    const flashless = dom.document.createElement('div');
+    PlayRecipientEffect(flashless, box, recipe);
+    assert.equal(flashless.children.length, 0);
   });
+});
+
+// Mounting a fight warms every configured contact/caster shape so the first hit
+// is not a cold placeholder; it must not wait on decode and must respect the
+// reduced-motion switch.
+test('combat prewarm requests every configured warm shape and skips under reduced motion', async () => {
+  const dom = rewardDom(), restore = installDom(dom), oldImage = globalThis.Image;
+  const requested = [];
+  globalThis.Image = class {
+    naturalWidth = 768; naturalHeight = 256;
+    set src(value) { requested.push(value); queueMicrotask(() => this.onload?.()); }
+  };
+  try {
+    const resolveAsset = path => `warm/${path}`;
+    const results = await PrewarmCombatRecipientEffects({ resolveAsset });
+    assert.equal(results.length, SETTINGS.behavior.warmShapes.length);
+    for (const shape of SETTINGS.behavior.warmShapes)
+      assert.ok(requested.some(url => url.includes(`/${shape}.png`)), `${shape} is warmed`);
+    dom.document.body.classList.add('reduced-motion');
+    assert.deepEqual(await PrewarmCombatRecipientEffects({ resolveAsset: path => `cold/${path}` }), []);
+  } finally { globalThis.Image = oldImage; restore(); }
 });
 
 test('receipt decoration keeps actual targets and action scope for player, enemy, and Ward', () => {
