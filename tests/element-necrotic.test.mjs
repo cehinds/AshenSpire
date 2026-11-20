@@ -1,5 +1,5 @@
 // W25 (owner, 2026-11-14) Necrotic: x0.7 damage; ignores Poise entirely (Block then HP; Poise neither absorbs nor drops); each necrotic hit that lands while the target's Poise is broken adds Necrotic build-up
-// equal to the attacker INT (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
+// equal to the attacker INT (at least 1; stat contract 2026-11-18: Decay/Necrotic is Divine, so WIS, and a fight saved before spell traditions keeps INT); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
@@ -31,11 +31,17 @@ test('live: a necrotic hit never touches Poise, and the quote is what is lost', 
   assert.ok(played.lost.e1 > 0);
 });
 
-test('a hit on a target whose Poise is broken adds build-up equal to the attacker INT, at least 1; with Poise left it adds none', () => {
-  for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
-    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { intelligence } });
+test('a hit on a target whose Poise is broken adds build-up equal to the attacker WIS, at least 1; with Poise left it adds none', () => {
+  // Stat contract 2026-11-18: "Divine and Decay/Necrotic are Divine", read from WIS whatever INT is.
+  for (const [wisdom, intelligence, stacks] of [[4, 0, 4], [0, 4, 1]]) {
+    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { wisdom, intelligence } });
     play(combat, 'core.graveToll', enemy.id);
-    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `INT ${intelligence}`);
+    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `WIS ${wisdom}, INT ${intelligence}`);
+  }
+  for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
+    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { intelligence, wisdom: 0 }, preTraditions: true });
+    play(combat, 'core.graveToll', enemy.id);
+    assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `before spell traditions, INT ${intelligence}`);
   }
   const held = fight({ enemies: 1, poise: 50 });
   const played = play(held.combat, 'core.graveToll', held.enemy.id);
