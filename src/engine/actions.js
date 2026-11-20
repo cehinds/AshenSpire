@@ -1718,10 +1718,23 @@ export function ComputeStatusGrant(ctx, action, eff, target, base) {
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
 }
 
-/** The Counter stacks one Counter play grants a holder under the card-stack rule, Mail's gain bonus included; 0 under the Block-as-stacks rule. The quote reads this, the landed opcode below grants the same. */
-export function CounterStacksGranted(ctx, card, holder) {
-  const grant = fixCoreEnabled(ctx) ? CounterStackGrant(ctx, card) : 0;
-  return grant > 0 ? grant + GearGainBonus(holder, 'counter') : 0;
+/**
+ * The Counter stacks one Counter play grants a holder, summed the way live play grants them: the card's own base grant (the synthetic
+ * `gainCounterStacks` the armed Counter adds; 0 under the Block-as-stacks rule) plus every authored `gainCounterStacks` with an explicit
+ * amount (the fx:counter upgrade), each given Mail's gain bonus unless it opts out. `effects` are the card's prepared effects and
+ * `amountOf(effect)` reads an authored amount; the quote and the landed opcode below must agree.
+ */
+export function CounterStacksGranted(ctx, card, holder, effects = [], amountOf = effect => Number(effect.amount) || 0) {
+  if (!fixCoreEnabled(ctx)) return 0;
+  const bonus = GearGainBonus(holder, 'counter');
+  const base = CounterStackGrant(ctx, card);
+  let total = base > 0 ? base + bonus : 0;
+  for (const effect of effects) {
+    if (effect.op !== 'gainCounterStacks' || effect.amount === undefined || !['self', 'owner'].includes(effect.target)) continue;
+    const gained = amountOf(effect);
+    total += gained > 0 && !effect.noGainBonus ? gained + bonus : Math.max(0, gained);
+  }
+  return total;
 }
 
 function runGuardStackOpcode(ctx, action, eff) {

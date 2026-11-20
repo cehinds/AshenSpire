@@ -35,3 +35,15 @@ for (const [armor, stacks] of [[null, 1], ['wyrmscaleMail', 2]]) test(`guardCoun
   dispatch(combat, { type: 'playCard', cardInstanceId: 'gc' });
   assert.equal(combat.player.counterStacks || 0, stacks, 'live play grants the same');
 });
+
+// An upgraded Counter (the fx:counter step adds an authored gainCounterStacks) is quoted as every stack op live play runs, each with Mail's bonus.
+test('core.counter upgraded with a +1 Counter step and Mail: the quote and the face say 5 and live play grants 5', () => {
+  const combat = world('wyrmscaleMail');
+  combat.piles.hand = [{ instanceId: 'gc', cardId: 'core.counter', upgraded: true, upgradeSteps: [{ k: 'authored' }, { k: 'fx', fx: 'counter', n: 1 }] }];
+  const preview = previewCard(combat, 'gc');
+    assert.equal(preview.counterStackGrant, 5, 'base 1 + 1 upgrade + 1 Mail, plus the step 1 + 1 Mail');
+  const html = cardFaceLines(registries.cards.get('core.counter'), preview, registries, null).map(row => row.html).join('');
+  assert.match(html, />5<\/span> Counter stacks/);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'gc' });
+  assert.equal(combat.player.counterStacks || 0, 5, 'live play grants the same');
+});

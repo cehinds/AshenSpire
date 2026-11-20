@@ -2549,6 +2549,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const authoredSp = authoredCosts.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : undefined); // profileCardCosts' chain
   // The one computed return (SPEC §17) for any Core Counter, with or without an authored damage opcode: the card face
   // reads it for the HP, Poise and conditional Block rows its effects do not already carry.
+  const counterStackGrant = coreCounterCard ? A.CounterStacksGranted(combat, action.card, p, preparedEffects, effect => Math.floor(evalPreview(combat, action, effect.amount, p))) : 0;
   let supportCounterReturn = null;
   if (coreCounterCard) {
     const read = coreCounterReturn();
@@ -2601,7 +2602,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     values,
     ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
     // The Counter stacks this play grants (the card's own, plus Mail's gain bonus), the way Evade names its grant.
-    ...(coreCounterCard && FixCoreCounterStacks(combat) && A.CounterStacksGranted(combat, action.card, p) > 0 ? { counterStackGrant: A.CounterStacksGranted(combat, action.card, p) } : {}),
+    ...(coreCounterCard && FixCoreCounterStacks(combat) && counterStackGrant > 0 ? { counterStackGrant } : {}),
     tokens,
     damageSequences,
     // Core: the live Precision an entry into this card's stance grants (base + the actor's stat mix); the face prints it.
