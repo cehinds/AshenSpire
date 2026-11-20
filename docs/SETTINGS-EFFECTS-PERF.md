@@ -30,7 +30,7 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [x] Strings in `content/source/uiStrings.csv`, short and plain
 
 ### Performance (ranked)
-- [ ] **Root cause of "slow late in long fights":** every action deep-copies the whole fight log (`structuredClone` in `candidateState`, `src/engine/combatRules.js:102`). 200-turn Node run: playCard 4 → 45 ms, endTurn 16 → 61 ms as the log grows 1.4k → 10.7k entries. Fix in progress (share old entries, copy only the array), then Opus review.
+- [x] **Root cause of "slow late in long fights":** every action deep-copies the whole fight log (`structuredClone` in `candidateState`, `src/engine/combatRules.js:102`). 200-turn Node run: playCard 4 → 45 ms, endTurn 16 → 61 ms as the log grows 1.4k → 10.7k entries. Fixed: transactions share old rows and copy only the array. 80-turn run: playCard 15 → 29 ms before, 2.3 → 2.4 ms after; endTurn 24 → 37 ms before, 8.3 → 9.0 ms after. Opus review clean (64 seeded fights hash identically).
 - [x] `combat.js:1701` copied the whole event log every render; now reads only the new tail
 - [x] `tooltip.js:693` body-wide observer rescanned the whole page on every DOM change; now scans only added nodes
 - [ ] `combat.js` `render()` re-runs every geometry pass on every action. Blocked: contract C8 (`tools/ui-components.mjs`, `stableCombatStageRendering`) pins those lines; patch ready in `eebf2e95ca`
@@ -46,4 +46,4 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 
 ### Verify
 - [x] Sandbox QA `docs/qa/acceptance.effects-modal.json`: 24 PASS / 0 FAIL at 1280x800 and 390x844
-- [ ] Before/after timing of one card play and one end turn
+- [x] Before/after timing of one card play and one end turn (Node, 80 turns; see the root-cause line)
