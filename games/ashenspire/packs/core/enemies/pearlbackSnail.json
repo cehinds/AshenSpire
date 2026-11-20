@@ -74,14 +74,16 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "pearlGuard",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:pearlbackSnail.nacreWall": {
       "aiWeight": 15,
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "nacreWall",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:pearlbackSnail.advance": {
       "aiWeight": 0,
