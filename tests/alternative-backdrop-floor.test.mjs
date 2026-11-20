@@ -65,6 +65,6 @@ test('combat passes only the back rank top as the ceiling for the painted ground
   assert.match(art, /maximumPaintTop: \(floorTop - frameTop\) \/ frameScale/);
   assert.doesNotMatch(art, /floorShadowTop|shadowClearancePx/);
   const model = read('../src/ui/models/CombatBackdropFitModel.js');
-  assert.match(model, /floorTop: Number\.isFinite\(backRankTop\) \? fieldTopLocal \+ backRankTop \/ zoom/);
+  assert.match(model, /floorTop: Number\.isFinite\(grid\.backRankTop\) \? fieldTopLocal \+ grid\.backRankTop/);
   assert.doesNotMatch(read('../src/ui/components/battlefieldStage.js'), /floorShadowTop|getComputedStyle\(sprite, '::before'\)/);
 });

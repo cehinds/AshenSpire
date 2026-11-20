@@ -3,27 +3,50 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 
 // The combat backdrop is one fixed picture per screen (owner, 2026-11-20): its fit
 // depends on the combat box, the zoom, the device and the scene, never on the
-// enemies, how many there are, or who is alive. The formation plan supplies only
-// the empty grid's lines, which every cell has whether occupied or not.
-// Lengths in are real px (the scaled plan, the combat and field boxes); out are
-// the fitters' local px.
-export function CombatBackdropInputs({ combatWidth, combatHeight, fieldTop, fieldHeight, zoom, narrow, plan, config = wireframeUi.scene })
+// enemies, how many there are, who is alive, or the hand. The formation plan
+// supplies only the empty grid's lines, taken once per screen.
+
+// The grid lines a plan drew, in local px from the field's top. `screenKey` names
+// the screen the plan was made for.
+export function BackdropGridLines({ plan, zoom, narrow, screenKey })
+{
+  const backRankTop = plan.visualBands?.[0]?.top;
+  return {
+    screenKey,
+    narrow,
+    backRankTop: Number.isFinite(backRankTop) ? backRankTop / zoom : undefined,
+    cellGrounds: plan.cells.map(cell => cell.ground / zoom),
+  };
+}
+
+// The lines held for this screen. They are taken from the latest plan only when
+// the screen changes (the first fit of a fight, a resize); a later plan on the same
+// screen (a death after the hand changed size, which moves the grid a little)
+// never replaces them. `lines` reads the latest plan's lines for this screen.
+export function HeldBackdropGrid(held, { screenKey, lines })
+{
+  if (held?.screenKey === screenKey) return held;
+  return lines?.() ?? held ?? null;
+}
+
+// Lengths in are real px (the combat and field boxes); the grid is local px; out
+// are the fitters' local px.
+export function CombatBackdropInputs({ combatWidth, combatHeight, fieldTop, fieldHeight, zoom, grid, config = wireframeUi.scene })
 {
   const width = combatWidth / zoom;
   const height = combatHeight / zoom;
   const fieldTopLocal = fieldTop / zoom;
   const fieldHeightLocal = fieldHeight / zoom;
-  const backRankTop = plan.visualBands?.[0]?.top;
   const sceneHeight = fieldTopLocal + fieldHeightLocal;
   return {
     alternative: {
       width,
       height: fieldHeightLocal,
       fieldTop: fieldTopLocal,
-      narrow,
+      narrow: grid.narrow,
       coverFloor: true,
       zoom,
-      floorTop: Number.isFinite(backRankTop) ? fieldTopLocal + backRankTop / zoom : undefined,
+      floorTop: Number.isFinite(grid.backRankTop) ? fieldTopLocal + grid.backRankTop : undefined,
     },
     environment: {
       height,
@@ -36,7 +59,7 @@ export function CombatBackdropInputs({ combatWidth, combatHeight, fieldTop, fiel
         height: sceneHeight,
         fieldTop: fieldTopLocal,
         fieldHeight: fieldHeightLocal,
-        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })) },
+        formation: { cells: grid.cellGrounds.map(ground => ({ ground })) },
       }, config),
     },
   };

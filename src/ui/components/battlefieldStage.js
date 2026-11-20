@@ -1,5 +1,5 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
-import { CombatBackdropInputs } from '../models/CombatBackdropFitModel.js';
+import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid } from '../models/CombatBackdropFitModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -707,7 +707,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
-  let backdropGrid = null, backdropRequest = 0;
+  let backdropRequest = 0, lastPass = null;
   // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
   // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
   // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
@@ -1572,24 +1572,32 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    backdropGrid = { plan, narrow };
-    fitCombatBackdrop();
+    fitCombatBackdrop({ plan, narrow });
     field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
   // The backdrop is fitted apart from the formation pass (owner, 2026-11-20: a fixed picture). Its inputs are the
-  // combat box, the zoom, the device, the scene and the grid lines the last formation pass drew, so it follows the
-  // combat box as it settles and a death, which relays out the figures, leaves it as it was.
+  // combat box, the zoom, the device, the scene and the empty grid's lines, held per screen in layoutState (co-op
+  // re-wires the stage): it follows the combat box as it settles, and a later pass on the same screen, such as a
+  // death after the hand changed size, leaves it as it was.
   // Fit the sky from the top of the combat screen, including the HUD. Extending a field-only crop upward can expose
   // empty space above the painting. Continuing behind cards must not move the ground line.
-  function fitCombatBackdrop() {
+  // `pass` is the formation pass that just ran, when called from one.
+  function fitCombatBackdrop(pass = null) {
     cancelAnimationFrame(backdropRequest);
     backdropRequest = 0;
-    if (!field.isConnected || !backdropGrid) return;
+    if (!field.isConnected) return;
     const combat = field.closest('.combat');
     const measuredField = field.getBoundingClientRect();
     const zoom = measuredField.width / field.offsetWidth || 1;
     const rect = combat.getBoundingClientRect();
+    const narrow = document.documentElement.dataset.layout === 'narrow';
+    const screenKey = [rect.width, rect.height, zoom, narrow, document.documentElement.dataset.formFactor]
+      .map(value => typeof value === 'number' ? Math.round(value * 64) / 64 : value).join('|');
+    if (pass) lastPass = pass;
+    const lines = lastPass && (() => BackdropGridLines({ plan: lastPass.plan, zoom, narrow: lastPass.narrow, screenKey }));
+    const grid = layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid, { screenKey, lines });
+    if (!grid) return;
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
@@ -1598,12 +1606,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     setVar(combat, '--environment-top', '0px');
     setVar(combat, '--environment-height', `${rect.height / zoom}px`);
     const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height,
-      fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64, zoom,
-      narrow: backdropGrid.narrow, plan: backdropGrid.plan });
+      fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64, zoom, grid });
     fitAlternativeBackdrop(combat, backdropInputs.alternative);
     if (backdrop) fitSceneBackdrop(backdrop, { width: backdropWidth, ...backdropInputs.environment });
   }
-  const scheduleBackdrop = () => { if (!backdropRequest) backdropRequest = requestAnimationFrame(fitCombatBackdrop); };
+  const scheduleBackdrop = () => { if (!backdropRequest) backdropRequest = requestAnimationFrame(() => fitCombatBackdrop()); };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
   const scheduleForced = () => { forcePending = true; schedule(); };
   // An art image that finishes loading settles the bounds the fit fell back from (the whole sprite box): that one
