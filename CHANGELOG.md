@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-20
+
+- **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.224`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
+
 ## 2026-11-19
 
-- **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.222`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
+- **Impact sprites show with Effects off** ([#2888](https://github.com/cehinds/AshenSpire/pull/2888), `0.7.4.224`). Hits, spells and status changes now show their impact sprite on the affected fighter whether Effects is on or off; Reduce motion and Reduce flashes still hide them. Fights load these sprites as they open, so the first hit is less often a plain marker.
 - **A new run starts with only the armour you chose** ([#2886](https://github.com/cehinds/AshenSpire/pull/2886), `0.7.4.222`). The Armoury no longer lists Wayfarer Plate, Nightweave, Rite Vestments and Gutter Leathers as owned from the start; shared sets join your Armoury when you buy them. Armour you already wear in a saved run, or wore before a class swap, stays yours after you take it off.
 - **A tidier read-only deck view** ([#2881](https://github.com/cehinds/AshenSpire/pull/2881), `0.7.4.220`). Away from rest sites, the deck tab and its window say View Deck, omit the Pile pretitle, remove the empty space above the cards and halve card spacing. Viewing keeps your deck unchanged; editing at a rest site still says Edit Deck.
 - **End Turn no longer locks up with Ward or Barrier** ([#2883](https://github.com/cehinds/AshenSpire/pull/2883), `0.7.4.218`). Fixed a soft-lock where End Turn stopped working after a run of card plays while holding Ward or Poise Barrier; affected saved fights now load and continue.
