@@ -198,9 +198,10 @@ try {
     await page.waitForSelector('.equip-compare-modal');
     const armourNames = await page.$$eval('.equip-compare-face', (nodes) => nodes.map((n) => n.dataset.compareSide));
     assert.deepEqual(armourNames, ['current', 'new']);
-    assert.ok(await page.locator('[data-compare-row="defenseRating"]').count(), 'armour lists DR');
+    // AR/DR/PR are removed (owner ruling 2026-11-18 §8, docs/balance/owner-ruling-2026-11-18.md): armour compares by Poise, not DR.
+    assert.equal(await page.locator('[data-compare-row="defenseRating"]').count(), 0, 'armour lists no DR row');
     assert.ok(await page.locator('[data-compare-row="poise"]').count(), 'armour lists Poise');
-    if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-armour-desktop.png` });
+    if (SHOT_DIR) { await wait(page, 800); await page.screenshot({ path: `${SHOT_DIR}/compare-armour-desktop.png` }); }
   } else console.log('note: no spare Reaver outfit in content; armour comparison covered by the model test');
 
   // Reduced motion: no fade, simply gone.
@@ -219,6 +220,17 @@ try {
   await mount(phone);
   assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal overflow at 390');
   if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/equipment-phone.png` });
+  // The armour comparison on a phone: Poise, and no DR row (owner ruling 2026-11-18 §8).
+  if (spare) {
+    await phone.click(`${rowSel('body:0')} .armament-replace`).catch(async () => { await phone.click('.armoury-position-card.is-occupied .armament-replace'); });
+    await phone.waitForSelector('.equip-item-choice');
+    await pickInModal(phone, spare);
+    await phone.waitForSelector('.equip-compare-modal');
+    assert.equal(await phone.locator('[data-compare-row="defenseRating"]').count(), 0, 'phone: armour lists no DR row');
+    assert.ok(await phone.locator('[data-compare-row="poise"]').count(), 'phone: armour lists Poise');
+    assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'phone: the comparison stays inside 390');
+    if (SHOT_DIR) { await wait(phone, 800); await phone.screenshot({ path: `${SHOT_DIR}/compare-armour-phone.png` }); }
+  }
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/equipment-desktop.png` });
   assert.deepEqual(errors, [], 'no page errors');
   console.log('Armoury compact list, toast and Replace comparison behave as wireframed.');
