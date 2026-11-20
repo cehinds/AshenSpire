@@ -413,6 +413,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       unconditional.push({ cat: 'damage', text: conciseCounter && key === 'hp' ? num(amount, payload[key]) : `${typed(num(amount, payload[key]), type)} ${label}` });
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
+    // The Counter stacks the play grants, Mail's gain bonus included (preview.counterStackGrant).
+    if (preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
     // Beating the revealed hit also adds Block before it lands.
     if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }

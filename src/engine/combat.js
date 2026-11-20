@@ -2600,6 +2600,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
     ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
+    // The Counter stacks this play grants (the card's own, plus Mail's gain bonus), the way Evade names its grant.
+    ...(coreCounterCard && FixCoreCounterStacks(combat) && A.CounterStacksGranted(combat, action.card, p) > 0 ? { counterStackGrant: A.CounterStacksGranted(combat, action.card, p) } : {}),
     tokens,
     damageSequences,
     // Core: the live Precision an entry into this card's stance grants (base + the actor's stat mix); the face prints it.

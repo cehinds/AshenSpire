@@ -1718,6 +1718,12 @@ export function ComputeStatusGrant(ctx, action, eff, target, base) {
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
 }
 
+/** The Counter stacks one Counter play grants a holder under the card-stack rule, Mail's gain bonus included; 0 under the Block-as-stacks rule. The quote reads this, the landed opcode below grants the same. */
+export function CounterStacksGranted(ctx, card, holder) {
+  const grant = fixCoreEnabled(ctx) ? CounterStackGrant(ctx, card) : 0;
+  return grant > 0 ? grant + GearGainBonus(holder, 'counter') : 0;
+}
+
 function runGuardStackOpcode(ctx, action, eff) {
   if (eff.op === 'gainCounterStacks') {
     if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)

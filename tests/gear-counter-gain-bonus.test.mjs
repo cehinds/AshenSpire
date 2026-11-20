@@ -1,0 +1,37 @@
+// Review finding (MEDIUM): the Mail Counter gain bonus is on the face and the quote as well as in play.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { compileGameProfiles } from '../tools/game-config.mjs';
+import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { equipPiece } from '../src/model/loadout.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRng } from '../src/engine/rng.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
+import { cardFaceLines } from '../src/model/cardFaceText.js';
+const { catalog, authors } = compileGameProfiles();
+const profile = resolveGameAuthor(authors.core, catalog);
+const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+function world(armor) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 31, profileMeta: META });
+  if (armor) equipPiece(registries, run.loadout, 'armor', 0, armor, { has: () => true }, { inCombat: false, classId: run.class, attributes: run.attributes });
+  const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  Object.assign(combat.enemies[0], { hp: 900, maxHp: 900 });
+  combat.player.stamina = combat.player.energy = 100;
+  combat.piles.hand = [{ instanceId: 'gc', cardId: 'guardCounter' }];
+  return combat;
+}
+for (const [armor, stacks] of [[null, 1], ['wyrmscaleMail', 2]]) test(`guardCounter ${armor ? 'with Mail' : 'bare'}: the quote, the face and live play all say ${stacks} Counter stack(s) granted`, () => {
+  const combat = world(armor);
+  const preview = previewCard(combat, 'gc');
+  assert.equal(preview.counterStackGrant, stacks, 'the quote names the stack grant');
+  const html = cardFaceLines(registries.cards.get('guardCounter'), preview, registries, null).map(row => row.html).join('');
+  assert.match(html, new RegExp(`>${stacks}</span> Counter stack`));
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'gc' });
+  assert.equal(combat.player.counterStacks || 0, stacks, 'live play grants the same');
+});
