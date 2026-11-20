@@ -313,9 +313,9 @@ export function openEffectsModal({ settings, onChange, opener = document.activeE
   const commit = (key, value) => {
     settings[key] = value;
     onChange({ [key]: value });
-    draw(key);
+    draw(key, value);
   };
-  const draw = (focusKey = null) => {
+  const draw = (focusKey = null, focusValue = null) => {
     if (!host) return;
     host.innerHTML = effectsModalHtml(settings);
     host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
@@ -336,7 +336,12 @@ export function openEffectsModal({ settings, onChange, opener = document.activeE
       });
     });
     refreshButton();
-    if (focusKey) host.querySelector(`[data-row-key="${CSS.escape(focusKey)}"] [data-key]`)?.focus({ preventScroll: true });
+    if (focusKey) {
+      // Focus stays on the control that was used: the clicked choice, else the row's first control.
+      const rowSelector = `[data-row-key="${CSS.escape(focusKey)}"]`;
+      const chosen = typeof focusValue === 'string' ? host.querySelector(`${rowSelector} [data-key][data-val="${CSS.escape(focusValue)}"]`) : null;
+      (chosen || host.querySelector(`${rowSelector} [data-key]`))?.focus({ preventScroll: true });
+    }
   };
   return openModal({
     size: 'sm',
