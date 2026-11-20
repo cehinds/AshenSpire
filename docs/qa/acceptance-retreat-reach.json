@@ -463,6 +463,90 @@
         }
       ],
       "failure": []
+    },
+    {
+      "name": "two-stacks-melee",
+      "url": "?shot=combat&shotSeed=2&shotClass=starseer&shotEnemies=gildedKnight&shotDeck=core.galePush,core.galePush,core.strike,core.strike,core.strike",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.galePush\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 3500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.galePush\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 3500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.strike\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row after two Gale Pushes (two Retreat stacks)",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "two Retreat stacks price two Advances: Strike 1 + 2 = total 3 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 3 Stamina"
+        },
+        {
+          "kind": "text",
+          "label": "the quote shows the Advances as +2 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+2 Stamina"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "two stacks are priced as one (a flat band): total 2 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 2 Stamina"
+        }
+      ]
     }
   ]
 }
