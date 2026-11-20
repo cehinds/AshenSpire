@@ -45,16 +45,18 @@ async function openPicker(page) {
     });
   });
   await page.locator('[data-slot-position="armor:0"] .armament-replace').click();
-  await page.locator('.equip-picker').waitFor();
+  await page.locator('.equip-item-choice').waitFor();
+}
+// The slot's item list is a modal (owner 2026-11-19): choose a row, then its Equip.
+async function choose(page, id) {
+  await page.locator(`.equip-item-choice [data-item-option="${id}"]`).click();
+  await page.locator('.equip-item-choice .as-btn.primary').click();
 }
 
-const armourIds = page => page.locator('.equip-picker-row[data-row-key^="armour:"]').evaluateAll(rows => rows.map(row => row.dataset.itemId));
+const armourIds = page => page.locator('.equip-item-choice [data-item-option]').evaluateAll(rows => rows.map(row => row.dataset.itemOption));
 async function capture(page, name) {
   if (!shotDir) return;
   await page.evaluate(() => document.fonts.ready);
-  await page.locator('.equip-picker-thumb').evaluateAll(async images => {
-    await Promise.all(images.map(image => image.decode().catch(() => {})));
-  });
   await page.screenshot({ path: resolve(shotDir, name) });
 }
 
@@ -80,9 +82,7 @@ try {
         const starter = await fixture(page, classId, alternate);
         await openPicker(page);
         assert.deepEqual(await armourIds(page), [starter], `${viewport.name}/${classId}/${starter}: only the chosen starting armour`);
-        await page.locator('.equip-picker-filter').click();
-        assert.deepEqual(await armourIds(page), [starter], 'showing items that do not fit cannot reveal unowned armour');
-        await page.locator('.equip-picker-filter').click();
+        assert.equal(await page.locator('.equip-item-choice [data-item-option]').first().isDisabled(), true, 'the worn starter is listed, not offered');
         if (classId === 'reaver' && !alternate) await capture(page, `fresh-armour-${viewport.name}.png`);
       }
     }
@@ -104,11 +104,11 @@ try {
     await openPicker(page);
     assert.deepEqual(await armourIds(page), ['default', bought], 'a purchase adds only that armour');
     await capture(page, `purchased-armour-${viewport.name}.png`);
-    await page.locator(`.equip-picker-row[data-item-id="${bought}"] .equip-picker-act`).click();
+    await choose(page, bought);
     await page.locator('.equip-compare-equip').click();
     assert.equal(await page.evaluate(() => window.__freshArmour.run.loadout.sets.armor[0]), bought, 'purchased armour equips');
     await openPicker(page);
-    await page.locator('.equip-picker-row[data-item-id="default"] .equip-picker-act').click();
+    await choose(page, 'default');
     await page.locator('.equip-compare-equip').click();
     assert.equal(await page.evaluate(() => window.__freshArmour.run.loadout.sets.armor[0]), 'default', 'starting armour remains available');
     assert.deepEqual(errors, [], 'no browser errors');

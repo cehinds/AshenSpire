@@ -3465,7 +3465,9 @@
       }
     ],
     "upgrade": {
-      "manaCost": 1
+      "manaCost": 1,
+      "keywords": [],
+      "textTemplate": "Gain {dexterity} Dexterity. Draw {draw} card."
     },
     "minCombatExpansionVersion": 2
   },
