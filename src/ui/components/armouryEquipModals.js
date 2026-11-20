@@ -5,6 +5,7 @@ import { t as translate } from '../strings.js';
 
 const CLICK_EVENT = 'click';
 const SLOT_CHOICE_KIND = 'slotChoice';
+const ITEM_CHOICE_KIND = 'itemChoice';
 const BACK_LABEL_KEY = 'common.back';
 const EQUIP_LABEL_KEY = 'armoury.picker.act.equip';
 const CARD_OPTIONS = Object.freeze({
@@ -97,6 +98,28 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
         kind: SLOT_CHOICE_KIND,
         rows: buildSlotRowModels(options),
         title: translate('armoury.slot.title'),
+        opener,
+        onCommit: onChoose,
+    });
+}
+
+/**
+ * OpenItemChoiceModal({ slotLabel, options, onChoose, opener }) — Replace / Choose item on a slot (owner, 2026-11-19):
+ * the items that fit that slot as option rows in a modal, instead of a picker drawn under the slot rows.
+ * `options`: { id, name, sub, status, disabled, hint }. Choosing one hands its id to `onChoose`.
+ */
+export function OpenItemChoiceModal({ slotLabel, options, onChoose, opener })
+{
+    return OpenChoiceModal({
+        kind: ITEM_CHOICE_KIND,
+        rows: options.map((option) => ({
+            id: option.id,
+            name: option.name,
+            text: option.disabled && option.hint ? option.hint : option.sub,
+            chip: option.status || '',
+            disabled: !!option.disabled,
+        })),
+        title: translate('armoury.picker.title', { slot: slotLabel }),
         opener,
         onCommit: onChoose,
     });
