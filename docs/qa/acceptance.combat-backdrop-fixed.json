@@ -1,0 +1,28 @@
+{
+  "request": "When combat begins, the background should be fixed (like a solid image). Some times when an enemy is defeated, the layers will shift position. That should not happen. It should be pretty uniform between all combat scenarios (owner, 2026-11-20).",
+  "success": "A ?shot=combat fight draws the backdrop over the whole combat screen with its layers and enemies, and no console errors. tests/combat-backdrop-fixed.browser.mjs measures the backdrop through a resize of the combat box and a death.",
+  "failure": "The backdrop or its layers are missing, or the page logs console errors.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat-three-enemies",
+      "url": "?shot=combat&shotSeed=4&shotEnemyCount=3",
+      "ready": ".combatant .sprite",
+      "settleMs": 2500,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The backdrop is drawn", "selector": ".combat .environment-backdrop" },
+        { "kind": "count", "label": "The backdrop has its layers", "selector": ".combat .layered-environment-layer", "min": 3 },
+        { "kind": "within", "label": "The backdrop stays inside the combat screen", "selector": ".combat .environment-backdrop", "container": ".combat" },
+        { "kind": "count", "label": "Three enemies are drawn", "selector": ".combatant.enemy .sprite", "min": 3 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "No backdrop layer is drawn", "selector": ".combat .layered-environment-layer", "eq": 0 }
+      ]
+    }
+  ]
+}
