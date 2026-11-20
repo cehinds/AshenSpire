@@ -1,6 +1,8 @@
 // tests/option-choice-modals.test.mjs — the card choice (stance), the discard choice and the armoury slot choice
 // use the reaction modal's design (owner, 2026-11-14): optionRowList rows, an exit and ONE primary commit button that
 // stays disabled until a selection; a tap selects and never commits; the commit passes the selected id(s) as before.
+// The armoury slot choice is the exception (docs/ARMOURY-LAYOUT-BRIEF.md, Armaments List): a slot press goes straight
+// on to the equip confirmation, with no separate Choose button, so only that later Confirm changes the loadout.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { installDom } from './helpers/option-modal-dom.mjs';
@@ -63,7 +65,7 @@ test('discard choice: rows toggle up to the count, the primary enables at exactl
   } finally { restore(); }
 });
 
-test('slot choice: rows, a locked position is a disabled row, Choose commits the selected id after closing', async () => {
+test('slot choice: rows, a locked position is a disabled row, a press passes the slot on after closing, with no Choose', async () => {
   const { document, restore } = installDom();
   try {
     const { OpenSlotChoiceModal } = await import('../src/ui/components/armouryEquipModals.js');
@@ -74,13 +76,12 @@ test('slot choice: rows, a locked position is a disabled row, Choose commits the
     assert.ok(rows.every((row) => row.classes.has('option-row')));
     assert.equal(rows[1].disabled, true);
     assert.equal(rows[1].querySelector('.co-effect').textContent, 'Unlocks at 3');
-    const [commit] = buttons(document, 'Choose');
-    assert.equal(commit.disabled, true);
+    assert.deepEqual(buttons(document, 'Choose'), [], 'no separate Choose button');
     rows[2].click();
-    assert.deepEqual(chosen, [], 'a tap selects only');
-    assert.equal(commit.disabled, false);
-    commit.click();
-    assert.deepEqual(chosen, ['off:0']);
-    
+    assert.deepEqual(chosen, ['off:0'], 'the press passes the slot on to the equip confirmation');
+    assert.equal(shell.panel.isConnected, false, 'the slot list closes first');
+    rows[0].click();
+    assert.deepEqual(chosen, ['off:0'], 'a second press after closing passes nothing');
+
   } finally { restore(); }
 });
