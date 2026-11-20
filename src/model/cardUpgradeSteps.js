@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, holdsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -76,11 +76,13 @@ export const rarityOfStep = (step) => (UPGRADE_RARITIES.includes(step?.r) ? step
 // How much bigger each rarity makes a sized step (times limits.scale, the rank-up bonus's own x2): damage, Block and Poise x1 / x2 / x4,
 // stacks +1 / +2 / +3, a status added 1 / 2 / 3 stacks, a Block effect x1 / x2 / x3. Every kind's own guard (the +100% cap, the status cap,
 // the cost floors) still limits the size, and a rarity whose size would not beat the one below it is not offered.
-const SIZE_MULT = Object.freeze({ dmg: [1, 2, 4], blk: [1, 2, 4], poise: [1, 2, 4], stk: [1, 2, 3], 'fx:block': [1, 2, 3] });
+const SIZE_MULT = Object.freeze({ dmg: [1, 2, 4], blk: [1, 2, 4], poise: [1, 2, 4], stk: [1, 2, 3], 'fx:block': [1, 2, 3], element: [1, 2, 4] });
+// The element packet is 75% of the matching damage step, at least this much per rarity (owner, 2026-11-19; proposal section 9).
+const PACKET_MIN = Object.freeze([2, 3, 6]);
 // Kinds with one size: the rarity they sit at is only a placement (proposal section 10 tables).
 const PLACED_AT = Object.freeze({
   'fx:cull': 0, 'fx:copy': 0, 'fx:shuffle': 0, 'fx:counter': 0,
-  'fx:retain': 1, 'fx:innate': 1, 'fx:holdOne': 1, 'fx:reaction': 1, targeting: 1, maneuver: 1, rankDown: 1, element: 0,
+  'fx:retain': 1, 'fx:innate': 1, 'fx:holdOne': 1, 'fx:reaction': 1, targeting: 1, maneuver: 1, rankDown: 1,
   range: 2, attr: 2, school: 0, dmgType: 0,
 });
 // The ease kinds: easing a drawback is common; the uncommon version removes it and draws a card, the rare one removes it and takes a rare-size step.
@@ -382,7 +384,21 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     const now = tags.find((t) => t.startsWith('damage:'))?.slice(7) || current.attack?.damageType;
     found.dmgType = { types: PHYSICAL_DAMAGE_TYPES.filter((type) => type !== now) };
   }
-  if (hitsEnemy && !counterReturn && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
+  // Element (owner, 2026-11-19): ADDS a magic packet to the hit instead of replacing it; a card that already holds one raises its own packet.
+  // The packet is 75% of the matching damage step (min 2 / 3 / 6 by rarity) and, with the damage steps, stays inside the +100% guard.
+  // A card with an authored `attack` block (typed components) keeps its own mix: no packet is offered there.
+  if (hitsEnemy && !counterReturn && camp !== 'spell' && !current.attack && isPlainEffect(effects[dmgIndex], 'damage')) {
+    const held = holdsPacket(current);
+    if (held || (current.damageSchool === 'physical' && !tagged((s) => s.damageSchool))) {
+      const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
+      const hits = hitsOf(effects[dmgIndex]);
+      const step = Math.max(2, Math.ceil(baseTotal * 0.15)) * SIZE_MULT.dmg[rarity];
+      const lift = Number.isFinite(limits.scale) && limits.scale > 1 ? limits.scale : 1;
+      let n = Math.round(Math.max(PACKET_MIN[rarity], Math.ceil(step * 0.75)) * lift);
+      while (n >= 2 && (effects[dmgIndex].amount + n) * hits - baseTotal > baseTotal) n -= 1;
+      if (n >= 2) found.element = { schools: held ? [current.damageSchool] : UPGRADE_ELEMENTS, n, ...(held ? {} : { exposure: limits.exposure }) };
+    }
+  }
   // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
   // ...and only a card that pays Mana: on a 0-Mana card the step would change a tag and nothing else.
   if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0 && current.manaCost > 0
@@ -404,7 +420,7 @@ function optionsByRarity(base, current, applied, limits) {
   }
   for (let r = 1; r < 3; r += 1) {
     for (const kind of Object.keys(SIZE_MULT)) {
-      const size = (option) => (kind === 'stk' || kind === 'fx:block' || kind === 'dmg' || kind === 'blk' || kind === 'poise' ? option?.n : 0);
+      const size = (option) => (['stk', 'fx:block', 'dmg', 'blk', 'poise', 'element'].includes(kind) ? option?.n : 0);
       const below = Math.max(0, ...per.slice(0, r).map((found) => size(found[kind]) || 0));
       if (per[r][kind] && size(per[r][kind]) <= below) delete per[r][kind];
     }
@@ -471,7 +487,8 @@ const stepOf = (kind, option, choice, rarity = 0) => {
     case 'element': {
       const damageSchool = pickOf(option.schools);
       const identity = ELEMENT_IDENTITY[damageSchool];
-      return rated({ k: 'tag', tag: `school:${identity.school}`, damage: identity.damage, damageSchool, magicShare: 1,
+      // The step stores the packet's size; apply derives the magic share from it (a step saved before packets carries `magicShare: 1` and no `packet`).
+      return rated({ k: 'tag', tag: `school:${identity.school}`, damage: identity.damage, damageSchool, packet: option.n,
         ...(Number.isInteger(option.exposure) && option.exposure > 0 ? { exposureBuildupPerHit: option.exposure } : {}) });
     }
     default: return rated({ k: 'hits', hits: option.counts[0], per: option.per });

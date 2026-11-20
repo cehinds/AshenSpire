@@ -78,3 +78,57 @@ test('dmgType: never on a spell, an elemental hit, a Reach card or a counter', (
   assert.equal(typeSteps(melee({ type: 'skill', tags: ['camp:physical', 'maneuver:defend', 'damage:slashing'], effects: [{ op: 'block', target: 'self', amount: 6 }] })).length, 0, 'defend');
   assert.ok(PHYSICAL.length === 3);
 });
+
+// Element packet (owner, 2026-11-19): the element ADDS a magic packet to the hit; the card stays a physical Attack.
+const strike6 = () => melee({ tags: ['camp:physical', 'maneuver:attack', 'classification.attack'] });
+const elementSteps = (card, applied = [], limits = {}) => rollMany(card, applied, 1500, limits).filter((s) => s.damageSchool !== undefined);
+
+test('element packet: 75% of the matching damage step, at least 2 / 3 / 6, and it adds damage instead of replacing it', () => {
+  const steps = elementSteps(strike6());
+  const bySize = (rarity) => steps.filter((s) => (s.r ?? 'common') === rarity);
+  for (const [rarity, packet] of [['common', 2], ['uncommon', 3], ['rare', 6]]) {
+    assert.ok(bySize(rarity).length, `${rarity} is rolled`);
+    assert.ok(bySize(rarity).every((s) => s.packet === packet), `${rarity} Strike 6 packet is ${packet}`);
+  }
+  // Smash 12 reads +2, +3, +6 and Spell-sized 24 reads +3, +6, +12 (the proposal's table); the cap is +100% of the printed total.
+  const smash = melee({ tags: ['camp:physical', 'maneuver:smash', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 12 }], cost: 2, staminaCost: 2 });
+  assert.deepEqual([...new Set(elementSteps(smash).map((s) => s.packet))].sort((a, b) => a - b), [2, 3, 6]);
+  const big = melee({ tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], effects: [{ op: 'damage', target: 'enemy', amount: 24 }] });
+  assert.deepEqual([...new Set(elementSteps(big).map((s) => s.packet))].sort((a, b) => a - b), [3, 6, 12]);
+  for (const step of steps) {
+    const card = applyUpgradeSteps(strike6(), [step]);
+    assert.equal(card.effects[0].amount, 6 + step.packet, 'the one damage effect rises by the packet');
+    assert.ok(combatProfileFor(card).maneuver === 'attack' && combatProfileFor(card).camp === 'physical', 'still a physical Attack');
+    assert.ok(card.tags.includes(`damage:${step.damage}`) && card.tags.includes(step.tag), 'the damage and school tags are the magic trait');
+    assert.ok(Math.abs(card.magicShare - step.packet / (6 + step.packet)) < 1e-12, 'magic share = packet over the whole hit');
+    assert.equal(upgradeStepsProblems({ upgraded: true, upgradeSteps: [step] }, 'x').length, 0, 'the saved step validates');
+  }
+});
+
+test('element packet: a later damage step scales both parts in proportion; a held packet is raised, never a second element', () => {
+  const step = elementSteps(strike6()).find((s) => s.packet === 2 && s.damageSchool === 'fire') || { k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', packet: 2 };
+  const once = applyUpgradeSteps(strike6(), [step]);
+  const grown = applyUpgradeSteps(strike6(), [step, { k: 'dmg', n: 4 }]);
+  assert.equal(grown.effects[0].amount, 12);
+  assert.equal(grown.magicShare, once.magicShare, 'the share is unchanged, so the packet grows with the hit');
+  const raised = elementSteps(strike6(), [step]);
+  assert.ok(raised.length, 'a card holding a packet is offered to raise it');
+  assert.ok(raised.every((s) => s.damageSchool === 'fire'), 'only its own element');
+  const twice = applyUpgradeSteps(strike6(), [step, raised[0]]);
+  assert.equal(twice.effects[0].amount, 6 + 2 + raised[0].packet);
+  assert.equal(twice.damageSchool, 'fire');
+  assert.deepEqual(twice.tags.filter((t) => t.startsWith('damage:')), ['damage:fire'], 'one element only');
+});
+
+test('element packet: a chosen physical type stays the physical part; spells, counters and typed attack blocks are not offered it; a saved whole-hit step still plays whole', () => {
+  const blunt = { k: 'tag', damage: 'blunt' };
+  const fire = { k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', packet: 2 };
+  assert.equal(applyUpgradeSteps(strike6(), [blunt, fire]).physicalDamageType, 'blunt');
+  assert.equal(elementSteps(melee({ tags: ['camp:spell', 'maneuver:attack', 'classification.attack'], damageSchool: 'magic' })).length, 0, 'spell');
+  assert.equal(elementSteps(melee({ tags: ['camp:physical', 'maneuver:counter', 'classification.attack'] })).length, 0, 'counter');
+  assert.equal(elementSteps(strike6(), [fire, { k: 'tag', damage: 'blunt' }]).filter((s) => s.damageSchool !== 'fire').length, 0);
+  const legacy = applyUpgradeSteps(strike6(), [{ k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', magicShare: 1 }]);
+  assert.equal(legacy.magicShare, 1, 'a step saved before packets keeps its whole-hit conversion');
+  assert.equal(legacy.effects[0].amount, 6);
+  assert.equal(elementSteps(strike6(), [{ k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', magicShare: 1 }]).length, 0, 'and offers no packet on top');
+});

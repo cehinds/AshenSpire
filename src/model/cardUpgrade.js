@@ -40,6 +40,7 @@ export function upgradedDefinition(base) {
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
 //                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
 //                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
+//                                  `packet` n (with `damage`, `damageSchool`): an element ADDS n magic damage to the hit, or raises the card's own packet
 //   (every step may carry `r`: 'uncommon' or 'rare', its rarity; none means common)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
@@ -225,7 +226,8 @@ function applyStep(card, step) {
       break;
     }
     case 'tag': {
-      if (step.tag) {
+      const packet = Number.isFinite(step.packet) && step.packet > 0 ? step.packet : 0;
+      if (step.tag && !(packet && holdsPacket(card))) {
         const family = Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix));
         const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
@@ -246,8 +248,8 @@ function applyStep(card, step) {
           effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
         }
       }
-      if (step.damageSchool) out.damageSchool = step.damageSchool;
-      if (step.damage) {
+      if (step.damageSchool && !(packet && holdsPacket(card))) out.damageSchool = step.damageSchool;
+      if (step.damage && !packet) {
         const keepType = (tag) => !tag.startsWith('damage:');
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
         for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
@@ -263,6 +265,7 @@ function applyStep(card, step) {
       }
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
+      if (packet) out = addElementPacket(out, card, step);
       break;
     }
     case 'fx':
@@ -273,6 +276,30 @@ function applyStep(card, step) {
       break;
     default:
       throw new Error(`Unknown card upgrade step '${step.k}'`);
+  }
+  return out;
+}
+
+// The element packet (owner, 2026-11-19): a physical hit gains a magic part of `step.packet` damage on the same hit. The card keeps its type
+// and its maneuver; its one damage effect rises by the packet and its magic share becomes packet / total, so the engine's mixed-hit routing
+// (Barrier then Ward for the magic part, Block then Poise for the physical part) and later damage steps (which scale both parts in proportion)
+// need nothing else. A physical type the card already chose (a dmgType step) stays the physical part's. A card that already holds a packet
+// raises it by the same sizes: it never gains a second element.
+export const holdsPacket = (card) => Number.isFinite(card?.magicShare) && card.magicShare > 0 && card.magicShare < 1 && UPGRADE_ELEMENTS.includes(card.damageSchool);
+function addElementPacket(out, card, step) {
+  const index = out.effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
+  if (index < 0) return out;
+  const held = holdsPacket(card) ? card.magicShare : 0;
+  const before = out.effects[index].amount;
+  const after = before + step.packet;
+  out.effects[index].amount = after;
+  out.magicShare = (before * held + step.packet) / after;
+  if (!held) {
+    const physical = (card.cardTags ?? card.tags ?? []).find((tag) => tag.startsWith('damage:') && PHYSICAL_DAMAGE_TYPES.includes(tag.slice(7)));
+    if (physical) out.physicalDamageType = physical.slice(7);
+    const keepType = (tag) => !tag.startsWith('damage:');
+    const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+    for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
   }
   return out;
 }
@@ -446,6 +473,7 @@ export function upgradeStepsProblems(instance, path) {
       if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
       if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
       if (step.magicShare !== undefined && !(Number.isFinite(step.magicShare) && step.magicShare >= 0 && step.magicShare <= 1)) bad('magicShare');
+      if (step.packet !== undefined && !(Number.isInteger(step.packet) && step.packet >= 1 && step.packet <= 99)) bad('packet');
       if (step.exposureBuildupPerHit !== undefined && !(Number.isInteger(step.exposureBuildupPerHit) && step.exposureBuildupPerHit >= 0 && step.exposureBuildupPerHit <= 99)) bad('exposureBuildupPerHit');
     }
   });
