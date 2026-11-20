@@ -40,29 +40,45 @@ function mount(extra = {}, options = null, takeCount = 1) {
 }
 const modal = () => document.querySelector('.card-inspection-modal');
 const tap = face => { face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true })); face.click(); };
+// Owner 2026-11-20: a tap selects; the selected card's (i) opens its modal.
+const info = face => face.querySelector('.card-info-button');
+const inspect = face => { tap(face); info(face).click(); };
 
 // Owner 2026-11-20: the card's own modal answers where it goes. Add to deck and Send to library stand side by side
 // and one click claims the card; there is no Select step and no second page.
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 const acts = () => [...modal().querySelectorAll('.card-inspection-act')].map(node => [node.dataset.act, node.textContent]);
 
-test('first reward face press opens that card with Add to deck and Send to library, without a badge or claim', () => withGlobalDom(() => {
+test('a reward face tap selects it and shows its (i); the (i) opens Add to deck and Send to library without a claim', () => withGlobalDom(() => {
   const { faces, calls, ids } = mount();
-  for (const face of faces) assert.equal(face.querySelector('.card-info-button'), null);
+  for (const face of faces) assert.ok(info(face), 'every selectable reward card carries an (i)');
   tap(faces[1]);
+  assert.equal(modal(), null, 'a tap never opens the modal');
+  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, true, false]);
+  info(faces[1]).click();
   assert.equal(modal().querySelector('.card').dataset.cardId, ids[1]);
   assert.deepEqual(acts().sort(), [['addToDeck', 'Add to deck'], ['addToLibrary', 'Send to library']]);
-  assert.equal(modal().querySelector('[data-act="select"]'), null, 'no Select step');
   modal().querySelector('.card-inspection-back').click();
   assert.equal(modal(), null);
   assert.deepEqual(calls, []);
-  assert.equal(document.activeElement, faces[1]);
+}));
+
+test('a press-and-hold on a reward card opens its modal and the release does not toggle it', () => withGlobalDom(async () => {
+  const { faces, calls } = mount();
+  faces[0].dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true }), { pointerType: 'touch', button: 0, clientX: 5, clientY: 5 }));
+  await new Promise(resolve => setTimeout(resolve, 760));
+  assert.ok(modal(), 'the hold opened the modal');
+  faces[0].dispatchEvent(new Event('pointerup', { bubbles: true }));
+  faces[0].click();
+  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, false, false], 'the click after a completed read is swallowed: reading never picks');
+  modal().querySelector('.card-inspection-back').click();
+  assert.deepEqual(calls, []);
 }));
 
 for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
   test(`single-pick ${action} from the card modal claims it in one click and leaves`, () => withGlobalDom(async () => {
     const { faces, calls } = mount();
-    tap(faces[2]);
+    inspect(faces[2]);
     const commit = modal().querySelector(`[data-act="${action}"]`);
     commit.click(); commit.click();
     await settle();
@@ -74,19 +90,19 @@ for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'li
 
 test('multi-pick: a card modal claim spends that pick and keeps the door open for the rest', () => withGlobalDom(async () => {
   const { app, faces, calls, offer } = mount({}, null, 2);
-  tap(faces[0]); modal().querySelector('[data-act="addToDeck"]').click();
+  inspect(faces[0]); modal().querySelector('[data-act="addToDeck"]').click();
   await settle();
   assert.deepEqual(calls, [['deck', 0]]);
   assert.deepEqual(offer.taken, [0]);
   const redrawn = [...app.querySelectorAll('.reward-choice-face')];
-  tap(redrawn[1]); modal().querySelector('[data-act="addToLibrary"]').click();
+  inspect(redrawn[1]); modal().querySelector('[data-act="addToLibrary"]').click();
   await settle();
   assert.deepEqual(calls, [['deck', 0], ['library', 1], ['continue']]);
 }));
 
 test('a refused Add to deck is disabled with the reason; Send to library still claims', () => withGlobalDom(async () => {
   const { faces, calls } = mount({ addRefusal: () => 'full', deckMax: 40 });
-  tap(faces[0]);
+  inspect(faces[0]);
   assert.equal(modal().querySelector('[data-act="addToDeck"]').disabled, true);
   assert.equal(modal().querySelector('[data-act="addToLibrary"]').disabled, false);
   modal().querySelector('[data-act="addToLibrary"]').click();
@@ -97,7 +113,7 @@ test('a refused Add to deck is disabled with the reason; Send to library still c
 test('a one-pick door with the deck editor open adds Edit deck to the card modal', () => withGlobalDom(async () => {
   const edits = [];
   const { faces, calls } = mount({ canEditDeck: true, onEditDeck: (i, back) => { edits.push(i); back(); } });
-  tap(faces[1]);
+  inspect(faces[1]);
   assert.deepEqual(acts().map(([id]) => id).sort(), ['addToDeck', 'addToLibrary', 'editDeck']);
   modal().querySelector('[data-act="editDeck"]').click();
   await settle();
@@ -108,7 +124,7 @@ test('a one-pick door with the deck editor open adds Edit deck to the card modal
 test('duplicate card offers stay separate picks', () => withGlobalDom(async () => {
   const options = [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'frostNova' }];
   const { faces, calls } = mount({}, options, 2);
-  tap(faces[1]); modal().querySelector('[data-act="addToLibrary"]').click();
+  inspect(faces[1]); modal().querySelector('[data-act="addToLibrary"]').click();
   await settle();
   assert.deepEqual(calls, [['library', 1]]);
 }));
@@ -116,7 +132,7 @@ test('duplicate card offers stay separate picks', () => withGlobalDom(async () =
 for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
   test(`mixed reward inspect ${action} claims one selected offer once`, () => withGlobalDom(async () => {
     const { faces, calls } = mount({}, [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'relics', id: registries.relics.all()[0].id }]);
-    tap(faces[0]);
+    inspect(faces[0]);
     const commit = modal().querySelector(`[data-act="${action}"]`);
     commit.click(); commit.click();
     await Promise.resolve();
@@ -127,7 +143,7 @@ for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'li
 
 test('an offer claimed while its inspector stands cannot be claimed again', () => withGlobalDom(() => {
   const { faces, calls, offer } = mount();
-  tap(faces[0]);
+  inspect(faces[0]);
   offer.taken.push(0); offer.claimed = 0;
   modal().querySelector('[data-act="addToDeck"]').click();
   assert.deepEqual(calls, []);
@@ -137,7 +153,7 @@ test('an offer claimed while its inspector stands cannot be claimed again', () =
 
 test('a free armament reward opens Back and Confirm, and Confirm claims that offer once', () => withGlobalDom(async () => {
   const { faces, calls } = mount({}, [{ kind: 'weapons', id: registries.equipment.armaments[0].id }]);
-  tap(faces[0]);
+  inspect(faces[0]);
   assert.ok(modal().querySelector('.equipment-poker-card'));
   const confirm = modal().querySelector('[data-act="take"]');
   assert.equal(confirm.textContent, 'Confirm');

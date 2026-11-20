@@ -4110,6 +4110,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
    shows its (i) in the lane reserved above the row. */
 .reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
+/* Owner 2026-11-20: the (i) appears above ANY selected card that can be selected (outside the hand, whose (i) is the
+   portal above), not only on reward doors. */
+.card-inspection-target:is(.inspection-selected, .is-chosen, [aria-pressed="true"]):not(.hand *) > .card-info-button { visibility:visible; pointer-events:auto; z-index:var(--layer-screen-chrome, 100); }
 /* Playtest 2026-11-17 item 45: the card-pick grid keeps only a little room above and between its rows, so the chosen
    card's (i) keeps its place above the face on the top layer, over the note or the row above, never under them. */
 .reward-door .reward-choice-option:has(> .is-chosen) { position:relative; z-index:var(--layer-screen-chrome, 100); }

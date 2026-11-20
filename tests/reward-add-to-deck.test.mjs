@@ -160,8 +160,9 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
         canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
-      // The face opens the inspect door; the name control is what selects.
+      // Owner 2026-11-20: a face tap selects; its (i) opens the inspect door.
       app.querySelector('.reward-choice-face').click();
+      app.querySelector('.reward-choice-face .card-info-button').click();
       const inspection = document.querySelector('.card-inspection-modal');
       assert.ok(inspection, 'an armament face opens the inspect door');
       inspection.querySelector('.card-inspection-back').click();
