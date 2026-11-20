@@ -69,7 +69,7 @@ test('a press-and-hold on a reward card opens its modal and the release does not
   await new Promise(resolve => setTimeout(resolve, 760));
   assert.ok(modal(), 'the hold opened the modal');
   faces[0].dispatchEvent(new Event('pointerup', { bubbles: true }));
-  faces[0].click();
+  faces[0].dispatchEvent(Object.assign(new Event('click', { bubbles: true, cancelable: true }), { detail: 1 }));  // the pointer's own trailing click
   assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, false, false], 'the click after a completed read is swallowed: reading never picks');
   modal().querySelector('.card-inspection-back').click();
   assert.deepEqual(calls, []);
@@ -119,6 +119,16 @@ test('a one-pick door with the deck editor open adds Edit deck to the card modal
   await settle();
   assert.deepEqual(edits, [1]);
   assert.deepEqual(calls, [['library', 1], ['continue']]);
+}));
+
+test('a hold-read whose release lands on the modal never eats the next controller activation', () => withGlobalDom(async () => {
+  const { faces } = mount();
+  faces[0].dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true }), { pointerType: 'mouse', button: 0, clientX: 5, clientY: 5 }));
+  await new Promise(resolve => setTimeout(resolve, 760));
+  assert.ok(modal());
+  modal().querySelector('.card-inspection-back').click();
+  faces[0].click();  // a controller's synthetic click: detail 0
+  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [true, false, false]);
 }));
 
 test('duplicate card offers stay separate picks', () => withGlobalDom(async () => {
