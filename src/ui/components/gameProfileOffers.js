@@ -75,6 +75,21 @@ function applyRadioRole(face, label, isDisabled, onPick)
     );
 }
 
+function applyInspectionRole(face, name, isDisabled, onInspect)
+{
+    face.setAttribute('role', 'button');
+    face.setAttribute('aria-haspopup', 'dialog');
+    face.setAttribute('aria-label', translate('deckEditor.inspectNamed', { name }));
+    face.removeAttribute('aria-checked');
+    if (isDisabled)
+    {
+        face.setAttribute('aria-disabled', 'true');
+        return;
+    }
+    face.tabIndex = 0;
+    ActivateOnKey(face, onInspect, { canActivate: (event) => event.target === face });
+}
+
 function findOptionDefinition(registries, activeRun, option)
 {
     if (isCardKind(option.kind))
@@ -100,7 +115,7 @@ function findOptionDefinition(registries, activeRun, option)
     }
 }
 
-function buildCardOptionFace(registries, activeRun, option, optionIndex)
+function buildCardOptionFace(registries, activeRun, option, optionIndex, inspectionOptions = {})
 {
     const rankFields = option.rank > 1
         ? {
@@ -122,6 +137,7 @@ function buildCardOptionFace(registries, activeRun, option, optionIndex)
             actionOwnsTouch: true,
             infoBadge: true,
             only: [],
+            ...inspectionOptions,
         },
     );
 }
@@ -139,11 +155,11 @@ function buildCollectibleOptionFace(registries, option, definition)
     ).card;
 }
 
-function buildOptionFace(registries, activeRun, option, optionIndex, definition)
+function buildOptionFace(registries, activeRun, option, optionIndex, definition, inspectionOptions = {})
 {
     if (isCardKind(option.kind))
     {
-        return buildCardOptionFace(registries, activeRun, option, optionIndex);
+        return buildCardOptionFace(registries, activeRun, option, optionIndex, inspectionOptions);
     }
     if (option.kind === RANK_UP_KIND)
     {
@@ -151,7 +167,7 @@ function buildOptionFace(registries, activeRun, option, optionIndex, definition)
     }
     if (isEquipmentKind(option.kind))
     {
-        return renderEquipmentCard(registries, definition, READ_ONLY_REWARD_FACE_OPTIONS).card;
+        return renderEquipmentCard(registries, definition, { ...READ_ONLY_REWARD_FACE_OPTIONS, ...inspectionOptions }).card;
     }
     return buildCollectibleOptionFace(registries, option, definition);
 }
@@ -485,7 +501,7 @@ export function MountGameProfileOffers(appRoot, {
                         'reward-selected',
                         CHOSEN_CLASS,
                     ],
-                    ariaAttribute: isFaceRadio
+                    ariaAttribute: isFaceRadio && face.getAttribute('role') === 'radio'
                         ? 'aria-checked'
                         : null,
                 },
@@ -560,9 +576,38 @@ export function MountGameProfileOffers(appRoot, {
         }
     }
 
+    function handleFaceClick(face, optionIndex)
+    {
+        if (isClaimPending || isCompleted || isReviewing || isOptionSpent(optionIndex)) return;
+        if (onAddToDeck && (isCardKind(offer.options[optionIndex].kind) || isEquipmentKind(offer.options[optionIndex].kind)))
+        {
+            openBoundCardInspection(face, face);
+            return;
+        }
+        selectOption(optionIndex);
+    }
+
     function buildChoiceFace(option, optionIndex, definition)
     {
-        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
+        const isAcquisition = !!onAddToDeck && (isCardKind(option.kind) || isEquipmentKind(option.kind));
+        const inspectionOptions = isAcquisition ? {
+            infoBadge: false,
+            inspectionActions: () => {
+                const canTake = !isClaimPending && !isCompleted && !isReviewing && !isOptionSpent(optionIndex);
+                if (!isCardKind(option.kind)) return [{ id: 'take', verb: translate(CONFIRM_LABEL_KEY), enabled: canTake, reason: '' }];
+                const refusal = addRefusal?.(optionIndex);
+                return [
+                    { id: 'addToDeck', verb: translate('reward.configured.addToDeck'), enabled: canTake && !refusal, reason: refusal ? describeRefusal(refusal) : '' },
+                    { id: 'addToLibrary', verb: translate('reward.configured.addToLibrary'), enabled: canTake, reason: '' },
+                ];
+            },
+            commands: {
+                addToDeck: () => { selectOption(optionIndex); return commitPick(index => onAddToDeck(index)); },
+                addToLibrary: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
+                take: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
+            },
+        } : {};
+        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition, inspectionOptions);
         face.classList.add('reward-choice-face');
         face.dataset.pickId = String(optionIndex);
         return face;
@@ -578,13 +623,17 @@ export function MountGameProfileOffers(appRoot, {
         {
             face.addEventListener('click', () =>
             {
-                selectOption(optionIndex);
+                handleFaceClick(face, optionIndex);
             });
         }
         const choiceLabel = readChoiceLabel(option, definition);
         if (isFaceRadio)
         {
-            applyRadioRole(face, choiceLabel, isSpent, () => selectOption(optionIndex));
+            if (onAddToDeck && (isCardKind(option.kind) || isEquipmentKind(option.kind)))
+            {
+                applyInspectionRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex));
+            }
+            else applyRadioRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex));
         }
         const control = buildChoiceControl(choiceLabel, isSpent, optionIndex);
         control.addEventListener('click', () => selectOption(optionIndex));
@@ -882,8 +931,8 @@ export function MountGameProfileOffers(appRoot, {
 // Owner 2026-11-18: a door of cards (and, from a won fight, a "Rank up a card" service) is a multi-pick door.
 // - The rank-up is never a tile in the strip; it is its own step (the rank-up card picker) after the cards are resolved.
 //   An older saved offer that still lists it among the cards is filtered from the strip and routed to that step.
-// - Up to N cards can be chosen (N = the card picks the offer still allows). A tap toggles the chosen class on the face in
-//   place (the strip is never redrawn); the prompt line counts the picks left.
+// - Up to N cards can be chosen (N = the card picks the offer still allows). The name control or inspector action
+//   toggles that choice in place (the strip is never redrawn); the prompt line counts the picks left.
 // - Continue is always live, neutral until all N are chosen, then primary. It opens a confirmation listing the cards.
 //   One destination choice covers every chosen card: Add to deck by default, Add to library when the deck cannot take
 //   them all right now (or the door has no deck route).
@@ -1113,7 +1162,18 @@ function mountCardPickDoor(appRoot, doorArgs)
         const definition = findOptionDefinition(registries, activeRun, option);
         const spent = isSpent(optionIndex);
         const column = buildChoiceColumn(optionIndex, spent);
-        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
+        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition, {
+            infoBadge: false,
+            inspectionActions: () => {
+                const hasRoom = selected.has(optionIndex) || selected.size < picksAllowed || picksAllowed === 1;
+                return [{ id: 'select',
+                    verb: translate(selected.has(optionIndex) ? 'reward.picks.deselect' : 'reward.picks.select'),
+                    enabled: !isBusy && !isCompleted && !isSpent(optionIndex) && hasRoom,
+                    reason: hasRoom ? '' : translate('reward.picks.full', { count: picksAllowed }),
+                }];
+            },
+            commands: { select: () => toggle(optionIndex) },
+        });
         face.classList.add('reward-choice-face');
         face.dataset.pickId = String(optionIndex);
         const label = readChoiceLabel(option, definition);
@@ -1121,12 +1181,11 @@ function mountCardPickDoor(appRoot, doorArgs)
         control.setAttribute('role', 'checkbox');
         if (isFaceRadio)
         {
-            applyRadioRole(face, label, spent, () => toggle(optionIndex));
-            face.setAttribute('role', 'checkbox');
+            applyInspectionRole(face, label, spent, inspectChoice);
         }
         if (!spent)
         {
-            face.addEventListener('click', () => toggle(optionIndex));
+            face.addEventListener('click', inspectChoice);
             control.addEventListener('click', () => toggle(optionIndex));
         }
         column.append(face, control);
@@ -1135,6 +1194,10 @@ function mountCardPickDoor(appRoot, doorArgs)
             face,
             control,
         });
+        function inspectChoice()
+        {
+            if (!isBusy && !isCompleted && !isSpent(optionIndex)) openBoundCardInspection(face, face);
+        }
     }
 
     function toggle(optionIndex)
@@ -1181,9 +1244,7 @@ function mountCardPickDoor(appRoot, doorArgs)
                     'reward-selected',
                     CHOSEN_CLASS,
                 ],
-                ariaAttribute: isFaceRadio
-                    ? 'aria-checked'
-                    : null,
+                ariaAttribute: null,
             });
             MarkSelected(control, isChosen, {
                 className: CHOSEN_CLASS,
