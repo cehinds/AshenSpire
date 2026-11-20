@@ -11,6 +11,12 @@ export function applyCombatDisplayReceipt(entities, event) {
     }
     return true;
   }
+  // Counter and Reflect badges follow their own receipts (gain, a covered hit's spend, the owner-turn-start fade); `stacks` is the total after the change.
+  if (event.type === 'counterStacksChanged' || event.type === 'reflectStacksChanged') {
+    const key = event.type === 'counterStacksChanged' ? 'counterStacks' : 'reflectStacks';
+    if (actor && Number.isFinite(event.stacks)) actor[key] = Math.max(0, event.stacks);
+    return true;
+  }
   if (event.type === 'combatStanceChanged') {
     if (actor) {
       const next = { ...actor.combatStance };

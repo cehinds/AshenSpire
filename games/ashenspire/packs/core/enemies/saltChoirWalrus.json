@@ -77,7 +77,8 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "frozenBulwark",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:saltChoirWalrus.advance": {
       "aiWeight": 0,

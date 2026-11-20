@@ -78,7 +78,8 @@
       "aiWeight": 30,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "courtlyDecree"
+      "legacyMove": "courtlyDecree",
+      "coreBlock": "card"
     },
     "card:stitchedKing.thousandHands": {
       "aiWeight": 40,

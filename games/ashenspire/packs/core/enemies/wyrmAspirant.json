@@ -72,7 +72,8 @@
       "aiWeight": 20,
       "maxConsecutive": 1,
       "costSource": "healRules",
-      "legacyMove": "goldenGuard"
+      "legacyMove": "goldenGuard",
+      "coreBlock": "card"
     },
     "card:wyrmAspirant.advance": {
       "aiWeight": 0,

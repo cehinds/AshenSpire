@@ -82,7 +82,8 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "siegePlate",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:kilnbackTerrapin.bunkerGuard": {
       "aiWeight": 20,
