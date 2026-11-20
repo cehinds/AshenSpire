@@ -82,7 +82,7 @@ test('allocation uses benefit names without numeric badges while the model retai
     sheet.panel.querySelector('.progression-points').click();
     assert.equal(document.querySelectorAll('.cc-stat-modal .se-gain').length, 0, 'no numeric gain badges');
     const summaries = [...document.querySelectorAll('.cc-stat-modal .disc-summary')].map(node => node.textContent);
-    assert.deepEqual(summaries, ['Physical damage', 'Block', 'Health', 'Poise · Divine magic', 'Arcane magic']);
+    assert.deepEqual(summaries, ['Physical damage', 'Defense', 'Health', 'Poise · Divine magic', 'Arcane magic']);
     assert.ok(summaries.every(text => !/\d|\b(?:AR|DR|PR|Ward)\b/.test(text)));
     sheet.close();
   });

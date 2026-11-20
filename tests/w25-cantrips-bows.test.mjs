@@ -15,9 +15,9 @@ const cards = profile.content.cards;
 const tagsOf = card => card.cardTags ?? card.tags ?? [];
 const schoolOf = card => tagsOf(card).find(tag => tag.startsWith('school:'))?.slice(7) || '';
 const statusesOf = effects => (effects || []).filter(e => e.op === 'applyStatus').map(e => e.status);
-// The status a school's cards carry (owner: fire -> Burn, frost -> Chill, necrotic/decay -> Weak or its build-up, divine -> heal over time).
+// The status a school's cards carry (owner: fire -> Burn, frost -> Chill, necrotic/decay -> Weak or its build-up, divine -> regeneration or non-damaging suppression).
 // Lightning cantrips Shock through the Lightning contest rule on the hit (tests/element-lightning.test.mjs), so they print no status.
-const SCHOOL_STATUS = { fire: ['burn'], frost: ['chill'], divine: ['regen'], decay: ['venom', 'necroticBlight', 'weak', 'frail'], lightning: ['shock'] };
+const SCHOOL_STATUS = { fire: ['burn'], frost: ['chill'], divine: ['regen', 'weak', 'frail'], decay: ['venom', 'necroticBlight', 'weak', 'frail'], lightning: ['shock'] };
 
 test('no shipped card, authored or projected, carries maneuver:ranged; the nine bow cards are Reach attacks', () => {
   for (const card of contentBundle.cards) assert.ok(!objectTagIds('card', card.id).includes('maneuver:ranged'), card.id);
@@ -50,10 +50,16 @@ test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 
   }
 });
 
-test('every school cantrip applies at least 1 stack of its school status, at both grades', () => {
+test('elemental and Divine cantrips retain school riders while Arcane schools keep their authored utility', () => {
   for (const card of cantrips) {
     const school = schoolOf(card);
     if (!school || school === 'lightning') continue;
+    if (school === 'alteration' || school === 'illusion') {
+      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block' };
+      assert.ok(utility[card.id], `${card.id}: named Arcane utility cantrip`);
+      for (const effects of [card.effects, card.upgrade?.effects || card.effects]) assert.ok(effects.some(effect => effect.op === utility[card.id] && effect.amount >= 1), `${card.id}: actual Arcane utility`);
+      continue;
+    }
     for (const [grade, effects] of [['base', card.effects], ['upgrade', card.upgrade.effects]]) {
       if (school === 'force') {
         // Force is a damage type, not a spell school; Gale Push explicitly carries Retreat.

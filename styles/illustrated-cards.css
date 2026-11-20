@@ -71,6 +71,12 @@
 /* Approved B + B: solid warm-gold identity, in the existing frame. */
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
 :root .card-sigil-band .card-type-name {font:700 7.8cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
+:root .card-sigil-band[data-traditions] { gap: 2.5cqw; }
+:root .card-sigil-band[data-traditions] .combat-sigil-tradition { width: 9cqw; height: 9cqw; }
+:root .card-sigil-band[data-traditions] .card-type-name { font-size: 7cqw; letter-spacing: .05em; }
+:root .card-sigil-band[data-traditions][data-mirror] .combat-sigil { width: 8cqw; height: 8cqw; }
+:root .card-sigil-band[data-traditions] .card-tradition-icon[data-tradition='arcane'] { color: var(--grace); }
+:root .card-sigil-band[data-traditions] .card-tradition-icon[data-tradition='divine'] { color: var(--combat-symbol-gold); }
 :root .illustrated-card-face .card-tag-rail {
   /* No stacking context of its own: the symbols sit above the hand's hit lane (z 20), so a tap explains a symbol and never plays the card. */
   position:absolute;z-index:auto;right:9%;top:16%;display:flex;flex-direction:column;align-items:flex-end;gap:2cqw;

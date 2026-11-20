@@ -169,7 +169,9 @@
       "tags": [
         "camp:spell",
         "maneuver:casting",
-        "classification.attack"
+        "classification.attack",
+        "school:force",
+        "tradition:arcane"
       ],
       "effects": [
         {
@@ -243,7 +245,9 @@
         "source:spell",
         "maneuver:casting",
         "classification.attack",
-        "rank.cantrip"
+        "rank.cantrip",
+        "tradition:arcane",
+        "tradition:divine"
       ],
       "effects": [
         {
@@ -266,7 +270,9 @@
         "rank.cantrip",
         "camp:spell",
         "maneuver:casting",
-        "classification.skill"
+        "classification.skill",
+        "school:alteration",
+        "tradition:arcane"
       ],
       "effects": [
         {

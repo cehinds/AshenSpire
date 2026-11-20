@@ -2,6 +2,7 @@ import { spellTraditions as rules } from '../content/generated/spellTraditions.j
 import { statRow } from './statRows.js';
 import { statRowValue } from './derivedStats.js';
 import { PrAttributeView } from './fixCoreMechanics.js';
+import { t } from './strings.js';
 
 const traditionIds = Object.freeze(Object.keys(rules.traditions));
 const tagIds = card => (card?.cardTags ?? card?.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
@@ -62,7 +63,29 @@ export function TraditionSpellPower(ctx, entity, card, previous) {
   return Math.max(0, previous - intrinsic + evaluateSpellRow(row, ctx, entity, attributes, card));
 }
 
+// The words live in uiStrings.csv (card.tradition.*), not in spellTraditions.json:
+// a one-tradition card wears that tradition's name, a shared card wears "Spell".
 export function SpellTraditionLabel(card) {
   const traditions = CardSpellTraditions(card);
-  return traditions.length === 1 ? rules.traditions[traditions[0]].label : 'Spell';
+  return t(traditions.length === 1 ? `card.tradition.${traditions[0]}` : 'card.tradition.shared');
+}
+
+
+export function SpellPoolRole(card) {
+  if (rules.roles?.[card.id]) return rules.roles[card.id];
+  const effects = card.effects || [];
+  return effects.some(effect => effect.op === 'damage'
+    || effect.op === 'applyStatus' && rules.offensiveStatuses.includes(effect.status)
+      && !['self', 'ally', 'allAllies'].includes(effect.target)) ? 'offense' : 'support';
+}
+// Normalize each eligible role group, so changing the number of cards does
+// not quietly change the tradition's offense/support ratio.
+export function SpellPoolWeights(cards, tradition) {
+  const target = rules.traditions[tradition];
+  const counts = { offense: 0, support: 0 };
+  for (const card of cards) if (CardSpellTraditions(card).includes(tradition)) counts[SpellPoolRole(card)]++;
+  return Object.fromEntries(cards.map(card => {
+    const role = SpellPoolRole(card);
+    return [card.id, CardSpellTraditions(card).includes(tradition) ? target[role] / counts[role] : 0];
+  }));
 }
