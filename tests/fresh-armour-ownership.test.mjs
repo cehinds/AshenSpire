@@ -1,14 +1,15 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_ACQUIRED_ARMOUR } from '../src/model/state.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
 import { equipPiece, ownership, stampDeck } from '../src/model/loadout.js';
 import { startingArmourViews } from '../src/model/startingKits.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
-import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { createRng } from '../src/engine/rng.js';
 import { rederivePools } from '../src/model/levelup.js';
 import { swapRunClass } from '../src/model/classSwap.js';
@@ -124,4 +125,36 @@ test('setting aside a class preserves its previously worn legacy outfit', () => 
   assert.equal(equip(registries, run, 'default'), true);
   assert.equal(equip(registries, run, 'vigil'), true, 'remembered worn armour remains owned after replacing it');
   assert.deepEqual(armourIds(registries, run), ['default', 'vigil']);
+});
+
+test('a save from before acquired-only armour keeps every unworn set the old rule owned; a fresh run does not', () => {
+  const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  const loadBytes = (bytes) => {
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, bytes);
+    const saves = createSaveManager(storage);
+    const run = saves.loadRun(registries);
+    assert.ok(run, JSON.stringify(saves.runStatus()));
+    return run;
+  };
+  const oldBytes = corpus.versions[String(RUN_SCHEMA_ACQUIRED_ARMOUR - 1)].bytes;
+  const old = loadBytes(oldBytes);
+  const oldClassShared = registries.equipment.armour.filter(row => row.classId === old.class && row.sharedSet);
+  assert.ok(oldClassShared.length > 0);
+  for (const piece of oldClassShared) {
+    assert.equal(old.loadout.sets.armor.includes(piece.id), false, `${piece.id} is not worn`);
+    assert.ok(old.loadout.boughtArmour.some(row => row.classId === old.class && row.id === piece.id), `${piece.id} recorded as acquired`);
+    assert.equal(ownership(registries, { loadout: old.loadout }).has(piece), true, `${piece.id} still owned`);
+  }
+  assert.equal(old.loadout.boughtArmour.some(row => row.classId !== old.class), false, 'no other class armour is granted');
+  const grant = old.loadout.creationArmourGrant;
+  assert.equal(old.loadout.boughtArmour.some(row => row.classId === grant.classId && row.id === grant.id), false, 'the creation grant is not recorded twice');
+
+  const fresh = createRunState({ seed: 0x10a5, classId: old.class, registries });
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(fresh, createRng(fresh.seed));
+  const reloaded = loadBytes(storage.getItem(RUN_KEY));
+  for (const piece of oldClassShared) {
+    assert.equal(ownership(registries, { loadout: reloaded.loadout }).has(piece), false, `a fresh run does not own ${piece.id}`);
+  }
 });

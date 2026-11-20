@@ -122,7 +122,9 @@ export const MAX_CARD_RANK = 99;
 // 25: pinned game profile, durable run ID and configured service receipts.
 // 26: the stored form may carry `gameProfileRef` instead of the pinned profile
 // (model/runStorage.js); a 25 save loads unchanged, an older build keeps a 26 one.
-export const RUN_SCHEMA_VERSION = 26;
+// 27: a run owns only the armour it acquired. A 26-or-older save is given, at
+// the load door, the unworn sets the old rule let it own (engine/save.js).
+export const RUN_SCHEMA_VERSION = 27;
 
 // Schema versions named for the version that FIRST carries each field. A run is
 // "pre-X" when its schemaVersion is below RUN_SCHEMA_X (migrateRunSchema).
@@ -160,6 +162,8 @@ const RUN_SCHEMA_CONSUMABLES = 16;
 const RUN_SCHEMA_TRAINING_POOL = 18;
 // Attuned sigils first appear in v19.
 const RUN_SCHEMA_ATTUNED_SIGILS = 19;
+// Armour owned by acquisition only (shared sets included) first applies in v27.
+export const RUN_SCHEMA_ACQUIRED_ARMOUR = 27;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -1992,6 +1996,8 @@ export function migrateRunSchema(run) {
   // before this runs, so there is nothing to fill. The bump exists so an OLDER
   // build refuses and keeps a v26 slot (save.js 'newer') rather than reading a
   // run with no pinned profile as corrupt and archiving it.
+  // v26 → v27: nothing is filled HERE; the load door records the armour the
+  // old ownership rule granted, which needs the registries.
   if (run.combatExpansionVersion === 2) {
     bringCombatExpansionRulesForward(run.combatExpansionRules);
     // A run saved in (or just after) a fight carries its own frozen copy in
