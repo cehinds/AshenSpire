@@ -1196,7 +1196,7 @@ function mountCardPickDoor(appRoot, doorArgs)
                     'reward-selected',
                     CHOSEN_CLASS,
                 ],
-                ariaAttribute: null,
+                ariaAttribute: isFaceRadio ? 'aria-checked' : null,
             });
             MarkSelected(control, isChosen, {
                 className: CHOSEN_CLASS,
