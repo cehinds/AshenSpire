@@ -142,7 +142,10 @@ function applyCardOverlay(moves, hint, source, owned, path)
         const guards = Array.isArray(source?.effects)
             ? source.effects.filter(effect => effect?.op === 'block')
             : [];
-        if (!owned || guards.length !== 1 || !Number.isSafeInteger(guards[0].amount) || moves[moveId].block === undefined)
+        if (
+            !owned || guards.length !== 1 || !Number.isSafeInteger(guards[0].amount)
+            || moves[moveId].block === undefined
+        )
         {
             throw new GameConfigError(
                 `${path}/coreBlock`,
