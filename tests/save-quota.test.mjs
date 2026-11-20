@@ -241,7 +241,8 @@ test('size budget: a 60-fight Core run stays under 1 MB at rest and mid-fight, a
   assert.ok(Math.max(...sizes) < 100000, `a Core run at rest is at most ${Math.max(...sizes)} chars`);
   assert.ok(peak < 1000000, `a Core run mid-fight peaked at ${peak} chars`);
   assert.ok(sizes[59] - sizes[0] < 2000, `the run does not grow with the fights it has won (${sizes[0]} -> ${sizes[59]})`);
-  assert.ok(store.used() < 1000000, 'the whole origin (run + profile + backup) stays far from a 5 MB quota');
+  // 1.5 MB since the Codex roster (2026-11-18): 32 more enemies grew the profile snapshot the run, profile and backup each carry (1.10 MB measured).
+  assert.ok(store.used() < 1500000, 'the whole origin (run + profile + backup) stays far from a 5 MB quota');
 });
 
 // A Core run in the PRE-reference stored form: the profile inline (schema 25), as every older build wrote it.

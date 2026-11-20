@@ -1,8 +1,10 @@
-// W25 (owner, 2026-11-14) Fire: a single-target fire card hits every enemy at x0.6; it ignores 1 Poise per point of WIS + INT; breaking
-// Poise inflicts Burn (stacks = INT, at least 1). Burn: +5% damage taken per stack, 1 HP per stack at turn start, 5% per stack to explode
+// Fire: a single-target fire card hits every enemy at x0.6; current shared casting uses max(INT, WIS) for ignored Poise and break Burn.
+// Archived W25 (owner, 2026-11-14) retains WIS + INT ignored Poise and INT break Burn (at least 1). Burn: +5% damage taken per stack, 1 HP per stack at turn start, 5% per stack to explode
 // for its stacks on the owner's allies (clearing it), no stack cap (owner). A fight without `elements` rules plays as before.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { fight, play } from './elementFixture.mjs';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
@@ -13,6 +15,7 @@ const FIRE = { combatProfile: { camp: 'spell', school: 'fire', damageType: 'arca
 // Base 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules as 10.
 const hit = (combat, target, carrier = FIRE, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
+const archivedProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
 
 test('the element of a hit is its school or damage type: a fire spell is fire even though spells default to arcane damage', () => {
   assert.equal(ElementOfHit(FIRE), 'fire');
@@ -44,25 +47,52 @@ test('live: Cinder Dart reaches both enemies, each loses exactly what the quote 
   assert.ok(before.lost.e1 > played.lost.e1, 'and no x0.6');
 });
 
-test('fire ignores 1 Poise per point of WIS + INT: the ignored Poise never absorbs and leaves the pool', () => {
-  const { combat, enemies } = fight({ enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
-  const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] });
-  const fire = hit(combat, target);
+test('current fire ignores max(INT, WIS) Poise, never their sum, with either casting attribute higher', () => {
+  for (const [attributes, ignored] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 2, wisdom: 4 }, 4], [{ intelligence: 0, wisdom: 0 }, 0]]) {
+    const { combat, enemy } = fight({ poise: 20, attributes });
+    const fire = hit(combat, enemy);
+    assert.equal(fire.element.poiseIgnored, ignored, JSON.stringify(attributes));
+    assert.deepEqual([fire.poiseMitigated, fire.poiseDrain, fire.hpLoss], [10, ignored, 0]);
+    assert.equal(enemy.persistentPoise.value, 20, 'a receipt never edits the pool');
+    enemy.persistentPoise.value = 8;
+    const small = hit(combat, enemy);
+    assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [8 - ignored, ignored, 2 + ignored], 'the higher casting stat alone determines ignored Poise; zero ignores none');
+  }
+});
+
+test('archived 6727 fire retains WIS + INT ignored Poise with its original damage and spell Poise scales', () => {
+  const { combat, enemies } = fight({ profile: archivedProfile, enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
+  assert.equal(combat.fixCoreRules.elements.version, 1, 'elements remain enabled');
+  // The untouched archive scales player damage by 0.7: base 30 yields an integer incoming hit of 10.
+  const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] }, 30);
+  const fire = hit(combat, target, FIRE, 30);
   assert.equal(plain.poiseMitigated, 10, 'a spell meets Poise first, 1:1');
   assert.equal(fire.poiseMitigated, 10, 'the 14 Poise above the 6 ignored ones still absorb the whole hit');
-  assert.equal(fire.poiseDrain, 6, 'the six ignored points leave the pool, so fire can still break it');
+  assert.equal(fire.element.poiseIgnored, 6, 'the original WIS 2 + INT 4 ignores six');
+  assert.equal(fire.poiseDrain, 10, 'six ignored points plus four extra spell Poise drain fit after mitigation');
   assert.equal(target.persistentPoise.value, 20, 'a receipt never edits the pool');
   target.persistentPoise.value = 8;
-  const small = hit(combat, target);
+  const small = hit(combat, target, FIRE, 30);
   assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [2, 6, 8], 'a pool of 8: 2 absorb (the other 6 are ignored), so 8 of the 10 reaches HP and the pool is emptied');
 });
 
-test('breaking Poise with fire inflicts Burn equal to the attacker INT (at least 1)', () => {
-  const { combat: c2, enemies: e2 } = fight({ enemies: 1, poise: 3, attributes: { intelligence: 4 } });
+test('current fire break Burn uses max(INT, WIS), with either higher, and a minimum of 1 at zero/zero', () => {
+  for (const [attributes, extra] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 2, wisdom: 4 }, 4], [{ intelligence: 0, wisdom: 0 }, 1]]) {
+    const { combat, enemy } = fight({ poise: 3, attributes });
+    const played = play(combat, 'core.emberFlick', enemy.id);
+    assert.equal(enemy.persistentPoise.value, 0, 'the live hit broke Poise');
+    assert.equal(getStacks(enemy, 'burn'), 2 + extra, `printed 2 + shared casting break Burn: ${JSON.stringify(attributes)}`);
+    assert.equal(played.lost.e1, played.row.perTarget[enemy.id], 'target-specific quote = dealt, including Poise absorption at zero casting stats');
+  }
+});
+
+test('archived 6727 fire break Burn retains INT and its minimum of 1', () => {
+  const { combat: c2, enemies: e2 } = fight({ profile: archivedProfile, enemies: 1, poise: 3, attributes: { intelligence: 4 } });
+  assert.equal(c2.fixCoreRules.elements.version, 1, 'elements remain enabled');
   play(c2, 'core.emberFlick', e2[0].id);
   assert.equal(e2[0].persistentPoise.value, 0, 'the hit broke Poise');
   assert.equal(getStacks(e2[0], 'burn'), 2 + 4, 'the card prints 2 Burn, the break adds INT');
-  const { combat: c3, enemies: e3 } = fight({ enemies: 1, poise: 3, attributes: { intelligence: 0 } });
+  const { combat: c3, enemies: e3 } = fight({ profile: archivedProfile, enemies: 1, poise: 3, attributes: { intelligence: 0 } });
   play(c3, 'core.emberFlick', e3[0].id);
   assert.equal(getStacks(e3[0], 'burn'), 2 + 1, 'INT 0 still inflicts 1');
 });

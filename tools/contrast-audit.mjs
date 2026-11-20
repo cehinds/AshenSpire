@@ -102,6 +102,10 @@ const PROFILES = {
   'hi-contrast+ui-S': { highContrast: true, uiScale: 'S' },
 };
 
+// The map is read on the full-map pose (src/dev/shotStates.js `shotMapReveal`):
+// a configured run pins fog, which draws no plain node and no untraveled road.
+const MAP = 'map&shotMapReveal=1';
+
 // Each target names a screen (?shot=), a selector, and whether WCAG treats it as
 // large text (≥24px, or ≥18.66px bold → 3.0 floor instead of 4.5).
 const TARGETS = [
@@ -124,15 +128,20 @@ const TARGETS = [
   { screen: 'title', sel: '.title-screen #settings', label: 'Settings (menu entry)' },
   // The run-position chip paints its ink in two children (.ck key, .cv value);
   // measuring the parent chip toggled a colour no glyph uses and read no ink.
-  { screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },
-  { screen: 'map', sel: '.map-header .hud-act .cv', label: 'Act value' },
-  { screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' },
-  { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
+  // The Act chip (key `.ck` + value `.cv`) became one gold title in the act
+  // route strip, so `Act value` folded into `Act`.
+  { screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },
+  // The route strip's two ends. They are the measured riders of --muted
+  // (Entrance) and of --ember (Boss), which the --selftest palette arms dim.
+  { screen: MAP, sel: '.act-route-strip .as-eyebrow[data-role="start"]', label: 'route strip Entrance' },
+  { screen: MAP, sel: '.act-route-strip .as-eyebrow[data-role="boss"]', label: 'route strip Boss' },
+  { screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' },
+  { screen: MAP, sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
   // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
   // to plan a run. Non-text (WCAG 1.4.11 → 3.0 floor), SVG, so the ink property
   // is stroke/fill rather than color. The selectors pin the PLAIN node and the
   // untraveled edge deliberately: every state class (visited/reachable/current/
-  // elite/boss, .traveled) swaps the stroke to a token high contrast never
+  // elite/boss, .traveled, .shrine-lane) swaps the stroke to a token high contrast never
   // touches (--gold 8.12:1, --blood, --parchment), so the states survive either
   // palette — it is the bare --line-soft ring and road that the atmospheric
   // palette (hi-contrast OFF) drops to 1.94:1 at the token, and antialiasing
@@ -142,9 +151,9 @@ const TARGETS = [
   // `adjacency`: judged on the boundary's worst adjacent rendered colour — the
   // ring straddles its own fill and the field and must clear the floor against
   // BOTH (Sunna's #45 ruling; the two clusters print beside the verdict).
-  { screen: 'map', sel: '.map-edge:not(.traveled)', label: 'map edge (untraveled road)', prop: 'stroke', box: true, adjacency: true },
+  { screen: MAP, sel: '.map-edge:not(.traveled):not(.shrine-lane)', label: 'map edge (untraveled road)', prop: 'stroke', box: true, adjacency: true },
   {
-    screen: 'map',
+    screen: MAP,
     sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
     label: 'map node ring (plain)', prop: 'stroke', box: true, adjacency: true,
   },
@@ -155,7 +164,7 @@ const TARGETS = [
   // default), not the fill's (1.17). A half-box on a circle contains no rim
   // (corner distance 0.71r < r), so the fill is measured as itself.
   {
-    screen: 'map',
+    screen: MAP,
     sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
     label: 'map node body (fill vs bg)', prop: 'fill', box: true, shrink: 0.5, median: true,
   },
@@ -163,21 +172,29 @@ const TARGETS = [
   // Cinders owner. Keep the pixel gate on the current visible status instead of
   // allowing a removed selector to turn the gate blind.
   { screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' },
-  { screen: 'combat', sel: '.topbar .hud-class .cv', label: 'hero name (combat)' },
-  { screen: 'combat', sel: '.resbars .m-label', label: 'resource bar label (combat)' },
-  // Card text keywords and the hold cue (the former polish review §G, removed 2026-10-11:
-  // keyword red 4.1-4.3:1, "HOLD" 2.45:1). The showcase hand carries a Bleed
-  // card; `.hold-hint` is --gold at 0.75 opacity (kit.css).
-  { screen: 'combat', sel: '.hand .card .ctext .st-bleed', label: 'Bleed keyword (card text)' },
-  { screen: 'combat', sel: '.hand .card[data-card-id="strike"] > .hold-hint', label: 'card HOLD cue' },
+  // (`hero name (combat)`, `.topbar .hud-class .cv`, was dropped 2026-11-19: the
+  // shared combat HUD no longer mounts the identity chip, and no visible hero or
+  // class name remains in combat — the mini-HUD's `.ls-label` renders at 0x0.)
+  // (`resource bar label (combat)`, `.resbars .m-label`, was dropped 2026-11-19:
+  // the only combat match is the shared HUD's HP label, painted at font-size 0
+  // by styles/shared-run-hud.css, so no resource label is visible to measure.)
+  // Card text rows, both dropped 2026-11-19 because nothing is painted to
+  // measure: the Bleed keyword (`.ctext .st-bleed`) — illustrated-v1 faces
+  // paint rules as `.face-line` with no keyword spans — and the card HOLD cue
+  // (`.hand .card > .hold-hint`) — `:root .combat .card .hold-hint` is
+  // `display:none` (styles/player-polish.css).
   { screen: 'death', sel: '.gameover .as-title-l', label: 'YOU PERISHED' },
-  // Reward panel: the gold row titles and the primary button's HOLD cue.
-  { screen: 'reward', sel: '.reward-kind[data-state="pending"] .cp-body h3', label: 'reward title (gold)' },
-  { screen: 'reward', sel: '#reward-continue .hold-hint', label: 'reward Continue HOLD cue' },
-  { screen: 'reward', sel: '.reward-claim-row[data-state="taken"] .reward-claim-state', label: 'reward claim Taken (gold)' },
-  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .chip', label: 'reward TAKEN chip (gold)' },
-  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .cp-body h3', label: 'reward taken title (gold)' },
-  { screen: 'reward', sel: '.reward-kind .chip.reward-new', label: 'reward NEW chip (gold)' },
+  // Reward rows. A configured run's combat reward is a card chooser; the
+  // row door (reward.js) now opens for card rank-ups, so the row targets are
+  // read there: `shotRankUp=1` poses a pending row, `shotRankUp=taken` the same
+  // row claimed (src/dev/shotStates.js). Dropped 2026-11-19, each because its
+  // element is gone: the Continue HOLD cue (Continue commits on a tap, owner
+  // 2026-11-14, model/secondbeat.js, so no `.hold-hint` is painted) and the NEW
+  // chip (nothing in src emits `.reward-new` or the chooser's `.card-badge-new`).
+  { screen: 'reward&shotRankUp=1', sel: '.reward-kind[data-state="pending"] .cp-body h3', label: 'reward row title (pending)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-claim-row[data-state="taken"] .reward-claim-state', label: 'reward claim Taken (gold)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-kind[data-state="taken"] .chip', label: 'reward TAKEN chip (gold)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-kind[data-state="taken"] .cp-body h3', label: 'reward taken title (gold)' },
 ];
 
 // Failures that are KNOWN, MEASURED, and deliberately not fixed by the default
@@ -201,16 +218,6 @@ const TARGETS = [
 // the declared colour clears AA (spec 4.74 / 7.33) and an `opacity` rule in
 // styles/kit.css pulls the delivered pixel under it. No palette token reaches
 // an opacity, which is why no token edit here could retire these rows.
-const LEDGER_HOLD = {
-  render: 3.36, floor: 4.5,
-  why: '`.hold-hint` is --gold at `opacity: 0.75` (styles/kit.css), and on the primary '
-     + 'button it sits on a gold-tinted fill: declared 4.74, delivered 3.36 at 13.4px. The '
-     + 'hand-card HOLD cue (same rule, dark card body) clears at 4.66 — only the primary '
-     + 'button\'s cue is below. --gold itself is 8:1 on --bg; brightening it would move every '
-     + 'gold surface to lift one translucent word.',
-  fix: 'Drop the 0.75 opacity on `.as-btn.primary .hold-hint` (or render the cue in '
-     + '--parchment on primary fills) in styles/kit.css — a component rule, not a token.',
-};
 const LEDGER_TAKEN = {
   render: 2.98, floor: 4.5,
   why: 'A TAKEN reward row is an inactive control (`.class-pick.locked`, `opacity: 0.55`, '
@@ -222,10 +229,6 @@ const LEDGER_TAKEN = {
      + 'instead of opacity) in styles/kit.css.',
 };
 const KNOWN_BELOW = [
-  { label: 'reward Continue HOLD cue', profile: 'default', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'cb-safe', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off+cb-safe', ...LEDGER_HOLD },
   { label: 'reward TAKEN chip (gold)', profile: 'default', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
@@ -598,12 +601,16 @@ const selectorContract = (source) => {
   const bad = [];
   const targetBlock = /const TARGETS = \[[\s\S]*?\n\];/.exec(source)?.[0] || '';
   const wanted = [
-    ["{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", 'S1 current Act metadata selector missing'],
-    ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
+    ["{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", 'S1 current Act metadata selector missing'],
+    ["{ screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
     ["{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
     ["{ screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' }", 'S8 Continue row does not require the highlighted, enabled entry'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
+  // A configured run pins fog, which draws no plain node or untraveled road, so
+  // the #45 structure rows read only on the full-map pose.
+  if (!/^const MAP = 'map&shotMapReveal=1';/m.test(source)) bad.push('S9 map targets are not read on the full-map pose');
+  if (targetBlock.includes("sel: '.map-header .hud-act")) bad.push('S10 removed map-header Act chip selector returned');
   if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
   // The run seed left the solo map header, so a `.mh-seed` map target can only
   // read BLIND.
@@ -617,8 +624,16 @@ if (args.includes('--source-selftest')) {
   const clean = readFileSync(fileURLToPath(import.meta.url), 'utf8');
   const plants = [
     {
+      name: 'map targets fall back to the fogged map', expected: 'S9 ',
+      source: clean.replace(/^const MAP = 'map&shotMapReveal=1';/m, "const MAP = 'map';"),
+    },
+    {
+      name: 'Act points back at the removed map-header chip', expected: 'S10 ',
+      source: clean.replace("{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", "{ screen: MAP, sel: '.map-header .hud-act .ck', label: 'Act' }"),
+    },
+    {
       name: 'Act metadata points back at removed combined progress', expected: 'S1 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
+      source: clean.replace("{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", "{ screen: MAP, sel: '.map-header .mh-prog', label: 'Act' }"),
     },
     {
       // The Floor chip was removed from the run header on 2026-09-05 (owner:
@@ -628,20 +643,20 @@ if (args.includes('--source-selftest')) {
       // comes BACK without a chip to point at.
       name: 'Floor metadata target returns with no chip behind it', expected: 'S2 ',
       source: clean.replace(
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },\n  { screen: MAP, sel: '.map-header .hud-floor', label: 'Floor' },",
       ),
     },
     {
       name: 'SEED metadata target returns to the solo map header', expected: 'S3 ',
       source: clean.replace(
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },\n  { screen: MAP, sel: '.map-header .mh-seed', label: 'SEED' },",
       ),
     },
     {
       name: 'legend points back at removed map-header parent', expected: 'S4 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: 'map', sel: '.map-header #map-legend', label: 'map ? button' }"),
+      source: clean.replace("{ screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: MAP, sel: '.map-header #map-legend', label: 'map ? button' }"),
     },
     {
       name: 'combat Cinders points back at removed fight label', expected: 'S7 ',
@@ -697,26 +712,25 @@ if (args.includes('--selftest')) {
       why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
-      // The Floor chip and the solo SEED left the header, and the keyboard hint
-      // is now a parchment button; the --muted riders today are the run-meta
-      // chip keys and the resource-bar labels.
+      // The Act chip became a gold title and the resource-bar label is no
+      // longer painted, so the measured --muted rider today is the route
+      // strip's Entrance label.
       expectRows: [
-        { label: 'Act', profile: 'default' },
-        { label: 'Cinders (combat)', profile: 'default' },
-        { label: 'resource bar label (combat)', profile: 'default' },
+        { label: 'route strip Entrance', profile: 'default' },
       ],
     },
     {
-      // THE cb-safe ARM (SPEC §7.5: all three palettes must pass). --bleed is
-      // overridden ONLY under body.cb-safe, so this plant can go red only if the
-      // gate actually judges the cb-safe profile — in `default` the keyword
-      // still derives from --ember and is untouched.
-      name: 'colourblind-safe keyword',
-      find: '  --bleed: #cc79a7;',
-      replace: '  --bleed: #6a3f57;',
-      why: 'the cb-safe --bleed keyword tint dimmed to #6a3f57 — a cb-safe-only palette edit',
+      // THE cb-safe ARM (SPEC §7.5: all three palettes must pass). The plant
+      // edits --ember inside body.cb-safe ONLY, so it can go red only if the
+      // gate actually judges the cb-safe profile — in `default` --ember keeps
+      // its own value. (It rode --bleed until the Bleed keyword stopped being
+      // painted: illustrated card faces carry no keyword spans.)
+      name: 'colourblind-safe ember',
+      find: '  --ember: #d55e00;',
+      replace: '  --ember: #5a2800;',
+      why: 'the cb-safe --ember dimmed to #5a2800 — a cb-safe-only palette edit',
       expectRows: [
-        { label: 'Bleed keyword (card text)', profile: 'cb-safe' },
+        { label: 'route strip Boss', profile: 'cb-safe' },
       ],
     },
     {
@@ -949,7 +963,7 @@ const rows = [];
 try {
   const cdp = await connectCdp(dbg);
   for (const [pname, settings] of Object.entries(profiles)) {
-    for (const screen of ['title', 'map', 'combat', 'death', 'reward']) {
+    for (const screen of ['title', MAP, 'combat', 'death', 'reward&shotRankUp=1', 'reward&shotRankUp=taken']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
       // The fog-first map boot deliberately exposes only the entrance choice:
@@ -957,7 +971,7 @@ try {
       // but it gives the structural contrast probes nothing to see. Pose the
       // player's full path-map setting through the same public settings door so
       // ordinary roads and rings exist without reaching into render internals.
-      const screenSettings = screen === 'map' ? { ...settings, mapMode: 'path' } : settings;
+      const screenSettings = screen === MAP ? { ...settings, mapMode: 'path' } : settings;
       const profileState = await gotoScreen(
         cdp,
         `http://localhost:${port}/${servedPage}${screen ? `?shot=${screen}` : ''}`,

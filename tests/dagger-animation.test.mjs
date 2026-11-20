@@ -15,7 +15,20 @@ const manifest=JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exp
 const sequence=JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exports/dagger-outfits-2026-09-19/attack-sequence.json',import.meta.url))));
 assert.equal(manifest.groups.length,32);
 assert.deepEqual(manifest.missingAppearances,[]);
-assert.equal(manifest.outfits.length,ARMOUR.length);
+// The export remains the original 35 outfits; Codex adds five declared borrowers, not new skins.
+const codexAppearanceAliases = [
+  ['reaver', 'cinderforgedPlate', 'warden'],
+  ['reaver', 'wyrmscaleMail', 'vigil'],
+  ['herald', 'ringmailHauberk', 'pilgrim'],
+  ['rogue', 'huntersHide', 'nightveil'],
+  ['starseer', 'sagesRobe', 'astral'],
+];
+const outfitKey = row => `${row.classId}/${row.id}`;
+const exportedOutfits = new Set(manifest.outfits.map(outfitKey));
+assert.equal(manifest.outfits.length,35);
+assert.deepEqual(ARMOUR.filter(row => exportedOutfits.has(outfitKey(row))).map(outfitKey).sort(), [...exportedOutfits].sort(), 'every historical export outfit remains covered');
+assert.deepEqual(ARMOUR.filter(row => !exportedOutfits.has(outfitKey(row))).map(row => [row.classId,row.id,row.artKey]).sort(), [...codexAppearanceAliases].sort(), 'only the five declared Codex appearance aliases extend the export');
+assert.equal(ARMOUR.length,manifest.outfits.length+codexAppearanceAliases.length);
 assert.deepEqual(manifest.attack,sequence);
 const registries=createRegistries(contentBundle), selectedSets=new Set();
 for(const outfit of ARMOUR){
@@ -39,7 +52,17 @@ for(const outfit of ARMOUR){
  assert.notEqual(equipmentAnimationForLoadout(registries,loadout,outfit.classId)?.motionProfile,'daggerSingle');
  for(const frame of Object.values(component.frames))assert.ok(manifestIds().has(frame.file),frame.file);
 }
-assert.equal(selectedSets.size,32,'35 entries resolve to exactly 32 skins');
+assert.equal(selectedSets.size,32,'35 exported outfits plus five Codex borrowers resolve to exactly 32 skins');
+for(const [classId,alias,original] of codexAppearanceAliases){
+ const selector={classId,rightId:'dagger',leftId:null,grip:'one'};
+ const borrowed=selectEquipmentAnimation({...selector,armourId:alias});
+ const authored=selectEquipmentAnimation({...selector,armourId:original});
+ assert.equal(borrowed.setId,authored.setId,alias+' borrows its declared appearance');
+ assert.deepEqual(borrowed.frames,authored.frames,alias+' reuses existing exported frames');
+ const bindings=EQUIPMENT_ANIMATIONS.bindings.filter(row=>row.classId===classId&&row.armourId===original);
+ assert.equal(bindings.length,9,'the existing appearance has nine ordered hand bindings');
+ assert.deepEqual(EQUIPMENT_ANIMATIONS.bindings.filter(row=>row.classId===classId&&row.armourId===alias),bindings.map(row=>({...row,armourId:alias})),alias+' preserves every existing hand binding without new paintings');
+}
 for(const group of manifest.groups){
  for(const [pose,info] of Object.entries(group.frames)){
   // The export's own file (art/…/info.file) is the art repository's to check
@@ -55,4 +78,4 @@ changed.motionProfiles.daggerSingle.clips.daggerAttack.frameMs=120;
 for(const outfit of ARMOUR)assert.equal(animationTiming(selectEquipmentAnimation({classId:outfit.classId,armourId:outfit.id,rightId:'dagger'},changed),'attack').totalMs,1080,'one motion setting applies to all skins');
 assert.deepEqual(changed.motionProfiles.greatswordTwoHand,EQUIPMENT_ANIMATIONS.motionProfiles.greatswordTwoHand);
 assert.deepEqual(changed.motionProfiles.swordShield,EQUIPMENT_ANIMATIONS.motionProfiles.swordShield);
-console.log('PASS single dagger: 35 legal ordered bindings, 32 skins, 512 frames, shared timing, aliases, hashes and exclusions');
+console.log('PASS single dagger: 35 exported outfits plus 5 Codex borrowers, 32 skins, 512 frames, all 40 loadouts, shared timing, aliases, hashes and exclusions');

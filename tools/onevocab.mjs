@@ -613,8 +613,10 @@ check('A6 ONE derivation path: a relic resource grant is wholly inside the snaps
     // (b) Mana and Stamina have no outside addend at all — the snapshot is the
     // whole authority. If a carrier ever grants Mana off-table, this is where
     // it shows.
-    for (const [statId, actual] of [['mana', run.maxMana], ['stamina', run.maxStamina]]) {
-      const value = deriveStat(run.derivedStatRuleSnapshot.rules, statId, { attributes: run.attributes, classDef }).value;
+    // Owner, 2026-11-18: an armour group's base can add a pool point (robes +1 max MP), and that is the equipment's own authored addend, read through runMods.
+    const pools = runMods(registries, run.loadout, run.class);
+    for (const [statId, actual, addend] of [['mana', run.maxMana, pools.maxMana], ['stamina', run.maxStamina, pools.maxStamina]]) {
+      const value = deriveStat(run.derivedStatRuleSnapshot.rules, statId, { attributes: run.attributes, classDef }).value + addend;
       assert(actual === value,
         `${cls.id}: max${statId} ${actual} != the snapshot's ${value} — something adds to ${statId} outside the derived table.`);
     }

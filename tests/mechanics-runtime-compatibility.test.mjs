@@ -12,7 +12,7 @@ const mechanic='defense.wardProtection';
 function fixture() {
   const root=mkdtempSync(join(tmpdir(),'ashen mechanic compatibility '));
   const copy=file=>{mkdirSync(dirname(join(root,file)),{recursive:true});cpSync(join(repo,file),join(root,file),{recursive:true});};
-  for(const file of ['content/source/fixCoreMechanics.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
+  for(const file of ['content/source/fixCoreMechanics.json','content/source/spellTraditions.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js','src/model/spellTraditions.js','src/model/spellPoolPolicy.js',`engine/mechanics/${mechanic}`])copy(file);
   const index='engine/mechanics/index.json';
   writeFileSync(join(root,index),JSON.stringify({format:'ashen.mechanics-index@1',mechanics:[{id:mechanic,tag:'defense:wardProtection',family:'defense',portability:'portable',modules:['effects']}]}));
   return root;
@@ -28,12 +28,13 @@ function pin(root) {
 }
 const changes=[
   ['canonical JSON-only multiplier',root=>editJSON(root,'content/source/fixCoreMechanics.json',rules=>{rules.stance.discount+=1;})],
+  ['spell school tradition membership',root=>editJSON(root,'content/source/spellTraditions.json',rules=>{rules.schools.fire=['arcane'];})],
   ['registered parameter default',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.parameters.properties.multiplier.default=0.6;})],
   ['registered service expression',root=>editJSON(root,`engine/mechanics/${mechanic}/service.json`,service=>{service.modifiers[0].value=0.6;})],
   ['class attachment eligibility',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.attaches=manifest.attaches.filter(kind=>kind!=='character');})],
   ['status attachment eligibility',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.attaches=manifest.attaches.filter(kind=>kind!=='status');})],
   ['behavior tag registration',root=>editJSON(root,'engine/mechanics/index.json',index=>{index.mechanics[0].tag='defense:renamedProtection';})],
-  ...[['mechanicsKernel','engine/runtime/bindings.mjs'],['formulas','src/model/formulas.js'],['fixCoreMechanics','src/model/fixCoreMechanics.js']].map(([name,path])=>[`live ${name} evaluator`,root=>{
+  ...[['mechanicsKernel','engine/runtime/bindings.mjs'],['formulas','src/model/formulas.js'],['fixCoreMechanics','src/model/fixCoreMechanics.js'],['spellTraditions','src/model/spellTraditions.js'],['spellPoolPolicy','src/model/spellPoolPolicy.js']].map(([name,path])=>[`live ${name} evaluator`,root=>{
     const file=join(root,path);writeFileSync(file,readFileSync(file,'utf8')+'\nexport const compatibilityProbe = 1;\n');
   }]),
 ];

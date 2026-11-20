@@ -1,0 +1,54 @@
+{
+  "request": "I wish the effects button was a button that opened a modal with other options toggles that I can turn on and off, but a master toggle at the top.",
+  "success": "Settings > General > Combat shows an Effects button. It opens a modal with the master Effects switch at the top, a Visual effects section (greyed while Effects is off) and a Fighter motion section.",
+  "failure": "The old Effects switch, shake, ambient or fighter-motion rows still sit in the Combat list; the modal does not open; the Visual section is not greyed with Effects off.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "effects-off",
+      "url": "?shot=title&shotSettings=%7B%22settingsGeneralCategory%22%3A%22Combat%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        { "click": "#settings" },
+        { "wait": { "ms": 800 } },
+        { "click": "[data-btn=\"effectsMenu\"]" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Effects modal is open", "selector": ".set-effects-modal" },
+        { "kind": "text", "label": "Button reads Effects off", "selector": "[data-btn=\"effectsMenu\"]", "includes": "Effects off" },
+        { "kind": "count", "label": "Master switch is in the modal", "selector": ".set-effects-modal [data-row-key=\"effects\"]", "eq": 1 },
+        { "kind": "count", "label": "Visual section is greyed while Effects is off", "selector": ".set-effects-modal [data-effects-section=\"visual\"][data-off]", "eq": 1 },
+        { "kind": "count", "label": "Fighter motion section has its four rows", "selector": ".set-effects-modal [data-effects-section=\"motion\"] [data-row-key]", "min": 4 },
+        { "kind": "within", "label": "Modal fits the screen", "selector": ".set-effects-modal", "container": "body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Old rows still listed outside the modal", "selector": ".set-card-list [data-row-key=\"motionAttack\"]:not(.set-effects-modal *)", "min": 1 }
+      ]
+    },
+    {
+      "name": "effects-on",
+      "url": "?shot=title&shotSettings=%7B%22settingsGeneralCategory%22%3A%22Combat%22%2C%22effects%22%3Atrue%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        { "click": "#settings" },
+        { "wait": { "ms": 800 } },
+        { "click": "[data-btn=\"effectsMenu\"]" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Effects modal is open", "selector": ".set-effects-modal" },
+        { "kind": "text", "label": "Button shows how many are on", "selector": "[data-btn=\"effectsMenu\"]", "includes": "of 6" },
+        { "kind": "count", "label": "Visual section is live", "selector": ".set-effects-modal [data-effects-section=\"visual\"][data-off]", "eq": 0 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": []
+    }
+  ]
+}

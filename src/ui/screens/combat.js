@@ -59,7 +59,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEff
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
-import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
+import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -264,6 +264,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Start decoding impact sprites now; never awaited, so the fight is not delayed.
+  void PrewarmCombatRecipientEffects();
   SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -1698,9 +1700,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderReactionNote() {
     reactionNote.attach(combatEl);
-    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+    // Only the entries after the last note shown can hold a new one: read that tail, never a copy of the
+    // whole log (it grows all fight, and this runs on every render).
+    const start = Math.max(0, reactionNoteSeen + 1), shown = disp?.logLength ?? combat.eventLog.length;
+    if (start >= shown) return;
+    const note = latestReactionNote(combat.eventLog.slice(start, shown), {
       registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
-    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
+    if (note) { reactionNoteSeen = start + note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {
@@ -2607,6 +2613,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // once, the halves let a pure selection change reuse the unselected cards'
     // previews instead of re-quoting the whole hand.
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      { fixCoreRules: combat.fixCoreRules, profileHash: combat.gameProfile?.hash, combatExpansionVersion: combat.combatExpansionVersion },
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     // A play paints the hand from `disp.handPreviews`, the quotes taken BEFORE the dispatch, while `combat` is already
     // post-dispatch, so stateKey alone is the same before and after the animation ends. The tag keeps those two paints
@@ -2654,7 +2661,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+        return { inst, preview: pv, rules: combat, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
           stacked: stackedIds.has(inst.instanceId), maxRange: combat.rangeState?.policy?.maxRange,
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
@@ -3088,7 +3095,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           : { preview: pv, affordable };
       } catch (e) { console.warn('[combat] dragged card not previewable for', targetId); return; }
       const old = dragGhost;
-      const face = renderCard(registries, inst, { preview: quote.preview, affordable: quote.affordable, range: true,
+      const face = renderCard(registries, inst, { preview: quote.preview, rules: combat, affordable: quote.affordable, range: true,
         maxRange: combat.rangeState?.policy?.maxRange, faceLineLimit: 3, inspection: false });
       face.classList.add(...[...old.classList].filter(name => name !== 'unaffordable'));
       face.setAttribute('aria-hidden', 'true');

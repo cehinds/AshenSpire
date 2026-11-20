@@ -111,6 +111,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
+| `js-preamble.mjs` | Omit ordinary leading module comments from emitted JavaScript, stopping at the first code token and preserving licenses and directives. | tests js-preamble; tools buildversion, bundle |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |
@@ -124,6 +125,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `enemy-back-normalize.py` | Mechanical proposal export: fixed cells, one scale, no inferred pixels. | (none) |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
+| `enemy-roster-table.mjs` | tools/enemy-roster-table.mjs - read-only markdown roster of Core enemies (default: the 32 Codex enemies). | tests alternative-art, gear-module; docs docs/content/codex-art-buildout-2026-11-18.md |
 | `enemy-sheets.mjs` | tools/enemy-sheets.mjs - one editable character sheet per Core enemy (owner request 2026-11-01). | tests enemy-sheets; tools jev; docs CONTRIBUTING.md, DEVELOPER.md, games/ashenspire/packs/core/enemies/_reference.md; other games/ashenspire/packs/core/enemies/_reference.json, games/ashenspire/packs/core/enemies/ashRevenant.json, games/ashenspire/packs/core/enemies/ashheartDragon.json +31 |
 | `enemy-turn-probe.mjs` | enemy-turn-probe — how long the enemies' turn takes, in a real browser | (none) |
 | `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |

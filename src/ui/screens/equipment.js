@@ -15,7 +15,8 @@ import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { MountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
-import { OpenSlotChoiceModal, OpenEquipConfirmModal } from '../components/armouryEquipModals.js';
+import { OpenSlotChoiceModal, OpenEquipConfirmModal, OpenItemChoiceModal } from '../components/armouryEquipModals.js';
+import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { ItemPropertyChips, ItemPropertyDetail, ItemPropertyCounts } from '../components/itemProperties.js';
 import { ArmouryItemRef, ItemPropertyLines } from '../../model/itemPropertyLines.js';
@@ -930,6 +931,42 @@ export function mountEquipment(host, {
     chooseSlot();
   }
 
+  /**
+   * Replace / Choose item on a slot (owner, 2026-11-19): the items that fit THIS position open in a modal, not in a
+   * picker drawn under the slot rows that the player had to scroll down to. Picking one runs the same compare (an
+   * occupied position) as every other replacement, whose Back reopens this list; an empty position equips at once.
+   */
+  function openSlotItemPicker(slot, position, opener = null) {
+    const slotLabel = `${slot.label} · ${position.index + 1}`;
+    const slotName = (id) => (eq.slots || []).find((candidate) => candidate.id === id)?.label || id;
+    const fitting = sortEquipPickerRows(equipPickerTableRows(inventoryRows(registries, run, meta), slot, { setIndex: position.index, loadout: run.loadout }))
+      .filter((row) => row.fits);
+    const options = fitting.map((row) => {
+      // What this position already holds is listed, greyed, so the list reads as the whole choice.
+      if (row.status === 'here') return { id: row.id, name: row.name, sub: row.category, status: t('armoury.picker.status.here'), disabled: true };
+      const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
+      const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
+      const requirement = equipmentRequirementReceipt(registries, row.row.item, run.attributes, run);
+      const hint = !seal.ok ? seal.reason : !transition.ok ? transition.reason
+        : !requirement.ok ? t('armoury.picker.requires', { stats: requirement.failures.map((failure) => `${registries.attributes.get(failure.attributeId).label} ${failure.required}`).join(', ') }) : '';
+      const first = row.elsewhere[0];
+      return {
+        id: row.id, name: row.name, sub: row.category, hint, disabled: !!hint,
+        status: first ? t('armoury.picker.status.elsewhere', { slot: slotName(first.slotId), n: first.setIndex + 1 }) : t('armoury.picker.status.free'),
+      };
+    });
+    const reopen = () => openSlotItemPicker(slot, position, opener);
+    OpenItemChoiceModal({
+      slotLabel, options, opener,
+      onChoose: (id) => {
+        const row = fitting.find((candidate) => candidate.id === id);
+        // An occupied position compares first; an empty one equips at once, as the inline picker did.
+        const occupied = !!run.loadout.sets[slot.id]?.[position.index];
+        if (row) requestEquip(slot.id, position.index, id, `Equip ${row.name} to ${slotLabel}`, { confirm: occupied, opener, onBack: reopen });
+      },
+    });
+  }
+
   function comparisonFor(slotId, setIndex, pieceId) {
     return equipmentSurfaceReceipt(registries, run, {
       candidate: { slotId, setIndex, pieceId },
@@ -974,11 +1011,9 @@ export function mountEquipment(host, {
     return reason ? { ok: false, reason } : seal;
   }
 
-  function activatePosition(slot, position, { openPicker = false } = {}) {
+  function activatePosition(slot, position, { openPicker = false, opener = null } = {}) {
     if (openPicker) {
-      openInventoryForSelection(slot.id, position.index);
-      selectedInventoryKey = null;
-      draw();
+      openSlotItemPicker(slot, position, opener);
       return;
     }
     const rule = positionActivationSeal(slot, position);
@@ -997,15 +1032,8 @@ export function mountEquipment(host, {
       commit(openPicker ? foldSettings() : null);
       return;
     }
-    if (picking && picking.slotId === slot.id && picking.setIndex === position.index) clearInventorySelection();
-    else openInventoryForSelection(slot.id, position.index);
-    if (onChange) onChange(run.loadout, foldSettings());
-    draw();
-    if (picking) {
-      const target = wrap.querySelector('.armoury-selection-context button');
-      target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-    }
+    // Choosing the active position opens its item list in a modal (owner, 2026-11-19), as Replace does.
+    openSlotItemPicker(slot, position, opener);
   }
 
   function attachPositionDropTarget(target, slot, position) {
@@ -1040,7 +1068,7 @@ export function mountEquipment(host, {
       className: 'armament-replace', attrs: { 'aria-label': t('armoury.action.chooseFor', { slot: position.label }) } });
     replace.addEventListener('click', event => {
       event.preventDefault(); event.stopPropagation();
-      activatePosition(slot, position, { openPicker: true });
+      activatePosition(slot, position, { openPicker: true, opener: replace });
     });
     actions.append(replace);
     if (position.state === 'occupied') {
@@ -1065,7 +1093,7 @@ export function mountEquipment(host, {
       const seal = positionActivationSeal(slot, position);
       activate.disabled = !seal.ok;
       if (!seal.ok) activate.title = seal.reason;
-      activate.addEventListener('click', () => activatePosition(slot, position));
+      activate.addEventListener('click', () => activatePosition(slot, position, { opener: activate }));
       actions.append(activate);
       if (!seal.ok) actions.append(prose(seal.reason, { class: 'armament-action-reason' }));
     }
@@ -1719,11 +1747,12 @@ export function mountEquipment(host, {
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
+    const readOnlyDeck = !onEditDeck && !inCombat && RestOpensDeckEditor(run);
     const rendered = renderArmouryPanel(panelModel, wrap, { back,
       tabs: [
         { id: 'character', label: t('progression.tab.character'), selected: view === 'grid' },
         { id: 'armory', label: t('armoury.hub.armory'), selected: view !== 'grid' },
-        { id: 'deck', label: t('armoury.hub.deck'), selected: false },
+        { id: 'deck', label: t(readOnlyDeck ? 'armoury.hub.viewDeck' : 'armoury.hub.deck'), selected: false },
       ],
       onTab: id => {
         hideTooltip();
@@ -1735,7 +1764,7 @@ export function mountEquipment(host, {
             notice = inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.';
             draw();
             // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
-            if (restOnly) openPileModal(registries, t('armoury.hub.deck'), run.deck || []);
+            if (restOnly) openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], { deckView: true });
           }
           return;
         }
@@ -1747,7 +1776,7 @@ export function mountEquipment(host, {
       },
     });
     const deckTab = rendered.panel.querySelector('[data-modal-tab="deck"]');
-    deckTab?.setAttribute('aria-disabled', String(!onEditDeck));
+    deckTab?.setAttribute('aria-disabled', String(!onEditDeck && !readOnlyDeck));
     if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : RestOpensDeckEditor(run) ? t('armoury.deck.restOnly') : 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
     const panel = rendered.panel;

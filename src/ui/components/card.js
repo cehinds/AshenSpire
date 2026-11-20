@@ -44,7 +44,7 @@ import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
-import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
@@ -119,10 +119,10 @@ export function relicText(def, registries = null) {
 
 // `wardAsPoise` ({ preview }) is set when the run's profile has Ward switched off (Core 2): a card that authors
 // `wardOffTextTemplate` then reads its Ward damage as Poise damage, one combined figure (model/wardOffCardText.js).
-function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null) {
+function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null, rules = null) {
   let template = def.textTemplate;
   // A Core Smash adds the shared rule sentence once (model/smashClause.js); an authored template that has it is left alone.
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules);
   if (smashClause && !template.includes(smashClause)) template = `${template.trim()} ${smashClause}`;
   const projected = wardAsPoise ? wardOffCardText(def, tokens, baseTokens, wardAsPoise.preview) : null;
   if (projected) { template = projected.template; tokens = projected.tokens; baseTokens = projected.baseTokens; }
@@ -274,7 +274,9 @@ export function renderCard(registries, ref, opts = {}) {
     // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
     model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-    accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
+    accessibleLabel = [model.name, model.sigils.displayLabel || ACTION_SIGILS[model.sigils.action].label,
+      model.sigils.traditions?.length === 2 && t('card.tradition.both'),
+      model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
       damageWords.length && `Damage: ${damageWords.join(', ')}`,
       ...model.sideTags.map(tag => tag.label + (Number.isInteger(tag.count) ? ` ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : '')),
@@ -411,8 +413,8 @@ export function renderCard(registries, ref, opts = {}) {
       definition:def,preview:opts.preview,registries,style:opts.artStyle});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
-      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
-      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
     const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
@@ -546,12 +548,12 @@ export function renderCard(registries, ref, opts = {}) {
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
     actionOwnsTouch: opts.actionOwnsTouch === true,
     infoBadge: opts.infoBadge === true,
-    open: opener => {
+    open: (opener, overrides = {}) => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
       const reading = cardStatusContext(def, opts, registries);
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() + cardStatusDetailsHtml(registries, def, reading)
-        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading);
+        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading, model);
       const receipt = cardDamageReceipt(opts.preview);
       if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName, expanded: true }));
       decorateKeywords(details);
@@ -581,8 +583,8 @@ export function renderCard(registries, ref, opts = {}) {
       // and no footer, which is the honest shape rather than an apology.
       const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
-        commands: opts.commands || {},
+        actions: overrides.actions ?? opts.inspectionActions ?? (() => cardActions(surface, ref, { availability: opts.availability, only: opts.only })),
+        commands: overrides.commands ?? opts.commands ?? {},
         // Combat's hand: the page lock lifts a frame after the door leaves.
         deferLift: surface === 'combat' });
     } });
@@ -777,7 +779,7 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -893,10 +895,10 @@ function cardStatusDetailsHtml(registries, def, context) {
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries));
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries), model);
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}, identity = null) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -907,7 +909,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
-  const identity = playingCardModel(registries, { cardId: def.id }, { definition: def });
+  identity ||= playingCardModel(registries, { cardId: def.id }, { definition: def, rules: statusContext });
   const typeText = [identity.type.label, identity.type.subtype, identity.type.abilityLabel, identity.type.weaponArt].filter(Boolean).join(' · ');
   let html = `<div class="tt-title">${esc(def.name)}</div>`
     + `<div class="ti-meta"><span class="as-tag">${esc(typeText)}</span><span class="ti-cost">${costText}</span></div>`;
@@ -916,7 +918,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   const commonStart = html.length;
-  html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
+  html += sigilExplanationHtml(identity.sigils);
   if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
     if (stance) {
@@ -965,7 +967,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // follow, then the chips.
   const common = html.slice(commonStart);
   html = html.slice(0, commonStart);
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"
@@ -1024,10 +1026,11 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   const service = tagService(registries);
+  const tagContext = { ...registries, ...statusContext };
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, tagContext)); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, tagContext));
   const rows = [...chips.values()];
   const effects = rows.filter((chip) => chip.effect && chip.effectTips.length);
   if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.effectTips.join(' '))}</dd>`).join('')}</dl>`;

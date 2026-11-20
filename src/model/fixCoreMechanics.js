@@ -82,8 +82,10 @@ export function FixCoreBrokenRules(ctx) {
 export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
+// Owner, 2026-11-18: `builtInElements` carry Pierce without a tag (Lightning); `skinStatus` is the status whose stacks each cut a Pierce hit's bypass by 1 (Stone Skin);
+// `earthSource` marks Block laid by a card of that school, which a built-in Pierce does not bypass.
 // Owner, 2026-11-18 (section 21): each Pierce stack ignores `blockIgnoredPerStack` Block. The default 0 keeps the 2026-10-26 fraction for a fight saved without the key.
-export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2, blockIgnoredPerStack: 0 });
+export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2, blockIgnoredPerStack: 0, builtInElements: [], skinStatus: null, earthSource: null });
 export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(rules?.pierce || {}) });
 // Owner, 2026-11-14: attacks always connect and intents are always read. `accuracy.hitRoll: false` draws no d20 and makes Evade a
 // stack that cancels the next attack; `perception.roll: false` makes every intent read exact. A rules object without the key
@@ -203,7 +205,8 @@ function validateElementFlux(row) {
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.spellTraditionsVersion !== undefined && ![0, 1].includes(rules.spellTraditionsVersion)) throw new Error('FixCore spellTraditionsVersion must be 0 or 1');
+  const known = new Set(['spellTraditionsVersion','version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
     || (rules.ward.decayPerTurn !== undefined && !(Number.isInteger(rules.ward.decayPerTurn) && rules.ward.decayPerTurn >= 0))
@@ -223,14 +226,21 @@ export function validateFixCoreRules(rules) {
   const pr = rules.ratings;
   if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
-  fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
+  const pierce = rules.pierce;
+  if (pierce !== undefined && (typeof pierce !== 'object' || pierce === null || Array.isArray(pierce)
+    || Object.keys(pierce).some(key => !Object.hasOwn(FIXCORE_PIERCE_DEFAULTS, key))
+    || (pierce.blockBypassFraction !== undefined && !(Number.isFinite(pierce.blockBypassFraction) && pierce.blockBypassFraction >= 0 && pierce.blockBypassFraction <= 1))
+    || (pierce.blockIgnoredPerStack !== undefined && !(Number.isInteger(pierce.blockIgnoredPerStack) && pierce.blockIgnoredPerStack >= 0))
+    || (pierce.builtInElements !== undefined && !(Array.isArray(pierce.builtInElements) && pierce.builtInElements.every(id => typeof id === 'string' && id.length > 0)))
+    || ['skinStatus', 'earthSource'].some(key => pierce[key] !== undefined && pierce[key] !== null && !(typeof pierce[key] === 'string' && pierce[key].length > 0)))) throw new Error('FixCore pierce requires optional fraction, non-negative integer Block per stack, element strings and nullable status/source strings');
   validateStanceBenefits(rules.stanceBenefits);
   validateSpellCosts(rules.spellCosts);
   validateElementFlux(rules.elementFlux);
   validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
-  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
-    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','defendDamageMultiplier','blockFraction','poiseFraction'].includes(key))
+    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0
+    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
   if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);

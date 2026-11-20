@@ -49,6 +49,12 @@ async function mount(page) {
 const rowSel = (code) => `.armoury-position-card[data-slot-position="${code}"]`;
 const wait = (page, ms) => page.waitForTimeout(ms);
 
+// The slot's item list is a modal (owner 2026-11-19): choose the item's row, then its Equip.
+async function pickInModal(page, id) {
+  await page.click(`.equip-item-choice [data-item-option="${id}"]`);
+  await page.click('.equip-item-choice .as-btn.primary');
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, reducedMotion: 'no-preference' });
   page.setDefaultTimeout(15000);
@@ -84,7 +90,7 @@ try {
 
   // Replace / Unequip do not move the selection.
   await page.click(`${rowSel(rows[0])} .armament-replace`);
-  await page.waitForSelector('.equip-picker-table');
+  await page.waitForSelector('.equip-item-choice');
   await page.waitForSelector('.armoury-position-card.is-inspected');
   assert.deepEqual(await selected(), [second], 'Replace leaves the selection alone');
 
@@ -125,9 +131,8 @@ try {
   const weaponRow = 'rightHand:0';
   const currentName = await page.$eval(`${rowSel(weaponRow)} .armament-position-name`, (n) => n.textContent);
   await page.click(`${rowSel(weaponRow)} .armament-replace`);
-  await page.waitForSelector('.equip-picker-table');
-  await page.waitForSelector('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await page.waitForSelector('.equip-item-choice');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'nothing is equipped by merely choosing');
   assert.equal(await page.locator('.equip-compare-modal h2, .equip-compare-modal [id="equip-compare-title"]').first().innerText(), 'Replace Main Hand?');
@@ -164,18 +169,18 @@ try {
   // Back (and Escape) returns to the picker without equipping.
   await page.click('.equip-compare-back');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
-  assert.ok(await page.locator('.equip-picker-table').isVisible(), 'back at the picker');
+  assert.ok(await page.locator('.equip-item-choice').isVisible(), 'back at the item list');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equipped nothing');
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   await page.keyboard.press('Escape');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
-  assert.ok(await page.locator('.equip-picker-table').isVisible(), 'Escape is Back');
+  assert.ok(await page.locator('.equip-item-choice').isVisible(), 'Escape is Back');
   assert.ok(await page.locator('.armoury').isVisible(), 'Escape did not close the Armoury');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0);
 
   // Equip performs the existing equip.
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   await page.click('.equip-compare-equip');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
@@ -188,8 +193,8 @@ try {
   const spare = await page.evaluate(() => window.__armouryRun.loadout.boughtArmour?.[0]?.id);
   if (spare) {
     await page.click(`${rowSel('body:0')} .armament-replace`).catch(async () => { await page.click('.armoury-position-card.is-occupied .armament-replace'); });
-    await page.waitForSelector('.equip-picker-table');
-    await page.click(`.equip-picker-row[data-item-id="${spare}"] .equip-picker-act`);
+    await page.waitForSelector('.equip-item-choice');
+    await pickInModal(page, spare);
     await page.waitForSelector('.equip-compare-modal');
     const armourNames = await page.$$eval('.equip-compare-face', (nodes) => nodes.map((n) => n.dataset.compareSide));
     assert.deepEqual(armourNames, ['current', 'new']);

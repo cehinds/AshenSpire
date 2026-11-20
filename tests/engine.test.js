@@ -1,3 +1,4 @@
+import { GEAR_TYPES } from '../src/content/gearTypes.js';
 import { engravedIconHtml } from '../src/ui/components/engravedIcon.js';
 // tests/engine.test.js — headless engine/model/content tests (SPEC §8)
 //
@@ -3596,18 +3597,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const expectedArmaments = ['straightSword', 'greatsword', 'dagger', 'shortbow', 'katana', 'halberd', 'warhammer', 'twinblade', 'battleaxe',
       'buckler', 'kiteShield', 'towerShield', 'roundShield', 'spikedShield', 'lantern', 'torch', 'parryDagger',
       'ashStaff', 'starstoneStaff', 'boneSceptre', 'emberlightSceptre', 'goldboughBranch', 'blightRod', 'gorefireBrand', 'wyrmhornStaff',
-      'frostSpear', 'cinderAxe', 'duskChime'];
+      'frostSpear', 'cinderAxe', 'duskChime',
+      // Codex art v28 equipment (docs/content/codex-equipment-buildout-2026-11-19.md)
+      'kris', 'stiletto', 'broadsword', 'flamberge', 'rapier', 'estoc', 'duelistsFoil', 'ashenClaymore', 'zweihander',
+      'pike', 'scythe', 'reapersCrescent', 'mace', 'morningStar', 'flail', 'maul', 'thunderMallet', 'beardedAxe',
+      'moonlitKatana', 'moonGlaives', 'longbow', 'huntersRecurve', 'handCrossbow', 'arbalest', 'leatherWhip', 'thornWhip',
+      'ironKnuckles', 'beastClaws', 'stormSceptre', 'grimoire', 'prayerBook', 'sunTalisman', 'boneTalisman'];
     eq([...ids].sort().join('|'), expectedArmaments.sort().join('|'), 'exact expanded armament roster');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 11, 'eleven weapons');
-    eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
-    eq(weapons.filter((w) => w.kind === 'staff').length, 9, 'nine staves');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 39, 'thirty-nine weapons');
+    eq(weapons.filter((w) => w.kind === 'shield').length, 12, 'twelve shields/offhands');
+    eq(weapons.filter((w) => w.kind === 'staff').length, 10, 'ten staves');
 
     const checkMods = (mods, where) => {
       if (mods === '') return;
       for (const m of (Array.isArray(mods) ? mods : [mods])) {
         const [lhs] = String(m).split('=');
-        const [target, field] = lhs.split('.');
-        assert(TARGETS.includes(target), `${where}: '${m}' targets a known card (${target})`);
+        const [fullTarget, field] = lhs.split('.');
+        const target = fullTarget.split(/[:@]/)[0]; // a gear mod's prefix is a selector with optional :arg and @conditions (equipmentTypes.json)
+        assert(TARGETS.includes(target) || ['start', 'end', ...Object.keys(GEAR_TYPES.selectors)].includes(target), `${where}: '${m}' targets a known card (${target})`);
         assert(field && field.length > 0, `${where}: '${m}' names a field`);
       }
     };
@@ -3639,7 +3646,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
       const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
-      eq(mine.length, additions[id] ? 9 : 8, `class '${id}' has its full armour roster including four shared sets`);
+      eq(mine.length, (additions[id] ? 9 : 8) + ({ reaver: 2, starseer: 1, herald: 1, rogue: 1 }[id] ?? 0), `class '${id}' has its full armour roster including four shared sets`);
       if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
       eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }
@@ -3657,7 +3664,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(LEGACY_REG).join('; '), '', 'every authored piece parses against the vocabulary');
 
     const intrinsicReceipts = LEGACY_REG.equipment.armaments.map(armamentIntrinsicReceipt);
-    eq(intrinsicReceipts.length, 28, 'all 28 armaments expose an intrinsic stat receipt');
+    eq(intrinsicReceipts.length, 61, 'all 61 armaments expose an intrinsic stat receipt');
     eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
       weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
     assert(intrinsicReceipts.every((row) => ['weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
@@ -3748,7 +3755,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 3, 'the deck definition carries its base while runtime adds source AR');
-    eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
+    eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses.find(row => row.status === 'strength')?.status, 'strength', 'the Oathsworn set grants Strength (a heavy set also carries Thorns 1, 2026-11-18)');
     assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
     // Swapping mid-fight: the price is paid, and the hand is re-armed.
@@ -3949,7 +3956,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(POOL_REG, run);
     eq(JSON.stringify(runMods(POOL_REG, run.loadout, run.class)), JSON.stringify({
       maxHp: 10, maxMana: 1, maxStamina: 1, swapCostDelta: 0, startStatuses: [],
-    }), 'runMods exposes every authored pool bonus');
+    }), 'runMods exposes every authored pool bonus without opting an unprofiled fixture into Core gear types');
     eq(run.maxHp, base.hp + 10, 'camp equip adds 10 maximum HP');
     eq(run.maxHp - run.hp, 7, 'camp equip carries the absolute HP deficit');
     eq(run.maxMana, base.mana + 1, 'camp equip adds 1 maximum Mana');
@@ -4307,6 +4314,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const probeRun = (apply) => {
       const reg = {
         ...REG,
+        gameProfile: { modules: { gear: { typeEffectsVersion: 1 } } },
         equipment: {
           ...REG.equipment,
           modFields: { ...REG.equipment.modFields, probe: { field: 'probe', scope: 'run', apply, status: 'strength' } },
@@ -4782,13 +4790,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
-      'a fresh profile owns its starting set and four attribute-gated shared sets');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
+      'a fresh run owns only its starting armour');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
     eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
     // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
     const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
+    eq(armourPool.filter((p) => inRun.has(p)).length, 1, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5755,7 +5763,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       const meta = { unlocked: over.unlocked || [], found: over.available || [] };
       return {
-        owned: ownership(reg, { meta, loadout: over.loadout || null }),
+        owned: ownership(reg, { meta, loadout: over.loadout || null, profileWardrobe: true }),
         unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
         drops,
       };
@@ -7261,7 +7269,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,effectsMenu,showPlayedCard,manaRing',
       'every quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
@@ -7287,7 +7295,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat', 'screenShake', 'showPlayedCard',
+    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effectsMenu', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);
@@ -7635,6 +7643,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
     const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
     const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(!equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'an alternate starter does not also grant the default armour');
+    worn.loadout.boughtArmour = [{ classId: 'reaver', id: defaultArmour.id }];
     assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
       ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
     assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
@@ -7922,7 +7933,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Owner, 2026-11-18: Mana is WIS in fours and Stamina is DEX in fours, so Constitution feeds neither any more.
     eq(constitution.face.summary, '+1 HP per pt · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
-    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+    eq(constitution.reveal.flavour, REG.attributes.get('constitution').sense,
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+1 every 1 point$/.test(line))
       && !constitution.reveal.lines.some((line) => /^Mana /.test(line))
@@ -9711,6 +9722,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
     // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
     // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;

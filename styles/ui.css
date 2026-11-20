@@ -632,6 +632,7 @@ button.ev-choice {
 /* ---------- event screen ---------- */
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+:root[data-effects='off'] .event-art { animation: none; }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
@@ -1499,7 +1500,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card .cost > span { display: none; }
 .deck-editor .deck-editor-reading .card .cost { justify-content: center; align-content: center; }
 .deck-editor .deck-editor-reading .card .card-cost-rail > :is(.stamina-cost, .mana-cost) { font-size: max(1.4rem, var(--deck-min-text)); line-height: 1.3; padding: .3rem .5rem; border: 1px solid #796741; background: #181b1e; border-radius: .5rem; }
-.deck-editor-inspect-back { display: none; }
+.deck-editor-inspect-back { display: block; align-self: start; flex: none; }
 .deck-editor-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #d6bd8e; min-height: var(--deck-editor-target); }
 .deck-editor-feedback[hidden] { display: none; }
 .deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }
@@ -1728,6 +1729,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-traditions="arcane divine"] .combat-sigil { width: 48%; flex: 0 0 48%; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-traditions="arcane divine"] svg { width: 100%; height: 100%; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance
    wrap onto line 2 (the same shape as on phones), in the text column. */
 @container game-viewport (min-width: 1001px) {

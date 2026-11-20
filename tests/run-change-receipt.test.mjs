@@ -15,9 +15,10 @@ test('no change is an empty frozen diff', () => {
   assert.equal(d.empty, true); assert.deepEqual(d.rows, []); assert.ok(Object.isFrozen(d));
 });
 test('stat and resource rows carry before, after and delta', () => {
-  const d = diff(newRun(), (r) => { r.hp -= 5; r.cinders += 12; r.smithingStones += 1; });
+  const run = newRun(), hp = run.hp;
+  const d = diff(run, (r) => { r.hp -= 5; r.cinders += 12; r.smithingStones += 1; });
   assert.deepEqual(d.rows.map((r) => [r.kind, r.label, r.before, r.after, r.delta]).sort(), [
-    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '50', '45', -5]].sort()); // Reaver level-1 max HP 50: 30 + 5 x (CON + level)
+    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', String(hp), String(hp - 5), -5]].sort()); // The current starting outfit's CON is included in the initial HP.
 });
 test('a relic gained and lost', () => {
   const run = newRun();

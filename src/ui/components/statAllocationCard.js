@@ -13,7 +13,6 @@ import {
     openModal,
 } from '../kit/index.js';
 import { t as translate } from '../strings.js';
-import { attributeGainSummary } from '../../model/attributePointPreview.js';
 
 const CLICK_EVENT = 'click';
 const ARIA_DISABLED = 'aria-disabled';
@@ -130,32 +129,12 @@ function buildAttributeCardModels(statRowModels)
     }));
 }
 
-function appendMainGain(attributeCard, statRowModel)
-{
-    const mainGain = statRowModel.card?.mainGain;
-    const labelHost = attributeCard.querySelector('.ls-label');
-    if (
-        mainGain
-        && labelHost
-    )
-    {
-        const gainLabel = buildElement('span', {
-            class: 'se-gain',
-            text: mainGain.text,
-            title: attributeGainSummary(statRowModel.card.gains),
-        });
-        labelHost.appendChild(gainLabel);
-    }
-}
-
 function buildStatRow(attributeCard, statRowModel, stepHandlers)
 {
     attributeCard.classList.add('se-attribute-card');
 
     const stepperHost = attributeCard.querySelector(STEPPER_HOST_SELECTOR);
     stepperHost.appendChild(buildStepper(statRowModel, stepHandlers));
-
-    appendMainGain(attributeCard, statRowModel);
 
     const settingRow = buildSettingRow({
         tag: 'div',

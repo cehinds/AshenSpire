@@ -6,7 +6,9 @@ import { fight } from './elementFixture.mjs';
 import * as Statuses from '../src/engine/statuses.js';
 import { profileDamageReceipt, PierceStacks } from '../src/engine/gameProfileCombat.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
-import { fixCorePierceRules } from '../src/model/fixCoreMechanics.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { createRng } from '../src/engine/rng.js';
+import { fixCorePierceRules, validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 const PIERCE = { combatProfile: { camp: 'physical', damageType: 'piercing', reach: 'contact' }, tags: ['camp:physical', 'pierce', 'damage:piercing'] };
 const BLUNT = { combatProfile: { camp: 'physical', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'] };
@@ -98,4 +100,21 @@ test('Pierce with Ward up: what Block holds is Block, and Poise still absorbs th
   assert.equal(receipt.blocked, 3, 'Block 5 less the 2 ignored');
   assert.equal(receipt.poiseMitigated, incoming - 3, 'Poise absorbs everything Block did not, 100%');
   assert.equal(receipt.hpLoss, 0);
+});
+
+test('Pierce settings validate every new field and reject malformed saved combat rules', () => {
+  for (const pierce of [null, [], { unknown: 1 }, { blockBypassFraction: -0.1 }, { blockBypassFraction: 1.1 },
+    { blockIgnoredPerStack: -1 }, { blockIgnoredPerStack: 0.5 }, { blockIgnoredPerStack: '1' },
+    { builtInElements: 'lightning' }, { builtInElements: [3] }, { builtInElements: [''] },
+    { skinStatus: 2 }, { earthSource: {} }]) {
+    assert.throws(() => validateFixCoreRules({ ...fixCoreMechanics, pierce }), /pierce/);
+  }
+  for (const pierce of [{}, { blockBypassFraction: 0.2 }, { blockIgnoredPerStack: 999999 },
+    { builtInElements: [], skinStatus: null, earthSource: null }]) {
+    assert.doesNotThrow(() => validateFixCoreRules({ ...fixCoreMechanics, pierce }));
+  }
+  const { combat } = fight();
+  const snapshot = serializeCombatSnapshot(combat);
+  snapshot.fixCoreRules.pierce.builtInElements = 'lightning';
+  assert.throws(() => restoreCombatSnapshot({ registries: combat.registries, snapshot, rng: createRng(5), expectedGameProfile: combat.gameProfile }), /pierce/);
 });

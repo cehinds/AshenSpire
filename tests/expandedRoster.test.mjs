@@ -12,15 +12,15 @@ import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { defaultSeatOrder } from '../src/model/seats.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 const added = ['lanternMoth','briarHermit','chainScavenger','bellKeeper','thornMatriarch','mirrorScribe','stitchCrab','glassRegent','marrowOrganist','cinderMantis','eclipseCantor','furnaceSaint','hollowAstronomer','ashheartDragon'];
-const bosses = new Set(['fellWarden','stitchedKing','blightedValkyrie','bellKeeper','thornMatriarch','glassRegent','marrowOrganist','furnaceSaint','hollowAstronomer','ashheartDragon']);
-const elites = new Set(['wyrmAspirant','courtDuelist','wyrmLord']);
+const bosses = new Set(['fellWarden','stitchedKing','blightedValkyrie','bellKeeper','thornMatriarch','glassRegent','marrowOrganist','furnaceSaint','hollowAstronomer','ashheartDragon','woundwoodTusker','mireProcessional','veiledJusticiar','sixleggedHearse','crucibleNewt']);
+const elites = new Set(['wyrmAspirant','courtDuelist','wyrmLord','siltCrownNewt','wickerHind','blackrushStork','pearlbackSnail','alderMaskHarvester','pallidOathCamel','inkveilNautilus','mirrorFanAbbess','saltChoirWalrus','rimewheelPenitent','brassThroatIbex','kilnbackTerrapin','slagwingHeron','ashSilkWeaver','ferrumVotary']);
 const reg = createRegistries(contentBundle);
 function fight(id, seed = 234){ return createCombat({registries:reg,rng:createRng(seed),player:{classId:'reaver',maxHp:10000,hp:10000,maxMana:0,mana:0,maxStamina:3,stamina:3,energyMax:3,drawPerTurn:0,deck:[],relicIds:[],flasks:[]},enemyIds:[id]}); }
 const end = c => dispatch(c,{type:'endTurn'});
-test('all ten authored boss locations appear as distinct saved map destinations',()=>{
+test('all fifteen authored boss locations appear as distinct saved map destinations',()=>{
  const encounters=contentBundle.encounters.filter(e=>e.pool==='boss');
  assert.deepEqual(Object.keys(BOSS_LOCATIONS).sort(),encounters.map(e=>e.id).sort());
- assert.equal(new Set(Object.values(BOSS_LOCATIONS)).size,10);
+ assert.equal(new Set(Object.values(BOSS_LOCATIONS)).size,15);
  const seen=new Set();
  const order=defaultSeatOrder(reg);
  for(const act of [1,2,3])for(let seed=1;seed<=20;seed++){
@@ -28,14 +28,14 @@ test('all ten authored boss locations appear as distinct saved map destinations'
   const map=buildActMap(reg,createRng(seed),seat,act);
   for(const id of map.bossIds){const encounter=bossEncounterForNode(reg,map,id,{seat,tier:act});seen.add(encounter);assert(map.nodes[id].destinationLabel.startsWith(BOSS_LOCATIONS[encounter]+' · '));}
  }
- assert.equal(seen.size,10);
+ assert.equal(seen.size,15);
 });
-test('roster has exactly 20 regular enemies, 10 bosses, and 3 elites with valid authored content',()=>{
+test('roster has exactly 32 regular enemies, 15 bosses, and 18 elites with valid authored content',()=>{
  const enemies=contentBundle.enemies;
- assert.equal(new Set(enemies.map(e=>e.id)).size,33);
- assert.equal(enemies.filter(e=>bosses.has(e.id)).length,10);
- assert.equal(enemies.filter(e=>elites.has(e.id)).length,3);
- assert.equal(enemies.filter(e=>!bosses.has(e.id)&&!elites.has(e.id)).length,20);
+ assert.equal(new Set(enemies.map(e=>e.id)).size,65);
+ assert.equal(enemies.filter(e=>bosses.has(e.id)).length,15);
+ assert.equal(enemies.filter(e=>elites.has(e.id)).length,18);
+ assert.equal(enemies.filter(e=>!bosses.has(e.id)&&!elites.has(e.id)).length,32);
  const validation=validateContent(contentBundle); assert.equal(validation.ok,true,JSON.stringify(validation.errors));
  const moveIds=new Set();
  for(const id of added){const def=reg.enemies.get(id);assert(def);for(const key of Object.keys(def.moves)){assert(!moveIds.has(key),'new move ID repeated: '+key);moveIds.add(key);}assert(Object.values(def.moves).some(m=>m.damage>0));}
@@ -79,10 +79,10 @@ test('seeded weighted plans replay exactly and respect move locks and repeat lim
 });
 
 
-test('live pools expose all 20 regular enemies and 10 bosses through seeded legal encounters',()=>{
+test('live pools expose all 32 regular enemies and 15 bosses through seeded legal encounters',()=>{
  const encounters=contentBundle.encounters;
  const poolIds=pool=>new Set(encounters.filter(e=>e.pool===pool).flatMap(e=>e.enemies));
- assert.equal(poolIds('normal').size,20);assert.equal(poolIds('boss').size,10);assert.equal(poolIds('elite').size,3);
+ assert.equal(poolIds('normal').size,32);assert.equal(poolIds('boss').size,15);assert.equal(poolIds('elite').size,18);
  assert.deepEqual([...poolIds('boss')].sort(),[...bosses].sort());
  const actIds=[['lanternMoth','briarHermit','chainScavenger','bellKeeper','thornMatriarch'],['mirrorScribe','stitchCrab','glassRegent','marrowOrganist'],['cinderMantis','eclipseCantor','furnaceSaint','hollowAstronomer','ashheartDragon']];
  for(let act=1;act<=3;act++){

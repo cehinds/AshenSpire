@@ -83,8 +83,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
     'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
     'from:armor': { label: 'Armour' },
-    // Owner 2026-11-18 (ruling §9): a focus (staff, sceptre) lowers every spell's Mana cost by 1, so its blurb says so.
-    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. Equipped, a focus lowers the Mana cost of every spell by 1 (never below 0).' },
+    // Owner 2026-11-18 (ruling §18 supersedes §9 timing): one shared Focus discount applies only in Prepared.
+    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies.' },
     'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
@@ -140,8 +140,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'trait', 'utility'],
-    'the roots that joined are the framework\'s nine plus four named tactical domains');
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'tradition', 'trait', 'utility'],
+    'the roots that joined are exactly the named framework, tactical and spell tradition domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
@@ -174,6 +174,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
+    tradition: ['tradition:arcane', 'tradition:divine'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
     trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
@@ -221,7 +222,7 @@ test('every object states exactly one kind, the one its collection and type name
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
-  assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
+  assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
   const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
     contentBundle.flasks, contentBundle.events,

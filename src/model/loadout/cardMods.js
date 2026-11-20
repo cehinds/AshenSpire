@@ -10,6 +10,8 @@ import { parseMod } from './modStrings.js';
 import { EQUIPMENT_POOL_FIELDS, EQUIPMENT_POOL_CURRENT, moveEquipmentPool } from './applyVocab.js';
 import { WeaponCardPackageModel } from './weaponPackages.js';
 import { equippedPieces } from './equipped.js';
+import { GearPieceMods, GearTypeEffectsEnabled, GearVocabularyEnabled } from '../gearEffects.js';
+import { GEAR_TYPES } from '../../content/gearTypes.js';
 
 /**
  * cardMods(registries, loadout, classId) → Map(cardId → ['damage=+4', ...]).
@@ -73,18 +75,33 @@ export function runMods(registries, loadout, classId, run = null) {
   const stacks = new Map();
   const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
-  for (const piece of equippedPieces(registries, loadout, classId)) {
-    const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
-    for (const raw of piece.mods || []) {
+  const statPoints = {}, flags = {}, resist = {};
+  const worn = equippedPieces(registries, loadout, classId);
+  for (const piece of worn) {
+    const pieceRef = piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`;
+    const resolvedPiece = resolvedRefs.has(pieceRef), resolvedSource = gear.sources.find(source => source.sourceId === pieceRef);
+    // The piece's type or armour group base reads like its own mods (owner, 2026-11-18; content/source/equipmentTypes.json).
+    for (const raw of GearPieceMods(piece, GearTypeEffectsEnabled(subject))) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
+      // Newly introduced vocabulary cannot change a saved profile which predates the gear pass.
+      if (!GearVocabularyEnabled(subject, spec)) continue;
       // Resolved gear replaces pool stats; independent swap/status effects remain.
-      if (resolvedPiece && EQUIPMENT_POOL_FIELDS.includes(spec.apply)) continue;
+      // Resolved gear replaces a pool stat only when its own points supply that pool (hp, mp, sp); an item that supplies none (Nightweave's +1 max MP) and every
+      // type or group base still add, uncapped (owner, 2026-11-18).
+      const poolStat = { maxHp: 'hp', maxMana: 'mp', maxStamina: 'sp' }[spec.apply];
+      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (resolvedSource?.[poolStat] || 0) > 0)) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
         swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
+      } else if (spec.apply === 'statPoint') {
+        statPoints[spec.op] = mod.mode === 'add' ? (statPoints[spec.op] || 0) + mod.value : mod.value;
+      } else if (spec.apply === 'flag') {
+        flags[spec.op] = mod.mode === 'add' ? (flags[spec.op] || 0) + mod.value : mod.value;
+      } else if (spec.apply === 'resist') {
+        resist[spec.op] = (resist[spec.op] || 0) + GEAR_TYPES.resistPercent * Math.max(1, mod.value);
       } else if (spec.apply === 'startStatus') {
         const prev = stacks.get(spec.status) || 0;
         stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
@@ -96,6 +113,8 @@ export function runMods(registries, loadout, classId, run = null) {
     ...pools,
     swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
+    // Owner, 2026-11-18: the gear vocabulary's run words (stat points, flags, Resist); left out when nothing sets them.
+    ...(Object.keys(statPoints).length ? { statPoints } : {}), ...(Object.keys(flags).length ? { flags } : {}), ...(Object.keys(resist).length ? { resist } : {}),
   };
 }
 

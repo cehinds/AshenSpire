@@ -13,7 +13,12 @@ import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
 import { carriedIds } from './loadout/ownership.js';
+import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
+import { GearTypeEffectsEnabled } from './gearEffects.js';
+import { GEAR_TYPES } from '../content/gearTypes.js';
+const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
+import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -53,7 +58,7 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-11-14: eligibility.excludeCardIds keeps cards that do nothing without the hit roll (Guiding Whisper) or repeat another
   // (base.evade) out of every new offer and shop. Their definitions stay for saved decks, and a claim still accepts an earlier offer.
   const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -152,8 +157,8 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
   // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
   const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
-  const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
+  const weights=BalanceSpellRewardWeights(registries,run,ids.map(id=>defs.get(id)),ids.map(id=>{const card=defs.get(id);
+    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));})),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -222,7 +227,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):kind==='weapons'||kind==='armor'?ThemedItemPick(rng,stream,ids,{classId:run.class,kind,enabled:GearTypeEffectsEnabled(run),rowOf:itemId=>kind==='weapons'?(registries.equipment.armaments||[]).find(row=>row.id===itemId):(registries.equipment.armour||[]).find(row=>row.id===itemId&&row.classId===run.class)}):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     // A card that is also a weapon art is one offer, never both a card and an art on the same screen.
     if(kind==='combatCards'||kind==='weaponArts')for(const other of ['combatCards','combatCardsLow','weaponArts'])available[other]=available[other].filter(value=>value!==id);
     options.push({kind,id});
@@ -367,7 +372,10 @@ export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool =
   const chosen = [];
   let left = candidates;
   while (chosen.length < wanted && left.length) {
-    const pick = spreadPick(rng, left, chosen, [row => row.type, row => row.family, row => row.sub]);
+    // Owner, 2026-11-18: each pick draws from the class-themed items 75% of the time (the whole pool otherwise, or when none is left).
+    const themed = left.filter(row => ItemIsThemed(row.kind === 'weapons' ? (registries.equipment.armaments || []).find(item => item.id === row.id) : (registries.equipment.armour || []).find(item => item.id === row.id && item.classId === run.class), run.class, row.kind));
+    const pool = GearTypeEffectsEnabled(run) && rng.int('cardRewards', 1, 100) <= GEAR_THEME_PERCENT && themed.length ? themed : left;
+    const pick = spreadPick(rng, pool, chosen, [row => row.type, row => row.family, row => row.sub]);
     chosen.push(pick);
     left = left.filter(row => row !== pick);
   }

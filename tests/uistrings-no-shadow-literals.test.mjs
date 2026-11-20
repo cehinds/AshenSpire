@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return', 'wording'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -154,6 +154,9 @@ const ALLOWED = [
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],
   ['src/ui/input.js', 'Deck', 'control-bar short for Open Armoury (Deck); no migrated row names this action (the Armoury tab is "Cards")'],
+  ['src/ui/components/menuComponents.js', 'Off', 'a menu switch pill\'s own On/Off state, not the Blur and shadows Off choice'],
+  ['src/ui/models/HudQuickSettingsModel.js', 'Off', 'the quick-settings tile\'s own On/Off state, not the Blur and shadows Off choice'],
+  ['src/ui/screens/settings.js', 'Off', 'the scene toggle button\'s own On/Off state, not the Blur and shadows Off choice'],
   ['src/ui/models/SmithSelectionModel.js', 'Discard', 'a card upgrade\'s discard value ("Discard +1"), not the combat Discard pile'],
   ['src/ui/screens/combat.js', 'Poise', 'the stat meter and resistance sentence name the Poise stat; statsPreview.overview.poise labels one preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
@@ -302,6 +305,21 @@ test('shared controls and hidden intent copy remain protected after promotion', 
   assert.ok(texts.get('Choose')?.includes('common.chooseNamed.short'));
 });
 
+
+test('Smash matchup copy and its semantic allowance survive an empty branch delta', () => {
+  const ids = frozenMigrationIds('smash-stance-rule');
+  assert.deepEqual(ids, ['card.smash.matchupClause']);
+  const permanent = permanentMigratedIds();
+  assert.ok(permanent.has(ids[0]));
+  assert.ok(uiStrings.some(row => row.id === ids[0]));
+  assert.ok(migratedTexts(permanent).get('Against')?.includes('card.smash.matchupClause.full'));
+  const file = 'src/ui/components/damageReceipt.js';
+  const hits = sweep(permanent);
+  assert.ok(hits.some(hit => hit.file === file && hit.text === 'Against'
+    && hit.rows.includes('card.smash.matchupClause.full')));
+  assert.ok(ALLOWED.some(([allowedFile, text, reason]) => allowedFile === file && text === 'Against'
+    && reason.includes('not the Core Smash stance-matchup sentence')));
+});
 
 test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
   const frozen = frozenMigrationIds('core-profile');

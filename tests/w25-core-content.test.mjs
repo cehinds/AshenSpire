@@ -1,3 +1,4 @@
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 // Owner, 2026-11-14 content decisions for Core (W25-B): Backstep cost, Jab as a reaction, spell damage, Ward and Barrier.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,9 +27,9 @@ import { dispatch } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live(classId = 'reaver', seed = 511) {
-  const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+function live(classId = 'reaver', seed = 511, registries = reg) {
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
   return { run, combat };
 }
 
@@ -69,13 +70,25 @@ test('played as a reaction, Jab pays 1 Stamina and strikes the attacker before t
 const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[6],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
 
 // Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
-test('every non-cantrip Spell card deals twice its earlier damage, and a cantrip is back at its earlier damage', () => {
+test('retained legacy Spell damage keeps its doubling and cantrip baseline while tradition rebalances are explicit', () => {
   const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
   // The nine cost.manaOnly spells are new in batch 4 and authored at their final damage: neither doubled nor halved.
   const spells = cards.filter(row => row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
-  assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length);
+  const repurposed = ['censure', 'graveToll', 'rendingHex', 'acidSplash'];
+  const added = { glimpse: [[4], [6]], mindLance: [[12], [16]] };
+  assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length - repurposed.length + Object.keys(added).length);
+  for (const id of repurposed) {
+    const row = card(`core.${id}`);
+    assert.deepEqual(damages(row.effects), [], `${id}: Divine support replaces its former damage`);
+    assert.deepEqual(damages(row.upgrade.effects), [], `${id}: upgraded support stays non-damaging`);
+  }
   for (const row of spells) {
-    const [base, upgraded] = SPELL_DAMAGE_BEFORE[row.id.replace('core.', '')];
+    const id = row.id.replace('core.', '');
+    if (added[id]) {
+      assert.deepEqual([damages(row.effects), damages(row.upgrade.effects)], added[id], `${id}: authored Arcane offense`);
+      continue;
+    }
+    const [base, upgraded] = SPELL_DAMAGE_BEFORE[id];
     const scale = row.tags.includes('rank.cantrip') ? 1 : 2;
     assert.deepEqual(damages(row.effects), base.map(n => Math.max(1, n * scale)), row.id);
     assert.deepEqual(damages(row.upgrade?.effects), upgraded.map(n => Math.max(1, n * scale)), `${row.id} upgraded`);
@@ -96,7 +109,7 @@ test('a cast cantrip deals its halved damage, and the hit meets Poise before HP'
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c1', targetId: target.id });
   const dealt = out.events.find(event => event.type === 'damageDealt');
   const hit = dealt.damageReceipt.hits[0];
-  assert.equal(hit.sources.find(row => row.id === 'base').amount, 6, 'Cantrip: 6 before the doubling, 12 after it, 6 again after "Halve cantrip damage"');
+  assert.equal(hit.sources.find(row => row.id === 'base').amount, 6 + 1, 'Cantrip authored 6 after the halving, plus the current Sceptre magic damage 1');
   assert.ok(dealt.poiseAbsorbed > 0, 'Poise took its share first');
   assert.equal(hit.hpLoss, hit.incoming - hit.poiseReduced, 'HP only took what Poise left');
   assert.equal(500 - target.hp, dealt.hpLoss);
@@ -160,7 +173,7 @@ test('while the holder has Ward or Barrier, a hit meets Poise before HP', () => 
 });
 
 test('a fight saved before the ruling (its rules lack ward.poisePerStack) gives Ward no Poise', () => {
-  const { combat } = live('starseer');
+  const { combat } = live('starseer', 511, legacyGearRegistries(reg));
   delete combat.fixCoreRules.ward.poisePerStack;
   const before = poiseOf(combat);
   applyStatus(combat, combat.player, 'ward', 2, null);

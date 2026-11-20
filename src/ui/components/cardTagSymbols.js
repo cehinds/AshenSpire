@@ -1,4 +1,4 @@
-import { ACTION_SIGILS, SCHOOL_SIGILS } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, TRADITION_SIGILS } from '../../content/combatSigils.js';
 import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
@@ -53,6 +53,7 @@ const SHAPES = Object.freeze({
 const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
+  if (tag.id.startsWith('tradition:')) return TRADITION_SIGILS[tag.id.slice(10)]?.shape || SHAPES.skill;
   // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
   if (tag.id === 'effect:precision') return SHAPES.precision;
   if (tag.id === 'effect:block') return SHAPES.guard;
@@ -129,7 +130,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
-  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  const smashHelp = coreSmashHelp(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');

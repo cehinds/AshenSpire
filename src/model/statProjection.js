@@ -12,6 +12,8 @@ import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { handStatRows, ratingStatRows, ratingsConfigFor, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { handSizeReceipts, resolveHandRules } from './handRules.js';
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -220,6 +222,11 @@ export function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;
   if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
   const classDef = registries.classes.get(run.class);
+  // Pool writers price equipped, deck and Blight attributes once, then add the persisted equipment pools.
+  // The allocated attribute rows below remain unchanged; a display receipt never re-derives or mutates the run's pools.
+  const poolAttributes = gameProfileEffectiveAttributes(registries, run, effectiveAshenBlightAttributes(run));
+  const poolBonuses = run.equipmentPoolBonuses ?? runMods(registries, run.loadout, run.class, run);
+  const staminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   const attributes = registries.attributes.all()
     .slice()
     .sort((a, b) => a.order - b.order)
@@ -240,10 +247,12 @@ export function statProjection(registries, run) {
     && snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
   )).map((presentation) => {
     const id = presentation.id;
-    const receipt = deriveStat(snapshot.rules, id, { attributes: SheetAttributes(run), classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
-    const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
+    const poolField = { hp: 'maxHp', mana: 'maxMana', stamina: 'maxStamina' }[id];
+    const receipt = deriveStat(snapshot.rules, id, { attributes: poolField ? poolAttributes : SheetAttributes(run), classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
+    const equipmentBonus = poolField ? poolBonuses[poolField] || 0 : 0;
     const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
-    const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
+    const penalty = id === 'stamina' ? staminaPenalty : 0;
+    const value = poolField ? Math.max(id === 'hp' ? 1 : 0, receipt.value + equipmentBonus + adjustment - penalty) : receipt.value;
     return {
       ...receipt,
       label: presentation.label,
@@ -268,6 +277,7 @@ export function statProjection(registries, run) {
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
+        + `${penalty ? ` - ${penalty} Ashen Blight` : ''}`
         + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
       note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: its fights draw by its hand rules.' : '',
     };

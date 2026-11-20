@@ -18,9 +18,11 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
+import { legacyGearProfile, legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const preGearRegistries = legacyGearRegistries(reg);
 function live(registries = reg) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
@@ -52,7 +54,8 @@ test('fractions are data: 0.3 per stack, capped at 0.9', () => {
 
 test('reduction: stacks cut the hit before Block, rounded down', () => {
   for (const stacks of [1, 2]) {
-    const { reflected, taken } = exchange(stacks);
+    const { reflected, taken, combat } = exchange(stacks);
+    assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'the normal Reflect fixture keeps current gear');
     assert.equal(taken.amount, Math.floor(reflected.original * (1 - stacks * 0.3)), `${stacks} stack(s)`);
     assert.equal(taken.hpLoss, taken.amount, 'no Block: all of it reaches HP');
   }
@@ -169,7 +172,8 @@ test('a lethal hit on the Reflect holder still returns damage and spends the sta
 });
 
 test('a reflected hit keeps the incoming carrier\'s magicShare split (fully magical return is absorbed by Poise)', () => {
-  const { combat, enemy } = live();
+  // Isolate the reflected packet: plate Thorns is a separate HP cost, not part of its magic share.
+  const { combat, enemy } = live(preGearRegistries);
   combat.player.reflectStacks = 1;
   enemy.persistentPoise = { value: 20, max: 20 };
   const carrier = { magicShare: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', range: 'melee', targeting: 'single', traits: [] } };
@@ -185,14 +189,15 @@ test('a Reflect return that kills a multi-hit attacker cancels its later hits in
   const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
   const { projectEnemyIntentDamage } = await import('../src/engine/enemyIntentProjection.js');
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
-  const prime = () => { const { combat, enemy } = live(); enemy.hp = 1; combat.player.reflectStacks = 1; return { combat, enemy }; };
+  // No other retaliation may kill the control attacker: this counterfactual pins the pre-Thorns gear rules.
+  const prime = () => { const { combat, enemy } = live(preGearRegistries); enemy.hp = 1; combat.player.reflectStacks = 1; return { combat, enemy }; };
   const { combat, enemy } = prime();
   const view = previewDamageHits(combat, enemy, combat.player, 5, [], carrier, 3);
   assert.equal(view.hits, 1, 'the first hit\'s return kills the 1-HP attacker; hits 2 and 3 are cancelled');
   assert.equal(view.totalDamage, view.hitDamages[0]);
   assert.equal(enemy.hp, 1, 'the preview never damages the live attacker');
   // Without a Reflect stack all three hits are forecast, so the cut is what cancels them.
-  const bare = live();
+  const bare = live(preGearRegistries);
   bare.enemy.hp = 1;
   assert.equal(previewDamageHits(bare.combat, bare.enemy, bare.combat.player, 5, [], carrier, 3).hits, 3);
   // Enemy-intent projection: the same three-hit move forecasts only the first hit.
@@ -239,7 +244,8 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
   const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
   for (const stacks of [0, 2]) {
-    const { combat, enemy } = live();
+    // The literal 80% d20 example predates plate's -1 DEX; the detached/live equality assertion is unchanged.
+    const { combat, enemy } = live(preGearRegistries);
     legacyRolls(combat); // the roll's Evasion math only prices a fight that still rolls (saved before the 2026-11-14 ruling)
     combat.player.basePrecisionBonus = 0; // the real value, not live()'s auto-hit helper
     Object.assign(enemy, { baseEvasionBonus: 0, reflectStacks: stacks || undefined });
@@ -254,7 +260,8 @@ test('Counter forecast under Reflect equals live: a return that kills the attack
   const { previewCard } = await import('../src/engine/combat.js');
   // Full base damage: under Core's halving the soldier's 8 Slash returns 1, which its Poise rating absorbs, so the Reflect return could never kill.
   const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-  const fullBase = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile);
+  // The one-HP attacker is meant to die to Reflect, without plate Thorns killing it first.
+  const fullBase = legacyGearRegistries(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile));
   const run = enemyHp => {
     const { combat, enemy } = live(fullBase);
     enemy.hp = enemyHp;
@@ -311,7 +318,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   // With 11 stacks held (10 + the card's 1), each answered hit returns the scaled base 2 plus floor(incoming x 0.1 x stacks held), then spends one stack.
   assert.equal(control.forecast.hp, 48, 'control forecast with the card-stack Counter rule; the enemy side x0.7 (owner, 2026-11-18) took it from 66 (19 + 25 + 22)');
   const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-  const legacy = withoutBatch2Rules(() => run(0, fullProfile, 20));
+  const legacy = withoutBatch2Rules(() => run(0, legacyGearProfile(fullProfile), 20));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
   assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');

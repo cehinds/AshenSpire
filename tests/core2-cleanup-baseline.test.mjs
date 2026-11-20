@@ -16,6 +16,33 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
+// current-profile hash leaves only (27).
+// Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
+// branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
+// control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
+// current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
+// Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
+// still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
+// Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
+// Only profile/runtime pins and snapshot/save digests move; events, RNG,
+// receipts and continuations match the preserved preceding 521250 capture.
+// Historical profiles normalize the new effects marker to 0 and retain their rules.
+// Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
+// Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
+// Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
+// Incoming Dev previously revalidated the same historical capture at runtime 04de9306 before combining stat traditions.
+// Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
+// The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
+// Recaptured 2026-11-19 after combining the Codex catalog and gear integration: exactly 31 profile/snapshot/save hashes moved.
+// Native and production agree; immutable-parent oracles explain historical metadata drift, with events, RNG, receipts, continuations and original profile provenance preserved.
+// Recaptured 2026-11-19 for the Strength call-map reanchor to finishAbilityPlay: only 27 current-profile/runtime/snapshot/save hashes moved.
+// Native and production captures agree in all four scenarios; events, RNG, continuations and the historical profile/provenance are unchanged.
+// Recaptured 2026-11-19 after Prepared-only Focus copy and the Evade grant source reference; behavior and RNG are unchanged.
+// Recaptured 2026-11-19 after combining GearPass and Force/Ward: only 34 profile/runtime/snapshot/save hashes moved.
+// JS01 explicitly predates equipment type effects. Event digests, RNG, receipts and continuations match origin/dev exactly, including the historical profile.
+// Recaptured 2026-11-18 after merging origin/dev into the Codex branch (32 enemies, 38 weapons and armour): only the profile, snapshot and save hashes moved; events, RNG, continuations and runtime hashes are identical.
 // Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider: only the three current profile, snapshot and save digests moved.
 // Runtime, event digests, RNG, receipts, continuations and the complete historical scenario are unchanged; native and production captures agree.
 // Recaptured 2026-11-19 (owner rulings 20-23 on chore/ForceWardRules: Force, Ward, Pierce, break statuses): every current-profile hash and the events they price moved; measured with this test's own output.
@@ -42,6 +69,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-15 (ci-fixes added the core.retreat and core.upsetRanks resource variants, which moved the profile hash and so only the snapshot, stored and loaded hashes; with those entries reverted and the config regenerated the earlier values return). Earlier: (W25-BANDS merge with batch 5: the fights are made without `bands`, so every events, rng and continuation hash equals dev's; only the profile, runtime, snapshot, stored and loaded hashes moved). Earlier note (Wave 2 batch 5, the Counter-stack rule moved the runtime hash): only the profile hash and the snapshot, stored and loaded hashes moved
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
+const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -69,7 +97,14 @@ function openFight(api, enemyId, encounterId, profileId) {
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
     assert.equal(profile.hash, historicalHash);
   } else {
-    profile = api.resolveGameProfile('default');
+    profile = plain(api.resolveGameProfile('default'));
+    // JS01 pins combat before equipment type effects; current rules are covered by the gear suites.
+    delete profile.modules.gear.typeEffectsVersion;
+    const { hash: _hash, ...payload } = profile;
+    profile.hash = `sha256:${hashJson(payload)}`;
+    const storage = memoryStorage();
+    storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
+    profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
   const content = api.applyGameProfileToContent(api.contentBundle, profile);
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
@@ -88,6 +123,8 @@ function openFight(api, enemyId, encounterId, profileId) {
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight drops the `bands` rules, as one saved before them.
   delete combat.fixCoreRules?.bands;
+  // This scenario pins an actual pre-override combat, not today's new-fight defaults.
+  if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
   return { api, profile, registries, run, combat, encounter };
 }
@@ -242,6 +279,21 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+});
+
+test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
+  for (const [name, current] of Object.entries(fixture.scenarios)) {
+    const previous = previousFixture.scenarios[name];
+    assert.deepEqual(current.receipt, previous.receipt, `${name}: same receipt`);
+    assert.equal(current.profile.actionPolicy, previous.profile.actionPolicy);
+    for (const key of ['start', 'pending', 'restored', 'live', 'afterRestore']) {
+      const { snapshot: oldSnapshot, ...oldBehavior } = previous[key];
+      const { snapshot: newSnapshot, ...newBehavior } = current[key];
+      assert.deepEqual(newBehavior, oldBehavior, `${name}: ${key} behavior`);
+    }
+    if (name === 'historical action policy') assert.deepEqual(current.profile, previous.profile);
+    else assert.equal(previous.profile.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  }
 });
 
 for (const [name, ...scenario] of scenarios) {

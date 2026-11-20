@@ -31,7 +31,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   enemySpawnRow: 'F',
   playerSpawnColumn: '1',
   enemySpawnColumn: '6',
-  showFormationGrid: true,
+  showFormationGrid: false,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
   rowAScale: 1, rowBScale: 1, rowCScale: 1, rowDScale: 1, rowEScale: 1, rowFScale: 1,
@@ -826,7 +826,7 @@ function presentationModelRows() {
     {
       cat: 'Display',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
-      presentationKey: 'showFormationGrid', def: true,
+      presentationKey: 'showFormationGrid', def: false,
       label: 'Show battlefield grid',
       note: 'Show faint formation lines behind combatants.',
     },
