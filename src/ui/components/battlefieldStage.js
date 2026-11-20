@@ -707,6 +707,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
+  let backdropGrid = null, backdropRequest = 0;
   // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
   // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
   // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
@@ -1566,30 +1567,43 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         }
       }
     }
-    const rect = combat.getBoundingClientRect();
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
-    // The combat box above is unchanged by the Inspect marks.
     if (!targetHud) placeEnemyInspect();
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    // Fit the sky from the top of the combat screen, including the HUD.
-    // Extending a field-only crop upward can expose empty space above the
-    // painting. Continuing behind cards must not move the ground line.
+    backdropGrid = { plan, narrow };
+    fitCombatBackdrop();
+    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
+    field.dispatchEvent(new Event('battlefieldgeometrychange'));
+  };
+  // The backdrop is fitted apart from the formation pass (owner, 2026-11-20: a fixed picture). Its inputs are the
+  // combat box, the zoom, the device, the scene and the grid lines the last formation pass drew, so it follows the
+  // combat box as it settles and a death, which relays out the figures, leaves it as it was.
+  // Fit the sky from the top of the combat screen, including the HUD. Extending a field-only crop upward can expose
+  // empty space above the painting. Continuing behind cards must not move the ground line.
+  function fitCombatBackdrop() {
+    cancelAnimationFrame(backdropRequest);
+    backdropRequest = 0;
+    if (!field.isConnected || !backdropGrid) return;
+    const combat = field.closest('.combat');
+    const measuredField = field.getBoundingClientRect();
+    const zoom = measuredField.width / field.offsetWidth || 1;
+    const rect = combat.getBoundingClientRect();
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
     // once more. The width is the root's (inset: 0), never the height written.
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
-    combat.style.setProperty('--environment-top', '0px');
-    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    setVar(combat, '--environment-top', '0px');
+    setVar(combat, '--environment-height', `${rect.height / zoom}px`);
     const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height,
-      fieldTop: fieldRect.top - rect.top, fieldHeight: fieldRect.height, zoom, narrow, plan });
+      fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64, zoom,
+      narrow: backdropGrid.narrow, plan: backdropGrid.plan });
     fitAlternativeBackdrop(combat, backdropInputs.alternative);
     if (backdrop) fitSceneBackdrop(backdrop, { width: backdropWidth, ...backdropInputs.environment });
-    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
-    field.dispatchEvent(new Event('battlefieldgeometrychange'));
-  };
+  }
+  const scheduleBackdrop = () => { if (!backdropRequest) backdropRequest = requestAnimationFrame(fitCombatBackdrop); };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
   const scheduleForced = () => { forcePending = true; schedule(); };
   // An art image that finishes loading settles the bounds the fit fell back from (the whole sprite box): that one
@@ -1619,6 +1633,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   combatHost.addEventListener('combatantselectionchange', selectionChanged);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
+  const backdropObserver = new ResizeObserver(scheduleBackdrop);
+  backdropObserver.observe(combatHost);
   // CSS zoom can move the rendered floor without changing the observed
   // element's unzoomed content box. Refit after responsive UI settings settle.
   // The root's inline style is rewritten by many unrelated custom properties
@@ -1660,6 +1676,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     lastSeenViewport = viewport;
     if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
     else schedule();
+    scheduleBackdrop();
   });
   layoutObserver.observe(document.documentElement, {
     // The two scene words are named here rather than left to ride on
@@ -1674,6 +1691,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
+  window.addEventListener('resize', scheduleBackdrop);
   const poseObserver = new MutationObserver(mutations => {
     // Selection tint and control visibility need the HUD's one-shot geometry,
     // not a new 900ms body-motion window. Pose/source and action changes keep it.
@@ -1729,13 +1747,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     cancelAnimationFrame(overheadRequest);
     cancelAnimationFrame(rackRequest);
     rackObserver.disconnect();
+    cancelAnimationFrame(backdropRequest);
     resizeObserver.disconnect();
+    backdropObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
     bandRowObserver.disconnect();
     reducedMedia?.removeEventListener('change', reconcileReducedMotion);
     reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);
+    window.removeEventListener('resize', scheduleBackdrop);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
     if (releaseActiveStage === release) releaseActiveStage = null;

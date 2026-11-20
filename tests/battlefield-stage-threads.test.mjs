@@ -58,3 +58,10 @@ test('the stage fits the backdrop from the screen and the empty grid, never from
   assert.doesNotMatch(stage, /holdFloorShadowTop|mobileFloorShadowTop|floorShadowTop/);
   assert.match(stage, /CombatBackdropInputs\(\{ combatWidth: rect\.width, combatHeight: rect\.height,/);
 });
+
+test('the backdrop follows the combat box apart from the formation gate, and is released with the stage', () => {
+  assert.match(stage, /const backdropObserver = new ResizeObserver\(scheduleBackdrop\);\s*backdropObserver\.observe\(combatHost\);/);
+  assert.match(stage, /backdropObserver\.disconnect\(\);/);
+  assert.match(stage, /window\.removeEventListener\('resize', scheduleBackdrop\);/);
+  assert.match(stage, /backdropGrid = \{ plan, narrow \};\s*fitCombatBackdrop\(\);/);
+});
