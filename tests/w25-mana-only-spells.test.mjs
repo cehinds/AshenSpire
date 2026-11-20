@@ -133,16 +133,21 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 
 // ---- Pools: each card reaches its own class ----
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
+// Owner, 2026-11-20: a fresh run is offered only the spells its max Mana pays (1 MP, +1 per four WIS; stat contract 2026-11-18). A card
+// above a fresh class's pool is never offered to it; every card it can pay reaches it.
+test('each new card is offered to its own class (colorless to every caster) when that class can pay for it, and never to another class', () => {
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
+  const pool = Object.fromEntries(Object.keys(seen).map(classId => [classId, live(classId, 1).maxMana]));
+  const pays = (classId, id) => (def(id).manaCost || 0) <= pool[classId];
+  const ownClass = (classId, id) => pays(classId, id) ? seen[classId].has(id) : !seen[classId].has(id);
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
     for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);
   }
   for (const [id, want] of Object.entries(NEW)) {
-    if (want.cls === 'starseer') { assert.ok(seen.starseer.has(id), `${id} offered to Starseer`); assert.ok(!seen.herald.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
-    if (want.cls === 'herald') { assert.ok(seen.herald.has(id), `${id} offered to Herald`); assert.ok(!seen.starseer.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
-    if (want.cls === 'colorless') assert.ok(seen.starseer.has(id) || seen.herald.has(id), `${id} offered to a caster`);
+    if (want.cls === 'starseer') { assert.ok(ownClass('starseer', id), `${id} offered to Starseer exactly when it pays ${pool.starseer} MP or less`); assert.ok(!seen.herald.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
+    if (want.cls === 'herald') { assert.ok(ownClass('herald', id), `${id} offered to Herald exactly when it pays ${pool.herald} MP or less`); assert.ok(!seen.starseer.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
+    if (want.cls === 'colorless') for (const classId of Object.keys(seen)) assert.ok(ownClass(classId, id), `colorless ${id} reaches ${classId} exactly when it can pay`);
   }
 });
 
