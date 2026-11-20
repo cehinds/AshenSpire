@@ -13,7 +13,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
-import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, AdvancedGroupModal, AdvancedRowTopic } from '../models/AdvancedSettingsGroups.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { openDebugLog } from '../debuglog.js';
@@ -319,10 +319,12 @@ export function OpenEffectsModal({ settings, onChange, opener = document.activeE
 
 // ---- settings-group modals (owner, 2026-11-20) -------------------------------
 // A cluster of closely related rows can live behind one button row that opens
-// its own modal, like Effects. Advanced rows carry `groupModal: '<id>'`; the
-// Advanced panel draws one button row in their place (SettingsGroupButtonRow),
-// and search, reset, export and release visibility still see every row.
-// Only rows the modal can wire live behind one: switches, chips and drop-downs.
+// its own window, like Effects. AdvancedGroupModal (models/AdvancedSettingsGroups.js)
+// says which window a row lives in; the Advanced panel draws one button row in
+// their place (SettingsGroupButtonRow), and search, reset, export and release
+// visibility still see every row. The window wires switches, chips, drop-downs,
+// number fields, text fields and the panel's own buttons (`wireButtons`).
+const topicSection = (row) => { const id = AdvancedRowTopic(row); return { id, label: id }; };
 const SETTINGS_GROUP_MODALS = Object.freeze({
   wireframes: Object.freeze({
     labelId: 'settings.groupModal.wireframes',
@@ -330,11 +332,21 @@ const SETTINGS_GROUP_MODALS = Object.freeze({
     // label: two families that share a label stay two sections.
     section: (row) => ({ id: row.wireframeTopic || '', label: row.wireframeTopicLabel || row.wireframeTopic || '' }),
   }),
+  cardSize: Object.freeze({ labelId: 'settings.groupModal.cardSize', section: null }),
+  text: Object.freeze({ labelId: 'settings.group.Text', section: topicSection }),
+  interface: Object.freeze({ labelId: 'settings.group.Interface', section: topicSection }),
+  export: Object.freeze({ labelId: 'settings.group.Export', section: topicSection }),
 });
 
 /** SettingsGroupRows(id) → the Advanced rows behind group modal `id`, in table order. */
 export function SettingsGroupRows(id) {
-  return SETTINGS_ROWS.filter((row) => row.groupModal === id && !row.retired);
+  return SETTINGS_ROWS.filter((row) => row.cat === 'Advanced' && AdvancedGroupModal(row) === id);
+}
+
+/** SettingsGroupLabel(row) → the name of the window an Advanced row lives in, or '' when it is in the panel. */
+export function SettingsGroupLabel(row) {
+  const id = AdvancedGroupModal(row);
+  return id && SETTINGS_GROUP_MODALS[id] ? t(SETTINGS_GROUP_MODALS[id].labelId) : '';
 }
 
 /** SettingsGroupButtonRow(id) → the button row that opens group modal `id`: its face says how many rows differ from default. */
@@ -371,7 +383,7 @@ export function SettingsGroupModalHtml(settings, id) {
  * returns focus to that button (found again by `buttonKey` if the panel was redrawn meanwhile).
  */
 export function OpenSettingsGroupModal({ settings, onChange, opener = document.activeElement, buttonKey, title, bodyHtml,
-  className = 'set-group-modal', bodyClassName = 'set-body set-group-modal-body', afterDraw = null }) {
+  className = 'set-group-modal', bodyClassName = 'set-body set-group-modal-body', afterDraw = null, wireButtons = null }) {
   let host = null;
   const refreshButton = () => {
     const row = rowByKey(buttonKey) || (buttonKey.startsWith('groupModal.') ? SettingsGroupButtonRow(buttonKey.slice('groupModal.'.length)) : null);
@@ -396,6 +408,33 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
     host.querySelectorAll('.set-choice-select[data-key]').forEach((select) => {
       select.addEventListener('change', () => commit(select.dataset.key, select.value));
     });
+    // Number fields commit as the panel's do: through commitNumberRow, on change or blur (never per
+    // keystroke), and the steppers through wireStepper. The value is written back into every input
+    // of the row; the body is not redrawn, so a held stepper keeps repeating.
+    host.querySelectorAll('.num-wrap').forEach((wrap) => {
+      const field = wrap.querySelector('.set-num');
+      const row = field && rowByKey(field.dataset.key);
+      if (!row) return;
+      const commitNumber = (raw) => {
+        const { value } = commitNumberRow(settings, row, raw);
+        for (const input of wrap.querySelectorAll('input')) input.value = String(value);
+        settings[row.key] = value;
+        onChange({ [row.key]: value });
+        refreshButton();
+      };
+      field.addEventListener('change', () => commitNumber(field.value));
+      field.addEventListener('blur', () => commitNumber(field.value));
+      wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit: commitNumber, min: row.min, max: row.max, step: row.step ?? 1, stepFor: (v) => buttonStep(row, v) });
+    });
+    host.querySelectorAll('.set-text[data-key]').forEach((input) => {
+      const commitText = () => {
+        settings[input.dataset.key] = input.value.trim();
+        onChange({ [input.dataset.key]: input.value.trim() });
+        refreshButton();
+      };
+      input.addEventListener('change', commitText);
+      input.addEventListener('blur', commitText);
+    });
     host.querySelectorAll('[data-reset-key]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const key = btn.dataset.resetKey;
@@ -403,6 +442,8 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
         draw(key);
       });
     });
+    // The panel's own buttons (export, import, command log, copy card sizes) keep their one handler.
+    wireButtons?.(host);
     refreshButton();
     if (focusKey) {
       // Focus stays on the control that was used: the clicked choice, else the row's first control.
@@ -434,17 +475,18 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
 export function AdvancedTopicRowsHtml(settings, rows, groupId, topicId) {
   const drawn = new Set();
   return rows.map((row) => {
-    if (!row.groupModal) return settingsRowHtml(settings, compactAdvancedRow(row, groupId, topicId));
-    if (drawn.has(row.groupModal) || !SETTINGS_GROUP_MODALS[row.groupModal]) return '';
-    drawn.add(row.groupModal);
-    return settingsRowHtml(settings, SettingsGroupButtonRow(row.groupModal));
+    const id = AdvancedGroupModal(row);
+    if (!id || !SETTINGS_GROUP_MODALS[id]) return settingsRowHtml(settings, compactAdvancedRow(row, groupId, topicId));
+    if (drawn.has(id)) return '';
+    drawn.add(id);
+    return settingsRowHtml(settings, SettingsGroupButtonRow(id));
   }).join('');
 }
 
-/** OpenSettingsGroup({ id, settings, onChange, opener }) — opens Advanced group modal `id`. */
-export function OpenSettingsGroup({ id, settings, onChange, opener = document.activeElement }) {
+/** OpenSettingsGroup({ id, settings, onChange, opener, wireButtons }) — opens Advanced group window `id`. */
+export function OpenSettingsGroup({ id, settings, onChange, opener = document.activeElement, wireButtons = null }) {
   return OpenSettingsGroupModal({
-    settings, onChange, opener,
+    settings, onChange, opener, wireButtons,
     buttonKey: `groupModal.${id}`,
     title: t(SETTINGS_GROUP_MODALS[id].labelId),
     bodyHtml: (current) => SettingsGroupModalHtml(current, id),
@@ -1726,8 +1768,8 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   for (const group of visibleAdvancedGroups(debug, profile, nextProfile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
     for (const sub of cachedSubgroups(advanced, group.id, profile, nextProfile)) {
-      // A row behind a group modal is found too, filed under the button that opens it.
-      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}${row.groupModal && SETTINGS_GROUP_MODALS[row.groupModal] ? ` › ${t(SETTINGS_GROUP_MODALS[row.groupModal].labelId)}` : ''}` });
+      // A row in a settings-group window is found too, filed as "group › window".
+      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: SettingsGroupLabel(row) ? `${group.label} › ${SettingsGroupLabel(row)}` : `${group.label} › ${sub.label}` });
     }
   }
   return hits;
@@ -2522,23 +2564,25 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     }, btn));
   });
 
-  container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
+  // The settings buttons, wired on a root: the panel, or a settings-group window that holds them.
+  const wireSettingsButtons = (root) => {
+  root.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
   });
 
-  container.querySelectorAll('details[data-more-topic]').forEach((more) => {
+  root.querySelectorAll('details[data-more-topic]').forEach((more) => {
     more.addEventListener('toggle', () => rememberMoreOpen(more.dataset.moreTopic, more.open));
   });
 
-  container.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
     btn.addEventListener('click', () => OpenEffectsModal({ settings, onChange, opener: btn }));
   });
 
-  container.querySelectorAll('[data-btn^="groupModal."]').forEach((btn) => {
-    btn.addEventListener('click', () => OpenSettingsGroup({ id: btn.dataset.btn.slice('groupModal.'.length), settings, onChange, opener: btn }));
+  root.querySelectorAll('[data-btn^="groupModal."]').forEach((btn) => {
+    btn.addEventListener('click', () => OpenSettingsGroup({ id: btn.dataset.btn.slice('groupModal.'.length), settings, onChange, opener: btn, wireButtons: wireSettingsButtons }));
   });
 
-  container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -2566,7 +2610,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // every balance and interface override in it under a notice that said only
   // "Loaded 412 settings". The door that says scenes takes scenes, and says so
   // by name when handed something wider.
-  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) root.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
     const openingOnly = buttonKey === 'prologueSceneImport';
     const picker = document.createElement('input');
     picker.type = 'file';
@@ -2606,7 +2650,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
+  root.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -2654,7 +2698,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     deferredCardSizeNotice = null;
     showSettingsNotice(held.msg);
   }
-  container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
+  root.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
       const text = cardSizingExport(levels);
@@ -2801,6 +2845,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       setTimeout(() => { btn.textContent = t('common.copy'); }, 2000);
     });
   });
+  };
+  wireSettingsButtons(container);
 
   // Display settings apply after durable persistence, so derived readouts must
   // wait for onChange. A pane can be closed or replaced while that promise runs.

@@ -10,14 +10,38 @@ export function advancedSection(row) {
   return row.advancedGroup || 'Interface';
 }
 
+// Sections whose every row sits behind one button that opens their own window (owner, 2026-11-20).
+const WINDOWED_SECTIONS = Object.freeze({ Text: 'text', Interface: 'interface', Export: 'export' });
+
+/**
+ * AdvancedGroupModal(row) → the id of the settings-group window a row lives in, or null when it
+ * is drawn in the panel: a row's own `groupModal`, the card-size rows, or a windowed section.
+ */
+export function AdvancedGroupModal(row) {
+  if (!row || row.modal || row.retired) return null;
+  if (row.groupModal) return row.groupModal;
+  if (row.cardSizeTopic) return 'cardSize';
+  return WINDOWED_SECTIONS[advancedSection(row)] || null;
+}
+
+/** AdvancedRowTopic(row) → the topic a row would have in the panel, ignoring any window it sits in. */
+export function AdvancedRowTopic(row) {
+  return inlineTopic(row, advancedSection(row));
+}
+
 function topic(row, section) {
+  // A row in a window sits where the window's button is drawn: Developer › Layout, or the
+  // windowed section's one topic.
+  if (AdvancedGroupModal(row)) return section === 'Developer' ? 'Layout' : section;
+  return inlineTopic(row, section);
+}
+
+function inlineTopic(row, section) {
   const key = row.key;
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
   // `wireframeTopic` is the group's stable id, never its rewordable label.
-  // A row behind a group modal sits in its section's Layout topic, where the modal's button is drawn.
-  if (row.groupModal) return 'Layout';
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.cardSizeTopic) return 'Card size';
   if (row.debugTopic) return 'Diagnostics';
@@ -45,7 +69,7 @@ export function advancedSubgroups(rows, section) {
     // A topic id is what a profile stores and what rows group by; a row whose
     // topic heading is rewordable copy carries that label separately, so a
     // reword never moves the id or merges two topics (Codex, #1489).
-    if (!labels.has(id) && !row.groupModal && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
+    if (!labels.has(id) && !AdvancedGroupModal(row) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
   }
   const result = [...groups].map(([id, rows]) => ({ id, label: labels.get(id) ?? id, rows }));
   // A topic not named in an order keeps its discovered order, after the named
@@ -54,13 +78,8 @@ export function advancedSubgroups(rows, section) {
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   };
-  // Modals, then Menus, then Scenes: outermost surface first, and the order the
-  // catalogue itself is written in — discovered, not restated, so the two
-  // cannot disagree about which family comes first. Cards and the settings
-  // window follow.
-  if (section === 'Developer') byOrder(['Layout', 'Card size', 'QA shortcuts']);
-  if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
-  if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
-  if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);
+  // Developer: the Layout topic (the Wireframes and Card sizes buttons, the settings window)
+  // first, then the QA shortcuts.
+  if (section === 'Developer') byOrder(['Layout', 'QA shortcuts']);
   return result;
 }

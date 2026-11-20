@@ -62,5 +62,27 @@ test('a group modal button summarises its rows, and search still finds a row ins
   assert.equal(button.btn({ [first.key]: other }), '1 changed');
   const hit = settingsSearchHits(String(first.label), true, {}).find((entry) => entry.row.key === first.key);
   assert.ok(hit, 'search reaches the row behind the button');
-  assert.match(hit.where, /Developer › Layout › Wireframes$/);
+  assert.equal(hit.where, 'Developer › Wireframes', 'filed as group › window');
+});
+
+test('Text, Interface, Card sizes and Export each open their own window; search files their rows as group › window', async () => {
+  const { categoryHandler, AdvancedTopicRowsHtml, SettingsGroupRows, SettingsGroupModalHtml, SettingsGroupButtonRow, settingsSearchHits } = await import('../src/ui/screens/settings.js');
+  const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  const rows = categoryHandler('Advanced').rows;
+  const cases = [['Text', 'text', 6], ['Interface', 'interface', 6], ['Export', 'export', 6], ['Developer', 'cardSize', 5]];
+  for (const [section, id, count] of cases) {
+    const windowRows = SettingsGroupRows(id);
+    assert.equal(windowRows.length, count, `${id} holds ${count} rows`);
+    const panel = advancedSubgroups(rows, section).map((sub) => AdvancedTopicRowsHtml({}, sub.rows, section, sub.id)).join('');
+    assert.equal(panel.split(`data-btn="groupModal.${id}"`).length - 1, 1, `${section} draws one ${id} button`);
+    for (const row of windowRows) assert.ok(!panel.includes(`data-row-key="${row.key}"`), `${row.key} is drawn only in its window`);
+    const body = SettingsGroupModalHtml({}, id);
+    for (const row of windowRows) assert.ok(body.includes(`data-row-key="${row.key}"`), `${row.key} is in the ${id} window`);
+    assert.equal(SettingsGroupButtonRow(id).btn({}), 'All default');
+    const hit = settingsSearchHits(String(windowRows[0].label), true, {}).find((entry) => entry.row.key === windowRows[0].key);
+    assert.ok(hit, `search reaches ${windowRows[0].key}`);
+    assert.equal(hit.where.split(' › ').length, 2, `${hit.where} is group › window`);
+  }
+  // Card sizes: number fields, so the window draws their steppers.
+  assert.match(SettingsGroupModalHtml({}, 'cardSize'), /num-wrap/);
 });

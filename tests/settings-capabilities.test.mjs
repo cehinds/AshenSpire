@@ -78,10 +78,11 @@ test('both standalone and in-run overlay settings receive the active profile con
   assert.match(overlay,/settings: ctx.settings,\s+gameProfile: ctx.gameProfile,/);
   assert.match(overlay,/onQuitWithoutSave, gameProfile,/);
 });
-test('the flask setting is filed under Interface > Map & HUD, not Rewards',()=>{
+test('the flask setting is filed under the Interface window, section Map & HUD, not Rewards',async()=>{
   const key='useRestorativeFlasksOutsideCombat';
-  const map=advancedSubgroups(settingsRows(),'Interface').find(g=>g.id==='Map & HUD');
-  assert(map,'Map & HUD subgroup exists');
-  assert(map.rows.some(r=>r.key===key),'Map & HUD holds the flask setting');
+  const { AdvancedGroupModal, AdvancedRowTopic } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  const row=settingsRows().find(r=>r.key===key);
+  assert.equal(AdvancedGroupModal(row),'interface','the Interface window holds the flask setting');
+  assert.equal(AdvancedRowTopic(row),'Map & HUD','under its Map & HUD section');
   assert(!advancedSubgroups(settingsRows(),'Rewards').some(g=>g.rows.some(r=>r.key===key)),'Rewards no longer holds it');
 });
