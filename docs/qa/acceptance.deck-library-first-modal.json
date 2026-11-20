@@ -1,0 +1,189 @@
+{
+  "request": "Owner play-test: choosing deck vs library is an inner set of buttons / new modal page rather than options on the original card modal. Chosen: \"Both buttons in first modal\" — Add to deck and Send to library side by side, one click, no second page.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "card-modal",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Tapping a reward card opens its card modal",
+          "selector": ".card-inspection-modal"
+        },
+        {
+          "kind": "text",
+          "label": "The card modal offers Add to deck",
+          "selector": ".card-inspection-modal [data-act=\"addToDeck\"]",
+          "includes": "Add to deck"
+        },
+        {
+          "kind": "text",
+          "label": "The card modal offers Send to library",
+          "selector": ".card-inspection-modal [data-act=\"addToLibrary\"]",
+          "includes": "Send to library"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "The two answers sit side by side without overlapping",
+          "a": ".card-inspection-modal [data-act=\"addToDeck\"]",
+          "b": ".card-inspection-modal [data-act=\"addToLibrary\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Add to deck fits the viewport",
+          "selector": ".card-inspection-modal [data-act=\"addToDeck\"]",
+          "container": "body"
+        },
+        {
+          "kind": "within",
+          "label": "Send to library fits the viewport",
+          "selector": ".card-inspection-modal [data-act=\"addToLibrary\"]",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The old Select step is still the card modal's action",
+          "selector": ".card-inspection-modal [data-act=\"select\"]"
+        }
+      ]
+    },
+    {
+      "name": "one-click-library",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".card-inspection-modal [data-act=\"addToLibrary\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The card modal closed after one click",
+          "selector": ".card-inspection-modal",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "A second page (confirmation) opened after the click",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "An inner destination group appeared",
+          "selector": ".reward-pick-destinations"
+        }
+      ]
+    },
+    {
+      "name": "one-click-deck",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".card-inspection-modal [data-act=\"addToDeck\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "The card modal closed after one click",
+          "selector": ".card-inspection-modal",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "A second page (confirmation) opened after the click",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "An inner destination group appeared",
+          "selector": ".reward-pick-destinations"
+        }
+      ]
+    }
+  ]
+}

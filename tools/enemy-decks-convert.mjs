@@ -240,6 +240,11 @@ for (const enemy of roster) {
   }
   // A Core-only price (coreSp "card", owner 2026-10-25) is authored on the hint and kept.
   for (const card of enemyCards) if (authoredHints[card.id]?.coreSp) row.cardHints[card.id].coreSp = authoredHints[card.id].coreSp;
+  // A Core-only Block (coreBlock "card", owner 2026-11-20) keeps the card's authored effects and its hint.
+  for (const card of enemyCards) if (authoredHints[card.id]?.coreBlock) {
+    card.effects = structuredClone(authoredCards.get(card.id).effects);
+    row.cardHints[card.id].coreBlock = authoredHints[card.id].coreBlock;
+  }
   enemies.push(row);
   {
     const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;

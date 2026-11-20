@@ -73,7 +73,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "tailBastion"
+      "legacyMove": "tailBastion",
+      "coreBlock": "card"
     },
     "card:ashheartDragon.heartRumble": {
       "aiWeight": 15,
