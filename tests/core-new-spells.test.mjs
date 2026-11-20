@@ -23,8 +23,13 @@ const BY_CLASS = {
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
-// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
-const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
+// Owner 2026-11-14 (playableOnly) and 2026-11-20: a run is offered only the cards its max Mana can pay. A fresh run has 1 MP and one
+// more per four WIS (stat contract 2026-11-18), so a fresh caster sees only the spells it can afford, and the costlier ones wait.
+const freshMaxMana = new Map();
+const payable = (classId, id) => {
+  if (!freshMaxMana.has(classId)) freshMaxMana.set(classId, live(classId, 1, 1).maxMana);
+  return !((def(id).manaCost || 0) > freshMaxMana.get(classId));
+};
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
@@ -127,8 +132,8 @@ test('offers never cross classes: Magic spells only reach their own class, color
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
       // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
       // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): it stays far rarer than an unowned class card.
-      if (owner === classId && starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other)).map(other => counts.get(other) || 0)), `${classId} was offered ${id} as often as a card it does not own`);
-      else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
+      if (owner === classId && starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other) && payable(classId, other)).map(other => counts.get(other) || 0)), `${classId} was offered ${id} as often as a card it does not own`);
+      else if (owner === classId) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), payable(classId, id) ? `${classId} never offered its own ${id}` : `${classId} was offered its own ${id} it cannot pay for`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
     for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
