@@ -4790,13 +4790,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
-      'a fresh profile owns its starting set and four attribute-gated shared sets');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
+      'a fresh run owns only its starting armour');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
     eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
     // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
     const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
+    eq(armourPool.filter((p) => inRun.has(p)).length, 1, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5763,7 +5763,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       const meta = { unlocked: over.unlocked || [], found: over.available || [] };
       return {
-        owned: ownership(reg, { meta, loadout: over.loadout || null }),
+        owned: ownership(reg, { meta, loadout: over.loadout || null, profileWardrobe: true }),
         unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
         drops,
       };
@@ -7269,7 +7269,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,effectsMenu,showPlayedCard,manaRing',
       'every quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
@@ -7295,7 +7295,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat', 'screenShake', 'showPlayedCard',
+    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effectsMenu', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);
@@ -7643,6 +7643,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
     const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
     const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(!equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'an alternate starter does not also grant the default armour');
+    worn.loadout.boughtArmour = [{ classId: 'reaver', id: defaultArmour.id }];
     assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
       ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
     assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
@@ -9719,6 +9722,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
     // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
     // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;

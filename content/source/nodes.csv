@@ -503,3 +503,7 @@ trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interactio
 trait:unreflectable,trait,Unreflectable,9FC3E8,◇,,,,,Unreflectable combat interaction.
 target,card,Target,9FC3E8,◎,,,,,An explicitly targeted spell bypasses Evasion without consuming an Evasion stack.
 throw,property,Throw,9FC3E8,➶,,,,,"Choose Throw to attack one band beyond this weapon’s range with reduced Precision. Does not consume the weapon."
+
+tradition,,Casting tradition,,,,,,,The casting attributes and identity of a spell.
+tradition:arcane,tradition,Arcane,9FC3E8,historic-comet,,,,,Magic governed by Intelligence; shared elemental spells also carry Divine.
+tradition:divine,tradition,Divine,F0D99A,historic-sun,,,,,Magic governed by Wisdom; shared elemental spells also carry Arcane.

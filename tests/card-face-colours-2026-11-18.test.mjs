@@ -65,29 +65,29 @@ const unitDamageProfile = (modules = {}) => Profile.resolveGameProfile({ formatV
 
 test('a face outside combat is always black', () => {
   const { run } = fight('starseer');
-  const text = cardFaceLines(registries.cards.get('blightTouch'), undefined, registries, run).map(row => row.html).join('');
+  const text = cardFaceLines(registries.cards.get('core.venomSpray'), undefined, registries, run).map(row => row.html).join('');
   assert.ok(!/class="val (up|down)"/.test(text));
   assert.ok(/class="val"/.test(text));
 });
 
 test('attributes and gear alone leave a combat number black', () => {
   const world = fight('starseer');
-  // The static face (run rules) and the live preview agree on blightTouch, so the figure carries no mark.
-  const live = damageClasses(world, 'blightTouch');
+  // The static face (run rules) and the live preview agree on core.venomSpray, so the figure carries no mark.
+  const live = damageClasses(world, 'core.venomSpray');
   assert.deepEqual(live, ['black'], 'the always-on Divine WIS bonus is part of the baseline');
-  assert.equal(damageClasses(world, 'blightTouch').length, 1);
+  assert.equal(damageClasses(world, 'core.venomSpray').length, 1);
 });
 
 test('a fight boost turns the number green', () => {
   const world = fight('starseer');
   ChangeAttribute(world.combat, world.combat.player, 'wisdom', 4);
-  assert.deepEqual(damageClasses(world, 'blightTouch'), ['up']);
+  assert.deepEqual(damageClasses(world, 'core.venomSpray'), ['up']);
 });
 
 test('a fight debuff on the player turns the number red', () => {
   const world = fight('starseer');
   ChangeAttribute(world.combat, world.combat.player, 'wisdom', -2);
-  assert.deepEqual(damageClasses(world, 'blightTouch'), ['down']);
+  assert.deepEqual(damageClasses(world, 'core.venomSpray'), ['down']);
 });
 
 test('the current stance bonus turns a physical attack green', () => {

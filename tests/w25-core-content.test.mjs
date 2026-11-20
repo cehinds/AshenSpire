@@ -70,13 +70,25 @@ test('played as a reaction, Jab pays 1 Stamina and strikes the attacker before t
 const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[6],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"galePull":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
 
 // Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
-test('every non-cantrip Spell card deals twice its earlier damage, and a cantrip is back at its earlier damage', () => {
+test('retained legacy Spell damage keeps its doubling and cantrip baseline while tradition rebalances are explicit', () => {
   const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
   // The nine cost.manaOnly spells are new in batch 4 and authored at their final damage: neither doubled nor halved.
   const spells = cards.filter(row => row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
-  assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length);
+  const repurposed = ['censure', 'graveToll', 'rendingHex', 'acidSplash'];
+  const added = { glimpse: [[4], [6]], mindLance: [[12], [16]] };
+  assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length - repurposed.length + Object.keys(added).length);
+  for (const id of repurposed) {
+    const row = card(`core.${id}`);
+    assert.deepEqual(damages(row.effects), [], `${id}: Divine support replaces its former damage`);
+    assert.deepEqual(damages(row.upgrade.effects), [], `${id}: upgraded support stays non-damaging`);
+  }
   for (const row of spells) {
-    const [base, upgraded] = SPELL_DAMAGE_BEFORE[row.id.replace('core.', '')];
+    const id = row.id.replace('core.', '');
+    if (added[id]) {
+      assert.deepEqual([damages(row.effects), damages(row.upgrade.effects)], added[id], `${id}: authored Arcane offense`);
+      continue;
+    }
+    const [base, upgraded] = SPELL_DAMAGE_BEFORE[id];
     const scale = row.tags.includes('rank.cantrip') ? 1 : 2;
     assert.deepEqual(damages(row.effects), base.map(n => Math.max(1, n * scale)), row.id);
     assert.deepEqual(damages(row.upgrade?.effects), upgraded.map(n => Math.max(1, n * scale)), `${row.id} upgraded`);

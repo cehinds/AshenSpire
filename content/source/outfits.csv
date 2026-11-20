@@ -5,7 +5,7 @@
 # "armour set" were the same record under different names.
 #
 # Exactly one non-shared set per class is the free starting outfit.
-# sharedSet rows are owned Armoury choices, gated by equipmentRequirements.csv.
+# sharedSet rows are purchasable Armoury choices, gated by equipmentRequirements.csv.
 # plate/plateLt/leather/under  body palette (hex, no '#')
 # tags   every row starts with item:armor; remaining tags are granted while worn
 # mods   card rewrites (see weapons.csv)

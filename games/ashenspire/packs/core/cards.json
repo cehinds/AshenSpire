@@ -208,7 +208,9 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:force",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -333,7 +335,9 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -363,7 +367,9 @@
       "rank.cantrip",
       "camp:spell",
       "maneuver:casting",
-      "classification.skill"
+      "classification.skill",
+      "school:alteration",
+      "tradition:arcane"
     ],
     "textTemplate": "Restore {restoreMana} Mana.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -946,7 +952,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:fire",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
@@ -1004,7 +1012,8 @@
       "school:divine",
       "rank.cantrip",
       "fx:heal",
-      "lifecycle.exhaust"
+      "lifecycle.exhaust",
+      "tradition:divine"
     ],
     "textTemplate": "Heal {heal} HP. Gain {regen} Regen. Exhaust.",
     "upgrade": {
@@ -1033,17 +1042,17 @@
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "type": "skill",
-    "icon": "skill",
+    "type": "attack",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
-        "op": "draw",
-        "amount": 1
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
       },
       {
-        "op": "restoreMana",
-        "target": "self",
+        "op": "draw",
         "amount": 1
       }
     ],
@@ -1051,25 +1060,28 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.skill",
-      "rank.cantrip"
+      "rank.cantrip",
+      "school:illusion",
+      "tradition:arcane",
+      "classification.attack"
     ],
-    "textTemplate": "Draw {draw} card. Restore {restoreMana} Mana.",
+    "textTemplate": "Deal {damage} damage. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
-          "op": "draw",
-          "amount": 2
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
         },
         {
-          "op": "restoreMana",
-          "target": "self",
+          "op": "draw",
           "amount": 1
         }
-      ],
-      "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana."
+      ]
     },
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "A momentary opening becomes a razor of thought before the next idea arrives.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.galePush",
@@ -1103,7 +1115,8 @@
       "classification.attack",
       "rank.cantrip",
       "school:force",
-      "retreat"
+      "retreat",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage. Inflict Retreat.",
     "upgrade": {
@@ -1761,7 +1774,9 @@
       "source:spell",
       "maneuver:casting",
       "classification.skill",
-      "rank.cantrip"
+      "rank.cantrip",
+      "school:alteration",
+      "tradition:arcane"
     ],
     "textTemplate": "Draw {draw} card. Gain {block} Block.",
     "upgrade": {
@@ -1803,7 +1818,8 @@
       "source:spell",
       "maneuver:casting",
       "school:alteration",
-      "classification.skill"
+      "classification.skill",
+      "tradition:arcane"
     ],
     "textTemplate": "Gain {applyReflect} Reflect.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -1847,7 +1863,9 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "targeting:area"
+      "targeting:area",
+      "school:force",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Apply {vulnerable} Vulnerable to ALL enemies.",
     "upgrade": {
@@ -1903,7 +1921,10 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:frost",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
     "upgrade": {
@@ -1959,7 +1980,10 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
@@ -2016,7 +2040,10 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
     "upgrade": {
@@ -2066,7 +2093,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.skill"
+      "classification.skill",
+      "school:divine",
+      "tradition:divine"
     ],
     "textTemplate": "Gain {block} Block. Draw {draw} card.",
     "upgrade": {
@@ -2116,7 +2145,9 @@
       "maneuver:casting",
       "classification.skill",
       "fx:heal",
-      "lifecycle.exhaust"
+      "lifecycle.exhaust",
+      "school:divine",
+      "tradition:divine"
     ],
     "textTemplate": "Heal {heal} HP. Gain {block} Block. Exhaust.",
     "upgrade": {
@@ -2170,7 +2201,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:divine",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {frail} Frail.",
     "upgrade": {
@@ -2225,7 +2258,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.skill"
+      "classification.skill",
+      "school:divine",
+      "tradition:divine"
     ],
     "textTemplate": "Gain {block} Block. Draw {draw} card.",
     "upgrade": {
@@ -2271,7 +2306,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:force",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage. Restore {restoreMana} Mana.",
     "upgrade": {
@@ -2322,7 +2359,10 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "targeting:area"
+      "targeting:area",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
     "upgrade": {
@@ -2582,7 +2622,9 @@
       "source:spell",
       "maneuver:casting",
       "classification.attack",
-      "targeting:area"
+      "targeting:area",
+      "school:illusion",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
     "upgrade": {
@@ -2631,7 +2673,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:force",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage. Draw {draw} card.",
     "upgrade": {
@@ -2660,14 +2704,15 @@
     "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "type": "attack",
-    "icon": "attack",
+    "type": "skill",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {
-        "op": "damage",
+        "op": "applyStatus",
         "target": "enemy",
-        "amount": 10
+        "status": "weak",
+        "stacks": 2
       },
       {
         "op": "applyStatus",
@@ -2680,15 +2725,18 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.skill",
+      "school:divine",
+      "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {frail} Frail.",
+    "textTemplate": "Apply {weak} Weak and {frail} Frail.",
     "upgrade": {
       "effects": [
         {
-          "op": "damage",
+          "op": "applyStatus",
           "target": "enemy",
-          "amount": 14
+          "status": "weak",
+          "stacks": 3
         },
         {
           "op": "applyStatus",
@@ -2736,7 +2784,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:divine",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
     "upgrade": {
@@ -2794,7 +2844,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.skill"
+      "classification.skill",
+      "school:decay",
+      "tradition:divine"
     ],
     "textTemplate": "Apply {vulnerable} Vulnerable. Apply {weak} Weak.",
     "upgrade": {
@@ -2849,7 +2901,9 @@
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack"
+      "classification.attack",
+      "school:force",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {weak} Weak.",
     "upgrade": {
@@ -3138,7 +3192,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:frost",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {chill} Chill.",
     "upgrade": {
@@ -3186,7 +3242,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:lightning",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} Lightning damage.",
     "upgrade": {
@@ -3234,7 +3292,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:fire",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
@@ -3297,7 +3357,9 @@
       "maneuver:casting",
       "classification.skill",
       "rank.cantrip",
-      "trait:reaction"
+      "trait:reaction",
+      "school:alteration",
+      "tradition:arcane"
     ],
     "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {
@@ -3365,7 +3427,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:fire",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {burn} Burn.",
     "upgrade": {
@@ -3426,7 +3490,9 @@
       "classification.attack",
       "school:fire",
       "rank.cantrip",
-      "range:melee"
+      "range:melee",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
@@ -3479,7 +3545,9 @@
       "maneuver:casting",
       "classification.skill",
       "school:fire",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Gain {block} Block. Apply {burn} Burn.",
     "upgrade": {
@@ -3537,7 +3605,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:frost",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {chill} Chill. Apply {weak} Weak.",
     "upgrade": {
@@ -3604,7 +3674,9 @@
       "classification.attack",
       "school:frost",
       "rank.cantrip",
-      "range:melee"
+      "range:melee",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {chill} Chill. Apply {vulnerable} Vulnerable.",
     "upgrade": {
@@ -3667,7 +3739,8 @@
       "school:divine",
       "rank.cantrip",
       "fx:heal",
-      "lifecycle.exhaust"
+      "lifecycle.exhaust",
+      "tradition:divine"
     ],
     "textTemplate": "Heal {heal} HP. Gain {regen} Regen. Exhaust.",
     "upgrade": {
@@ -3703,38 +3776,37 @@
       {
         "op": "applyStatus",
         "target": "self",
-        "status": "precision",
-        "stacks": 3
+        "status": "regen",
+        "stacks": 2
       },
       {
-        "op": "applyStatus",
+        "op": "removeStatus",
         "target": "self",
-        "status": "regen",
-        "stacks": 1
+        "status": "weak"
       }
     ],
     "tags": [
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.skill",
       "school:divine",
-      "rank.cantrip"
+      "rank.cantrip",
+      "classification.skill",
+      "tradition:divine"
     ],
-    "textTemplate": "Gain {precision} Precision. Gain {regen} Regen.",
+    "textTemplate": "Gain {regen} Regen. Remove your Weak.",
     "upgrade": {
       "effects": [
         {
           "op": "applyStatus",
           "target": "self",
-          "status": "precision",
-          "stacks": 4
+          "status": "regen",
+          "stacks": 3
         },
         {
-          "op": "applyStatus",
+          "op": "removeStatus",
           "target": "self",
-          "status": "regen",
-          "stacks": 1
+          "status": "weak"
         }
       ]
     },
@@ -3776,7 +3848,8 @@
       "maneuver:casting",
       "classification.skill",
       "school:divine",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:divine"
     ],
     "textTemplate": "Gain {block} Block and {gainBarrier} Poise. Gain {regen} Regen.",
     "upgrade": {
@@ -3833,7 +3906,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:divine",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Gain {regen} Regen.",
     "upgrade": {
@@ -3887,7 +3961,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:decay",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {venom} Venom.",
     "upgrade": {
@@ -3918,48 +3993,48 @@
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "type": "attack",
-    "icon": "attack",
+    "type": "skill",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {
-        "op": "damage",
-        "target": "enemy",
+        "op": "restorePoise",
+        "target": "self",
         "amount": 3
       },
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "necroticBlight",
+        "status": "weak",
         "stacks": 1
       }
     ],
-    "mirrors": "attack",
     "tags": [
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack",
       "school:decay",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:divine",
+      "classification.skill"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
+    "textTemplate": "Restore {restorePoise} Poise. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
-          "op": "damage",
-          "target": "enemy",
-          "amount": 4
+          "op": "restorePoise",
+          "target": "self",
+          "amount": 5
         },
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "necroticBlight",
-          "stacks": 1
+          "status": "weak",
+          "stacks": 2
         }
       ]
     },
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "flavor": "The toll recalls a steadier rhythm, lending resolve to the living and doubt to their foe.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
   },
@@ -3995,7 +4070,8 @@
       "maneuver:casting",
       "classification.skill",
       "school:decay",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:divine"
     ],
     "textTemplate": "Apply {weak} Weak. Apply {frail} Frail.",
     "upgrade": {
@@ -4025,56 +4101,46 @@
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "type": "attack",
-    "icon": "attack",
+    "type": "skill",
+    "icon": "skill",
     "keywords": [],
     "effects": [
-      {
-        "op": "damage",
-        "target": "enemy",
-        "amount": 2
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "bleed",
-        "stacks": 3
-      },
       {
         "op": "applyStatus",
         "target": "enemy",
         "status": "weak",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
         "stacks": 1
       }
     ],
-    "mirrors": "attack",
     "tags": [
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack",
       "school:decay",
-      "rank.cantrip"
+      "rank.cantrip",
+      "classification.skill",
+      "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed. Apply {weak} Weak.",
+    "textTemplate": "Apply {weak} Weak and {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
-        {
-          "op": "damage",
-          "target": "enemy",
-          "amount": 3
-        },
-        {
-          "op": "applyStatus",
-          "target": "enemy",
-          "status": "bleed",
-          "stacks": 4
-        },
         {
           "op": "applyStatus",
           "target": "enemy",
           "status": "weak",
-          "stacks": 1
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 2
         }
       ]
     },
@@ -4091,54 +4157,46 @@
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "type": "attack",
-    "icon": "attack",
+    "type": "skill",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {
-        "op": "damage",
+        "op": "applyStatus",
         "target": "enemy",
-        "amount": 3
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 3
+        "status": "frail",
+        "stacks": 2
       },
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "venom",
+        "status": "vulnerable",
         "stacks": 1
       }
     ],
-    "mirrors": "attack",
     "tags": [
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack",
       "school:decay",
-      "rank.cantrip"
+      "rank.cantrip",
+      "classification.skill",
+      "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {venom} Venom.",
+    "textTemplate": "Apply {frail} Frail and {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
-          "op": "damage",
+          "op": "applyStatus",
           "target": "enemy",
-          "amount": 4
-        },
-        {
-          "op": "poiseDamage",
-          "target": "enemy",
-          "amount": 4
+          "status": "frail",
+          "stacks": 3
         },
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "venom",
-          "stacks": 1
+          "status": "vulnerable",
+          "stacks": 2
         }
       ]
     },
@@ -4172,7 +4230,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:lightning",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage.",
     "upgrade": {
@@ -4220,7 +4280,9 @@
       "classification.attack",
       "school:lightning",
       "rank.cantrip",
-      "range:melee"
+      "range:melee",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
     "upgrade": {
@@ -4272,7 +4334,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:lightning",
-      "rank.cantrip"
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Close one band.",
     "upgrade": {
@@ -4330,7 +4394,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:fire",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
     "upgrade": {
@@ -4385,7 +4451,9 @@
       "classification.attack",
       "school:fire",
       "targeting:area",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
     "upgrade": {
@@ -4444,7 +4512,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:lightning",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock. Lose {loseHp} HP.",
     "upgrade": {
@@ -4499,7 +4569,9 @@
       "classification.attack",
       "school:lightning",
       "targeting:area",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
     "upgrade": {
@@ -4563,7 +4635,9 @@
       "maneuver:casting",
       "classification.attack",
       "school:frost",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill. Lose {loseHp} HP.",
     "upgrade": {
@@ -4633,7 +4707,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:divine",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:divine"
     ],
     "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
     "upgrade": {
@@ -4670,8 +4745,8 @@
     "staminaCost": 0,
     "manaCost": 1,
     "costRule": "fixed",
-    "type": "attack",
-    "icon": "attack",
+    "type": "skill",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {
@@ -4681,41 +4756,59 @@
         "nonlethal": true
       },
       {
-        "op": "damage",
+        "op": "applyStatus",
         "target": "enemy",
-        "amount": 24
+        "status": "weak",
+        "stacks": 4
       },
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "necroticBlight",
-        "stacks": 2
+        "status": "frail",
+        "stacks": 3
+      },
+      {
+        "op": "removeStatus",
+        "target": "self",
+        "status": "weak"
       }
     ],
     "tags": [
       "camp:spell",
       "source:spell",
       "maneuver:casting",
-      "classification.attack",
       "school:decay",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "classification.skill",
+      "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight. Lose {loseHp} HP.",
+    "textTemplate": "Lose {loseHp} HP. Apply {weak} Weak and {frail} Frail. Remove your Weak.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
       "effects": [
         {
-          "op": "damage",
+          "op": "applyStatus",
           "target": "enemy",
-          "amount": 29
+          "status": "weak",
+          "stacks": 5
         },
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "necroticBlight",
-          "stacks": 3
+          "status": "frail",
+          "stacks": 5
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "weak"
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "frail"
         }
-      ]
+      ],
+      "textTemplate": "Apply {weak} Weak and {frail} Frail. Remove your Weak and Frail."
     },
     "flavor": "Drunk from the cup the Chapel keeps for those it cannot bury.",
     "damageSchool": "magic",
@@ -4757,13 +4850,21 @@
       "maneuver:casting",
       "classification.attack",
       "school:force",
-      "cost.manaOnly"
+      "cost.manaOnly",
+      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Lose {loseHp} HP.",
-    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage.", "Lose {loseHp} HP."],
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Deal {poiseDamage} Poise damage.",
+      "Lose {loseHp} HP."
+    ],
     "upgrade": {
       "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
-      "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
+      "faceTemplate": [
+        "Deal {damage} damage.",
+        "Deal {poiseDamage} Poise damage."
+      ],
       "effects": [
         {
           "op": "damage",
@@ -4812,7 +4913,9 @@
       "maneuver:casting",
       "classification.skill",
       "cost.manaOnly",
-      "lifecycle.exhaust"
+      "lifecycle.exhaust",
+      "school:illusion",
+      "tradition:arcane"
     ],
     "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana. Exhaust.",
     "upgrade": {
@@ -4829,5 +4932,337 @@
       ]
     },
     "flavor": "Every catalogue the Astronomer sealed, open at once.\nThe reader pays in Mana and keeps what the pages give back."
+  },
+  {
+    "id": "core.purifyingLight",
+    "name": "Purifying Light",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 8
+      },
+      {
+        "op": "removeStatus",
+        "target": "self",
+        "status": "weak"
+      },
+      {
+        "op": "removeStatus",
+        "target": "self",
+        "status": "frail"
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "fx:heal",
+      "lifecycle.exhaust",
+      "school:divine",
+      "tradition:divine"
+    ],
+    "textTemplate": "Heal {heal} HP. Remove your Weak and Frail. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 12
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "weak"
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "frail"
+        }
+      ]
+    },
+    "flavor": "The light restores the body and quiets the curses laid upon it."
+  },
+  {
+    "id": "core.mindLance",
+    "name": "Mind Lance",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 12
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:illusion",
+      "tradition:arcane"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 16
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "A sharpened certainty pierces the mind and leaves its next defense uncertain.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.cleansingEmbers",
+    "name": "Cleansing Embers",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 4
+      },
+      {
+        "op": "removeStatus",
+        "target": "self",
+        "status": "weak"
+      },
+      {
+        "op": "removeStatus",
+        "target": "self",
+        "status": "frail"
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Heal {heal} HP. Remove your Weak and Frail.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 6
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "weak"
+        },
+        {
+          "op": "removeStatus",
+          "target": "self",
+          "status": "frail"
+        }
+      ]
+    },
+    "flavor": "A controlled flame burns away what clings to the spirit."
+  },
+  {
+    "id": "core.rootedShelter",
+    "name": "Rooted Shelter",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "stoneskin",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:earth",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block and {stoneskin} Stoneskin.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 12
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "stoneskin",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Stone and root answer either a studied pattern or a steadfast prayer."
+  },
+  {
+    "id": "core.stormBlessing",
+    "name": "Storm Blessing",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "dexterity",
+        "stacks": 1
+      },
+      {
+        "op": "restoreStamina",
+        "target": "self",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:lightning",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {dexterity} Dexterity. Restore {restoreStamina} Stamina.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "dexterity",
+          "stacks": 2
+        },
+        {
+          "op": "restoreStamina",
+          "target": "self",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "A measured current steadies the hands and returns motion to weary limbs."
+  },
+  {
+    "id": "core.rimeVeil",
+    "name": "Rime Veil",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 9
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:frost",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 13
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "A veil of cold turns aside the blow and numbs the hand that struck it."
   }
 ]

@@ -214,7 +214,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
-  assert.equal(profile.lock.runtimeHash, 'sha256:e5b5d5b558969077b703152b30648fd7e49830b8caa2cb0b94d7ad788f820573');
+  // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-20 on the Retreat reach merge: 7d13f1... (dev) and e5b5d5... (this branch before dev) are now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

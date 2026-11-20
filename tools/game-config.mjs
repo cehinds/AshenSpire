@@ -24,6 +24,9 @@ const MECHANIC_RUNTIME_SOURCES = Object.freeze([
   'src/model/formulas.js',
   'src/model/fixCoreMechanics.js',
   'src/model/retreatRuleFaces.js',
+  'src/model/spellTraditions.js',
+  'src/model/spellPoolPolicy.js',
+  'content/source/spellTraditions.json',
 ]);
 export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics,retreatRuleFaces}.js';
 

@@ -13,13 +13,24 @@ test('compact and inspection use the same projected Counter definition and canon
   const compact = cardPlainText(registries, ref, { rules });
   const detail = cardDetailHtml(registries, ref, { rules });
   assert.match(compact, /Gain 25 Poise/);
-  assert.match(detail, /SPELL · Prepare/);
+  assert.match(detail, /SPELL/);
+  assert.doesNotMatch(detail, /SPELL · Prepare/);
+  assert.match(detail, /Arcane magic scales with Intelligence/);
+  assert.match(detail, /Divine magic scales with Wisdom/);
   assert.match(detail, /Counter coverage:.*Spell/);
   assert.match(detail, /Defense range:.*Ranged/);
   assert.equal(combatCardRange(playingCardDefinition(registries, ref, { rules })), 'reach');
   assert.match(detail.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Spell counter Reach/);
   assert.match(detail, /Prepare a fire Counter: 2 Ward return/);
   assert.match(detail, /Return once after all covered damage and status pressure is resisted/);
+});
+
+test('saved legacy Counter inspection retains its generic Spell identity', () => {
+  const legacyRules = { ...rules, gameProfile: { modules: { effects: { mode: 'legacy' } } } };
+  const detail = cardDetailHtml(registries, { cardId: 'fireCounter' }, { rules: legacyRules });
+  assert.match(detail, /SPELL · Prepare/);
+  assert.doesNotMatch(detail, /Arcane magic scales with Intelligence|Divine magic scales with Wisdom/);
+  assert.match(detail, /Counter coverage:.*Spell/);
 });
 test('inspection keeps the live Poise figure (no Block/Ward split)', () => {
   const ref = { cardId: 'fireCounter' };

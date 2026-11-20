@@ -24,6 +24,8 @@ const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
 // The reward pool's playableOnly rule uses the run's maximum Mana. Stock Core runs start with 1 MP.
+const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
+  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -122,7 +124,7 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
   console.log(`new-spell share of card offers: ${report.join('; ')}`);
 });
 
-test('each class sees only payable spells from its own class or colorless', () => {
+test('each class sees only payable spells matching its class and spell tradition', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set(), counts = new Map();
@@ -140,6 +142,9 @@ test('each class sees only payable spells from its own class or colorless', () =
       }
       else assert.ok(seen.has(id), `${classId} never offered its own payable ${id}`);
     }
-    for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
+    for (const id of BY_CLASS.colorless) {
+      const eligible = payable(classId, id) && matchesTradition(classId, id);
+      assert.equal(seen.has(id), eligible, `${classId} colorless ${id}: offered only when payable and matching its spell tradition`);
+    }
   }
 });

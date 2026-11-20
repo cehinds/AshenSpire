@@ -59,7 +59,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEff
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
-import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
+import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -264,6 +264,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Start decoding impact sprites now; never awaited, so the fight is not delayed.
+  void PrewarmCombatRecipientEffects();
   SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -1698,9 +1700,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderReactionNote() {
     reactionNote.attach(combatEl);
-    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+    // Only the entries after the last note shown can hold a new one: read that tail, never a copy of the
+    // whole log (it grows all fight, and this runs on every render).
+    const start = Math.max(0, reactionNoteSeen + 1), shown = disp?.logLength ?? combat.eventLog.length;
+    if (start >= shown) return;
+    const note = latestReactionNote(combat.eventLog.slice(start, shown), {
       registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
-    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
+    if (note) { reactionNoteSeen = start + note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {

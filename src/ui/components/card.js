@@ -44,7 +44,7 @@ import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
-import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
@@ -274,7 +274,9 @@ export function renderCard(registries, ref, opts = {}) {
     // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
     model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-    accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
+    accessibleLabel = [model.name, model.sigils.displayLabel || ACTION_SIGILS[model.sigils.action].label,
+      model.sigils.traditions?.length === 2 && t('card.tradition.both'),
+      model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
       damageWords.length && `Damage: ${damageWords.join(', ')}`,
       ...model.sideTags.map(tag => tag.label + (Number.isInteger(tag.count) ? ` ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : '')),
@@ -546,12 +548,12 @@ export function renderCard(registries, ref, opts = {}) {
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
     actionOwnsTouch: opts.actionOwnsTouch === true,
     infoBadge: opts.infoBadge === true,
-    open: opener => {
+    open: (opener, overrides = {}) => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
       const reading = cardStatusContext(def, opts, registries);
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() + cardStatusDetailsHtml(registries, def, reading)
-        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading);
+        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading, model);
       const receipt = cardDamageReceipt(opts.preview);
       if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName, expanded: true }));
       decorateKeywords(details);
@@ -581,8 +583,8 @@ export function renderCard(registries, ref, opts = {}) {
       // and no footer, which is the honest shape rather than an apology.
       const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
-        commands: opts.commands || {},
+        actions: overrides.actions ?? opts.inspectionActions ?? (() => cardActions(surface, ref, { availability: opts.availability, only: opts.only })),
+        commands: overrides.commands ?? opts.commands ?? {},
         // Combat's hand: the page lock lifts a frame after the door leaves.
         deferLift: surface === 'combat' });
     } });
@@ -893,10 +895,10 @@ function cardStatusDetailsHtml(registries, def, context) {
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries));
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries), model);
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}, identity = null) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -907,7 +909,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
-  const identity = playingCardModel(registries, { cardId: def.id }, { definition: def });
+  identity ||= playingCardModel(registries, { cardId: def.id }, { definition: def, rules: statusContext });
   const typeText = [identity.type.label, identity.type.subtype, identity.type.abilityLabel, identity.type.weaponArt].filter(Boolean).join(' · ');
   let html = `<div class="tt-title">${esc(def.name)}</div>`
     + `<div class="ti-meta"><span class="as-tag">${esc(typeText)}</span><span class="ti-cost">${costText}</span></div>`;
@@ -916,7 +918,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   const commonStart = html.length;
-  html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
+  html += sigilExplanationHtml(identity.sigils);
   if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
     if (stance) {

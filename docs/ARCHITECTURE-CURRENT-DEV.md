@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `4318f8b658c4f8cdb085337555cdf546d610da78`
+- Source commit: `b165aee4374a7df8ebb6ed0a46cd8500c72e4947`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,18 +21,18 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 337 |
+| Domain models and contracts | `src/model/` | 338 |
 | Headless simulation/services | `src/engine/` | 85 |
 | Application lifecycle and action services | `src/services/` | 5 |
 | Screen presenters/hosts | `src/ui/screens/` | 26 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 134 |
-| DOM components and observer adapters | `src/ui/components/` | 166 |
+| DOM components and observer adapters | `src/ui/components/` | 167 |
 | Code-side content adapters | `src/content/` | 281 |
 | Authoritative JSON/CSV content | `content/source/` | 139 |
 | Transport | `src/net/` | 0 |
-| Tests | `tests/` | 1383 |
-| Architecture/tooling | `tools/` | 867 |
+| Tests | `tests/` | 1409 |
+| Architecture/tooling | `tools/` | 868 |
 
 ## Current implementation signals
 
@@ -52,8 +52,8 @@
 
 ## File-shape summary
 
-Tracked files: **6316**.
-Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 39, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 8, `.html` 23, `.js` 1213, `.json` 2369, `.md` 578, `.mjs` 1798, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 130, `.ps1` 8, `.py` 31, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
+Tracked files: **6354**.
+Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 40, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 10, `.html` 23, `.js` 1215, `.json` 2380, `.md` 581, `.mjs` 1817, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 130, `.ps1` 8, `.py` 31, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

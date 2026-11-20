@@ -17,6 +17,7 @@ import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { openDebugLog } from '../debuglog.js';
+import { effectsEnabled } from '../performance.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
 import { tierStatus, retryOffered, retryBuiltInArt, retryRunning } from '../artTier.js';
@@ -128,7 +129,7 @@ function releaseHidden() {
     const into = releaseGroups.has(group.id) ? shown : debugOnly;
     for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) into.add(row.key);
   }
-  for (const row of SETTINGS_ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
+  for (const row of SETTINGS_ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility' || row.modal) shown.add(row.key);
   return (key) => !shown.has(key) && (debugOnly.has(key) || key.startsWith('gameConfig.'));
 }
 
@@ -277,6 +278,83 @@ function switchHtml({ label, on, attrs = '' }) {
 }
 
 /**
+ * EffectsModalHtml(settings) → the Effects modal body (owner, 2026-11-19): the master
+ * switch, then "Visual effects" (greyed while the master is off; the values are kept),
+ * then "Fighter motion" and "Blur and shadows" (both independent of the master). Rows are the `modal: 'effects'`
+ * rows of SETTINGS_ROWS drawn by settingsRowHtml, so they look and save like any row.
+ */
+export function EffectsModalHtml(settings) {
+  const rows = SETTINGS_ROWS.filter((row) => row.modal === 'effects');
+  const on = effectsEnabled(settings);
+  const list = (shown) => `<div class="set-card-list">${shown.map((row) => settingsRowHtml(settings, row)).join('')}</div>`;
+  const section = (id, heading, note, off) => {
+    const shown = rows.filter((row) => row.modalSection === id);
+    if (!shown.length) return '';
+    return `<section class="set-topic set-effects-section" data-effects-section="${id}"${off ? ' data-off="1"' : ''}>`
+      + `<h4 class="set-subsection-heading">${esc(heading)}</h4>${note ? `<p class="set-note">${esc(note)}</p>` : ''}${list(shown)}</section>`;
+  };
+  return list(rows.filter((row) => !row.modalSection))
+    + section('visual', t('settings.effects.visual'), on ? '' : t('settings.effects.visualOff'), !on)
+    + section('motion', t('settings.effects.motion'), t('settings.effects.motionNote'), false)
+    + section('surface', t('settings.effects.surface'), t('settings.effects.surfaceNote'), false);
+}
+
+/**
+ * OpenEffectsModal({ settings, onChange, opener }) — the modal the Combat › Effects
+ * button opens. Every change goes through the same `onChange` the Settings rows use
+ * (persistSettingsChange), and the body redraws so the greyed section and the
+ * button face follow the master switch.
+ */
+export function OpenEffectsModal({ settings, onChange, opener = document.activeElement }) {
+  let host = null;
+  const refreshButton = () => {
+    const row = rowByKey('effectsMenu');
+    document.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => { btn.textContent = row.btn(settings); });
+  };
+  const commit = (key, value) => {
+    settings[key] = value;
+    onChange({ [key]: value });
+    draw(key, value);
+  };
+  const draw = (focusKey = null, focusValue = null) => {
+    if (!host) return;
+    host.innerHTML = EffectsModalHtml(settings);
+    host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
+    host.querySelectorAll('.toggle[data-key]').forEach((box) => {
+      box.addEventListener('change', () => commit(box.dataset.key, box.checked));
+    });
+    host.querySelectorAll('.choice[data-key]').forEach((btn) => {
+      btn.addEventListener('click', () => commit(btn.dataset.key, btn.dataset.val));
+    });
+    host.querySelectorAll('.set-choice-select[data-key]').forEach((select) => {
+      select.addEventListener('change', () => commit(select.dataset.key, select.value));
+    });
+    host.querySelectorAll('[data-reset-key]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.resetKey;
+        await resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+        draw(key);
+      });
+    });
+    refreshButton();
+    if (focusKey) {
+      // Focus stays on the control that was used: the clicked choice, else the row's first control.
+      const rowSelector = `[data-row-key="${CSS.escape(focusKey)}"]`;
+      const chosen = typeof focusValue === 'string' ? host.querySelector(`${rowSelector} [data-key][data-val="${CSS.escape(focusValue)}"]`) : null;
+      (chosen || host.querySelector(`${rowSelector} [data-key]`))?.focus({ preventScroll: true });
+    }
+  };
+  return openModal({
+    size: 'sm',
+    className: 'set-effects-modal',
+    title: t('settings.row.effects'),
+    bodyClassName: 'set-body set-effects-body',
+    body: (node) => { host = node; draw(); },
+    opener,
+  });
+}
+
+/**
  * developerSwitchHtml() → the Developer tools switch drawn above every
  * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
  * at all on the 1.0 release builds, where the tools stay off (owner,
@@ -361,9 +439,10 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: SETTINGS_ROWS.filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
+  // A `modal` row draws only inside its modal (the Effects button opens it), never in a list.
+  if (cat === 'General') return { rows: SETTINGS_ROWS.filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired && !row.modal) };
   if (SECTIONS[cat]) return SECTIONS[cat];
-  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired);
+  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired && !r.modal);
   return rows.length ? { rows } : null;
 }
 
@@ -1011,7 +1090,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'button') {
     return `${rowOpen()}
         ${stack()}
-        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${esc(r.key)}">${r.btn || 'Open'}</button></span>
+        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${esc(r.key)}">${typeof r.btn === 'function' ? esc(r.btn(settings)) : r.btn || 'Open'}</button></span>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -1542,9 +1621,11 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   };
   const hits = [];
   for (const row of SETTINGS_ROWS) {
-    if (row.retired || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
+    if (row.retired || row.modal || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
     if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
   }
+  // The Effects modal's rows are found too, filed under the button that opens them.
+  for (const row of SETTINGS_ROWS) if (row.modal === 'effects' && hit(row)) hits.push({ row, where: `General › Combat › ${t('settings.row.effects')}` });
   const advanced = categoryHandler('Advanced')?.rows || [];
   for (const group of visibleAdvancedGroups(debug, profile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
@@ -1807,7 +1888,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile())}</div></div>`;
     }
   } else {
-    html = SETTINGS_ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
+    html = SETTINGS_ROWS.filter((r) => !r.retired && !r.modal && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
   }
   const view = captureView(container);
   container.innerHTML = html;
@@ -2323,6 +2404,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
+  });
+
+  container.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
+    btn.addEventListener('click', () => OpenEffectsModal({ settings, onChange, opener: btn }));
   });
 
   container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {

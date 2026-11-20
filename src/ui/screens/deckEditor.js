@@ -40,8 +40,9 @@ import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits } from '../
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
+import { sigilHtml } from '../components/combatSigilView.js';
 import { cardClassification } from '../../model/cardClassification.js';
-import { playingCardModel, playingCardDefinition } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, CardPresentationSigils } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
@@ -293,10 +294,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
-    // Back returns to the list the card was opened from: the library, or the
-    // deck under Play in deck order.
+    // Back returns to the exact source list on every screen size.
     const back = chip(t('deckEditor.back'), false, () => {
-      mobileView = inspectOrigin === 'deck' && model.ordered ? 'deck' : 'collection';
+      mobileView = inspectOrigin;
       pane = mobileView;
       focusKey = selected ? (inspectOrigin === 'deck' ? `row:${selected.key}` : `tile:${selected.key}`) : null;
       draw();
@@ -311,7 +311,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const def = resolveCard(registries, row.ref);
     // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
     const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
-      definition: combatDef(row) });
+      definition: combatDef(row), rules: run });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -320,26 +320,22 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // their band instead of stretching the whole card; keyboard users can
     // reach that reading without needing to open a second inspection door.
     face.querySelector('.cd-body')?.setAttribute('tabindex', '0');
-    // Both doors for one card (SPEC §14.1 UX). Add names the library tile
-    // that takes a copy: this row itself, or for a deck card the tile of its
-    // variant. Remove takes one copy: the tile's last deck copy, or this row.
-    const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
-    const addTile = source === 'collection' ? row
-      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey || tile.memberKeys?.includes(row.tileKey)) : null) || null;
-    const addOn = !!addTile?.addable;
-    const removeOn = !!row.removable;
-    const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
-    const addNode = focusable(button({
-      label: t('deckEditor.addSelected'), weight: 'primary', className: 'deck-editor-primary', disabled: !addOn,
+    // The source determines the only transfer offered. The session moves one
+    // instance, even when this row represents several identical copies.
+    const fromDeck = source === 'deck';
+    const canTransfer = fromDeck ? !!row.removable : !!row.addable;
+    const transfer = focusable(button({
+      label: t(fromDeck ? 'reward.configured.addToLibrary' : 'deckEditor.addSelected'),
+      weight: 'primary', className: 'deck-editor-primary', disabled: !canTransfer,
       attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
-    }), 'selected-add');
-    addNode.addEventListener('click', () => { if (addOn) add(addTile.key); });
-    const removeNode = focusable(button({
-      label: t('deckEditor.removeSelected'), className: 'deck-editor-secondary', disabled: !removeOn,
-      attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
-    }), 'selected-remove');
-    removeNode.addEventListener('click', () => { if (removeOn) remove(removeId); });
-    const reasons = [!addOn ? (addTile?.refusal || '') : '', !removeOn ? (row.lockSentence || '') : ''].filter(Boolean);
+    }), fromDeck ? 'selected-remove' : 'selected-add');
+    transfer.addEventListener('click', () => {
+      if (!canTransfer) return;
+      focusKey = 'inspect-back';
+      if (fromDeck) remove(row.instanceId);
+      else add(row.key);
+    });
+    const reasons = !canTransfer ? [fromDeck ? row.lockSentence : row.refusal].filter(Boolean) : [];
     const base = row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
     // The stance rides the selected-reason line, not the card's reading block
     // (where the oversized card face covered it). It follows a refusal too, so
@@ -386,7 +382,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
         el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
-        el('div', { class: 'deck-editor-selected-buttons' }, [...(removeOn ? [removeNode] : []), addNode]),
+        el('div', { class: 'deck-editor-selected-buttons' }, [transfer]),
       ]),
     );
     // Fit the preview against the live reading box, including UI zoom. The
@@ -431,19 +427,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (panes) panes.dataset.active = pane;
   }
 
-  // A phone shows one list, the collection. The deck pane is reachable there
-  // only under Play in deck order, through one "Draw order" chip, so an
-  // ordered deck can still be reworked on a phone.
+  // Both sources must be reachable even without draw-order editing: a deck
+  // copy offers Add to library; a library copy offers Add to deck.
   function navigation() {
-    if (!model.ordered) return null;
-    const onDeck = pane === 'deck';
-    const node = chip(t('deckEditor.drawOrder'), onDeck, () => {
-      mobileView = onDeck ? 'collection' : 'deck';
-      pane = mobileView;
-      focusKey = 'mobile:draw-order';
+    const tabs = DECK_PANES.map(source => chip(t(`deckEditor.pane.${source}`), pane === source, () => {
+      pane = source;
+      mobileView = source;
+      focusKey = `mobile:${source}`;
       draw();
-    }, 'mobile:draw-order');
-    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') }, [node]);
+    }, `mobile:${source}`));
+    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') }, tabs);
   }
 
   // `grouped` is a deck row standing for several copies; a collection tile's
@@ -479,9 +472,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return identity.stanceType || identity.cardCategory;
   };
   const stanceName = row => {
-    const identity = cardClassification(combatDef(row));
+    const def = combatDef(row);
+    const identity = cardClassification(def);
+    const presentation = CardPresentationSigils(def, { registries, rules: run });
     const title = value => value[0].toUpperCase() + value.slice(1);
-    return [title(identity.cardCategory), identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
+    return [presentation.displayLabel || title(identity.cardCategory),
+      presentation.displayLabel && identity.cardCategory === 'power' ? t('deckEditor.stance.power') : null,
+      identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
   };
   const stanceNode = row => el('span', { class: 'deck-editor-stance',
     dataset: { stance: stanceKey(row) }, text: stanceName(row) });
@@ -489,7 +486,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // has a name: a spell's is Cantrip, a maneuver's is Basic, except a class special's, which is Weapon art.
   const rankNode = (row) => {
     const def = combatDef(row);
-    const card = playingCardModel(registries, row.ref, { definition: def });
+    const card = playingCardModel(registries, row.ref, { definition: def, rules: run });
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
     const rank = Number.isInteger(ranked) ? ranked
@@ -508,12 +505,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const range = combatCardRange(combatDef(row), run.rangePolicy?.maxRange);
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs: the Physical shield in gold
-  // for physical cards, the outlined Spell sparkle in gold for magical ones.
+  // The same tradition icons as the face, before the resource costs.
   const campNode = (row) => {
-    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
-    const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
+    const def = combatDef(row);
+    const camp = combatProfileFor(def).camp === 'spell' ? 'magical' : 'physical';
+    const presentation = CardPresentationSigils(def, { registries, rules: run });
+    const traditions = presentation.traditions || [];
+    const label = traditions.length ? traditions.map(value => value[0].toUpperCase() + value.slice(1)).join(' and ') : t(`deckEditor.camp.${camp}`);
+    const node = el('span', { class: 'deck-editor-camp', dataset: { camp, traditions: traditions.join(' ') }, role: 'img', title: traditions.length ? label : tFull(`deckEditor.camp.${camp}`), 'aria-label': label });
+    node.innerHTML = traditions.length ? traditions.map(id => sigilHtml(id, 'tradition')).join('')
+      : cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);
@@ -545,19 +546,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     el('span', { class: 'deck-editor-count', title: extra, text: t('deckEditor.count', { count: grouped ? row.count : row.inDeck || 0 }) }),
   ].filter(Boolean);
 
-  // THE CARD ITSELF OPENS THE INSPECTOR; there is no (i) badge (owner, 2026-11-03).
-  // The first press only selects: pointerdown records whether the card was
-  // already selected before focus selects it, and a second press on its art
-  // opens. A right-click, or the I key on a focused card, opens at once.
+  // The card's entire reading surface opens Inspect on the first activation.
+  // The separate stepper buttons retain their own single-copy actions.
   function artOpens(main, row, source) {
-    let armed = false;
-    main.addEventListener('pointerdown', (event) => {
-      armed = !!event.target?.closest?.('.deck-editor-art') && selected?.source === source && selected.key === selectionKey(row, source);
-    });
-    main.addEventListener('click', () => { const open = armed; armed = false; select(row, source, open); });
-    main.addEventListener('contextmenu', (event) => { event.preventDefault(); armed = false; select(row, source, true); });
+    main.addEventListener('click', () => select(row, source, true));
+    main.addEventListener('contextmenu', (event) => { event.preventDefault(); select(row, source, true); });
     main.addEventListener('keydown', (event) => {
-      if ((event.key === 'i' || event.key === 'I') && !event.ctrlKey && !event.metaKey && !event.altKey) { event.preventDefault(); armed = false; select(row, source, true); }
+      if ((event.key === 'i' || event.key === 'I') && !event.ctrlKey && !event.metaKey && !event.altKey) { event.preventDefault(); select(row, source, true); }
     });
   }
 
@@ -875,7 +870,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     combatDefCache.clear();
     const rawModel = deckEditorModel({ registries, run, settings, view });
     model = { ...rawModel, collection: deckEditorCollectionRows({ registries, run, collection: rawModel.collection }) };
-    if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
@@ -944,7 +938,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function siblingOf(key) {
     const other = key?.startsWith('tile-remove:') ? `tile-add:${key.slice('tile-remove:'.length)}`
       : key?.startsWith('tile-add:') ? `tile-remove:${key.slice('tile-add:'.length)}`
-        : key === 'selected-add' ? 'selected-remove' : key === 'selected-remove' ? 'selected-add' : null;
+        : key === 'selected-add' || key === 'selected-remove' ? 'inspect-back' : null;
     return other ? panel.querySelector(`[data-focus-key="${cssEscape(other)}"]`) : null;
   }
 
@@ -1018,11 +1012,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return false;
   }
 
-  // On a phone the deck pane is hidden unless the deck is ordered (the Draw
-  // order chip is then the only way to it), so pane switching does nothing
-  // there for an unordered deck.
+  // Keyboard and controller navigate the same two source views as the tabs.
   function switchPane(step) {
-    if (!model.ordered && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) return false;
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
@@ -1180,26 +1171,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (liveEditor && liveEditor.root === root) liveEditor = null;
   }
 
-  // A window that narrows to phone width while the deck pane stands leaves it:
-  // on a phone an unordered deck has no deck pane to stand in.
+  // Resizing preserves the source view, including an open inspection's Back
+  // destination. Both piles remain reachable on a phone.
   const phoneQuery = typeof matchMedia === 'function' ? matchViewMedia('(max-width: 1000px)') : null;
   const onPhoneChange = (ev) => {
-    if (ev?.matches && !model.ordered) {
-      // An open inspection stays open; its Back goes to the library list.
-      if (mobileView === 'inspect') { pane = 'collection'; inspectOrigin = 'collection'; draw(); return; }
-      if (pane === 'deck') {
-        pane = 'collection';
-        mobileView = 'collection';
-        focusKey = null;
-        draw();
-        const node = paneFocusable('collection');
-        if (node) focusNode(node);
-        return;
-      }
-    }
-    // An ordered deck keeps both panes on a phone (Draw order shows the deck),
-    // so the visible view follows the pane that holds focus.
-    if (ev?.matches && model.ordered && mobileView !== 'inspect' && mobileView !== pane) {
+    if (ev?.matches && mobileView !== 'inspect' && mobileView !== pane) {
       mobileView = pane;
       draw();
       return;

@@ -111,6 +111,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
+| `js-preamble.mjs` | Omit ordinary leading module comments from emitted JavaScript, stopping at the first code token and preserving licenses and directives. | tests js-preamble; tools buildversion, bundle |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |

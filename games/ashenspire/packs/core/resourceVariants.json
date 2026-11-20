@@ -1978,5 +1978,137 @@
       "staminaCost": 0,
       "manaCost": 2
     }
+  },
+  "core.purifyingLight": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.mindLance": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.cleansingEmbers": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.rootedShelter": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.stormBlessing": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.rimeVeil": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
   }
 }

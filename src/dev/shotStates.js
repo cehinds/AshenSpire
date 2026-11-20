@@ -23,7 +23,7 @@ import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
-import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
@@ -41,6 +41,11 @@ export function createShotStates(ctx) {
     // Suppress the first-run tutorial so captures show a clean board.
     const shotMeta = saves.loadMeta();
     shotMeta.settings.seenTutorial = true;
+    // `?shotClass=` names a class to pose; on a configured profile the later classes unlock by completed runs, so a fresh stub meta
+    // refused them ("Class 'starseer' is locked in this profile"). Three completed runs open the whole sequence. The meta is the shot
+    // boot's memory stub (pickStorage), never a player's.
+    const profileId = ctx.getRegistries().gameProfile?.id;
+    if (shotParams.get('shotClass') && profileId) shotMeta.gameProfileUnlocks = { ...(shotMeta.gameProfileUnlocks || {}), [profileId]: { completedRunIds: ['shot-1', 'shot-2', 'shot-3'] } };
     saves.saveMeta(shotMeta);
     // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
     //
@@ -98,6 +103,7 @@ export function createShotStates(ctx) {
     if (name === 'combat' && shotParams.get('shotKit') === '1') {
       configureArmamentKitPreview(ctx.getRegistries(), run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
     }
+    if (name === 'combat' && shotParams.get('shotArmor')) ConfigureArmourPreview(ctx.getRegistries(), run, shotParams.get('shotArmor'));
     // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
     //
     // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
@@ -207,6 +213,19 @@ export function createShotStates(ctx) {
         run.itemProps[ref] = [0, 1, 2].map((n) => pool[(at * 2 + n) % pool.length]);
         run.itemRanks[ref] = 1 + (at % 2);
       });
+    }
+    // `?shotMapReveal=1` — THE WHOLE MAP, FOG OFF. A configured run pins its map mode to the authored route
+    // (model/map/mapknowledge.js resolveMapMode), so the player's path setting can no longer reveal plain nodes and
+    // untraveled roads, and the contrast gate's #45 structure probes (tools/contrast-audit.mjs) had nothing to read.
+    // This swaps THIS run's routes module for a copy with mapMode 'path'; the profile object other runs share is
+    // left untouched. Dev-only like every ?shot= state, and a ?shot= boot writes through the memory stub
+    // (src/main.js createMemoryStorage), so the pose never reaches a real save.
+    if (name === 'map' && shotParams.get('shotMapReveal') === '1') {
+      const profile = run.gameProfile;
+      const routes = profile?.modules?.routes;
+      if (!routes) throw new Error('?shotMapReveal=1 requires a run whose profile has a routes module.');
+      run.gameProfile = { ...profile, modules: { ...profile.modules, routes: { ...routes, mapMode: 'path' } } };
+      showMap();
     }
     // `?shotAct=<n>` — the map of act n (2 or 3 open on a Rest), built the way advanceAct builds it. Poses before `?shotAt`.
     const shotAct = name === 'map' ? shotParams.get('shotAct') : null;
@@ -415,7 +434,10 @@ export function createShotStates(ctx) {
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
       // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
-      if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      // `?shotRankUp=taken` — the same door with that row already claimed, resumed through the door's own saved
+      // claim state (rankUpCheckpoint), so the TAKEN row and its claim line can be measured (tools/contrast-audit.mjs).
+      const rankUpPose = shotParams.get('shotRankUp');
+      if (rankUpPose === '1' || rankUpPose === 'taken') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
       // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
@@ -435,6 +457,13 @@ export function createShotStates(ctx) {
         pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
       beginGameProfileReward({ source: 'combat', after: 'map', takeCount: shotTake >= 1 ? Math.min(5, shotTake) : null, pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
         ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
+      if (rankUpPose === 'taken') {
+        // The key is the rank-up row's own (model/state.js: `skillRankUp:<skillId>:<n>`). Remounting is the
+        // reload-resume path the door already takes after a claim, not a posed alternate UI.
+        const pending = run.gameProfilePendingReward;
+        pending.rankUpCheckpoint = { ...(pending.rankUpCheckpoint || {}), states: { 'skillRankUp:item:blade:0': 'taken' } };
+        persist(); showGameProfileReward();
+      }
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
       // four POOL doors (which sit above the shot branches, right after newRun,

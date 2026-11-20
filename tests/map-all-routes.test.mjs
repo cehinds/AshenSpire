@@ -7,14 +7,19 @@ const draw = options => mapTravelEdgesHtml({ nodes, px: n => n.x, py: n => n.y, 
 
 test('allRoutes draws every edge between drawn nodes and marks only path pairs traveled', () => {
   const html = draw({ path: ['a', 'b'], allRoutes: true });
-  assert.equal((html.match(/<line /g) || []).length, 3 + 1); // 3 edges + 1 outline for the traveled one
+  assert.equal((html.match(/<line /g) || []).length, 3 + 3); // 3 edges, each over its dark outline
   assert.equal((html.match(/map-edge traveled/g) || []).length, 1);
-  assert.equal((html.match(/map-route-outline/g) || []).length, 1);
+  assert.equal((html.match(/map-route-outline/g) || []).length, 3);
   assert.equal((html.match(/class="map-edge"/g) || []).length, 2);
 });
 test('allRoutes still honours isDrawn', () => {
   const html = draw({ path: [], allRoutes: true, isDrawn: id => id !== 'c' });
   assert.equal((html.match(/class="map-edge"/g) || []).length, 1);
+});
+test('a shrine lane keeps its glow and takes no plain-road outline', () => {
+  const html = draw({ path: [], allRoutes: true, laneEdge: new Set(['a>b']) });
+  assert.equal((html.match(/map-edge shrine-lane/g) || []).length, 1);
+  assert.equal((html.match(/map-route-outline/g) || []).length, 2);
 });
 test('allRoutes off is byte-identical to the default', () => {
   const base = draw({ path: ['a', 'b'] });

@@ -16,8 +16,23 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
+// (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
 // Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
+// Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
+// current-profile hash leaves only (27).
+// Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
+// branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
+// control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
+// current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
+// Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
+// still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
+// Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
+// Only profile/runtime pins and snapshot/save digests move; events, RNG,
+// receipts and continuations match the preserved preceding 521250 capture.
+// Historical profiles normalize the new effects marker to 0 and retain their rules.
 // Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
 // Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
 // Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
@@ -58,6 +73,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-15 (ci-fixes added the core.retreat and core.upsetRanks resource variants, which moved the profile hash and so only the snapshot, stored and loaded hashes; with those entries reverted and the config regenerated the earlier values return). Earlier: (W25-BANDS merge with batch 5: the fights are made without `bands`, so every events, rng and continuation hash equals dev's; only the profile, runtime, snapshot, stored and loaded hashes moved). Earlier note (Wave 2 batch 5, the Counter-stack rule moved the runtime hash): only the profile hash and the snapshot, stored and loaded hashes moved
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
+const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -267,6 +283,21 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+});
+
+test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
+  for (const [name, current] of Object.entries(fixture.scenarios)) {
+    const previous = previousFixture.scenarios[name];
+    assert.deepEqual(current.receipt, previous.receipt, `${name}: same receipt`);
+    assert.equal(current.profile.actionPolicy, previous.profile.actionPolicy);
+    for (const key of ['start', 'pending', 'restored', 'live', 'afterRestore']) {
+      const { snapshot: oldSnapshot, ...oldBehavior } = previous[key];
+      const { snapshot: newSnapshot, ...newBehavior } = current[key];
+      assert.deepEqual(newBehavior, oldBehavior, `${name}: ${key} behavior`);
+    }
+    if (name === 'historical action policy') assert.deepEqual(current.profile, previous.profile);
+    else assert.equal(previous.profile.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  }
 });
 
 for (const [name, ...scenario] of scenarios) {

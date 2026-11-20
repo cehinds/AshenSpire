@@ -1,6 +1,8 @@
 import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
+import { t } from './strings.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
+import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
@@ -138,6 +140,21 @@ export function combatCardType(def) {
   const classification = cardClassification(def);
   const type = (classification.stanceType !== 'prepare' && classification.stanceType) || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
   return type[0].toUpperCase() + type.slice(1);
+}
+
+/** The same profile-aware type identity for a card face and compact list rows. */
+export function CardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
+  // Saved profiles retain their historical shared scaling and generic label.
+  // A catalog without a selected profile describes the current rules.
+  const context = CardPresentationContext(def, preview, rules);
+  const presentationRules = context?.gameProfile || context?.fixCoreRules ? context
+    : registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  const profile = combatProfileFor(def);
+  const identity = cardSigilIdentity(combatCardType(def), profile);
+  if (presentationRules && !SpellTraditionsActive(presentationRules)
+    || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
+  const card = { ...def, combatProfile: profile };
+  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), displayLabel: SpellTraditionLabel(card) });
 }
 
 /** Live saved policy plus the matching quote's detached baseline metadata. */
@@ -290,6 +307,7 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
+      case 'restorePoise': text = `Restore ${n} Poise`; break;
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
@@ -613,6 +631,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
     : rankBadge || '';
+  const sigils = CardPresentationSigils(def, { registries, rules, preview });
+  const traditionType = sigils.displayLabel || null;
 
   return freeze({
     id: def.id,
@@ -629,9 +649,10 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankHelp,
     type: freeze({
       id: classification.cardCategory,
-      label: classification.cardCategory.toUpperCase(),
-      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
-      abilityLabel,
+      label: traditionType ? traditionType.toUpperCase() : classification.cardCategory.toUpperCase(),
+      subtype: traditionType ? classification.cardCategory === 'power' ? t('deckEditor.stance.power') : null
+        : classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel: traditionType ? abilityRank === 0 ? t('deckEditor.rank.cantrip') : null : abilityLabel,
       weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
@@ -640,7 +661,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     legacyType: def.type,
     costs,
     tags,
-    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
+    sigils,
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,
