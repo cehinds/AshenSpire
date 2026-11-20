@@ -1,0 +1,27 @@
+{
+  "request": "Every combatant's feet stand inside its drawn formation cell, footInCellFraction above the bottom line; a lone player's feet stand at the resting cards' top; a back-row enemy is drawn smaller by the layout, inside its cell (owner, 2026-11-20).",
+  "success": "A ?shot=combat fight with the grid on shows the player and the enemy, the grid's cells drawn, and no console errors. tests/combat-feet-in-cell.browser.mjs measures the feet.",
+  "failure": "A combatant or the grid cells are missing, or the page logs console errors.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat-grid-on",
+      "url": "?shot=combat&shotSeed=PERF1&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D",
+      "ready": ".combatant .sprite",
+      "settleMs": 2500,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The player is drawn", "selector": ".combatant.player .sprite" },
+        { "kind": "visible", "label": "The enemy is drawn", "selector": ".combatant.enemy .sprite" },
+        { "kind": "count", "label": "Grid cells are drawn", "selector": ".formation-grid-cell:not([hidden])", "min": 4 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "No combatant on the field", "selector": ".combatant .sprite", "eq": 0 }
+      ]
+    }
+  ]
+}
