@@ -48,3 +48,18 @@ test('an in-progress run that holds the double-counted +10 max HP drops it on re
   assert.ok(restored.hp <= restored.maxHp, 'current HP clamps to the new max');
   assert.ok(restored.hp <= run.hp, 'and the re-derive never heals');
 });
+
+// Review finding: a Blacksmith pick is the player's spend; only the item's BASE resolved points decide whether its own pool line is dropped.
+test('a CON pick on Rite Vestments does not drop its +6 max HP line; a DEX pick on a Stamina-line item likewise', () => {
+  const {run} = wear('herald','armor','riteVestments');
+  const ref = 'armor/herald/riteVestments';
+  const before = runMods(reg,run.loadout,'herald',run).maxHp;
+  assert.equal(before,6,'the item line is its own +6');
+  run.itemUpgradePicks = {[ref]:[{id:'attr:constitution',k:'stat',stat:'constitution',n:2}]};
+  assert.equal(runMods(reg,run.loadout,'herald',run).maxHp,before,'a CON pick leaves the +6 in place');
+  const bastion = wear('reaver','armor','bastion');
+  const bRef = 'armor/reaver/bastion';
+  const sp = runMods(reg,bastion.run.loadout,'reaver',bastion.run).maxStamina;
+  bastion.run.itemUpgradePicks = {[bRef]:[{id:'attr:dexterity',k:'stat',stat:'dexterity',n:2}]};
+  assert.equal(runMods(reg,bastion.run.loadout,'reaver',bastion.run).maxStamina,sp,'a DEX pick leaves the item\'s own Stamina line in place');
+});

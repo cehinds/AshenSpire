@@ -93,9 +93,11 @@ export function runMods(registries, loadout, classId, run = null) {
       // Owner, 2026-11-20 (amends 2026-11-18, docs/balance/owner-ruling-2026-11-18.md): an item's own max HP/MP/SP line is dropped only when its resolved
       // points already feed that pool, through content/source/derivedStatRules.json (hp: constitution, mana: wisdom, stamina: dexterity), so it is not counted twice.
       // An item whose points feed no such pool, and every type or group base (Robes +1 max MP), keeps its line, uncapped.
+      // Only the item's BASE resolved points decide it: a Blacksmith pick or item property is the player's spend and must not remove the item's own line.
+      const baseValues = resolvedSource?.resolved?.values || {};
       const poolStat = { maxHp: 'hp', maxMana: 'mp', maxStamina: 'sp' }[spec.apply];
       const feeder = { hp: 'constitution', mp: 'wisdom', sp: 'dexterity' }[poolStat];
-      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (!fromType && ((resolvedSource?.[poolStat] || 0) > 0 || (resolvedSource?.[feeder] || 0) > 0)))) continue;
+      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (!fromType && ((baseValues[poolStat] || 0) > 0 || (baseValues[feeder] || 0) > 0)))) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
