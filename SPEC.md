@@ -1087,13 +1087,15 @@ Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward 
 
   | Card | Class | Cost | Effect | Penalty → upgrade |
   |---|---|---|---|---|
-  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP |
-  | Iron Hide | Reaver | 1 SP | 2 Dexterity | +1 SP each play (max +2) → base 0 SP |
+  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP, no Exhaust |
+  | Iron Hide | Reaver | 1 SP | 2 Dexterity | Exhaust, +1 SP each play (max +2) → base 0 SP, no Exhaust |
   | Hearth Vigil | Herald | 1 SP, 2 MP | 4 Regen | 2 MP → 1 MP |
-  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal → removed |
-  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP |
+  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP, no Exhaust |
   | Starlit Skin | Starseer | 1 SP, 1 MP | 5 Block, 1 Stoneskin | Exhaust → removed |
-  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal → removed |
+  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+
+- **Stat-buff cards exhaust** (owner, 2026-11-19). Every player card that grants Strength or Dexterity (to its player or an ally) carries Exhaust on its base face, and its upgrade removes Exhaust; anything else the upgrade already did stays. In Core today: Steel Resolve, Iron Hide, Zealous Fervor, Inner Orbit, Keen Edge (table above), Empower (`base.stat-buff`, 2 Strength), Ally Empowerment (`base.buff-ally`) and Storm Blessing (`core.stormBlessing`, 1 Dexterity and 1 Stamina; upgraded 2 Dexterity). A new stat-buff card follows the same rule. Enemy moves are not cards in a deck and are unaffected. Profiles saved before this rule keep their snapshotted card definitions. *Falsify:* `tests/stat-buff-exhaust.test.mjs`.
 
 - **Conditional payoffs** (base / upgraded; stance and status conditions read `snapshot: 'beforePlay'`):
 

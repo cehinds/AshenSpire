@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 on merging dev again (card changes, #2902): the runtime hash is unchanged (fbf370e6...); only the profile, snapshot and save hash leaves moved (card data joins the profile); every events, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
 // (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
 // Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
@@ -25,6 +26,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
 // branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
 // control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for stat-buff cards gaining Exhaust (#2902): the 24 profile, snapshot and save hash leaves of the three
+// current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
 // current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
 // Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
