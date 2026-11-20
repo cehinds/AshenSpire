@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 10
+        "amount": 8
       }
     ],
     "tags": [

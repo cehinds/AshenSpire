@@ -82,7 +82,8 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "oathWater",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:pallidOathCamel.pilgrimBurden": {
       "aiWeight": 15,
