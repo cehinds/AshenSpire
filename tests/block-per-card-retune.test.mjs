@@ -30,6 +30,8 @@ const enemyIds = profile => new Set((profile.content.enemyCards || []).map(card 
 
 test('Defend authors 8 Block and every retuned enemy guard carries its new number', () => {
   assert.equal(blockOf(current, 'core.defend'), 8);
+  assert.equal(blockOf(current, 'core.counter'), 5, 'Counter is unchanged');
+  assert.equal(blockOf(saved, 'core.counter'), 5);
   for (const [id, [, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) assert.equal(blockOf(current, id), after, id);
 });
 

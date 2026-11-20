@@ -141,7 +141,7 @@ test('both Codex tomes grant two Ward and talismans grant one', () => {
 });
 
 test('Codex armour grants its group Block once and preserves the authored robe Mana and Hunter Dexterity status', () => {
-  for (const [id, block] of [['cinderforgedPlate', 13], ['wyrmscaleMail', 12], ['ringmailHauberk', 12], ['huntersHide', 11], ['sagesRobe', 10]]) {
+  for (const [id, block] of [['cinderforgedPlate', 11], ['wyrmscaleMail', 10], ['ringmailHauberk', 10], ['huntersHide', 9], ['sagesRobe', 8]]) {
     const piece = pieceById(id), equipped = world({ armor: id, classId: piece.classId });
     assert.equal(equipped.card('core.defend').effects.find(e => e.op === 'block').amount, block, id);
     // The current profile carries Sage's Robe's signature (owner, 2026-11-19): its raw +1 is replaced, so only the generic robe +1 remains.
