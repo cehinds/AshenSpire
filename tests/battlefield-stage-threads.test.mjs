@@ -63,8 +63,8 @@ test('the backdrop follows the combat box apart from the formation gate, and is 
   assert.match(stage, /const backdropObserver = new ResizeObserver\(scheduleBackdrop\);\s*backdropObserver\.observe\(combatHost\);/);
   assert.match(stage, /backdropObserver\.disconnect\(\);/);
   assert.match(stage, /window\.removeEventListener\('resize', scheduleBackdrop\);/);
-  assert.match(stage, /fitCombatBackdrop\(\{ plan, narrow \}\);/);
+  assert.match(stage, /fitCombatBackdrop\(\{ plan, narrow, screenKey: \[now\.inputs, narrow, document\.documentElement\.dataset\.formFactor\]\.join\('\|'\) \}\);/);
   // Held per screen on the fight's layoutState (co-op re-wires the stage), never in a per-mount closure.
-  assert.match(stage, /if \(pass\) \{[\s\S]*?layoutState\.backdropGrid = HeldBackdropGrid\(layoutState\.backdropGrid,\s*BackdropGridLines\(\{ plan: pass\.plan,/);
+  assert.match(stage, /if \(pass\) layoutState\.backdropGrid = HeldBackdropGrid\(layoutState\.backdropGrid,\s*BackdropGridLines\(\{ plan: pass\.plan, zoom, narrow: pass\.narrow, screenKey: pass\.screenKey \}\)\);/);
   assert.equal(stage.match(/layoutState\.backdropGrid =/g).length, 1, 'only a formation pass stores the lines');
 });

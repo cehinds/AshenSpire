@@ -1572,7 +1572,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    fitCombatBackdrop({ plan, narrow });
+    // The grid's local inputs (the canvas, the field's and the hand's local boxes, the device): a window resize that
+    // only scales the screen keeps them, and the held lines, which are local px.
+    fitCombatBackdrop({ plan, narrow, screenKey: [now.inputs, narrow, document.documentElement.dataset.formFactor].join('|') });
     field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
@@ -1582,7 +1584,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // death after the hand changed size, leaves it as it was.
   // Fit the sky from the top of the combat screen, including the HUD. Extending a field-only crop upward can expose
   // empty space above the painting. Continuing behind cards must not move the ground line.
-  // `pass` is the formation pass that just ran, when called from one.
+  // `pass` is the formation pass that just ran, when called from one; its `screenKey` names the grid's local inputs.
   function fitCombatBackdrop(pass = null) {
     cancelAnimationFrame(backdropRequest);
     backdropRequest = 0;
@@ -1591,13 +1593,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const measuredField = field.getBoundingClientRect();
     const zoom = measuredField.width / field.offsetWidth || 1;
     const rect = combat.getBoundingClientRect();
-    // Only a formation pass stores the lines, from its own plan and the screen measured in this same pass.
-    if (pass) {
-      const screenKey = [rect.width, rect.height, zoom, pass.narrow, document.documentElement.dataset.formFactor]
-        .map(value => typeof value === 'number' ? Math.round(value * 64) / 64 : value).join('|');
-      layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid,
-        BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey }));
-    }
+    // Only a formation pass stores the lines, from its own plan and the local screen it was made for.
+    if (pass) layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid,
+      BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey: pass.screenKey }));
     const grid = layoutState.backdropGrid;
     if (!grid) return;
     const backdrop = combat.querySelector('.environment-backdrop');
