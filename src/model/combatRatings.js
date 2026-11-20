@@ -754,13 +754,14 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
  * hit (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19). The ONE split the receipt, the live preview and the
  * face all read. Each part starts as its own share of the hit (the card's magic share of its base plus the Power bonus; the rest of the base plus
  * STR / AR); every multiplier of the chain (Vulnerable, stance, weakness, Burn and the other element stages) then scales both parts in proportion, and
- * `magicMultiplier` (elemental flux, owner ruling 2026-11-20) weighs the magic part alone: the chain carries it as a factor on the magic share of the hit only.
+ * `physicalMultiplier` (the effects' physical-damage scale) cuts the physical part alone, and `magicMultiplier` (elemental flux, owner ruling 2026-11-20) weighs the magic part alone: the chain carries it as a factor on the magic share of the hit only.
  */
-export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, magicMultiplier = 1, total }) {
+export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, magicMultiplier = 1, physicalMultiplier = 1, total }) {
   const value = Math.max(0, Math.floor(Number(total) || 0));
   const weights = PacketWeights({ base, share, physicalBonus, magicBonus });
   const magicWeight = weights.magic * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
-  const sum = magicWeight + weights.physical;
+  const physicalWeight = weights.physical * Math.max(0, Number.isFinite(physicalMultiplier) ? physicalMultiplier : 1);
+  const sum = magicWeight + physicalWeight;
   const magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
   return { physical: value - magic, magic };
 }

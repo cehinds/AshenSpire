@@ -60,7 +60,7 @@ import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -501,9 +501,12 @@ export function staticCardTokens(def, registries = null, rules = null) {
       const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
       const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
       const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
-      const parts = PacketSplit({ base, share: faceShare, physicalBonus, magicBonus, total: base + physicalBonus + magicBonus });
+      // The physical-damage scale cuts the physical part alone: the total is the cut physical plus the magic, split by the same weights the receipt reads.
+      const cut = Number.isFinite(physicalMultiplier) && physicalMultiplier >= 0 ? physicalMultiplier : 1;
+      const weights = PacketWeights({ base, share: faceShare, physicalBonus, magicBonus });
+      const parts = PacketSplit({ base, share: faceShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: weights.physical * cut + weights.magic });
       const side = value => (Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(value >= 1 && playerMultiplier > 0 ? 1 : 0, value * playerMultiplier) : value);
-      tokens[token] = Math.max(0, Math.floor(side(ScalePhysicalDamage(parts.physical, 1, physicalMultiplier))));
+      tokens[token] = Math.max(0, Math.floor(side(parts.physical)));
       tokens.packet = Math.max(0, Math.floor(side(parts.magic)));
     }
   }

@@ -133,3 +133,28 @@ test('a non-packet fire hit still takes flux on the whole hit', () => {
   const fluxed = hit(combat, legacy.carrier, authored);
   assert.ok(fluxed.magical > plain.magical && fluxed.physical === 0 && plain.physical === 0, 'a whole-magic hit has no physical part and its whole hit takes flux');
 });
+
+test('with the Core physical-damage scale (x0.7) the cut lands on the physical part alone, and face = receipt', async () => {
+  const { PacketFaceSplit } = await import('../src/engine/gameProfileCombat.js');
+  const { resolveGameProfile } = await import('../src/model/gameProfile.js');
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  const multiplier = core.modules.effects.physicalDamageMultiplier;
+  assert.equal(multiplier, 0.7, 'the Core bundle ships x0.7');
+  const run = (patch, flux, scale) => {
+    const combat = live();
+    if (scale) combat.gameProfile = core;
+    const { card, carrier } = carrierFor(combat, [{ ...FIRE, packet: 6 }, { k: 'dmg', n: 4 }]);
+    const authored = card.effects.find((e) => e.op === 'damage').amount;
+    Object.assign(combat.player.ratings, { ar: 10, pr: 10 });
+    if (flux) combat.player.elementFlux = 'fire';
+    const row = hit(combat, carrier, authored, patch);
+    const face = PacketFaceSplit(combat, combat.player, carrier, authored, row.incoming);
+    return { row, face };
+  };
+  for (const [name, patch, flux] of [['plain', {}, null], ['Vulnerable 3', { statuses: { vulnerable: { stacks: 3 } } }, null], ['flux', {}, 'fire']]) {
+    const scaled = run(patch, flux, true), unscaled = run(patch, flux, false);
+    assert.deepEqual([scaled.face.physical, scaled.face.magic], [scaled.row.physical, scaled.row.magical], `${name}: face = receipt under x0.7`);
+    assert.ok(scaled.row.physical < unscaled.row.physical, `${name}: the cut lowers the physical part`);
+    assert.ok(Math.abs(scaled.row.magical - unscaled.row.magical) <= 1, `${name}: the magic part is untouched by the physical scale`);
+  }
+});
