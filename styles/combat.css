@@ -205,6 +205,8 @@
 .aim-silho > * { box-shadow: none !important; }
 @keyframes aimGlow { from { opacity: 0.5; } to { opacity: 0.95; } }
 .reduced-motion .aim-silho { animation: none; filter: blur(1px); opacity: 0.8; }
+/* Effects off: the likely-target silhouette holds still and drops its blur (an offscreen surface per sprite); its tint still marks the target. */
+:root[data-effects='off'] .aim-silho { animation: none; filter: none; opacity: 0.8; }
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }

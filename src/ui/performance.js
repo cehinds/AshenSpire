@@ -15,6 +15,35 @@ export function motionFlags(settings = {}) {
     key === 'motionIdle' ? resolveMotionIdle(settings) : settings[key] !== false]));
 }
 
+/**
+ * The Effects sub-switches (owner, 2026-11-19), each default ON and each read only
+ * while the Effects master is on. Kind → settings key.
+ */
+export const FX_KEYS = Object.freeze({ glow: 'fxGlow', sparks: 'fxSparks', flash: 'fxFlash', hitstop: 'fxHitStop' });
+
+/** FxFlags(settings) → { glow, sparks, flash, hitstop } booleans: true when that effect plays (master on and sub-switch on). */
+export function FxFlags(settings = {}) {
+  const master = effectsEnabled(settings);
+  return Object.fromEntries(Object.entries(FX_KEYS).map(([kind, key]) => [kind, master && settings[key] !== false]));
+}
+
+/** FxOff(kind) → true when Effects is off or that sub-switch is off (root `data-fx-<kind>="off"`); kind is glow|sparks|flash|hitstop. */
+export function FxOff(kind) {
+  if (effectsOff()) return true;
+  return typeof document !== 'undefined' && document.documentElement?.dataset[`fx${kind[0].toUpperCase()}${kind.slice(1)}`] === 'off';
+}
+
+/**
+ * EffectsSummary(settings) → { on, count, total }: the Effects master and how many of
+ * its visual sub-switches are on (the four FX_KEYS, screen shake and ambient).
+ * The Settings button reads it ("On · 5 of 6").
+ */
+export function EffectsSummary(settings = {}) {
+  const parts = [...Object.values(FX_KEYS).map(key => settings[key] !== false),
+    settings.screenShake !== false, settings.ambient !== 'off'];
+  return { on: effectsEnabled(settings), count: parts.filter(Boolean).length, total: parts.length };
+}
+
 /** coarsePointer() → true on a touch-first device. The one matchMedia read, here so tests can stub it. */
 export function coarsePointer() {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
