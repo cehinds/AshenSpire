@@ -68,6 +68,8 @@ export const ELEMENT_IDENTITY = Object.freeze({
   holy: Object.freeze({ school: DIVINE, damage: 'sacred' }),
   fire: Object.freeze({ school: FIRE, damage: FIRE }),
 });
+// The three physical types a `dmgType` step (a `tag` step with `damage` and no `tag`) may set.
+export const PHYSICAL_DAMAGE_TYPES = Object.freeze(words('slashing piercing blunt'));
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 // A rolled step may carry `r`, its rarity, for the picker's colour and label (owner, 2026-11-19). It changes no number: the size is in the step.
@@ -435,8 +437,8 @@ export function upgradeStepsProblems(instance, path) {
       if (Array.isArray(inner) && inner.some((s) => s && (s.k === 'combo' || s.k === 'authored'))) bad('steps');
     }
     if (step.k === 'tag') {
-      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
-      if (step.damage !== undefined && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
+      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined && step.damage === undefined) bad('tag');
+      if (step.damage !== undefined && !PHYSICAL_DAMAGE_TYPES.includes(step.damage) && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
       if (step.tag !== undefined && step.tag !== RANK_DOWN_TAG) {
         const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
         if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');

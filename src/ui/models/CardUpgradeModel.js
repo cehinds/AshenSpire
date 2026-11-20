@@ -136,6 +136,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
   push(t('cardUpgrade.change.school'), cap(combatProfileFor(before).school || 'none'), cap(combatProfileFor(after).school || 'none'));
   push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
+  push(t('cardUpgrade.change.damageType'), cap(combatProfileFor(before).damageType || 'none'), cap(combatProfileFor(after).damageType || 'none'));
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
