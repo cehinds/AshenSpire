@@ -75,7 +75,8 @@ test('Quickstep: Evade, a Counter and a draw', () => {
 });
 
 test('Nightstep pays exactly 1 SP and 1 MP (no spell surcharge), gives Evade 2 and +1 INT this turn', () => {
-  const c = fight('progression-nightstep', { stamina: 3 }); c.player.mana = 3;
+  // A pool with room: Core max Mana is 1 + one per four WIS (stat contract 2026-11-18), and this test is about the price, not the pool.
+  const c = fight('progression-nightstep', { stamina: 3 }); c.player.maxMana = 3; c.player.mana = 3;
   const pv = previewCard(c, 'qa0', undefined);
   assert.deepEqual([pv.staminaCost, pv.manaCost], [1, 1]);
   const int = LiveAttribute(c.player, 'intelligence');
