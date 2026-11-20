@@ -73,7 +73,7 @@ function mount(kind, id, extra = {}) {
   return { app, run, offer, calls };
 }
 
-for (const [kind, id] of cardCases) test(`${kind} on the card door is read by a tap and a right-click, never claimed by reading`, () => {
+for (const [kind, id] of cardCases) test(`${kind} on the card door: a tap selects, the (i) and a right-click read, never claimed by reading`, () => {
   withInspectionDom(() => {
     const { app, run, offer, calls } = mount(kind, id);
     const before = structuredClone({ run, offer });
@@ -81,21 +81,20 @@ for (const [kind, id] of cardCases) test(`${kind} on the card door is read by a 
     const face = app.querySelector('.reward-choice-face');
     face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true }));
     face.click();
-    assert.ok(document.querySelector('.card-inspection-modal'), 'a tap opens inspection');
-    assert.equal(app.querySelector('.reward-selected'), null, 'reading alone does not choose');
-    document.querySelector('.card-inspection-back').click();
-    app.querySelector('.reward-choice-button').click();
+    // Owner 2026-11-20: a tap selects (never inspects) and the selected card shows its (i).
+    assert.equal(document.querySelector('.card-inspection-modal'), null, 'a tap does not open inspection');
     const chosen = app.querySelector('.reward-selected');
+    assert.equal(chosen, face, 'the tap chose the face');
+    chosen.querySelector('.card-info-button').click();
+    assert.ok(document.querySelector('.card-inspection-modal'), 'the (i) opens inspection');
+    document.querySelector('.card-inspection-back').click();
     mouseRightClick(chosen);
     const dialog = document.querySelector('.card-inspection-modal');
     assert.ok(dialog, 'right-click opens the reading door');
-    assert.equal(dialog.querySelector('.card-inspection-act').dataset.act, 'select', 'the door offers selection, never an immediate claim');
+    // Owner 2026-11-20: the card modal's own answers are Add to deck and Send to library; opening it claims nothing.
+    assert.deepEqual([...dialog.querySelectorAll('.card-inspection-act')].map(node => node.dataset.act).sort(), ['addToDeck', 'addToLibrary'], 'the door offers the two destinations');
     assert.equal(dialog.querySelector('.playing-card-details').inspectionMarkup, cardDetailHtml(registries, { cardId: id, instanceId: 'offer:0', upgraded: false }, { rules: run }));
     dialog.querySelector('.modal-close').click();
-    assert.equal(chosen.querySelector('.card-info-button'), null, 'no separate information button');
-    face.click();
-    assert.ok(document.querySelector('.card-inspection-modal'), 'the face opens it too');
-    document.querySelector('.card-inspection-modal .modal-close').click();
     assert.equal(app.querySelector('.reward-selected'), chosen, 'inspection preserves the selected face');
     assert.deepEqual({ run, offer }, before, 'reading cannot change XP, decks, claims, or offers');
     assert.deepEqual(calls, []);

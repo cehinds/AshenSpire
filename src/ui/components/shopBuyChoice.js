@@ -34,7 +34,7 @@ function openChoice({ title, body, primaryLabel, secondaryLabel, onPrimary, onSe
 /** openShopCardChoice({ name, refusal, onDeck, onLibrary, onDismiss }) — onDeck may throw (the message shows and the modal stays).
  *  Dismissing runs onLibrary unless onDismiss is given (the Master's art is already in the deck, so dismissing keeps it there). */
 export function openShopCardChoice({ name, refusal = '', onDeck, onLibrary, onDismiss, title = t('shop.buyChoice.card.title') }) {
-  return openChoice({ title, body: t('shop.buyChoice.card.body', { name }), primaryLabel: t('reward.configured.addToDeck'), secondaryLabel: t('reward.configured.addToLibrary'), onPrimary: onDeck, onSecondary: onLibrary, onDismiss, refusal });
+  return openChoice({ title, body: t('shop.buyChoice.card.body', { name }), primaryLabel: t('reward.configured.addToDeck'), secondaryLabel: t('reward.configured.sendToLibrary'), onPrimary: onDeck, onSecondary: onLibrary, onDismiss, refusal });
 }
 /** openShopArmamentChoice({ name, onEquip, onKeep }). */
 export function openShopArmamentChoice({ name, onEquip, onKeep, title = t('shop.buyChoice.armament.title') }) {
