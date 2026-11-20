@@ -62,7 +62,6 @@ const ALLOWED = [
   ['src/ui/models/ConfirmationReviewModel.js', 'Confirm', 'a list of banned generic words a review head must not use; not shown copy'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
-  ['src/ui/models/SettingsRowsModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/screens/combat.js', 'Confirm', 'a sentence that merely starts with the word ("Confirm <thing>"), not the common.confirm row'],
   ['src/ui/screens/customize.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/screens/customize.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
@@ -75,7 +74,6 @@ const ALLOWED = [
   ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
-  ['src/ui/models/SettingsRowsModel.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
@@ -119,7 +117,6 @@ const ALLOWED = [
   ['src/ui/models/SettingsRowsModel.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
-  ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'advancedGroup id of the derived grace-refill rows, not displayed copy'],
   ['src/ui/screens/settings.js', 'Range', `advanced-group id and RELEASE_ADVANCED_GROUP_IDS; the heading reads settings.group.Range; ${ID}`],
   ['src/ui/models/RangeSettingsModel.js', 'Range', `advancedGroup id; the heading reads settings.group.Range; ${ID}`],
   ['src/ui/screens/settings.js', 'Map', `advanced-group id and RELEASE_ADVANCED_GROUP_IDS; the heading reads settings.group.Map; ${ID}`],

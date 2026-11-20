@@ -1549,7 +1549,11 @@ export const RetiredPlainSettingKeys = Object.freeze([
 const RETIRED_PLAIN_KEYS = new Set(RetiredPlainSettingKeys);
 export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
 /** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups or rows left behind. */
-export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) || RETIRED_PLAIN_KEYS.has(String(key).replace(/^settings\./, ''));
+// The per-kind grace refill rows (`graceRefill.<kind>`, under the removed Rewards tab) went the same
+// way: the counts are the authored `balance.graceRefill` table.
+const RETIRED_GRACE_REFILL_KEY = /^(settings\.)?graceRefill\.[^.]+$/;
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) || RETIRED_GRACE_REFILL_KEY.test(String(key))
+  || RETIRED_PLAIN_KEYS.has(String(key).replace(/^settings\./, ''));
 /** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
 export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
 export function withoutRetiredLegacyGroups(entries, warnings) {

@@ -13,9 +13,7 @@ import { liveAdvancedConfigRows } from '../../model/advancedConfig.js';
 import { contentBundle } from '../../content/index.js';
 import { t, tFull } from '../strings.js';
 import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
-import { flaskSlotCap, graceRefillTable, graceRefillLadder, firstFlaskOfKind } from '../../model/gracerefill.js';
-import { esc } from '../kit/index.js';
-import { flasks } from '../../content/flasks.js';
+import { graceRefillTable } from '../../model/gracerefill.js';
 import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
@@ -74,7 +72,7 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
 // families and whose rows are dropdowns. Not one row typed per choice: the
 // catalogue (models/WireframeChoiceModel.js) already has to name every option
 // for the components that read them, and a second copy here is the drift this
-// screen has learned to refuse everywhere else (see graceRefillRows above). A
+// screen has learned to refuse everywhere else. A
 // fourth family, or a third option on an existing one, is an edit to the model
 // and NOTHING here.
 //
@@ -104,128 +102,16 @@ function wireframeChoiceRows() {
   })));
 }
 
-// ---- the grace-refill rows: DERIVED, one per row of the table --------------
-//
-// Constantine asked for the flask refill to be "configurable in teh debug
-// settings and be data driven" in one breath, and this is the only shape that
-// is both at once. These rows are not authored. `balance.graceRefill` is walked
-// and each row becomes one Advanced chip strip, so a third refilled kind is a
-// row in content and NOTHING here — which is the Law 0 falsifier for this
-// feature, and `tools/gracerefill.mjs --selftest` runs it.
-//
-// THE LADDER IS DERIVED TOO: 0 … balance.flaskSlots, from graceRefillLadder.
-// Raising the carry cap lengthens every strip with no edit here, and 0 is a
-// real position — his own debug switch for turning the whole thing off.
-//
-// FIVE CHIPS AT flaskSlots: 3. Marina measured four chips at 92.1 px tall on
-// 390x844 and seven at 301.2 px with the last chip off-viewport; five is inside
-// that, and tools/axisfit.mjs is what says so rather than this comment.
-//
-// KEY SHAPE `graceRefill.<kind>`: one key per kind, so a stored override
-// survives a table reorder. `settingOn` is not involved — these are choices.
-const GRACE_REFILL_KEY = (kind) => `graceRefill.${kind}`;
-
-// What a kind is CALLED to a human. A kind with no entry here falls back to the
-// id, so a new kind gets a working row before anyone writes it prose — the row
-// appears ugly rather than not at all.
-const KIND_LABELS = { hp: 'HP', mana: 'Mana', utility: 'Utility' };
-const kindLabel = (k) => KIND_LABELS[k] || k;
-
-function graceRefillRows() {
-  const cap = flaskSlotCap(balance);
-  return graceRefillTable(balance).map((row) => ({
-    cat: 'Advanced',
-    advancedGroup: 'Rewards',
-    key: GRACE_REFILL_KEY(row.kind),
-    type: 'choice',
-    def: String(row.count),
-    choices: graceRefillLadder(balance),
-    label: `Grace refill — ${kindLabel(row.kind)} flasks`,
-    applied: graceRefillAppliedHtml,
-    graceRefillKind: row.kind,
-    // SHORT, and Marina's own measurement is why: a long note beside a chip
-    // strip squeezes the text column to a ribbon (she took one row from 92.1 px
-    // to 216.9 px proving it). What the row DOES is one clause; what it
-    // RESOLVES TO is the applied line below, which changes with the value and
-    // therefore earns its space.
-    note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
-  }));
-}
-
 /**
- * resolveGraceRefill(settings) → { counts, bad: [{ key, kind, stored, used }] }
- *
- * THE ONE HOME FOR "how many flasks does a grace give", asked by the shrine
- * (main.js showRest), by the co-op session, and by the row below that prints
- * it. The authored numbers are `balance.graceRefill`; this only ever layers a
- * stored override on top, and the override has to be a position on the row's
- * own ladder.
- *
- * `bad` IS THE POINT, exactly as it is for resolveTapSize: a sparse store is
- * normal and absence means "use the authored count" with nothing to report. A
- * key that is PRESENT and not on the ladder is bad data — a hand-edited save, a
- * restored profile from a tree with a smaller carry cap — and it still has to
- * resolve to something, so it resolves to the authored count and SAYS SO. A
- * refill that quietly ignores the number on the screen is the failure this
- * whole feature is supposed to be the opposite of.
+ * resolveGraceRefill() → { counts, bad }: how many flasks of each kind a grace tops up, from the
+ * authored `balance.graceRefill` table. The per-kind `graceRefill.<kind>` rows were retired
+ * (owner, 2026-11-20, with the Rewards tab); a stored key is cleared at boot, so there is never a
+ * bad stored value to report and `bad` is always empty.
  */
-export function resolveGraceRefill(settings) {
-  const s = settings || {};
+export function resolveGraceRefill() {
   const counts = {};
-  const bad = [];
-  for (const r of SETTINGS_ROWS) {
-    if (!r.graceRefillKind) continue;
-    const def = Number(r.def);
-    const stored = s[r.key];
-    if (stored === undefined || stored === null || stored === '') {
-      counts[r.graceRefillKind] = def;
-      continue;
-    }
-    const v = String(stored);
-    if (r.choices.includes(v)) {
-      counts[r.graceRefillKind] = Number(v);
-    } else {
-      counts[r.graceRefillKind] = def;
-      bad.push({ key: r.key, kind: r.graceRefillKind, stored: v, used: def });
-    }
-  }
-  return { counts, bad };
-}
-
-// THE LINE UNDER A GRACE-REFILL ROW. It exists to make two states impossible to
-// miss and one impossible to fake:
-//
-//   NOT BINDING — the kind has no flask entry, so whatever number is showing,
-//   this restores nothing. Freja's pattern, and the reason it is not silence:
-//   a chip strip reading 3 over a refill that gives 0 is a knob whose value is
-//   ignored, which Law 0 clause 5 calls the dangerous failure.
-//
-//   the rejected stored value — same sentence resolveTapSize's row prints.
-//
-//   0 says "off" in words, because a lone 0 chip is ambiguous between "off"
-//   and "not set".
-//
-// It names the flask a kind resolves to, at the value chosen, so the derivation
-// is visible on the screen the choice is made on rather than inferable from
-// content/flasks.js.
-function graceRefillAppliedHtml(settings, r) {
-  const { counts, bad } = resolveGraceRefill(settings);
-  const kind = r.graceRefillKind;
-  const n = counts[kind];
-  const rejected = bad.find((b) => b.kind === kind);
-  const lead = rejected
-    ? `<b>${esc(rejected.stored)}</b> is not one of these. Using ${rejected.used}. `
-    : '';
-  // Asked of the content array rather than the registry: this module is UI and
-  // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
-  // shared with the plan and with boot validation.
-  const entry = firstFlaskOfKind(flasks, kind);
-  if (!entry) {
-    return `${lead}<b>NOT BINDING</b>: nothing declares kind “${esc(kind)}”, so a grace restores none. `
-      + `Declared so it works the day something does.`;
-  }
-  if (n === 0) return `${lead}Off. A grace tops up no ${esc(kindLabel(kind))} flasks.`;
-  return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
+  for (const row of graceRefillTable(balance)) counts[row.kind] = row.count;
+  return { counts, bad: [] };
 }
 
 /** effectsButtonText(settings) → the Effects button face: "Off", or "On · 5 of 6". */
@@ -709,9 +595,5 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.gameConfigExport') },
   { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: t('settings.row.gameConfigImport'),
     note: tFull('settings.row.gameConfigImport') },
-  // Advanced is the debugging surface — his word, and where Hold to confirm
-  // already lives. These rows are generated from balance.graceRefill; see the
-  // block above the SETTINGS_ROWS array.
-  ...graceRefillRows(),
   ...wireframeChoiceRows(),
 ];

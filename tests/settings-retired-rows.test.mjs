@@ -51,3 +51,22 @@ test('each removed row\'s value is authored content, at the default the row had'
 test('Auto-advance character creation is a Developer row', () => {
   assert.equal(settingsRows().find((row) => row.key === 'creationAutoAdvance')?.advancedGroup, 'Developer');
 });
+
+test('every Advanced row is filed under a tab that exists; none points at a removed one', async () => {
+  const { ADVANCED_GROUP_IDS } = await import('../src/ui/screens/settings.js');
+  const { advancedSection } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  const removed = ['Progression', 'Rewards', 'Equipment', 'World', 'Wireframes'];
+  for (const row of settingsRows().filter((entry) => entry.cat === 'Advanced')) {
+    assert.ok(!removed.includes(row.advancedGroup), `${row.key} still names the removed ${row.advancedGroup} tab`);
+    if (!row.retired && !row.modal) assert.ok(ADVANCED_GROUP_IDS.includes(advancedSection(row)), `${row.key} is filed under a real tab`);
+  }
+});
+
+test('the grace refill rows are retired: a stored count is cleared, the authored table applies', async () => {
+  const { resolveGraceRefill } = await import('../src/ui/screens/settings.js');
+  const { graceRefillTable } = await import('../src/model/gracerefill.js');
+  for (const key of ['graceRefill.hp', 'settings.graceRefill.mana']) assert.equal(isRetiredLegacySettingKey(key), true, key);
+  assert.ok(!settingsRows().some((row) => String(row.key).startsWith('graceRefill.')), 'no grace refill row is left');
+  const authored = Object.fromEntries(graceRefillTable(balance).map((row) => [row.kind, row.count]));
+  assert.deepEqual(resolveGraceRefill(), { counts: authored, bad: [] });
+});

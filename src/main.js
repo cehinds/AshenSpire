@@ -2419,14 +2419,9 @@ function showRest(openPanel = null, locationId = null) {
   // tags. The refill is one of those rules (`restFlasks` on `arrived`) —
   // AUTOMATIC, AND BEFORE THE CHOICE. Constantine: "flasks should refill
   // automatically at graces". Arriving is the trigger, so a run that comes to
-  // smith is refilled exactly like a run that comes to rest. The counts come
-  // from balance.graceRefill through the Advanced debug rows; `bad` is a
-  // stored override that is not on the ladder, and it is named in the
-  // command log rather than swallowed.
-  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
-  for (const b of bad) {
-    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
-  }
+  // smith is refilled exactly like a run that comes to rest. The counts are the
+  // authored balance.graceRefill table (the per-kind rows were retired, owner 2026-11-20).
+  const { counts } = resolveGraceRefill();
   // The classic map's rest site keeps its own record (restRevisit.js), which
   // stands in for the service state so a re-entry does not refill again.
   const classicRest = true;
