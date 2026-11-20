@@ -311,12 +311,10 @@ export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
-  // RENDERING QUALITY FOLDED INTO EFFECTS (owner, 2026-10-30). The key stays so a
-  // settings file that names it still imports; ui/performance.js reads a saved
-  // 'full' once as `effects: true` (migrateEffectsSetting).
-  { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto', retired: true,
-    choices: ['auto', 'full', 'lite'], label: t('settings.row.performanceMode'),
-    note: tFull('settings.row.performanceMode') },
+  // RENDERING QUALITY FOLDED INTO EFFECTS (owner, 2026-10-30); its row left in the
+  // Settings tidy (2026-11-20). A saved `performanceMode` is read once at boot by
+  // ui/performance.js (migrateEffectsSetting) and an imported one by
+  // model/advancedConfig.js (withRenderingQualityAsEffects): 'full' → Effects on.
   // EFFECTS (default OFF) turns the decoration on: animated stance glow, hit sparks
   // and flashes, card motion, blur and shadows, live-tracking bars. Off stays fully
   // informative. The four fighter-motion rows are independent of it (default ON).

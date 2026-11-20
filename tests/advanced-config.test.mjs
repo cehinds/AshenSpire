@@ -55,6 +55,15 @@ test('settings import leaves out the removed legacy reward and shop rows instead
   assert.deepEqual(warnings, ['Settings for the removed legacy reward and shop menus were left out. Everything else was kept.']);
 });
 
+test('settings import reads the removed Rendering quality as Effects, never refusing the file', () => {
+  const rows = [{ cat: 'Combat', key: 'effects', def: false, label: 'Effects' }];
+  const read = (overrides) => parseAdvancedConfigFile(v1File(overrides), contentBundle, {}, rows, []);
+  assert.deepEqual(read({ 'settings.performanceMode': 'full' }), { effects: true }, 'an explicit Full is Effects on');
+  assert.deepEqual(read({ 'settings.performanceMode': 'lite' }), {}, 'anything else is dropped');
+  assert.deepEqual(read({ 'settings.performanceMode': 'auto' }), {});
+  assert.deepEqual(read({ 'settings.performanceMode': 'full', 'settings.effects': false }), { effects: false }, 'a named Effects wins');
+});
+
 test('settings import accepts exported legacy advanced settings using their row definitions', () => {
   const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
     { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
