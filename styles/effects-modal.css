@@ -16,6 +16,8 @@
 /* Settings > Combat: the "More" toggle that holds a topic's finer dials (owner, 2026-11-20).
    Collapsed by default; the summary is a full-width tap target. */
 .set-more { margin-top: 0.3rem; }
+/* Spelled out so the closed rows are display:none in every engine, not only unrendered. */
+.set-more:not([open]) > .set-card-list { display: none; }
 .set-more > .set-more-toggle {
   display: flex;
   align-items: center;
