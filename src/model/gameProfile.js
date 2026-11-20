@@ -99,6 +99,27 @@ function projectWeaponArtResources(bundle,profile) {
     return out;
   });
 }
+// Item signatures (SPEC "The gear vocabulary", owner 2026-11-19). A profile-owned content.gear row may carry `signatureMods`; when the
+// array is PRESENT (an empty one included) it replaces the matched piece's authored raw mods, and when it is absent the piece is untouched.
+// The type / armour-group base is not here: GearPieceMods adds it on top of whatever `mods` the piece holds, so it still applies unchanged.
+// Projecting the registry piece itself, once, is what makes stat pools (runMods), card rules and turn grants (GearSummary) and the
+// equipment help text read one and the same piece; a per-reader override would be three facts that could disagree.
+// Gated on typeEffectsVersion 1 as well as on presence: a saved profile without the type pass keeps its original item modifiers (SPEC,
+// the `typeEffectsVersion` opt-in paragraph), and a signature without the type pass would strip the raw mods while the gear vocabulary that
+// replaces them (turnGrant and the rest) stays switched off. Existing saves never carry the key, so presence alone already pins them.
+// `bundle` is the caller's private clone (cloneLegacy) and every replaced piece is a new object, so neither the base content nor the
+// frozen profile snapshot is written to.
+function projectGearSignatures(bundle,profile) {
+  if(gameModule(profile,'gear')?.typeEffectsVersion !== 1 || !bundle.equipment) return;
+  const rows=(gameContent(profile,'gear')||[]).filter(row=>Array.isArray(row.signatureMods));
+  if(!rows.length) return;
+  const signatureOf=piece=>rows.find(row=>(row.source?.id || row.id)===piece.id && (row.kind==='armor')===(piece.kind==='armor')
+    && (piece.kind!=='armor' || !row.classes || row.classes.includes(piece.classId)));
+  for (const key of ['armaments','armour']) bundle.equipment[key]=(bundle.equipment[key]||[]).map(piece=>{
+    const row=signatureOf(piece);
+    return row ? {...piece,mods:[...row.signatureMods]} : piece;
+  });
+}
 /** @param {string | object} [profileOrAuthor] */
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
@@ -112,6 +133,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     bundle.tagging=[...(bundle.tagging||[]).filter(row=>row.family!=='card'||!raw.some(def=>def.id===row.objectId)),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
   projectWeaponArtResources(bundle,profile);
+  projectGearSignatures(bundle,profile);
   if(gameModule(profile,'class-selection')) {
     bundle.classes=(bundle.classes||[]).map(def=>{
       const row=gameContent(profile,'classes').find(item=>item.id===def.id);

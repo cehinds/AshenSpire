@@ -1,5 +1,5 @@
 // Disposable preview setup; gameplay still uses the real composer and combat.
-import { startingDeckRefs, stampDeck } from '../model/loadout.js';
+import { startingDeckRefs, stampDeck, reconcileRunLoadoutHp } from '../model/loadout.js';
 
 export function configureArmamentKitPreview(registries, run, right, left) {
   if (right && right === left) throw new Error('Choose different armaments for the two hands.');
@@ -11,6 +11,16 @@ export function configureArmamentKitPreview(registries, run, right, left) {
   run.deck = startingDeckRefs(registries, run.loadout, run.class).map((ref, i) => ({ ...ref, instanceId: `kit-preview:${i}`, upgraded: false }));
   run.equipmentAttackSlotCount = run.deck.filter(c => c.equipmentRole === 'attack').length;
   stampDeck(registries, run);
+  return run;
+}
+
+// `?shotArmor=<id>`: wear one of the run class's outfits, through the same loadout fields and pool reconcile a real equip uses, so an
+// armour's pools and turn grants (Sage's Robe's Ward, 2026-11-19) can be captured without first buying it. An unknown id throws, as above.
+export function configureArmourPreview(registries, run, id) {
+  if (!registries.equipment.armour.some(o => o.classId === run.class && o.id === id)) throw new Error(`Unknown ${run.class} armour: ${id}`);
+  run.loadout.sets.armor = [id];
+  run.loadout.active.armor = 0;
+  reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses: true });
   return run;
 }
 

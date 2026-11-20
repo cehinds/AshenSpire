@@ -1584,6 +1584,9 @@
     "classes": [
       "starseer"
     ],
+    "signatureMods": [
+      "start.turnWard=+1"
+    ],
     "source": {
       "file": "content/source/outfits.csv",
       "id": "sagesRobe"
