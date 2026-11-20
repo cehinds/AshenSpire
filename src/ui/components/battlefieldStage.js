@@ -19,7 +19,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes, HandAnchorLayoutKey } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -902,9 +902,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const handLeft = readRestingHand()?.left ?? fieldRect.left;
     // Preserve the incoming remount cache's subpixel tolerance; raw geometry
     // still validates the hand's authored resting envelope above.
-    const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
-      ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
-    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    // The resting cards' top is in the key: the hand publishes it after its own layout, and an anchor kept from
+    // before it settled stood the lone player's feet above the cards (owner, 2026-11-20).
+    const handLayoutKey = HandAnchorLayoutKey({ fieldWidth: fieldRect.width, fieldHeight: fieldRect.height, pageZoom, handKey,
+      restTop: parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) });
     // The lone player's feet floor: the strip's top, or the resting cards' top where the stage stretches down to them.
     const cardsFloor = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.stageExtent?.mode === 'handTop'
       ? parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) * (handRect ? handRect.height / (hand.clientHeight || handRect.height || 1) : 1) : NaN;

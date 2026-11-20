@@ -3,6 +3,16 @@ import { separateRow } from './CombatViewportSizeModel.js';
 
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
+// The key a hand anchor is kept under: the field's size, the page zoom, the hand's geometry key (its subpixel
+// noise rounded) and the resting cards' top (--hand-rest-top), so an anchor read before the cards settled is
+// never reused once they have.
+export function HandAnchorLayoutKey({ fieldWidth, fieldHeight, pageZoom, handKey, restTop }) {
+  const round = value => Math.round(value * 1000) / 1000;
+  const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value)) ? round(Number(value)) : value).join(':');
+  return [fieldWidth, fieldHeight, pageZoom].map(round).join(':') + ':' + stableHandKey
+    + ':' + (Number.isFinite(restTop) ? round(restTop) : '');
+}
+
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
   if (previous?.key === layoutKey) return previous;
   if (!Number.isFinite(top)) return null;
