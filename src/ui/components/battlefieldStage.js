@@ -1572,9 +1572,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    // The grid's local inputs (the canvas, the field's and the hand's local boxes, the device): a window resize that
-    // only scales the screen keeps them, and the held lines, which are local px.
-    fitCombatBackdrop({ plan, narrow, screenKey: [now.inputs, narrow, document.documentElement.dataset.formFactor].join('|') });
+    // The screen only (the logical canvas and the device), never the field's or the hand's boxes, which follow the
+    // hand: a window resize that only scales the screen keeps it, and the held box and lines, which are local px.
+    fitCombatBackdrop({ plan, narrow, screenKey: [now.width, now.height, narrow, document.documentElement.dataset.formFactor].join('|') });
     field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
@@ -1584,7 +1584,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // death after the hand changed size, leaves it as it was.
   // Fit the sky from the top of the combat screen, including the HUD. Extending a field-only crop upward can expose
   // empty space above the painting. Continuing behind cards must not move the ground line.
-  // `pass` is the formation pass that just ran, when called from one; its `screenKey` names the grid's local inputs.
+  // `pass` is the formation pass that just ran, when called from one; its `screenKey` names the screen.
   function fitCombatBackdrop(pass = null) {
     cancelAnimationFrame(backdropRequest);
     backdropRequest = 0;
@@ -1593,9 +1593,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const measuredField = field.getBoundingClientRect();
     const zoom = measuredField.width / field.offsetWidth || 1;
     const rect = combat.getBoundingClientRect();
-    // Only a formation pass stores the lines, from its own plan and the local screen it was made for.
+    // Only a formation pass stores the field box and lines, from its own plan and field, for the screen it ran on.
     if (pass) layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid,
-      BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey: pass.screenKey }));
+      BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey: pass.screenKey,
+        fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64 }));
     const grid = layoutState.backdropGrid;
     if (!grid) return;
     const backdrop = combat.querySelector('.environment-backdrop');
@@ -1605,8 +1606,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
     setVar(combat, '--environment-top', '0px');
     setVar(combat, '--environment-height', `${rect.height / zoom}px`);
-    const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height,
-      fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64, zoom, grid });
+    const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height, zoom, grid });
     fitAlternativeBackdrop(combat, backdropInputs.alternative);
     if (backdrop) fitSceneBackdrop(backdrop, { width: backdropWidth, ...backdropInputs.environment });
   }

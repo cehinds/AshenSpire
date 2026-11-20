@@ -27,7 +27,7 @@ const stagePlan = (screen, { enemies, party = 1, rangeRanks = null, handCardsTop
 
 // The fit the stage makes from one plan on one screen.
 const fitFor = (screen, plan, screenKey = screen.label) => CombatBackdropInputs({ ...screen,
-  grid: BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey }) });
+  grid: BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey, fieldTop: screen.fieldTop, fieldHeight: screen.fieldHeight }) });
 
 const enemiesOf = count => Array.from({ length: count }, (_, i) => ({ id: `e${i}` }));
 
@@ -76,7 +76,8 @@ test('the combat backdrop fit follows the screen: a resize refits it', () => {
 // Review of #2918: the grid's lines follow the resting cards' top, which moves with the number of cards in the hand.
 // A hand change runs no pass, but the next pass (a death) brought the new lines and the floor jumped about 35 px.
 // The stage stores lines only from a formation pass (HeldBackdropGrid); a fit without a pass uses what is held.
-const passLines = (screen, plan, screenKey = screen.label) => BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey });
+const passLines = (screen, plan, screenKey = screen.label) => BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey,
+  fieldTop: screen.fieldTop, fieldHeight: screen.fieldHeight });
 
 test('the backdrop holds its grid lines per screen: a hand change then a death changes nothing', () => {
   for (const screen of SCREENS) {
@@ -121,16 +122,37 @@ test('a scaled screen keeps its key and its lines; new local inputs store new li
     const plan = stagePlan(screen, { enemies, handCardsTop: screen.handTop + 40 });
     const held = HeldBackdropGrid(null, passLines(screen, plan, localKey));
     // The same plan seen through a 0.8 scale: real px shrink, the zoom with them, the local lines do not.
-    const scale = .8, scaled = { ...screen, zoom: screen.zoom * scale };
+    const scale = .8, scaled = { ...screen, zoom: screen.zoom * scale, fieldTop: screen.fieldTop * scale, fieldHeight: screen.fieldHeight * scale };
     const scaledPlan = ScaleFormationPlan(structuredClone(plan), scale);
     const seen = passLines(scaled, scaledPlan, localKey);
     const close = (a, b) => Math.abs(a - b) < 1e-9;
-    assert.ok(close(seen.backRankTop, held.backRankTop) && seen.cellGrounds.every((ground, i) => close(ground, held.cellGrounds[i])), `${screen.label}: the lines are local px`);
+    assert.ok(['backRankTop', 'fieldTop', 'fieldHeight'].every(key => close(seen[key], held[key])) && seen.cellGrounds.every((ground, i) => close(ground, held.cellGrounds[i])), `${screen.label}: the box and lines are local px`);
     const handMoved = ScaleFormationPlan(stagePlan(screen, { enemies: enemiesOf(2), handCardsTop: screen.handTop }), scale);
     assert.notDeepEqual(passLines(scaled, handMoved, localKey).backRankTop, held.backRankTop, `${screen.label}: the fixture's hand change moves the grid`);
     assert.equal(HeldBackdropGrid(held, passLines(scaled, handMoved, localKey)), held, `${screen.label}: a death on the scaled screen keeps the held lines`);
     const newLocal = passLines(scaled, handMoved, `${screen.label} other canvas`);
     assert.equal(HeldBackdropGrid(held, newLocal), newLocal, `${screen.label}: new local inputs store new lines`);
+  }
+});
+
+// Review of #2918, phone: an upcastable card in hand reserves room for its controls, and the field's height follows it
+// (mobileFieldOverlap). The held box and lines are keyed on the screen only, so neither that nor the hand's rest top
+// moves the backdrop; a new canvas or form factor stores new values.
+test('a field box change from the hand keeps the backdrop on the same screen', () => {
+  for (const screen of SCREENS) {
+    const enemies = enemiesOf(3);
+    const screenKey = `${screen.label} canvas`;
+    const held = HeldBackdropGrid(null, passLines(screen, stagePlan(screen, { enemies }), screenKey));
+    const reserve = { ...screen, fieldTop: screen.fieldTop + 4, fieldHeight: screen.fieldHeight - 35 };
+    const later = passLines(reserve, stagePlan(reserve, { enemies: enemiesOf(2), handCardsTop: screen.handTop - 30 }), screenKey);
+    assert.notDeepEqual(later, held, `${screen.label}: the fixture moves the field and the grid`);
+    const kept = HeldBackdropGrid(held, later);
+    assert.equal(kept, held, `${screen.label}: a pass on the same screen keeps the held box and lines`);
+    assert.deepEqual(CombatBackdropInputs({ ...reserve, grid: kept }), CombatBackdropInputs({ ...screen, grid: held }), `${screen.label}: the backdrop inputs are unchanged`);
+    for (const otherScreen of [`${screen.label} other canvas`, `${screen.label} other form factor`]) {
+      const fresh = passLines(reserve, stagePlan(reserve, { enemies }), otherScreen);
+      assert.equal(HeldBackdropGrid(held, fresh), fresh, `${otherScreen}: stores new values`);
+    }
   }
 });
 
