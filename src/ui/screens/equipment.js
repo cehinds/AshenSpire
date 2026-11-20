@@ -934,14 +934,16 @@ export function mountEquipment(host, {
   /**
    * Replace / Choose item on a slot (owner, 2026-11-19): the items that fit THIS position open in a modal, not in a
    * picker drawn under the slot rows that the player had to scroll down to. Picking one runs the same compare (an
-   * occupied position) or confirm (an empty one) as every other equip, whose Back reopens this list.
+   * occupied position) as every other replacement, whose Back reopens this list; an empty position equips at once.
    */
   function openSlotItemPicker(slot, position, opener = null) {
     const slotLabel = `${slot.label} · ${position.index + 1}`;
     const slotName = (id) => (eq.slots || []).find((candidate) => candidate.id === id)?.label || id;
     const fitting = sortEquipPickerRows(equipPickerTableRows(inventoryRows(registries, run, meta), slot, { setIndex: position.index, loadout: run.loadout }))
-      .filter((row) => row.fits && row.status !== 'here');
+      .filter((row) => row.fits);
     const options = fitting.map((row) => {
+      // What this position already holds is listed, greyed, so the list reads as the whole choice.
+      if (row.status === 'here') return { id: row.id, name: row.name, sub: row.category, status: t('armoury.picker.status.here'), disabled: true };
       const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
       const requirement = equipmentRequirementReceipt(registries, row.row.item, run.attributes, run);
@@ -958,7 +960,9 @@ export function mountEquipment(host, {
       slotLabel, options, opener,
       onChoose: (id) => {
         const row = fitting.find((candidate) => candidate.id === id);
-        if (row) requestEquip(slot.id, position.index, id, `Equip ${row.name} to ${slotLabel}`, { confirm: true, opener, onBack: reopen });
+        // An occupied position compares first; an empty one equips at once, as the inline picker did.
+        const occupied = !!run.loadout.sets[slot.id]?.[position.index];
+        if (row) requestEquip(slot.id, position.index, id, `Equip ${row.name} to ${slotLabel}`, { confirm: occupied, opener, onBack: reopen });
       },
     });
   }
