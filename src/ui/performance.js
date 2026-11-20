@@ -33,6 +33,17 @@ export function fxOff(kind) {
   return typeof document !== 'undefined' && document.documentElement?.dataset[`fx${kind[0].toUpperCase()}${kind.slice(1)}`] === 'off';
 }
 
+/**
+ * effectsSummary(settings) → { on, count, total }: the Effects master and how many of
+ * its visual sub-switches are on (the four FX_KEYS, screen shake and ambient).
+ * The Settings button reads it ("On · 5 of 6").
+ */
+export function effectsSummary(settings = {}) {
+  const parts = [...Object.values(FX_KEYS).map(key => settings[key] !== false),
+    settings.screenShake !== false, settings.ambient !== 'off'];
+  return { on: effectsEnabled(settings), count: parts.filter(Boolean).length, total: parts.length };
+}
+
 /** coarsePointer() → true on a touch-first device. The one matchMedia read, here so tests can stub it. */
 export function coarsePointer() {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;

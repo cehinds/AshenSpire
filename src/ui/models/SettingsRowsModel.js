@@ -20,7 +20,7 @@ import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../../model/autoCombatPolicy.js';
-import { resolveMotionIdle } from '../performance.js';
+import { resolveMotionIdle, effectsSummary } from '../performance.js';
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import { MAP_MODE_DEFAULT, MAP_MODES, SHRINE_GLOW_DEFAULT } from '../../model/map/mapknowledge.js';
@@ -228,6 +228,12 @@ function graceRefillAppliedHtml(settings, r) {
   return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
 }
 
+/** effectsButtonText(settings) → the Effects button face: "Off", or "On · 5 of 6". */
+function effectsButtonText(settings = {}) {
+  const summary = effectsSummary(settings);
+  return summary.on ? t('settings.effects.statusOn', { count: summary.count, total: summary.total }) : t('settings.effects.statusOff');
+}
+
 export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
     note: tFull('settings.row.askToUpcastAfterTarget') },
@@ -309,8 +315,21 @@ export const SETTINGS_ROWS = [
   // EFFECTS (default OFF) turns the decoration on: animated stance glow, hit sparks
   // and flashes, card motion, blur and shadows, live-tracking bars. Off stays fully
   // informative. The four fighter-motion rows are independent of it (default ON).
-  { cat: 'Combat', key: 'effects', def: false, label: t('settings.row.effects'),
+  // THE EFFECTS MODAL (owner, 2026-11-19): Combat shows one button row; the master
+  // switch and its sub-switches live in a modal. A row with `modal: 'effects'` keeps
+  // its key, default, save, import and reset, but draws only inside that modal.
+  { cat: 'Combat', key: 'effectsMenu', type: 'button', btn: effectsButtonText, label: t('settings.row.effects'),
+    note: tFull('settings.row.effectsMenu') },
+  { cat: 'Combat', key: 'effects', def: false, modal: 'effects', label: t('settings.row.effects'),
     note: tFull('settings.row.effects') },
+  { cat: 'Combat', key: 'fxGlow', def: true, modal: 'effects', modalSection: 'visual', label: t('settings.row.fxGlow'),
+    note: tFull('settings.row.fxGlow') },
+  { cat: 'Combat', key: 'fxSparks', def: true, modal: 'effects', modalSection: 'visual', label: t('settings.row.fxSparks'),
+    note: tFull('settings.row.fxSparks') },
+  { cat: 'Combat', key: 'fxFlash', def: true, modal: 'effects', modalSection: 'visual', label: t('settings.row.fxFlash'),
+    note: tFull('settings.row.fxFlash') },
+  { cat: 'Combat', key: 'fxHitStop', def: true, modal: 'effects', modalSection: 'visual', label: t('settings.row.fxHitStop'),
+    note: tFull('settings.row.fxHitStop') },
   { cat: 'Combat', key: 'motionAttack', def: true, label: t('settings.row.motionAttack'), selfEvident: true,
     note: tFull('settings.row.motionAttack') },
   { cat: 'Combat', key: 'motionHit', def: true, label: t('settings.row.motionHit'), selfEvident: true,
