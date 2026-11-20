@@ -5,6 +5,7 @@
 // 2 px), never inside the cards, and it is exempt from the cell checks (the cards' top, not its cell, places it). A back-row enemy's lift and
 // shrink are part of the layout, so its drawn feet stand in its cell too, and it is drawn backRowEnemyScale of the size
 // the same enemy has in the front row (a three-enemy shot whose enemies start in the back row; the row is flipped live).
+// Its HUD plates shrink with it, so on a phone neighbouring back-row plates never overlap.
 // A ?shot=combat boot, real layout, the visible .formation-grid-cell rectangles.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -32,8 +33,8 @@ try {
         const r = t.getBoundingClientRect(); return { cell: t.dataset.cell, side: t.dataset.side, top: r.top, bottom: r.bottom, left: r.left, right: r.right };
       }),
       figures: [...document.querySelectorAll('.combatant')].map(f => {
-        const r = f.querySelector('.sprite').getBoundingClientRect();
-        return { side: f.classList.contains('enemy') ? 'enemy' : 'player', foot: r.bottom, x: r.left + r.width / 2, height: r.height,
+        const r = f.querySelector('.sprite').getBoundingClientRect(), rack = f.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
+        return { plates: rack && rack.width > 0 ? { left: rack.left, right: rack.right, height: rack.height } : null, side: f.classList.contains('enemy') ? 'enemy' : 'player', foot: r.bottom, x: r.left + r.width / 2, height: r.height,
           cell: f.dataset.formationCell, row: f.dataset.bandRow };
       }),
     }));
@@ -57,15 +58,24 @@ try {
       assert.ok(fig.foot - cell.top >= Math.min(1, height / 4) && cell.bottom - fig.foot >= Math.min(1, height / 4), `${at}: foot ${fig.foot.toFixed(1)} touches a line of cell ${cell.cell} ${cell.top.toFixed(1)}..${cell.bottom.toFixed(1)}`);
       if (height >= 20) assert.ok(Math.abs(above - fraction) <= 0.05, `${at}: foot stands ${(above * 100).toFixed(0)}% above cell ${cell.cell}'s bottom, expected ${fraction * 100}%`);
     }
+    if (scene.backRow && w < 600) {
+      const plates = m.figures.filter(f => f.side === 'enemy' && f.row === 'back' && f.plates).map(f => f.plates).sort((a, b) => a.left - b.left);
+      assert.ok(plates.length >= 2, `${w}x${h} ${scene.name}: the back-row enemies show their plates`);
+      for (let i = 1; i < plates.length; i++) assert.ok(plates[i].left >= plates[i - 1].right,
+        `${w}x${h} ${scene.name}: back-row plates overlap (${plates[i - 1].right.toFixed(1)} > ${plates[i].left.toFixed(1)})`);
+    }
     if (scene.backRow) {
       // The same enemies moved to the front row refit once (the stage observes data-band-row): back / front = backRowEnemyScale.
       await p.evaluate(() => { for (const f of document.querySelectorAll('.combatant.enemy[data-band-row="back"]')) f.dataset.bandRow = 'front'; });
       await p.waitForTimeout(1500);
-      const front = await p.evaluate(() => [...document.querySelectorAll('.combatant')].map(f => f.querySelector('.sprite').getBoundingClientRect().height));
+      const front = await p.evaluate(() => [...document.querySelectorAll('.combatant')].map(f => ({ height: f.querySelector('.sprite').getBoundingClientRect().height,
+        plates: f.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect().height })));
       m.figures.forEach((fig, i) => {
         if (fig.row !== 'back') return;
-        const ratio = fig.height / front[i];
+        const ratio = fig.height / front[i].height;
         assert.ok(Math.abs(ratio - backRowEnemyScale) <= 0.01, `${w}x${h} ${scene.name}: a back-row enemy is drawn ${ratio.toFixed(3)} of its front-row size, expected ${backRowEnemyScale}`);
+        const plateRatio = fig.plates?.height / front[i].plates;
+        assert.ok(Math.abs(plateRatio - backRowEnemyScale) <= 0.01, `${w}x${h} ${scene.name}: a back-row enemy's plates are ${plateRatio.toFixed(3)} of their front-row height, expected ${backRowEnemyScale}`);
       });
     }
     await p.close();
