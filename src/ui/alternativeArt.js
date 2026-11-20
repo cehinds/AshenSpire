@@ -127,39 +127,33 @@ export function alternativeCardFadeHtml() {
   return `<div class="alternative-card-fade" aria-hidden="true" style="background-image:url('${alternativeArtUrl((phoneArt() ? alternativeArtCatalog.mobileLayers : alternativeArtCatalog.layers)['card-section-texture'])}')"></div>`;
 }
 
-// Fit the art canvas to the actual battlefield, keeping its measured ground
-// aligned with the current formation. HUD/cards/footer and actor slots stay owned
-// by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, floorTop, zoom = 1, coverWindow = false }) {
+// Fit the art canvas to the battlefield box. Combat covers the floor from the
+// back rank's empty grid line, so the picture holds still whoever stands on it;
+// dialogue keeps its own floor line (`ground`). HUD/cards/footer and actor slots
+// stay owned by their existing models. Never stretch a layer independently of its canvas.
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, narrow, coverFloor = false, floorTop, zoom = 1, coverWindow = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
-  if (backdrop) {
-    delete backdrop.dataset.mobileFloorPaintTop;
-    delete backdrop.dataset.mobileFloorShadowTop;
-  }
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
-  if (!scene || width <= 0 || height <= 0) return;
+  if (!scene || width <= 0 || height <= 0) {
+    if (backdrop) delete backdrop.dataset.mobileFloorPaintTop;
+    return;
+  }
   const key = narrow ? 'phone' : 'desktop';
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
+  const sceneFloor = document.documentElement.dataset.wireframeSceneFloor;
+  const sceneSkyline = document.documentElement.dataset.wireframeSceneSkyline;
+  const sources = combatSceneLayers(device).map(layer => alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], narrow)));
+  delete backdrop.dataset.mobileFloorPaintTop;
   const framing = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.scene;
   const previewTop = narrow ? fieldTop * .5 : combat.clientHeight * framing.topHeightFraction;
   const coverScale = Math.max(width / device.width, (coverFloor ? fieldTop + height - previewTop : height) / device.height);
   // Combat zooms the art out (owner 2026-11-01: too close, looks pixelated) about
   // the ground anchor, so the floor stays under the grid where it was.
   const scale = coverScale * (coverFloor ? framing.backdropZoom ?? 1 : 1);
-  // Combat follows the fitted enemies while keeping the floor canvas beneath
-  // the entire battlefield; moving it farther up exposes its lower edge.
-  // Other callers (dialogue) keep their own floor line.
-  // `standGround`, when given, is the farthest-back foot line: the camera never
-  // frames so low that those feet rise above the scene's standing area.
-  const standingTop = device.standingArea?.y ?? device.groundAnchor;
-  const framed = Number.isFinite(standGround)
-    ? Math.min(ground, standGround + (device.groundAnchor - standingTop) * device.height * scale) : ground;
-  const cameraGround = coverFloor
-    ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
-  let top = document.documentElement.dataset.wireframeSceneFloor === 'off'
+  let top = sceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : coverFloor ? previewTop + device.groundAnchor * device.height * (coverScale - scale) : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+    : coverFloor ? previewTop + device.groundAnchor * device.height * (coverScale - scale) : fieldTop + ground - device.groundAnchor * device.height * scale;
   // `coverWindow` (desktop dialogue): the art reaches the window's bottom edge, so the figures never stand on a bare strip.
   if (coverWindow) top = Math.max(top, fieldTop + height - device.height * scale);
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
@@ -168,17 +162,14 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   let groundBottom = Infinity, fillGround = null;
   [...svg.querySelectorAll('.alternative-scene-layer')].forEach((group, index) => {
     let layer = combatSceneLayers(device)[index];
-    if (coverFloor && Number.isFinite(floorShadowTop)) {
+    if (coverFloor && Number.isFinite(floorTop)) {
       const floor = framing.mobileFloor;
       const paintStart = floor.paintStarts[layer.id];
       if (paintStart) {
         group.style.transform = '';
         // The ground never starts below the back rank's cell top (`floorTop`, owner 2026-10-31): the grid's back edge
-        // stands on painted ground, not in the sky. The shadow rule still wins where the shadows rise higher.
-        const paintCeiling = Number.isFinite(floorTop) ? Math.min(floorShadowTop - floor.shadowClearancePx / zoom, floorTop) : floorShadowTop - floor.shadowClearancePx / zoom;
-        // Continue only the authored ground behind the hand to the footer;
-        // its painted horizon remains constrained by the back-row shadows.
-        const fitFloor = (frameTop, frameScale) => mobileFloorLayer(layer, { paintStart, maximumPaintTop: (paintCeiling - frameTop) / frameScale,
+        // stands on painted ground, not in the sky. Continue only the authored ground behind the hand to the footer.
+        const fitFloor = (frameTop, frameScale) => mobileFloorLayer(layer, { paintStart, maximumPaintTop: (floorTop - frameTop) / frameScale,
           minimumBottom: (combat.clientHeight - frameTop) / frameScale });
         // The ground is sized by the screen (horizon to footer), not by the canvas
         // scale, so the backdrop zoom shrinks the fitted ground about its horizon.
@@ -188,7 +179,6 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
           : fitFloor(top, scale);
         groundBottom = top + (layer.y + layer.height) * scale;
         backdrop.dataset.mobileFloorPaintTop = String((top + (layer.y + layer.height * paintStart) * scale) * zoom);
-        backdrop.dataset.mobileFloorShadowTop = String(floorShadowTop * zoom);
       }
     }
     const art = alternativeArtCatalog.sceneLayers[layer.id];
@@ -196,9 +186,8 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     group.dataset.depth = String(layer.depth);
     image.dataset.layer = layer.id;
     for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, layer[prop]);
-    const href = alternativeArtUrl(sceneArtPath(art, narrow));
-    if (image.getAttribute('href') !== href) image.setAttribute('href', href);
-    group.style.visibility = ['far', 'landmark'].includes(art.kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : '';
+    if (image.getAttribute('href') !== sources[index]) image.setAttribute('href', sources[index]);
+    group.style.visibility = ['far', 'landmark'].includes(art.kind) && sceneSkyline === 'off' ? 'hidden' : '';
   });
   fitBackdropFill(svg, { device, scale, coverScale, left: (width - device.width * scale) / 2, top, width, bottom: combat.clientHeight || fieldTop + height, groundBottom, fillGround, narrow });
   const fade = combat.querySelector('.alternative-card-fade');

@@ -1,5 +1,5 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
-import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
+import { CombatBackdropInputs } from '../models/CombatBackdropFitModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -17,9 +17,8 @@ import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeA
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
-import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes, HandAnchorLayoutKey } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes, HandAnchorLayoutKey } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -1584,34 +1583,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
-    const fieldTop = (fieldRect.top - rect.top) / zoom;
-    // Continue real ground past the lowered footer fade, including on phones
-    // where the hand consumes much of the viewport. Keep the same horizon.
-    const sceneHeight = fieldTop + fieldRect.height / zoom;
-    const floorShadowTop = mobileFloorShadowTop(placed.filter(({frame}) => frame.classList.contains('enemy') && !frame.classList.contains('dead')).map(({frame,sprite}) => {
-      const box = sprite.getBoundingClientRect(), style = getComputedStyle(sprite), shadow = getComputedStyle(sprite, '::before');
-      const spriteZoom = box.height / (parseFloat(style.height) || sprite.offsetHeight || 1);
-      const translatedY = new DOMMatrix(shadow.transform === 'none' ? undefined : shadow.transform).m42;
-      return { band: frame.dataset.visualBand,
-        top: box.bottom - (parseFloat(shadow.bottom) + parseFloat(shadow.height) - translatedY) * spriteZoom };
-    }));
-
-    fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
-      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      coverFloor: true, zoom, floorTop: plan.visualBands?.length ? fieldTop + plan.visualBands[0].top / zoom : undefined, floorShadowTop: holdFloorShadowTop(layoutState, Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined) });
-    if (backdrop) fitSceneBackdrop(backdrop, {
-      width: backdropWidth, height: rect.height / zoom, zoom,
-      windowTop: 0, windowHeight: sceneHeight,
-      // Owner 2026-11-13: the floor's top stands at a fixed share of the whole
-      // combat screen (scenes/w4a-combat.json floorPercent: 75 = floor covers
-      // the bottom 75%), not at the back rank's feet, which left back-rank
-      // enemies standing on the tree line.
-      groundY: (rect.height / zoom) * (1 - wireframeUi.scene.floorFraction),
-      config: battlefieldBackdropConfig({ height: sceneHeight,
-        fieldTop, fieldHeight: fieldRect.height / zoom,
-        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
-    });
+    const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height,
+      fieldTop: fieldRect.top - rect.top, fieldHeight: fieldRect.height, zoom, narrow, plan });
+    fitAlternativeBackdrop(combat, backdropInputs.alternative);
+    if (backdrop) fitSceneBackdrop(backdrop, { width: backdropWidth, ...backdropInputs.environment });
     field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };

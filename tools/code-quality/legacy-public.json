@@ -4965,9 +4965,7 @@
     "quickMenuPanelModel"
   ],
   "src/ui/models/MobileFloorModel.js": [
-    "holdFloorShadowTop",
-    "mobileFloorLayer",
-    "mobileFloorShadowTop"
+    "mobileFloorLayer"
   ],
   "src/ui/models/MountServiceModel.js": [
     "mountServiceModel"

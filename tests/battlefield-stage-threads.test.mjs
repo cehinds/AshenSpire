@@ -54,7 +54,7 @@ test('responsive formation keeps every rank readout above its body', () => {
   assert.match(stage, /const hudBelow = \(\) => false;/);
 });
 
-test('the stage keeps the floor anchor on the fight\'s layoutState, not a per-mount closure', () => {
-  assert.doesNotMatch(stage, /const holdFloorShadow = /);
-  assert.match(stage, /floorShadowTop: holdFloorShadowTop\(layoutState, /);
+test('the stage fits the backdrop from the screen and the empty grid, never from living enemies', () => {
+  assert.doesNotMatch(stage, /holdFloorShadowTop|mobileFloorShadowTop|floorShadowTop/);
+  assert.match(stage, /CombatBackdropInputs\(\{ combatWidth: rect\.width, combatHeight: rect\.height,/);
 });

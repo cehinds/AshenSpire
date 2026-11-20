@@ -59,9 +59,11 @@ test('the stage no longer frames a desktop camera on a horizon share or a standi
   assert.doesNotMatch(art, /horizonCameraGround|desktopHorizonFloor|combatHorizonFloor|horizonShare/);
 });
 
-test('the backdrop never frames so low that the back-row feet leave its standing area', () => {
+// Owner (2026-11-20): the combat backdrop is a fixed picture. No actor-derived ground or standing line reaches it;
+// its floor is the empty grid's back rank (tests/combat-backdrop-fixed.test.mjs).
+test('the combat backdrop takes no ground or standing line from the actors', () => {
   const art = readFileSync(new URL('../src/ui/alternativeArt.js', import.meta.url), 'utf8');
-  assert.match(art, /Math\.min\(ground, standGround \+ \(device\.groundAnchor - standingTop\) \* device\.height \* scale\)/);
+  assert.doesNotMatch(art, /standGround|standingTop/);
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  assert.match(stage, /standGround: combatStandingGround\(sizes, actors, plan\.ground\) \/ zoom/);
+  assert.doesNotMatch(stage, /combatSceneryGround|combatStandingGround/);
 });
