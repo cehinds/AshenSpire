@@ -131,7 +131,12 @@ export function UpgradeStepLook(registries, step, before, after) {
         return one.side || one.op ? t('cardUpgrade.size.eases', { n: Math.abs(one.n), what: one.status ? statusName(registries, one.status) : one.op }) : t('cardUpgrade.size.stacks', { n: now - was, status: statusName(registries, one.status) });
       }
       case 'cost': return t(one.pool === 'mp' ? 'cardUpgrade.size.costMp' : 'cardUpgrade.size.costSp', { n: one.n || 1 });
-      case 'tag': return Number.isFinite(one.packet) ? t('cardUpgrade.size.packet', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage'), element: ELEMENT_WORD[one.damage] || cap(one.damage) }) : '';
+      case 'tag': {
+        if (Number.isFinite(one.packet)) return t('cardUpgrade.size.packet', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage'), element: ELEMENT_WORD[one.damage] || cap(one.damage) });
+        // An identity step has one size: the value it sets ("Blunt damage", "Reach", "Cantrip").
+        if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
+        return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
+      }
       case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : '';
       default: return '';
     }
