@@ -139,9 +139,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
     paintedAppearance: 'test', displayAppearance: () => 'test', selectedCombatantId: null,
     setData, formationOccupancy: () => [], renderPlayer() {},
     renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
-    syncEditLock() {}, renderPotionTray() {}, renderControls() {}, renderCombatTools() {},
-    // HP and costs change between passes: the top bar wrote, so the full render runs its board fit.
-    renderTopbar: () => true, stageWrote: false,
+    syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
     combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,
     scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'), KeepIntentRowsInside() {},
   });
