@@ -1,0 +1,87 @@
+{
+  "request": "Effects off strips blur and drop-shadows only on phones today. Make blur and shadows separate options that also work on desktop.",
+  "success": "The Effects modal has a Blur and shadows section (live with Effects off) with a Blur row and a Shadows row, each Auto / On / Off. Off writes data-fx-blur / data-fx-shadows = off on the root and strips the blur and drop-shadow filters on desktop too; On keeps them on a phone with Effects off; Auto changes nothing.",
+  "failure": "The section is missing or greyed; Off leaves the target silhouette blurred or the intent icon shadowed on desktop; Auto strips them on desktop; On still strips them on a phone with Effects off.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "modal-section",
+      "url": "?shot=title&shotSettings=%7B%22settingsGeneralCategory%22%3A%22Combat%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        { "click": "#settings" },
+        { "wait": { "ms": 800 } },
+        { "click": "[data-btn=\"effectsMenu\"]" },
+        { "wait": { "ms": 600 } },
+        { "scrollTo": { "selector": ".set-effects-modal [data-effects-section=\"surface\"]", "top": 0 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Effects modal is open", "selector": ".set-effects-modal" },
+        { "kind": "visible", "label": "Blur and shadows section is shown", "selector": ".set-effects-modal [data-effects-section=\"surface\"]" },
+        { "kind": "text", "label": "Section heading reads Blur and shadows", "selector": "[data-effects-section=\"surface\"] .set-subsection-heading", "includes": "Blur and shadows" },
+        { "kind": "count", "label": "Section has the Blur and Shadows rows", "selector": "[data-effects-section=\"surface\"] :is([data-row-key=\"fxBlur\"], [data-row-key=\"fxShadows\"])", "eq": 2 },
+        { "kind": "count", "label": "Each row offers Auto, On and Off", "selector": "[data-effects-section=\"surface\"] .choice[data-val]", "eq": 6 },
+        { "kind": "count", "label": "Section works with Effects off (not greyed)", "selector": "[data-effects-section=\"surface\"][data-off]", "eq": 0 },
+        { "kind": "within", "label": "Modal fits the screen", "selector": ".set-effects-modal", "container": "body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Blur or Shadows row drawn outside the modal", "selector": ".set-card-list [data-row-key=\"fxBlur\"]:not(.set-effects-modal *)", "min": 1 }
+      ]
+    },
+    {
+      "name": "forced-off",
+      "url": "?shot=combat&shotSeed=4&shotSettings=%7B%22effects%22%3Atrue%2C%22fxBlur%22%3A%22off%22%2C%22fxShadows%22%3A%22off%22%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "count", "label": "Root carries both off flags", "selector": "html[data-fx-blur=\"off\"][data-fx-shadows=\"off\"]", "eq": 1 },
+        { "kind": "style", "label": "Target silhouette has no blur", "selector": ".aim-silho", "prop": "filter", "equals": "none" },
+        { "kind": "style", "label": "Intent icon has no drop-shadow", "selector": ".combat .intent-icon", "prop": "filter", "equals": "none" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": []
+    },
+    {
+      "name": "auto-unchanged",
+      "url": "?shot=combat&shotSeed=4&shotSettings=%7B%22effects%22%3Atrue%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "count", "label": "Auto writes no blur or shadow flag", "selector": "html:is([data-fx-blur], [data-fx-shadows])", "eq": 0 },
+        { "kind": "style", "label": "Target silhouette keeps its blur", "selector": ".aim-silho", "prop": "filter", "equals": "blur(2px)" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "style", "label": "Intent icon shadow stripped with Effects on", "selector": ".combat .intent-icon", "prop": "filter", "equals": "none" }
+      ]
+    },
+    {
+      "name": "on-keeps-with-effects-off",
+      "url": "?shot=combat&shotSeed=4&shotSettings=%7B%22fxBlur%22%3A%22on%22%2C%22fxShadows%22%3A%22on%22%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        { "kind": "count", "label": "Root carries both on flags", "selector": "html[data-fx-blur=\"on\"][data-fx-shadows=\"on\"]", "eq": 1 },
+        { "kind": "count", "label": "Effects is off", "selector": "html[data-effects=\"off\"]", "eq": 1 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "style", "label": "Intent icon drop-shadow stripped although Shadows is On", "selector": ".combat .intent-icon", "prop": "filter", "equals": "none" }
+      ]
+    }
+  ]
+}
