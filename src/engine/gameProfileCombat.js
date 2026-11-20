@@ -35,7 +35,7 @@ export function isPierceHit(profile, carrier) {
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
 /** PierceStacks is the shared, pure Pierce count for live hits and forecasts. Stone Skin cancels one stack per stack. */
-export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null) {
+export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null, maxSpend = Infinity) {
   if (carrier?.combatReaction) return 0;
   const rules = fixCorePierceRules(fixCoreRules(ctx, target));
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
@@ -44,7 +44,8 @@ export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProf
   const intrinsic = tagged || builtIn ? (Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1) : 0;
   const stacks = intrinsic + Math.max(0, Math.floor(carrier?.gear?.pierce || 0));
   const skin = rules.skinStatus ? Math.max(0, target?.statuses?.[rules.skinStatus]?.stacks || 0) : 0;
-  const spent = Math.min(stacks, skin);
+  // Stone Skin is spent only against Pierce that Block actually soaked (`maxSpend`): Block 0 spends none.
+  const spent = Math.min(stacks, skin, Math.max(0, maxSpend));
   if (out) out.spent = spent;
   return stacks - spent;
 }
@@ -55,7 +56,7 @@ export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSo
   const ignored = Math.max(0, carrier?.gear?.ignoreBlock || 0);
   let bypass;
   if (rules.blockIgnoredPerStack > 0) {
-    bypass = Math.floor(PierceStacks(ctx, target, carrier, profile, out) * rules.blockIgnoredPerStack);
+    bypass = Math.floor(PierceStacks(ctx, target, carrier, profile, out, Math.ceil(Math.max(0, blockSoak) / rules.blockIgnoredPerStack)) * rules.blockIgnoredPerStack);
   } else {
     // The old fraction belongs to the saved fight, and gear Pierce remains a flat grant.
     const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
@@ -63,7 +64,7 @@ export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSo
     bypass = isPierceHit(profile, carrier) || builtIn ? Math.floor(rules.blockBypassFraction * total) : 0;
     bypass += Math.max(0, carrier?.gear?.pierce || 0);
     const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
-    const spent = Math.min(bypass, skin);
+    const spent = Math.min(bypass, skin, Math.max(0, blockSoak));
     if (out) out.spent = spent;
     bypass -= spent;
   }
