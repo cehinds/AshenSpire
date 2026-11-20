@@ -4672,8 +4672,6 @@
   "src/ui/models/CombatCompositionModel.js": [
     "alternativeCombatComposition",
     "combatArtworkKey",
-    "combatSceneryGround",
-    "combatStandingGround",
     "insetPerspectiveFootprint",
     "stableCombatArtwork",
     "stableHandAnchor"
