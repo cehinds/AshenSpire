@@ -32,65 +32,85 @@ function mount(extra = {}, options = null, takeCount = 1) {
   const offer = { id: 'victory-inspect', options: options || ids.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount };
   const calls = [];
   MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
-    onTake(i) { calls.push(['library', i]); offer.taken.push(i); offer.claimed = i; },
-    onAddToDeck(i) { calls.push(['deck', i]); offer.taken.push(i); offer.claimed = i; },
+    // As the model does: an offer is claimed once its last pick is taken.
+    onTake(i) { calls.push(['library', i]); offer.taken.push(i); if (offer.taken.length >= takeCount) offer.claimed = i; },
+    onAddToDeck(i) { calls.push(['deck', i]); offer.taken.push(i); if (offer.taken.length >= takeCount) offer.claimed = i; },
     onContinue() { calls.push(['continue']); }, ...extra });
   return { app, run, offer, calls, faces: [...app.querySelectorAll('.reward-choice-face')], ids };
 }
 const modal = () => document.querySelector('.card-inspection-modal');
 const tap = face => { face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true })); face.click(); };
 
-test('first reward face press opens that card with Back and Select, without a badge or claim', () => withGlobalDom(() => {
+// Owner 2026-11-20: the card's own modal answers where it goes. Add to deck and Send to library stand side by side
+// and one click claims the card; there is no Select step and no second page.
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+const acts = () => [...modal().querySelectorAll('.card-inspection-act')].map(node => [node.dataset.act, node.textContent]);
+
+test('first reward face press opens that card with Add to deck and Send to library, without a badge or claim', () => withGlobalDom(() => {
   const { faces, calls, ids } = mount();
   for (const face of faces) assert.equal(face.querySelector('.card-info-button'), null);
   tap(faces[1]);
   assert.equal(modal().querySelector('.card').dataset.cardId, ids[1]);
-  assert.equal(modal().querySelector('[data-act="select"]').textContent, 'Select card');
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, false, false]);
+  assert.deepEqual(acts().sort(), [['addToDeck', 'Add to deck'], ['addToLibrary', 'Send to library']]);
+  assert.equal(modal().querySelector('[data-act="select"]'), null, 'no Select step');
   modal().querySelector('.card-inspection-back').click();
   assert.equal(modal(), null);
   assert.deepEqual(calls, []);
   assert.equal(document.activeElement, faces[1]);
 }));
 
-test('inspector Select and Deselect change exactly that pick, preserving every other choice', () => withGlobalDom(() => {
-  const { app, faces, calls } = mount({}, null, 2);
-  app.querySelectorAll('.reward-choice-button')[0].click();
-  tap(faces[1]); modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [true, true, false]);
+for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
+  test(`single-pick ${action} from the card modal claims it in one click and leaves`, () => withGlobalDom(async () => {
+    const { faces, calls } = mount();
+    tap(faces[2]);
+    const commit = modal().querySelector(`[data-act="${action}"]`);
+    commit.click(); commit.click();
+    await settle();
+    assert.equal(modal(), null);
+    assert.equal(document.querySelector('.confirmation-modal'), null, 'no second page');
+    assert.deepEqual(calls, [[destination, 2], ['continue']]);
+  }));
+}
+
+test('multi-pick: a card modal claim spends that pick and keeps the door open for the rest', () => withGlobalDom(async () => {
+  const { app, faces, calls, offer } = mount({}, null, 2);
+  tap(faces[0]); modal().querySelector('[data-act="addToDeck"]').click();
+  await settle();
+  assert.deepEqual(calls, [['deck', 0]]);
+  assert.deepEqual(offer.taken, [0]);
+  const redrawn = [...app.querySelectorAll('.reward-choice-face')];
+  tap(redrawn[1]); modal().querySelector('[data-act="addToLibrary"]').click();
+  await settle();
+  assert.deepEqual(calls, [['deck', 0], ['library', 1], ['continue']]);
+}));
+
+test('a refused Add to deck is disabled with the reason; Send to library still claims', () => withGlobalDom(async () => {
+  const { faces, calls } = mount({ addRefusal: () => 'full', deckMax: 40 });
+  tap(faces[0]);
+  assert.equal(modal().querySelector('[data-act="addToDeck"]').disabled, true);
+  assert.equal(modal().querySelector('[data-act="addToLibrary"]').disabled, false);
+  modal().querySelector('[data-act="addToLibrary"]').click();
+  await settle();
+  assert.deepEqual(calls, [['library', 0], ['continue']]);
+}));
+
+test('a one-pick door with the deck editor open adds Edit deck to the card modal', () => withGlobalDom(async () => {
+  const edits = [];
+  const { faces, calls } = mount({ canEditDeck: true, onEditDeck: (i, back) => { edits.push(i); back(); } });
   tap(faces[1]);
-  assert.equal(modal().querySelector('[data-act="select"]').textContent, 'Deselect card');
-  modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [true, false, false]);
-  assert.deepEqual(calls, []);
+  assert.deepEqual(acts().map(([id]) => id).sort(), ['addToDeck', 'addToLibrary', 'editDeck']);
+  modal().querySelector('[data-act="editDeck"]').click();
+  await settle();
+  assert.deepEqual(edits, [1]);
+  assert.deepEqual(calls, [['library', 1], ['continue']]);
 }));
 
-test('a full multi-pick selection disables selecting another card while allowing reading and Back', () => withGlobalDom(() => {
-  const { app, faces, calls } = mount({}, null, 2);
-  const controls = app.querySelectorAll('.reward-choice-button');
-  controls[0].click(); controls[1].click();
-  tap(faces[2]);
-  assert.equal(modal().querySelector('[data-act="select"]').disabled, true);
-  assert.match(modal().querySelector('.card-action-reason').textContent, /chosen 2/);
-  modal().querySelector('.card-inspection-back').click();
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [true, true, false]);
-  assert.deepEqual(calls, []);
-}));
-
-test('single-pick selection moves through the inspector action without claiming', () => withGlobalDom(() => {
-  const { app, faces, calls } = mount();
-  app.querySelectorAll('.reward-choice-button')[0].click();
-  tap(faces[2]); modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, false, true]);
-  assert.deepEqual(calls, []);
-}));
-
-test('duplicate card offers stay separate picks', () => withGlobalDom(() => {
+test('duplicate card offers stay separate picks', () => withGlobalDom(async () => {
   const options = [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'frostNova' }];
   const { faces, calls } = mount({}, options, 2);
-  tap(faces[1]); modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(faces.map(face => face.classList.contains('is-chosen')), [false, true]);
-  assert.deepEqual(calls, []);
+  tap(faces[1]); modal().querySelector('[data-act="addToLibrary"]').click();
+  await settle();
+  assert.deepEqual(calls, [['library', 1]]);
 }));
 
 for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
@@ -105,13 +125,13 @@ for (const [action, destination] of [['addToDeck', 'deck'], ['addToLibrary', 'li
   }));
 }
 
-test('an offer claimed while its inspector stands cannot be selected', () => withGlobalDom(() => {
+test('an offer claimed while its inspector stands cannot be claimed again', () => withGlobalDom(() => {
   const { faces, calls, offer } = mount();
   tap(faces[0]);
   offer.taken.push(0); offer.claimed = 0;
-  modal().querySelector('[data-act="select"]').click();
+  modal().querySelector('[data-act="addToDeck"]').click();
   assert.deepEqual(calls, []);
-  assert.equal(modal().querySelector('[data-act="select"]').disabled, true);
+  assert.equal(modal().querySelector('[data-act="addToDeck"]').disabled, true);
   modal().querySelector('.card-inspection-back').click();
 }));
 

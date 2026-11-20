@@ -1837,11 +1837,9 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
   border-color: var(--green);
 }
 /* Owner 2026-11-18: the card-pick door's Continue stays neutral until every pick is made (then it wears .primary above);
-   the confirmation lists the chosen cards with one destination choice for all of them. */
+   the confirmation lists the chosen cards; its footer answers Add to deck or Send to library (owner 2026-11-20). */
 .reward-pick-confirm-list { margin: 0 0 .5rem; padding-left: 1.2rem; }
 .reward-pick-confirm-unused { margin: .25rem 0 .5rem; opacity: .85; }
-.reward-pick-destinations { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
-.reward-pick-destination.is-chosen { background: color-mix(in srgb, var(--green) 22%, var(--panel)); border-color: var(--green); }
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in

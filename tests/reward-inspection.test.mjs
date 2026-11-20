@@ -89,7 +89,8 @@ for (const [kind, id] of cardCases) test(`${kind} on the card door is read by a 
     mouseRightClick(chosen);
     const dialog = document.querySelector('.card-inspection-modal');
     assert.ok(dialog, 'right-click opens the reading door');
-    assert.equal(dialog.querySelector('.card-inspection-act').dataset.act, 'select', 'the door offers selection, never an immediate claim');
+    // Owner 2026-11-20: the card modal's own answers are Add to deck and Send to library; opening it claims nothing.
+    assert.deepEqual([...dialog.querySelectorAll('.card-inspection-act')].map(node => node.dataset.act).sort(), ['addToDeck', 'addToLibrary'], 'the door offers the two destinations');
     assert.equal(dialog.querySelector('.playing-card-details').inspectionMarkup, cardDetailHtml(registries, { cardId: id, instanceId: 'offer:0', upgraded: false }, { rules: run }));
     dialog.querySelector('.modal-close').click();
     assert.equal(chosen.querySelector('.card-info-button'), null, 'no separate information button');
