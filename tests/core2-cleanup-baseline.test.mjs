@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
+// and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
 // Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
 // current-profile hash leaves only (27).
