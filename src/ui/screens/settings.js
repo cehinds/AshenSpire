@@ -280,7 +280,7 @@ function switchHtml({ label, on, attrs = '' }) {
 /**
  * EffectsModalHtml(settings) → the Effects modal body (owner, 2026-11-19): the master
  * switch, then "Visual effects" (greyed while the master is off; the values are kept),
- * then "Fighter motion" (independent of the master). Rows are the `modal: 'effects'`
+ * then "Fighter motion" and "Blur and shadows" (both independent of the master). Rows are the `modal: 'effects'`
  * rows of SETTINGS_ROWS drawn by settingsRowHtml, so they look and save like any row.
  */
 export function EffectsModalHtml(settings) {
@@ -295,7 +295,8 @@ export function EffectsModalHtml(settings) {
   };
   return list(rows.filter((row) => !row.modalSection))
     + section('visual', t('settings.effects.visual'), on ? '' : t('settings.effects.visualOff'), !on)
-    + section('motion', t('settings.effects.motion'), t('settings.effects.motionNote'), false);
+    + section('motion', t('settings.effects.motion'), t('settings.effects.motionNote'), false)
+    + section('surface', t('settings.effects.surface'), t('settings.effects.surfaceNote'), false);
 }
 
 /**
