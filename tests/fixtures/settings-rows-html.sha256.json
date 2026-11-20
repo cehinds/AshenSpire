@@ -2,10 +2,6 @@
  "Combat/combatLogConsole": "85dea87d92fa6b8bf32cc51296724c303445db47fccfe31af6ab0945602e007d",
  "Combat/combatLogPlayerColor": "f181f06eedb49e1deaeb0b49b0f582e47d22dd03515d1085b72ce16f091e90f9",
  "Combat/combatLogEnemyColor": "e4884ec321f89863e1e30e2019b55c303caca58accdd10d35238468ab7e359b0",
- "Combat/rangeMechanics": "4e71e890301e046b68dd61e41fd21e2b8242db9253a485e221f43a5cf8a2ee74",
- "Combat/rangeAdvanceSpPerBand": "44b487786d9489ebfc955f8ae3d40c5ff1598910d447de57df7f030832b5ac4b",
- "Combat/rangeReachPrecisionBonus": "5d1663d8f30e101527aa0a98bfbf969c428d631f97719d46c465e6665c8583e0",
- "Combat/rangeThrowPrecisionPenalty": "089519dbf11855374de8bda068cca082d521a923f2388f39584162ec9fee5ec6",
  "Accessibility/hoverTooltips": "0659482d5559a82677443fcca423d3c4fdc37f7fb6d25f6fdd4b1c3253f2b108",
  "Accessibility/tooltipDelay": "3ba5991e397d1796045124e312f06fb12242c336f45b790fedd4eb489ba5f0bd",
  "Accessibility/tooltipCloseDelay": "803f9e4cb24bb1bf3c408f944bb32c11c305d9861443c859ec8cd6e01299de63",
@@ -947,5 +943,9 @@
  "Advanced/wireframeMenuNav": "1f79770171d6dc403878d93222de981c2639d129a0521eb8d9a106c4415964ad",
  "Advanced/wireframeMenuFrame": "b8781154b3a6d47fefddabd5682aef6485c20415506d47a74d0344289f1414c5",
  "Advanced/wireframeSceneSkyline": "04f10572a542839af5ef621c2507b8e0eb4bae86a2b9b4d4833f2c0e69572474",
- "Advanced/wireframeSceneFloor": "4504925d07d8de71c96c7babbd9548c0c9876b98728a83fc0591b46576b9f1ee"
+ "Advanced/wireframeSceneFloor": "4504925d07d8de71c96c7babbd9548c0c9876b98728a83fc0591b46576b9f1ee",
+ "Advanced/rangeMechanics": "4e71e890301e046b68dd61e41fd21e2b8242db9253a485e221f43a5cf8a2ee74",
+ "Advanced/rangeAdvanceSpPerBand": "44b487786d9489ebfc955f8ae3d40c5ff1598910d447de57df7f030832b5ac4b",
+ "Advanced/rangeReachPrecisionBonus": "5d1663d8f30e101527aa0a98bfbf969c428d631f97719d46c465e6665c8583e0",
+ "Advanced/rangeThrowPrecisionPenalty": "089519dbf11855374de8bda068cca082d521a923f2388f39584162ec9fee5ec6"
 }

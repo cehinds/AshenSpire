@@ -7198,7 +7198,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
@@ -7212,9 +7212,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.find(r => r.key === 'combatLogConsole').def, false, 'Console shortcut defaults off');
     eq(combat.find(r => r.key === 'combatLogConsole').type, 'toggle', 'Console shortcut is an ordinary toggle');
     eq(combat.find(r => r.key === 'combatLogConsole').debugTopic, undefined, 'Console shortcut has no developer gate');
-    eq(combatTopics.get('Range').map(r => r.key).join(','),
+    eq(categoryHandler('Advanced').rows.filter(r => r.advancedGroup === 'Range').map(r => r.key).join(','),
       'rangeMechanics,rangeAdvanceSpPerBand,rangeReachPrecisionBonus,rangeThrowPrecisionPenalty',
-      'new-run range rules have their own Combat topic');
+      'new-run range rules are their own Advanced group (owner, 2026-11-20)');
     eq(combat.some(r => r.key === 'askToUpcastAfterTarget'), false, 'the upcast prompt row is gone (owner, 2026-11-20)');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',

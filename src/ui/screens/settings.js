@@ -233,6 +233,9 @@ const ADVANCED_GROUPS = Object.freeze([
   // Progression, Rewards, Equipment and World went with their rows (owner, 2026-11-20):
   // Core 2 drew none of them, and their values are authored content now.
   { id: 'Deck', label: t('settings.group.Deck'), tip: tFull('settings.group.Deck') },
+  // The four Range rules moved here from General › Combat (owner, 2026-11-20): they change the
+  // next run's rules, not how a fight looks.
+  { id: 'Range', label: t('settings.group.Range'), tip: tFull('settings.group.Range') },
   { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
   { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
   // The wireframe decisions the drawings leave open, one topic per family of
@@ -257,8 +260,9 @@ const ADVANCED_GROUPS = Object.freeze([
 // Stored values are untouched either way: hiding a section changes what is
 // drawn, never what a profile holds.
 // Deck (SPEC §14.1) is a player choice, not tuning: Play in deck order is its
-// one row (the editor's limits are authored in content/deckRules.js).
-export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
+// one row (the editor's limits are authored in content/deckRules.js). Range was a
+// General › Combat topic every build showed; it keeps that reach after its move.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Range', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
@@ -365,9 +369,9 @@ export function developerSwitchHtml(state = debugSwitch()) {
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
-export function visibleAdvancedGroups(debug = pageDebug(), profile = null) {
+export function visibleAdvancedGroups(debug = pageDebug(), profile = null, nextProfile = null) {
   const groups = debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
-  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(SETTINGS_ROWS, group.id, profile).length) : groups;
+  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(SETTINGS_ROWS, group.id, profile, nextProfile).length) : groups;
 }
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -386,9 +390,9 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
  */
 export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
 
-export function activeAdvancedGroup(settings, profile = null) {
+export function activeAdvancedGroup(settings, profile = null, nextProfile = null) {
   const stored = settings?.[ADVANCED_CAT_KEY];
-  const shown = visibleAdvancedGroups(pageDebug(), profile);
+  const shown = visibleAdvancedGroups(pageDebug(), profile, nextProfile);
   return shown.some((group) => group.id === stored) ? stored : shown[0].id;
 }
 
@@ -1510,7 +1514,6 @@ const SETTINGS_TOPIC_LABELS = Object.freeze({
   autoCombat: () => t('settings.topic.autoCombat'),
   animation: () => 'Animation & effects',
   combatLog: () => t('combat.log.title'),
-  range: () => t('settings.range.topic'),
   armaments: () => 'Armaments',
   audio: () => 'Audio',
   tooltips: () => 'Tooltips',
@@ -1592,9 +1595,9 @@ function visibleAdvancedSubgroups(rows, groupId) {
 // nothing else; a section draws only the topic that is open.
 const SEARCH_LIMIT = 120;
 const subgroupCache = new Map();
-function cachedSubgroups(rows, groupId, profile = null) {
-  const key = `${groupId}:${profile?.hash || ''}`;
-  if (!subgroupCache.has(key)) subgroupCache.set(key, visibleAdvancedSubgroups(rows.filter(row => row.cat === 'Advanced' && settingsRowAvailable(row, profile)), groupId));
+function cachedSubgroups(rows, groupId, profile = null, nextProfile = null) {
+  const key = `${groupId}:${profile?.hash || ''}:${nextProfile?.hash || ''}`;
+  if (!subgroupCache.has(key)) subgroupCache.set(key, visibleAdvancedSubgroups(rows.filter(row => row.cat === 'Advanced' && settingsRowAvailable(row, profile, nextProfile)), groupId));
   return subgroupCache.get(key);
 }
 
@@ -1623,9 +1626,9 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   // The Effects modal's rows are found too, filed under the button that opens them.
   for (const row of SETTINGS_ROWS) if (row.modal === 'effects' && hit(row)) hits.push({ row, where: `General › Combat › ${t('settings.row.effects')}` });
   const advanced = categoryHandler('Advanced')?.rows || [];
-  for (const group of visibleAdvancedGroups(debug, profile)) {
+  for (const group of visibleAdvancedGroups(debug, profile, nextProfile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
-    for (const sub of cachedSubgroups(advanced, group.id, profile)) {
+    for (const sub of cachedSubgroups(advanced, group.id, profile, nextProfile)) {
       for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
     }
   }
@@ -1695,8 +1698,8 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
-    const shownGroups = visibleAdvancedGroups(pageDebug(), profile);
-    const active = activeAdvancedGroup(settings, profile);
+    const shownGroups = visibleAdvancedGroups(pageDebug(), profile, nextProfile);
+    const active = activeAdvancedGroup(settings, profile, nextProfile);
     const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
@@ -1710,7 +1713,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
           + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
       }
-      const subgroups = cachedSubgroups(h.rows, group.id, profile);
+      const subgroups = cachedSubgroups(h.rows, group.id, profile, nextProfile);
       const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`

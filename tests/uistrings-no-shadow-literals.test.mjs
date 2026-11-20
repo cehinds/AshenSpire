@@ -120,6 +120,8 @@ const ALLOWED = [
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'advancedGroup id of the derived grace-refill rows, not displayed copy'],
+  ['src/ui/screens/settings.js', 'Range', `advanced-group id and RELEASE_ADVANCED_GROUP_IDS; the heading reads settings.group.Range; ${ID}`],
+  ['src/ui/models/RangeSettingsModel.js', 'Range', `advancedGroup id; the heading reads settings.group.Range; ${ID}`],
   ['src/ui/screens/settings.js', 'Developer', `advanced-group id; the heading reads settings.group.Developer; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Developer', `advancedGroup id; the heading reads settings.group.Developer; ${ID}`],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
