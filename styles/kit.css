@@ -1837,11 +1837,9 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
   border-color: var(--green);
 }
 /* Owner 2026-11-18: the card-pick door's Continue stays neutral until every pick is made (then it wears .primary above);
-   the confirmation lists the chosen cards with one destination choice for all of them. */
+   the confirmation lists the chosen cards; its footer answers Add to deck or Send to library (owner 2026-11-20). */
 .reward-pick-confirm-list { margin: 0 0 .5rem; padding-left: 1.2rem; }
 .reward-pick-confirm-unused { margin: .25rem 0 .5rem; opacity: .85; }
-.reward-pick-destinations { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
-.reward-pick-destination.is-chosen { background: color-mix(in srgb, var(--green) 22%, var(--panel)); border-color: var(--green); }
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in
@@ -4122,6 +4120,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
    shows its (i) in the lane reserved above the row. */
 .reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
+/* Owner 2026-11-20: the (i) appears above ANY selected card that can be selected (outside the hand, whose (i) is the
+   portal above), not only on reward doors. */
+.card-inspection-target:is(.inspection-selected, .is-chosen, [aria-pressed="true"]):not(.hand *, .reward-door *) > .card-info-button { visibility:visible; pointer-events:auto; z-index:var(--layer-screen-chrome, 100); }
 /* Playtest 2026-11-17 item 45: the card-pick grid keeps only a little room above and between its rows, so the chosen
    card's (i) keeps its place above the face on the top layer, over the note or the row above, never under them. */
 .reward-door .reward-choice-option:has(> .is-chosen) { position:relative; z-index:var(--layer-screen-chrome, 100); }

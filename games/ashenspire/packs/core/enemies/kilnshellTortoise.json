@@ -75,7 +75,8 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "kilnPlate",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:kilnshellTortoise.advance": {
       "aiWeight": 0,
