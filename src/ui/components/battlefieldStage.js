@@ -1124,6 +1124,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setStyle(frame, 'zIndex', '');
       // Depth stays within a role's plane: players always paint over enemies.
       setVar(sprite, '--combat-depth', String(depthOrder.indexOf(slot.layer)));
+      // A back-row enemy's HUD plates shrink with its body (BackRowEnemySizes), so neighbouring plates keep their gap on a phone.
+      setVar(frame, '--combat-hud-row-scale', String(actor.backRow
+        ? uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale ?? 1 : 1));
       setData(frame, 'formationRow', slot.formationRow);
       setData(frame, 'visualBand', slot.visualBand);
       setData(frame, 'formationRole', slot.formationRole);
