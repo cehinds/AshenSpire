@@ -182,15 +182,19 @@ export const IsPacketHit = (ctx, source, carrier, profile, share) => fixCoreEnab
  * PacketFaceSplit(ctx, source, carrier, authoredBase, total) → { physical, magic } for the face number `total` of a packet hit, or null for any
  * other hit: the same two channels the receipt reads (STR / AR for the physical part, INT / Power for the magic part).
  */
-export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
+export function PacketFaceSplit(ctx, source, carrier, authoredBase, total, target = null) {
   const profile = { ...(carrier?.combatProfile || {}), ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}) };
   const share = FightMagicShare(ctx, profile);
   if (!IsPacketHit(ctx, source, carrier, profile, share) || carrier.skipRatingBonus) return null;
   const effects = configuredModule(ctx, 'effects');
   const finesse = core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
   const channel = (id, entity) => Math.max(0, Math.floor(sourceRatingValue(ctx, entity, id, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) * ChannelWeight(effects, id)));
-  return PacketSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source), total });
+  const stages = fixCoreEnabled(ctx) ? ElementReceiptStages(ctx, source, target, carrier, total)?.stages : null;
+  return PacketSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source),
+    magicMultiplier: PacketMagicMultiplier(FluxMultiplier(ctx, source, carrier), stages), total });
 }
+/** The factor only a packet's magic part takes: elemental flux and every element stage of its element (Burn, element Vulnerable, Brittle, spread...); a Chill on the attacker cuts the whole hit. */
+export const PacketMagicMultiplier = (flux, stages) => (Number.isFinite(flux) ? flux : 1) * (stages || []).filter(stage => stage.id !== 'element-chill').reduce((product, stage) => product * stage.multiplier, 1);
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
   const effects = configuredModule(ctx, 'effects');
@@ -279,6 +283,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Element identity (W25): the deterministic element multipliers (Burn, Shock, Brittle, Chill, spread, chain, undead) are receipt stages, so a quote equals the hit.
   const element = modern && !flatReturn ? ElementReceiptStages(ctx, source, target, carrier, raw) : null;
   for (const stage of element?.stages || []) raw = transition(stage.id, stage.label, raw, raw * stage.multiplier, 'offense', stage.multiplier);
+  const packetMagicMultiplier = packetHit ? PacketMagicMultiplier(fluxMultiplier, element?.stages) : 1;
   // Owner, 2026-11-18: one stage scales every hit by its side (`effects.playerDamageMultiplier` / `enemyDamageMultiplier`), after the element stages and
   // before Block and Poise absorb it, so the face, the intent and the hit read the same number. Final returns (a Counter return, a reflected hit, a
   // proposal's reactive return) are not scaled again. A positive hit never rounds to 0.
@@ -286,7 +291,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // on top of the side scale, with the same exemptions for final returns. A positive physical part never rounds to 0.
   const physicalMultiplier = flatReturn || carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : PhysicalDamageMultiplier(effects);
   if (physicalMultiplier !== 1 && raw > 0) {
-    const split = splitContactParts({amount:raw,base,ratingBonus:packetHit ? packetPower : ratingBonus,share,ratingPart:packetHit || ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+    const split = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,total:raw}) : splitContactParts({amount:raw,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
     const physicalFraction = split.physical + split.magic > 0 ? split.physical / (split.physical + split.magic) : 0;
     if (physicalFraction > 0) raw = transition('physical-damage-scale','Physical damage scale',raw,ScalePhysicalDamage(raw,physicalFraction,physicalMultiplier),'offense',physicalMultiplier);
   }
@@ -345,7 +350,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   }
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
-  const parts = splitContactParts({amount:incoming,base,ratingBonus:packetHit ? packetPower : ratingBonus,share,ratingPart:packetHit || ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+  const parts = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,total:incoming}) : splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
   // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),

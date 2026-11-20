@@ -90,3 +90,32 @@ test('live preview: the same tokens, and the same split the hit then deals', asy
   assert.ok(Number.isFinite(quote.tokens.packet) && quote.tokens.packet === row.packet, 'the live tokens carry the magic part');
   assert.ok(quote.tokens.damage > 0);
 });
+
+test('face and preview read exactly the split the live receipt deals (Vulnerable, Burn and flux included)', async () => {
+  const { PacketFaceSplit } = await import('../src/engine/gameProfileCombat.js');
+  const cases = [
+    ['plain', {}, null],
+    ['Vulnerable 3', { statuses: { vulnerable: { stacks: 3 } } }, null],
+    ['Burn 2', { statuses: { burn: { stacks: 2 } } }, null],
+    ['fire flux', {}, 'fire'],
+    ['all three', { statuses: { vulnerable: { stacks: 3 }, burn: { stacks: 2 } } }, 'fire'],
+  ];
+  const seen = {};
+  for (const [name, patch, flux] of cases) {
+    const combat = live();
+    const { card, carrier } = carrierFor(combat, [{ ...FIRE, packet: 4 }, { k: 'dmg', n: 4 }]);
+    const authored = card.effects.find((e) => e.op === 'damage').amount;
+    Object.assign(combat.player.ratings, { ar: 10, pr: 10 });
+    if (flux) combat.player.elementFlux = flux;
+    const target = combat.enemies[0];
+    const row = hit(combat, carrier, authored, patch);
+    const face = PacketFaceSplit(combat, combat.player, carrier, authored, row.incoming, target);
+    assert.deepEqual([face.physical, face.magic], [row.physical, row.magical], `${name}: the face split is the receipt's`);
+    seen[name] = row;
+  }
+  const share = (row) => row.magical / (row.magical + row.physical);
+  assert.ok(seen['fire flux'].magical > seen.plain.magical && share(seen['fire flux']) > share(seen.plain), 'flux weighs the magic part: it takes more of the hit');
+  assert.ok(share(seen['Burn 2']) >= share(seen.plain), 'Burn weighs the magic part');
+  assert.ok(seen['Vulnerable 3'].magical > seen.plain.magical && seen['Vulnerable 3'].physical > seen.plain.physical, 'Vulnerable raises both parts');
+  assert.ok(Math.abs(share(seen['Vulnerable 3']) - share(seen.plain)) < 0.04, 'and keeps their proportion');
+});
