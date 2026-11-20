@@ -30,9 +30,10 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [ ] Strings in `content/source/uiStrings.csv`, short and plain
 
 ### Performance (ranked)
-- [ ] `combat.js` `render()` re-runs every geometry pass on every action; skip when nothing moved (as `finishRender()` does)
-- [ ] `combat.js:1701` copies the whole event log every render; read from the last-seen index instead
-- [ ] `tooltip.js:693` body-wide observer rescans the whole page on every DOM change; scan only added nodes
+- [ ] **Root cause of "slow late in long fights":** every action deep-copies the whole fight log (`structuredClone` in `candidateState`, `src/engine/combatRules.js:102`). 200-turn Node run: playCard 4 → 45 ms, endTurn 16 → 61 ms as the log grows 1.4k → 10.7k entries. Fix in progress (share old entries, copy only the array), then Opus review.
+- [x] `combat.js:1701` copied the whole event log every render; now reads only the new tail
+- [x] `tooltip.js:693` body-wide observer rescanned the whole page on every DOM change; now scans only added nodes
+- [ ] `combat.js` `render()` re-runs every geometry pass on every action. Blocked: contract C8 (`tools/ui-components.mjs`, `stableCombatStageRendering`) pins those lines; patch ready in `eebf2e95ca`
 - [x] CSS that animates forever with Effects off: all 19 infinite loops now stop (one allowlisted: loading spinner); test `tests/effects-off-infinite-animations.test.mjs`
 - [ ] Effects off on desktop still keeps every blur and drop-shadow. Blocked: owner set filter stripping to phones only (`styles/perf-lite.css`, `tests/perf-lite-css.test.mjs`); needs owner yes/no
 - [ ] Later: `JSON.stringify` render keys in `combat.js` → revision counter
