@@ -18,7 +18,9 @@ const WINDOWED_SECTIONS = Object.freeze({ Text: 'text', Interface: 'interface', 
  * is drawn in the panel: a row's own `groupModal`, the card-size rows, or a windowed section.
  */
 export function AdvancedGroupModal(row) {
-  if (!row || row.modal || row.retired) return null;
+  // Ambient effects is an Interface row that the Effects modal also draws (owner: it stays in
+  // Interface), so it goes in the Interface window with its section; other modal rows do not.
+  if (!row || row.retired || (row.modal && row.cat !== 'Advanced')) return null;
   if (row.groupModal) return row.groupModal;
   if (row.cardSizeTopic) return 'cardSize';
   return WINDOWED_SECTIONS[advancedSection(row)] || null;

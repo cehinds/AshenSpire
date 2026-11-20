@@ -69,7 +69,7 @@ test('Text, Interface, Card sizes and Export each open their own window; search 
   const { categoryHandler, AdvancedTopicRowsHtml, SettingsGroupRows, SettingsGroupModalHtml, SettingsGroupButtonRow, settingsSearchHits } = await import('../src/ui/screens/settings.js');
   const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
   const rows = categoryHandler('Advanced').rows;
-  const cases = [['Text', 'text', 6], ['Interface', 'interface', 6], ['Export', 'export', 6], ['Developer', 'cardSize', 5]];
+  const cases = [['Text', 'text', 6], ['Interface', 'interface', 7], ['Export', 'export', 6], ['Developer', 'cardSize', 5]];
   for (const [section, id, count] of cases) {
     const windowRows = SettingsGroupRows(id);
     assert.equal(windowRows.length, count, `${id} holds ${count} rows`);
@@ -79,8 +79,9 @@ test('Text, Interface, Card sizes and Export each open their own window; search 
     const body = SettingsGroupModalHtml({}, id);
     for (const row of windowRows) assert.ok(body.includes(`data-row-key="${row.key}"`), `${row.key} is in the ${id} window`);
     assert.equal(SettingsGroupButtonRow(id).btn({}), 'All default');
-    const hit = settingsSearchHits(String(windowRows[0].label), true, {}).find((entry) => entry.row.key === windowRows[0].key);
-    assert.ok(hit, `search reaches ${windowRows[0].key}`);
+    const probe = windowRows.find((row) => !row.modal);
+    const hit = settingsSearchHits(String(probe.label), true, {}).find((entry) => entry.row.key === probe.key && !entry.where.startsWith('General'));
+    assert.ok(hit, `search reaches ${probe.key}`);
     assert.equal(hit.where.split(' › ').length, 2, `${hit.where} is group › window`);
   }
   // Card sizes: number fields, so the window draws their steppers.
