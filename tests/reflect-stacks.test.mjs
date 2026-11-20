@@ -212,6 +212,8 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   const prime = () => {
     const { combat, enemy } = live();
     combat.player.reflectStacks = 1;
+    // Three 20-point hits must not empty the player: a fresh Core Reaver has 50 HP (stat contract 2026-11-18, 5 HP per CON).
+    combat.player.hp = combat.player.maxHp = 500;
     enemy.persistentPoise = { value: 1, max: 5 };
     enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
     return { combat, enemy };
