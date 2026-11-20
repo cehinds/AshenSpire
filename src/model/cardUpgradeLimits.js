@@ -91,14 +91,15 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * first, then one rolled alternative when count > 1. Otherwise the seeded roll supplies the options.
  * The first entry is always what nextUpgradeStep returns. Stateless.
  * `scale` (> 1) makes the amounts bigger, `salt` gives the roll its own stream and `noAuthored` skips the card's
- * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js).
+ * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js). `vendor` ('blacksmith' | 'arcane') weights the kinds by category
+ * and reads the vendor's own rarity odds (proposal section 11); none is a rest site, a free upgrade or any other source.
  */
-export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false } = {}) {
+export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, vendor = '' } = {}) {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
+  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}) };
   const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, salt ? `${instance.instanceId}#${salt}` : instance.instanceId, applied.length), limits, n);
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);

@@ -179,7 +179,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
     // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
-    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false } : RestUpgradeRule(instance);
+    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' } : RestUpgradeRule(instance);
     const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.

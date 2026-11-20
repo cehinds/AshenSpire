@@ -70,7 +70,43 @@ const RARITY_ODDS = Object.freeze([
   { upTo: 7, odds: [25, 45, 30] },
   { upTo: MAX_CARD_UPGRADES, odds: [10, 40, 50] },
 ]);
-export const upgradeRarityOdds = (upgradeNumber) => (RARITY_ODDS.find((row) => upgradeNumber <= row.upTo) || RARITY_ODDS[RARITY_ODDS.length - 1]).odds;
+// A vendor's own category and its off-category read other odds (proposal section 11); neutral kinds and ease rows read the base table.
+const VENDOR_RARITY_ODDS = Object.freeze({
+  own: Object.freeze([{ upTo: 3, odds: [55, 33, 12] }, { upTo: 5, odds: [35, 42, 23] }, { upTo: 7, odds: [18, 42, 40] }, { upTo: MAX_CARD_UPGRADES, odds: [7, 33, 60] }]),
+  off: Object.freeze([{ upTo: 3, odds: [80, 18, 2] }, { upTo: 5, odds: [60, 32, 8] }, { upTo: 7, odds: [40, 42, 18] }, { upTo: MAX_CARD_UPGRADES, odds: [25, 45, 30] }]),
+});
+/** The rarity odds of an upgrade number: the base table, or a vendor's `own` / `off` category table. */
+export const upgradeRarityOdds = (upgradeNumber, standing = 'base') => {
+  const table = VENDOR_RARITY_ODDS[standing] || RARITY_ODDS;
+  return (table.find((row) => upgradeNumber <= row.upTo) || table[table.length - 1]).odds;
+};
+// Upgrade vendors (proposal section 11). A vendor multiplies the weight of the kinds of its own category and of the other one; neutral kinds
+// are always x1. The Blacksmith favours physical kinds, the Arcane Trader magic ones; a rest site, a free upgrade and a rank-up bonus have no vendor.
+export const UPGRADE_VENDORS = Object.freeze({
+  blacksmith: Object.freeze({ own: 'physical', physical: 3, magic: 0.25, neutral: 1 }),
+  arcane: Object.freeze({ own: 'magic', physical: 0.25, magic: 3, neutral: 1 }),
+});
+const WARD_STATUSES = Object.freeze(['ward', 'barrier']);
+/**
+ * upgradeCategoryOf(kind, option, card) -> 'physical' | 'magic' | 'neutral' (proposal section 11). A kind can be either by card: a boost is
+ * physical for STR / DEX and magic for INT / WIS, a Block is magic on a spell, a status is the card's school's, a cost cut is SP or Mana.
+ */
+export function upgradeCategoryOf(kind, option, card) {
+  const spell = isSpellCard(card);
+  switch (kind) {
+    case 'dmg': case 'hits': case 'poise': case 'dmgType': case 'maneuver': case 'range': case 'fx:target': case 'fx:counter': return 'physical';
+    case 'blk': case 'fx:block': return spell ? 'magic' : 'physical';
+    case 'element': case 'school': case 'attr': case 'rankDown': return 'magic';
+    case 'fx:boost': return ['intelligence', 'wisdom'].includes(option?.stat) ? 'magic' : 'physical';
+    case 'addStatus': return (option?.statuses || []).some((status) => ['burn', 'vulnerable'].includes(status)) ? 'magic' : 'physical';
+    case 'stk': return WARD_STATUSES.includes(option?.status) ? 'magic' : 'neutral';
+    case 'cost': {
+      const pools = option?.combo || option?.pools || [];
+      return pools.length === 1 ? (pools[0] === 'mp' ? 'magic' : 'physical') : 'neutral';
+    }
+    default: return 'neutral';
+  }
+}
 /** The rarity of a stored step: its `r`, or common when it has none (a step saved before rarity, or a common one). */
 export const rarityOfStep = (step) => (UPGRADE_RARITIES.includes(step?.r) ? step.r : 'common');
 // How much bigger each rarity makes a sized step (times limits.scale, the rank-up bonus's own x2): damage, Block and Poise x1 / x2 / x4,
@@ -516,10 +552,12 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const allowed = (kind) => !menu || menu.includes(kind);
   const taken = new Set();
   // kindsAt(r, group): the kinds still open at rarity r, in WEIGHTS order.
-  const kindsAt = (r, group) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && !taken.has(kind) && (!graded || r === 0) && (!group || upgradeGroupOf(kind) === group));
+  const vendor = UPGRADE_VENDORS[limits.vendor] || null;
+  const categoryAt = (r, kind) => upgradeCategoryOf(kind, perRarity[r][kind], current);
+  const kindsAt = (r, group, category) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && !taken.has(kind) && (!graded || r === 0)
+    && (!group || upgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category));
   const out = [];
   const shares = upgradeGroupShares(stepIndex + 1);
-  const odds = upgradeRarityOdds(stepIndex + 1);
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream. `pick` is split by
   // rescaling: it picks the group, the rest of it picks the rarity, and what remains picks the kind inside both.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {
@@ -529,9 +567,20 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     // A group with no eligible kind gives its share to the others pro rata (they are renormalised by the pick); so does a rarity.
     const groups = UPGRADE_GROUPS.filter((group) => [0, 1, 2].some((r) => kindsAt(r, group).length)).map((group) => [group, shares[group]]);
     const { key: group, rest: afterGroup } = pickByWeight(groups, pick);
-    const rarities = [0, 1, 2].filter((r) => kindsAt(r, group).length).map((r) => [r, odds[r]]);
-    const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterGroup);
-    const inGroup = kindsAt(rarity, group);
+    // A vendor then picks the category (its multipliers over the group's kinds) and reads that category's rarity odds; without one the roll is unchanged.
+    let category = '', standing = 'base', afterCategory = afterGroup;
+    if (vendor) {
+      const seen = new Map();
+      for (const r of [0, 1, 2]) for (const kind of kindsAt(r, group)) if (!seen.has(kind)) seen.set(kind, categoryAt(r, kind));
+      const weights = ['physical', 'magic', 'neutral'].map((name) => [name, [...seen].reduce((sum, [kind, cat]) => sum + (cat === name ? WEIGHTS[kind] : 0), 0) * vendor[name]]).filter(([, weight]) => weight > 0);
+      ({ key: category, rest: afterCategory } = pickByWeight(weights, afterGroup));
+      standing = category === 'neutral' ? 'base' : category === vendor.own ? 'own' : 'off';
+    }
+    const here = (r) => kindsAt(r, group, category || undefined);
+    const rarityOdds = upgradeRarityOdds(stepIndex + 1, standing);
+    const rarities = [0, 1, 2].filter((r) => here(r).length).map((r) => [r, rarityOdds[r]]);
+    const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
+    const inGroup = here(rarity);
     const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), afterRarity);
     out.push(stepOf(kind, perRarity[rarity][kind], choice, rarity));
     taken.add(kind);

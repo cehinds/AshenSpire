@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeOptions, upgradeStepRng, UPGRADE_KIND_WEIGHTS } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, UPGRADE_KIND_WEIGHTS, upgradeRarityOdds, upgradeCategoryOf, UPGRADE_VENDORS } from '../src/model/cardUpgradeSteps.js';
 import { applyUpgradeSteps, upgradeStepsProblems } from '../src/model/cardUpgrade.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 
@@ -131,4 +131,63 @@ test('element packet: a chosen physical type stays the physical part; spells, co
   assert.equal(legacy.magicShare, 1, 'a step saved before packets keeps its whole-hit conversion');
   assert.equal(legacy.effects[0].amount, 6);
   assert.equal(elementSteps(strike6(), [{ k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', magicShare: 1 }]).length, 0, 'and offers no packet on top');
+});
+
+// Vendors (proposal section 11): category weights over the kinds, then the category's own rarity odds.
+const vendorMix = (card, vendor, { n = 4000, applied = [] } = {}) => {
+  const mix = { physical: 0, magic: 0, neutral: 0, rare: 0, own: 0, total: 0 };
+  for (let i = 0; i < n; i += 1) {
+    const [step] = rollUpgradeOptions(card, applied, applied.length, upgradeStepRng(i, 'vend', applied.length), vendor ? { vendor } : {}, 1);
+    if (!step) continue;
+    const kind = step.k === 'fx' ? `fx:${step.fx}` : step.k === 'tag' ? (step.damageSchool ? 'element' : step.damage ? 'dmgType' : step.tag?.startsWith('range:') ? 'range' : step.tag?.startsWith('targeting:') ? 'targeting' : step.tag?.startsWith('maneuver:') ? 'maneuver' : 'rankDown')
+      : step.k === 'combo' ? 'combo' : step.k;
+    const cat = kind === 'combo' ? 'neutral' : upgradeCategoryOf(kind, kind === 'fx:boost' ? { stat: step.stat } : kind === 'addStatus' ? { statuses: [step.status] } : kind === 'cost' ? { pools: [step.pool || 'sp'] } : {}, card);
+    mix[cat] += 1; mix.total += 1;
+    if (step.r === 'rare') mix.rare += 1;
+  }
+  return Object.fromEntries(Object.entries(mix).map(([k, v]) => [k, v / mix.total]));
+};
+
+test('vendor odds: the own category rolls rarer than the off category, neutral reads the base table', () => {
+  assert.deepEqual(upgradeRarityOdds(1), [70, 25, 5]);
+  assert.deepEqual([1, 4, 6, 8].map((n) => upgradeRarityOdds(n, 'own')), [[55, 33, 12], [35, 42, 23], [18, 42, 40], [7, 33, 60]]);
+  assert.deepEqual([1, 4, 6, 8].map((n) => upgradeRarityOdds(n, 'off')), [[80, 18, 2], [60, 32, 8], [40, 42, 18], [25, 45, 30]]);
+  assert.deepEqual(upgradeRarityOdds(9, 'base'), [10, 40, 50]);
+  assert.deepEqual(UPGRADE_VENDORS.blacksmith, { own: 'physical', physical: 3, magic: 0.25, neutral: 1 });
+  assert.deepEqual(UPGRADE_VENDORS.arcane, { own: 'magic', physical: 0.25, magic: 3, neutral: 1 });
+});
+
+test('vendor: the Blacksmith skews an Attack toward physical kinds and rarer rolls; the Arcane Trader the reverse; no vendor is the base table', () => {
+  const card = strike6();
+  const base = vendorMix(card, ''), smith = vendorMix(card, 'blacksmith'), arcane = vendorMix(card, 'arcane');
+  assert.ok(smith.physical > base.physical + 0.03, `physical ${base.physical} -> ${smith.physical}`);
+  assert.ok(smith.magic < base.magic, `magic ${base.magic} -> ${smith.magic}`);
+  assert.ok(arcane.magic > base.magic, `magic ${base.magic} -> ${arcane.magic}`);
+  assert.ok(arcane.physical < base.physical - 0.03, `physical ${base.physical} -> ${arcane.physical}`);
+  assert.ok(smith.rare > base.rare, `rare ${base.rare} -> ${smith.rare}`);
+  // Without a vendor the roll is exactly the one before vendors existed: same stream, same step.
+  assert.deepEqual(rollMany(card, [], 50), rollMany(card, [], 50, {}));
+});
+
+test('vendor: a card with no kind in the vendor category still gets a full list, and neutral rows are the same at both vendors', () => {
+  const buff = { id: 't.buff', name: 'Buff', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, keywords: ['exhaust'], damageSchool: 'physical', tags: ['camp:physical', 'maneuver:defend'],
+    effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }] };
+  const steps = (vendor) => { const out = []; for (let i = 0; i < 300; i += 1) out.push(...rollUpgradeOptions(buff, [], 0, upgradeStepRng(i, 'b', 0), { vendor }, 3)); return out; };
+  assert.ok(steps('arcane').length >= 300, 'the Arcane Trader still lists options for a card with no magic kind');
+  const ease = (list) => list.filter((s) => s.k === 'fx' && s.fx === 'unexhaust').length / list.length;
+  assert.ok(Math.abs(ease(steps('arcane')) - ease(steps('blacksmith'))) < 0.12, 'ease kinds are neutral at both vendors');
+});
+
+test('the Blacksmith plans its upgrade with the vendor, and a committed quote keeps it', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { registries } = await import('./helpers/fixcore-combat-rules.mjs');
+  const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 77, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  run.smithingStones = 9;
+  const card = run.deck.find((c) => c.cardId === 'core.strike');
+  const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3, vendor: 'blacksmith' });
+  assert.equal(quote.vendor, 'blacksmith');
+  assert.equal(planCardUpgrade(run, registries, card.instanceId, { choices: 3 }).vendor, undefined, 'a rest-site quote has none');
+  const receipt = commitCardUpgrade(run, registries, { ...quote, step: quote.options[1].step });
+  assert.deepEqual(receipt.step, quote.options[1].step, 'the commit re-plans with the same vendor and finds the chosen step');
 });
