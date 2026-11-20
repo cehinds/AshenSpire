@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-20
+
+- **Fewer missing sound-file requests; release checks contrast** ([#2885](https://github.com/cehinds/AshenSpire/pull/2885), `0.7.4.224`). Sounds that are synthesized no longer ask for an audio file that was never shipped, so the browser console stays clear of missing-file errors while every cue still plays immediately. Release builds now run the colour-contrast check automatically.
+
 ## 2026-11-19
 
-- **Fewer missing sound-file requests; release checks contrast** ([#2885](https://github.com/cehinds/AshenSpire/pull/2885), `0.7.4.222`). Sounds that are synthesized no longer ask for an audio file that was never shipped, so the browser console stays clear of missing-file errors while every cue still plays immediately. Release builds now run the colour-contrast check automatically.
+- **Impact sprites show with Effects off** ([#2888](https://github.com/cehinds/AshenSpire/pull/2888), `0.7.4.224`). Hits, spells and status changes now show their impact sprite on the affected fighter whether Effects is on or off; Reduce motion and Reduce flashes still hide them. Fights load these sprites as they open, so the first hit is less often a plain marker.
 - **A new run starts with only the armour you chose** ([#2886](https://github.com/cehinds/AshenSpire/pull/2886), `0.7.4.222`). The Armoury no longer lists Wayfarer Plate, Nightweave, Rite Vestments and Gutter Leathers as owned from the start; shared sets join your Armoury when you buy them. Armour you already wear in a saved run, or wore before a class swap, stays yours after you take it off.
 - **A tidier read-only deck view** ([#2881](https://github.com/cehinds/AshenSpire/pull/2881), `0.7.4.220`). Away from rest sites, the deck tab and its window say View Deck, omit the Pile pretitle, remove the empty space above the cards and halve card spacing. Viewing keeps your deck unchanged; editing at a rest site still says Edit Deck.
 - **End Turn no longer locks up with Ward or Barrier** ([#2883](https://github.com/cehinds/AshenSpire/pull/2883), `0.7.4.218`). Fixed a soft-lock where End Turn stopped working after a run of card plays while holding Ward or Poise Barrier; affected saved fights now load and continue.
