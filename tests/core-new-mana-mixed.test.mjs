@@ -29,8 +29,13 @@ const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
-// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
-const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
+// Owner 2026-11-14 (playableOnly) and 2026-11-20: a run is offered only the cards its max Mana can pay. A fresh run has 1 MP and one
+// more per four WIS (stat contract 2026-11-18), so a fresh caster sees only the spells it can afford, and the costlier ones wait.
+const freshMaxMana = new Map();
+const payable = (classId, id) => {
+  if (!freshMaxMana.has(classId)) freshMaxMana.set(classId, live(classId, 1, 1).maxMana);
+  return !((def(id).manaCost || 0) > freshMaxMana.get(classId));
+};
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
