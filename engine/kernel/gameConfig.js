@@ -400,11 +400,17 @@ function enemyAttributeMinimums(row, settings) {
   const floor = settings.attributeFill?.floor ?? 0;
   return Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(floor, row.attributes?.[id] || 0)]));
 }
+// Attribute caps: the fill's, then the tier's under enemyLevelScaling (owner, 2026-11-20: elite and boss Dex and Wis at most 4),
+// then the row's own. Points a cap holds back spill to the remaining priorities.
+function enemyAttributeCaps(row, settings) {
+  const tier = enemyTierId(row);
+  return { ...settings.attributeFill.caps, ...(tier ? settings.enemyLevelScaling?.attributeCaps?.[tier] || {} : {}), ...(row.attributeCaps || {}) };
+}
 export function resolveEnemyAttributes(row, settings, seed = null) {
   const fill = settings.attributeFill, tier = characterRule(row, settings);
   const budget = enemyAttributeBudget(row, settings);
   const set = enemyAttributeMinimums(row, settings);
-  const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  const out = { ...set }, caps = enemyAttributeCaps(row, settings);
   let weights = enemyAttributeWeights(row, settings), left = budget - Object.values(set).reduce((a, b) => a + b, 0);
   for (let guard = 0; left > 0 && guard < 10; guard++) {
     const open = Object.fromEntries(Object.entries(weights).filter(([id]) => caps[id] === undefined || out[id] < caps[id]));
@@ -430,7 +436,7 @@ export function enemyAttributeOutcomes(row, settings) {
   const fill = settings.attributeFill, v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
   const outcomes = [base], minimum = enemyAttributeMinimums(row, settings);
   if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
-  const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = enemyAttributeCaps(row, settings);
   // Track unique spreads only: many move orders reach the same spread, and expanding duplicates grows
   // exponentially with variance.points (the schema allows up to 10).
   const seen = new Set([canonicalGameJSON(base)]);
@@ -467,8 +473,12 @@ export function characterRule(row, settings) {
 // Owner, 2026-11-17 (enemies `effectiveLevelByAct`, Core): an elite or boss fights at its tier's level for the act
 // (Core: elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3; past the table the last entry holds). null when the
 // tier has no row, so a normal enemy keeps its own level. `row.tier` or its `tier.<id>` tag names the tier.
+// An enemy's tier id: its `tier` field or its `tier.<id>` tag (undefined for players).
+export function enemyTierId(row) {
+  return row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+}
 export function enemyEffectiveLevel(row, settings, act) {
-  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const tier = enemyTierId(row);
   const levels = settings?.effectiveLevelByAct?.[tier];
   if (!Array.isArray(levels) || !levels.length) return null;
   const index = Math.min(levels.length, Math.max(1, Number.isSafeInteger(act) ? act : 1)) - 1;
@@ -484,7 +494,7 @@ export function enemyLevel(row, settings) {
 // Past the last act the last act's row holds. No table, or no row for the tier: enemyLevel() at step 0.
 export function enemyFightLevel(row, settings, { act = 1, floor = 0 } = {}) {
   const scaling = settings?.enemyLevelScaling;
-  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const tier = enemyTierId(row);
   const acts = Object.keys(scaling?.levels || {}).length;
   const actIndex = Math.min(acts, Math.max(1, Number.isSafeInteger(act) ? act : 1));
   const levels = scaling?.levels?.[`act${actIndex}`]?.[tier];
@@ -542,6 +552,9 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
   }
   // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
   if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
+  // enemyLevelScaling.spCap (owner, 2026-11-20): a tier's SP stops at its cap after gear and relics, so a high-level boss keeps two or three actions.
+  const spCap = settings.enemyLevelScaling?.spCap?.[enemyTierId(row)];
+  if (Number.isSafeInteger(spCap)) pools.sp = Math.min(pools.sp, spCap);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
