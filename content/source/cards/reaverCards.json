@@ -2262,7 +2262,9 @@
       }
     ],
     "upgrade": {
-      "cost": 1
+      "cost": 1,
+      "keywords": [],
+      "textTemplate": "Gain {strength} Strength."
     },
     "minCombatExpansionVersion": 2
   },
@@ -2274,9 +2276,11 @@
     "cost": 1,
     "type": "skill",
     "flavor": "Scale stitched into a gambeson, one row at a time.\n\nBorder smiths sold the rows singly, so a poor soldier could armour himself by the season. A full coat took years of wages. The richest wardens wore patched hides of a dozen colours.\n\nEach new row cost more than the last.",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "icon": "shield",
-    "textTemplate": "Gain {dexterity} Dexterity. Costs 1 more each play.",
+    "textTemplate": "Gain {dexterity} Dexterity. Costs 1 more each play. Exhaust.",
     "faceTemplate": [
       "Gain {dexterity} Dexterity.",
       "Costs 1 more each play."
@@ -2295,7 +2299,9 @@
       }
     ],
     "upgrade": {
-      "cost": 0
+      "cost": 0,
+      "keywords": [],
+      "textTemplate": "Gain {dexterity} Dexterity. Costs 1 more each play."
     },
     "minCombatExpansionVersion": 2
   },
