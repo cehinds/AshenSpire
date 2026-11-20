@@ -63,10 +63,11 @@ const slotModal = (page) => page.locator('.equip-slot-choice');
 const confirmModal = (page) => page.locator('.equip-confirm-modal');
 const compareModal = (page) => page.locator('.equip-compare-modal');
 const sets = (page) => page.evaluate(() => structuredClone(window.__armouryRun.loadout.sets));
-/** A slot's picker: Choose item / Replace on the row, then the named item's Equip in the picker. */
+/** A slot's picker: Choose item / Replace on the row opens the item modal; choose the named item, then Equip. */
 const pickEquip = async (page, position, name) => {
   await page.locator(`.armoury-position-card[data-slot-position="${position}"] .armament-replace`).click();
-  await page.locator('.equip-picker-row', { hasText: name }).locator('.equip-picker-act').click();
+  await page.locator('.equip-item-choice .option-row', { hasText: name }).click();
+  await page.locator('.equip-item-choice .as-btn.primary').click();
 };
 
 try {
@@ -81,6 +82,23 @@ try {
   assert.equal(await page.evaluate(() => { const b = document.querySelector('.armoury-body'); return b.scrollHeight <= b.clientHeight + 1; }), true, 'the slot rows fit without a scrollbar');
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-rows-desktop.png` });
 
+  // Owner 2026-11-19: Replace opens the slot's items in a modal, listing only what fits that slot, never a picker
+  // drawn under the slot rows.
+  await page.locator('.armoury-position-card[data-slot-position="leftHand:0"] .armament-replace').click();
+  await page.locator('.equip-item-choice').waitFor();
+  assert.equal(await page.locator('.armoury .equip-picker').count(), 0, 'no inline picker under the slot rows');
+  const listed = await page.locator('.equip-item-choice [data-item-option]').evaluateAll(rows => rows.map(row => row.dataset.itemOption));
+  const fitting = await page.evaluate(async (ids) => {
+    const { fitsSlot } = await import('/src/model/loadout.js');
+    const reg = window.__armouryRegistries;
+    const slot = reg.equipment.slots.find(row => row.id === 'leftHand');
+    return ids.filter(id => fitsSlot(slot, reg.equipment.armaments.find(row => row.id === id)));
+  }, listed);
+  assert.ok(listed.length > 0, 'the Off Hand lists something');
+  assert.deepEqual(fitting, listed, `every listed item fits the Off Hand: ${listed}`);
+  await page.keyboard.press('Escape');
+  await page.locator('.equip-item-choice').waitFor({ state: 'detached' });
+
   // A slot's picker -> Equip on an occupied slot goes straight to the compare modal (the slot is already chosen).
   await pickEquip(page, 'rightHand:0', 'Ash Staff');
   await compareModal(page).waitFor();
@@ -89,7 +107,10 @@ try {
   await page.keyboard.press('Escape');
   await compareModal(page).waitFor({ state: 'detached' });
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-  await pickEquip(page, 'rightHand:0', 'Ash Staff');
+  // Back lands on the slot's item list again; choosing from it reaches the same compare.
+  await page.locator('.equip-item-choice').waitFor();
+  await page.locator('.equip-item-choice .option-row', { hasText: 'Ash Staff' }).click();
+  await page.locator('.equip-item-choice .as-btn.primary').click();
   await compareModal(page).waitFor();
   await page.locator('.equip-compare-equip').click();
   await compareModal(page).waitFor({ state: 'detached' });
@@ -115,7 +136,7 @@ try {
   await slotModal(page).locator('button', { hasText: 'Back' }).click();
   await slotModal(page).waitFor({ state: 'detached' });
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'the slot picker never opened');
+  assert.equal(await page.locator('.equip-item-choice').count(), 0, 'the item list never opened');
   // Choose Main Hand: the compare modal (occupied) then Equip puts the offered item in that slot.
   await mount(page, true, false, { equipItemId: 'ashStaff' });
   await slotModal(page).waitFor();
@@ -123,7 +144,7 @@ try {
   await slotModal(page).locator('button', { hasText: 'Choose' }).click();
   await compareModal(page).waitFor();
   assert.equal(await slotModal(page).count(), 0, 'the slot modal closed');
-  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'no second item picker after the slot choice');
+  assert.equal(await page.locator('.equip-item-choice').count(), 0, 'no second item picker after the slot choice');
   await page.locator('.equip-compare-equip').click();
   await compareModal(page).waitFor({ state: 'detached' });
   assert.equal((await sets(page)).rightHand[0], 'ashStaff', 'the offered item equipped into the chosen slot');
@@ -132,6 +153,7 @@ try {
   await mount(page, true, false, { equipItemId: 'roundShield' });
   await slotModal(page).waitFor();
   await slotModal(page).locator('.option-row', { hasText: 'Off Hand · 1' }).click();
+  await slotModal(page).locator('button', { hasText: 'Choose' }).click();
   await confirmModal(page).waitFor();
   await confirmModal(page).locator('.equip-confirm-equip').click();
   await confirmModal(page).waitFor({ state: 'detached' });
