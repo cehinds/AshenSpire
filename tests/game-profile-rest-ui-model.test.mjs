@@ -73,7 +73,7 @@ test('earned Constitution selection previews its new maximum and exactly matches
   const model = gameProfileRestModel(registries, run, visit);
   const con = model.attributes.find(row => row.id === 'constitution');
   assert.equal(con.available, true);
-  assert.equal(con.preview.maxHp, run.maxHp + 10);
+  assert.equal(con.preview.maxHp, run.maxHp + 5, 'stat contract 2026-11-18: 5 maximum HP per CON point');
   assert.equal(con.preview.hp, con.preview.maxHp);
   assert.deepEqual(run, before);
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'constitution' });
