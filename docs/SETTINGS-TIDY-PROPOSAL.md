@@ -238,6 +238,7 @@ with the retired-settings warning (`RetiredPlainSettingKeys`, `model/advancedCon
 | deckMaxUnlimited | true | `deckRules.defaults` |
 | deckMaxSize | 40 | `deckRules.defaults` |
 | classSpellPowerCopies | 1 | `deckRules.defaults` |
+| graceRefill.<kind> | the authored count | `balance.graceRefill` (empty today, so no row was ever drawn); found in review |
 
 - Moved, not removed: **Auto-advance character creation** is in Advanced › Developer (QA
   shortcuts).
@@ -260,34 +261,35 @@ with the retired-settings warning (`RetiredPlainSettingKeys`, `model/advancedCon
 | Deck | Play in deck order | all |
 | Range | the four Range rules | dev, test |
 | Map | Walked nodes, Two-axis map dragging, Map header, Relics in map header | all |
-| Interface | Use flasks outside combat, Card motif, Motif strength, Control hints, Hold to confirm, Reward collection | all |
-| Text | the six lore type rows | all |
-| Export | configuration file and diagnostics | dev, test |
-| Developer | Layout (Wireframes button, settings window size, short-screen warning), Card size (four widths and Export), QA shortcuts (Auto-advance character creation) | dev, test |
+| Interface | one Interface button: Use flasks outside combat, Ambient effects, Card motif, Motif strength, Control hints, Hold to confirm, Reward collection | all |
+| Text | one Text & lore button: the six lore type rows | all |
+| Export | one Import, export & debug button: configuration file and diagnostics | dev, test |
+| Developer | Layout (Wireframes and Card sizes buttons, settings window size, short-screen warning), QA shortcuts (Auto-advance character creation) | dev, test |
 
 ### 5. Settings-group modals
 - One helper, `OpenSettingsGroupModal` (`ui/screens/settings.js`), opens every settings button
-  modal. Effects uses it; so does any Advanced cluster marked `groupModal: '<id>'`.
+  window. Effects uses it; so does every Advanced window (`AdvancedGroupModal`, `models/AdvancedSettingsGroups.js`).
 - The Advanced panel draws one button row in place of the cluster. Its face says
   "All default" or "N changed". Search, reset, export and release visibility still see every
-  row; a search hit is filed under the button ("Developer › Layout › Wireframes").
+  row; a search hit is filed as group › window ("Developer › Wireframes", "Text & lore › Text & lore").
+- The window wires switches, chips, drop-downs, number fields (commit and steppers as in the
+  panel), text fields and the panel's own buttons (export, import, command log, copy card sizes).
 - Closing returns focus to the button, found again if the panel was redrawn meanwhile.
 
 | Modal | Where | Rows |
 |---|---|---|
 | Effects (existing) | General › Combat | the 12 Effects rows |
 | Wireframes | Advanced › Developer › Layout | Modal window width, Modal footer buttons, Category navigation, Workspace frame, Scene backdrop, Scene ground line |
+| Text & lore | Advanced › Text | the six lore rows, in Flavor text and Lore window sections |
+| Interface | Advanced › Interface | the seven Interface rows, in Map & HUD, Appearance and Controls sections |
+| Card sizes | Advanced › Developer › Layout | four card widths and Copy |
+| Import, export & debug | Advanced › Export | configuration file and diagnostics rows |
 
-Kept inline, and why:
-- **Text** (6) and **Interface** (6) are player groups already split into small topic tabs
-  (4 + 2, and 1 + 2 + 3); a modal would hide them behind one more click.
-- **Card size** (5) is number fields plus Export; its commit path (clamps, refusals, the size
-  notice) lives in the panel, so it stays there rather than being copied into the modal.
-- **Export** (6) is mostly buttons that open their own dialogs.
-- **Opening** is its own scene editor with one topic per scene.
+Owner follow-up (2026-11-20): Text, Interface, Card size and Export open their own windows too.
+Only **Opening** stays inline: it is its own scene editor with one topic per scene.
 
-### SPEC lines that now describe removed rows
-SPEC was not edited. These lines name a row or tab that is gone: §14.1 *Settings* table
+### SPEC wording
+SPEC now names the content key for each (owner, 2026-11-20; wording only): §14.1 *Settings* table
 (Advanced group Deck, `deckEditing` ... `classSpellPowerCopies`), the `classSpellPowerCopies`
 row note, the `shopSell` setting in the Core shop list, `levelUpValue` in §13.4 levelling and
 the Settings → Progression levelling preview, and "Settings → Advanced → Interface → Two-axis
