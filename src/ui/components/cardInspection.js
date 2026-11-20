@@ -359,6 +359,10 @@ export function openCardInspection({ title, card, details, opener, actions = nul
 // Hosts can expose a visible Inspect action (a footer button) without the face
 // printing anything. The renderer owns the reading; opening it owns no choice.
 const boundInspections = new WeakMap();
+// The reading hold: longer than the combat hand's selecting hold (holdConfirm `short`, 350 ms) so a hold there
+// selects first and reads only if it is kept; the slop is the drag's own 12 px start boundary.
+const HOLD_INSPECT_MS = 700;
+const HOLD_INSPECT_SLOP_PX = 12;
 export function openBoundCardInspection(card, opener = card, { allowDetached = false, ...overrides } = {}) {
   const open = boundInspections.get(card);
   if ((!card?.isConnected && !allowDetached) || !open) return false;
@@ -477,7 +481,8 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     // A touch long-press raises this event too. Where armInspect owns the press its hold is the
     // reading; a card with the (i) badge (the combat hand) is read through the badge alone, so a
     // long press there selects and never inspects by accident.
-    if ((event.pointerType === 'touch' || (info && touch)) && (card.dataset.inspect || info)) { if (info) event.stopPropagation(); return; }
+    // The press-and-hold below is the reading there, so the browser's own long-press menu is refused too.
+    if ((event.pointerType === 'touch' || (info && touch)) && (card.dataset.inspect || info)) { event.preventDefault(); if (info) event.stopPropagation(); return; }
     event.stopPropagation(); read();
   });
   card.addEventListener('keydown', event => {
@@ -518,6 +523,37 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   }
   if (info) card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
+  // PRESS AND HOLD READS THE CARD (owner, 2026-11-20: "inspect should work after pressing and holding the
+  // target"). A still press past HOLD_INSPECT_MS opens the same door as the (i), right-click and I; moving past
+  // the 12 px drag slop, a drag starting, or letting go first abandons it, so taps and drags are untouched. The
+  // combat hand's own hold selects at its short step and this one, longer, reads after it. Where armInspect owns
+  // the press (a hand with the zoom hold) its zoomed copy is the reading and this stands aside. The click that
+  // follows a completed read is swallowed once, so a read never becomes a select or a play.
+  let hold = null;
+  let swallowClick = false;
+  const endHold = () => { if (hold) { clearTimeout(hold.timer); hold = null; } };
+  card.addEventListener('pointerdown', event => {
+    endHold();
+    swallowClick = false;
+    if (event.button !== 0 || event.target?.closest?.('.card-info-button, input, textarea, select')) return;
+    const { clientX: x, clientY: y } = event;
+    hold = { x, y, timer: setTimeout(() => {
+      hold = null;
+      if (!card.isConnected || ['pending', 'open'].includes(card.dataset.inspect)) return;
+      swallowClick = true;
+      read();
+    }, HOLD_INSPECT_MS) };
+  });
+  card.addEventListener('pointermove', event => {
+    if (hold && Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > HOLD_INSPECT_SLOP_PX) endHold();
+  });
+  for (const type of ['pointerup', 'pointercancel', 'carddragstart']) card.addEventListener(type, endHold);
+  card.addEventListener('pointerup', () => { if (swallowClick) setTimeout(() => { swallowClick = false; }, 400); });
+  card.addEventListener('click', event => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    event.preventDefault(); event.stopImmediatePropagation();
+  }, true);
   card.addEventListener('click', event => {
     if (event.target === info) return;
     select();
