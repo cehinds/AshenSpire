@@ -9,7 +9,7 @@ import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { armHold, holdMs } from '../src/ui/components/holdconfirm.js';
-import { bindCardInspection, holdInspectDelay } from '../src/ui/components/cardInspection.js';
+import { bindCardInspection, HoldInspectDelay } from '../src/ui/components/cardInspection.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 
 const registries = createRegistries(contentBundle);
@@ -48,8 +48,8 @@ function handCard(setting) {
 test('the read always waits past the card\'s own hold, at every Hold to confirm setting', () => withDom(async () => {
   for (const setting of Object.keys(holdConfirm.steps)) {
     const { card, ms } = handCard(setting);
-    if (ms > 0) assert.ok(holdInspectDelay(card) >= ms + 300, `${setting}: read at ${holdInspectDelay(card)} ms, card hold ${ms} ms`);
-    assert.ok(holdInspectDelay(card) >= 700, `${setting}: never shorter than the bare 700 ms read`);
+    if (ms > 0) assert.ok(HoldInspectDelay(card) >= ms + 300, `${setting}: read at ${HoldInspectDelay(card)} ms, card hold ${ms} ms`);
+    assert.ok(HoldInspectDelay(card) >= 700, `${setting}: never shorter than the bare 700 ms read`);
   }
 }));
 

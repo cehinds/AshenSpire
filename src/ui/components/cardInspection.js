@@ -369,7 +369,7 @@ const HOLD_INSPECT_SLOP_PX = 12;
 const HOLD_INSPECT_RETRY_MS = 50;
 // A card hold that never reports its end (a host that stopped painting) does not hold the read off for ever.
 const HOLD_INSPECT_MAX_WAIT_MS = 2000;
-export function holdInspectDelay(card) {
+export function HoldInspectDelay(card) {
   const ownHold = Number(card?.dataset?.holdMs) || 0;
   return Math.max(HOLD_INSPECT_MS, ownHold > 0 ? ownHold + HOLD_INSPECT_MARGIN_MS : 0);
 }
@@ -556,7 +556,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     swallowClick = false;
     if (event.button !== 0 || event.target?.closest?.('.card-info-button, input, textarea, select')) return;
     const { clientX: x, clientY: y } = event;
-    hold = { x, y, at: performance.now(), timer: setTimeout(fireHold, holdInspectDelay(card)) };
+    hold = { x, y, at: performance.now(), timer: setTimeout(fireHold, HoldInspectDelay(card)) };
   });
   card.addEventListener('pointermove', event => {
     if (hold && Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > HOLD_INSPECT_SLOP_PX) endHold();
