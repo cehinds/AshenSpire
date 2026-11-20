@@ -78,7 +78,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "healRules",
-      "legacyMove": "goldenBulwark"
+      "legacyMove": "goldenBulwark",
+      "coreBlock": "card"
     },
     "card:wyrmLord.advance": {
       "aiWeight": 0,
