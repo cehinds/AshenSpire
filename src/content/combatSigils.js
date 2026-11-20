@@ -1,5 +1,14 @@
 import { CARD_COMPONENTS } from './cardComponents.generated.js';
-import { t, tFull } from '../model/strings.js';
+import { uiStrings } from './generated/uiStrings.js';
+// Content may not import model/strings.js (tests/layering.test.mjs ranks), so the
+// tradition words are read straight from the generated uiStrings table, loudly.
+const uiRow = (id) => {
+  const row = uiStrings.find(entry => entry.id === id);
+  if (!row?.short || !row.full) throw new Error(`combatSigils: uiStrings row ${id} needs short and full text`);
+  return row;
+};
+const t = (id) => uiRow(id).short;
+const tFull = (id) => uiRow(id).full;
 // Original monochrome marks. Identity comes from authored combat tags, never
 // a card name, damage element, class colour, or inferred effect.
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
