@@ -162,7 +162,8 @@ test('Mana Surge keeps one SP cost, zero MP cost and its separate two-Mana resto
   const ctx = native('herald');
   ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
   ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
-  ctx.player.stamina = 3; ctx.player.mana = 0;
+  // Room for the restore: a fresh Core Herald has 1 max Mana (stat contract 2026-11-18: +1 per four WIS), and the restore is what is tested.
+  ctx.player.stamina = 3; ctx.player.mana = 0; ctx.player.maxMana = 3;
   assert.deepEqual(cardPlayCosts(ctx, 'surge'), { energy: 1, stamina: 1, mana: 0 });
   dispatch(ctx, { type: 'playCard', cardInstanceId: 'surge' });
   assert.equal(ctx.player.stamina, 2); assert.equal(ctx.player.mana, 2);
