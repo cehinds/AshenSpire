@@ -1,0 +1,26 @@
+{
+  "request": "All stat buff cards should exhaust by default, and lose exhaust only when upgraded.",
+  "success": "In a Core fight, a hand dealt only stat-buff cards shows Exhaust on the base cards; nothing prints raw template text, undefined or NaN; no console errors at 1280x800 and 390x844.",
+  "failure": "A base stat-buff card shows no Exhaust; a card prints a raw {token}, undefined or NaN; the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "stat-buff-hand",
+      "url": "?shot=combat&gameProfile=core&shotSeed=4&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=ironHide,base.stat-buff,core.stormBlessing,keenEdge,zealousFervor",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        { "kind": "count", "label": "The five stat-buff cards are in hand", "selector": ".hand .card", "min": 5 },
+        { "kind": "text", "label": "The hand shows Exhaust", "selector": ".hand", "matches": "[Ee]xhaust" },
+        { "kind": "consoleErrors", "label": "No console or missing-resource errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "A card prints a raw token, undefined or NaN", "selector": ".hand", "matches": "\\{[a-zA-Z.]+\\}|undefined|NaN" }
+      ]
+    }
+  ]
+}
