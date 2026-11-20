@@ -21,11 +21,14 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
 // Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
+// Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
 // Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
 // current-profile hash leaves only (27).
 // Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
 // branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
 // control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for the Block-per-card retune (Defend 8, enemy guards at most 12): the same 24 profile, snapshot and save hash
+// leaves of the three current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for stat-buff cards gaining Exhaust (#2902): the 24 profile, snapshot and save hash leaves of the three
 // current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
@@ -94,7 +97,7 @@ function memoryStorage() {
   };
 }
 
-function openFight(api, enemyId, encounterId, profileId) {
+function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   let profile;
   if (profileId === 'historical') {
     const storage = memoryStorage();
@@ -113,8 +116,10 @@ function openFight(api, enemyId, encounterId, profileId) {
     storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
-  const content = api.applyGameProfileToContent(api.contentBundle, profile);
+  const applied = api.applyGameProfileToContent(api.contentBundle, profile);
+  const content = contentVersion === undefined ? applied : { ...applied, version: contentVersion };
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
+  if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
@@ -152,12 +157,18 @@ function checkpoint(api, combat) {
   };
 }
 
-function hashRun(json) {
+// Release cuts rewrite the content version (version-advance.yml), and a saved run records it, so the
+// raw bytes would change at every cut. The recorded version is swapped for a constant only when it
+// equals the version the registries really carry: a save that drops or mis-records it still moves the hash.
+const CONTENT_VERSION_STAMP = '<contentVersion>';
+function hashRun(json, contentVersion) {
   const payload = JSON.parse(json);
   delete payload.savedAt;
+  if (payload.contentVersion === contentVersion) payload.contentVersion = CONTENT_VERSION_STAMP;
   return hashJson(payload);
 }
 
+let lastStoredContentVersion;
 function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
   const storage = memoryStorage();
   const manager = api.createSaveManager(storage);
@@ -165,7 +176,10 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     run, combat, nodeId: run.mapNodeId || 'n1_4', encounterId: encounter.id,
   });
   manager.saveRun(run, combat.rng);
-  const stored = hashRun(storage.getItem(api.runKey(1)));
+  const storedJson = storage.getItem(api.runKey(1));
+  assert.equal(JSON.parse(storedJson).contentVersion, registries.contentVersion);
+  lastStoredContentVersion = JSON.parse(storedJson).contentVersion;
+  const stored = hashRun(storedJson, registries.contentVersion);
   const loaded = manager.loadRun(registries);
   assert.ok(loaded, manager.runStatus().reason);
   assert.equal(loaded.gameProfile.hash, profile.hash);
@@ -177,7 +191,7 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     expectedGameProfile: loaded.gameProfile,
   });
   assert.equal(restored.core2ActionRulesVersion, combat.core2ActionRulesVersion);
-  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true })) } };
+  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion) } };
 }
 
 function continued(api, combat, restored, action) {
@@ -198,8 +212,8 @@ function continued(api, combat, restored, action) {
   return { live, afterRestore };
 }
 
-function baseline(api, profileId, enemyId, encounterId, prepare, action) {
-  const setup = openFight(api, enemyId, encounterId, profileId);
+function baseline(api, profileId, enemyId, encounterId, prepare, action, { contentVersion } = {}) {
+  const setup = openFight(api, enemyId, encounterId, profileId, contentVersion);
   const { combat, profile } = setup;
   const start = checkpoint(api, combat);
   const receipt = prepare(setup);
@@ -311,3 +325,19 @@ for (const [name, ...scenario] of scenarios) {
     assert.deepEqual(source, fixture.scenarios[name], 'compare against the immutable JS01 capture');
   });
 }
+
+test('the saved-run baseline does not depend on the content version', () => {
+  for (const [name, ...scenario] of scenarios) {
+    lastStoredContentVersion = undefined;
+    const result = baseline(native, ...scenario, { contentVersion: '9.99.99' });
+    assert.equal(lastStoredContentVersion, '9.99.99', `${name}: the save recorded the overridden version`);
+    assert.deepEqual(result, fixture.scenarios[name], name);
+  }
+});
+
+test('the saved-run hash still sees a wrong content version', () => {
+  const json = JSON.stringify({ contentVersion: '1.2.3', gold: 5 });
+  assert.equal(hashRun(json, '1.2.3'), hashRun(JSON.stringify({ contentVersion: '9.9.9', gold: 5 }), '9.9.9'));
+  assert.notEqual(hashRun(json, '1.2.3'), hashRun(json, '9.9.9'));
+  assert.notEqual(hashRun(json, '1.2.3'), hashRun(JSON.stringify({ contentVersion: '1.2.3', gold: 6 }), '1.2.3'));
+});

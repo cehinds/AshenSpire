@@ -29,7 +29,6 @@
       "showNameButton": false,
       "gridGapPx": 6,
       "gridGapPhonePx": 4,
-      "gridPadTopPx": 16,
       "gridRowGapPx": 24
     },
     "cardUpgrade": {

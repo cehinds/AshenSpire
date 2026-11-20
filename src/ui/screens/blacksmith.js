@@ -40,6 +40,8 @@ import { OpenSmithOptionsModal, OpenSmithKeepModal } from '../components/smithOp
 import { KeepableProperties, KeepLimit, CategoryChoices } from '../../model/smithCategory.js';
 import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
+import { beatArmer } from '../../framework/optionDecision.js';
+import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
 import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 
 const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
@@ -49,6 +51,17 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
   let layout = null;
+  // Every purchase asks first (owner, 2026-11-19): a row whose action spends on one click (buy, rank up) is armed
+  // through the shared review (secondbeat 'smithBuy'); the services that open their own modal confirm there.
+  const arm = beatArmer(meta, registries);
+  function wireAction(control, action) {
+    if (!action.review) { control.addEventListener('click', action.run); return; }
+    const review = () => action.review();
+    arm(control, 'smithBuy', {
+      question: () => review().question, target: () => review().target, message: () => review().message,
+      confirmLabel: review().confirmLabel, policyAction: 'action.purchase', onConfirm: () => action.run(),
+    });
+  }
 
   function refuse(host, error) {
     // The refusal reads inside the row's details column, as the merchant's own unaffordable reason does.
@@ -100,8 +113,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     return node;
   }
   function addAction(host, action) { host._row.actions.push(action); return action; }
-  function actionButton(host, { id, label, plan, commit, kind = 'service', cost = null, price = null }) {
-    return addAction(host, { id: id || '', label, kind, ok: !!plan.ok, reason: plan.reason, price: price ?? (cost == null ? '' : t('shop.price', { cost })), run: () => act(host, commit) });
+  function actionButton(host, { id, label, plan, commit, kind = 'service', cost = null, price = null, review = null }) {
+    return addAction(host, { id: id || '', label, kind, ok: !!plan.ok, reason: plan.reason, price: price ?? (cost == null ? '' : t('shop.price', { cost })), run: () => act(host, commit), review });
   }
   function finishRow(host) {
     const row = host._row;
@@ -120,7 +133,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     if (control) {
       if (first.id) control.id = first.id;
       if (first.serviceId) control.dataset.smithService = first.serviceId;
-      if (first.ok) control.addEventListener('click', first.run);
+      if (first.ok) wireAction(control, first);
       if (!first.ok && first.reason) control.title = first.reason;
     }
     // A disabled action beside an affordable one still says why, in the row, not only as a tooltip.
@@ -130,7 +143,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       const extra = button({ label: action.label, className: 'merchant-offer-action', disabled: !action.ok, attrs: action.ok ? {} : { title: action.reason } });
       extra.dataset.shopAction = action.kind;
       extra.addEventListener('click', (event) => event.stopPropagation());
-      if (action.ok) extra.addEventListener('click', action.run);
+      if (action.ok) wireAction(extra, action);
       actions.append(extra);
       if (action.price) actions.append(statusText(action.price, { class: 'merchant-offer-price' }));
       if (!action.ok && available && action.reason) host.querySelector('.merchant-offer-details').append(statusText(action.reason, { class: 'shop-offer-avail' }));
@@ -180,6 +193,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         cost: plan.cost,
         plan,
         commit: () => buyShelf.purchase(plan),
+        review: () => purchaseReview({ kind: ShopPurchaseKind(shelfKind), name: plan.name, cost: plan.cost, cinders: run.cinders }),
       });
       shelf.append(host);
     }
@@ -193,7 +207,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const card of rankUpCards(registries, run)) {
         const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
         const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.desc', { from: plan.from, to: plan.to }), '', { visual: cardVisual(card) });
-        actionButton(host, { label: t('blacksmith.action.rankUp'), price: priceLine({ stones: plan.stones, cinders: plan.cost }), plan, commit: () => commitRankUp(registries, run, plan, { priceMult }) });
+        const price = priceLine({ stones: plan.stones, cinders: plan.cost });
+        actionButton(host, { label: t('blacksmith.action.rankUp'), price, plan, commit: () => commitRankUp(registries, run, plan, { priceMult }),
+          review: () => SmithRankReview({ kind: 'card', name: plan.name, price, stones: run.smithingStones || 0, cinders: run.cinders }) });
         shelf.append(host);
       }
     },
@@ -216,6 +232,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
           const rank = ItemRankUpPlan(registries, run, candidate.itemRef, { priceMult });
           const third = addAction(host, { label: t('blacksmith.itemRank.action'), kind: 'service', ok: rank.ok, reason: rank.reason, price: priceLine({ stones: rank.stones, cinders: rank.cost }) });
           third.run = () => act(host, () => CommitItemRankUp(registries, run, rank, { priceMult }));
+          third.review = () => SmithRankReview({ kind: 'item', name: candidate.itemName, price: third.price, stones: run.smithingStones || 0, cinders: run.cinders });
           shelf.append(host);
         }
         return;

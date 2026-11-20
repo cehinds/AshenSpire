@@ -1,0 +1,268 @@
+{
+  "request": "When the player plays a Counter card, the Counter badge appears on their status row, but it disappears the moment they end their turn. It should stay visible until the Counter stacks are actually used up, by a counter-attack on an enemy hit, or decay under the SPEC decay rule.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "one Counter played, before End Turn",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.counter,core.counter,core.counter,core.counter,core.counter&shotSettings=%7B%22enemyAttackMs%22%3A2000%2C%22enemyFloaterIntervalMs%22%3A2000%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the Counter badge shows on the player's status row",
+          "selector": ".combatant.player .combat-health-counter:not([hidden])"
+        },
+        {
+          "kind": "text",
+          "label": "it holds 1 stack",
+          "selector": ".combatant.player .combat-health-counter .combat-health-badge-value",
+          "includes": "1"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "one Counter, the moment End Turn is pressed",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.counter,core.counter,core.counter,core.counter,core.counter&shotSettings=%7B%22enemyAttackMs%22%3A2000%2C%22enemyFloaterIntervalMs%22%3A2000%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        },
+        {
+          "click": "button.end-turn"
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the Counter badge is still shown after End Turn",
+          "selector": ".combatant.player .combat-health-counter:not([hidden])"
+        },
+        {
+          "kind": "text",
+          "label": "with its stack",
+          "selector": ".combatant.player .combat-health-counter .combat-health-badge-value",
+          "includes": "1"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "hidden",
+          "label": "the Counter badge vanished the moment the turn ended",
+          "selector": ".combatant.player .combat-health-counter"
+        }
+      ]
+    },
+    {
+      "name": "two Counters, during the enemy turn",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.counter,core.counter,core.counter,core.counter,core.counter&shotSettings=%7B%22enemyAttackMs%22%3A2000%2C%22enemyFloaterIntervalMs%22%3A2000%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        },
+        {
+          "click": "button.end-turn"
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "both stacks are shown into the enemy turn (none has been used or faded yet)",
+          "selector": ".combatant.player .combat-health-counter .combat-health-badge-value",
+          "includes": "2"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "hidden",
+          "label": "the Counter badge vanished at End Turn",
+          "selector": ".combatant.player .combat-health-counter"
+        }
+      ]
+    },
+    {
+      "name": "two Counters, next player turn (one stack faded at turn start)",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.counter,core.counter,core.counter,core.counter,core.counter&shotSettings=%7B%22enemyAttackMs%22%3A2000%2C%22enemyFloaterIntervalMs%22%3A2000%7D",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.counter\"]"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combatant.player .player-action-intent"
+        },
+        {
+          "wait": {
+            "ms": 4500
+          }
+        },
+        {
+          "click": "button.end-turn"
+        },
+        {
+          "wait": {
+            "ms": 6000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "the next hand is drawn",
+          "selector": ".hand .card",
+          "eq": 5
+        },
+        {
+          "kind": "visible",
+          "label": "the one stack left after the turn-start fade is still shown",
+          "selector": ".combatant.player .combat-health-counter:not([hidden])"
+        },
+        {
+          "kind": "text",
+          "label": "it reads 1",
+          "selector": ".combatant.player .combat-health-counter .combat-health-badge-value",
+          "includes": "1"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator\\.vibrate",
+            "Failed to load resource"
+          ]
+        }
+      ],
+      "failure": []
+    }
+  ]
+}
