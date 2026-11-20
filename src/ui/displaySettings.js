@@ -18,7 +18,7 @@ import { setCombatPacing } from './animationPace.js';
 import { setAnimSpeed } from './fx.js';
 import { resolveMusicEnabled, AUDIO_DEFAULTS } from './audio.js';
 import { SHIPPED_MUSIC_FOLDER } from '../content/music.js';
-import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, motionFlags, FxFlags, SurfaceFlags, coarsePointer } from './performance.js';
+import { resolveCombatPacing, effectsEnabled, motionFlags, FxFlags, SurfaceFlags, coarsePointer } from './performance.js';
 import { clearPosePreloads } from './services/posePreloads.js';
 import { scheduleCardFits } from './components/card.js';
 import { updateUprightGate } from './components/upright.js';
@@ -508,11 +508,8 @@ export function applyDisplaySettings(settings) {
   document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
   document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
   document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
-  const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
-  document.documentElement.dataset.performance = quality;
-  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
-  // `data-effects` is its readable alias. The fighter-motion options are body
-  // classes (`motion-attack-off`, ...), each independent of Effects.
+  // Effects (owner, 2026-10-30): `data-effects` is the one root hook (off is the old Lite).
+  // The fighter-motion options are body classes (`motion-attack-off`, ...), each independent of Effects.
   document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
   // Effects sub-switches: `data-fx-glow="off"` etc., read by FxOff(kind).
   const fx = FxFlags(settings);

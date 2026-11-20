@@ -85,7 +85,17 @@ test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selecte
   }
   // the three states that must stay visible are still defined, unconditionally
   assert.match(css, /\.combat \.combatant:focus-visible \.sprite \{ filter: drop-shadow/);
-  assert.doesNotMatch(css, /data-performance='lite'\]:not\(\[data-effects='off'\]\)/, 'the unreachable lite selector is gone');
+  assert.doesNotMatch(css, /data-performance/, 'data-effects is the one root hook (owner, 2026-11-20)');
+});
+
+test('no stylesheet or script reads or writes the retired data-performance hook', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const walk = (dir) => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })
+    .flatMap(e => e.isDirectory() ? walk(`${dir}${e.name}/`) : /\.(css|js)$/.test(e.name) ? [`${dir}${e.name}`] : []);
+  for (const file of [...walk('../styles/'), ...walk('../src/ui/')]) {
+    const text = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.doesNotMatch(text, /\[data-performance=|dataset\.performance\b/, `${file} still uses data-performance; read data-effects`);
+  }
 });
 
 test('image figures draw only the held stance glow with Effects or Stance and aura glow off (no casting pulse)', async () => {
