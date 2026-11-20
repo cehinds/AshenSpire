@@ -250,15 +250,15 @@ with the retired-settings warning (`RetiredPlainSettingKeys`, `model/advancedCon
 - Pause between steps, Animation step duration, Enemy attack animation, Enemy floater interval
   and Combat pacing preset sit behind a **More** toggle at the end of Auto combat & pacing.
   Collapsed by default; open or closed is remembered on this device.
-- The four Range rows moved to **Advanced › Range**. Range stays in release builds, as the
-  Combat topic was.
+- The four Range rows moved to **Advanced › Range**, dev and test builds only (owner,
+  2026-11-20). Release players lose the four Range rows they had in Combat; the values are unchanged.
 
 ### 4. Advanced groups
 | Group | Rows | Builds |
 |---|---|---|
 | Opening | the opening editor (unchanged) | dev, test |
 | Deck | Play in deck order | all |
-| Range | the four Range rules | all |
+| Range | the four Range rules | dev, test |
 | Map | Walked nodes, Two-axis map dragging, Map header, Relics in map header | all |
 | Interface | Use flasks outside combat, Card motif, Motif strength, Control hints, Hold to confirm, Reward collection | all |
 | Text | the six lore type rows | all |

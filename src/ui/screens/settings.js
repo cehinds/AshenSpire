@@ -259,9 +259,9 @@ const ADVANCED_GROUPS = Object.freeze([
 // Stored values are untouched either way: hiding a section changes what is
 // drawn, never what a profile holds.
 // Deck (SPEC §14.1) is a player choice, not tuning: Play in deck order is its
-// one row (the editor's limits are authored in content/deckRules.js). Range was a
-// General › Combat topic every build showed; it keeps that reach after its move.
-export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Range', 'Map', 'Interface', 'Text', 'Changelog', 'About']);
+// one row (the editor's limits are authored in content/deckRules.js). Range is dev and
+// test only (owner, 2026-11-20): release players lose the four rows; the values stay.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Map', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 

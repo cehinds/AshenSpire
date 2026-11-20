@@ -36,14 +36,14 @@ test('Combat has no Range topic; Range is an Advanced group', () => {
   assert.ok(!topics.some((key) => key.startsWith('range')), 'no Range row is left in Combat');
 });
 
-test('Advanced: Map and Developer are groups; release builds keep Map and Range, never Developer', async () => {
+test('Advanced: Map and Developer are groups; release builds keep Map, never Range or Developer', async () => {
   const { visibleAdvancedGroups, RELEASE_ADVANCED_GROUP_IDS, categoryHandler } = await import('../src/ui/screens/settings.js');
   const { advancedSection } = await import('../src/ui/models/AdvancedSettingsGroups.js');
   const debug = visibleAdvancedGroups(true).map((group) => group.id);
   for (const id of ['Map', 'Range', 'Developer']) assert.ok(debug.includes(id), id);
   assert.ok(!debug.includes('Wireframes'), 'Wireframes folded into Developer');
   assert.deepEqual(visibleAdvancedGroups(false).map((group) => group.id), [...RELEASE_ADVANCED_GROUP_IDS]);
-  assert.ok(!RELEASE_ADVANCED_GROUP_IDS.includes('Developer'));
+  assert.ok(!RELEASE_ADVANCED_GROUP_IDS.includes('Developer') && !RELEASE_ADVANCED_GROUP_IDS.includes('Range'), 'Range is dev and test only (owner, 2026-11-20)');
   const rows = categoryHandler('Advanced').rows;
   const section = (key) => advancedSection(rows.find((row) => row.key === key));
   for (const key of ['walkedFade', 'mapFreePan', 'mapHeaderDensity', 'mapHeaderRelics']) assert.equal(section(key), 'Map', key);
