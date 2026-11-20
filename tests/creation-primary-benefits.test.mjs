@@ -13,6 +13,9 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { progressionStats } from '../src/ui/models/ProgressionInspectionModel.js';
 import { primaryStatCard } from '../src/ui/components/creationCards.js';
 
+// `registries` is the bare content bundle, which keeps the legacy CON Poise row
+// so saved runs are not repriced. The profile-bound Wisdom row is asserted in the
+// first test below and in tests/spell-tradition-combat.test.mjs.
 const registries = createRegistries(configuredContentBundle(contentBundle, {}));
 const run = createRunState({ registries, classId: 'reaver', seed: 7 });
 const cards = (reg, character) => attributeCardModels(reg, character.attributes, { projection: statProjection(reg, character) });
@@ -35,7 +38,7 @@ test('current Wisdom and spell disclosures omit retired Ward and use the real co
 });
 
 test('each primary point adds one to its main stats and no other main stat', () => {
-  const mains = { ar: 'strength', dr: 'dexterity', hp: 'constitution', poise: 'wisdom', ward: 'wisdom', pr: 'intelligence' };
+  const mains = { ar: 'strength', dr: 'dexterity', hp: 'constitution', poise: 'constitution', ward: 'wisdom', pr: 'intelligence' };
   for (const [id, owner] of Object.entries(mains)) {
     // AR, DR and PR have no table row any more: their channel is the attribute itself (resolvedRuleRow).
     const row = resolvedRuleRow(contentBundle.derivedStatRules, id);
@@ -50,7 +53,7 @@ test('each primary point adds one to its main stats and no other main stat', () 
 test('primary faces name the main bonus while secondary benefits remain inspectable', () => {
   const rows = cards(registries, run);
   assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage');
-  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health');
+  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health · Poise');
   assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage');
   assert.ok(rows.find((row) => row.id === 'wisdom').reveal.lines.some((line) => line.startsWith('Mana ')));
 });
@@ -61,7 +64,7 @@ test('one allocated point changes the actual character projection by one', () =>
     return { ...pools, ...playerPoiseThresholdReceipt(registries, character).ratings };
   };
   const before = values(run);
-  for (const [attribute, ids] of Object.entries({ strength: ['ar'], dexterity: ['dr'], constitution: ['hp'], wisdom: ['ward', 'poise'], intelligence: ['pr'] })) {
+  for (const [attribute, ids] of Object.entries({ strength: ['ar'], dexterity: ['dr'], constitution: ['hp', 'poise'], wisdom: ['ward'], intelligence: ['pr'] })) {
     const raised = values({ ...run, attributes: { ...run.attributes, [attribute]: run.attributes[attribute] + 1 } });
     for (const id of ids) assert.equal(raised[id] - before[id], 1, `${attribute} -> projected ${id}`);
   }
@@ -74,8 +77,9 @@ test('custom fractional bonuses and caps use the saved rules after live config c
   const custom = createRegistries(configuredContentBundle(bundle, {}));
   const saved = createRunState({ registries: custom, classId: 'reaver', seed: 8 });
   const rows = cards(registries, saved);
-  assert.equal(rows.find((row) => row.id === 'wisdom').face.mainSummary, 'Poise');
-  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health');
+  assert.equal(rows.find((row) => row.id === 'wisdom').face.mainSummary, '', 'a benefit requiring two points stays out of the short summary');
+  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health · Poise');
+  assert.ok(rows.find((row) => row.id === 'wisdom').reveal.lines.some(line => /0\.5/.test(line)), 'the exact saved formula remains inspectable');
 });
 
 test('Core faces use current spell and hand rules without rating names or numerical bonuses', () => {

@@ -485,7 +485,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const presentation = CardPresentationSigils(def, { registries, rules: run });
     const title = value => value[0].toUpperCase() + value.slice(1);
     return [presentation.displayLabel || title(identity.cardCategory),
-      presentation.displayLabel && identity.cardCategory === 'power' ? 'Power' : null,
+      presentation.displayLabel && identity.cardCategory === 'power' ? t('deckEditor.stance.power') : null,
       identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
   };
   const stanceNode = row => el('span', { class: 'deck-editor-stance',

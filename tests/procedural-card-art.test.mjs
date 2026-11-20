@@ -15,7 +15,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { withModalDom } from './helpers/dom.mjs';
 import { readFileSync } from 'node:fs';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, validateGameProfileSnapshot } from '../src/model/gameProfile.js';
+import { gunzipSync } from 'node:zlib';
 import { createRunState } from '../src/model/state.js';
 import { playingCardDefinition } from '../src/model/playingCard.js';
 import { optionRowList } from '../src/ui/components/optionRowList.js';
@@ -122,7 +123,11 @@ test('opposing scoped effects keep both directions centered as a group behind on
 });
 
 test('Core 2 Rending Hex keeps its staff, with Weak chevrons behind and projectile and Bleed above', () => {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  // The Arcane/Divine rebalance (docs/ARCANE-DIVINE-RULES.md) made the current
+  // Rending Hex a Divine support skill with no damage or Bleed. This art
+  // contract is about the damage + Bleed + Weak shape, so it reads the archived
+  // dev profile that still ships that definition (saved runs keep it).
+  const profile = validateGameProfileSnapshot(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-0b11a358.json.gz', import.meta.url)))));
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const context = { gameProfile: profile, combatExpansionVersion: 2 };
   const combatRegistries = combatStatusPresentationRegistries(registries, context);
