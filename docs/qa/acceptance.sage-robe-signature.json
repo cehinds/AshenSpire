@@ -1,0 +1,165 @@
+{
+  "request": "Sage's Robe (owner, 2026-11-19): uncommon, Starseer-themed, unarmoured (robe). In a new profile carrying its signature override it grants +1 total max MP via the robe base (no extra raw item MP) and 1 Ward at the start of each player turn via the normal Ward machinery. Its spell MP discount and melee vulnerability stay.",
+  "success": "A Starseer wearing Sage's Robe holds one more Ward stack at turn start than the same Starseer in the default outfit (2 vs 1, the sceptre giving the other) at the same max Mana 3, and the inspector explains it, with no console errors at 1280x800 and 390x844.",
+  "failure": "No Ward status on the robe wearer; the inspector or a card prints a raw mod string, undefined or NaN; the page logs a console error.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "sage-robe-ward",
+      "url": "?shot=combat&shotSeed=4&shotClass=starseer&shotArmor=sagesRobe&shotEnemies=wanderingSoldier",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.player .combatant-stack",
+            "ms": 800
+          }
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": ".combatant-door .modal-head-id"
+        },
+        {
+          "scrollTo": {
+            "selector": ".combatant-door .combatant-inspector-details",
+            "top": 500
+          }
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The hand is drawn",
+          "selector": ".hand .card"
+        },
+        {
+          "kind": "visible",
+          "label": "The robe wearer's inspector opens",
+          "selector": ".combatant-door .combatant-inspector-body"
+        },
+        {
+          "kind": "text",
+          "label": "With the robe and the Starseer's sceptre: two Ward (sceptre 1 + robe 1)",
+          "selector": ".combatant-door [data-ability-id=\"ward\"] > summary",
+          "matches": "Ward\\s*×\\s*2"
+        },
+        {
+          "kind": "text",
+          "label": "Max Mana is 3: the robe group +1 only, no extra raw MP",
+          "selector": ".combatant-door .combatant-inspector-body",
+          "matches": "[Mm][Aa][Nn][Aa]\\s*3\\s*/\\s*3"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or missing-resource errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Cards or the inspector print undefined, NaN or raw gear mods",
+          "selector": ".hand, .combatant-door .combatant-inspector-body",
+          "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+="
+        }
+      ]
+    },
+    {
+      "name": "control-default-robe",
+      "url": "?shot=combat&shotSeed=4&shotClass=starseer&shotEnemies=wanderingSoldier",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.player .combatant-stack",
+            "ms": 800
+          }
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": ".combatant-door .modal-head-id"
+        },
+        {
+          "scrollTo": {
+            "selector": ".combatant-door .combatant-inspector-details",
+            "top": 500
+          }
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The hand is drawn",
+          "selector": ".hand .card"
+        },
+        {
+          "kind": "visible",
+          "label": "The robe wearer's inspector opens",
+          "selector": ".combatant-door .combatant-inspector-body"
+        },
+        {
+          "kind": "text",
+          "label": "Control, default Starseer outfit with the same sceptre: one Ward",
+          "selector": ".combatant-door [data-ability-id=\"ward\"] > summary",
+          "matches": "Ward\\s*×\\s*1"
+        },
+        {
+          "kind": "text",
+          "label": "Control Max Mana is also 3 (default robe +1): Sage's Robe adds no MP over it",
+          "selector": ".combatant-door .combatant-inspector-body",
+          "matches": "[Mm][Aa][Nn][Aa]\\s*3\\s*/\\s*3"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or missing-resource errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Cards or the inspector print undefined, NaN or raw gear mods",
+          "selector": ".hand, .combatant-door .combatant-inspector-body",
+          "matches": "undefined|NaN|\\.card[A-Z][a-z]+=|\\.turn[A-Z][a-z]+="
+        }
+      ]
+    }
+  ]
+}
