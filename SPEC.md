@@ -1339,10 +1339,11 @@ The grace is the Shrine of Emberlight (there is no `grace` node type).
 
 - Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (`mapConfigs[act].unknownWeights`, `src/content/mapconfig.js`).
 - Event = data `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }`; `effects` are §3.4 run-level opcodes.
+- **No card removal as a reward** (owner, 2026-11-20): no card effect, event choice or reward removes a card from the deck as a benefit. Where one did, it grants a deck-reduction relic (`deckSlot1`) instead: Goldbough Avatar's *Offer a card* gives Ascetic's Cord, Wandering Physician's *Let him cut* Threadbare Satchel, Stake of the Martyr's *Pay its price* Pruning Hook (before its random relic). One copy per relic: a held relic is not granted again. The Merchant's paid removal service is not a card effect and stays (*Rewards after combat and merchant prices*).
 
 | # | Event | Choices |
 |---|---|---|
-| 1 | Goldbough Avatar | *Offer a card* (remove 1 card, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt) / *Leave* |
+| 1 | Goldbough Avatar | *Offer a card* (gain Ascetic's Cord, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt) / *Leave* |
 | 2 | Abandoned Merchant Cart | *Loot* (gain 75 cinders, 50%: fight a Wandering Soldier ambush) / *Leave* |
 | 3 | Wayward Pilgrim | *Give 50 cinders* (gain a random relic) / *Refuse* (nothing) |
 | 4 | Ancient Cinder Stone | *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave* |
