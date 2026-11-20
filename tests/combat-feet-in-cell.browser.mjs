@@ -7,13 +7,15 @@ import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
 import { uiConfig } from '../src/config/generated/ui.js';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
+// The grid starts off (owner, 2026-11-19); this test measures cells, so it turns the grid on.
+const GRID_ON = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
 const fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction;
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 try {
   for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, reducedMotion: 'reduce' });
-    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1`, { waitUntil: 'load' });
+    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1&shotSettings=${GRID_ON}`, { waitUntil: 'load' });
     await p.waitForSelector('.combatant .sprite');
     await p.waitForTimeout(2500);
     const m = await p.evaluate(() => ({
