@@ -77,3 +77,11 @@ test('under Long, a 1400 ms hold selects at 1000, reads after it, and the releas
   const selectAt = calls.indexOf('select');
   assert.ok(selectAt >= 0 && selectAt < readAt, `the card's hold selected before the read (${calls.join(',')})`);
 }));
+
+test('a press that leaves the card ends the hold: no read opens when it is released elsewhere', () => withDom(async () => {
+  const { card, calls } = handCard('normal');
+  press(card, 'pointerdown');
+  press(card, 'pointerleave');
+  await wait(HoldInspectDelay(card) + 150);
+  assert.ok(!calls.includes('read'), `a press that slid off the card did not read it (${calls.join(',')})`);
+}));

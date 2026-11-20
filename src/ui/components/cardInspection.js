@@ -561,7 +561,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   card.addEventListener('pointermove', event => {
     if (hold && Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > HOLD_INSPECT_SLOP_PX) endHold();
   });
-  for (const type of ['pointerup', 'pointercancel', 'carddragstart']) card.addEventListener(type, endHold);
+  for (const type of ['pointerup', 'pointercancel', 'carddragstart', 'pointerleave', 'lostpointercapture']) card.addEventListener(type, endHold);
   // Only the pointer's own trailing click is swallowed. The press that read usually ends on the modal, so no click
   // may follow at all; the flag then waits for this card's next pointerdown (which clears it), and a controller's
   // synthetic click (detail 0) is never the one eaten.
