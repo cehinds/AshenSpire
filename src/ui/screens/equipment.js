@@ -948,7 +948,7 @@ export function mountEquipment(host, {
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
       const requirement = equipmentRequirementReceipt(registries, row.row.item, run.attributes, run);
       const hint = !seal.ok ? seal.reason : !transition.ok ? transition.reason
-        : !requirement.ok ? `Requires ${requirement.failures.map((failure) => `${registries.attributes.get(failure.attributeId).label} ${failure.required}`).join(', ')}` : '';
+        : !requirement.ok ? t('armoury.picker.requires', { stats: requirement.failures.map((failure) => `${registries.attributes.get(failure.attributeId).label} ${failure.required}`).join(', ') }) : '';
       const first = row.elsewhere[0];
       return {
         id: row.id, name: row.name, sub: row.category, hint, disabled: !!hint,
