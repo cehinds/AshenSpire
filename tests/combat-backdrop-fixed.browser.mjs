@@ -7,6 +7,8 @@
 //   2. A later death relays out the figures and leaves every backdrop box where it was.
 //   3. Review of #2918: the grid follows the resting cards' top, which moves with the hand's size. Changing the hand,
 //      then a death (which relays out the figures with the new grid), leaves every backdrop box where it was.
+//   5. Phone: upcast controls in hand reserve room (--hand-controls-height), and the field's height follows it
+//      (mobileFieldOverlap). The backdrop holds its field box: every box stays put, before and after a death.
 //   4. A window resize inside the form factor (1280x800 to 1180x760) refits once; a hand change and a death after it
 //      leave every backdrop box where the resize put it.
 import assert from 'node:assert/strict';
@@ -114,6 +116,29 @@ try {
     const afterDeath = await read(page);
     assert.notEqual(afterDeath.epoch, resized.epoch, `${label}: the death relays out the figures`);
     assert.deepEqual(afterDeath.boxes, resized.boxes, `${label}: and every backdrop box stays where the resize put it`);
+    await page.close();
+    console.log(`ok ${label}`);
+  }
+  {
+    const label = '390x844 core, upcast controls reserve then death';
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await page.goto(`${server.url}index.html?shot=combat&gameProfile=core&shotEnemyCount=3&shotSeed=7&shotHand=5`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!window.__combat);
+    await page.waitForSelector('.combatant.enemy .sprite');
+    await page.waitForTimeout(2500);
+    const fieldHeight = () => page.evaluate(() => document.querySelector('[data-layout-epoch]').offsetHeight);
+    const before = await read(page), fieldBefore = await fieldHeight();
+    // What hand.js writes when an upcastable card is in hand; combatLayout re-applies the overlap on handlayoutchange.
+    await page.evaluate(() => { const hand = document.querySelector('.combat .hand'); hand.style.setProperty('--hand-controls-height', '60px');
+      hand.dispatchEvent(new Event('handlayoutchange', { bubbles: true })); });
+    await page.waitForTimeout(1000);
+    assert.notEqual(await fieldHeight(), fieldBefore, `${label}: the controls reserve changes the field's height`);
+    assert.deepEqual((await read(page)).boxes, before.boxes, `${label}: and leaves every backdrop box`);
+    await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.hp = 0; enemy.alive = false; window.__renderCombatForShot(); });
+    await page.waitForTimeout(1000);
+    const afterDeath = await read(page);
+    assert.notEqual(afterDeath.epoch, before.epoch, `${label}: the field and the death relay out the figures`);
+    assert.deepEqual(afterDeath.boxes, before.boxes, `${label}: a death after it leaves every backdrop box`);
     await page.close();
     console.log(`ok ${label}`);
   }
