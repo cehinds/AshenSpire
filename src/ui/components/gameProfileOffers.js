@@ -594,6 +594,11 @@ export function MountGameProfileOffers(appRoot, {
             infoBadge: false,
             inspectionActions: () => {
                 const canTake = !isClaimPending && !isCompleted && !isReviewing && !isOptionSpent(optionIndex);
+                // Owner 2026-11-19: won armour or a won weapon is offered to Equip beside Keep, as a purchase is.
+                if (!isCardKind(option.kind) && canEquipOffered()) return [
+                    { id: 'equip', verb: translate('armoury.picker.act.equip'), enabled: canTake, reason: '' },
+                    { id: 'take', verb: translate('shop.buyChoice.keepInventory'), enabled: canTake, reason: '' },
+                ];
                 if (!isCardKind(option.kind)) return [{ id: 'take', verb: translate(CONFIRM_LABEL_KEY), enabled: canTake, reason: '' }];
                 const refusal = addRefusal?.(optionIndex);
                 return [
@@ -605,6 +610,7 @@ export function MountGameProfileOffers(appRoot, {
                 addToDeck: () => { selectOption(optionIndex); return commitPick(index => onAddToDeck(index)); },
                 addToLibrary: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
                 take: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
+                equip: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken, openEquipmentEditor); },
             },
         } : {};
         const face = buildOptionFace(registries, activeRun, option, optionIndex, definition, inspectionOptions);
@@ -870,6 +876,11 @@ export function MountGameProfileOffers(appRoot, {
             return;
         }
         return commitPick(takeOptionIfUntaken);
+    }
+
+    function canEquipOffered()
+    {
+        return !!onEditEquipment && canEditEquipment;
     }
 
     function openEquipmentEditor()
