@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-20
 
-- **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.224`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
+- **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.226`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
 
 ## 2026-11-19
 
