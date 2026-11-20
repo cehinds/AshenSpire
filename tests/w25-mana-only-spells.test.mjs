@@ -168,6 +168,8 @@ test('Open the Archive draws, restores Mana and exhausts (non-element: it clears
   combat.loadout.sets.rightHand[0] = 'greatsword';
   const card = combat.piles.hand[0]; card.cardId = 'core.openArchive';
   combat.player.elementFlux = 'fire';
+  // Room for the restore: Core max Mana is 1 + one per four WIS (stat contract 2026-11-18), and the price and restore are what is tested.
+  combat.player.maxMana = 4;
   combat.player.mana = 4;
   const mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
