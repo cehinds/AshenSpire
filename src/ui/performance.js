@@ -97,6 +97,12 @@ export function liteRendering() {
   return typeof document !== 'undefined' && document.documentElement?.dataset.performance === 'lite';
 }
 
+/** OutlineTargetSilhouette() → true when a target silhouette must be drawn as an outline, not a filter-tinted copy:
+ * under Lite, or when Shadows is forced Off (its filter reset would strip the tint and leave an uncoloured copy). */
+export function OutlineTargetSilhouette() {
+  return liteRendering() || (typeof document !== 'undefined' && document.documentElement?.dataset.fxShadows === 'off');
+}
+
 /** effectsOff() → true when the Effects switch is off (root `data-effects="off"`, set at boot by main.js; absent in bare test DOMs reads as on). */
 export function effectsOff() {
   return typeof document !== 'undefined' && document.documentElement?.dataset.effects === 'off';

@@ -53,3 +53,28 @@ test('the root carries data-fx-blur / data-fx-shadows only when forced, and drop
   ApplySurfaceFlags(root, {});
   assert.deepEqual(root.dataset, {});
 });
+
+test('Shadows forced Off draws the target silhouette as a coloured outline, not a tinted copy its filter reset would blank', async () => {
+  const { renderTargetSilhouette } = await import('../src/ui/components/friendlyTargets.js');
+  const element = (cls = '') => ({
+    className: cls, dataset: {}, style: { setProperty() {} }, children: [],
+    classList: { _s: new Set(cls.split(' ').filter(Boolean)), add(...c) { c.forEach((x) => this._s.add(x)); }, contains(c) { return this._s.has(c); } },
+    cloneNode() { return element(cls); }, appendChild(c) { this.children.push(c); }, insertBefore(c) { this.children.unshift(c); },
+    matches() { return false; }, querySelector() { return null; },
+  });
+  const saved = globalThis.document;
+  try {
+    for (const [flags, outline] of [[{}, false], [{ fxShadows: 'off' }, true], [{ fxShadows: 'on' }, false], [{ performance: 'lite' }, true]]) {
+      globalThis.document = { documentElement: { dataset: { ...flags } }, createElement: () => element() };
+      const sprite = element('sprite');
+      sprite.children.push(element('art'));
+      const combatant = element('combatant');
+      combatant.querySelector = (sel) => (sel === '.sprite' ? sprite : null);
+      assert.equal(renderTargetSilhouette(combatant, 'enemy'), true, JSON.stringify(flags));
+      const holder = sprite.children[0];
+      assert.equal(holder.classList.contains('aim-outline'), outline, `${JSON.stringify(flags)}: outline=${outline}`);
+    }
+  } finally {
+    globalThis.document = saved;
+  }
+});
