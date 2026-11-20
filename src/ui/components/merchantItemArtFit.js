@@ -3,7 +3,7 @@ const alphaBoundsByUrl = new Map();
 
 // Measure visible pixels, not the transparent export canvas. A faint fringe
 // should not make the object tiny; retain a small margin around its solid art.
-export function itemArtBounds({ data, width, height }, naturalWidth = width, naturalHeight = height) {
+export function ItemArtBounds({ data, width, height }, naturalWidth = width, naturalHeight = height) {
   let left = width, top = height, right = -1, bottom = -1;
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
     if (data[(y * width + x) * 4 + 3] < 16) continue;
@@ -25,12 +25,12 @@ function measure(image, doc) {
     const context = canvas.getContext?.('2d', { willReadFrequently: true });
     if (!context) return null;
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return itemArtBounds(context.getImageData(0, 0, canvas.width, canvas.height), image.naturalWidth, image.naturalHeight);
+    return ItemArtBounds(context.getImageData(0, 0, canvas.width, canvas.height), image.naturalWidth, image.naturalHeight);
   } catch { return null; } // CORS-tainted or unsupported canvas keeps the original image.
 }
 
 /** Fit an item cutout to its well without changing its raster or aspect ratio. */
-export function bindMerchantItemArtFit(image, { isCurrent = () => true } = {}) {
+export function BindMerchantItemArtFit(image, { isCurrent = () => true } = {}) {
   const doc = image.ownerDocument || document;
   let fitted = null;
   let fittedUrl = '';

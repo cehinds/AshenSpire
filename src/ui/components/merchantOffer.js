@@ -3,7 +3,7 @@ import { uiIconText } from '../../content/uiIcons.js';
 import { button, el, statusText } from '../kit/index.js';
 import { t } from '../strings.js';
 import { openBoundCardInspection, openCardInspection } from './cardInspection.js';
-import { bindMerchantItemArtFit } from './merchantItemArtFit.js';
+import { BindMerchantItemArtFit } from './merchantItemArtFit.js';
 
 // A playing-card image is a background plus object/effect layers. The first
 // image in the face is its decorative frame, not its artwork. Preserve the
@@ -33,7 +33,7 @@ function merchantArtwork(visual) {
     }, { once: true }));
     host.replaceChildren(copy);
     if (original.classList.contains('epc-art')) for (const image of copies) {
-      bindMerchantItemArtFit(image, { isCurrent: () => generation === currentGeneration && image.parentNode === copy && host.firstElementChild === copy });
+      BindMerchantItemArtFit(image, { isCurrent: () => generation === currentGeneration && image.parentNode === copy && host.firstElementChild === copy });
     }
   }
   paint();

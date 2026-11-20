@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
 import { arrangeMerchantOffer } from '../src/ui/components/merchantOffer.js';
-import { bindMerchantItemArtFit, itemArtBounds } from '../src/ui/components/merchantItemArtFit.js';
+import { BindMerchantItemArtFit, ItemArtBounds } from '../src/ui/components/merchantItemArtFit.js';
 
 function pixels(width, height, rect = null) {
   const data = new Uint8ClampedArray(width * height * 4);
@@ -13,8 +13,8 @@ function pixels(width, height, rect = null) {
 test('item alpha bounds ignore transparent canvas and faint fringe while preserving a centered margin', () => {
   const sample = pixels(100, 80, { x: 35, y: 20, width: 20, height: 40 });
   sample.data[3] = 8; // Almost invisible export fringe must not stretch the crop.
-  assert.deepEqual(itemArtBounds(sample, 1000, 800), { x: 342, y: 184, width: 216, height: 432 });
-  assert.equal(itemArtBounds(pixels(10, 10)), null, 'transparent art keeps the normal fallback');
+  assert.deepEqual(ItemArtBounds(sample, 1000, 800), { x: 342, y: 184, width: 216, height: 432 });
+  assert.equal(ItemArtBounds(pixels(10, 10)), null, 'transparent art keeps the normal fallback');
 });
 
 function canvasFixture(document, { fail = false } = {}) {
@@ -47,7 +47,7 @@ test('loaded item art fits its visible pixels with one bounded alpha read per UR
   const canvas = canvasFixture(document);
   const first = itemImage(document, 'fit-cache-test.png');
   const second = itemImage(document, 'fit-cache-test.png');
-  bindMerchantItemArtFit(first.image); bindMerchantItemArtFit(second.image);
+  BindMerchantItemArtFit(first.image); BindMerchantItemArtFit(second.image);
   assert.equal(canvas.reads(), 1);
   assert.equal(canvas.largestSample(), 512);
   assert.equal(first.image.hidden, true);
@@ -62,12 +62,12 @@ test('loaded item art fits its visible pixels with one bounded alpha read per UR
 test('tainted-canvas failure retains the item image and stale loads cannot insert a fitted image', () => withKitDom(({ document, Event }) => {
   const canvas = canvasFixture(document, { fail: true });
   const failed = itemImage(document, 'fit-tainted-test.png');
-  bindMerchantItemArtFit(failed.image);
+  BindMerchantItemArtFit(failed.image);
   assert.equal(failed.image.hidden, false);
   assert.equal(failed.well.querySelector('svg'), null);
   let current = true;
   const stale = itemImage(document, 'fit-stale-test.png'); stale.image.complete = false;
-  bindMerchantItemArtFit(stale.image, { isCurrent: () => current });
+  BindMerchantItemArtFit(stale.image, { isCurrent: () => current });
   current = false;
   stale.image.dispatchEvent(new Event('load'));
   assert.equal(stale.well.querySelector('svg'), null);
@@ -79,7 +79,7 @@ test('fitted SVG errors restore the original image and invoke its established fa
   const { image, well } = itemImage(document, 'fit-error-test.png');
   let failures = 0;
   image.addEventListener('error', () => { failures++; });
-  bindMerchantItemArtFit(image);
+  BindMerchantItemArtFit(image);
   well.querySelector('svg image').dispatchEvent(new Event('error'));
   assert.equal(failures, 1);
   assert.equal(image.hidden, false);
