@@ -1,5 +1,5 @@
 {
-  "request": "Tidy Settings (owner, 2026-11-20): hide Combat's five millisecond dials behind a More toggle, move Range to Advanced, split Map out of Interface, fold Wireframes and card size into a dev-only Developer group, drop the rows Core 2 cannot reach, and put clusters of related Advanced rows behind a button that opens their own modal.",
+  "request": "Tidy Settings (owner, 2026-11-20): hide Combat's five millisecond dials behind a More toggle, move Range to Advanced, split Map out of Interface, fold Wireframes and card size into a dev-only Developer group, drop the rows Core 2 cannot reach, and put clusters of related Advanced rows behind a button that opens their own modal. Follow-up (owner, 2026-11-20): Text, Interface, Card size and Export open their own windows too.",
   "success": "General > Combat shows a collapsed More toggle with the five dials hidden and no Range rows. Advanced offers Map, Range and Developer sections; Developer > Layout has a Wireframes button that opens a modal with the six wireframe choices. Deck shows only Play in deck order. No console errors.",
   "failure": "A millisecond dial or a Range row is visible in Combat; Wireframes is still its own tab; the Wireframes button is missing or opens nothing; a removed row (deck limits, Merchant buys back, Level-up value) is still drawn.",
   "viewports": [
@@ -299,6 +299,262 @@
           "kind": "visible",
           "label": "Walked nodes shows",
           "selector": "[data-advanced-panel=\"Map\"] [data-row-key=\"walkedFade\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "text-window",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Text%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": "[data-btn=\"groupModal.text\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The text window is open",
+          "selector": ".set-group-modal"
+        },
+        {
+          "kind": "count",
+          "label": "It holds its 6 rows",
+          "selector": ".set-group-modal [data-row-key]",
+          "eq": 6
+        },
+        {
+          "kind": "count",
+          "label": "The panel draws only the button for them",
+          "selector": "[data-advanced-panel=\"Text\"] [data-row-key=\"groupModal.text\"]",
+          "eq": 1
+        },
+        {
+          "kind": "within",
+          "label": "Window fits the screen",
+          "selector": ".set-group-modal",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "interface-window",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Interface%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": "[data-btn=\"groupModal.interface\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The interface window is open",
+          "selector": ".set-group-modal"
+        },
+        {
+          "kind": "count",
+          "label": "It holds its 7 rows, Ambient effects included",
+          "selector": ".set-group-modal [data-row-key]",
+          "eq": 7
+        },
+        {
+          "kind": "count",
+          "label": "The panel draws only the button for them",
+          "selector": "[data-advanced-panel=\"Interface\"] [data-row-key=\"groupModal.interface\"]",
+          "eq": 1
+        },
+        {
+          "kind": "within",
+          "label": "Window fits the screen",
+          "selector": ".set-group-modal",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        },
+        {
+          "kind": "count",
+          "label": "Ambient effects stays in Interface",
+          "selector": ".set-group-modal [data-row-key=\"ambient\"]",
+          "eq": 1
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "export-window",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Export%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": "[data-btn=\"groupModal.export\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The export window is open",
+          "selector": ".set-group-modal"
+        },
+        {
+          "kind": "count",
+          "label": "It holds its 6 rows",
+          "selector": ".set-group-modal [data-row-key]",
+          "eq": 6
+        },
+        {
+          "kind": "count",
+          "label": "The panel draws only the button for them",
+          "selector": "[data-advanced-panel=\"Export\"] [data-row-key=\"groupModal.export\"]",
+          "eq": 1
+        },
+        {
+          "kind": "within",
+          "label": "Window fits the screen",
+          "selector": ".set-group-modal",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "card-size-window",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Developer%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": "[data-btn=\"groupModal.cardSize\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".set-group-modal [data-row-key=\"cardWidth_focus\"] .set-step[data-step=\"1\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The cardSize window is open",
+          "selector": ".set-group-modal"
+        },
+        {
+          "kind": "count",
+          "label": "It holds its 5 rows",
+          "selector": ".set-group-modal [data-row-key]",
+          "eq": 5
+        },
+        {
+          "kind": "count",
+          "label": "The panel draws only the button for them",
+          "selector": "[data-advanced-panel=\"Developer\"] [data-row-key=\"groupModal.cardSize\"]",
+          "eq": 1
+        },
+        {
+          "kind": "within",
+          "label": "Window fits the screen",
+          "selector": ".set-group-modal",
+          "container": "body"
+        },
+        {
+          "kind": "text",
+          "label": "A stepper in the window commits: the button now reads 1 changed",
+          "selector": "[data-btn=\"groupModal.cardSize\"]",
+          "includes": "1 changed"
         },
         {
           "kind": "consoleErrors",
