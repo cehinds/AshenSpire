@@ -163,21 +163,29 @@ const TARGETS = [
   // Cinders owner. Keep the pixel gate on the current visible status instead of
   // allowing a removed selector to turn the gate blind.
   { screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' },
-  { screen: 'combat', sel: '.topbar .hud-class .cv', label: 'hero name (combat)' },
-  { screen: 'combat', sel: '.resbars .m-label', label: 'resource bar label (combat)' },
-  // Card text keywords and the hold cue (the former polish review §G, removed 2026-10-11:
-  // keyword red 4.1-4.3:1, "HOLD" 2.45:1). The showcase hand carries a Bleed
-  // card; `.hold-hint` is --gold at 0.75 opacity (kit.css).
-  { screen: 'combat', sel: '.hand .card .ctext .st-bleed', label: 'Bleed keyword (card text)' },
-  { screen: 'combat', sel: '.hand .card[data-card-id="strike"] > .hold-hint', label: 'card HOLD cue' },
+  // (`hero name (combat)`, `.topbar .hud-class .cv`, was dropped 2026-11-19: the
+  // shared combat HUD no longer mounts the identity chip, and no visible hero or
+  // class name remains in combat — the mini-HUD's `.ls-label` renders at 0x0.)
+  // (`resource bar label (combat)`, `.resbars .m-label`, was dropped 2026-11-19:
+  // the only combat match is the shared HUD's HP label, painted at font-size 0
+  // by styles/shared-run-hud.css, so no resource label is visible to measure.)
+  // Card text rows, both dropped 2026-11-19 because nothing is painted to
+  // measure: the Bleed keyword (`.ctext .st-bleed`) — illustrated-v1 faces
+  // paint rules as `.face-line` with no keyword spans — and the card HOLD cue
+  // (`.hand .card > .hold-hint`) — `:root .combat .card .hold-hint` is
+  // `display:none` (styles/player-polish.css).
   { screen: 'death', sel: '.gameover .as-title-l', label: 'YOU PERISHED' },
-  // Reward panel: the gold row titles and the primary button's HOLD cue.
-  { screen: 'reward', sel: '.reward-kind[data-state="pending"] .cp-body h3', label: 'reward title (gold)' },
-  { screen: 'reward', sel: '#reward-continue .hold-hint', label: 'reward Continue HOLD cue' },
-  { screen: 'reward', sel: '.reward-claim-row[data-state="taken"] .reward-claim-state', label: 'reward claim Taken (gold)' },
-  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .chip', label: 'reward TAKEN chip (gold)' },
-  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .cp-body h3', label: 'reward taken title (gold)' },
-  { screen: 'reward', sel: '.reward-kind .chip.reward-new', label: 'reward NEW chip (gold)' },
+  // Reward rows. A configured run's combat reward is a card chooser; the
+  // row door (reward.js) now opens for card rank-ups, so the row targets are
+  // read there: `shotRankUp=1` poses a pending row, `shotRankUp=taken` the same
+  // row claimed (src/dev/shotStates.js). Dropped 2026-11-19, each because its
+  // element is gone: the Continue HOLD cue (Continue commits on a tap, owner
+  // 2026-11-14, model/secondbeat.js, so no `.hold-hint` is painted) and the NEW
+  // chip (nothing in src emits `.reward-new` or the chooser's `.card-badge-new`).
+  { screen: 'reward&shotRankUp=1', sel: '.reward-kind[data-state="pending"] .cp-body h3', label: 'reward row title (pending)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-claim-row[data-state="taken"] .reward-claim-state', label: 'reward claim Taken (gold)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-kind[data-state="taken"] .chip', label: 'reward TAKEN chip (gold)' },
+  { screen: 'reward&shotRankUp=taken', sel: '.reward-kind[data-state="taken"] .cp-body h3', label: 'reward taken title (gold)' },
 ];
 
 // Failures that are KNOWN, MEASURED, and deliberately not fixed by the default
@@ -201,16 +209,6 @@ const TARGETS = [
 // the declared colour clears AA (spec 4.74 / 7.33) and an `opacity` rule in
 // styles/kit.css pulls the delivered pixel under it. No palette token reaches
 // an opacity, which is why no token edit here could retire these rows.
-const LEDGER_HOLD = {
-  render: 3.36, floor: 4.5,
-  why: '`.hold-hint` is --gold at `opacity: 0.75` (styles/kit.css), and on the primary '
-     + 'button it sits on a gold-tinted fill: declared 4.74, delivered 3.36 at 13.4px. The '
-     + 'hand-card HOLD cue (same rule, dark card body) clears at 4.66 — only the primary '
-     + 'button\'s cue is below. --gold itself is 8:1 on --bg; brightening it would move every '
-     + 'gold surface to lift one translucent word.',
-  fix: 'Drop the 0.75 opacity on `.as-btn.primary .hold-hint` (or render the cue in '
-     + '--parchment on primary fills) in styles/kit.css — a component rule, not a token.',
-};
 const LEDGER_TAKEN = {
   render: 2.98, floor: 4.5,
   why: 'A TAKEN reward row is an inactive control (`.class-pick.locked`, `opacity: 0.55`, '
@@ -222,10 +220,6 @@ const LEDGER_TAKEN = {
      + 'instead of opacity) in styles/kit.css.',
 };
 const KNOWN_BELOW = [
-  { label: 'reward Continue HOLD cue', profile: 'default', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'cb-safe', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off', ...LEDGER_HOLD },
-  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off+cb-safe', ...LEDGER_HOLD },
   { label: 'reward TAKEN chip (gold)', profile: 'default', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
@@ -949,7 +943,7 @@ const rows = [];
 try {
   const cdp = await connectCdp(dbg);
   for (const [pname, settings] of Object.entries(profiles)) {
-    for (const screen of ['title', 'map', 'combat', 'death', 'reward']) {
+    for (const screen of ['title', 'map', 'combat', 'death', 'reward&shotRankUp=1', 'reward&shotRankUp=taken']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
       // The fog-first map boot deliberately exposes only the entrance choice:
