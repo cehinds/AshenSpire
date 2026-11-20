@@ -16,18 +16,18 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [x] Battlefield grid defaults off (`showFormationGrid`, `src/model/advancedConfig.js`)
 
 ### Effects modal
-- [ ] Combat > Effects becomes a button: "Effects: On · 5 of 6" opens a modal
-- [ ] Modal: master Effects switch at the top (existing `effects` key, default off)
-- [ ] Modal section "Visual effects", greyed when master is off:
-  - [ ] Stance and aura glow (`fxGlow`)
-  - [ ] Hit sparks and slashes (`fxSparks`)
-  - [ ] Impact flashes (`fxFlash`)
-  - [ ] Screen shake (existing `screenShake`, moved here)
-  - [ ] Hit pause (`fxHitStop`)
-  - [ ] Ambient background (existing `ambient`, moved from Advanced > Interface)
-- [ ] Modal section "Fighter motion" (works with Effects off): attack, hit, idle, defeat (existing rows, moved)
-- [ ] Each sub-switch actually gates its effect (root `data-fx-*` flags + `fxOff(kind)` helper)
-- [ ] Strings in `content/source/uiStrings.csv`, short and plain
+- [x] Combat > Effects becomes a button: "Effects: On · 5 of 6" opens a modal
+- [x] Modal: master Effects switch at the top (existing `effects` key, default off)
+- [x] Modal section "Visual effects", greyed when master is off:
+  - [x] Stance and aura glow (`fxGlow`)
+  - [x] Hit sparks and slashes (`fxSparks`)
+  - [x] Impact flashes (`fxFlash`)
+  - [x] Screen shake (existing `screenShake`, moved here)
+  - [x] Hit pause (`fxHitStop`)
+  - [x] Ambient background (existing `ambient`, moved from Advanced > Interface)
+- [x] Modal section "Fighter motion" (works with Effects off): attack, hit, idle, defeat (existing rows, moved)
+- [x] Each sub-switch actually gates its effect (root `data-fx-*` flags + `fxOff(kind)` helper)
+- [x] Strings in `content/source/uiStrings.csv`, short and plain
 
 ### Performance (ranked)
 - [ ] **Root cause of "slow late in long fights":** every action deep-copies the whole fight log (`structuredClone` in `candidateState`, `src/engine/combatRules.js:102`). 200-turn Node run: playCard 4 → 45 ms, endTurn 16 → 61 ms as the log grows 1.4k → 10.7k entries. Fix in progress (share old entries, copy only the array), then Opus review.
@@ -45,5 +45,5 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [ ] Remove the retired `performanceMode` row.
 
 ### Verify
-- [ ] Sandbox QA (`npm run qa:sandbox`), screenshots at 1280x800 and 390x844
+- [x] Sandbox QA `docs/qa/acceptance.effects-modal.json`: 24 PASS / 0 FAIL at 1280x800 and 390x844
 - [ ] Before/after timing of one card play and one end turn

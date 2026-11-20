@@ -3,3 +3,12 @@
 .set-effects-section[data-off] .set-card-list {
   opacity: 0.5;
 }
+/* Section headings and their notes line up with the row text, not the modal edge. */
+.set-effects-body .set-effects-section > .set-subsection-heading,
+.set-effects-body .set-effects-section > .set-note {
+  padding-inline: 0.5rem;
+}
+.set-effects-body .set-effects-section > .set-note {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+}
