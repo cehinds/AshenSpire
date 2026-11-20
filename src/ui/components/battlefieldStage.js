@@ -19,7 +19,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes, HandAnchorLayoutKey } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -878,6 +878,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) * fit : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
+        // An enemy in the engine's back row is drawn smaller by the layout (BackRowEnemySizes), not by CSS.
+        backRow: frame.classList.contains('enemy') && frame.dataset.bandRow === 'back',
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth, artLeading: Math.max(ceiling * zoom, racked),
@@ -900,9 +902,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const handLeft = readRestingHand()?.left ?? fieldRect.left;
     // Preserve the incoming remount cache's subpixel tolerance; raw geometry
     // still validates the hand's authored resting envelope above.
-    const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
-      ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
-    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    // The resting cards' top is in the key: the hand publishes it after its own layout, and an anchor kept from
+    // before it settled stood the lone player's feet above the cards (owner, 2026-11-20).
+    const handLayoutKey = HandAnchorLayoutKey({ fieldWidth: fieldRect.width, fieldHeight: fieldRect.height, pageZoom, handKey,
+      restTop: parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) });
     // The lone player's feet floor: the strip's top, or the resting cards' top where the stage stretches down to them.
     const cardsFloor = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.stageExtent?.mode === 'handTop'
       ? parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) * (handRect ? handRect.height / (hand.clientHeight || handRect.height || 1) : 1) : NaN;
@@ -913,12 +916,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     const fitFormation = () => {
-      const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
+      const viewportSizes = BackRowEnemySizes(fitViewportSprites({ width: fieldRect.width, actors,
         viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow), unit: fit,
         // Judge the fit on the positions composition will use: a solo
         // player's feet stay above the hand.
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
-        solo: solo && logicalViewport().height > 480 });
+        solo: solo && logicalViewport().height > 480 }), actors);
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         perspectiveGrid: true, unit: fit,
@@ -1121,6 +1124,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setStyle(frame, 'zIndex', '');
       // Depth stays within a role's plane: players always paint over enemies.
       setVar(sprite, '--combat-depth', String(depthOrder.indexOf(slot.layer)));
+      // A back-row enemy's HUD plates shrink with its body (BackRowEnemySizes), so neighbouring plates keep their gap on a phone.
+      setVar(frame, '--combat-hud-row-scale', String(actor.backRow
+        ? uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale ?? 1 : 1));
       setData(frame, 'formationRow', slot.formationRow);
       setData(frame, 'visualBand', slot.visualBand);
       setData(frame, 'formationRole', slot.formationRole);
@@ -1713,6 +1719,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   poseObserver.observe(field, { subtree: true, attributes: true, attributeOldValue: true,
     attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
+  // A back-row enemy is drawn smaller by the layout (BackRowEnemySizes): a change of engine row refits once.
+  const bandRowObserver = new MutationObserver(scheduleForced);
+  bandRowObserver.observe(field, { subtree: true, attributes: true, attributeFilter: ['data-band-row'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
@@ -1748,6 +1757,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
+    bandRowObserver.disconnect();
     reducedMedia?.removeEventListener('change', reconcileReducedMotion);
     reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);
