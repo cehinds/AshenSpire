@@ -17,7 +17,7 @@
         { "wait": { "ms": 800 } },
         { "click": "[data-btn=\"effectsMenu\"]" },
         { "wait": { "ms": 600 } },
-        { "scrollTo": { "selector": ".set-effects-modal [data-effects-section=\"surface\"]", "top": 0 } }
+        { "scrollTo": { "selector": ".set-effects-body", "top": 4000 } }
       ],
       "success": [
         { "kind": "visible", "label": "Effects modal is open", "selector": ".set-effects-modal" },
