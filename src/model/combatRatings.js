@@ -750,11 +750,11 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
 }
 
 /**
- * packetSplit({ base, share, physicalBonus, magicBonus, total }) → { physical, magic } of a face figure `total` for an element packet hit
+ * PacketSplit({ base, share, physicalBonus, magicBonus, total }) → { physical, magic } of a face figure `total` for an element packet hit
  * (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19): the magic part is the card's magic share of its base
  * plus the Power bonus, the physical part is the rest (base, STR / AR and every multiplier), the proportions read before any multiplier.
  */
-export function packetSplit({ base, share, physicalBonus = 0, magicBonus = 0, total }) {
+export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, total }) {
   const card = Math.max(0, Math.floor(Number(base) || 0));
   const value = Math.max(0, Math.floor(Number(total) || 0));
   const magicBefore = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9) + Math.max(0, magicBonus);

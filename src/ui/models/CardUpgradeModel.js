@@ -3,7 +3,7 @@
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
-import { rarityOfStep } from '../../model/cardUpgradeSteps.js';
+import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
 import { cardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimits.js';
@@ -118,7 +118,7 @@ const plainAmount = (def, op) => num((def?.effects || []).find((e) => e.op === o
  * number, so what the picker promises is the change the card then shows (a rank-up scale included), and a combo lists each part.
  */
 export function UpgradeStepLook(registries, step, before, after) {
-  const rarity = rarityOfStep(step);
+  const rarity = RarityOfStep(step);
   const sizes = (FlatSteps([step]).map((one) => {
     switch (one.k) {
       case 'dmg': return t('cardUpgrade.size.damage', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage') });

@@ -4,7 +4,7 @@ import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtr
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { ChannelLabel, ChannelWeight } from '../model/damageChannels.js';
 import { SpellTraditionsActive, SpellTraditionLabel, TraditionSpellPower } from '../model/spellTraditions.js';
-import { sourceRatingValue, magicShareOf, splitContactParts, packetSplit, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, PacketSplit, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
@@ -176,7 +176,7 @@ export function SideDamageMultiplier(effects, source) {
   return Number.isFinite(value) && value >= 0 ? value : 1;
 }
 /** An element packet hit (owner, 2026-11-19): a player's physical-camp card with a magic share between 0 and 1 and no rating of its own. */
-export const isPacketHit = (ctx, source, carrier, profile, share) => fixCoreEnabled(ctx) && source?.kind === 'player' && carrier?.ratingId === undefined
+export const IsPacketHit = (ctx, source, carrier, profile, share) => fixCoreEnabled(ctx) && source?.kind === 'player' && carrier?.ratingId === undefined
   && profile?.camp === 'physical' && Number.isFinite(carrier?.magicShare) && share > 0 && share < 1;
 /**
  * PacketFaceSplit(ctx, source, carrier, authoredBase, total) → { physical, magic } for the face number `total` of a packet hit, or null for any
@@ -185,11 +185,11 @@ export const isPacketHit = (ctx, source, carrier, profile, share) => fixCoreEnab
 export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
   const profile = { ...(carrier?.combatProfile || {}), ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}) };
   const share = FightMagicShare(ctx, profile);
-  if (!isPacketHit(ctx, source, carrier, profile, share) || carrier.skipRatingBonus) return null;
+  if (!IsPacketHit(ctx, source, carrier, profile, share) || carrier.skipRatingBonus) return null;
   const effects = configuredModule(ctx, 'effects');
   const finesse = core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
   const channel = (id, entity) => Math.max(0, Math.floor(sourceRatingValue(ctx, entity, id, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) * ChannelWeight(effects, id)));
-  return packetSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source), total });
+  return PacketSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source), total });
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
@@ -224,7 +224,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-11-19 (an element upgrade's packet): a player's physical-camp card with a magic share between 0 and 1 and no rating of its own deals a
   // physical part and a magic part on one hit. The physical part keeps its STR / AR channel and the magic part adds INT / Power (Arcane tradition) as its own
   // stage, so neither is lost to the other. A lent staff or sceptre card names its `ratingId`, and an enemy move reads its own, so both keep their one channel.
-  const packetHit = isPacketHit(ctx, source, carrier, profile, share);
+  const packetHit = IsPacketHit(ctx, source, carrier, profile, share);
   const ratingId = !packetHit && modern && (source?.kind !== 'enemy' || SpellTraditionsActive(ctx)) && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar';
   const ratingLabel = ratingId === 'pr' && SpellTraditionsActive(ctx) ? SpellTraditionLabel(carrier) : ChannelLabel(ratingId);
   // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).

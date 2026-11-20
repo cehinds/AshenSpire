@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeOptions, upgradeStepRng, rarityOfStep } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, RarityOfStep } from '../src/model/cardUpgradeSteps.js';
 
 const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
 const byId = (id) => cards.find((c) => c.id === id);
@@ -54,7 +54,7 @@ export function distribution(card, stepIndex, rolls = ROLLS) {
     if (!step) continue;
     got += 1;
     groups[groupOf(step)] += 1;
-    rarities[rarityOfStep(step)] += 1;
+    rarities[RarityOfStep(step)] += 1;
     const key = step.k === 'fx' ? `fx:${step.fx}` : step.k;
     kinds[key] = (kinds[key] || 0) + 1;
   }

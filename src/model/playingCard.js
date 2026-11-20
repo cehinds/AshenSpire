@@ -60,7 +60,7 @@ import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, packetSplit, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -501,7 +501,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
       const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
       const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
       const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
-      const parts = packetSplit({ base, share: faceShare, physicalBonus, magicBonus, total: base + physicalBonus + magicBonus });
+      const parts = PacketSplit({ base, share: faceShare, physicalBonus, magicBonus, total: base + physicalBonus + magicBonus });
       const side = value => (Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(value >= 1 && playerMultiplier > 0 ? 1 : 0, value * playerMultiplier) : value);
       tokens[token] = Math.max(0, Math.floor(side(ScalePhysicalDamage(parts.physical, 1, physicalMultiplier))));
       tokens.packet = Math.max(0, Math.floor(side(parts.magic)));

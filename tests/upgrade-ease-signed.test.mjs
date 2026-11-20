@@ -1,7 +1,7 @@
 // Card-upgrade redesign (owner, 2026-11-19), step 4: a signed `stk` lowers a drawback; a Power is eligible for the ease group.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rollUpgradeOptions, upgradeStepRng, rarityOfStep } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, RarityOfStep } from '../src/model/cardUpgradeSteps.js';
 import { applyUpgradeSteps, upgradeStepsProblems } from '../src/model/cardUpgrade.js';
 
 const card = (extra = {}) => ({ id: 't.c', name: 'C', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, keywords: [], tags: ['camp:physical', 'maneuver:defend'], damageSchool: 'physical',
@@ -10,7 +10,7 @@ const easeSteps = (c, rolls = 600) => {
   const out = new Map();
   for (let i = 0; i < rolls; i += 1) for (const s of rollUpgradeOptions(c, [], 0, upgradeStepRng(i, 'ease', 0), {}, 30)) {
     const first = s.k === 'combo' ? s.steps[0] : s;
-    if (first.k === 'stk' && first.n < 0) out.set(rarityOfStep(s), s);
+    if (first.k === 'stk' && first.n < 0) out.set(RarityOfStep(s), s);
   }
   return out;
 };

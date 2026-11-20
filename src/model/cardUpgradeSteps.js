@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, holdsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -37,7 +37,7 @@ const GROUP_OF = Object.freeze({
   range: 'identity', targeting: 'identity', maneuver: 'identity', school: 'identity', dmgType: 'identity',
 });
 /** The group an option kind belongs to; every `fx:` effect and `addStatus` / `attr` is a new effect. */
-export const upgradeGroupOf = (kind) => GROUP_OF[kind] || 'new';
+export const UpgradeGroupOf = (kind) => GROUP_OF[kind] || 'new';
 // Share of each group by upgrade number (upTo is inclusive). New effect and identity are listed apart: identity sits inside the
 // brief's "new effect" total (25 / 40 / 50 / 65).
 const GROUP_SHARES = Object.freeze([
@@ -46,7 +46,7 @@ const GROUP_SHARES = Object.freeze([
   { upTo: 7, ease: 20, eff: 30, new: 35, identity: 15 },
   { upTo: MAX_CARD_UPGRADES, ease: 15, eff: 20, new: 45, identity: 20 },
 ]);
-export const upgradeGroupShares = (upgradeNumber) => GROUP_SHARES.find((row) => upgradeNumber <= row.upTo) || GROUP_SHARES[GROUP_SHARES.length - 1];
+export const UpgradeGroupShares = (upgradeNumber) => GROUP_SHARES.find((row) => upgradeNumber <= row.upTo) || GROUP_SHARES[GROUP_SHARES.length - 1];
 
 /** Pick a key by weight from `u` in [0, 1): { key, rest } where `rest` is `u` rescaled inside the picked slice, for the next level of the roll. */
 function pickByWeight(entries, u) {
@@ -76,7 +76,7 @@ const VENDOR_RARITY_ODDS = Object.freeze({
   off: Object.freeze([{ upTo: 3, odds: [80, 18, 2] }, { upTo: 5, odds: [60, 32, 8] }, { upTo: 7, odds: [40, 42, 18] }, { upTo: MAX_CARD_UPGRADES, odds: [25, 45, 30] }]),
 });
 /** The rarity odds of an upgrade number: the base table, or a vendor's `own` / `off` category table. */
-export const upgradeRarityOdds = (upgradeNumber, standing = 'base') => {
+export const UpgradeRarityOdds = (upgradeNumber, standing = 'base') => {
   const table = VENDOR_RARITY_ODDS[standing] || RARITY_ODDS;
   return (table.find((row) => upgradeNumber <= row.upTo) || table[table.length - 1]).odds;
 };
@@ -88,10 +88,10 @@ export const UPGRADE_VENDORS = Object.freeze({
 });
 const WARD_STATUSES = Object.freeze(['ward', 'barrier']);
 /**
- * upgradeCategoryOf(kind, option, card) -> 'physical' | 'magic' | 'neutral' (proposal section 11). A kind can be either by card: a boost is
+ * UpgradeCategoryOf(kind, option, card) -> 'physical' | 'magic' | 'neutral' (proposal section 11). A kind can be either by card: a boost is
  * physical for STR / DEX and magic for INT / WIS, a Block is magic on a spell, a status is the card's school's, a cost cut is SP or Mana.
  */
-export function upgradeCategoryOf(kind, option, card) {
+export function UpgradeCategoryOf(kind, option, card) {
   const spell = isSpellCard(card);
   switch (kind) {
     case 'dmg': case 'hits': case 'poise': case 'dmgType': case 'maneuver': case 'range': case 'fx:target': case 'fx:counter': return 'physical';
@@ -108,7 +108,7 @@ export function upgradeCategoryOf(kind, option, card) {
   }
 }
 /** The rarity of a stored step: its `r`, or common when it has none (a step saved before rarity, or a common one). */
-export const rarityOfStep = (step) => (UPGRADE_RARITIES.includes(step?.r) ? step.r : 'common');
+export const RarityOfStep = (step) => (UPGRADE_RARITIES.includes(step?.r) ? step.r : 'common');
 // How much bigger each rarity makes a sized step (times limits.scale, the rank-up bonus's own x2): damage, Block and Poise x1 / x2 / x4,
 // stacks +1 / +2 / +3, a status added 1 / 2 / 3 stacks, a Block effect x1 / x2 / x3. Every kind's own guard (the +100% cap, the status cap,
 // the cost floors) still limits the size, and a rarity whose size would not beat the one below it is not offered.
@@ -424,7 +424,7 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   // The packet is 75% of the matching damage step (min 2 / 3 / 6 by rarity) and, with the damage steps, stays inside the +100% guard.
   // A card with an authored `attack` block (typed components) keeps its own mix: no packet is offered there.
   if (hitsEnemy && !counterReturn && camp !== 'spell' && !current.attack && isPlainEffect(effects[dmgIndex], 'damage')) {
-    const held = holdsPacket(current);
+    const held = HoldsPacket(current);
     if (held || (current.damageSchool === 'physical' && !tagged((s) => s.damageSchool))) {
       const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
       const hits = hitsOf(effects[dmgIndex]);
@@ -553,11 +553,11 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const taken = new Set();
   // kindsAt(r, group): the kinds still open at rarity r, in WEIGHTS order.
   const vendor = UPGRADE_VENDORS[limits.vendor] || null;
-  const categoryAt = (r, kind) => upgradeCategoryOf(kind, perRarity[r][kind], current);
+  const categoryAt = (r, kind) => UpgradeCategoryOf(kind, perRarity[r][kind], current);
   const kindsAt = (r, group, category) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && !taken.has(kind) && (!graded || r === 0)
-    && (!group || upgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category));
+    && (!group || UpgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category));
   const out = [];
-  const shares = upgradeGroupShares(stepIndex + 1);
+  const shares = UpgradeGroupShares(stepIndex + 1);
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream. `pick` is split by
   // rescaling: it picks the group, the rest of it picks the rarity, and what remains picks the kind inside both.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {
@@ -577,7 +577,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
       standing = category === 'neutral' ? 'base' : category === vendor.own ? 'own' : 'off';
     }
     const here = (r) => kindsAt(r, group, category || undefined);
-    const rarityOdds = upgradeRarityOdds(stepIndex + 1, standing);
+    const rarityOdds = UpgradeRarityOdds(stepIndex + 1, standing);
     const rarities = [0, 1, 2].filter((r) => here(r).length).map((r) => [r, rarityOdds[r]]);
     const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
     const inGroup = here(rarity);

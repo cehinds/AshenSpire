@@ -6,7 +6,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { cardUpgradeModel, UpgradeStepLook } from '../src/ui/models/CardUpgradeModel.js';
 import { commitCardUpgrade, planCardUpgrade } from '../src/model/cardUpgradeService.js';
-import { rarityOfStep } from '../src/model/cardUpgradeSteps.js';
+import { RarityOfStep } from '../src/model/cardUpgradeSteps.js';
 
 const newRun = (seed) => Object.assign(createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }), { itemUpgradeLevels: { 'armament/greatsword': 9 } });
 const damageOf = (def) => (def.effects || []).find((e) => e.op === 'damage')?.amount ?? 0;
@@ -19,9 +19,9 @@ test('every option carries its rarity and a size, for a rest-site row and a Blac
       const model = cardUpgradeModel(registries, run, null, { blacksmith });
       for (const row of model.rows) {
         if (!row.plan.step) { assert.equal(row.look, null, 'a row with no step names no rarity'); continue; }
-        assert.equal(row.look.rarity, rarityOfStep(row.plan.step), 'the row names the rarity of its step');
+        assert.equal(row.look.rarity, RarityOfStep(row.plan.step), 'the row names the rarity of its step');
         for (const option of row.options) {
-          assert.equal(option.look.rarity, rarityOfStep(option.step));
+          assert.equal(option.look.rarity, RarityOfStep(option.step));
           assert.equal(option.look.rarityLabel, { common: 'Common upgrade', uncommon: 'Uncommon upgrade', rare: 'Rare upgrade' }[option.look.rarity]);
           seen.add(option.look.rarity);
           if (['dmg', 'blk'].includes(option.step.k)) assert.match(option.look.size, /^\+\d+ (damage|Block)$/);

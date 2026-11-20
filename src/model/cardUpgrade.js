@@ -227,7 +227,7 @@ function applyStep(card, step) {
     }
     case 'tag': {
       const packet = Number.isFinite(step.packet) && step.packet > 0 ? step.packet : 0;
-      if (step.tag && !(packet && holdsPacket(card))) {
+      if (step.tag && !(packet && HoldsPacket(card))) {
         const family = Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix));
         const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
@@ -248,7 +248,7 @@ function applyStep(card, step) {
           effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
         }
       }
-      if (step.damageSchool && !(packet && holdsPacket(card))) out.damageSchool = step.damageSchool;
+      if (step.damageSchool && !(packet && HoldsPacket(card))) out.damageSchool = step.damageSchool;
       if (step.damage && !packet) {
         const keepType = (tag) => !tag.startsWith('damage:');
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
@@ -285,11 +285,11 @@ function applyStep(card, step) {
 // (Barrier then Ward for the magic part, Block then Poise for the physical part) and later damage steps (which scale both parts in proportion)
 // need nothing else. A physical type the card already chose (a dmgType step) stays the physical part's. A card that already holds a packet
 // raises it by the same sizes: it never gains a second element.
-export const holdsPacket = (card) => Number.isFinite(card?.magicShare) && card.magicShare > 0 && card.magicShare < 1 && UPGRADE_ELEMENTS.includes(card.damageSchool);
+export const HoldsPacket = (card) => Number.isFinite(card?.magicShare) && card.magicShare > 0 && card.magicShare < 1 && UPGRADE_ELEMENTS.includes(card.damageSchool);
 function addElementPacket(out, card, step) {
   const index = out.effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
   if (index < 0) return out;
-  const held = holdsPacket(card) ? card.magicShare : 0;
+  const held = HoldsPacket(card) ? card.magicShare : 0;
   const before = out.effects[index].amount;
   const after = before + step.packet;
   out.effects[index].amount = after;

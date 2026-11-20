@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeOptions, upgradeStepRng, UPGRADE_KIND_WEIGHTS, upgradeRarityOdds, upgradeCategoryOf, UPGRADE_VENDORS } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, UPGRADE_KIND_WEIGHTS, UpgradeRarityOdds, UpgradeCategoryOf, UPGRADE_VENDORS } from '../src/model/cardUpgradeSteps.js';
 import { applyUpgradeSteps, upgradeStepsProblems } from '../src/model/cardUpgrade.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 
@@ -141,7 +141,7 @@ const vendorMix = (card, vendor, { n = 4000, applied = [] } = {}) => {
     if (!step) continue;
     const kind = step.k === 'fx' ? `fx:${step.fx}` : step.k === 'tag' ? (step.damageSchool ? 'element' : step.damage ? 'dmgType' : step.tag?.startsWith('range:') ? 'range' : step.tag?.startsWith('targeting:') ? 'targeting' : step.tag?.startsWith('maneuver:') ? 'maneuver' : 'rankDown')
       : step.k === 'combo' ? 'combo' : step.k;
-    const cat = kind === 'combo' ? 'neutral' : upgradeCategoryOf(kind, kind === 'fx:boost' ? { stat: step.stat } : kind === 'addStatus' ? { statuses: [step.status] } : kind === 'cost' ? { pools: [step.pool || 'sp'] } : {}, card);
+    const cat = kind === 'combo' ? 'neutral' : UpgradeCategoryOf(kind, kind === 'fx:boost' ? { stat: step.stat } : kind === 'addStatus' ? { statuses: [step.status] } : kind === 'cost' ? { pools: [step.pool || 'sp'] } : {}, card);
     mix[cat] += 1; mix.total += 1;
     if (step.r === 'rare') mix.rare += 1;
   }
@@ -149,10 +149,10 @@ const vendorMix = (card, vendor, { n = 4000, applied = [] } = {}) => {
 };
 
 test('vendor odds: the own category rolls rarer than the off category, neutral reads the base table', () => {
-  assert.deepEqual(upgradeRarityOdds(1), [70, 25, 5]);
-  assert.deepEqual([1, 4, 6, 8].map((n) => upgradeRarityOdds(n, 'own')), [[55, 33, 12], [35, 42, 23], [18, 42, 40], [7, 33, 60]]);
-  assert.deepEqual([1, 4, 6, 8].map((n) => upgradeRarityOdds(n, 'off')), [[80, 18, 2], [60, 32, 8], [40, 42, 18], [25, 45, 30]]);
-  assert.deepEqual(upgradeRarityOdds(9, 'base'), [10, 40, 50]);
+  assert.deepEqual(UpgradeRarityOdds(1), [70, 25, 5]);
+  assert.deepEqual([1, 4, 6, 8].map((n) => UpgradeRarityOdds(n, 'own')), [[55, 33, 12], [35, 42, 23], [18, 42, 40], [7, 33, 60]]);
+  assert.deepEqual([1, 4, 6, 8].map((n) => UpgradeRarityOdds(n, 'off')), [[80, 18, 2], [60, 32, 8], [40, 42, 18], [25, 45, 30]]);
+  assert.deepEqual(UpgradeRarityOdds(9, 'base'), [10, 40, 50]);
   assert.deepEqual(UPGRADE_VENDORS.blacksmith, { own: 'physical', physical: 3, magic: 0.25, neutral: 1 });
   assert.deepEqual(UPGRADE_VENDORS.arcane, { own: 'magic', physical: 0.25, magic: 3, neutral: 1 });
 });
