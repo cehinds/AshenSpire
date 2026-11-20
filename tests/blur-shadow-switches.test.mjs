@@ -7,6 +7,7 @@ import { settingsRows, EffectsModalHtml } from '../src/ui/screens/settings.js';
 import { t } from '../src/ui/strings.js';
 import { SurfaceFlags, SURFACE_KEYS, EffectsSummary } from '../src/ui/performance.js';
 import { DEVICE_KEYS } from '../src/model/settingsSync.js';
+import { ApplySurfaceFlags } from '../src/ui/displaySettings.js';
 
 const rows = settingsRows();
 const row = (key) => rows.find((candidate) => candidate.key === key);
@@ -41,4 +42,14 @@ test('the modal draws a Blur and shadows section after Fighter motion, live with
   assert.ok(html.includes(t('settings.effects.surface')));
   assert.ok(html.includes(t('settings.effects.surfaceNote')));
   for (const key of Object.values(SURFACE_KEYS)) assert.ok(html.includes(`data-row-key="${key}"`), key);
+});
+
+test('the root carries data-fx-blur / data-fx-shadows only when forced, and drops them for Auto', () => {
+  const root = { dataset: {} };
+  ApplySurfaceFlags(root, { fxBlur: 'off', fxShadows: 'off' });
+  assert.deepEqual(root.dataset, { fxBlur: 'off', fxShadows: 'off' });
+  ApplySurfaceFlags(root, { fxBlur: 'on', fxShadows: 'auto' });
+  assert.deepEqual(root.dataset, { fxBlur: 'on' });
+  ApplySurfaceFlags(root, {});
+  assert.deepEqual(root.dataset, {});
 });
