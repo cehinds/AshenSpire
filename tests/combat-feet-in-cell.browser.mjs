@@ -3,7 +3,8 @@
 // cell, about footInCellFraction of the cell's height above its bottom line, never on a line.
 // Owner 2026-11-20: the cards' top rule wins for a lone player: its feet stand at the resting hand cards' top (within
 // 2 px), never inside the cards, and it is exempt from the cell checks (the cards' top, not its cell, places it). A back-row enemy's lift and
-// shrink are part of the layout, so its drawn feet stand in its cell too.
+// shrink are part of the layout, so its drawn feet stand in its cell too, and it is drawn backRowEnemyScale of the size
+// the same enemy has in the front row (a three-enemy shot whose enemies start in the back row; the row is flipped live).
 // A ?shot=combat boot, real layout, the visible .formation-grid-cell rectangles.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -12,13 +13,14 @@ import { uiConfig } from '../src/config/generated/ui.js';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 // The grid starts off (owner, 2026-11-19); this test measures cells, so it turns the grid on.
 const GRID_ON = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
-const fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction;
+const { footInCellFraction: fraction, backRowEnemyScale } = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+const SCENES = [{ name: 'one enemy', query: '' }, { name: 'back row', query: '&shotEnemyCount=3', backRow: true }];
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 try {
-  for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
+  for (const scene of SCENES) for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, reducedMotion: 'reduce' });
-    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1&shotSettings=${GRID_ON}`, { waitUntil: 'load' });
+    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1${scene.query}&shotSettings=${GRID_ON}`, { waitUntil: 'load' });
     await p.waitForSelector('.combatant .sprite');
     await p.waitForTimeout(2500);
     const m = await p.evaluate(() => ({
@@ -31,13 +33,15 @@ try {
       }),
       figures: [...document.querySelectorAll('.combatant')].map(f => {
         const r = f.querySelector('.sprite').getBoundingClientRect();
-        return { side: f.classList.contains('enemy') ? 'enemy' : 'player', foot: r.bottom, x: r.left + r.width / 2 };
+        return { side: f.classList.contains('enemy') ? 'enemy' : 'player', foot: r.bottom, x: r.left + r.width / 2, height: r.height,
+          cell: f.dataset.formationCell, row: f.dataset.bandRow };
       }),
     }));
-    assert.ok(m.figures.length >= 2, `${w}x${h}: the shot has a player and an enemy`);
+    assert.ok(m.figures.length >= 2, `${w}x${h} ${scene.name}: the shot has a player and an enemy`);
+    if (scene.backRow) assert.ok(m.figures.some(f => f.side === 'enemy' && f.row === 'back'), `${w}x${h} ${scene.name}: the shot has a back-row enemy`);
     const lonePlayer = m.figures.filter(f => f.side === 'player').length === 1;
     for (const fig of m.figures) {
-      const at = `${w}x${h} ${fig.side}`;
+      const at = `${w}x${h} ${scene.name} ${fig.side}${fig.row ? ` (${fig.row} row)` : ''}`;
       // The cards' top places a lone player's feet, not its cell (on a 360px phone they stand a pixel above it).
       if (lonePlayer && fig.side === 'player') {
         assert.ok(Number.isFinite(m.cardsTop), `${at}: the hand publishes its resting cards' top`);
@@ -45,12 +49,24 @@ try {
         assert.ok(fig.foot <= m.cardTop + 1, `${at}: lone player's feet ${fig.foot.toFixed(1)} stand inside the hand cards (top ${m.cardTop.toFixed(1)})`);
         continue;
       }
-      // The drawn cell holding the foot: same side, foot between its top and bottom lines, x within its sheared span.
-      const cell = m.cells.find(c => c.side === fig.side && fig.foot > c.top && fig.foot < c.bottom && fig.x > c.left - 40 && fig.x < c.right + 40);
+      // The figure's own drawn cell, or (no cell named) the one holding the foot: same side, foot between its lines, x near its sheared span.
+      const cell = fig.cell ? m.cells.find(c => c.cell === fig.cell && fig.foot > c.top && fig.foot < c.bottom)
+        : m.cells.find(c => c.side === fig.side && fig.foot > c.top && fig.foot < c.bottom && fig.x > c.left - 40 && fig.x < c.right + 40);
       assert.ok(cell, `${at}: foot y ${fig.foot.toFixed(1)} is inside no drawn cell (cells ${m.cells.filter(c => c.side === fig.side).map(c => `${c.cell} ${c.top.toFixed(1)}..${c.bottom.toFixed(1)}`)})`);
       const height = cell.bottom - cell.top, above = (cell.bottom - fig.foot) / height;
       assert.ok(fig.foot - cell.top >= Math.min(1, height / 4) && cell.bottom - fig.foot >= Math.min(1, height / 4), `${at}: foot ${fig.foot.toFixed(1)} touches a line of cell ${cell.cell} ${cell.top.toFixed(1)}..${cell.bottom.toFixed(1)}`);
       if (height >= 20) assert.ok(Math.abs(above - fraction) <= 0.05, `${at}: foot stands ${(above * 100).toFixed(0)}% above cell ${cell.cell}'s bottom, expected ${fraction * 100}%`);
+    }
+    if (scene.backRow) {
+      // The same enemies moved to the front row refit once (the stage observes data-band-row): back / front = backRowEnemyScale.
+      await p.evaluate(() => { for (const f of document.querySelectorAll('.combatant.enemy[data-band-row="back"]')) f.dataset.bandRow = 'front'; });
+      await p.waitForTimeout(1500);
+      const front = await p.evaluate(() => [...document.querySelectorAll('.combatant')].map(f => f.querySelector('.sprite').getBoundingClientRect().height));
+      m.figures.forEach((fig, i) => {
+        if (fig.row !== 'back') return;
+        const ratio = fig.height / front[i];
+        assert.ok(Math.abs(ratio - backRowEnemyScale) <= 0.01, `${w}x${h} ${scene.name}: a back-row enemy is drawn ${ratio.toFixed(3)} of its front-row size, expected ${backRowEnemyScale}`);
+      });
     }
     await p.close();
   }
