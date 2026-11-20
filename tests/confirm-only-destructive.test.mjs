@@ -98,7 +98,7 @@ test('a row that still asks keeps its hold and its review', () => {
 // ---- the screens that wire the freed actions no longer carry a review ---------------------------------
 test('screens wire the freed actions with a commit and no review', () => {
   for (const [file, actionId] of [['src/ui/screens/event.js', 'eventChoice'], ['src/ui/screens/dialogue.js', 'eventChoice'],
-    ['src/ui/screens/shop.js', 'shopBuy'], ['src/ui/screens/shop.js', 'shopSell'], ['src/ui/screens/rest.js', 'shrineRest'],
+    ['src/ui/screens/shop.js', 'shopSell'], ['src/ui/screens/rest.js', 'shrineRest'],
     ['src/ui/components/combatActionRow.js', 'useFlask'], ['src/ui/screens/combat.js', 'endTurn']]) {
     const src = read(file);
     const call = src.match(new RegExp(`arm\\([^\\n]*'${actionId}',\\s*\\{[\\s\\S]*?\\}\\)\\)?[;,]`))?.[0] || '';
@@ -106,6 +106,16 @@ test('screens wire the freed actions with a commit and no review', () => {
     assert.doesNotMatch(call, /question:|confirmLabel:|detailHtml:|\.\.\.restReview|\.\.\.review/, `${file}: ${actionId} has no review wording`);
   }
   assert.doesNotMatch(read('src/ui/screens/event.js'), /CHOOSE/);
+});
+
+// SPEC §"Only destructive actions ask": a merchant purchase asks once in the shared confirmation modal (owner, 2026-11-20).
+test('a merchant purchase asks once in the shared confirmation modal, then commits through the transaction', () => {
+  const shop = read('src/ui/screens/shop.js');
+  assert.doesNotMatch(shop, /arm\([^\n]*'shopBuy'/, 'Buy is not a tap-commit any more');
+  assert.match(shop, /confirmMerchantPurchase\(\{[\s\S]*?onConfirm: \(\) => \{ purchasePending = false; return transact\(key, \(\) => onTake\(index, quote\)\); \}/);
+  assert.match(shop, /if \(busy \|\| purchasePending \|\| entry\.control\.disabled\) return;/, 'a second press while it asks opens no second ask');
+  const confirm = read('src/ui/components/merchantPurchaseConfirmation.js');
+  assert.match(confirm, /export function confirmMerchantPurchase\(\{[^\n]*\}\) \{\n\s*return OpenConfirmationModal\(/);
 });
 
 test('equip and unequip commit on one tap: the Armoury never hands its card the hold dial', () => {
