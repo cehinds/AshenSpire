@@ -3909,7 +3909,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -3918,7 +3918,11 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain {strength} Strength for this combat.",
+        "textTemplate": "Gain {strength} Strength for this combat. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "Gain {strength} Strength for this combat."
+        },
         "faceTemplate": ["Gain {strength} Strength."],
         "icon": "shield",
         "flavor": "A strengthening rite of the Bastion's stone carriers.\n\nLaborers pressed both palms against the first block before beginning the morning's lift. The gesture steadied tired arms through a day on the ridge. Their descendants found the same borrowed resolve useful beneath a weapon's weight.\n\nStone taught the hand before steel did."
@@ -7116,7 +7120,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -7125,7 +7129,11 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "No ally gains {strength} Strength.",
+        "textTemplate": "No ally gains {strength} Strength. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "No ally gains {strength} Strength."
+        },
         "faceTemplate": ["No ally gains {strength} Strength."],
         "icon": "shield",
         "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
