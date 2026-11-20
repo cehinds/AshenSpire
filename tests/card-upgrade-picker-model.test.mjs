@@ -391,7 +391,8 @@ test('the card\'s modal is the shared body: cost, then the before and after face
     const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     // One click commits (playtest 2026-11-17 item 36), so the shared body is the detail under the selected row.
     const body = host.querySelector('.card-upgrade-modal-details');
-    const kids = [...body.children].map(n => n.className.split(' ')[0]);
+    // The rarity chip and exact size of the step (owner, 2026-11-19) head the body; the order of the shared parts under it is what this pins.
+    const kids = [...body.children].map(n => n.className.split(' ')[0]).filter(name => name !== 'card-upgrade-look');
     assert.deepEqual([kids[0], kids[1], kids.at(-1)].filter(Boolean).slice(0, 2), ['confirmation-cost', 'card-upgrade-faces'], 'cost first, then the faces');
     assert.ok(kids.indexOf('card-upgrade-faces') < kids.indexOf('confirmation-change-list'), 'the stat rows are under the faces');
     door.close();
