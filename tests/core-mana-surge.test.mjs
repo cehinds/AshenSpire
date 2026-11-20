@@ -130,6 +130,8 @@ test('playing Mana Surge in a Core fight costs 1 SP (a cantrip pays no SP surcha
   combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
   if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
   combat.player.mana = 0;
+  // Room for the restore: a fresh Core Herald has 1 max Mana (stat contract 2026-11-18: +1 per four WIS), and the restore is what is tested.
+  combat.player.maxMana = 3;
   combat.player.stamina = Math.max(combat.player.stamina, 3);
   const sp = combat.player.stamina;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
@@ -184,11 +186,12 @@ test('an unprofiled run with a Bone Sceptre grants no Core card', () => {
 
 // The shipped setting locks combat equipment; exercise the supported intent
 // with that setting enabled, as older/configured saves can do.
-function equipmentFight(classId) {
+function equipmentFight(classId, { attributes } = {}) {
   const registries = { ...reg, balance: structuredClone(reg.balance) };
   registries.balance.equipment.allowChangesInCombat = true;
   registries.balance.equipment.swapEndsTurn = false;
   const run = createRunState({ registries, classId, seed: 511, profileMeta: meta });
+  if (attributes) Object.assign(run.attributes, attributes);
   if (classId === 'reaver') run.loadout.storage.push('boneSceptre');
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   combat.player.stamina = 99;
@@ -246,7 +249,8 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
 
 for (const intent of ['changeEquipment', 'swapArmament']) {
   test(`Core ${intent} preserves missing pools across repeated sceptre swaps and saves valid stats`, () => {
-    const { registries, run, combat } = equipmentFight('reaver');
+    // A legal lean allocation with INT 2, so the sceptre's INT crosses a fourth point (stat contract 2026-11-18: hand size +1 per four INT).
+    const { registries, run, combat } = equipmentFight('reaver', { attributes: { strength: 1, intelligence: 2 } });
     registries.balance.equipment.swapCostKind = 'allowance';
     if (intent === 'swapArmament') {
       combat.loadout.sets.rightHand[1] = 'boneSceptre';
@@ -261,8 +265,8 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? 'boneSceptre' : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the sceptre intelligence raises the saved Mana formula');
-        assert.equal(p.drawPerTurn, before.draw + (sceptre ? 2 : 0), 'the sceptre intelligence raises Draw');
+        assert.equal(p.maxMana, before.maxMana, 'the sceptre intelligence leaves Mana alone (WIS governs Mana)');
+        assert.equal(p.drawPerTurn, before.draw + (sceptre ? 1 : 0), 'the sceptre intelligence reaches INT 4: one more card');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
           assert.equal(p[field], Math.max(0, max - missing[field]), `${field} never refills a spent deficit`);
