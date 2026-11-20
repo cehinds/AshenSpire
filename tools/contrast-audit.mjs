@@ -102,6 +102,10 @@ const PROFILES = {
   'hi-contrast+ui-S': { highContrast: true, uiScale: 'S' },
 };
 
+// The map is read on the full-map pose (src/dev/shotStates.js `shotMapReveal`):
+// a configured run pins fog, which draws no plain node and no untraveled road.
+const MAP = 'map&shotMapReveal=1';
+
 // Each target names a screen (?shot=), a selector, and whether WCAG treats it as
 // large text (≥24px, or ≥18.66px bold → 3.0 floor instead of 4.5).
 const TARGETS = [
@@ -124,15 +128,16 @@ const TARGETS = [
   { screen: 'title', sel: '.title-screen #settings', label: 'Settings (menu entry)' },
   // The run-position chip paints its ink in two children (.ck key, .cv value);
   // measuring the parent chip toggled a colour no glyph uses and read no ink.
-  { screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },
-  { screen: 'map', sel: '.map-header .hud-act .cv', label: 'Act value' },
-  { screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' },
-  { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
+  // The Act chip (key `.ck` + value `.cv`) became one gold title in the act
+  // route strip, so `Act value` folded into `Act`.
+  { screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },
+  { screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' },
+  { screen: MAP, sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
   // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
   // to plan a run. Non-text (WCAG 1.4.11 → 3.0 floor), SVG, so the ink property
   // is stroke/fill rather than color. The selectors pin the PLAIN node and the
   // untraveled edge deliberately: every state class (visited/reachable/current/
-  // elite/boss, .traveled) swaps the stroke to a token high contrast never
+  // elite/boss, .traveled, .shrine-lane) swaps the stroke to a token high contrast never
   // touches (--gold 8.12:1, --blood, --parchment), so the states survive either
   // palette — it is the bare --line-soft ring and road that the atmospheric
   // palette (hi-contrast OFF) drops to 1.94:1 at the token, and antialiasing
@@ -142,9 +147,9 @@ const TARGETS = [
   // `adjacency`: judged on the boundary's worst adjacent rendered colour — the
   // ring straddles its own fill and the field and must clear the floor against
   // BOTH (Sunna's #45 ruling; the two clusters print beside the verdict).
-  { screen: 'map', sel: '.map-edge:not(.traveled)', label: 'map edge (untraveled road)', prop: 'stroke', box: true, adjacency: true },
+  { screen: MAP, sel: '.map-edge:not(.traveled):not(.shrine-lane)', label: 'map edge (untraveled road)', prop: 'stroke', box: true, adjacency: true },
   {
-    screen: 'map',
+    screen: MAP,
     sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
     label: 'map node ring (plain)', prop: 'stroke', box: true, adjacency: true,
   },
@@ -155,7 +160,7 @@ const TARGETS = [
   // default), not the fill's (1.17). A half-box on a circle contains no rim
   // (corner distance 0.71r < r), so the fill is measured as itself.
   {
-    screen: 'map',
+    screen: MAP,
     sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
     label: 'map node body (fill vs bg)', prop: 'fill', box: true, shrink: 0.5, median: true,
   },
@@ -592,12 +597,16 @@ const selectorContract = (source) => {
   const bad = [];
   const targetBlock = /const TARGETS = \[[\s\S]*?\n\];/.exec(source)?.[0] || '';
   const wanted = [
-    ["{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", 'S1 current Act metadata selector missing'],
-    ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
+    ["{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", 'S1 current Act metadata selector missing'],
+    ["{ screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
     ["{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
     ["{ screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' }", 'S8 Continue row does not require the highlighted, enabled entry'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
+  // A configured run pins fog, which draws no plain node or untraveled road, so
+  // the #45 structure rows read only on the full-map pose.
+  if (!/^const MAP = 'map&shotMapReveal=1';/m.test(source)) bad.push('S9 map targets are not read on the full-map pose');
+  if (targetBlock.includes("sel: '.map-header .hud-act")) bad.push('S10 removed map-header Act chip selector returned');
   if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
   // The run seed left the solo map header, so a `.mh-seed` map target can only
   // read BLIND.
@@ -611,8 +620,16 @@ if (args.includes('--source-selftest')) {
   const clean = readFileSync(fileURLToPath(import.meta.url), 'utf8');
   const plants = [
     {
+      name: 'map targets fall back to the fogged map', expected: 'S9 ',
+      source: clean.replace(/^const MAP = 'map&shotMapReveal=1';/m, "const MAP = 'map';"),
+    },
+    {
+      name: 'Act points back at the removed map-header chip', expected: 'S10 ',
+      source: clean.replace("{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", "{ screen: MAP, sel: '.map-header .hud-act .ck', label: 'Act' }"),
+    },
+    {
       name: 'Act metadata points back at removed combined progress', expected: 'S1 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
+      source: clean.replace("{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' }", "{ screen: MAP, sel: '.map-header .mh-prog', label: 'Act' }"),
     },
     {
       // The Floor chip was removed from the run header on 2026-09-05 (owner:
@@ -622,20 +639,20 @@ if (args.includes('--source-selftest')) {
       // comes BACK without a chip to point at.
       name: 'Floor metadata target returns with no chip behind it', expected: 'S2 ',
       source: clean.replace(
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },\n  { screen: MAP, sel: '.map-header .hud-floor', label: 'Floor' },",
       ),
     },
     {
       name: 'SEED metadata target returns to the solo map header', expected: 'S3 ',
       source: clean.replace(
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
-        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },",
+        "{ screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },\n  { screen: MAP, sel: '.map-header .mh-seed', label: 'SEED' },",
       ),
     },
     {
       name: 'legend points back at removed map-header parent', expected: 'S4 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: 'map', sel: '.map-header #map-legend', label: 'map ? button' }"),
+      source: clean.replace("{ screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: MAP, sel: '.map-header #map-legend', label: 'map ? button' }"),
     },
     {
       name: 'combat Cinders points back at removed fight label', expected: 'S7 ',
@@ -943,7 +960,7 @@ const rows = [];
 try {
   const cdp = await connectCdp(dbg);
   for (const [pname, settings] of Object.entries(profiles)) {
-    for (const screen of ['title', 'map', 'combat', 'death', 'reward&shotRankUp=1', 'reward&shotRankUp=taken']) {
+    for (const screen of ['title', MAP, 'combat', 'death', 'reward&shotRankUp=1', 'reward&shotRankUp=taken']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
       // The fog-first map boot deliberately exposes only the entrance choice:
@@ -951,7 +968,7 @@ try {
       // but it gives the structural contrast probes nothing to see. Pose the
       // player's full path-map setting through the same public settings door so
       // ordinary roads and rings exist without reaching into render internals.
-      const screenSettings = screen === 'map' ? { ...settings, mapMode: 'path' } : settings;
+      const screenSettings = screen === MAP ? { ...settings, mapMode: 'path' } : settings;
       const profileState = await gotoScreen(
         cdp,
         `http://localhost:${port}/${servedPage}${screen ? `?shot=${screen}` : ''}`,

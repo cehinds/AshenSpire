@@ -208,6 +208,19 @@ export function createShotStates(ctx) {
         run.itemRanks[ref] = 1 + (at % 2);
       });
     }
+    // `?shotMapReveal=1` — THE WHOLE MAP, FOG OFF. A configured run pins its map mode to the authored route
+    // (model/map/mapknowledge.js resolveMapMode), so the player's path setting can no longer reveal plain nodes and
+    // untraveled roads, and the contrast gate's #45 structure probes (tools/contrast-audit.mjs) had nothing to read.
+    // This swaps THIS run's routes module for a copy with mapMode 'path'; the profile object other runs share is
+    // left untouched. Dev-only like every ?shot= state, and a ?shot= boot writes through the memory stub
+    // (src/main.js createMemoryStorage), so the pose never reaches a real save.
+    if (name === 'map' && shotParams.get('shotMapReveal') === '1') {
+      const profile = run.gameProfile;
+      const routes = profile?.modules?.routes;
+      if (!routes) throw new Error('?shotMapReveal=1 requires a run whose profile has a routes module.');
+      run.gameProfile = { ...profile, modules: { ...profile.modules, routes: { ...routes, mapMode: 'path' } } };
+      showMap();
+    }
     // `?shotAct=<n>` — the map of act n (2 or 3 open on a Rest), built the way advanceAct builds it. Poses before `?shotAt`.
     const shotAct = name === 'map' ? shotParams.get('shotAct') : null;
     if (shotAct) {
