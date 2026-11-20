@@ -54,7 +54,22 @@ test('responsive formation keeps every rank readout above its body', () => {
   assert.match(stage, /const hudBelow = \(\) => false;/);
 });
 
-test('the stage keeps the floor anchor on the fight\'s layoutState, not a per-mount closure', () => {
-  assert.doesNotMatch(stage, /const holdFloorShadow = /);
-  assert.match(stage, /floorShadowTop: holdFloorShadowTop\(layoutState, /);
+test('the stage fits the backdrop from the screen and the empty grid, never from living enemies', () => {
+  assert.doesNotMatch(stage, /holdFloorShadowTop|mobileFloorShadowTop|floorShadowTop/);
+  assert.match(stage, /CombatBackdropInputs\(\{ combatWidth: rect\.width, combatHeight: rect\.height,/);
+});
+
+test('the backdrop follows the combat box apart from the formation gate, and is released with the stage', () => {
+  assert.match(stage, /const backdropObserver = new ResizeObserver\(scheduleBackdrop\);\s*backdropObserver\.observe\(combatHost\);/);
+  assert.match(stage, /backdropObserver\.disconnect\(\);/);
+  assert.match(stage, /window\.removeEventListener\('resize', scheduleBackdrop\);/);
+  assert.match(stage, /fitCombatBackdrop\(\{ plan, narrow, screenKey: BackdropScreenKey\(\{ canvasWidth: now\.width, canvasHeight: now\.height, narrow,\s*formFactor: document\.documentElement\.dataset\.formFactor, bands: BACKDROP_BAND_VARS\.map\(name => combat\.style\.getPropertyValue\(name\)\) \}\) \}\);/);
+  // combatLayout's bands are in the key, the phone's field overlap (which follows the hand's controls) is not.
+  assert.match(stage, /const BACKDROP_BAND_VARS = \['--w4-band-hud', '--w4-band-context', '--w4-band-footer'\];/);
+  assert.doesNotMatch(stage.slice(stage.indexOf('const BACKDROP_BAND_VARS'), stage.indexOf('const BACKDROP_BAND_VARS') + 200), /field-overlap'/);
+  // The field box follows the hand (a phone's controls reserve): the fit takes it from the held grid, never live.
+  assert.match(stage, /CombatBackdropInputs\(\{ combatWidth: rect\.width, combatHeight: rect\.height, zoom, grid \}\)/);
+  // Held per screen on the fight's layoutState (co-op re-wires the stage), never in a per-mount closure.
+  assert.match(stage, /if \(pass\) layoutState\.backdropGrid = HeldBackdropGrid\(layoutState\.backdropGrid,\s*BackdropGridLines\(\{ plan: pass\.plan, zoom, narrow: pass\.narrow, screenKey: pass\.screenKey,/);
+  assert.equal(stage.match(/layoutState\.backdropGrid =/g).length, 1, 'only a formation pass stores the lines');
 });
