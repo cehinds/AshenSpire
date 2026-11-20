@@ -517,7 +517,7 @@ export function applyDisplaySettings(settings) {
   ApplySurfaceFlags(document.documentElement, settings);
   const motion = motionFlags(settings);
   for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
-  if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
+  if (!effectsEnabled(settings) || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
@@ -586,7 +586,7 @@ export function applyDisplaySettings(settings) {
   document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
-  document.documentElement.dataset.ambient = quality === 'lite' ? 'off' : amb;
+  document.documentElement.dataset.ambient = effectsEnabled(settings) ? amb : 'off';
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
