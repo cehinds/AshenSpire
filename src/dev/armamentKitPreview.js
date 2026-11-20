@@ -16,7 +16,7 @@ export function configureArmamentKitPreview(registries, run, right, left) {
 
 // `?shotArmor=<id>`: wear one of the run class's outfits, through the same loadout fields and pool reconcile a real equip uses, so an
 // armour's pools and turn grants (Sage's Robe's Ward, 2026-11-19) can be captured without first buying it. An unknown id throws, as above.
-export function configureArmourPreview(registries, run, id) {
+export function ConfigureArmourPreview(registries, run, id) {
   if (!registries.equipment.armour.some(o => o.classId === run.class && o.id === id)) throw new Error(`Unknown ${run.class} armour: ${id}`);
   run.loadout.sets.armor = [id];
   run.loadout.active.armor = 0;

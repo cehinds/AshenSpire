@@ -23,7 +23,7 @@ import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
-import { configureArmamentKitPreview, configureArmourPreview } from './armamentKitPreview.js';
+import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
@@ -103,7 +103,7 @@ export function createShotStates(ctx) {
     if (name === 'combat' && shotParams.get('shotKit') === '1') {
       configureArmamentKitPreview(ctx.getRegistries(), run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
     }
-    if (name === 'combat' && shotParams.get('shotArmor')) configureArmourPreview(ctx.getRegistries(), run, shotParams.get('shotArmor'));
+    if (name === 'combat' && shotParams.get('shotArmor')) ConfigureArmourPreview(ctx.getRegistries(), run, shotParams.get('shotArmor'));
     // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
     //
     // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
