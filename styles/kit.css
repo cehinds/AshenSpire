@@ -4824,6 +4824,12 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: var(--modal-grid-pad-top, 64px); row-gap: var(--modal-grid-row-gap, 64px);
 }
+/* Read-only deck inspection keeps only a tiny clearance for the cost pennants. */
+.deck-view-modal .pile-body { padding-top: 0; }
+.deck-view-modal .pile-body .as-cardgrid {
+  --modal-grid-pad-top: calc(16px / var(--ui-zoom, 1)); --modal-grid-row-gap: 32px;
+  column-gap: calc(9px / var(--ui-zoom, 1));
+}
 .reward-door .reward-row.reward-choice-grid { row-gap: 12px; }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
    These three variables are the only placement knobs a theme or future card

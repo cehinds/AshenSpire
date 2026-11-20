@@ -1,6 +1,6 @@
 # Recipient effects
 
-These animations decorate resolved events on the affected player or enemy. They do not infer successful hits from selected targets or change combat mechanics. Physical contact, spell contact, Ward, buffs/debuffs, status lifecycle and defensive reactions can share geometry while palette and separate overlay layers carry their meaning. Sweep is one group sprite per action. Range presentation has only melee and reach; legacy ranged labels normalize to reach.
+These animations decorate resolved events on the affected player or enemy. They do not infer successful hits from selected targets or change combat mechanics. Physical contact, spell contact, Ward, buffs/debuffs, status lifecycle and defensive reactions can share geometry while palette and separate overlay layers carry their meaning. Sweep is one group sprite per action. Range presentation has only melee and reach. Legacy ranged labels normalize to reach. Recipient sprites show in both Full and Lite, including when decorative Effects are off. Reduced motion and Reduce flashes suppress this animation.
 
 ## Authoritative configuration
 
@@ -15,7 +15,7 @@ node tools/config-build.mjs --check
 
 | Section | Purpose |
 | --- | --- |
-| `behavior` | Palettes, three-frame count, versioned atlas entries, neutral palettes and content-bounds threshold |
+| `behavior` | Palettes, enable flag, combat warm-up list, three-frame count, versioned atlas entries, neutral palettes and content-bounds threshold |
 | `motion` | Impact/aura/caster windup durations, melee/reach timing, reaction offset, frame selection and secondary-overlay start frame |
 | `sizing` | Actor-relative footprints, Ward/circle sizing, group Sweep, element/status overlay scale and delivery dimensions |
 | `layering` | Primary/circle opacity, per-layer and per-frame opacity, tint mix, status offset and stack intensity |
@@ -34,7 +34,7 @@ MP/Mana uses blue-violet (`mana` palette), distinct from SP/Stamina and AP. Ever
 
 `src/content/recipientEffectAtlas.js` exposes `RecipientEffectAtlasEntry(shape)`, returning `{asset,path,columns,rows,row}`, or `null` for an unknown shape. Every runtime ID is `assets/recipient-effects/v5/<shape>.png`: three columns, one row, 256×256 per frame. The versioned path cannot accidentally select the earlier four-row atlas.
 
-`RecipientEffectArtAvailable(shape, resolveAsset)` checks whether the supplied asset resolver maps the ID to an inline/pack/high-resolution URL. A bare development path is not proof that a file exists. In explicit source/art-authoring mode the renderer can load that path and fall back on failure. The existing `assetUrl()` seam remains responsible for runtime pack/tier resolution.
+`RecipientEffectArtAvailable(shape, resolveAsset)` checks whether the supplied asset resolver maps the ID to an inline/pack/high-resolution URL. A bare development path does not prove a file exists. A mounted fight starts decoding the configured contact, caster and element layers without delaying combat. When a clip is still cold or the art is unavailable, it uses the same static marker throughout its lifetime. In explicit source/art-authoring mode the renderer can load that path and fall back on failure. The existing `assetUrl()` seam remains responsible for runtime pack/tier resolution.
 
 ## Explicit art export and provenance
 
