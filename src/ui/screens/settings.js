@@ -409,10 +409,13 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
     onChange({ [key]: value });
     draw(key, value);
   };
+  const refusals = new Map();
+  const paintRefusals = () => { if (host) paintConfigProblems(host, settings, [...refusals].map(([key, message]) => ({ keys: [key], message }))); };
   const draw = (focusKey = null, focusValue = null) => {
     if (!host) return;
     host.innerHTML = bodyHtml(settings);
     afterDraw?.(host);
+    paintRefusals();
     host.querySelectorAll('.toggle[data-key]').forEach((box) => {
       box.addEventListener('change', () => commit(box.dataset.key, box.checked));
     });
@@ -430,10 +433,13 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
       const row = field && rowByKey(field.dataset.key);
       if (!row) return;
       const commitNumber = (raw) => {
-        const { value } = commitNumberRow(settings, row, raw);
+        const { value, refusal } = commitNumberRow(settings, row, raw);
         for (const input of wrap.querySelectorAll('input')) input.value = String(value);
         settings[row.key] = value;
         onChange({ [row.key]: value });
+        // The clamp says so, as in the panel: the row shows why the typed number was not kept.
+        if (refusal) refusals.set(row.key, refusal); else refusals.delete(row.key);
+        paintRefusals();
         refreshButton();
       };
       field.addEventListener('change', () => commitNumber(field.value));
