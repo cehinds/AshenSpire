@@ -290,9 +290,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        // Owner, 2026-11-20 (docs/balance/owner-ruling-2026-11-18.md §25): the Blight Rod's raw +1 max MP is a legacy item line (no signature) and its Wisdom point already
-        // feeds Mana, so it is dropped: the rod adds one MP through WIS only.
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod adds one MP through WIS; its raw maxMana line is not counted again');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod adds one MP through WIS; its raw maxMana line is dropped, its Wisdom already feeding Mana (owner, 2026-11-20)');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
@@ -303,8 +301,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         assert.equal(p.energyMax, p.maxStamina);
         assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
-        // §25 (2026-11-20): the rod's raw +1 is dropped, so nothing persists as an equipment bonus; the WIS-derived increase is never persisted either.
-        assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'no raw equipment MP persists, and never the WIS-derived increase');
+        assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the rod raw +1 MP line is dropped (its Wisdom feeds Mana, owner 2026-11-20), and the WIS-derived increase is never persisted');
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
         assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
@@ -316,7 +313,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
     combat.result = 'victory';
     runCombatEnd(run, combat);
     run.combatEntered = null; // The finished-fight transition clears its resume point.
-    assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the combat-end door persists the same (here no) raw pool bonus, §25');
+    assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the combat-end door persists the same raw pool bonus (none: the rod line is dropped, owner 2026-11-20)');
     const saves = createSaveManager(createMemoryStorage());
     saves.saveRun(run, combat.rng);
     assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));

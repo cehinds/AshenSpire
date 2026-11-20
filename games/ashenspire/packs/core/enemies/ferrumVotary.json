@@ -86,7 +86,8 @@
       "maxConsecutive": 1,
       "costSource": "authored",
       "legacyMove": "ironLitany",
-      "coreSp": "card"
+      "coreSp": "card",
+      "coreBlock": "card"
     },
     "card:ferrumVotary.thunderOath": {
       "aiWeight": 15,

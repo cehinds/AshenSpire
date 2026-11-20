@@ -1,0 +1,94 @@
+{
+  "request": "Owner play-test: \"card rewards keep auto inspecting instead of showing the (i) button above it, like before. Also, the (i) button is moved in some places. the (i) button should appear anywhere there is a card that can be selected. Also, inspect should work after pressing and holding the target.\" Decided: in combat a short hold still selects and a longer hold inspects; the deck editor is unchanged.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "reward-tap-selects",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".reward-choice-face" },
+        { "wait": { "ms": 500 } }
+      ],
+      "success": [
+        { "kind": "count", "label": "One card is chosen by the tap", "selector": ".reward-choice-face.is-chosen", "eq": 1 },
+        { "kind": "visible", "label": "The chosen card shows its (i)", "selector": ".reward-choice-face.is-chosen > .card-info-button" },
+        { "kind": "within", "label": "The (i) sits inside the reward door", "selector": ".reward-choice-face.is-chosen > .card-info-button", "container": ".reward-door" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The tap opened the card modal (auto inspect)", "selector": ".card-inspection-modal" }
+      ]
+    },
+    {
+      "name": "reward-info-opens",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".reward-choice-face" },
+        { "wait": { "ms": 400 } },
+        { "click": ".reward-choice-face.is-chosen > .card-info-button" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The (i) opens the card modal", "selector": ".card-inspection-modal" },
+        { "kind": "text", "label": "The modal offers Add to deck", "selector": ".card-inspection-modal [data-act=\"addToDeck\"]", "includes": "Add to deck" },
+        { "kind": "text", "label": "The modal offers Send to library", "selector": ".card-inspection-modal [data-act=\"addToLibrary\"]", "includes": "Send to library" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": []
+    },
+    {
+      "name": "reward-hold-inspects",
+      "url": "?shot=reward&shotSeed=1",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        { "hold": { "selector": ".reward-choice-face", "ms": 900 } },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Pressing and holding a reward card opens its modal", "selector": ".card-inspection-modal" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": []
+    },
+    {
+      "name": "combat-long-hold-inspects",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        { "hold": { "selector": ".hand .card", "ms": 1000 } },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "A long hold on a hand card opens its modal", "selector": ".card-inspection-modal" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": []
+    },
+    {
+      "name": "combat-short-hold-selects",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 2000,
+      "actions": [
+        { "hold": { "selector": ".hand .card", "ms": 450 } },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "A short hold selects: the hand's (i) appears above the card", "selector": ".hand-info-portal" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "A short hold opened the modal", "selector": ".card-inspection-modal" }
+      ]
+    }
+  ]
+}
