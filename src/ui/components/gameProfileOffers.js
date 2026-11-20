@@ -1198,6 +1198,12 @@ function mountCardPickDoor(appRoot, doorArgs)
                 ],
                 ariaAttribute: isFaceRadio ? 'aria-checked' : null,
             });
+            // The inspection light's attributes (cardInspection select()) go with the choice.
+            if (isFaceRadio && !isChosen)
+            {
+                face.removeAttribute('aria-pressed');
+                face.removeAttribute('aria-current');
+            }
             MarkSelected(control, isChosen, {
                 className: CHOSEN_CLASS,
                 ariaAttribute: 'aria-checked',
