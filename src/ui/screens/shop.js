@@ -29,9 +29,9 @@ import { shopWorkspaceLayout } from '../models/ShopWorkspaceModel.js';
 // Configured stock uses the same merchant frame, category dock, offer rows,
 // inspections and purchase review as the full game. The host retains ownership
 // of saved stock and its atomic transaction; this adapter only presents it.
-// A shop card has no selection step, so it wears the shared (i) badge always (merchantOffer.js shows it); the
-// reading it opens carries no purchase or play verbs (`only: []`), and buying stays on the row's own button.
-const shopCardOptions = Object.freeze({ level: 'glance', infoBadge: true, surface: 'shop', only: [] });
+// Merchant rows open the card's own reading and supply the same Buy/Sell
+// action as the row, so both routes retain the host's guarded transaction.
+const shopCardOptions = Object.freeze({ level: 'glance', surface: 'shop', only: [] });
 
 // A configured-shop row's description: the resolved text the card face / relic tooltip shows (cardPlainText and
 // relicText fill the {tokens}), never the raw textTemplate. Equipment and other kinds have no template to fill.
