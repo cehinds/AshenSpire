@@ -501,13 +501,16 @@ export function staticCardTokens(def, registries = null, rules = null) {
       const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
       const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
       const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
-      // The physical-damage scale cuts the physical part alone: the total is the cut physical plus the magic, split by the same weights the receipt reads.
+      // The receipt's order: the physical-damage scale cuts the physical part alone, the side scale takes the whole hit, the amount is floored ONCE,
+      // then the same PacketSplit (same weights) divides that amount. Flooring parts separately would drift a point from the hit.
       const cut = Number.isFinite(physicalMultiplier) && physicalMultiplier >= 0 ? physicalMultiplier : 1;
-      const weights = PacketWeights({ base, share: faceShare, physicalBonus, magicBonus });
-      const parts = PacketSplit({ base, share: faceShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: weights.physical * cut + weights.magic });
-      const side = value => (Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(value >= 1 && playerMultiplier > 0 ? 1 : 0, value * playerMultiplier) : value);
-      tokens[token] = Math.max(0, Math.floor(side(parts.physical)));
-      tokens.packet = Math.max(0, Math.floor(side(parts.magic)));
+      // The card's own share (`magicShare`) rules a packet, as the receipt reads it; the face profile alone would give the configured Technique share.
+      const weights = PacketWeights({ base, share: def.magicShare, physicalBonus, magicBonus });
+      const whole = weights.physical * cut + weights.magic;
+      const sided = Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(whole >= 1 && playerMultiplier > 0 ? 1 : 0, whole * playerMultiplier) : whole;
+      const parts = PacketSplit({ base, share: def.magicShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: sided });
+      tokens[token] = parts.physical;
+      tokens.packet = parts.magic;
     }
   }
   return tokens;

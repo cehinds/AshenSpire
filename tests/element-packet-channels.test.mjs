@@ -158,3 +158,26 @@ test('with the Core physical-damage scale (x0.7) the cut lands on the physical p
     assert.ok(Math.abs(scaled.row.magical - unscaled.row.magical) <= 1, `${name}: the magic part is untouched by the physical scale`);
   }
 });
+
+test('under the real Core profile the static face tokens equal the receipt for a small packet (no double flooring)', async () => {
+  const { staticCardTokens } = await import('../src/model/playingCard.js');
+  const { resolveGameProfile, bindGameProfileRegistries, applyGameProfileToContent } = await import('../src/model/gameProfile.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { contentBundle } = await import('../src/content/index.js');
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
+  const zero = { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 };
+  for (const [packet, dmg] of [[4, 2], [6, 4], [2, 0]]) {
+    const steps = [{ ...FIRE, packet }, ...(dmg ? [{ k: 'dmg', n: dmg }] : [])];
+    const combat = live();
+    combat.gameProfile = core;
+    Object.assign(combat.player.ratings, { ar: 0, pr: 0 });
+    const f = projectGameCard({ gameProfile: core }, { instanceId: 'i', cardId: 'core.strike', upgraded: true, upgradeSteps: steps });
+    const authored = f.effects.find((e) => e.op === 'damage').amount;
+    const ref = { cardId: 'core.strike', damageSchool: f.damageSchool, magicShare: f.magicShare, sourceHand: 'right' };
+    const carrier = tacticalCarrier(f, ref, combat, combat.player);
+    const row = hit(combat, carrier, authored);
+    const tokens = staticCardTokens(f, regs, { gameProfile: core, faceAttributes: zero });
+    assert.deepEqual([tokens.damage, tokens.packet], [row.physical, row.magical], `packet ${packet} + dmg ${dmg}: face ${tokens.damage}/${tokens.packet} vs receipt ${row.physical}/${row.magical}`);
+  }
+});
