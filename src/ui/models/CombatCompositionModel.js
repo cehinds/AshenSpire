@@ -18,6 +18,7 @@ export function combatArtworkKey({ width, height, zoom, wide = false, presentati
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset, actor.artLeading,
+    actor.backRow === true,
   ])], (_key, value) => typeof value === 'number' ? Math.round(value * 1000) / 1000 : value);
 }
 
@@ -113,6 +114,19 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     for (const row of band) row.size.x = row.x;
   }
   return placed;
+}
+
+// A back-row enemy (its engine row, actor.backRow) is drawn backRowEnemyScale of its fitted size. Owner 2026-11-20:
+// the layout shrinks it, not CSS, so composition stands its smaller body's feet in its drawn cell like any other
+// figure's. Scales the sizes in place (the fit's lastResort stays on the array) and returns them.
+export function BackRowEnemySizes(sizes, actors,
+  scale = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale ?? 1) {
+  for (const size of sizes) {
+    if (!actors.some(actor => actor.slot.id === size.id && actor.backRow === true)) continue;
+    size.scale *= scale;
+    size.visibleHeight *= scale;
+  }
+  return sizes;
 }
 
 // Owner 2026-11-20: the feet stay footInCellFraction above the cell's bottom line. A cell too short to hold the

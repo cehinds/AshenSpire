@@ -19,7 +19,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -878,6 +878,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) * fit : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
+        // An enemy in the engine's back row is drawn smaller by the layout (BackRowEnemySizes), not by CSS.
+        backRow: frame.classList.contains('enemy') && frame.dataset.bandRow === 'back',
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth, artLeading: Math.max(ceiling * zoom, racked),
@@ -913,12 +915,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     const fitFormation = () => {
-      const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
+      const viewportSizes = BackRowEnemySizes(fitViewportSprites({ width: fieldRect.width, actors,
         viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow), unit: fit,
         // Judge the fit on the positions composition will use: a solo
         // player's feet stay above the hand.
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
-        solo: solo && logicalViewport().height > 480 });
+        solo: solo && logicalViewport().height > 480 }), actors);
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         perspectiveGrid: true, unit: fit,
@@ -1713,6 +1715,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   poseObserver.observe(field, { subtree: true, attributes: true, attributeOldValue: true,
     attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
+  // A back-row enemy is drawn smaller by the layout (BackRowEnemySizes): a change of engine row refits once.
+  const bandRowObserver = new MutationObserver(scheduleForced);
+  bandRowObserver.observe(field, { subtree: true, attributes: true, attributeFilter: ['data-band-row'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
@@ -1748,6 +1753,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
+    bandRowObserver.disconnect();
     reducedMedia?.removeEventListener('change', reconcileReducedMotion);
     reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);

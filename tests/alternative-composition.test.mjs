@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
 import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
-import { insetPerspectiveFootprint, PerspectiveFootInsetY, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
+import { insetPerspectiveFootprint, PerspectiveFootInsetY, BackRowEnemySizes, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -308,4 +308,16 @@ test('a short cell shrinks the shadow inset so the foot stays footInCellFraction
   assert.equal(PerspectiveFootInsetY({ cellHeight: 25, shadowHeight: 20, inset }), 0);
   // A tall cell keeps the full inset.
   assert.equal(PerspectiveFootInsetY({ cellHeight: 120, shadowHeight: 9.3, inset }), inset);
+});
+
+test('a back-row enemy is drawn backRowEnemyScale of its fitted size by the layout', () => {
+  const scale = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale;
+  assert.ok(scale > 0 && scale < 1, 'the back row is drawn smaller');
+  const sizes = [{ id: 'a', scale: 1, visibleHeight: 100 }, { id: 'b', scale: 1, visibleHeight: 100 }];
+  sizes.lastResort = 0.8;
+  const actors = [{ slot: { id: 'a' }, backRow: true }, { slot: { id: 'b' }, backRow: false }];
+  const out = BackRowEnemySizes(sizes, actors);
+  assert.equal(out, sizes, 'scaled in place, the fit\'s lastResort kept');
+  assert.equal(out.lastResort, 0.8);
+  assert.deepEqual(out.map(s => [s.scale, s.visibleHeight]), [[scale, 100 * scale], [1, 100]]);
 });
