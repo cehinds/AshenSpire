@@ -3,7 +3,7 @@
 // Upcast button, the after-target rank prompt or its setting. The engine keeps
 // the rank math for old saves and tests; flip this to bring the UI back.
 export const UPCASTING_ENABLED = false;
-export const upcastingOffered = def => UPCASTING_ENABLED && !!def && upcastOptions(def).length > 0;
+export const UpcastingOffered = def => UPCASTING_ENABLED && !!def && upcastOptions(def).length > 0;
 
 // Optional temporary rank increases never mutate a deck instance.
 export function upcastOptions(def) {

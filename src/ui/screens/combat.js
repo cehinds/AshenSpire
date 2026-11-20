@@ -192,7 +192,7 @@ import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
 import { PlayConditionReachable, PlayConditionTargetPlan } from '../../engine/cardBehavior.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
-import { upcastingOffered, UPCASTING_ENABLED } from '../../model/upcasting.js';
+import { UpcastingOffered, UPCASTING_ENABLED } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
@@ -772,7 +772,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The upcast control is built from the preview's upcast options and the chosen tier: when either moves, the card is rebuilt.
     rebuildKey: entry => {
       const def = entry.preview?.resolvedDefinition;
-      if (combat.combatExpansionVersion !== 2 || !upcastingOffered(def)) return '';
+      if (combat.combatExpansionVersion !== 2 || !UpcastingOffered(def)) return '';
       return JSON.stringify([def.upcast.baseTier, upcastChoicePlan(def).options.map(option => [option.id, option.name]),
         upcastRanksByCard.get(entry.inst.instanceId) ?? def.upcast.baseTier, entry.preview.name]);
     },
@@ -2900,7 +2900,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function wireUpcastControl(card, inst, preview) {
-    if (combat.combatExpansionVersion !== 2 || !upcastingOffered(preview.resolvedDefinition)) return;
+    if (combat.combatExpansionVersion !== 2 || !UpcastingOffered(preview.resolvedDefinition)) return;
     const baseTier = preview.resolvedDefinition.upcast.baseTier;
     const selectedTier = upcastRanksByCard.get(inst.instanceId) ?? baseTier;
     const controls = document.createElement('div'); controls.className = 'card-upcast-controls';
@@ -3955,7 +3955,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const definition = resolveCombatCard(combat, inst);
     // With upcasting off no rank is sent: the engine plays the printed card.
     const rank = UPCASTING_ENABLED ? chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0 : undefined;
-    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastingOffered(definition)) {
+    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && UpcastingOffered(definition)) {
       if (expansionChoiceShell) { refusePlay(instanceId, 'upcast choice already open'); return; }
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
