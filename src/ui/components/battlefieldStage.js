@@ -1,5 +1,5 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
-import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid } from '../models/CombatBackdropFitModel.js';
+import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid, BackdropScreenKey } from '../models/CombatBackdropFitModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -708,6 +708,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
   let backdropRequest = 0;
+  // combatLayout's W4 bands: the HUD, the hand's context band and the footer (not --combat-field-overlap).
+  const BACKDROP_BAND_VARS = ['--w4-band-hud', '--w4-band-context', '--w4-band-footer'];
   // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
   // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
   // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
@@ -1572,9 +1574,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    // The screen only (the logical canvas and the device), never the field's or the hand's boxes, which follow the
-    // hand: a window resize that only scales the screen keeps it, and the held box and lines, which are local px.
-    fitCombatBackdrop({ plan, narrow, screenKey: [now.width, now.height, narrow, document.documentElement.dataset.formFactor].join('|') });
+    // A window resize that only scales the screen keeps the key, and the held box and lines, which are local px.
+    fitCombatBackdrop({ plan, narrow, screenKey: BackdropScreenKey({ canvasWidth: now.width, canvasHeight: now.height, narrow,
+      formFactor: document.documentElement.dataset.formFactor, bands: BACKDROP_BAND_VARS.map(name => combat.style.getPropertyValue(name)) }) });
     field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };

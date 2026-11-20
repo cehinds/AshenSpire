@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../src/ui/models/AlternativeFormationModel.js';
-import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid } from '../src/ui/models/CombatBackdropFitModel.js';
+import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid, BackdropScreenKey } from '../src/ui/models/CombatBackdropFitModel.js';
 
 // Owner, 2026-11-20: "When combat begins, the background should be fixed (like a solid image).
 // Sometimes when an enemy is defeated, the layers shift position." The backdrop fit depends only on
@@ -153,6 +153,29 @@ test('a field box change from the hand keeps the backdrop on the same screen', (
       const fresh = passLines(reserve, stagePlan(reserve, { enemies }), otherScreen);
       assert.equal(HeldBackdropGrid(held, fresh), fresh, `${otherScreen}: stores new values`);
     }
+  }
+});
+
+// Review of #2918, form-factor switch: the stage's forced pass can run before combatLayout writes the new bands, and
+// the redo after them ran on the same canvas. combatLayout's bands are in the key, so the redo stores fresh values;
+// the phone's field overlap, the field's live height and the hand's rest top are not, so a hand change keeps them.
+test('the bands from combatLayout key the held values; the overlap, field height and hand do not', () => {
+  for (const screen of SCREENS) {
+    const enemies = enemiesOf(3);
+    const keyFor = bands => BackdropScreenKey({ canvasWidth: screen.combatWidth, canvasHeight: screen.combatHeight, narrow: screen.narrow, formFactor: screen.formFactor, bands });
+    const preBands = keyFor(['92px', '265px', '92px']), landed = keyFor(['84px', '318px', '89px']);
+    assert.notEqual(landed, preBands, `${screen.label}: new bands make a new key`);
+    assert.equal(keyFor(['84.00000000000001px', '317.99999999999994px', '89px']), landed, `${screen.label}: float noise in a rewritten band keeps the key`);
+    const stale = HeldBackdropGrid(null, passLines(screen, stagePlan(screen, { enemies }), preBands));
+    const settledScreen = { ...screen, fieldTop: screen.fieldTop - 6, fieldHeight: screen.fieldHeight + 40 };
+    const fresh = passLines(settledScreen, stagePlan(settledScreen, { enemies }), landed);
+    const held = HeldBackdropGrid(stale, fresh);
+    assert.equal(held, fresh, `${screen.label}: the redo after the bands land stores fresh values`);
+    // Same canvas and bands: the overlap, the field's height and the hand's rest top move, the key does not.
+    const handMoved = { ...settledScreen, fieldHeight: settledScreen.fieldHeight - 35 };
+    const later = passLines(handMoved, stagePlan(handMoved, { enemies: enemiesOf(2), handCardsTop: screen.handTop - 30 }), keyFor(['84px', '318px', '89px']));
+    assert.notDeepEqual(later, held, `${screen.label}: the fixture moves the field and the grid`);
+    assert.equal(HeldBackdropGrid(held, later), held, `${screen.label}: the held values are kept`);
   }
 });
 

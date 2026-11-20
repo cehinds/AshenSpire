@@ -6,6 +6,18 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 // enemies, how many there are, who is alive, or the hand. The formation plan
 // supplies only the empty grid's lines, taken once per screen.
 
+// The screen the held box and lines belong to: the logical canvas, the device and the
+// bands combatLayout cut it into (its own pass can land after the stage's on a
+// form-factor switch, and the redo must store fresh values). Never the field's or
+// the hand's live boxes, nor the phone's field overlap: those follow the hand.
+// Bands are read as written ("167.26111111111112px"); a resize that only scales the
+// screen rewrites them with float noise in the last digits, so they key to 1/64 px.
+export function BackdropScreenKey({ canvasWidth, canvasHeight, narrow, formFactor, bands })
+{
+  const snap = band => Number.isFinite(parseFloat(band)) ? Math.round(parseFloat(band) * 64) / 64 : band;
+  return [canvasWidth, canvasHeight, narrow, formFactor, ...bands.map(snap)].join('|');
+}
+
 // The field box and the grid lines a pass drew, in local px (the lines from the
 // field's top). The field's height follows the hand (a phone's controls reserve),
 // so the backdrop takes it from here, not live. `screenKey` names the screen.
