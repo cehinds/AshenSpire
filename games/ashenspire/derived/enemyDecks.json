@@ -434,7 +434,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 12
+            "amount": 10
           },
           {
             "op": "heal",
@@ -446,7 +446,8 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "healRules",
-          "legacyMove": "goldenGuard"
+          "legacyMove": "goldenGuard",
+          "coreBlock": "card"
         }
       },
       {
@@ -1515,14 +1516,15 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 12
+            "amount": 10
           }
         ],
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "fortify"
+          "legacyMove": "fortify",
+          "coreBlock": "card"
         }
       },
       {
@@ -1794,7 +1796,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 15
+            "amount": 11
           },
           {
             "op": "applyStatus",
@@ -1807,7 +1809,8 @@
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "courtlyDecree"
+          "legacyMove": "courtlyDecree",
+          "coreBlock": "card"
         }
       },
       {
@@ -2066,14 +2069,15 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 16
+            "amount": 12
           }
         ],
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "prismGuard"
+          "legacyMove": "prismGuard",
+          "coreBlock": "card"
         }
       },
       {
@@ -2556,14 +2560,15 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "harden"
+          "legacyMove": "harden",
+          "coreBlock": "card"
         }
       },
       {
@@ -2673,7 +2678,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 16
+            "amount": 12
           },
           {
             "op": "heal",
@@ -2685,7 +2690,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "healRules",
-          "legacyMove": "goldenBulwark"
+          "legacyMove": "goldenBulwark",
+          "coreBlock": "card"
         }
       },
       {
@@ -3125,14 +3131,15 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "coolingAsh"
+          "legacyMove": "coolingAsh",
+          "coreBlock": "card"
         }
       },
       {
@@ -3304,14 +3311,15 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 12
+            "amount": 10
           }
         ],
         "hints": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "tailBastion"
+          "legacyMove": "tailBastion",
+          "coreBlock": "card"
         }
       },
       {
@@ -4247,7 +4255,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
@@ -4255,7 +4263,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "pearlGuard",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -4269,7 +4278,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 20
+            "amount": 12
           }
         ],
         "hints": {
@@ -4277,7 +4286,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "nacreWall",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -5434,7 +5444,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 12
+            "amount": 10
           }
         ],
         "hints": {
@@ -5442,7 +5452,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "oathWater",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -5847,7 +5858,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
@@ -5855,7 +5866,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "frozenBulwark",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -6406,7 +6418,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
@@ -6414,7 +6426,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "kilnPlate",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -6885,7 +6898,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
@@ -6893,7 +6906,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "siegePlate",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {
@@ -7308,7 +7322,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 14
+            "amount": 10
           }
         ],
         "hints": {
@@ -7316,7 +7330,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "ironLitany",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         }
       },
       {

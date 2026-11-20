@@ -1,0 +1,56 @@
+{
+  "request": "In AshenSpire, every purchase should go through a confirm modal before it completes. Relics bought from traders/merchants currently skip it and buy immediately.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "trader-relic-buy",
+      "url": "?shot=shop&shotSeed=4",
+      "ready": ".merchant-workspace .merchant-offer",
+      "settleMs": 1200,
+      "actions": [
+        { "click": "[data-shop-category=\"relics\"]" },
+        { "wait": { "ms": 300 } },
+        { "click": "[data-shop-shelf=\"relics\"] [data-shop-action=\"buy\"]" },
+        { "wait": { "ms": 500 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Buying a relic opens the confirmation modal", "selector": ".confirmation-modal" },
+        { "kind": "text", "label": "The review asks to buy the relic", "selector": ".confirmation-modal", "includes": "Buy this relic?" },
+        { "kind": "text", "label": "The review states the price and the purse left", "selector": ".confirmation-modal", "matches": "Spend \\d+ of your \\d+ cinders \\(\\d+ left\\)" },
+        { "kind": "visible", "label": "The review offers Back", "selector": ".confirmation-modal .confirmation-cancel" },
+        { "kind": "text", "label": "The review's primary names the purchase", "selector": ".confirmation-modal .confirmation-confirm", "includes": "BUY IT" },
+        { "kind": "within", "label": "The review fits the viewport", "selector": ".confirmation-modal", "container": "body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "The relic was bought with no confirmation", "selector": ".confirmation-modal", "eq": 0 }
+      ]
+    },
+    {
+      "name": "blacksmith-armament-buy",
+      "url": "?shot=blacksmith&shotSeed=4",
+      "ready": ".blacksmith-workspace .merchant-offer",
+      "settleMs": 1200,
+      "actions": [
+        { "click": "#shop-cat-armaments" },
+        { "wait": { "ms": 300 } },
+        { "click": "[data-shop-shelf=\"armaments\"] [data-shop-action=\"buy\"]:not([disabled])" },
+        { "wait": { "ms": 500 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Buying an armament opens the confirmation modal", "selector": ".confirmation-modal" },
+        { "kind": "text", "label": "The review asks to buy the armament", "selector": ".confirmation-modal", "includes": "Buy this armament?" },
+        { "kind": "text", "label": "The review states the price and the purse left", "selector": ".confirmation-modal", "matches": "Spend \\d+ of your \\d+ cinders \\(\\d+ left\\)" },
+        { "kind": "within", "label": "The review fits the viewport", "selector": ".confirmation-modal", "container": "body" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "The armament was bought with no confirmation", "selector": ".confirmation-modal", "eq": 0 },
+        { "kind": "visible", "label": "The what-changed receipt opened (the purchase already happened)", "selector": ".what-changed-modal" }
+      ]
+    }
+  ]
+}
