@@ -4,7 +4,7 @@
   "modelSha256": "0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1",
   "correction": "fixed-upgrade-base-resource-budget-v1",
   "correctedModelSha256": "b77bc7280fac1a1e6f547ff400681cd62b379bc814bd36842c3b8fd4d41425f8",
-  "contentSha256": "6304de4cccea4bab556731a1bee0861c57d27bd0df7782f214cacf51caf4a22b",
+  "contentSha256": "a5ff37c0452d8af183a4075707104c2b96d2946ce107ed0f94be808401721616",
   "scope": "damage configuration, projected card definitions, validation problem rows",
   "cases": {
     "real-content": {

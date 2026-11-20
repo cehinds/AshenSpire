@@ -85,7 +85,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "coolingAsh"
+      "legacyMove": "coolingAsh",
+      "coreBlock": "card"
     },
     "card:furnaceSaint.advance": {
       "aiWeight": 0,

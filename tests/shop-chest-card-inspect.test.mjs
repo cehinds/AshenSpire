@@ -11,6 +11,7 @@ import { mountConfiguredShop } from '../src/ui/screens/shop.js';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { CONFIRMATION_INPUT_SHIELD_MS } from '../src/ui/components/confirmationModal.js';
 
 // Merchant thumbnails and reward choices open the shared contextual inspector.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -22,7 +23,9 @@ function withGlobalDom(fn) {
   Object.assign(globalThis, globals);
   dom.document.documentElement = dom.document.body;
   dom.document.getSelection = () => null;
-  try { return fn(dom); } finally {
+  let pending = null;
+  try { const out = fn(dom); if (out?.then) { pending = out; return out.finally(() => restore()); } return out; } finally { if (!pending) restore(); }
+  function restore() {
     clearSelection();
     for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
   }
@@ -100,15 +103,23 @@ test('armament and collectible rows inspect with Back and Buy', () => withGlobal
   assert.deepEqual(taken, []);
 }));
 
-test('inspector Buy forwards one guarded row purchase and row Buy never inspects', () => withGlobalDom(() => {
+test('inspector Buy forwards one guarded row purchase through the buy review, and row Buy never inspects', () => withGlobalDom(async () => {
   const { rows, taken } = mountShop();
+  // The inspector presses the row's armed Buy with element.click(), which a browser sends with detail 0.
+  for (const control of document.querySelectorAll('[data-shop-action="buy"]')) control.click = function () { this.dispatchEvent(new Event('click', { bubbles: true, detail: 0 })); };
   rows[0].querySelector('.merchant-thumbnail').click();
   modal().querySelector('[data-act="buy"]').click();
   assert.equal(modal(), null);
+  assert.equal(taken.length, 0, 'Buy asks before it spends (owner, 2026-11-19)');
+  document.querySelector('.confirmation-confirm').click();
   assert.equal(taken.length, 1);
   rows[1].querySelector('[data-shop-action="buy"]').click();
+  assert.equal(taken.length, 1);
+  document.querySelector('.confirmation-confirm').click();
   assert.equal(taken.length, 2);
   assert.equal(modal(), null);
+  // The review's focus timer and input shield run before the kit DOM's globals are taken away.
+  await new Promise(resolve => setTimeout(resolve, CONFIRMATION_INPUT_SHIELD_MS + 50));
 }));
 
 test('unaffordable and newly disabled merchant actions cannot buy from inspection', () => withGlobalDom(() => {
