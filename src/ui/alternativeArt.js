@@ -144,6 +144,10 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const sceneFloor = document.documentElement.dataset.wireframeSceneFloor;
   const sceneSkyline = document.documentElement.dataset.wireframeSceneSkyline;
   const sources = combatSceneLayers(device).map(layer => alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], narrow)));
+  const fitKey = JSON.stringify([backdrop.dataset.scene, width, height, fieldTop, ground, narrow, coverFloor, floorTop, zoom, coverWindow,
+    combat.clientHeight, sceneFloor, sceneSkyline, sources]);
+  if (svg.backdropFitKey === fitKey) return;
+  svg.backdropFitKey = fitKey;
   delete backdrop.dataset.mobileFloorPaintTop;
   const framing = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.scene;
   const previewTop = narrow ? fieldTop * .5 : combat.clientHeight * framing.topHeightFraction;

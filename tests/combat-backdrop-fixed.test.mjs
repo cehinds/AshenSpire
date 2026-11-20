@@ -68,3 +68,32 @@ test('the combat backdrop fit follows the screen: a resize refits it', () => {
   assert.equal(after.alternative.width, 1240);
   assert.equal(after.environment.height, 770);
 });
+
+// Counts every write a fitter makes to a fake node's attributes and inline style.
+const writeCounter = () => {
+  const counter = { writes: 0 };
+  counter.style = () => new Proxy({ setProperty(key, value) { counter.writes++; this[key] = value; } },
+    { set(target, key, value) { counter.writes++; target[key] = value; return true; } });
+  counter.node = (extra = {}) => ({ dataset: {}, style: counter.style(), getAttribute(name) { return this[`@${name}`] ?? null; },
+    setAttribute(name, value) { counter.writes++; this[`@${name}`] = String(value); }, removeAttribute(name) { counter.writes++; delete this[`@${name}`]; }, ...extra });
+  return counter;
+};
+
+test('a combat relayout with unchanged inputs writes nothing to the layered backdrop', async () => {
+  const { fitSceneBackdrop } = await import('../src/ui/components/sceneBackdrop.js');
+  const { LAYERED_SCENES } = await import('../src/content/layeredEnvironments.js');
+  const scene = Object.values(LAYERED_SCENES)[0];
+  const counter = writeCounter();
+  const nodes = scene.layers.map((_, i) => counter.node({ dataset: { layerIndex: String(i) } }));
+  const backdrop = { layeredRecipe: scene, dataset: {}, classList: { contains: () => true }, querySelectorAll: () => nodes };
+  const [screen] = SCREENS;
+  const inputs = CombatBackdropInputs({ ...screen, plan: stagePlan(screen, { enemies: enemiesOf(3) }) }).environment;
+  const first = fitSceneBackdrop(backdrop, { width: screen.combatWidth, ...inputs });
+  const writes = counter.writes;
+  assert.ok(writes > 0, 'the first fit paints the layers');
+  const again = fitSceneBackdrop(backdrop, { width: screen.combatWidth, ...inputs });
+  assert.equal(counter.writes, writes, 'a death-triggered relayout writes nothing');
+  assert.equal(again, first, 'and returns the same fit');
+  fitSceneBackdrop(backdrop, { width: screen.combatWidth - 40, ...inputs });
+  assert.ok(counter.writes > writes, 'a resize refits');
+});
