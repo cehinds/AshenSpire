@@ -44,7 +44,37 @@ export function layeredCombatScene(run = {}, environment) {
     const setting = authoredSetting || node?.settingId || taggedSetting || terrain || typeSetting;
     sceneId = REGION_SETTINGS[regionId]?.[setting];
   }
-  let scene = LAYERED_SCENES[sceneId];
+  return dressLayeredScene(run, LAYERED_SCENES[sceneId], binding);
+}
+
+// Decorative choices never consume the engine's RNG (same hash as environmentArt.js).
+function presentationHash(text) {
+  let value = 2166136261;
+  for (const char of String(text ?? '')) value = Math.imul(value ^ char.charCodeAt(0), 16777619) >>> 0;
+  return value;
+}
+
+// A region with no layered settings of its own borrows these outdoor scenes.
+const DIALOGUE_FALLBACK_SCENES = ['open-road', 'mountain-road', 'cave-approach'];
+
+/**
+ * The plate behind a conversation (owner, 2026-11-20). Always a layered scene,
+ * so it is fitted to the whole frame and never leaves a bare band: the node's
+ * own combat scene when it has one, otherwise one of its region's layered
+ * settings picked by the run seed and the node id (stable across reloads).
+ */
+export function layeredDialogueScene(run = {}, environment = combatEnvironment(run)) {
+  const own = layeredCombatScene(run, environment);
+  if (own) return own;
+  const regionId = run.environmentRegionId || environment?.region?.id;
+  const settings = [...new Set(Object.values(REGION_SETTINGS[regionId] || {}))];
+  const pool = (settings.length ? settings : DIALOGUE_FALLBACK_SCENES).filter(id => LAYERED_SCENES[id]);
+  const nodeId = run.mapNodeId || run.cursorId || '';
+  const sceneId = pool[presentationHash(`${run.seedString ?? ''}:${nodeId}:dialogue`) % pool.length];
+  return dressLayeredScene(run, LAYERED_SCENES[sceneId], INTRO_LAYERED_SCENES[nodeId]);
+}
+
+function dressLayeredScene(run, scene, binding) {
   if (!scene) return null;
   const explicitTime = ['day', 'dusk', 'night'].includes(run.presentationTimeId);
   const timeId = explicitTime ? run.presentationTimeId : scene.condition === 'night' ? 'night' : 'day';
