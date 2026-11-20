@@ -1396,6 +1396,7 @@ progression.cards.note,,Associated cards include future unlocks; reward choices 
 armoury.hub.name,,"Character, Armoury and Edit Deck",,
 armoury.hub.armory,,Armoury,,
 armoury.hub.deck,,Edit Deck,,
+armoury.hub.viewDeck,,View Deck,,
 armoury.deck.restOnly,,You can edit your deck at a rest site.,,
 progression.feat.acquired,,Acquired,,
 progression.feat.unlock,,Skill level {n},,

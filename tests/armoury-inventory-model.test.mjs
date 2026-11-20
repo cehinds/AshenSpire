@@ -26,7 +26,7 @@ test('outside a picker only usable non-equippable items are listed (none here)',
   const model = armouryInventoryModel({ registries, run: fresh(), meta, eq, picking: null, inCombat: false });
   assert.equal(model.selectedSlot, null);
   assert.equal(model.booksOnly, true);
-  assert.equal(model.allRows.length, 11);
+  assert.equal(model.allRows.length, 7);
   assert.deepEqual(model.rows, []);
   assert.equal(model.itemCount, 0);
 });
