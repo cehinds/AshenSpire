@@ -90,6 +90,9 @@ function wireframeChoiceRows() {
     advancedGroup: 'Developer',
     wireframeTopic: group.id,
     wireframeTopicLabel: group.label,
+    // Behind one Wireframes button in Developer › Layout (owner, 2026-11-20); the modal heads
+    // its sections with the family labels.
+    groupModal: 'wireframes',
     key: choice.key,
     type: 'choice',
     dropdown: true,

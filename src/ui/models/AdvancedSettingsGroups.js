@@ -1,4 +1,3 @@
-import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 //
@@ -17,12 +16,14 @@ function topic(row, section) {
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
   // `wireframeTopic` is the group's stable id, never its rewordable label.
+  // A row behind a group modal sits in its section's Layout topic, where the modal's button is drawn.
+  if (row.groupModal) return 'Layout';
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.cardSizeTopic) return 'Card size';
   if (row.debugTopic) return 'Diagnostics';
   if (row.textTopic) return row.textTopic;
   if (row.prologueTopic) return row.prologueTopic;
-  if (section === 'Developer') return row.key === 'creationAutoAdvance' ? 'QA shortcuts' : 'Window';
+  if (section === 'Developer') return row.key === 'creationAutoAdvance' ? 'QA shortcuts' : 'Layout';
   if (section === 'Map') return 'Map';
   if (section === 'Export') return 'Configuration file';
   if (section === 'Interface') {
@@ -44,7 +45,7 @@ export function advancedSubgroups(rows, section) {
     // A topic id is what a profile stores and what rows group by; a row whose
     // topic heading is rewordable copy carries that label separately, so a
     // reword never moves the id or merges two topics (Codex, #1489).
-    if (!labels.has(id) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
+    if (!labels.has(id) && !row.groupModal && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
   }
   const result = [...groups].map(([id, rows]) => ({ id, label: labels.get(id) ?? id, rows }));
   // A topic not named in an order keeps its discovered order, after the named
@@ -57,7 +58,7 @@ export function advancedSubgroups(rows, section) {
   // catalogue itself is written in — discovered, not restated, so the two
   // cannot disagree about which family comes first. Cards and the settings
   // window follow.
-  if (section === 'Developer') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.id), 'Card size', 'Window', 'QA shortcuts']);
+  if (section === 'Developer') byOrder(['Layout', 'Card size', 'QA shortcuts']);
   if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
   if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
   if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);

@@ -300,15 +300,83 @@ export function EffectsModalHtml(settings) {
 
 /**
  * OpenEffectsModal({ settings, onChange, opener }) — the modal the Combat › Effects
- * button opens. Every change goes through the same `onChange` the Settings rows use
- * (persistSettingsChange), and the body redraws so the greyed section and the
- * button face follow the master switch.
+ * button opens, through the shared OpenSettingsGroupModal. The body redraws so the
+ * greyed section and the button face follow the master switch.
  */
 export function OpenEffectsModal({ settings, onChange, opener = document.activeElement }) {
+  return OpenSettingsGroupModal({
+    settings, onChange, opener,
+    buttonKey: 'effectsMenu',
+    title: t('settings.row.effects'),
+    className: 'set-effects-modal',
+    bodyClassName: 'set-body set-effects-body',
+    bodyHtml: EffectsModalHtml,
+    afterDraw: (host) => {
+      host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
+    },
+  });
+}
+
+// ---- settings-group modals (owner, 2026-11-20) -------------------------------
+// A cluster of closely related rows can live behind one button row that opens
+// its own modal, like Effects. Advanced rows carry `groupModal: '<id>'`; the
+// Advanced panel draws one button row in their place (SettingsGroupButtonRow),
+// and search, reset, export and release visibility still see every row.
+// Only rows the modal can wire live behind one: switches, chips and drop-downs.
+const SETTINGS_GROUP_MODALS = Object.freeze({
+  wireframes: Object.freeze({
+    labelId: 'settings.groupModal.wireframes',
+    // One section per catalogue family, keyed by its stable id and headed by its rewordable
+    // label: two families that share a label stay two sections.
+    section: (row) => ({ id: row.wireframeTopic || '', label: row.wireframeTopicLabel || row.wireframeTopic || '' }),
+  }),
+});
+
+/** SettingsGroupRows(id) → the Advanced rows behind group modal `id`, in table order. */
+export function SettingsGroupRows(id) {
+  return SETTINGS_ROWS.filter((row) => row.groupModal === id && !row.retired);
+}
+
+/** SettingsGroupButtonRow(id) → the button row that opens group modal `id`: its face says how many rows differ from default. */
+export function SettingsGroupButtonRow(id) {
+  const spec = SETTINGS_GROUP_MODALS[id];
+  return {
+    cat: 'Advanced', key: `groupModal.${id}`, type: 'button', label: t(spec.labelId), note: tFull(spec.labelId),
+    btn: (settings = {}) => {
+      const changed = SettingsGroupRows(id).filter((row) => rowModified(settings, row)).length;
+      return changed ? t('settings.groupModal.changed', { count: changed }) : t('settings.groupModal.allDefault');
+    },
+  };
+}
+
+/** SettingsGroupModalHtml(settings, id) → the body of group modal `id`: its rows, sectioned by the spec's `section`. */
+export function SettingsGroupModalHtml(settings, id) {
+  const spec = SETTINGS_GROUP_MODALS[id];
+  const sections = new Map();
+  for (const row of SettingsGroupRows(id)) {
+    const { id: sectionId, label } = spec.section ? spec.section(row) : { id: '', label: '' };
+    if (!sections.has(sectionId)) sections.set(sectionId, { label, rows: [] });
+    sections.get(sectionId).rows.push(row);
+  }
+  return [...sections].map(([sectionId, { label, rows }]) => `<section class="set-topic set-group-modal-section" data-group-section="${esc(sectionId)}">`
+    + (label ? `<h4 class="set-subsection-heading">${esc(label)}</h4>` : '')
+    + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`).join('');
+}
+
+/**
+ * OpenSettingsGroupModal({ settings, onChange, opener, buttonKey, title, bodyHtml, ... }) — the one
+ * helper behind every settings button that opens its own modal (Effects, the Advanced group modals).
+ * Every change goes through the same `onChange` the Settings rows use (persistSettingsChange); the
+ * body redraws, focus stays on the control used, the opening button's face follows, and closing
+ * returns focus to that button (found again by `buttonKey` if the panel was redrawn meanwhile).
+ */
+export function OpenSettingsGroupModal({ settings, onChange, opener = document.activeElement, buttonKey, title, bodyHtml,
+  className = 'set-group-modal', bodyClassName = 'set-body set-group-modal-body', afterDraw = null }) {
   let host = null;
   const refreshButton = () => {
-    const row = rowByKey('effectsMenu');
-    document.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => { btn.textContent = row.btn(settings); });
+    const row = rowByKey(buttonKey) || (buttonKey.startsWith('groupModal.') ? SettingsGroupButtonRow(buttonKey.slice('groupModal.'.length)) : null);
+    if (!row || typeof row.btn !== 'function') return;
+    document.querySelectorAll(`[data-btn="${CSS.escape(buttonKey)}"]`).forEach((btn) => { btn.textContent = row.btn(settings); });
   };
   const commit = (key, value) => {
     settings[key] = value;
@@ -317,8 +385,8 @@ export function OpenEffectsModal({ settings, onChange, opener = document.activeE
   };
   const draw = (focusKey = null, focusValue = null) => {
     if (!host) return;
-    host.innerHTML = EffectsModalHtml(settings);
-    host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
+    host.innerHTML = bodyHtml(settings);
+    afterDraw?.(host);
     host.querySelectorAll('.toggle[data-key]').forEach((box) => {
       box.addEventListener('change', () => commit(box.dataset.key, box.checked));
     });
@@ -345,11 +413,41 @@ export function OpenEffectsModal({ settings, onChange, opener = document.activeE
   };
   return openModal({
     size: 'sm',
-    className: 'set-effects-modal',
-    title: t('settings.row.effects'),
-    bodyClassName: 'set-body set-effects-body',
+    className,
+    title,
+    bodyClassName,
     body: (node) => { host = node; draw(); },
     opener,
+    onClose: () => {
+      // The panel may have been redrawn while the modal was open; then the opener is gone and
+      // focus goes back to the same button in the new panel.
+      if (opener?.isConnected) return;
+      setTimeout(() => document.querySelector(`[data-btn="${CSS.escape(buttonKey)}"]`)?.focus({ preventScroll: true }), 0);
+    },
+  });
+}
+
+/**
+ * AdvancedTopicRowsHtml(settings, rows, groupId, topicId) → an Advanced topic's rows, with every
+ * cluster behind a group modal drawn once, as its button row, where its first row would sit.
+ */
+export function AdvancedTopicRowsHtml(settings, rows, groupId, topicId) {
+  const drawn = new Set();
+  return rows.map((row) => {
+    if (!row.groupModal) return settingsRowHtml(settings, compactAdvancedRow(row, groupId, topicId));
+    if (drawn.has(row.groupModal) || !SETTINGS_GROUP_MODALS[row.groupModal]) return '';
+    drawn.add(row.groupModal);
+    return settingsRowHtml(settings, SettingsGroupButtonRow(row.groupModal));
+  }).join('');
+}
+
+/** OpenSettingsGroup({ id, settings, onChange, opener }) — opens Advanced group modal `id`. */
+export function OpenSettingsGroup({ id, settings, onChange, opener = document.activeElement }) {
+  return OpenSettingsGroupModal({
+    settings, onChange, opener,
+    buttonKey: `groupModal.${id}`,
+    title: t(SETTINGS_GROUP_MODALS[id].labelId),
+    bodyHtml: (current) => SettingsGroupModalHtml(current, id),
   });
 }
 
@@ -1628,7 +1726,8 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   for (const group of visibleAdvancedGroups(debug, profile, nextProfile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
     for (const sub of cachedSubgroups(advanced, group.id, profile, nextProfile)) {
-      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
+      // A row behind a group modal is found too, filed under the button that opens it.
+      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}${row.groupModal && SETTINGS_GROUP_MODALS[row.groupModal] ? ` › ${t(SETTINGS_GROUP_MODALS[row.groupModal].labelId)}` : ''}` });
     }
   }
   return hits;
@@ -1745,7 +1844,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
-          + sub.rows.map((row) => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join('')
+          + AdvancedTopicRowsHtml(settings, sub.rows, group.id, sub.id)
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
@@ -2433,6 +2532,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
     btn.addEventListener('click', () => OpenEffectsModal({ settings, onChange, opener: btn }));
+  });
+
+  container.querySelectorAll('[data-btn^="groupModal."]').forEach((btn) => {
+    btn.addEventListener('click', () => OpenSettingsGroup({ id: btn.dataset.btn.slice('groupModal.'.length), settings, onChange, opener: btn }));
   });
 
   container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {

@@ -38,3 +38,9 @@
 }
 .set-more[open] > .set-more-toggle::before { transform: rotate(45deg); }
 .set-more > .set-more-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Settings > Advanced group modals (owner, 2026-11-20): the shared OpenSettingsGroupModal body.
+   Section headings line up with the row text, as in the Effects modal. */
+.set-group-modal-body .set-group-modal-section > .set-subsection-heading {
+  padding-inline: 0.5rem;
+}

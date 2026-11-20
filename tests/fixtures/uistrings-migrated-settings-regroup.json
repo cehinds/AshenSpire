@@ -3,6 +3,10 @@
   "ids": [
     "settings.group.Developer",
     "settings.group.Range",
-    "settings.group.Map"
+    "settings.group.Map",
+    "settings.more",
+    "settings.groupModal.allDefault",
+    "settings.groupModal.changed",
+    "settings.groupModal.wireframes"
   ]
 }
