@@ -1,7 +1,10 @@
 // PLAYWRIGHT_MODULE=/path/to/playwright CHROME=/path/to/chrome node tests/combat-feet-in-cell.browser.mjs
 // Owner 2026-11-06: every combatant's feet (its shadow's centre, the sprite's bottom) stand INSIDE the drawn formation
-// cell, about footInCellFraction of the cell's height above its bottom line, never on a line, and the player's feet
-// never stand inside the hand. A ?shot=combat boot, real layout, the visible .formation-grid-cell rectangles.
+// cell, about footInCellFraction of the cell's height above its bottom line, never on a line.
+// Owner 2026-11-20: the cards' top rule wins for a lone player: its feet stand at the resting hand cards' top (within
+// 2 px), never inside the cards, and it is exempt from the footInCellFraction check. A back-row enemy's lift and
+// shrink are part of the layout, so its drawn feet stand in its cell too.
+// A ?shot=combat boot, real layout, the visible .formation-grid-cell rectangles.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
@@ -19,7 +22,10 @@ try {
     await p.waitForSelector('.combatant .sprite');
     await p.waitForTimeout(2500);
     const m = await p.evaluate(() => ({
-      handTop: document.querySelector('.hand')?.getBoundingClientRect().top ?? Infinity,
+      // The resting cards' top, as the stage reads it: the hand strip's top plus its published --hand-rest-top.
+      cardsTop: (() => { const hand = document.querySelector('.hand'), r = hand?.getBoundingClientRect(), rest = parseFloat(hand?.style.getPropertyValue('--hand-rest-top'));
+        return r && Number.isFinite(rest) ? r.top + rest * (r.height / (hand.clientHeight || r.height || 1)) : NaN; })(),
+      cardTop: Math.min(...[...document.querySelectorAll('.hand .card')].map(c => c.getBoundingClientRect().top)),
       cells: [...document.querySelectorAll('.formation-grid-cell:not([hidden])')].map(t => {
         const r = t.getBoundingClientRect(); return { cell: t.dataset.cell, side: t.dataset.side, top: r.top, bottom: r.bottom, left: r.left, right: r.right };
       }),
@@ -29,6 +35,7 @@ try {
       }),
     }));
     assert.ok(m.figures.length >= 2, `${w}x${h}: the shot has a player and an enemy`);
+    const lonePlayer = m.figures.filter(f => f.side === 'player').length === 1;
     for (const fig of m.figures) {
       const at = `${w}x${h} ${fig.side}`;
       // The drawn cell holding the foot: same side, foot between its top and bottom lines, x within its sheared span.
@@ -36,8 +43,13 @@ try {
       assert.ok(cell, `${at}: foot y ${fig.foot.toFixed(1)} is inside no drawn cell (cells ${m.cells.filter(c => c.side === fig.side).map(c => `${c.cell} ${c.top.toFixed(1)}..${c.bottom.toFixed(1)}`)})`);
       const height = cell.bottom - cell.top, above = (cell.bottom - fig.foot) / height;
       assert.ok(fig.foot - cell.top >= Math.min(1, height / 4) && cell.bottom - fig.foot >= Math.min(1, height / 4), `${at}: foot ${fig.foot.toFixed(1)} touches a line of cell ${cell.cell} ${cell.top.toFixed(1)}..${cell.bottom.toFixed(1)}`);
-      if (height >= 20) assert.ok(Math.abs(above - fraction) <= 0.05, `${at}: foot stands ${(above * 100).toFixed(0)}% above cell ${cell.cell}'s bottom, expected ${fraction * 100}%`);
-      if (fig.side === 'player') assert.ok(fig.foot <= m.handTop + 1, `${at}: feet ${fig.foot.toFixed(1)} stand inside the hand (top ${m.handTop.toFixed(1)})`);
+      const exempt = lonePlayer && fig.side === 'player';
+      if (height >= 20 && !exempt) assert.ok(Math.abs(above - fraction) <= 0.05, `${at}: foot stands ${(above * 100).toFixed(0)}% above cell ${cell.cell}'s bottom, expected ${fraction * 100}%`);
+      if (exempt) {
+        assert.ok(Number.isFinite(m.cardsTop), `${at}: the hand publishes its resting cards' top`);
+        assert.ok(Math.abs(fig.foot - m.cardsTop) <= 2, `${at}: lone player's feet ${fig.foot.toFixed(1)} are not at the cards' top ${m.cardsTop.toFixed(1)}`);
+        assert.ok(fig.foot <= m.cardTop + 1, `${at}: lone player's feet ${fig.foot.toFixed(1)} stand inside the hand cards (top ${m.cardTop.toFixed(1)})`);
+      }
     }
     await p.close();
   }
