@@ -240,17 +240,17 @@ function surfaceChoiceLabels() {
 }
 
 export const SETTINGS_ROWS = [
-  { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
+  { cat: 'Combat', key: 'askToUpcastAfterTarget', topic: 'animation', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
     note: tFull('settings.row.askToUpcastAfterTarget') },
-  { cat: 'Combat', key: 'combatLogConsole', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
+  { cat: 'Combat', key: 'combatLogConsole', topic: 'combatLog', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
     note: tFull('settings.row.combatLogConsole') },
-  { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
+  { cat: 'Combat', key: 'combatLogPlayerColor', topic: 'combatLog', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
-  { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
+  { cat: 'Combat', key: 'combatLogEnemyColor', topic: 'combatLog', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
     label: t('settings.row.combatLogEnemyColor'), note: tFull('settings.row.combatLogEnemyColor') },
   ...rangeSettingsRows(),
   ...tooltipSettingsRows(),
-  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
+  { cat: 'Display', key: 'fullscreen', topic: 'interface', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
@@ -281,34 +281,34 @@ export const SETTINGS_ROWS = [
   // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
   // Advanced tip now says where the feel settings went so the section named for
   // combat stops being a dead end.
-  { cat: 'Combat', key: 'useSprites', def: true, label: t('settings.row.useSprites'),
+  { cat: 'Combat', key: 'useSprites', topic: 'animation', def: true, label: t('settings.row.useSprites'),
     note: tFull('settings.row.useSprites') },
-  { cat: 'Combat', key: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: t('settings.row.autoCombat'),
+  { cat: 'Combat', key: 'autoCombat', topic: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: t('settings.row.autoCombat'),
     note: tFull('settings.row.autoCombat') },
-  { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
+  { cat: 'Combat', key: 'combatSpeed', topic: 'autoCombat', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
     min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, integer: false, label: t('settings.row.combatSpeed'),
     note: tFull('settings.row.combatSpeed') },
-  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+  { cat: 'Combat', key: 'combatPreference', topic: 'autoCombat', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
     choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
-  { cat: 'Combat', key: 'autoCombatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
+  { cat: 'Combat', key: 'autoCombatSpeed', topic: 'autoCombat', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
     min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, integer: false, label: t('settings.row.autoCombatSpeed'),
     note: tFull('settings.row.autoCombatSpeed') },
-  { cat: 'Combat', key: 'combatStepPause', type: 'number', def: ACTION_PACING.stageGapMs,
+  { cat: 'Combat', key: 'combatStepPause', topic: 'autoCombat', type: 'number', def: ACTION_PACING.stageGapMs,
     min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
     note: tFull('settings.row.combatStepPause') },
-  { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
+  { cat: 'Combat', key: 'animationStepDuration', topic: 'autoCombat', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },
   // Owner 2026-11-06: the enemy's pacing is separate from the player's (both default 750 ms).
-  { cat: 'Combat', key: 'enemyAttackMs', type: 'number', def: ACTION_PACING.enemyAttackDefaultMs,
+  { cat: 'Combat', key: 'enemyAttackMs', topic: 'autoCombat', type: 'number', def: ACTION_PACING.enemyAttackDefaultMs,
     min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
     label: t('settings.row.enemyAttackMs'), note: tFull('settings.row.enemyAttackMs') },
-  { cat: 'Combat', key: 'enemyFloaterIntervalMs', type: 'number', def: ACTION_PACING.enemyFloaterIntervalDefaultMs,
+  { cat: 'Combat', key: 'enemyFloaterIntervalMs', topic: 'autoCombat', type: 'number', def: ACTION_PACING.enemyFloaterIntervalDefaultMs,
     min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
     label: t('settings.row.enemyFloaterIntervalMs'), note: tFull('settings.row.enemyFloaterIntervalMs') },
-  { cat: 'Combat', key: 'combatPacingPreset', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
+  { cat: 'Combat', key: 'combatPacingPreset', topic: 'autoCombat', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
     label: t('settings.row.combatPacingPreset'), note: tFull('settings.row.combatPacingPreset') },
-  { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
+  { cat: 'Combat', key: 'animSpeed', topic: 'autoCombat', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
   // RENDERING QUALITY FOLDED INTO EFFECTS (owner, 2026-10-30); its row left in the
@@ -321,7 +321,7 @@ export const SETTINGS_ROWS = [
   // THE EFFECTS MODAL (owner, 2026-11-19): Combat shows one button row; the master
   // switch and its sub-switches live in a modal. A row with `modal: 'effects'` keeps
   // its key, default, save, import and reset, but draws only inside that modal.
-  { cat: 'Combat', key: 'effectsMenu', type: 'button', btn: effectsButtonText, label: t('settings.row.effects'),
+  { cat: 'Combat', key: 'effectsMenu', topic: 'animation', type: 'button', btn: effectsButtonText, label: t('settings.row.effects'),
     note: tFull('settings.row.effectsMenu') },
   { cat: 'Combat', key: 'effects', def: false, modal: 'effects', label: t('settings.row.effects'),
     note: tFull('settings.row.effects') },
@@ -354,7 +354,7 @@ export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'fxShadows', type: 'choice', def: 'auto', modal: 'effects', modalSection: 'surface',
     choices: [...SURFACE_CHOICES], choiceLabels: surfaceChoiceLabels(), label: t('settings.row.fxShadows'),
     note: tFull('settings.row.fxShadows') },
-  { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
+  { cat: 'Display', key: 'titleCityHold', topic: 'titleScreen', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
     choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: t('settings.row.titleCityHold'),
     note: tFull('settings.row.titleCityHold') },
   // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
@@ -382,7 +382,7 @@ export const SETTINGS_ROWS = [
   // BOUNDARY still exists and still belongs to a maintainer, not to this string:
   // 120 measured cells is not every seed, so the map keeps reporting a frame it
   // could not fit (`.map-scroll[data-framing]`, and the warning it logs).
-  { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
+  { cat: 'Display', key: 'mapZoom', topic: 'map', type: 'choice', def: MAP_ZOOM_DEFAULT,
     choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: t('settings.row.mapZoom'),
     note: tFull('settings.row.mapZoom') },
   // THE FOG A/B, and it sits HERE rather than in Custom Climb — Marina's ruling,
@@ -408,7 +408,7 @@ export const SETTINGS_ROWS = [
   // `choices` and `def` are the ladder's own, never a second list (the row three
   // above learned this the hard way — it carried four of the zoom ladder's six
   // steps for a night).
-  { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
+  { cat: 'Display', key: 'mapMode', topic: 'map', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: t('settings.row.mapMode'),
     note: tFull('settings.row.mapMode') },
   // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
@@ -454,7 +454,7 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.rewardLevelStatPoints') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: t('settings.row.rewardLevelCards'),
     note: tFull('settings.row.rewardLevelCards') },
-  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
+  { cat: 'Display', key: 'shrinePathGlow', topic: 'map', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
     note: tFull('settings.row.shrinePathGlow') },
   // The map's Potions control and the run HUD read this on every profile
   // (components/runPotions.js, components/runHud.js) and the map's refusal points
@@ -472,7 +472,7 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.walkedFade') },
   // `selfEvident`: W1a shows help only where the effect is not obvious. The
   // note stays on the row as the one place the sentence lives; it is not drawn.
-  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
+  { cat: 'Display', key: 'accent', topic: 'interface', type: 'choice', def: 'gold', selfEvident: true,
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),
     note: tFull('settings.row.accent') },
   // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,
@@ -483,18 +483,18 @@ export const SETTINGS_ROWS = [
   // Auto's tier (src/ui/highResArt.js); anything the folder lacks stays
   // built-in. 'Built-in', the old default, reads as Auto. A per-device key
   // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
-  { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
+  { cat: 'Display', key: ART_QUALITY_KEY, topic: 'interface', type: 'choice', def: ART_AUTO,
     choices: ART_QUALITY_CHOICES, choiceLabels: { [ART_AUTO]: t('settings.viewPreset.auto') }, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: t('settings.row.artQuality'), applied: (settings, row) => hooks.artQualityHtml(settings, row),
     note: tFull('settings.row.artQuality') },
-  { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
+  { cat: 'Display', key: CARD_ART_STYLE_KEY, topic: 'interface', type: 'choice', def: CARD_ART_SIMPLE,
     choices: CARD_ART_STYLE_CHOICES, label: t('settings.row.cardArtStyle'),
     note: tFull('settings.row.cardArtStyle') },
-  { cat: 'Display', key: 'viewPreset', type: 'choice', def: 'auto', dropdown: true,
+  { cat: 'Display', key: 'viewPreset', topic: 'interface', type: 'choice', def: 'auto', dropdown: true,
     choices: ['auto', 'desktop', 'mobile', 'widescreen', 'tablet'],
     choiceLabels: Object.fromEntries(['auto', 'desktop', 'mobile', 'widescreen', 'tablet'].map(id => [id, t(`settings.viewPreset.${id}`)])),
     label: t('settings.row.viewPreset'), note: tFull('settings.row.viewPreset') },
-  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
+  { cat: 'Display', key: 'uiScale', topic: 'interface', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.uiScale'), applied: (settings, row) => hooks.appliedHtml(settings, row),
     note: tFull('settings.row.uiScale') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
@@ -547,7 +547,7 @@ export const SETTINGS_ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: t('settings.row.uprightGate'),
     note: tFull('settings.row.uprightGate') },
 
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
+  { cat: 'Display', key: 'quickNav', topic: 'interface', type: 'choice', def: 'mirror',
     choices: ['off', 'mirror', 'switcher'], label: t('settings.row.quickNav'),
     note: tFull('settings.row.quickNav') },
   // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
@@ -555,59 +555,59 @@ export const SETTINGS_ROWS = [
   // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
   // The only door to Download & saves from Settings now the top action row is
   // gone (owner, 2026-10-26); it opens the same panel the row used to.
-  { cat: 'Display', key: 'downloadSaves', id: 'settings-download', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
+  { cat: 'Display', key: 'downloadSaves', topic: 'interface', id: 'settings-download', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
     note: tFull('settings.row.downloadSaves') },
-  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
+  { cat: 'Display', key: 'resetAllSettings', topic: 'interface', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
 
-  { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+  { cat: 'Combat', key: 'armamentsPresentation', topic: 'armaments', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
     note: tFull('settings.row.armamentsPresentation') },
-  { cat: 'Combat', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+  { cat: 'Combat', key: 'armamentsPhonePlacement', topic: 'armaments', type: 'choice', def: 'left',
     choices: ['left', 'center', 'right'], label: t('settings.row.armamentsPhonePlacement'),
     note: tFull('settings.row.armamentsPhonePlacement') },
 
-  { cat: 'Combat', key: 'showPlayedCard', def: false, label: t('settings.row.showPlayedCard'),
+  { cat: 'Combat', key: 'showPlayedCard', topic: 'animation', def: false, label: t('settings.row.showPlayedCard'),
     note: tFull('settings.row.showPlayedCard') },
 
-  { cat: 'Combat', key: 'manaRing', def: true, label: t('settings.manaRing'),
+  { cat: 'Combat', key: 'manaRing', topic: 'animation', def: true, label: t('settings.manaRing'),
     note: t('settings.manaRing.note') },
 
   ...HUD_VISIBILITY_SETTINGS,
 
-  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
+  { cat: 'Audio', key: 'musicEnabled', topic: 'audio', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: t('settings.row.musicEnabled'), note: (settings) => hooks.musicEnabledCondition(settings) },
-  { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: t('settings.row.muteAudio'),
+  { cat: 'Audio', key: 'muteAudio', topic: 'audio', def: false, positiveWhen: false, label: t('settings.row.muteAudio'),
     note: tFull('settings.row.muteAudio') },
-  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: t('settings.row.musicVolume'), selfEvident: true,
+  { cat: 'Audio', key: 'musicVolume', topic: 'audio', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: t('settings.row.musicVolume'), selfEvident: true,
     note: tFull('settings.row.musicVolume') },
-  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: t('settings.row.sfxVolume'), selfEvident: true,
+  { cat: 'Audio', key: 'sfxVolume', topic: 'audio', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: t('settings.row.sfxVolume'), selfEvident: true,
     note: tFull('settings.row.sfxVolume') },
-  { cat: 'Audio', key: 'haptics', def: HAPTICS_DEFAULT_ON, label: t('settings.row.haptics'),
+  { cat: 'Audio', key: 'haptics', topic: 'audio', def: HAPTICS_DEFAULT_ON, label: t('settings.row.haptics'),
     note: tFull('settings.row.haptics') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: t('settings.row.musicFolder'),
     placeholder: t('settings.row.musicFolder.placeholder'),
     note: tFull('settings.row.musicFolder') },
 
-  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: t('settings.row.touchFlickPlay'),
+  { cat: 'Accessibility', key: 'touchFlickPlay', topic: 'touchGestures', def: UI_DEFAULTS.touchFlick.enabled, label: t('settings.row.touchFlickPlay'),
     note: tFull('settings.row.touchFlickPlay') },
-  { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
+  { cat: 'Accessibility', key: 'touchFlickDistance', topic: 'touchGestures', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
   // Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
   // Off by default. On is an opt-in: a tap on a card with an unambiguous target
   // plays it. Off is select, then the next tap on the selected card.
-  { cat: 'Accessibility', key: 'oneTapPlay', def: false, label: t('settings.row.oneTapPlay'),
+  { cat: 'Accessibility', key: 'oneTapPlay', topic: 'readability', def: false, label: t('settings.row.oneTapPlay'),
     note: tFull('settings.row.oneTapPlay') },
-  { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
+  { cat: 'Accessibility', key: 'reducedMotion', topic: 'motionColour', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },
   // ON by default. Measured, not assumed: at the old default eight text targets
   // sat below the WCAG AA floor and the secondary buttons' own outlines sat at
   // 1.64:1 against a 3.0 floor. High contrast clears all of that and costs one
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
-  { cat: 'Accessibility', key: 'highContrast', def: true, label: t('settings.row.highContrast'),
+  { cat: 'Accessibility', key: 'highContrast', topic: 'readability', def: true, label: t('settings.row.highContrast'),
     note: tFull('settings.row.highContrast') },
-  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
+  { cat: 'Accessibility', key: 'textSize', topic: 'readability', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.textSize'),
     note: tFull('settings.row.textSize') },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
@@ -638,15 +638,15 @@ export const SETTINGS_ROWS = [
   // wider than a fingertip and which no `scrollTop` can answer.
   // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
   // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
-  { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
+  { cat: 'Accessibility', key: 'tapFloor', topic: 'readability', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
     choices: UI_DEFAULTS.tapSize.sizes.map(String), label: t('settings.row.tapFloor'),
     applied: (settings, row) => hooks.tapCostHtml(settings, row), resizesWhilePressed: true,
     note: tFull('settings.row.tapFloor') },
-  { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: t('settings.row.colorblindSafe'),
+  { cat: 'Accessibility', key: 'colorblindSafe', topic: 'motionColour', def: false, label: t('settings.row.colorblindSafe'),
     note: tFull('settings.row.colorblindSafe') },
-  { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: t('settings.row.reduceFlashes'),
+  { cat: 'Accessibility', key: 'reduceFlashes', topic: 'motionColour', def: false, label: t('settings.row.reduceFlashes'),
     note: tFull('settings.row.reduceFlashes') },
-  { cat: 'Accessibility', key: 'readableHeadings', def: false, label: t('settings.row.readableHeadings'),
+  { cat: 'Accessibility', key: 'readableHeadings', topic: 'readability', def: false, label: t('settings.row.readableHeadings'),
     note: tFull('settings.row.readableHeadings') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'debugMode', def: false, label: t('settings.row.debugMode'),
     note: tFull('settings.row.debugMode') },
