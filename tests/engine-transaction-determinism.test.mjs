@@ -128,7 +128,7 @@ function withStaggeredRule(build) {
 }
 // Re-pinned 2026-11-20 for the stat contract (docs/balance/stat-allocation-rules-2026-11-18.md: "Each Constitution point grants 5 maximum
 // HP"): every fight here starts from a fresh default Core run, whose Reaver now has 50 maximum HP instead of 71. Verified against 471e0283e2: the
-// event logs differ only in the player's hp/maxHp fields; no event, roll or turn moved. All sixteen fights re-pinned for that one cause.
+// event logs of all eighteen digested fights differ only in the player hp, maxHp and turnStartHpPct fields; no event, roll or turn moved.
 const LEGACY_PINNED = [
   [['PERF1', 'reaver'], { log: '5ffb3f10258d154f', state: '0d201e2d8fa00761', events: 222, turn: 6 }],
   [[4242, 'reaver'], { log: 'f1da3c38c998fc40', state: '32fbb8feb64f07a0', events: 219, turn: 6 }],
