@@ -15,7 +15,8 @@ import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { MountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
-import { OpenSlotChoiceModal, OpenEquipConfirmModal } from '../components/armouryEquipModals.js';
+import { OpenSlotChoiceModal, OpenEquipConfirmModal, OpenItemChoiceModal } from '../components/armouryEquipModals.js';
+import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { ItemPropertyChips, ItemPropertyDetail, ItemPropertyCounts } from '../components/itemProperties.js';
 import { ArmouryItemRef, ItemPropertyLines } from '../../model/itemPropertyLines.js';
@@ -930,6 +931,38 @@ export function mountEquipment(host, {
     chooseSlot();
   }
 
+  /**
+   * Replace / Choose item on a slot (owner, 2026-11-19): the items that fit THIS position open in a modal, not in a
+   * picker drawn under the slot rows that the player had to scroll down to. Picking one runs the same compare (an
+   * occupied position) or confirm (an empty one) as every other equip, whose Back reopens this list.
+   */
+  function openSlotItemPicker(slot, position, opener = null) {
+    const slotLabel = `${slot.label} · ${position.index + 1}`;
+    const slotName = (id) => (eq.slots || []).find((candidate) => candidate.id === id)?.label || id;
+    const fitting = sortEquipPickerRows(equipPickerTableRows(inventoryRows(registries, run, meta), slot, { setIndex: position.index, loadout: run.loadout }))
+      .filter((row) => row.fits && row.status !== 'here');
+    const options = fitting.map((row) => {
+      const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
+      const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
+      const requirement = equipmentRequirementReceipt(registries, row.row.item, run.attributes, run);
+      const hint = !seal.ok ? seal.reason : !transition.ok ? transition.reason
+        : !requirement.ok ? `Requires ${requirement.failures.map((failure) => `${registries.attributes.get(failure.attributeId).label} ${failure.required}`).join(', ')}` : '';
+      const first = row.elsewhere[0];
+      return {
+        id: row.id, name: row.name, sub: row.category, hint, disabled: !!hint,
+        status: first ? t('armoury.picker.status.elsewhere', { slot: slotName(first.slotId), n: first.setIndex + 1 }) : t('armoury.picker.status.free'),
+      };
+    });
+    const reopen = () => openSlotItemPicker(slot, position, opener);
+    OpenItemChoiceModal({
+      slotLabel, options, opener,
+      onChoose: (id) => {
+        const row = fitting.find((candidate) => candidate.id === id);
+        if (row) requestEquip(slot.id, position.index, id, `Equip ${row.name} to ${slotLabel}`, { confirm: true, opener, onBack: reopen });
+      },
+    });
+  }
+
   function comparisonFor(slotId, setIndex, pieceId) {
     return equipmentSurfaceReceipt(registries, run, {
       candidate: { slotId, setIndex, pieceId },
@@ -974,11 +1007,9 @@ export function mountEquipment(host, {
     return reason ? { ok: false, reason } : seal;
   }
 
-  function activatePosition(slot, position, { openPicker = false } = {}) {
+  function activatePosition(slot, position, { openPicker = false, opener = null } = {}) {
     if (openPicker) {
-      openInventoryForSelection(slot.id, position.index);
-      selectedInventoryKey = null;
-      draw();
+      openSlotItemPicker(slot, position, opener);
       return;
     }
     const rule = positionActivationSeal(slot, position);
@@ -997,15 +1028,8 @@ export function mountEquipment(host, {
       commit(openPicker ? foldSettings() : null);
       return;
     }
-    if (picking && picking.slotId === slot.id && picking.setIndex === position.index) clearInventorySelection();
-    else openInventoryForSelection(slot.id, position.index);
-    if (onChange) onChange(run.loadout, foldSettings());
-    draw();
-    if (picking) {
-      const target = wrap.querySelector('.armoury-selection-context button');
-      target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-    }
+    // Choosing the active position opens its item list in a modal (owner, 2026-11-19), as Replace does.
+    openSlotItemPicker(slot, position, opener);
   }
 
   function attachPositionDropTarget(target, slot, position) {
@@ -1040,7 +1064,7 @@ export function mountEquipment(host, {
       className: 'armament-replace', attrs: { 'aria-label': t('armoury.action.chooseFor', { slot: position.label }) } });
     replace.addEventListener('click', event => {
       event.preventDefault(); event.stopPropagation();
-      activatePosition(slot, position, { openPicker: true });
+      activatePosition(slot, position, { openPicker: true, opener: replace });
     });
     actions.append(replace);
     if (position.state === 'occupied') {
@@ -1065,7 +1089,7 @@ export function mountEquipment(host, {
       const seal = positionActivationSeal(slot, position);
       activate.disabled = !seal.ok;
       if (!seal.ok) activate.title = seal.reason;
-      activate.addEventListener('click', () => activatePosition(slot, position));
+      activate.addEventListener('click', () => activatePosition(slot, position, { opener: activate }));
       actions.append(activate);
       if (!seal.ok) actions.append(prose(seal.reason, { class: 'armament-action-reason' }));
     }
