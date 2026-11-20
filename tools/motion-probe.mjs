@@ -202,7 +202,7 @@ if (argv.includes('--selftest')) {
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
         file: 'src/ui/alternativeCardStage.js',
-        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!fxOff('glow'),still:fxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
+        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!FxOff('glow'),still:FxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
         replace: '    ctx.restore();',
         expectRed: /RED IDLE player#\d+ — .*canvas has no painted pixels/,
       }, {

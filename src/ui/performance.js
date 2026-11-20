@@ -21,24 +21,24 @@ export function motionFlags(settings = {}) {
  */
 export const FX_KEYS = Object.freeze({ glow: 'fxGlow', sparks: 'fxSparks', flash: 'fxFlash', hitstop: 'fxHitStop' });
 
-/** fxFlags(settings) → { glow, sparks, flash, hitstop } booleans: true when that effect plays (master on and sub-switch on). */
-export function fxFlags(settings = {}) {
+/** FxFlags(settings) → { glow, sparks, flash, hitstop } booleans: true when that effect plays (master on and sub-switch on). */
+export function FxFlags(settings = {}) {
   const master = effectsEnabled(settings);
   return Object.fromEntries(Object.entries(FX_KEYS).map(([kind, key]) => [kind, master && settings[key] !== false]));
 }
 
-/** fxOff(kind) → true when Effects is off or that sub-switch is off (root `data-fx-<kind>="off"`); kind is glow|sparks|flash|hitstop. */
-export function fxOff(kind) {
+/** FxOff(kind) → true when Effects is off or that sub-switch is off (root `data-fx-<kind>="off"`); kind is glow|sparks|flash|hitstop. */
+export function FxOff(kind) {
   if (effectsOff()) return true;
   return typeof document !== 'undefined' && document.documentElement?.dataset[`fx${kind[0].toUpperCase()}${kind.slice(1)}`] === 'off';
 }
 
 /**
- * effectsSummary(settings) → { on, count, total }: the Effects master and how many of
+ * EffectsSummary(settings) → { on, count, total }: the Effects master and how many of
  * its visual sub-switches are on (the four FX_KEYS, screen shake and ambient).
  * The Settings button reads it ("On · 5 of 6").
  */
-export function effectsSummary(settings = {}) {
+export function EffectsSummary(settings = {}) {
   const parts = [...Object.values(FX_KEYS).map(key => settings[key] !== false),
     settings.screenShake !== false, settings.ambient !== 'off'];
   return { on: effectsEnabled(settings), count: parts.filter(Boolean).length, total: parts.length };

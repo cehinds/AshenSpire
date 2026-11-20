@@ -446,12 +446,12 @@ export function syncHeldTriggers(root) {
   for (const el of root.querySelectorAll(HELD_TRIGGERS)) syncHeldTrigger(el);
 }
 /**
- * syncAddedHeldTriggers(nodes) — syncHeldTriggers over only the given element nodes (and their
+ * SyncAddedHeldTriggers(nodes) — syncHeldTriggers over only the given element nodes (and their
  * descendants): the page-wide observer hands it what a mutation burst added, so a combat beat that
  * rewrites a few nodes scans those, not every trigger on the page. Text nodes and nodes already
  * removed again are skipped; a node inside another listed node is scanned through that one.
  */
-export function syncAddedHeldTriggers(nodes) {
+export function SyncAddedHeldTriggers(nodes) {
   const list = new Set([...nodes].filter(node => node?.nodeType === 1 && node.isConnected !== false));
   const listedAncestor = node => { for (let up = node.parentElement; up; up = up.parentElement) if (list.has(up)) return true; return false; };
   for (const node of list) {
@@ -714,7 +714,7 @@ function wireTitles() {
       const first = !added.size;
       for (const record of records) for (const node of record.addedNodes || []) if (node.nodeType === 1) added.add(node);
       if (!first || !added.size) return;
-      queueMicrotask(() => { const nodes = [...added]; added.clear(); syncAddedHeldTriggers(nodes); });
+      queueMicrotask(() => { const nodes = [...added]; added.clear(); SyncAddedHeldTriggers(nodes); });
     }).observe(document.body, { childList: true, subtree: true });
     syncHeldTriggers(document.body);
   }

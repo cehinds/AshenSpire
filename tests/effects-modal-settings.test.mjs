@@ -2,8 +2,8 @@
 // master switch and its sub-switches draw only inside the modal it opens.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { settingsRows, generalGroups, effectsModalHtml, settingsRowHtml, allResettableKeys } from '../src/ui/screens/settings.js';
-import { effectsSummary } from '../src/ui/performance.js';
+import { settingsRows, generalGroups, EffectsModalHtml, settingsRowHtml, allResettableKeys } from '../src/ui/screens/settings.js';
+import { EffectsSummary } from '../src/ui/performance.js';
 import { t } from '../src/ui/strings.js';
 
 const rows = settingsRows();
@@ -27,19 +27,19 @@ test('the modal rows keep their keys, defaults and reset', () => {
 test('the button face says Off, or On with how many visual effects are on', () => {
   const off = settingsRowHtml({}, row('effectsMenu'));
   assert.match(off, new RegExp(`>${t('settings.effects.statusOff')}</button>`));
-  const { count, total } = effectsSummary({ effects: true, fxSparks: false });
+  const { count, total } = EffectsSummary({ effects: true, fxSparks: false });
   assert.equal(total - count, 1);
   const on = settingsRowHtml({ effects: true, fxSparks: false }, row('effectsMenu'));
   assert.ok(on.includes(`>${t('settings.effects.statusOn', { count, total })}</button>`), on);
 });
 
 test('the modal draws the master first and greys Visual effects while Effects is off', () => {
-  const off = effectsModalHtml({});
+  const off = EffectsModalHtml({});
   assert.ok(off.indexOf('data-row-key="effects"') < off.indexOf('data-effects-section="visual"'), 'master switch on top');
   assert.match(off, /data-effects-section="visual" data-off="1"/);
   assert.ok(off.includes(t('settings.effects.visualOff')));
   for (const key of ['fxGlow', 'fxSparks', 'fxFlash', 'fxHitStop']) assert.ok(off.includes(`data-row-key="${key}"`), key);
-  const on = effectsModalHtml({ effects: true });
+  const on = EffectsModalHtml({ effects: true });
   assert.doesNotMatch(on, /data-effects-section="visual" data-off/);
 });
 
@@ -50,7 +50,7 @@ test('screen shake, ambient and fighter motion moved into the modal, keys and de
     ['motionAttack', 'motionHit', 'motionIdle', 'motionDefeat']);
   assert.equal(row('screenShake').def, true);
   assert.equal(row('ambient').def, 'normal');
-  const html = effectsModalHtml({});
+  const html = EffectsModalHtml({});
   assert.ok(html.indexOf('data-effects-section="motion"') > html.indexOf('data-effects-section="visual"'));
   assert.doesNotMatch(html, /data-effects-section="motion" data-off/, 'fighter motion works with Effects off');
   assert.ok(html.includes(t('settings.effects.motionNote')));

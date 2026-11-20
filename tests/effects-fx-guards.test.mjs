@@ -91,11 +91,11 @@ test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selecte
 test('image figures draw only the held stance glow with Effects or Stance and aura glow off (no casting pulse)', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/ui/paintedOutfits.js', import.meta.url), 'utf8');
-  assert.match(src, /fxOff\('glow'\) \? auraFilter\('ready', resting, \[\], false\)/);
+  assert.match(src, /FxOff\('glow'\) \? auraFilter\('ready', resting, \[\], false\)/);
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
   assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
-  assert.match(fx, /if \(holdMs && !fxOff\('hitstop'\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain gated by Effects and Hit pause and belong to their originating combat mount');
+  assert.match(fx, /if \(holdMs && !FxOff\('hitstop'\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain gated by Effects and Hit pause and belong to their originating combat mount');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {

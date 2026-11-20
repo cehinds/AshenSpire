@@ -278,12 +278,12 @@ function switchHtml({ label, on, attrs = '' }) {
 }
 
 /**
- * effectsModalHtml(settings) → the Effects modal body (owner, 2026-11-19): the master
+ * EffectsModalHtml(settings) → the Effects modal body (owner, 2026-11-19): the master
  * switch, then "Visual effects" (greyed while the master is off; the values are kept),
  * then "Fighter motion" (independent of the master). Rows are the `modal: 'effects'`
  * rows of SETTINGS_ROWS drawn by settingsRowHtml, so they look and save like any row.
  */
-export function effectsModalHtml(settings) {
+export function EffectsModalHtml(settings) {
   const rows = SETTINGS_ROWS.filter((row) => row.modal === 'effects');
   const on = effectsEnabled(settings);
   const list = (shown) => `<div class="set-card-list">${shown.map((row) => settingsRowHtml(settings, row)).join('')}</div>`;
@@ -299,12 +299,12 @@ export function effectsModalHtml(settings) {
 }
 
 /**
- * openEffectsModal({ settings, onChange, opener }) — the modal the Combat › Effects
+ * OpenEffectsModal({ settings, onChange, opener }) — the modal the Combat › Effects
  * button opens. Every change goes through the same `onChange` the Settings rows use
  * (persistSettingsChange), and the body redraws so the greyed section and the
  * button face follow the master switch.
  */
-export function openEffectsModal({ settings, onChange, opener = document.activeElement }) {
+export function OpenEffectsModal({ settings, onChange, opener = document.activeElement }) {
   let host = null;
   const refreshButton = () => {
     const row = rowByKey('effectsMenu');
@@ -317,7 +317,7 @@ export function openEffectsModal({ settings, onChange, opener = document.activeE
   };
   const draw = (focusKey = null, focusValue = null) => {
     if (!host) return;
-    host.innerHTML = effectsModalHtml(settings);
+    host.innerHTML = EffectsModalHtml(settings);
     host.querySelectorAll('[data-effects-section][data-off] :is(input, button, select)').forEach((control) => { control.disabled = true; });
     host.querySelectorAll('.toggle[data-key]').forEach((box) => {
       box.addEventListener('change', () => commit(box.dataset.key, box.checked));
@@ -2406,7 +2406,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
-    btn.addEventListener('click', () => openEffectsModal({ settings, onChange, opener: btn }));
+    btn.addEventListener('click', () => OpenEffectsModal({ settings, onChange, opener: btn }));
   });
 
   container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {

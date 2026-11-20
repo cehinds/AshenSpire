@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled, fxFlags, fxOff } from '../src/ui/performance.js';
+import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled, FxFlags, FxOff } from '../src/ui/performance.js';
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
@@ -121,24 +121,24 @@ test('the motion body classes and the Effects root attribute are what the helper
   } finally { delete globalThis.document; }
 });
 
-test('each Effects sub-switch plays only while the master is on (fxFlags, default on)', () => {
-  assert.deepEqual(fxFlags({}), { glow: false, sparks: false, flash: false, hitstop: false }, 'master off by default');
-  assert.deepEqual(fxFlags({ effects: true }), { glow: true, sparks: true, flash: true, hitstop: true });
-  assert.deepEqual(fxFlags({ effects: true, fxSparks: false }), { glow: true, sparks: false, flash: true, hitstop: true });
-  assert.deepEqual(fxFlags({ effects: false, fxSparks: true }).sparks, false);
+test('each Effects sub-switch plays only while the master is on (FxFlags, default on)', () => {
+  assert.deepEqual(FxFlags({}), { glow: false, sparks: false, flash: false, hitstop: false }, 'master off by default');
+  assert.deepEqual(FxFlags({ effects: true }), { glow: true, sparks: true, flash: true, hitstop: true });
+  assert.deepEqual(FxFlags({ effects: true, fxSparks: false }), { glow: true, sparks: false, flash: true, hitstop: true });
+  assert.deepEqual(FxFlags({ effects: false, fxSparks: true }).sparks, false);
 });
 
-test('fxOff(kind) reads the Effects master and the data-fx-<kind> root flag', () => {
+test('FxOff(kind) reads the Effects master and the data-fx-<kind> root flag', () => {
   globalThis.document = { documentElement: { dataset: { effects: 'off', fxSparks: 'on' } }, body: { classList: { contains: () => false } } };
   try {
-    assert.equal(fxOff('sparks'), true, 'Effects off turns every sub-effect off');
+    assert.equal(FxOff('sparks'), true, 'Effects off turns every sub-effect off');
     document.documentElement.dataset.effects = 'on';
-    assert.equal(fxOff('sparks'), false, 'Effects on and fxSparks on');
+    assert.equal(FxOff('sparks'), false, 'Effects on and fxSparks on');
     document.documentElement.dataset.fxSparks = 'off';
-    assert.equal(fxOff('sparks'), true, 'fxSparks off');
-    assert.equal(fxOff('hitstop'), false, 'other kinds are independent');
+    assert.equal(FxOff('sparks'), true, 'fxSparks off');
+    assert.equal(FxOff('hitstop'), false, 'other kinds are independent');
     document.documentElement.dataset.fxHitstop = 'off';
-    assert.equal(fxOff('hitstop'), true);
+    assert.equal(FxOff('hitstop'), true);
   } finally { delete globalThis.document; }
 });
 

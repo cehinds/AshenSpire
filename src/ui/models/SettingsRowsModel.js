@@ -20,7 +20,7 @@ import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../../model/autoCombatPolicy.js';
-import { resolveMotionIdle, effectsSummary } from '../performance.js';
+import { resolveMotionIdle, EffectsSummary } from '../performance.js';
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import { MAP_MODE_DEFAULT, MAP_MODES, SHRINE_GLOW_DEFAULT } from '../../model/map/mapknowledge.js';
@@ -230,7 +230,7 @@ function graceRefillAppliedHtml(settings, r) {
 
 /** effectsButtonText(settings) → the Effects button face: "Off", or "On · 5 of 6". */
 function effectsButtonText(settings = {}) {
-  const summary = effectsSummary(settings);
+  const summary = EffectsSummary(settings);
   return summary.on ? t('settings.effects.statusOn', { count: summary.count, total: summary.total }) : t('settings.effects.statusOff');
 }
 

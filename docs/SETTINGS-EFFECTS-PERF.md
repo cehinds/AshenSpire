@@ -26,7 +26,7 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
   - [x] Hit pause (`fxHitStop`)
   - [x] Ambient background (existing `ambient`, moved from Advanced > Interface)
 - [x] Modal section "Fighter motion" (works with Effects off): attack, hit, idle, defeat (existing rows, moved)
-- [x] Each sub-switch actually gates its effect (root `data-fx-*` flags + `fxOff(kind)` helper)
+- [x] Each sub-switch actually gates its effect (root `data-fx-*` flags + `FxOff(kind)` helper)
 - [x] Strings in `content/source/uiStrings.csv`, short and plain
 
 ### Performance (ranked)

@@ -25,7 +25,7 @@ class RecordingObserver {
 }
 const previous = Object.fromEntries(['MutationObserver', 'Node', 'setTimeout', 'clearTimeout', ...Object.keys(dom)].map(key => [key, globalThis[key]]));
 Object.assign(globalThis, dom, { Node: dom.document.body.constructor, MutationObserver: RecordingObserver, setTimeout() { return 0; }, clearTimeout() {} });
-const { syncAddedHeldTriggers } = await import('../src/ui/components/tooltip.js');
+const { SyncAddedHeldTriggers } = await import('../src/ui/components/tooltip.js');
 test.after(() => {
   for (const [key, value] of Object.entries(previous)) {
     if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
@@ -74,18 +74,18 @@ test('the observer scans only the added nodes, not the rest of the page', async 
   assert.equal(untouched.dataset.heldBack, undefined, 'a node outside the burst is not re-read');
 });
 
-test('syncAddedHeldTriggers handles a trigger added on its own, nested additions and text nodes', () => {
+test('SyncAddedHeldTriggers handles a trigger added on its own, nested additions and text nodes', () => {
   const card = document.createElement('div'); card.className = 'card';
   document.body.appendChild(card);
   const lone = tabIndexed(document.createElement('span')); lone.className = 'tooltip-keyword';
   card.appendChild(lone);
   const { card: outer, tag: inner } = cardWithTag();
   document.body.appendChild(outer);
-  syncAddedHeldTriggers([lone, outer, inner, document.createTextNode('x')]);
+  SyncAddedHeldTriggers([lone, outer, inner, document.createTextNode('x')]);
   assert.equal(lone.dataset.heldBack, 'true', 'an added trigger is matched itself, not only its descendants');
   assert.equal(inner.dataset.heldBack, 'true');
   // A detached node (added then removed within the burst) is skipped.
   const { card: gone, tag: goneTag } = cardWithTag();
-  syncAddedHeldTriggers([gone]);
+  SyncAddedHeldTriggers([gone]);
   assert.equal(goneTag.dataset.heldBack, undefined);
 });
