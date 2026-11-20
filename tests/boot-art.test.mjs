@@ -575,6 +575,8 @@ test('no image error handler in src/ui swaps or removes art without marking it (
   // Handlers that swap nothing a restore must bring back, by file and why.
   const ALLOWED = new Map([
     ['assets.js:enemySprite', 'its placeholder() marks the node itself (markArtPlaceholder inside placeholder)'],
+    // Keyed by offset, so any edit above the handler re-flags it for review.
+    ['merchantItemArtFit.js:2901', 'removes only its own fitted overlay, unhides the original image and re-fires its error, so the image\'s own marked fallback runs'],
   ]);
   const bad = [];
   let seen = 0;
