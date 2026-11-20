@@ -407,8 +407,11 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 .mapscreen .map-route-outline {
   stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
 }
+/* filter:none drops the pale drop-shadow (0 1px 1px #e2c994) the older terrain-road rule above gives every
+   road. Under the dark outline it reached ~4px below the road's centre, past the 6px outline's 3px half-width,
+   and on snow that halo read 1.09:1 (tools/contrast-audit.mjs, untraveled road). The outline is the road's edge now. */
 .mapscreen svg > .map-terrain ~ .map-edge {
-  stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
+  stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round; filter:none;
 }
 .mapscreen svg > .map-terrain ~ .map-edge.traveled { stroke:#ead090; }
 .mapscreen svg > .map-terrain ~ .map-edge.shrine-lane { stroke:#ffe39a; stroke-width:3.5px; }
