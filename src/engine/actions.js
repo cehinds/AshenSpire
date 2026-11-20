@@ -1045,6 +1045,9 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 // Owner, 2026-11-18: `effects.blockGainMultiplier` scales every configured Block gain, both sides (the live Block preview calls computeBlockGain).
 const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.blockGainMultiplier; return Number.isFinite(m) && m >= 0 ? m : 1; };
+// Owner, 2026-11-20: each Dexterity stack (a `blockAdd` status) adds `effects.statusBlockWeight` Block to every later configured Block gain,
+// after the scale, so +1 Dexterity is +1 Block on the next card. Absent (profiles saved before) = 0: the status added nothing.
+const StatusBlockAdd = (ctx, entity) => { const w = configuredModule(ctx, 'effects')?.statusBlockWeight; return Number.isFinite(w) && w > 0 ? Math.floor(statuses.getAdd(ctx, entity, 'blockAdd') * w) : 0; };
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
@@ -1054,7 +1057,7 @@ const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.bloc
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx)) + StatusBlockAdd(ctx, entity)) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
