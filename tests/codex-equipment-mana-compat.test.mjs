@@ -6,6 +6,8 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
 
 // Measured by resolving real base and upgraded faces on clean dev 66e473a77c.
+// Inner Orbit+ re-pinned 2026-11-20 (#2902): its upgrade now drops Exhaust, which the legacy action-cost formula prices +1 (0 -> 1).
+// Core's profile authors fixed costs and is unaffected (tests/stat-buff-exhaust.test.mjs).
 // A new package's default art contributes to a registry-wide identity set:
 // lending an ordinary old card must not silently reprice it for every weapon.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/codex-equipment-legacy-mana.json', import.meta.url)));
