@@ -239,6 +239,8 @@ jobs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
       comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
       preview_targets: ${{ steps.feature_previews.outputs.preview_targets }}
+      # Compact JSON array of PR numbers (strings) whose fresh preview the cap left out.
+      capped_prs: ${{ steps.feature_previews.outputs.capped_prs }}
       primary_targets: ${{ steps.primary_targets.outputs.targets }}
     steps:
       - uses: actions/checkout@v5
@@ -483,6 +485,8 @@ jobs:
           # Branch builds without a PR never become PR comment targets.
           targets=$(jq -c '[.previews[] | select(.pr > 0) | {pr: (.pr | tostring), dir: .dir}]' "$out/previews.json")
           echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
+          capped=$(jq -c '[.capped[]? | select(.pr > 0) | (.pr | tostring)]' "$out/previews.json")
+          echo "capped_prs=$capped" >> "$GITHUB_OUTPUT"
           previews=$(jq -c '[.previews[] | {dir: .dir, sha: .sha}]' "$out/previews.json")
           echo "preview_targets=$previews" >> "$GITHUB_OUTPUT"
           {
@@ -822,6 +826,7 @@ jobs:
           REPO: ${{ github.repository }}
           # Branch-derived values reach the shell only through env, never ${{ }} in run.
           TARGETS: ${{ needs.assemble.outputs.comment_targets }}
+          CAPPED: ${{ needs.assemble.outputs.capped_prs }}
           # The PR this run closed (pull_request_target, closed), or empty. Its preview is
           # removed with the close, so its own sticky comment is edited to say so.
           CLOSED_PR: ${{ github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.number || '' }}
@@ -886,13 +891,22 @@ jobs:
               failed=1
             fi
           fi
+          # A PR whose build passed but fell outside MAX_BRANCH_PREVIEWS is told so, not
+          # told its build failed.
+          declare -A capped=()
+          for pr in $(printf '%s' "${CAPPED:-[]}" | jq -r '.[]' 2>/dev/null); do capped[$pr]=1; done
           open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
             | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
             || { echo "::error::could not list the open pull requests into dev"; exit 1; }
           while read -r pr; do
             [ -n "$pr" ] || continue
             [ -n "${published[$pr]:-}" ] && continue
-            if ! withdraw "$pr" "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."; then
+            if [ -n "${capped[$pr]:-}" ]; then
+              text="Preview not published: only the 2 newest branch builds are on the site (MAX_BRANCH_PREVIEWS); this commit's build passed and its CI artifact is still available."
+            else
+              text="Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."
+            fi
+            if ! withdraw "$pr" "$text"; then
               echo "::error title=Withdrawn-preview comment failed::PR #$pr"
               failed=1
             fi

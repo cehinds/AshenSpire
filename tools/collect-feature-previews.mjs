@@ -104,7 +104,9 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
   }
   entries = kept;
   mkdirSync(out, { recursive: true });
-  writeFileSync(manifest, JSON.stringify({ previews: entries }));
+  // `capped` names the fresh previews the cap left out, so the PR comment says so
+  // rather than calling their build failed (pages-builds.yml, capped_prs).
+  writeFileSync(manifest, JSON.stringify({ previews: entries, capped: dropped.map((e) => ({ branch: e.branch, pr: Number(e.pr) || 0 })) }));
   return entries;
 }
 

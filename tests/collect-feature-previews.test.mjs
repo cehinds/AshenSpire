@@ -74,5 +74,7 @@ test('a capped collection drops the older previews from the manifest and the dis
   const fixture = setup(t);
   const entries = await collectFeaturePreviews({ ...fixture, maxPreviews: 1 });
   assert.deepEqual(entries.map((e) => [e.branch, e.run]), [['Feature/test', 9]]);
-  assert.deepEqual(JSON.parse(readFileSync(join(fixture.out, 'previews.json'), 'utf8')).previews, entries);
+  const manifest = JSON.parse(readFileSync(join(fixture.out, 'previews.json'), 'utf8'));
+  assert.deepEqual(manifest.previews, entries);
+  assert.deepEqual(manifest.capped, [{ branch: 'fix/pr-only', pr: 17 }, { branch: 'alternative/other/dev', pr: 0 }]);
 });
